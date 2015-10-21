@@ -1,0 +1,36 @@
+## @file
+#  Generic watchdog timer driver produceing Watchdog Timer Architectural Protocol using UEFI APIs.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010016
+  BASE_NAME                      = WatchdogTimer
+  FILE_GUID                      = BD3C7586-B9A3-4332-9EEE-E9F02CF6A931
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = WatchdogInitialize
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[Sources]
+  WatchdogTimer.c
+
+[LibraryClasses]
+  UefiRuntimeServicesTableLib
+  UefiBootServicesTableLib
+  ReportStatusCodeLib
+  UefiDriverEntryPoint
+  DebugLib
+  IoLib
+  WatchdogTimerLib
+
+[Protocols]
+  gEfiWatchdogTimerArchProtocolGuid             ## PRODUCES
+
+[depex]
+  gEfiTimerArchProtocolGuid

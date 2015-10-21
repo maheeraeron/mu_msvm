@@ -1,0 +1,35 @@
+## @file
+#  Config Library instance.
+#
+#  Simplifies access to virtual machine configuration information.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010016
+  BASE_NAME                      = ConfigLib
+  FILE_GUID                      = 0A0B5ED3-5BDA-4929-9C12-80DC1839C990
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ConfigLib
+
+[Sources]
+  ConfigLib.c
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  IoLib
+  HobLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[Guids]
+  gMsvmConfigPageV2Guid         ## CONSUMES ## GUID
+  gMsvmConfigPageV3Guid         ## CONSUMES ## GUID
+  gSratGuid                     ## CONSUMES ## GUID
+  gMemmapGuid                   ## CONSUMES ## GUID

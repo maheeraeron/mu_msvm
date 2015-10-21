@@ -1,0 +1,1854 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    Emcl.c
+
+Abstract:
+
+    Implements the EFI EMCL protocol.
+
+Author:
+
+    Arseney Romanenko (arseneyr) - 2-Aug-2012
+
+--*/
+
+#include <PiDxe.h>
+#include <EfiNt.h>
+
+#include <Library/UefiLib.h>
+#include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/DebugLib.h>
+
+#include <Protocol/Emcl.h>
+#include <Protocol/Vmbus.h>
+
+#define VMBUS_RING_BUFFER_SINGLE_MAPPED 1
+#include <VmbusPacketInterface.h>
+
+#define EMCL_DRIVER_VERSION 0x10
+
+#define ADDRESS_AND_SIZE_TO_SPAN_PAGES(_Addr_,_Size_) \
+    (ALIGN_VALUE((((UINT_PTR)(_Addr_)) & EFI_PAGE_MASK) + (_Size_), EFI_PAGE_SIZE) >> EFI_PAGE_SHIFT)
+
+#define VARIABLE_STRUCT_SIZE(_Type_,_Field_,_Size_) \
+    ((OFFSET_OF(_Type_,_Field_)) + sizeof(*(((_Type_ *)0)->_Field_)) * (_Size_))
+
+#define EMCL_MAX_OUTSTANDING_COMPLETIONS 64
+
+typedef struct _EMCL_COMPLETION_ENTRY
+{
+    EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine;
+    VOID *CompletionContext;
+    LIST_ENTRY Link;
+
+} EMCL_COMPLETION_ENTRY;
+
+#define EMCL_CONTEXT_SIGNATURE         SIGNATURE_32('e','m','c','l')
+
+typedef struct _EMCL_CONTEXT
+{
+    UINT32 Signature;
+
+    EFI_HANDLE Handle;
+    EFI_EMCL_PROTOCOL EmclProtocol;
+    EFI_VMBUS_PROTOCOL *VmbusProtocol;
+    BOOLEAN IsPipe;
+
+    PACKET_LIB_CONTEXT PkLibContext;
+    UINT32 IncomingPageCount;
+    UINT32 OutgoingPageCount;
+    VOID *RingBufferPages;
+    VOID *IncomingData;
+    VOID *OutgoingData;
+    UINT32 RingBufferGpadl;
+
+    EFI_EVENT ReceiveEvent;
+    EFI_EMCL_RECEIVE_PACKET ReceiveCallback;
+    VOID *ReceiveContext;
+    EFI_TPL ReceiveTpl;
+    BOOLEAN AllocationFailure;
+
+    LIST_ENTRY CompletionEntries;
+    LIST_ENTRY OutgoingQueue;
+
+    BOOLEAN IsRunning;
+
+} EMCL_CONTEXT;
+
+typedef struct _EMCL_INCOMING_PACKET
+{
+    union
+    {
+        VMPACKET_DESCRIPTOR Descriptor;
+        VMTRANSFER_PAGE_PACKET_HEADER TransferHeader;
+        VMDATA_GPA_DIRECT GpaHeader;
+    };
+
+} EMCL_INCOMING_PACKET;
+
+typedef struct _EMCL_OUTGOING_PACKET
+{
+    VOID *Buffer;
+    UINT32 BufferSize;
+
+    LIST_ENTRY QueueLink;
+
+} EMCL_OUTGOING_PACKET;
+
+EFI_HANDLE mImageHandle;
+
+extern EFI_GUID gEfiEmclTagProtocolGuid;
+
+EFI_STATUS
+EFIAPI
+EmclComponentNameGetDriverName (
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in CHAR8 *Language,
+    __out CHAR16 **DriverName
+    );
+
+EFI_STATUS
+EFIAPI
+EmclComponentNameGetControllerName(
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in_opt EFI_HANDLE ChildHandle,
+    __in CHAR8 *Language,
+    __out CHAR16 **ControllerName
+    );
+
+VOID
+EmclDestroyPacketLibrary(
+    __in EMCL_CONTEXT *Context
+    )
+/*++
+
+Routine Description:
+
+    This routine destroys the packet library.
+
+Arguments:
+
+    Context - Pointer to the EMCL context.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    if (Context->RingBufferPages != NULL)
+    {
+        FreePages(Context->RingBufferPages,
+                  Context->IncomingPageCount + Context->OutgoingPageCount);
+
+        Context->IncomingData = NULL;
+        Context->OutgoingData = NULL;
+        Context->RingBufferPages = NULL;
+        Context->IncomingPageCount = 0;
+        Context->OutgoingPageCount = 0;
+    }
+}
+
+
+EFI_STATUS
+EmclInitializePacketLibrary(
+    __in EMCL_CONTEXT *Context,
+    __in UINT32 IncomingRingBufferPageCount,
+    __in UINT32 OutgoingRingBufferPageCount
+    )
+/*++
+
+Routine Description:
+
+    This routine initializes the packet library.
+
+Arguments:
+
+    Context - Pointer to the EMCL context.
+
+    IncomingRingBufferPageCount - Size of incoming ring buffer in pages.
+
+    OutgoingRingBufferPageCount - Size of outgoing ring buffer in pages.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    NTSTATUS ntStatus;
+    UINT32 pageCount;
+    VOID *incomingControl;
+
+    //
+    // Include a control page for both ring buffer directions.
+    //
+
+    pageCount = IncomingRingBufferPageCount + OutgoingRingBufferPageCount + 2;
+    Context->RingBufferPages = AllocatePages(pageCount);
+    if (Context->RingBufferPages == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    Context->IncomingPageCount = IncomingRingBufferPageCount + 1;
+    Context->OutgoingPageCount = OutgoingRingBufferPageCount + 1;
+    ZeroMem(Context->RingBufferPages, pageCount * EFI_PAGE_SIZE);
+
+    incomingControl = (VOID*)((UINT_PTR)Context->RingBufferPages +
+                      Context->OutgoingPageCount * EFI_PAGE_SIZE);
+
+    Context->OutgoingData = (PVOID)((UINT_PTR)Context->RingBufferPages + EFI_PAGE_SIZE);
+    Context->IncomingData = (PVOID)((UINT_PTR)incomingControl + EFI_PAGE_SIZE);
+
+    ntStatus = PkInitializeSingleMappedRingBuffer(&Context->PkLibContext,
+                                                  incomingControl,
+                                                  Context->IncomingData,
+                                                  IncomingRingBufferPageCount,
+                                                  Context->RingBufferPages,
+                                                  Context->OutgoingData,
+                                                  OutgoingRingBufferPageCount);
+
+    if (!NT_SUCCESS(ntStatus))
+    {
+        status = EFI_DEVICE_ERROR;
+        goto Cleanup;
+    }
+
+    status = EFI_SUCCESS;
+
+Cleanup:
+    if (EFI_ERROR(status))
+    {
+        EmclDestroyPacketLibrary(Context);
+    }
+
+    return status;
+
+}
+
+
+UINT32
+EmclGpaDirectHeaderSize(
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in_range(>, 0) UINT32 ExternalBufferCount
+    )
+/*++
+
+Routine Description:
+
+    This routine calculates the header size of a GPA Direct packet.
+
+Arguments:
+
+    ExternalBuffers - Array of buffers to be sent as part of a GPA direct
+        packet.
+
+    ExternalBufferCount - Number of buffers in ExternalBuffers.
+
+Return Value:
+
+    Size of packet header.
+
+--*/
+{
+    UINT32 headerSize;
+    UINT32 index;
+
+    headerSize = OFFSET_OF(VMDATA_GPA_DIRECT, Range);
+    for (index = 0; index < ExternalBufferCount; ++index)
+    {
+        headerSize += VARIABLE_STRUCT_SIZE(GPA_RANGE,
+            PfnArray,
+            ADDRESS_AND_SIZE_TO_SPAN_PAGES(ExternalBuffers[index].Buffer,
+                                           ExternalBuffers[index].BufferSize));
+    }
+
+    return headerSize;
+}
+
+
+VOID
+EmclWriteGpaDirectPacket(
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in_range(>, 0) UINT32 ExternalBufferCount,
+    __in UINT64 TransactionId,
+    __in BOOLEAN RequestCompletion,
+    __in VOID *OutputBuffer
+    )
+/*++
+
+Routine Description:
+
+    This routine constructs a GPA Direct packet into a specified buffer.
+
+Arguments:
+
+    InlineBuffer - Optional buffer to be sent as part of the packet.
+
+    InlineBufferLength - Length of InlineBuffer.
+
+    ExternalBuffers - Array of buffers to be sent as part of the GPA direct
+        packet.
+
+    ExternalBufferCount - Number of buffers in ExternalBuffers.
+
+    TransactionId - Transaction ID of packet to be sent.
+
+    RequestCompletion - Whether to request a completion packet from the opposite
+        endpoint.
+
+    OutputBuffer - The buffer to write the packet into. It is the caller's
+        responsibility to ensure this buffer is large enough.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    VMDATA_GPA_DIRECT *header;
+    UINT32 index;
+    UINT32 headerSize;
+    GPA_RANGE *currentRange;
+    UINT32 pfnCount;
+    UINT32 pfnIndex;
+
+    headerSize = EmclGpaDirectHeaderSize(ExternalBuffers, ExternalBufferCount);
+
+    header = (VMDATA_GPA_DIRECT*)OutputBuffer;
+    header->Descriptor.Type = VmbusPacketTypeDataUsingGpaDirect;
+    header->Descriptor.DataOffset8 = (UINT16)(headerSize / 8);
+    header->Descriptor.Length8 =
+        (UINT16)(ALIGN_VALUE(headerSize + InlineBufferLength, sizeof(UINT64)) / 8);
+
+    header->Descriptor.Flags = 0;
+    if (RequestCompletion)
+    {
+        header->Descriptor.Flags |= VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
+    }
+
+    header->Descriptor.TransactionId = TransactionId;
+    header->RangeCount = ExternalBufferCount;
+    currentRange = header->Range;
+
+    //
+    // Fill in PFNs for each external range.
+    //
+
+    for (index = 0; index < ExternalBufferCount; ++index)
+    {
+        currentRange->ByteCount = ExternalBuffers[index].BufferSize;
+        currentRange->ByteOffset = (UINT32)((UINT_PTR)ExternalBuffers[index].Buffer & EFI_PAGE_MASK);
+        pfnCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(
+            ExternalBuffers[index].Buffer,
+            ExternalBuffers[index].BufferSize);
+
+        for (pfnIndex = 0; pfnIndex < pfnCount; ++pfnIndex)
+        {
+            currentRange->PfnArray[pfnIndex] =
+                ((UINT_PTR)ExternalBuffers[index].Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
+        }
+
+        currentRange = (GPA_RANGE*)((UINT_PTR)currentRange +
+            VARIABLE_STRUCT_SIZE(GPA_RANGE, PfnArray, pfnCount));
+    }
+
+    CopyMem((UINT8*)OutputBuffer + headerSize, InlineBuffer, InlineBufferLength);
+}
+
+
+VOID
+EmclDestroyOutgoingPacket(
+    __in EMCL_OUTGOING_PACKET *Packet
+    )
+/*++
+
+Routine Description:
+
+    This routine destroys an outgoing packet.
+
+Arguments:
+
+    Packet - Pointer to the packet.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    if (Packet->Buffer != NULL)
+    {
+        FreePool(Packet->Buffer);
+        Packet->Buffer = NULL;
+    }
+}
+
+
+EFI_STATUS
+EmclpSendPacket(
+    __in EMCL_CONTEXT *Context,
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount,
+    __in VMBUS_PACKET_TYPE PacketType,
+    __in UINT64 TransactionId,
+    __in BOOLEAN RequestCompletion
+    )
+/*++
+
+Routine Description:
+
+    This routine tries to send a packet, queuing it if necessary.
+
+    This routine must be called at TPL <= TPL_EMCL.
+
+Arguments:
+
+    Context - Pointer to the EMCL context.
+
+    InlineBuffer - Optional buffer to be sent as part of the packet.
+
+    InlineBufferLength - Length of InlineBuffer.
+
+    ExternalBuffers - Optional array of buffers to be sent as part of a GPA
+        direct packet.
+
+    ExternalBufferCount - Number of buffers in ExternalBuffers.
+
+    PacketType - Type of packet to be sent.
+
+    TransactionId - Transaction ID of packet to be sent.
+
+    RequestCompletion - Whether to request a completion packet from the opposite
+        endpoint.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    NTSTATUS ntStatus;
+    UINT32 packetSize;
+    VOID *packetBuffer;
+    EMCL_OUTGOING_PACKET *outgoingPacket;
+    VMPACKET_DESCRIPTOR *header;
+    VMPIPE_PROTOCOL_HEADER *pipeHeader;
+    EFI_TPL tpl;
+    BOOLEAN queuePacket;
+
+    outgoingPacket = NULL;
+    queuePacket = FALSE;
+
+    packetSize = (ExternalBufferCount == 0 ?
+                 sizeof(VMPACKET_DESCRIPTOR) :
+                 EmclGpaDirectHeaderSize(ExternalBuffers, ExternalBufferCount)) +
+                 InlineBufferLength;
+
+    if (Context->IsPipe)
+    {
+        ASSERT(ExternalBufferCount == 0);
+        packetSize += sizeof(*pipeHeader);
+    }
+
+    //
+    // Verify that the packet isn't too large before making any allocations.
+    //
+
+    if (packetSize > PkGetOutgoingRingSize(&Context->PkLibContext))
+    {
+        //
+        // Packet is larger than the ring buffer.
+        //
+
+        status = EFI_INVALID_PARAMETER;
+        goto Cleanup;
+    }
+
+    //
+    // Buffer the packet, either to queue for sending later or for sending now.
+    //
+
+    outgoingPacket = AllocateZeroPool(sizeof(*outgoingPacket));
+    if (outgoingPacket == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    outgoingPacket->Buffer = AllocateZeroPool(packetSize);
+    if (outgoingPacket->Buffer == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    outgoingPacket->BufferSize = packetSize;
+    packetBuffer = outgoingPacket->Buffer;
+
+    //
+    // Write the packet to the buffer.
+    //
+
+    switch (PacketType)
+    {
+    case VmbusPacketTypeDataInBand:
+    case VmbusPacketTypeCompletion:
+        header = packetBuffer;
+        header->Type = PacketType;
+        header->DataOffset8 = (UINT16)(sizeof(*header) / 8);
+        header->Flags = 0;
+        if (RequestCompletion)
+        {
+            header->Flags |= VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
+        }
+
+        header->Length8 = (UINT16)(ALIGN_VALUE(packetSize, sizeof(UINT64)) / 8);
+        header->TransactionId = TransactionId;
+        if (Context->IsPipe)
+        {
+            pipeHeader = (VMPIPE_PROTOCOL_HEADER*)(header + 1);
+            pipeHeader->DataSize = InlineBufferLength;
+            pipeHeader->PacketType = VmPipeMessageData;
+            CopyMem(pipeHeader + 1, InlineBuffer, InlineBufferLength);
+        }
+        else
+        {
+            CopyMem(header + 1, InlineBuffer, InlineBufferLength);
+        }
+
+        break;
+
+    case VmbusPacketTypeDataUsingGpaDirect:
+        EmclWriteGpaDirectPacket(InlineBuffer,
+                                 InlineBufferLength,
+                                 ExternalBuffers,
+                                 ExternalBufferCount,
+                                 TransactionId,
+                                 RequestCompletion,
+                                 packetBuffer);
+
+        break;
+
+    default:
+        ASSERT(!"Sending VMBus packet type not supported");
+    }
+
+    tpl = gBS->RaiseTPL(TPL_EMCL);
+    ntStatus = PkSendPacketSingleMapped(&Context->PkLibContext,
+                                        packetBuffer,
+                                        packetSize);
+
+    if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+    {
+        Context->VmbusProtocol->SendInterrupt(Context->VmbusProtocol);
+    }
+    else if (ntStatus == STATUS_BUFFER_OVERFLOW)
+    {
+        //
+        // The packet should be queued to send later.
+        //
+        queuePacket = TRUE;
+        InsertTailList(&Context->OutgoingQueue, &outgoingPacket->QueueLink);
+    }
+    else if (!NT_SUCCESS(ntStatus))
+    {
+        status = EFI_DEVICE_ERROR;
+        gBS->RestoreTPL(tpl);
+        goto Cleanup;
+    }
+
+    gBS->RestoreTPL(tpl);
+    status = EFI_SUCCESS;
+
+Cleanup:
+    if (EFI_ERROR(status) || !queuePacket)
+    {
+        if (outgoingPacket != NULL)
+        {
+            EmclDestroyOutgoingPacket(outgoingPacket);
+            FreePool(outgoingPacket);
+            outgoingPacket = NULL;
+        }
+    }
+
+    return status;
+}
+
+
+VOID
+EmclDispatchPacket(
+    __in EMCL_CONTEXT *Context,
+    __in EMCL_INCOMING_PACKET *Packet
+    )
+/*++
+
+Routine Description:
+
+    This routine dipatches a packet based on its type.
+
+Arguments:
+
+    Packet - Pointer to the packet.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EFI_TPL tpl;
+    EMCL_COMPLETION_ENTRY *completion;
+    VOID *inlineBuffer;
+    UINT32 inlineBufferLength;
+    PVMPIPE_PROTOCOL_HEADER pipeHeader;
+
+    inlineBuffer = (VOID*)((UINT_PTR)(&Packet->Descriptor) +
+        Packet->Descriptor.DataOffset8 * 8);
+
+    inlineBufferLength = (Packet->Descriptor.Length8 -
+        Packet->Descriptor.DataOffset8) * 8;
+
+    ASSERT((PUCHAR)inlineBuffer + inlineBufferLength <= ((PUCHAR)Packet + Packet->Descriptor.Length8 * 8));
+
+    switch (Packet->Descriptor.Type)
+    {
+    case VmbusPacketTypeCompletion:
+        completion =
+            (EMCL_COMPLETION_ENTRY*)Packet->Descriptor.TransactionId;
+
+        completion->CompletionRoutine(
+            completion->CompletionContext,
+            inlineBuffer,
+            inlineBufferLength);
+
+        tpl = gBS->RaiseTPL(TPL_EMCL);
+        RemoveEntryList(&completion->Link);
+        gBS->RestoreTPL(tpl);
+        FreePool(completion);
+        FreePool(Packet);
+        break;
+
+    case VmbusPacketTypeDataInBand:
+        if (Context->ReceiveCallback != NULL)
+        {
+            if (Context->IsPipe)
+            {
+                pipeHeader = (PVMPIPE_PROTOCOL_HEADER)inlineBuffer;
+                if (pipeHeader->PacketType != VmPipeMessageData)
+                {
+                    DEBUG((EFI_D_ERROR, "Invalid pipe packet received\n"));
+                    return;
+                }
+
+                inlineBuffer = (VOID*)((UINT_PTR)inlineBuffer + sizeof(*pipeHeader));
+
+                ASSERT(sizeof(*pipeHeader) + pipeHeader->DataSize <= inlineBufferLength);
+
+                inlineBufferLength = pipeHeader->DataSize;
+            }
+
+            Context->ReceiveCallback(
+                Context->ReceiveContext,
+                (VOID*)Packet,
+                inlineBuffer,
+                inlineBufferLength,
+                0,
+                0,
+                NULL);
+        }
+
+        break;
+
+    case VmbusPacketTypeDataUsingTransferPages:
+        if (Context->ReceiveCallback != NULL)
+        {
+            Context->ReceiveCallback(
+                Context->ReceiveContext,
+                (VOID*)Packet,
+                inlineBuffer,
+                inlineBufferLength,
+                Packet->TransferHeader.TransferPageSetId,
+                Packet->TransferHeader.RangeCount,
+                (EFI_TRANSFER_RANGE*)Packet->TransferHeader.Ranges);
+        }
+
+        break;
+
+    default:
+        DEBUG((EFI_D_ERROR, "EMCL parsed an invalid or unsupported packet\n"));
+        break;
+    }
+}
+
+
+VOID
+EmclProcessQueue(
+    __in EFI_EVENT Event,
+    __in_opt VOID *EventContext
+    )
+/*++
+
+Routine Description:
+
+    This routine processes the ring buffer when the opposite endpoint signals
+    the channel.
+
+Arguments:
+
+    Event - The event signalled.
+
+    EventContext - Pointer to the interrupt context, which is a pointer to the
+        EMCL context.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+    NTSTATUS ntStatus;
+    EFI_TPL tpl;
+    UINT32 ringOffset;
+    UINT32 bufferLength;
+    EMCL_INCOMING_PACKET *incomingPacket;
+    UINT32 receivedCount;
+    LIST_ENTRY *entry;
+    EMCL_OUTGOING_PACKET *outgoingPacket;
+
+    context = (EMCL_CONTEXT*)EventContext;
+
+    do
+    {
+        receivedCount = 0;
+
+        for (;;)
+        {
+            ntStatus = PkGetIncomingPacketSize(&context->PkLibContext,
+                                               &bufferLength,
+                                               &ringOffset);
+
+            if (ntStatus == STATUS_END_OF_FILE)
+            {
+                break;
+            }
+
+            ASSERT(NT_SUCCESS(ntStatus));
+
+            //
+            // If packet allocation fails, set a flag which will cause a retry when
+            // an existing packet completes and is freed.
+            //
+
+            incomingPacket = AllocateZeroPool(
+                OFFSET_OF(EMCL_INCOMING_PACKET, Descriptor) + bufferLength);
+
+            if (incomingPacket == NULL)
+            {
+                context->AllocationFailure = TRUE;
+                break;
+            }
+
+            context->AllocationFailure = FALSE;
+
+            ntStatus = PkReceivePacketSingleMapped(&context->PkLibContext,
+                                                   (PVMPACKET_DESCRIPTOR)incomingPacket,
+                                                   bufferLength,
+                                                   ringOffset);
+
+            ASSERT(NT_SUCCESS(ntStatus));
+
+            if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+            {
+                context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
+            }
+
+            EmclDispatchPacket(context, incomingPacket);
+            ++receivedCount;
+        }
+    } while (receivedCount > 0);
+
+    //
+    // Try to process the outgoing queue.
+    //
+
+    tpl = gBS->RaiseTPL(TPL_EMCL);
+    while (!IsListEmpty(&context->OutgoingQueue))
+    {
+        entry = GetFirstNode(&context->OutgoingQueue);
+        outgoingPacket = BASE_CR(entry, EMCL_OUTGOING_PACKET, QueueLink);
+
+        ntStatus = PkSendPacketSingleMapped(&context->PkLibContext,
+                                            outgoingPacket->Buffer,
+                                            outgoingPacket->BufferSize);
+
+        if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+        {
+            context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
+        }
+        else if (!NT_SUCCESS(ntStatus))
+        {
+            break;
+        }
+
+        RemoveEntryList(entry);
+        gBS->RestoreTPL(tpl);
+        EmclDestroyOutgoingPacket(outgoingPacket);
+        FreePool(outgoingPacket);
+        tpl = gBS->RaiseTPL(TPL_EMCL);
+    }
+
+    gBS->RestoreTPL(tpl);
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclStartChannel(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in UINT32 IncomingRingBufferPageCount,
+    __in UINT32 OutgoingRingBufferPageCount
+    )
+/*++
+
+Routine Description:
+
+    This routine starts the channel.
+
+    This routine must be called at TPL < TPL_NOTIFY.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    IncomingRingBufferPageCount - Number of pages to use for the incoming ring
+        buffer.
+
+    OutgoingRingBufferPageCount - Number of pages to use for the outgoing ring
+        buffer.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EMCL_CONTEXT *context;
+    BOOLEAN isrRegistered;
+
+    isrRegistered = FALSE;
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    ASSERT(!context->IsRunning);
+
+    status = EmclInitializePacketLibrary(context,
+                                         IncomingRingBufferPageCount,
+                                         OutgoingRingBufferPageCount);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    status = context->VmbusProtocol->CreateGpadl(
+        context->VmbusProtocol,
+        context->RingBufferPages,
+        (context->IncomingPageCount + context->OutgoingPageCount) * EFI_PAGE_SIZE,
+        &context->RingBufferGpadl);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // Create the receive event at the caller-set TPL or TPL_EMCL otherwise.
+    //
+
+    ASSERT(context->ReceiveEvent == NULL);
+
+    status = gBS->CreateEvent(
+        EVT_NOTIFY_SIGNAL,
+        (context->ReceiveCallback == NULL ? TPL_EMCL : context->ReceiveTpl),
+        EmclProcessQueue,
+        (VOID*) context,
+        &context->ReceiveEvent);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    if (context->ReceiveCallback == NULL)
+    {
+        context->ReceiveTpl = TPL_EMCL;
+    }
+
+    status = context->VmbusProtocol->RegisterIsr(context->VmbusProtocol,
+                                                 context->ReceiveEvent);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    isrRegistered = TRUE;
+
+    status = context->VmbusProtocol->OpenChannel(context->VmbusProtocol,
+                                                 context->RingBufferGpadl,
+                                                 context->OutgoingPageCount);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    context->IsRunning = TRUE;
+    status = EFI_SUCCESS;
+
+Cleanup:
+    if (EFI_ERROR(status))
+    {
+        if (context->RingBufferGpadl != 0)
+        {
+            context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
+                                                 context->RingBufferGpadl);
+        }
+
+        if (isrRegistered)
+        {
+            context->VmbusProtocol->RegisterIsr(context->VmbusProtocol, NULL);
+        }
+
+        if (context->ReceiveEvent != NULL)
+        {
+            gBS->CloseEvent(context->ReceiveEvent);
+            context->ReceiveEvent = NULL;
+        }
+
+        EmclDestroyPacketLibrary(context);
+    }
+
+    return status;
+}
+
+
+VOID
+EFIAPI
+EmclStopChannel(
+    __in EFI_EMCL_PROTOCOL *This
+    )
+/*++
+
+Routine Description:
+
+    This routine stops the channel.
+
+    This routine must be called at TPL <= MIN(ReceiveCallbackTPL, TPL_NOTIFY - 1).
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EFI_STATUS status;
+    EMCL_CONTEXT *context;
+    LIST_ENTRY *entry;
+    EMCL_OUTGOING_PACKET *packet;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    ASSERT(context->IsRunning);
+
+    //
+    // Stopping the EMCL channel while running at a TPL higher than the receive
+    // event is dangerous, as the receive event could be running and accessing
+    // structures that are destroyed here.
+    //
+
+    ASSERT(EfiGetCurrentTpl() <= context->ReceiveTpl);
+
+    status = context->VmbusProtocol->CloseChannel(context->VmbusProtocol);
+
+    ASSERT_EFI_ERROR(status);
+
+    status = context->VmbusProtocol->RegisterIsr(context->VmbusProtocol, NULL);
+
+    ASSERT_EFI_ERROR(status);
+
+    status = context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
+                                                  context->RingBufferGpadl);
+    ASSERT_EFI_ERROR(status);
+
+    //
+    // If the current TPL and the receive TPL are equal, the receive event
+    // could still be queued up to be run after the TPL drops. Clear out the
+    // event.
+    //
+
+    gBS->CloseEvent(context->ReceiveEvent);
+    context->ReceiveEvent = NULL;
+
+    //
+    // Clear out the queued packet list. No need to raise to TPL_EMCL, since
+    // the receive event should not be running and sending packets is prohibited.
+    //
+
+    while (!IsListEmpty(&context->OutgoingQueue))
+    {
+        entry = RemoveEntryList(GetFirstNode(&context->OutgoingQueue));
+        packet = BASE_CR(entry, EMCL_OUTGOING_PACKET, QueueLink);
+        EmclDestroyOutgoingPacket(packet);
+        FreePool(packet);
+    }
+
+    //
+    // Free any outstanding completion packets.
+    // FUTURE-arseneyr-20130410: Complete these packets back to the VSCs as
+    // aborted and have the VSCs handle this case appropriately.
+    //
+
+    while (!IsListEmpty(&context->CompletionEntries))
+    {
+        entry = RemoveEntryList(GetFirstNode(&context->CompletionEntries));
+        FreePool(BASE_CR(entry, EMCL_COMPLETION_ENTRY, Link));
+    }
+
+    context->RingBufferGpadl = 0;
+    EmclDestroyPacketLibrary(context);
+    context->IsRunning = FALSE;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclSendPacket(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount,
+    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
+    __in_opt VOID *CompletionRoutineContext
+    )
+/*++
+
+Routine Description:
+
+    This routine sends a simple or GPA Direct packet to the opposite endpoint,
+    optionally registering a callback to be called when the packet completes.
+
+    This routine must be called at TPL <= TPL_EMCL.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    InlineBuffer - Optional buffer to be sent as part of the packet.
+
+    InlineBufferLength - Length of InlineBuffer.
+
+    ExternalBuffers - Optional array of buffers to be sent as part of a GPA
+        Direct packet.
+
+    ExternalBufferCount - Number of buffers in ExternalBuffers.
+
+    CompletionRoutine - Optional routine to be called when the packet completes.
+        This routine will be called at the same TPL specified in
+        EmclSetReceiveCallback, or TPL_CALLBACK otherwise.
+
+    CompletionRoutineContext - Context supplied when CompletionRoutine is called.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_TPL tpl;
+    EMCL_CONTEXT *context;
+    EMCL_COMPLETION_ENTRY *completionEntry;
+    UINT32 index;
+
+    completionEntry = NULL;
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    //
+    // Channel must be started.
+    //
+
+    ASSERT(context->IsRunning);
+
+    //
+    // Validate the external buffers.
+    //
+
+    for (index = 0; index < ExternalBufferCount; ++index)
+    {
+        if (ExternalBuffers[index].Buffer == NULL ||
+            ExternalBuffers[index].BufferSize == 0)
+        {
+            status = EFI_INVALID_PARAMETER;
+            goto Cleanup;
+        }
+    }
+
+    if (CompletionRoutine != NULL)
+    {
+        completionEntry = AllocatePool(sizeof(*completionEntry));
+        if (completionEntry == NULL)
+        {
+            status = EFI_OUT_OF_RESOURCES;
+            goto Cleanup;
+        }
+
+        completionEntry->CompletionRoutine = CompletionRoutine;
+        completionEntry->CompletionContext = CompletionRoutineContext;
+
+        //
+        // Insert into list so we can keep track of these entries and free
+        // them if uncompleted when DriverStop is called.
+        //
+
+        tpl = gBS->RaiseTPL(TPL_EMCL);
+        InsertTailList(&context->CompletionEntries, &completionEntry->Link);
+        gBS->RestoreTPL(tpl);
+    }
+
+    status = EmclpSendPacket(context,
+                             InlineBuffer,
+                             InlineBufferLength,
+                             ExternalBuffers,
+                             ExternalBufferCount,
+                             (ExternalBuffers == 0 ? VmbusPacketTypeDataInBand :
+                             VmbusPacketTypeDataUsingGpaDirect),
+                             (UINT64)completionEntry,
+                             completionEntry != NULL);
+
+Cleanup:
+    if (EFI_ERROR(status))
+    {
+        if (completionEntry != NULL)
+        {
+            tpl = gBS->RaiseTPL(TPL_EMCL);
+            RemoveEntryList(&completionEntry->Link);
+            gBS->RestoreTPL(tpl);
+            FreePool(completionEntry);
+        }
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclCompletePacket(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in VOID *PacketContext,
+    __in_bcount(BufferLength) VOID *Buffer,
+    __in UINT32 BufferLength
+    )
+/*++
+
+Routine Description:
+
+    This routine is called when the client is finished with a packet passed
+    during a receive callback. This may cause a completion packet to be sent.
+
+    This routine must be called at TPL <= TPL_EMCL.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    PacketContext - Packet context supplied during the receive callback.
+
+    Buffer - Optional buffer to send as part of the completion packet.
+
+    BufferLength - Length of Buffer.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EMCL_CONTEXT *context;
+    EMCL_INCOMING_PACKET *incomingPacket;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    incomingPacket = (EMCL_INCOMING_PACKET*)PacketContext;
+
+    if (incomingPacket->Descriptor.Flags & VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
+    {
+        status = EmclpSendPacket(context,
+                                 Buffer,
+                                 BufferLength,
+                                 NULL,
+                                 0,
+                                 VmbusPacketTypeCompletion,
+                                 incomingPacket->Descriptor.TransactionId,
+                                 FALSE);
+    }
+    else
+    {
+        status = EFI_SUCCESS;
+    }
+
+    FreePool(incomingPacket);
+
+    //
+    // We just freed a packet, so retry allocating a new one.
+    //
+
+    if (context->AllocationFailure)
+    {
+        gBS->SignalEvent(context->ReceiveEvent);
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclSetReceiveCallback(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in_opt EFI_EMCL_RECEIVE_PACKET ReceiveCallback,
+    __in_opt VOID *ReceiveContext,
+    __in_range(<=, TPL_EMCL) EFI_TPL Tpl
+    )
+/*++
+
+Routine Description:
+
+    This routine registers a callback that is called whenever this channel is
+    signalled by the opposite endpoint. This routine must be called while the
+    channel is not started.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    ReceiveCallback - Callback to be called. If NULL, clears the receive
+        callback.
+
+    ReceiveContext - Context to be passed to the callback.
+
+    Tpl - TPL at which to call the callback.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    //
+    // Make sure StartChannel hasn't been called yet.
+    //
+
+    ASSERT(!context->IsRunning);
+
+    ASSERT(context->ReceiveEvent == NULL);
+
+    //
+    // Clear any previous receive callbacks.
+    //
+
+    if (context->ReceiveCallback != NULL)
+    {
+        context->ReceiveCallback = NULL;
+        context->ReceiveContext = NULL;
+        context->ReceiveTpl = 0;
+    }
+
+    if (ReceiveCallback != NULL)
+    {
+        context->ReceiveCallback = ReceiveCallback;
+        context->ReceiveContext = ReceiveContext;
+        context->ReceiveTpl = Tpl;
+    }
+
+    return EFI_SUCCESS;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclCreateGpadl(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in_bcount(BufferLength) VOID *Buffer,
+    __in UINT32 BufferLength,
+    __out UINT32 *GpadlHandle
+    )
+/*++
+
+Routine Description:
+
+    This routine is a wrapper for VMBus GPADL creation.
+
+    This routine must be called at TPL < TPL_NOTIFY.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    Buffer - Buffer to be used for the GPADL.
+
+    BufferLength - Length of Buffer.
+
+    GpadlHandle - Returns a handle to the GPADL.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    return context->VmbusProtocol->CreateGpadl(context->VmbusProtocol,
+                                               Buffer,
+                                               BufferLength,
+                                               GpadlHandle);
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclDestroyGpadl(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in UINT32 GpadlHandle
+    )
+/*++
+
+Routine Description:
+
+    This routine is a wrapper for VMBus GPADL destruction.
+
+    This routine must be called at TPL < TPL_NOTIFY.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    GpadlHandle - Handle of the GPADL to be destroyed.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    return context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
+                                                GpadlHandle);
+}
+
+
+VOID
+EmclInitializeContext(
+    __in EMCL_CONTEXT *Context
+    )
+/*++
+
+Routine Description:
+
+    This routine initializes the EMCL context.
+
+Arguments:
+
+    Context - Pointer to the EMCL context.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    ZeroMem(Context, sizeof(*Context));
+    Context->Signature = EMCL_CONTEXT_SIGNATURE;
+    Context->EmclProtocol.StartChannel = EmclStartChannel;
+    Context->EmclProtocol.StopChannel = EmclStopChannel;
+    Context->EmclProtocol.SendPacket = EmclSendPacket;
+    Context->EmclProtocol.CompletePacket = EmclCompletePacket;
+    Context->EmclProtocol.SetReceiveCallback = EmclSetReceiveCallback;
+    Context->EmclProtocol.CreateGpadl = EmclCreateGpadl;
+    Context->EmclProtocol.DestroyGpadl = EmclDestroyGpadl;
+    InitializeListHead(&Context->CompletionEntries);
+    InitializeListHead(&Context->OutgoingQueue);
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclDriverSupported(
+    __in EFI_DRIVER_BINDING_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    )
+/*++
+
+Routine Description:
+
+    Supported routine for EMCL driver binding protocol.
+
+Arguments:
+
+    This - Pointer to the driver binding protocol.
+
+    ControllerHandle - Device handle to check if supported.
+
+    RemainingDevicePath - Device path of child to start.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    //
+    // EMCL should not be autostarted by ConnectController. It should only be
+    // started directly on a VMBus channel handle, preferrably using EmclLib.
+    //
+
+    return EFI_UNSUPPORTED;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclDriverStart(
+    __in EFI_DRIVER_BINDING_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    )
+/*++
+
+Routine Description:
+
+    Start routine for EMCL driver binding protocol.
+
+Arguments:
+
+    This - Pointer to the driver binding protocol.
+
+    ControllerHandle - Device handle on which to start.
+
+    RemainingDevicePath - Device path of device being started.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_VMBUS_PROTOCOL *vmbusProtocol;
+    EMCL_CONTEXT *context;
+    BOOLEAN alreadyStarted;
+
+    vmbusProtocol = NULL;
+    context = NULL;
+    alreadyStarted = FALSE;
+
+    status = gBS->OpenProtocol(ControllerHandle,
+                               &gEfiVmbusProtocolGuid,
+                               (VOID**) &vmbusProtocol,
+                               mImageHandle,
+                               ControllerHandle,
+                               EFI_OPEN_PROTOCOL_BY_DRIVER);
+
+    if (EFI_ERROR(status))
+    {
+        if (status == EFI_ALREADY_STARTED)
+        {
+            alreadyStarted = TRUE;
+        }
+
+        goto Cleanup;
+    }
+
+    context = AllocatePool(sizeof(*context));
+    if (context == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    EmclInitializeContext(context);
+    context->Handle = ControllerHandle;
+    context->VmbusProtocol = vmbusProtocol;
+    context->IsPipe =
+        ((vmbusProtocol->Flags & EFI_VMBUS_PROTOCOL_FLAGS_PIPE_MODE) != 0);
+
+    //
+    // Install the EMCL protocol and store the EMCL context on the handle using
+    // the CallerId protocol.
+    //
+
+    status = gBS->InstallMultipleProtocolInterfaces(&ControllerHandle,
+                                                    &gEfiEmclProtocolGuid,
+                                                    &context->EmclProtocol,
+                                                    &gEfiCallerIdGuid,
+                                                    context,
+                                                    NULL);
+
+Cleanup:
+    if (EFI_ERROR(status) && !alreadyStarted)
+    {
+        if (context != NULL)
+        {
+            FreePool(context);
+        }
+
+        if (vmbusProtocol != NULL)
+        {
+            gBS->CloseProtocol(ControllerHandle,
+                               &gEfiVmbusProtocolGuid,
+                               mImageHandle,
+                               ControllerHandle);
+        }
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclDriverStop(
+    __in EFI_DRIVER_BINDING_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in UINTN NumberOfChildren,
+    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    )
+/*++
+
+Routine Description:
+
+    Stop routine for EMCL driver binding protocol.
+
+Arguments:
+
+    This - Pointer to the driver binding protocol.
+
+    ControllerHandle - Pointer to the device handle which needs to be stopped.
+
+    NumberOfChildren - If 0, stop the root controller. Otherwise, the number of
+        children in ChildHandleBuffer to be stopped.
+
+    ChildHandleBuffer - An array of child handles to stop.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EMCL_CONTEXT *context;
+
+    //
+    // Discover the EMCL context using the CallerId protocol.
+    //
+
+    status = gBS->OpenProtocol(ControllerHandle,
+                               &gEfiCallerIdGuid,
+                               (VOID**) &context,
+                               mImageHandle,
+                               ControllerHandle,
+                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+
+    if (EFI_ERROR(status))
+    {
+        return status;
+    }
+
+    status = gBS->UninstallMultipleProtocolInterfaces(ControllerHandle,
+                                                      &gEfiEmclProtocolGuid,
+                                                      &context->EmclProtocol,
+                                                      &gEfiCallerIdGuid,
+                                                      context,
+                                                      NULL);
+
+    if (EFI_ERROR(status))
+    {
+        DEBUG((EFI_D_ERROR, "Could not uninstall EMCL protocol\n"));
+        return status;
+    }
+
+    //
+    // Channel must be stopped by now.
+    //
+
+    ASSERT(!context->IsRunning);
+
+    FreePool(context);
+    gBS->CloseProtocol(ControllerHandle,
+                       &gEfiVmbusProtocolGuid,
+                       mImageHandle,
+                       ControllerHandle);
+
+    return EFI_SUCCESS;
+}
+
+
+//
+// Driver name table
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE gEmclDriverNameTable[] =
+{
+    {
+        "eng;en",
+        L"Hyper-V EMCL Driver"
+    },
+    {
+        NULL,
+        NULL
+    }
+};
+
+
+//
+// EFI Component Name Protocol
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL gEmclComponentName =
+{
+    EmclComponentNameGetDriverName,
+    EmclComponentNameGetControllerName,
+    "eng"
+};
+
+
+//
+// EFI Component Name 2 Protocol
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gEmclComponentName2 =
+{
+    (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) EmclComponentNameGetDriverName,
+    (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) EmclComponentNameGetControllerName,
+    "en"
+};
+
+
+EFI_DRIVER_BINDING_PROTOCOL gEmclDriverBindingProtocol =
+{
+    EmclDriverSupported,
+    EmclDriverStart,
+    EmclDriverStop,
+    EMCL_DRIVER_VERSION,
+    NULL,
+    NULL
+};
+
+
+EFI_STATUS
+EFIAPI
+EmclComponentNameGetDriverName (
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in CHAR8 *Language,
+    __out CHAR16 **DriverName
+    )
+/*++
+
+Routine Description:
+
+    Retrieves a Unicode string that is the user readable name of the EFI Driver.
+
+    This function retrieves the user readable name of a driver in the form of a
+    Unicode string. If the driver specified by This has a user readable name in
+    the language specified by Language, then a pointer to the driver name is
+    returned in DriverName, and EFI_SUCCESS is returned. If the driver specified
+    by This does not support the language specified by Language,
+    then EFI_UNSUPPORTED is returned.
+
+Arguments:
+
+    This - A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
+
+    Language - A pointer to a Null-terminated ASCII string array indicating the language.
+
+    DriverName - A pointer to the string to return.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    return LookupUnicodeString2(
+        Language,
+        This->SupportedLanguages,
+        gEmclDriverNameTable,
+        DriverName,
+        (BOOLEAN)(This == &gEmclComponentName));
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclComponentNameGetControllerName(
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in_opt EFI_HANDLE ChildHandle,
+    __in CHAR8 *Language,
+    __out CHAR16 **ControllerName
+    )
+/*++
+
+Routine Description:
+
+    Retrieves a Unicode string that is the user readable name of the controller
+    that is being managed by a Driver.
+
+
+    This function retrieves the user readable name of the controller specified by
+    ControllerHandle and ChildHandle in the form of a Unicode string. If the
+    driver specified by This has a user readable name in the language specified by
+    Language, then a pointer to the controller name is returned in ControllerName,
+    and EFI_SUCCESS is returned.  If the driver specified by This is not currently
+    managing the controller specified by ControllerHandle and ChildHandle,
+    then EFI_UNSUPPORTED is returned.  If the driver specified by This does not
+    support the language specified by Language, then EFI_UNSUPPORTED is returned.
+
+Arguments:
+
+    This - A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
+
+    ControllerHandle - The handle of a controller that the driver specified by This
+           is managing.  This handle specifies the controller whose name is to be returned.
+
+    ChildHandle - The handle of the child controller to retrieve the name of. This is an
+        optional parameter that may be NULL.  It will be NULL for device drivers.  It will
+        also be NULL for a bus drivers that wish to retrieve the name of the bus controller.
+        It will not be NULL for a bus  driver that wishes to retrieve the name of a
+        child controller.
+
+    Language - A pointer to a Null-terminated ASCII string array indicating the language.
+        This is the language of the driver name that the caller is requesting, and it
+        must match one of the languages specified in SupportedLanguages. The number of
+        languages supported by a driver is up to the driver writer. Language is specified in
+        RFC 4646 or ISO 639-2 language code format.
+
+    ControllerName - A pointer to the Unicode string to return. This Unicode string is the
+        name of the controller specified by ControllerHandle and ChildHandle in the language
+        specified by Language from the point of view of the driver specified by This.
+
+Return Value:
+
+    EFI_STATUS.
+
+
+--*/
+{
+    return EFI_UNSUPPORTED;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclDriverInitialize(
+    __in EFI_HANDLE ImageHandle,
+    __in EFI_SYSTEM_TABLE *SystemTable
+    )
+/*++
+
+Routine Description:
+
+    This routine is the EMCL driver entry point.
+
+Arguments:
+
+    ImageHandle - Handle of the EMCL image.
+
+    SystemTable - Pointer to the system table.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+
+    mImageHandle = ImageHandle;
+
+    //
+    // Install the protocols on the driver image handle.
+    //
+    // The EMCL tag protocol is used by other VMBus child device drivers
+    // to find the single instance EMCL driver image handle.  Once found
+    // the EMCL driver is started on a VMBus child handle.
+    //
+    // The Driver Binding and Component Name protocols are typical.
+    //
+    return gBS->InstallMultipleProtocolInterfaces(
+        &ImageHandle,
+        &gEfiEmclTagProtocolGuid,           // tag
+        NULL,
+        &gEfiDriverBindingProtocolGuid,     // driver binding
+        &gEmclDriverBindingProtocol,
+        &gEfiComponentNameProtocolGuid,     // component name
+        &gEmclComponentName,
+        &gEfiComponentName2ProtocolGuid,    // component name 2
+        &gEmclComponentName2,
+        NULL);
+}
+

@@ -1,0 +1,35 @@
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = SynicTimerDxe
+    FILE_GUID                      = 28311F03-DC68-4C06-AB19-7A20886488A2
+    MODULE_TYPE                    = DXE_DRIVER
+    VERSION_STRING                 = 1.0
+
+    ENTRY_POINT                    = SynicTimerInitialize
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    UefiBootServicesTableLib
+    BaseLib
+    DebugLib
+    UefiDriverEntryPoint
+
+[Sources]
+    SynicTimer.c
+
+[Protocols]
+    gEfiTimerArchProtocolGuid
+    gEfiHvProtocolGuid
+
+[Depex]
+    gEfiHvProtocolGuid
+
+[Pcd]
+    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex
+    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex
+    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerDefaultPeriod
+    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerVector
+

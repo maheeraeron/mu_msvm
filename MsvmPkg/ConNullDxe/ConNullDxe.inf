@@ -1,0 +1,45 @@
+#
+# Copyright (c) Microsoft Corporation
+#
+# Module Name:
+#
+#     ConNullDxe.inf
+#
+# Abstract:
+#
+#     This is the inf file for the ConNullDxe driver
+#
+# Author:
+#
+#     Larry Cleeton (lcleeton) 01-Dec-2014
+#
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ConNullDxe
+  FILE_GUID                      = 50B14875-1A50-49A0-A40A-128AB1EDB28F
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = ConsoleEntryPoint
+
+[Sources]
+  Console.h
+  ComponentName.c
+  Console.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+  DevicePathLib
+  MemoryAllocationLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Guids]
+
+[Protocols]
+  gMsvmConsoleProtocolGuid
+  gEfiSimpleTextOutProtocolGuid
+  gEfiSimpleTextInProtocolGuid
+

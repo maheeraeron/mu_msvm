@@ -1,0 +1,71 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    SynthKeyChannel.h
+
+Abstract:
+
+    VMBUS Keyboard Channel implementation for EFI.  This contains the VMBUS
+    specific implementation of the synthetic keyboard driver.
+
+Author:
+
+    Kris Harper (kharp) - 15-Oct-2012
+
+--*/
+
+#pragma once
+
+#include <hyperkbdprotocol.h>
+#include <VmBusPacketFormat.h>
+
+EFI_STATUS
+SynthKeyChannelOpen(
+    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    );
+
+EFI_STATUS
+SynthKeyChannelClose(
+    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    );
+
+EFI_STATUS
+SynthKeyChannelSetIndicators(
+    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    );
+
+FORCEINLINE
+VOID
+SynthKeyChannelInitMessage(
+    _Inout_updates_bytes_(ByteCount)
+                PHK_MESSAGE_HEADER          Header,
+    _In_        HK_MESSAGE_TYPE             Type,
+    _In_range_(>=, sizeof(HK_MESSAGE_HEADER)) 
+                UINT32                      ByteCount
+    )
+/*++
+
+Routine Description:
+
+    A utility function to initialize a message header.
+
+Arguments:
+
+    Header    - Message header
+
+    Type      - Message type
+
+    ByteCount - Size of the message header in bytes
+
+Return Value:
+
+    None.
+
+--*/
+{
+    ZeroMem(Header, ByteCount);
+    Header->MessageType = Type;
+}

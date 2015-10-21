@@ -1,0 +1,35 @@
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = EfiHvDxe
+    FILE_GUID                      = CA585647-54A9-4879-A8CD-45A769246680
+    MODULE_TYPE                    = DXE_DRIVER
+    VERSION_STRING                 = 1.0
+
+    ENTRY_POINT                    = EfiHvInitialize
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+    UefiCpuPkg/UefiCpuPkg.dec
+
+[LibraryClasses]
+    UefiBootServicesTableLib
+    BaseLib
+    DebugLib
+    UefiDriverEntryPoint
+    MemoryAllocationLib
+    LocalApicLib
+
+[Sources]
+    EfiHv.c
+
+[Guids]
+    gEfiEventExitBootServicesGuid
+
+[Protocols]
+    gEfiCpuArchProtocolGuid
+    gEfiHvProtocolGuid
+
+[Depex]
+    gEfiCpuArchProtocolGuid
+

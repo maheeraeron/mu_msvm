@@ -1,0 +1,385 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    EmclLib.h
+
+Abstract:
+
+    Utility functions for EMCL.
+
+Author:
+
+    Marius Buleandra (mariub) - 31 Jul 2012
+
+--*/
+
+
+#include <Uefi.h>
+#include <EfiNt.h>
+
+#include <Library/UefiLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/DevicePathLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/DebugLib.h>
+
+#include <Protocol/Emcl.h>
+#include <Protocol/Vmbus.h>
+
+#include <Library/EmclLib.h>
+
+typedef struct _EMCL_LIB_COMPLETION_CONTEXT
+{
+    EFI_EVENT Event;
+    VOID *Packet;
+    UINT32 PacketSize;
+
+} EMCL_LIB_COMPLETION_CONTEXT;
+
+
+extern EFI_GUID gEfiEmclTagProtocolGuid;
+extern EFI_GUID gEfiVmbusChannelDevicePathGuid;
+
+
+EFI_STATUS
+EFIAPI
+EmclInstallProtocol (
+    __in EFI_HANDLE ControllerHandle
+    )
+/*++
+
+Routine Description:
+
+    This method connects a device handle with the EMCL driver.
+    The device handle has to have VMBUS protocoll installed.
+
+Arguments:
+
+    ControllerHandle - The handle to connect to EMCL driver.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_HANDLE handle;
+    UINTN handleBufferSize;
+    EFI_DRIVER_BINDING_PROTOCOL *driverBinding;
+    EFI_STATUS status;
+
+    handleBufferSize = sizeof(handle);
+
+    status = gBS->LocateHandle(
+        ByProtocol,
+        &gEfiEmclTagProtocolGuid,
+        NULL,
+        &handleBufferSize,
+        &handle);
+
+    if (EFI_ERROR(status))
+    {
+        if (status == EFI_BUFFER_TOO_SMALL)
+        {
+            DEBUG((EFI_D_ERROR, "Multiple EMCL images found"));
+        }
+
+        goto Cleanup;
+    }
+
+    status = gBS->HandleProtocol(handle,
+                                 &gEfiDriverBindingProtocolGuid,
+                                 &driverBinding);
+
+    ASSERT_EFI_ERROR(status);
+
+    status = driverBinding->Start(driverBinding,
+                                  ControllerHandle,
+                                  NULL);
+
+Cleanup:
+    return status;
+}
+
+
+VOID
+EFIAPI
+EmclUninstallProtocol (
+    __in EFI_HANDLE ControllerHandle
+    )
+/*++
+
+Routine Description:
+
+    This method disconnects a device handle from the EMCL driver.
+
+Arguments:
+
+    ControllerHandle - The handle to disconnect from the EMCL driver.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_HANDLE handle;
+    UINTN handleBufferSize;
+    EFI_STATUS status;
+
+    handle = NULL;
+    handleBufferSize = sizeof(handle);
+
+    status = gBS->LocateHandle(
+        ByProtocol,
+        &gEfiEmclTagProtocolGuid,
+        NULL,
+        &handleBufferSize,
+        &handle);
+
+    ASSERT_EFI_ERROR(status);
+
+    //
+    // DisconnectController can correctly fail here if EMCL has already been
+    // uninstalled due to the VMBus protocol being uninstalled.
+    //
+
+    gBS->DisconnectController(ControllerHandle,
+                              handle,
+                              NULL);
+}
+
+
+VOID
+EmclSynchronousPacketCompletion (
+    __in_opt VOID *Context,
+    __in_bcount(BufferLength) VOID *Buffer,
+    __in UINT32 BufferLength
+    )
+/*++
+
+Routine Description:
+
+    This function is called when a packet has completed.
+
+Arguments:
+
+    Context - An event to be signaled when the packet is completed.
+
+    Buffer - The completion packet received for the request.
+
+    BufferLength - The length of the received packet.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EMCL_LIB_COMPLETION_CONTEXT *completionContext;
+
+    completionContext = Context;
+
+    if (BufferLength <= completionContext->PacketSize)
+    {
+        CopyMem(completionContext->Packet, Buffer, BufferLength);
+    }
+    else
+    {
+        completionContext->Packet = NULL;
+    }
+
+    gBS->SignalEvent(completionContext->Event);
+}
+
+
+
+EFI_STATUS
+EFIAPI
+EmclSendPacketSync (
+    __in EFI_EMCL_PROTOCOL *This,
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount
+    )
+/*++
+
+Routine Description:
+
+    This method sends an EMCL packet and waits for it to complete.
+
+Arguments:
+
+    This - Instance of the EMCL protocol
+
+    InlineBuffer - The buffer containing the packet
+
+    InlineBufferLength - The length of the buffer containing the packet
+
+    ExternalBuffers - Additional buffers that will be sent along with the packet
+
+    ExternalBufferCount - Number of additional buffers to be sent along with the packet
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    UINTN signaledEventIndex;
+    EMCL_LIB_COMPLETION_CONTEXT context = {0};
+
+    status = gBS->CreateEvent(
+        0,
+        0,
+        NULL,
+        NULL,
+        &context.Event);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    context.Packet = InlineBuffer;
+    context.PacketSize = InlineBufferLength;
+
+    status = This->SendPacket(
+        This,
+        InlineBuffer,
+        InlineBufferLength,
+        ExternalBuffers,
+        ExternalBufferCount,
+        EmclSynchronousPacketCompletion,
+        &context);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    gBS->WaitForEvent(1, &context.Event, &signaledEventIndex);
+
+    if (context.Packet == NULL)
+    {
+        status = EFI_BUFFER_TOO_SMALL;
+        goto Cleanup;
+    }
+
+    status = EFI_SUCCESS;
+
+Cleanup:
+    if (context.Event != NULL)
+    {
+        gBS->CloseEvent(context.Event);
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+EmclChannelTypeSupported (
+    __in EFI_HANDLE ControllerHandle,
+    __in const EFI_GUID *ChannelType,
+    __in EFI_HANDLE AgentHandle
+    )
+/*++
+
+Routine Description:
+
+    This method checks if a controller supports an EMCL channel type.
+    The controller handle must support VMBUS protocol.
+
+Arguments:
+
+    ControllerHandle - The handle of the controller to test.
+
+    ChannelType - Channel type to be checked if supported.
+
+    AgentHandle - The handle of the agent that is opening the protocol interface.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_DEVICE_PATH_PROTOCOL *devicePathNode;
+    VMBUS_DEVICE_PATH *vmbusDevicePath;
+    VENDOR_DEVICE_PATH *vendorDevicePath;
+    BOOLEAN devicePathProtocolOpened = FALSE;
+
+    if (AgentHandle != NULL)
+    {
+        status = gBS->OpenProtocol(
+            ControllerHandle,
+            &gEfiDevicePathProtocolGuid,
+            (VOID **) &devicePathNode,
+            AgentHandle,
+            ControllerHandle,
+            EFI_OPEN_PROTOCOL_BY_DRIVER);
+    }
+    else
+    {
+        status = gBS->OpenProtocol(
+            ControllerHandle,
+            &gEfiDevicePathProtocolGuid,
+            (VOID **) &devicePathNode,
+            NULL,
+            ControllerHandle,
+            EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+    }
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    devicePathProtocolOpened = TRUE;
+    status = EFI_UNSUPPORTED;
+
+    while (!IsDevicePathEnd(devicePathNode))
+    {
+        if ((DevicePathType(devicePathNode) == HARDWARE_DEVICE_PATH) &&
+            (DevicePathSubType(devicePathNode) == HW_VENDOR_DP))
+        {
+            vendorDevicePath = (VENDOR_DEVICE_PATH*) devicePathNode;
+
+            if (CompareGuid(
+                &vendorDevicePath->Guid,
+                &gEfiVmbusChannelDevicePathGuid))
+            {
+                vmbusDevicePath = (VMBUS_DEVICE_PATH*) devicePathNode;
+                if (CompareGuid(
+                    &vmbusDevicePath->InterfaceType,
+                    ChannelType))
+                {
+                    status = EFI_SUCCESS;
+                    break;
+                }
+            }
+        }
+        devicePathNode = NextDevicePathNode(devicePathNode);
+    }
+
+Cleanup:
+
+    if (devicePathProtocolOpened)
+    {
+        gBS->CloseProtocol(
+            ControllerHandle,
+            &gEfiDevicePathProtocolGuid,
+            AgentHandle,
+            ControllerHandle);
+    }
+
+    return status;
+}
+

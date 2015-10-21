@@ -1,0 +1,57 @@
+#
+# Copyright (c) Microsoft Corporation
+# 
+# Module Name:
+# 
+#     SmbiosPlatformDxe.inf
+# 
+# Abstract:
+# 
+#     This is the inf file for the SmbiosPlatformDxe driver.
+# 
+# Author:
+# 
+#     Larry Cleeton (lcleeton) 26-Nov-2012
+#
+
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = SmbiosPlatform
+    FILE_GUID                      = 12FCA5F5-7323-49A9-80FB-EE2CDD267569
+    MODULE_TYPE                    = DXE_DRIVER
+    VERSION_STRING                 = 1.0
+    ENTRY_POINT                    = SmbiosPlatformEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+    SmbiosPlatform.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    UefiLib
+    DxeServicesLib
+    BaseMemoryLib
+    DebugLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
+    IoLib
+    ConfigLib
+
+[Protocols]
+    gEfiSmbiosProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+
+[Guids]
+
+[Depex]
+    gEfiSmbiosProtocolGuid
+
+

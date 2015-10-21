@@ -1,0 +1,62 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    spcr.aslc
+
+Abstract:
+
+    Defines the Serial Port Redirection Table. This table informs the OS that
+    there is a port to be used for a serial console.
+
+Author:
+
+    Larry Cleeton (lcleeton) 14-Oct-2014
+
+--*/
+
+#include <Base.h>
+#include <AcpiTables.h>
+
+EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
+{
+    STANDARD_HEADER(EFI_ACPI_3_0_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
+                    sizeof(EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE),
+                    EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_REVISION)
+    0,                      // InterfaceType (0 = Fully 16550-compatible)
+    {                       // Reserved1[]
+        0, 0, 0,
+    },
+    {                       // BaseAddress EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE
+        EFI_ACPI_2_0_SYSTEM_IO, // AddressSpaceId
+        8,                      // RegisterBitWidth
+        0,                      // RegisterBitOffset
+        0,                      // Reserved
+        0,                      // Address - updated by AcpiPlatformDxe
+    },
+    3,                      // InterruptType (dual-8259 and IO-APIC)
+    0,                      // Irq - updated by AcpiPlatformDxe
+    0,                      // GlobalSystemInterrupt
+    0,                      // BaudRate - updated by AcpiPlatformDxe
+    0,                      // Parity - updated by AcpiPlatformDxe
+    1,                      // StopBits - updated by AcpiPlatformDxe
+    0,                      // FlowControl
+    0,                      // TerminalType - updated by AcpiPlatformDxe
+    0,                      // Language/Reserved
+    0xFFFF,                 // PciDeviceId - 0xFFFF means not a PCI device
+    0xFFFF,                 // PciVendorId - 0xFFFF means not a PCI device
+    0,                      // PciBusNumber
+    0,                      // PciDeviceNumber
+    0,                      // PciFunctionNumber
+    0,                      // PciFlags
+    0,                      // PciSegment
+    0                       // Reserved2
+};
+
+VOID*
+ReferenceAcpiTable()
+{
+    return (VOID*) &SPCR;
+}

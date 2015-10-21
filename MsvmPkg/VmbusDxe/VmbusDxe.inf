@@ -1,0 +1,42 @@
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = VmbusDxe
+    FILE_GUID                      = A6683912-5C39-43CB-9BE8-2A1BC903ABC8
+    MODULE_TYPE                    = DXE_DRIVER
+    VERSION_STRING                 = 1.0
+
+    ENTRY_POINT                    = VmbusDriverInitialize
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    UefiBootServicesTableLib
+    BaseLib
+    BaseMemoryLib
+    UefiLib
+    DebugLib
+    UefiDriverEntryPoint
+    DevicePathLib
+    MemoryAllocationLib
+
+[Sources]
+    VmbusRoot.c
+    VmbusChannel.c
+
+[Guids]
+    gEfiVmbusChannelDevicePathGuid
+
+[Protocols]
+    gEfiHvProtocolGuid
+    gEfiDevicePathProtocolGuid
+    gEfiVmbusRootProtocolGuid
+    gEfiVmbusProtocolGuid
+
+[Depex]
+    gEfiHvProtocolGuid
+
+[Pcd]
+    gUefiMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
+

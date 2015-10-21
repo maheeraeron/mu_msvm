@@ -1,0 +1,82 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    Apic.aslc
+
+Abstract:
+
+    Defines the APIC fixed acpi table.
+
+Author:
+
+    Rich Yampell (richyam) 11-Jul-2012
+
+--*/
+
+#include <Base.h>
+#include <AcpiTables.h>
+
+#define DEFAULT_IO_APIC_ADDRESS 0xFEC00000
+#define DEFAULT_LOCAL_APIC_ADDRESS 0xFEE00000
+
+#define DEFINE_OVERRIDE(IrqSource, Vector, Flags) \
+    { \
+        EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE, \
+        sizeof(EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE), \
+        0, \
+        IrqSource, \
+        Vector, \
+        Flags \
+    }
+
+VM_APIC_TABLE APIC =
+{
+    {
+        STANDARD_HEADER(EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+                        sizeof(VM_APIC_TABLE),
+                        EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
+        DEFAULT_LOCAL_APIC_ADDRESS,
+        0, // EFI_ACPI_3_0_PCAT_COMPAT flag is cleared; Hyper-V does not support the legacy PIC interface when running in UEFI mode.
+    },
+
+    //
+    // I/O APIC.
+    //
+
+    {
+        EFI_ACPI_3_0_IO_APIC,
+        sizeof(EFI_ACPI_3_0_IO_APIC_STRUCTURE),
+        0, // IoApicId - updated at runtime
+        0, // Reserved
+        DEFAULT_IO_APIC_ADDRESS,
+        0, // GlobalSystemInterruptBase
+    },
+
+    //
+    // Map PIC IRQ0 to APIC IRQ2.
+    //
+
+    DEFINE_OVERRIDE(0, 2, 0),
+
+    //
+    // Mark the PM interrupt as being active high and level triggered, since
+    // the OS ordinarily expects it to be active low.
+    //
+
+    DEFINE_OVERRIDE(9, 9, 0xd),
+
+    //
+    // The remainder is runtime-initialized.
+    //
+};
+
+
+VOID*
+ReferenceAcpiTable()
+{
+    return (VOID*) &APIC;
+}
+

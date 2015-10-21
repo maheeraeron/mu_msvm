@@ -1,0 +1,79 @@
+## @file
+#    Component description file for SNP module.
+#
+# Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
+# This program and the accompanying materials are licensed 
+# and made available under the terms and conditions of the BSD License which 
+# accompanies this distribution. The full text of the license may be found at 
+# http://opensource.org/licenses/bsd-license.php 
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = NetvscDxe
+  FILE_GUID                      = d2c1389f-e54f-4b33-a4b3-231b373ca37f
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeSnpDriver
+  UNLOAD_IMAGE                   = NetLibDefaultUnload
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+#  DRIVER_BINDING                =  mSimpleNetworkDriverBinding                        
+#  COMPONENT_NAME                =  gSimpleNetworkComponentName
+#  COMPONENT_NAME2               =  gSimpleNetworkComponentName2
+#
+
+[Sources]
+  Receive.c
+  Snp.h
+  Nvdata.c
+  GetStatus.c
+  Start.c
+  Snp.c
+  Stop.c
+  Statistics.c
+  Reset.c
+  Shutdown.c
+  McastIpToMac.c
+  Transmit.c
+  WaitForPacket.c
+  ReceiveFilters.c
+  Initialize.c
+  ComponentName.c
+  StationAddress.c
+  NetvscDxe.c
+  NetvscDxe.h
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  NetLib
+  EmclLib
+  SerialPortLib
+  PrintLib
+
+[Guids]
+  gEfiEventExitBootServicesGuid                 # CONSUMES
+  gEfiVmbusChannelDevicePathGuid                # CONSUMES
+
+
+[Protocols]
+  gEfiSimpleNetworkProtocolGuid                 # PRODUCES
+  gEfiDevicePathProtocolGuid                    # PRODUCES
+  gEfiVmbusProtocolGuid                         # CONSUMES
+  gEfiEmclProtocolGuid                          # CONSUMES
+
