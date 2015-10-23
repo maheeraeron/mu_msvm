@@ -14,6 +14,7 @@
 **/
 
 #include "PxeBcImpl.h"
+#include <Library/BootEventLogLib.h>
 
 
 /**
@@ -569,10 +570,11 @@ PxeBcDhcp4BootInfo (
   //
   // Display all the information: boot server address, boot file name and boot file size.
   //
-  AsciiPrint ("\n  Server IP address is ");
+  AsciiPrint ("  Server IP address is ");
   PxeBcShowIp4Addr (&Private->ServerIp.v4);
   AsciiPrint ("\n  NBP filename is %a", Private->BootFileName);
   AsciiPrint ("\n  NBP filesize is %d Bytes", Private->BootFileSize);
+  AsciiPrint ("\n");
 
   return Status;
 }
@@ -681,10 +683,10 @@ PxeBcDhcp6BootInfo (
   //
   // Display all the information: boot server address, boot file name and boot file size.
   //
-  AsciiPrint ("\n  Server IP address is ");
+  AsciiPrint ("  Server IP address is ");
   PxeBcShowIp6Addr (&Private->ServerIp.v6);
-  AsciiPrint ("\n  NBP filename is %a", Private->BootFileName);
-  AsciiPrint ("\n  NBP filesize is %d Bytes", Private->BootFileSize);
+  AsciiPrint ("\n  NBP filename is %a\n", Private->BootFileName);
+  AsciiPrint ("  NBP filesize is %d Bytes\n", Private->BootFileSize);
 
   return Status;
 }
