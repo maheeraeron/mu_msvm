@@ -102,19 +102,39 @@ BdsLibLoadDrivers (
         ImageInfo->LoadOptionsSize  = Option->LoadOptionsSize;
         ImageInfo->LoadOptions      = Option->LoadOptions;
       }
+
+//
+//    Deviate from the UEFI specification which states
+//    that the watchdog timer is enabled for 5 minutes prior to loading
+//    a UEFI boot application and disabled after the boot application
+//    returns.
+//
+//    In Hyper-V we want the watchdog to be active until the OS boots
+//    (i.e. ExitBootServices is called) to detect UEFI code issues.
+//
+#ifdef UEFI_COMPLIANT_IMAGE_WATCHDOG
       //
       // Before calling the image, enable the Watchdog Timer for
       // the 5 Minute period
       //
       gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x00, NULL);
+#endif
 
       Status = gBS->StartImage (ImageHandle, &ExitDataSize, &ExitData);
       DEBUG ((DEBUG_INFO | DEBUG_LOAD, "Driver Return Status = %r\n", Status));
 
+#ifdef UEFI_COMPLIANT_IMAGE_WATCHDOG
       //
       // Clear the Watchdog Timer after the image returns
       //
       gBS->SetWatchdogTimer (0x0000, 0x0000, 0x0000, NULL);
+#else
+      //
+      // Re-enable the Watchdog Timer after the image returns
+      //
+      gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x0000, NULL);
+#endif
+
     }
   }
   
@@ -711,6 +731,49 @@ BdsLibVariableToOption (
   InsertTailList (BdsCommonOptionList, &Option->Link);
   FreePool (Variable);
   return Option;
+}
+
+/**
+  Free the memory associated with an option list created by BdsLibBuildOptionFromVar ()
+  The list is empty on return.
+
+  @param  BdsCommonOptionList   List of BDS_COMMON_OPTIONs to free
+
+**/
+VOID
+EFIAPI
+BdsLibOptionListCleanup (
+  IN  LIST_ENTRY                      *BdsCommonOptionList
+  )
+{
+  LIST_ENTRY* Link = BdsCommonOptionList->ForwardLink;
+  BDS_COMMON_OPTION *BootOption;
+
+  while (Link != BdsCommonOptionList) {
+    BootOption = CR (Link, BDS_COMMON_OPTION, Link, BDS_LOAD_OPTION_SIGNATURE);
+    Link = Link->ForwardLink;
+    //
+    // Free the record, the following are all potentially allocated by BdsLibVariableToOption.
+    //
+    if (BootOption->DevicePath != NULL)
+    {
+        FreePool(BootOption->DevicePath);
+    }
+
+    if (BootOption->Description != NULL)
+    {
+        FreePool(BootOption->Description);
+    }
+
+    if (BootOption->LoadOptions != NULL)
+    {
+        FreePool(BootOption->LoadOptions);
+    }
+
+    FreePool(BootOption);
+  }
+
+  InitializeListHead(BdsCommonOptionList);
 }
 
 /**

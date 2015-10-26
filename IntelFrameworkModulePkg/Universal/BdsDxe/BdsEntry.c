@@ -123,7 +123,9 @@ BdsBootDeviceSelect (
   BOOLEAN           BootNextExist;
   LIST_ENTRY        *LinkBootNext;
   EFI_EVENT         ConnectConInEvent;
+  BOOLEAN           LastBootOption = FALSE;
 
+  DEBUG ((EFI_D_INFO, "BdsBootDeviceSelect\n"));
   //
   // Got the latest boot option
   //
@@ -240,7 +242,7 @@ BdsBootDeviceSelect (
       //
       Timeout = 0xffff;
       PlatformBdsEnterFrontPage (Timeout, FALSE);
-      InitializeListHead (&BootLists);
+      BdsLibOptionListCleanup (&BootLists);
       BdsLibBuildOptionFromVar (&BootLists, L"BootOrder");
       Link = BootLists.ForwardLink;
       continue;
@@ -288,8 +290,16 @@ BdsBootDeviceSelect (
       //
       // Call platform action to indicate the boot fail
       //
+      if (Link->ForwardLink == &BootLists) {
+        LastBootOption = TRUE;
+      }
       BootOption->StatusString = GetStringById (STRING_TOKEN (STR_BOOT_FAILED));
-      PlatformBdsBootFail (BootOption, Status, ExitData, ExitDataSize);
+      PlatformBdsBootFail (BootOption, Status, ExitData, ExitDataSize, LastBootOption);
+
+      //
+      // Reset LastBootOption.
+      //
+      LastBootOption = FALSE;
 
       //
       // Check the next boot option
@@ -326,7 +336,7 @@ BdsBootDeviceSelect (
         LinkBootNext = BootLists.ForwardLink;
       }
 
-      InitializeListHead (&BootLists);
+      BdsLibOptionListCleanup (&BootLists);
       if (LinkBootNext != NULL) {
         //
         // Reserve the boot next option
@@ -540,7 +550,7 @@ BdsEntry (
   //
   PERF_END (NULL, "DXE", NULL, 0);
   PERF_START (NULL, "BDS", NULL, 0);
-
+  DEBUG ((EFI_D_INFO, "BdsEntry\n"));
   PERF_CODE (
     BdsAllocateMemoryForPerformanceData ();
   );

@@ -2344,7 +2344,26 @@ BdsLibBootViaBootOption (
     }
         
     DEBUG_CODE_END();
-  
+
+    //
+    // Start a boot event for this device.
+    // Status for the boot device will be updated as needed in a distributed
+    // fashion (e.g. a PXE boot failure status will be update in the PXE code)
+    //
+    // The boot event will be completed before this function exits or 
+    // in ExitBootServices.
+    //
+    // Set the initial boot status to indicate an I/O error.
+    // If an I/O error occurs, LoadImage doesn't return a useful
+    // status code.
+    //
+    // Note:
+    //   At this point the device path may not contain the Bootx64.efi
+    //   file path which may be appended later.  This omission is OK for
+    //   boot logging.
+    //
+    BootDeviceEventStart(DevicePath, Option->BootCurrent, BootDeviceLoadError, EFI_SUCCESS);
+
     //
     // Report status code for OS Loader LoadImage.
     //
@@ -2364,30 +2383,41 @@ BdsLibBootViaBootOption (
     //
     if (EFI_ERROR (Status)) {
       //
-      // check if there is a bootable removable media could be found in this device path ,
-      // and get the bootable media handle
+      // Get the pending status and only attempt to get a bootable handle and 
+      // use the file path for non-network and secure boot failures.
       //
-      Handle = BdsLibGetBootableHandle(DevicePath);
-      if (Handle != NULL) {
+      StatusLogo = BootDeviceEventPendingStatus(&PendingStatus, &PendingExtStatus);
+      ASSERT(!EFI_ERROR(StatusLogo));
+
+      if ((GET_BOOT_DEVICE_STATUS_GROUP(PendingStatus) != DeviceStatusNetworkGroup) &&
+          (GET_BOOT_DEVICE_STATUS_GROUP(PendingStatus) != DeviceStatusSecureBootGroup)) {
         //
-        // Load the default boot file \EFI\BOOT\boot{machinename}.EFI from removable Media
-        //  machinename is ia32, ia64, x64, ...
+        // check if there is a bootable removable media could be found in this device path ,
+        // and get the bootable media handle
         //
-        FilePath = FileDevicePath (Handle, EFI_REMOVABLE_MEDIA_FILE_NAME);
-        if (FilePath != NULL) {
-          REPORT_STATUS_CODE (EFI_PROGRESS_CODE, PcdGet32 (PcdProgressCodeOsLoaderLoad));
-          Status = gBS->LoadImage (
-                          TRUE,
-                          gImageHandle,
-                          FilePath,
-                          NULL,
-                          0,
-                          &ImageHandle
-                          );
+        Handle = BdsLibGetBootableHandle(DevicePath);
+        if (Handle != NULL) {
+          //
+          // Load the default boot file \EFI\BOOT\boot{machinename}.EFI from removable Media
+          //  machinename is ia32, ia64, x64, ...
+          //
+          FilePath = FileDevicePath (Handle, EFI_REMOVABLE_MEDIA_FILE_NAME);
+          if (FilePath != NULL) {
+            REPORT_STATUS_CODE (EFI_PROGRESS_CODE, PcdGet32 (PcdProgressCodeOsLoaderLoad));
+            Status = gBS->LoadImage (
+                            TRUE,
+                            gImageHandle,
+                            FilePath,
+                            NULL,
+                            0,
+                            &ImageHandle
+                            );
+          }
         }
       }
     }
   }
+
   //
   // Provide the image with it's load options
   //
@@ -2415,6 +2445,16 @@ BdsLibBootViaBootOption (
   //
   ImageInfo->ParentHandle = NULL;
 
+//
+//    Deviate from the UEFI specification which states
+//    that the watchdog timer is enabled for 5 minutes prior to loading
+//    a UEFI boot application and disabled after the boot application
+//    returns.
+//
+//    In Hyper-V we want the watchdog to be active until the OS boots
+//    (i.e. ExitBootServices is called) to detect UEFI code issues.
+//
+#ifdef UEFI_COMPLIANT_IMAGE_WATCHDOG
   //
   // Before calling the image, enable the Watchdog Timer for
   // the 5 Minute period
@@ -2439,18 +2479,34 @@ BdsLibBootViaBootOption (
     //
     // Report Status Code to indicate that boot failure
     //
+    DeviceStatus = BootDeviceReturnedFailure;
+
     REPORT_STATUS_CODE (
       EFI_ERROR_CODE | EFI_ERROR_MINOR,
       (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED)
       );
+  } else {
+    DeviceStatus = BootDeviceOsNotLoaded;
   }
 
+  BootDeviceEventUpdate(DeviceStatus, Status);
+
+#ifdef UEFI_COMPLIANT_IMAGE_WATCHDOG
   //
   // Clear the Watchdog Timer after the image returns
   //
   gBS->SetWatchdogTimer (0x0000, 0x0000, 0x0000, NULL);
+#else
+  //
+  // Re-enable the Watchdog Timer after the image returns
+  //
+  gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x0000, NULL);
+#endif
 
 Done:
+
+  BootDeviceEventComplete();
+
   //
   // Set Logo status invalid after trying one boot option
   //
@@ -3274,11 +3330,16 @@ BdsLibEnumerateAllBootOption (
         break;
 
       case BDS_EFI_MESSAGE_SCSI_BOOT:
-        if (ScsiNumber != 0) {
-          UnicodeSPrint (Buffer, sizeof (Buffer), L"%s %d", BdsLibGetStringById (STRING_TOKEN (STR_DESCRIPTION_SCSI)), ScsiNumber);
-        } else {
-          UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", BdsLibGetStringById (STRING_TOKEN (STR_DESCRIPTION_SCSI)));
-        }
+        //
+        // Intentionally not putting a number on the end of the description as the VMMS WMI code
+        // also does not do so.  This allows for this code to consider the boot option "correct" 
+        // and avoids this code always rewriting the boot option on first boot after configuring
+        // new disk devices in the VM.
+        //
+        // The other boot option types are not generated by the VMMS WMI code and therefore
+        // that behavior doesn't need to be changed.
+        //
+        UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", BdsLibGetStringById (STRING_TOKEN (STR_DESCRIPTION_SCSI)));
         BdsLibBuildOptionFromHandle (BlockIoHandles[Index], BdsBootOptionList, Buffer);
         ScsiNumber++;
         break;
@@ -3573,6 +3634,8 @@ BdsLibBootNext (
   Second, check whether the device path point to a device which support SimpleFileSystemProtocol,
   Third, detect the the default boot file in the Media, and return the removable Media handle.
 
+  The current device boot event will be updated if a bootable media handle cannot be found.
+  
   @param  DevicePath  Device Path to a  bootable device
 
   @return  The bootable media handle. If the media on the DevicePath is not bootable, NULL will return.
@@ -3602,6 +3665,7 @@ BdsLibGetBootableHandle (
   EFI_IMAGE_DOS_HEADER            DosHeader;
   EFI_IMAGE_OPTIONAL_HEADER_UNION       HdrData;
   EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
+  BOOT_DEVICE_STATUS              DeviceStatus = BootDeviceNoFilesystem;
 
   UpdatedDevicePath = DevicePath;
 
@@ -3711,6 +3775,10 @@ BdsLibGetBootableHandle (
     //
     if (Size <= TempSize && CompareMem (TempDevicePath, UpdatedDevicePath, Size)==0) {
       //
+      // Filesystem found on this device
+      //
+      DeviceStatus = BootDeviceNoLoader;
+      //
       // Load the default boot file \EFI\BOOT\boot{machinename}.EFI from removable Media
       //  machinename is ia32, ia64, x64, ...
       //
@@ -3721,20 +3789,30 @@ BdsLibGetBootableHandle (
                  &DosHeader,
                  Hdr
                  );
-      if (!EFI_ERROR (Status) &&
-        EFI_IMAGE_MACHINE_TYPE_SUPPORTED (Hdr.Pe32->FileHeader.Machine) &&
-        Hdr.Pe32->OptionalHeader.Subsystem == EFI_IMAGE_SUBSYSTEM_EFI_APPLICATION) {
-        ReturnHandle = SimpleFileSystemHandles[Index];
-        break;
+      if (!EFI_ERROR (Status)) {
+        if (EFI_IMAGE_MACHINE_TYPE_SUPPORTED (Hdr.Pe32->FileHeader.Machine) &&
+            Hdr.Pe32->OptionalHeader.Subsystem == EFI_IMAGE_SUBSYSTEM_EFI_APPLICATION) {
+          ReturnHandle = SimpleFileSystemHandles[Index];
+          break;
+        } else {
+          DeviceStatus = BootDeviceIncompatibleLoader;
+        }
       }
-    }
+    }     
   }
-
-  FreePool(DupDevicePath);
 
   if (SimpleFileSystemHandles != NULL) {
     FreePool(SimpleFileSystemHandles);
   }
+
+  //
+  // Update the current boot event on failure.
+  //
+  if (ReturnHandle == NULL) {
+    BootDeviceEventUpdate(DeviceStatus, Status);
+  }
+
+  FreePool(DupDevicePath);
 
   gBS->RestoreTPL (OldTpl);
 

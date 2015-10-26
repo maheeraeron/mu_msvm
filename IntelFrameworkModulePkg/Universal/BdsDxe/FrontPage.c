@@ -969,6 +969,13 @@ ShowProgress (
   return EFI_SUCCESS;
 }
 
+//
+// FUTURE: 01-25-2013 Kharp - Ideally the setup menu code would be
+// in a platform specific library and then we wouldn't have to #ifdef this out.
+// Unfortunately the menu code (especially the boot order menu) is intertwined with
+// boot device enumeration/selection and is not easily seperated.
+//
+#ifdef USE_SETUP_MENU
 /**
   This function is the main entry of the platform setup entry.
   The function will present the main menu of the system setup,
@@ -1260,6 +1267,7 @@ Exit:
   //
   PERF_END (NULL, "BdsTimeOut", "BDS", 0);
 }
+#endif // USE_SETUP_MENU
 
 /**
   This function will change video resolution and text mode

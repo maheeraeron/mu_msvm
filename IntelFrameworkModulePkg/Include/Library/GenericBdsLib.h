@@ -275,6 +275,21 @@ BdsLibBuildOptionFromVar (
   IN  CHAR16                          *VariableName
   );
 
+
+/**
+  Free the memory associated with an option list created by BdsLibBuildOptionFromVar ()
+  The list is empty on return.
+
+  @param  BdsCommonOptionList   List of BDS_COMMON_OPTIONs to free
+
+**/
+VOID
+EFIAPI
+BdsLibOptionListCleanup (
+  IN  LIST_ENTRY                      *BdsCommonOptionList
+  );
+
+
 /**
   This function reads the EFI variable (VendorGuid/Name) and returns a dynamically allocated
   buffer and the size of the buffer. If it fails, return NULL.

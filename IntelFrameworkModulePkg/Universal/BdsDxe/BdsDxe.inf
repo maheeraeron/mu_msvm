@@ -91,6 +91,7 @@
   MdeModulePkg/MdeModulePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
   
 [LibraryClasses]
   DevicePathLib
@@ -112,6 +113,7 @@
   CapsuleLib
   PcdLib
   UefiHiiServicesLib
+  BootEventLogLib
   
 [Guids]
   ## SOMETIMES_PRODUCES ## Variable:L"BootXXXX"          # Boot option variable
