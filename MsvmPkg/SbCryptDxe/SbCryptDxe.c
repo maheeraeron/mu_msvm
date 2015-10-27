@@ -29,6 +29,8 @@ Author:
 
 #define WITHIN_4_GB_LL (0xFFFFFFFFLL)
 
+#define EFI_RNG_ALGORITHM_DEFAULT \
+    { 0x3248e0bb, 0x4246, 0x45ab, { 0x8a, 0x1c, 0x91, 0x4b, 0x17, 0xf9, 0x64, 0x1a } }
 
 //
 // The handle onto which the secure boot Crypt and random number generator
