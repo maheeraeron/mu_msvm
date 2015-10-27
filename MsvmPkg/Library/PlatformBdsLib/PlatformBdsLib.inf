@@ -55,7 +55,7 @@
   ConfigLib
 
 [Pcd]
-  gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdPlatformBootTimeOut
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile
   gUefiMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode
   gUefiMsvmPkgTokenSpaceGuid.PcdPlatformBootConsoleMode

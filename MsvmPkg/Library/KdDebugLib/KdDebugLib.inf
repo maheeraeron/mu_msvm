@@ -28,3 +28,6 @@
     PrintLib
     BaseLib
     DebugPrintErrorLevelLib
+
+[Pcd]
+gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel  ## CONSUMES

@@ -327,6 +327,34 @@ Return Value:
 }
 
 
+BOOLEAN
+EFIAPI
+DebugPrintLevelEnabled(
+  IN  CONST UINTN        ErrorLevel
+  )
+/*++
+
+Routine Description:
+
+    Returns TRUE if any one of the bit is set both in ErrorLevel and PcdFixedDebugPrintErrorLevel.
+
+    This function compares the bit mask of ErrorLevel and PcdFixedDebugPrintErrorLevel.
+
+Arguments:
+
+    ErrorLevel - the bit mask to test against the Pcd value.
+
+Return Value:
+
+    TRUE    Current ErrorLevel is supported.
+    FALSE   Current ErrorLevel is not supported.
+
+--*/
+{
+  return (BOOLEAN) ((ErrorLevel & PcdGet32(PcdDebugPrintErrorLevel)) != 0);
+}
+
+
 VOID
 EFIAPI
 DebugPrintString(
