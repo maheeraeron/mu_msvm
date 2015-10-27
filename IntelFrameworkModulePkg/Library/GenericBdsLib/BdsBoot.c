@@ -2235,6 +2235,9 @@ BdsLibBootViaBootOption (
   EFI_DEVICE_PATH_PROTOCOL  *WorkingDevicePath;
   LIST_ENTRY                TempBootLists;
   EFI_BOOT_LOGO_PROTOCOL    *BootLogo;
+  BOOT_DEVICE_STATUS        DeviceStatus;
+  BOOT_DEVICE_STATUS        PendingStatus;
+  EFI_STATUS                PendingExtStatus;
 
   Status        = EFI_SUCCESS;
   *ExitDataSize = 0;
@@ -2460,6 +2463,7 @@ BdsLibBootViaBootOption (
   // the 5 Minute period
   //
   gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x00, NULL);
+#endif
 
   //
   // Write boot to OS performance data for UEFI boot
