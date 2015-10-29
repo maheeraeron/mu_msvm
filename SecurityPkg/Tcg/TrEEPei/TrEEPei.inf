@@ -27,9 +27,6 @@
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
-# [BootMode]
-#   S3_RESUME                 ## SOMETIMES_CONSUMES
-#
 
 [Sources]
   TrEEPei.c
@@ -38,6 +35,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SecurityPkg/SecurityPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   HobLib
@@ -45,42 +43,29 @@
   PeiServicesLib
   BaseMemoryLib
   DebugLib
-  Tpm2CommandLib
   PeiServicesTablePointerLib
   Tpm2DeviceLib
-  HashLib
+  HashLibTpm2
   PerformanceLib
-  MemoryAllocationLib
-  ReportStatusCodeLib
+  IoLib
 
 [Guids]
-  gTcgEventEntryHobGuid                                                ## PRODUCES               ## HOB
-  gTpmErrorHobGuid                                                     ## SOMETIMES_PRODUCES     ## HOB
-  gMeasuredFvHobGuid                                                   ## PRODUCES               ## HOB
-  gEfiTpmDeviceInstanceNoneGuid                                        ## SOMETIMES_PRODUCES     ## GUID       # TPM device identifier
-  gEfiTpmDeviceInstanceTpm12Guid                                       ## SOMETIMES_PRODUCES     ## GUID       # TPM device identifier
+  gTcgEventEntryHobGuid
+  gMeasuredFvHobGuid
+  gMsvmConfigPageV2Guid
+  gMsvmConfigPageV3Guid
 
 [Ppis]
-  gEfiPeiFirmwareVolumeInfoPpiGuid                                     ## SOMETIMES_CONSUMES     ## NOTIFY
-  gEfiPeiFirmwareVolumeInfo2PpiGuid                                    ## SOMETIMES_CONSUMES     ## NOTIFY
-  gEfiPeiFirmwareVolumeInfoMeasurementExcludedPpiGuid                  ## SOMETIMES_CONSUMES
-  gPeiTpmInitializedPpiGuid                                            ## SOMETIMES_PRODUCES
-  gPeiTpmInitializationDonePpiGuid                                     ## PRODUCES
-  gEfiEndOfPeiSignalPpiGuid                                            ## SOMETIMES_CONSUMES     ## NOTIFY
+  gEfiPeiFirmwareVolumeInfoPpiGuid
+  gEfiPeiFirmwareVolumeInfoMeasurementExcludedPpiGuid
+  gPeiTpmInitializedPpiGuid
+  gEfiEndOfPeiSignalPpiGuid
 
 [Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString              ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid                     ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2InitializationPolicy            ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2SelfTestPolicy                  ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2ScrtmPolicy                     ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported              ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdStatusCodeSubClassTpmDevice         ## SOMETIMES_CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString             ## CONSUMES
+
+[FixedPcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported             ## CONSUMES
 
 [Depex]
-  gEfiPeiMasterBootModePpiGuid AND
-  gEfiPeiReadOnlyVariable2PpiGuid AND
-  gEfiTpmDeviceSelectedGuid
-
-[UserExtensions.TianoCore."ExtraFiles"]
-  TrEEPeiExtra.uni
+  gEfiPeiMasterBootModePpiGuid

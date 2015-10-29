@@ -35,12 +35,14 @@
 [Sources]
   TrEEDxe.c
   MeasureBootPeCoff.c
+  Tpm2Acpi.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SecurityPkg/SecurityPkg.dec
   CryptoPkg/CryptoPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -55,50 +57,35 @@
   PrintLib
   UefiLib
   Tpm2DeviceLib
-  HashLib
+  HashLibTpm2
   PerformanceLib
-  ReportStatusCodeLib
+  IoLib
+  ConfigLib
 
 [Guids]
-  ## SOMETIMES_CONSUMES     ## SystemTable           # Smbios Table
-  ## SOMETIMES_CONSUMES     ## GUID                  # Handoff Table for measurement.
-  gEfiSmbiosTableGuid
-  
-  ## SOMETIMES_CONSUMES     ## Variable:L"SecureBoot"
-  ## SOMETIMES_CONSUMES     ## Variable:L"PK"
-  ## SOMETIMES_CONSUMES     ## Variable:L"KEK"
-  ## SOMETIMES_CONSUMES     ## Variable:L"BootXXXX"
-  gEfiGlobalVariableGuid
-
-  ## SOMETIMES_CONSUMES      ## Variable:L"db"
-  ## SOMETIMES_CONSUMES      ## Variable:L"dbx"
+  gEfiSmbiosTableGuid                           # ALWAYS_CONSUMED
+  gEfiGlobalVariableGuid                        # ALWAYS_CONSUMED
+  gTcgEventEntryHobGuid
+  gEfiEventReadyToBootGuid
+  gEfiEventExitBootServicesGuid
+  gEventExitBootServicesFailedGuid              # ALWAYS_CONSUMED
   gEfiImageSecurityDatabaseGuid
-    
-  gTcgEventEntryHobGuid                              ## SOMETIMES_CONSUMES  ## HOB
-  gTpmErrorHobGuid                                   ## SOMETIMES_CONSUMES  ## HOB
-  gEfiEventExitBootServicesGuid                      ## CONSUMES            ## Event
-  gEventExitBootServicesFailedGuid                   ## SOMETIMES_CONSUMES  ## Event
-  gEfiTpmDeviceInstanceNoneGuid                      ## SOMETIMES_CONSUMES  ## GUID       # TPM device identifier
-  gEfiTpmDeviceInstanceTpm12Guid                     ## SOMETIMES_CONSUMES  ## GUID       # TPM device identifier
 
 [Protocols]
-  gEfiTrEEProtocolGuid                               ## PRODUCES
-  gEfiAcpiTableProtocolGuid                          ## NOTIFY
-  gEfiMpServiceProtocolGuid                          ## SOMETIMES_CONSUMES
-  gEfiVariableWriteArchProtocolGuid                  ## NOTIFY
+  gEfiTrEEProtocolGuid                          ## PRODUCES
+  gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+  gEfiDevicePathProtocolGuid                    # PROTOCOL ALWAYS_CONSUMED
+  gEfiMpServiceProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
+  gEfiVariableWriteArchProtocolGuid             # PROTOCOL ALWAYS_CONSUMED
 
 [Pcd]
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpmPlatformClass                         ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdFirmwareDebuggerInitialized              ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid                          ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress                           ## SOMETIMES_CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId                        ## SOMETIMES_CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId                   ## SOMETIMES_CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision                  ## SOMETIMES_CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId                    ## SOMETIMES_CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision              ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdStatusCodeSubClassTpmDevice              ## SOMETIMES_CONSUMES
-
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmPlatformClass
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId
+  gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
+  
 [Depex]
   TRUE
 

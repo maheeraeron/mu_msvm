@@ -50,19 +50,19 @@
   MemoryAllocationLib
   DevicePathLib
   UefiBootServicesTableLib
-  BaseCryptLib
   PeCoffLib
   BaseLib
   SecurityManagementLib
   HobLib
 
 [Guids]
-  gMeasuredFvHobGuid                    ## SOMETIMES_CONSUMES ## HOB
-  gZeroGuid                             ## SOMETIMES_CONSUMES ## GUID
+  gMeasuredFvHobGuid
 
 [Protocols]
-  gEfiTcg2ProtocolGuid                  ## SOMETIMES_CONSUMES
+  gEfiTrEEProtocolGuid                   ## CONSUMES
   gEfiFirmwareVolumeBlockProtocolGuid   ## SOMETIMES_CONSUMES
   gEfiBlockIoProtocolGuid               ## SOMETIMES_CONSUMES
   gEfiDiskIoProtocolGuid                ## SOMETIMES_CONSUMES
 
+[Depex]
+  gEfiTrEEProtocolGuid

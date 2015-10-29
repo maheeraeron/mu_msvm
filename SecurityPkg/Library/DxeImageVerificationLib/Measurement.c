@@ -207,13 +207,72 @@ IsSecureAuthorityVariable (
 }
 
 /**
+  Tpm20 measure and log data, and extend the measurement result into a specific PCR.
+
+  @param[in]  PcrIndex         PCR Index.
+  @param[in]  EventType        Event type.
+  @param[in]  EventLog         Measurement event log.
+  @param[in]  LogLen           Event log length in bytes.
+  @param[in]  HashData         The start of the data buffer to be hashed, extended.
+  @param[in]  HashDataLen      The length, in bytes, of the buffer referenced by HashData
+
+  @retval EFI_SUCCESS           Operation completed successfully.
+  @retval EFI_UNSUPPORTED       TPM device not available.
+  @retval EFI_OUT_OF_RESOURCES  Out of memory.
+  @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
+**/
+EFI_STATUS
+TpmMeasureAndLogData (
+  IN UINT32             PcrIndex,
+  IN UINT32             EventType,
+  IN VOID               *EventLog,
+  IN UINT32             LogLen,
+  IN VOID               *HashData,
+  IN UINT64             HashDataLen
+  )
+{
+  EFI_STATUS                Status;
+  EFI_TREE_PROTOCOL         *TreeProtocol;
+  TrEE_EVENT                *TreeEvent;
+
+  Status = gBS->LocateProtocol (&gEfiTrEEProtocolGuid, NULL, (VOID **) &TreeProtocol);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  TreeEvent = (TrEE_EVENT *) AllocateZeroPool (LogLen + sizeof (TrEE_EVENT));
+  if(TreeEvent == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  TreeEvent->Size = (UINT32)LogLen + sizeof (TrEE_EVENT) - sizeof(TreeEvent->Event);
+  TreeEvent->Header.HeaderSize    = sizeof(TrEE_EVENT_HEADER);
+  TreeEvent->Header.HeaderVersion = TREE_EVENT_HEADER_VERSION;
+  TreeEvent->Header.PCRIndex      = PcrIndex;
+  TreeEvent->Header.EventType     = EventType;
+  CopyMem (&TreeEvent->Event[0], EventLog, LogLen);
+
+  Status = TreeProtocol->HashLogExtendEvent (
+                           TreeProtocol,
+                           0,
+                           (EFI_PHYSICAL_ADDRESS)(UINTN)HashData,
+                           HashDataLen,
+                           TreeEvent
+                           );
+  FreePool (TreeEvent);
+
+  return Status;
+}
+
+
+/**
   Measure and log an EFI variable, and extend the measurement result into a specific PCR.
 
   @param[in]  VarName           A Null-terminated string that is the name of the vendor's variable.
   @param[in]  VendorGuid        A unique identifier for the vendor.
-  @param[in]  VarData           The content of the variable data.  
-  @param[in]  VarSize           The size of the variable data.  
- 
+  @param[in]  VarData           The content of the variable data.
+  @param[in]  VarSize           The size of the variable data.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
   @retval EFI_DEVICE_ERROR      The operation was unsuccessful.

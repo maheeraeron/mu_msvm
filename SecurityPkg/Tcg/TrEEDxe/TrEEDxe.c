@@ -48,7 +48,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/Tpm2DeviceLib.h>
 #include <Library/HashLib.h>
 #include <Library/PerformanceLib.h>
-#include <Library/ReportStatusCodeLib.h>
+#include <Library/ConfigLib.h>
+#include <Tpminterface.h>
+
+extern GUID gVmBiosConfigPageGuid;
 
 #define PERF_ID_TREE_DXE  0x3120
 
@@ -174,6 +177,13 @@ VARIABLE_TYPE  mVariableType[] = {
 };
 
 EFI_HANDLE mImageHandle;
+
+
+EFI_STATUS
+IntallTpm2AcpiTable(
+    IN EFI_ACPI_TABLE_PROTOCOL* AcpiTable
+    );
+
 
 /**
   Measure PE image into TPM log based on the authenticode image hashing in
@@ -760,15 +770,6 @@ TcgDxeHashLogExtendEvent (
     }
   }
 
-  if (Status == EFI_DEVICE_ERROR) {
-    DEBUG ((EFI_D_ERROR, "TcgDxeHashLogExtendEvent - %r. Disable TPM.\n", Status));
-    mTcgDxeData.BsCap.TrEEPresentFlag = FALSE;
-    REPORT_STATUS_CODE (
-      EFI_ERROR_CODE | EFI_ERROR_MINOR,
-      (PcdGet32 (PcdStatusCodeSubClassTpmDevice) | EFI_P_EC_INTERFACE_ERROR)
-      );
-  }
-
   return Status;
 }
 
@@ -825,7 +826,8 @@ TreeHashLogExtendEvent (
 
   NewEventHdr.PCRIndex  = Event->Header.PCRIndex;
   NewEventHdr.EventType = Event->Header.EventType;
-  NewEventHdr.EventSize = Event->Size - sizeof(UINT32) - Event->Header.HeaderSize;
+  NewEventHdr.EventSize = Event->Size - sizeof(Event->Size) - Event->Header.HeaderSize;
+  
   if ((Flags & PE_COFF_IMAGE) != 0) {
     Status = MeasurePeImageAndExtend (
                NewEventHdr.PCRIndex,
@@ -837,14 +839,6 @@ TreeHashLogExtendEvent (
       if ((Flags & TREE_EXTEND_ONLY) == 0) {
         Status = TcgDxeLogHashEvent (&DigestList, &NewEventHdr, Event->Event);
       }
-    }
-    if (Status == EFI_DEVICE_ERROR) {
-      DEBUG ((EFI_D_ERROR, "MeasurePeImageAndExtend - %r. Disable TPM.\n", Status));
-      mTcgDxeData.BsCap.TrEEPresentFlag = FALSE;
-      REPORT_STATUS_CODE (
-        EFI_ERROR_CODE | EFI_ERROR_MINOR,
-        (PcdGet32 (PcdStatusCodeSubClassTpmDevice) | EFI_P_EC_INTERFACE_ERROR)
-        );
     }
   } else {
     Status = TcgDxeHashLogExtendEvent (
@@ -1492,11 +1486,6 @@ MeasureSecureBootPolicy (
     return;
   }
 
-  if (PcdGetBool (PcdFirmwareDebuggerInitialized)) {
-    Status = MeasureLaunchOfFirmwareDebugger ();
-    DEBUG ((EFI_D_INFO, "MeasureLaunchOfFirmwareDebugger - %r\n", Status));
-  }
-
   Status = MeasureAllSecureVariables ();
   DEBUG ((EFI_D_INFO, "MeasureAllSecureVariables - %r\n", Status));
 
@@ -1602,82 +1591,6 @@ OnReadyToBoot (
 }
 
 /**
-  Install TCG ACPI Table when ACPI Table Protocol is available.
-
-  A system's firmware uses an ACPI table to identify the system's TCG capabilities 
-  to the Post-Boot environment. The information in this ACPI table is not guaranteed 
-  to be valid until the Host Platform transitions from pre-boot state to post-boot state.  
-
-  @param[in]  Event     Event whose notification function is being invoked
-  @param[in]  Context   Pointer to the notification function's context
-**/
-VOID
-EFIAPI
-InstallAcpiTable (
-  IN EFI_EVENT                      Event,
-  IN VOID                           *Context
-  )
-{
-  UINTN                             TableKey;
-  EFI_STATUS                        Status;
-  EFI_ACPI_TABLE_PROTOCOL           *AcpiTable;
-  UINT8                             Checksum;
-  UINT64                            OemTableId;
-
-  Status = gBS->LocateProtocol (&gEfiAcpiTableProtocolGuid, NULL, (VOID **)&AcpiTable);
-  if (EFI_ERROR (Status)) {
-    return;
-  }
-
-  if (PcdGet8 (PcdTpmPlatformClass) == TCG_PLATFORM_TYPE_CLIENT) {
-    CopyMem (mTcgClientAcpiTemplate.Header.OemId, PcdGetPtr (PcdAcpiDefaultOemId), sizeof (mTcgClientAcpiTemplate.Header.OemId));
-    OemTableId = PcdGet64 (PcdAcpiDefaultOemTableId);
-    CopyMem (&mTcgClientAcpiTemplate.Header.OemTableId, &OemTableId, sizeof (UINT64));
-    mTcgClientAcpiTemplate.Header.OemRevision      = PcdGet32 (PcdAcpiDefaultOemRevision);
-    mTcgClientAcpiTemplate.Header.CreatorId        = PcdGet32 (PcdAcpiDefaultCreatorId);
-    mTcgClientAcpiTemplate.Header.CreatorRevision  = PcdGet32 (PcdAcpiDefaultCreatorRevision);
-    //
-    // The ACPI table must be checksumed before calling the InstallAcpiTable() 
-    // service of the ACPI table protocol to install it.
-    //
-    Checksum = CalculateCheckSum8 ((UINT8 *)&mTcgClientAcpiTemplate, sizeof (mTcgClientAcpiTemplate));
-    mTcgClientAcpiTemplate.Header.Checksum = Checksum;
-
-    Status = AcpiTable->InstallAcpiTable (
-                            AcpiTable,
-                            &mTcgClientAcpiTemplate,
-                            sizeof (mTcgClientAcpiTemplate),
-                            &TableKey
-                            );
-  } else {
-    CopyMem (mTcgServerAcpiTemplate.Header.OemId, PcdGetPtr (PcdAcpiDefaultOemId), sizeof (mTcgServerAcpiTemplate.Header.OemId));
-    OemTableId = PcdGet64 (PcdAcpiDefaultOemTableId);
-    CopyMem (&mTcgServerAcpiTemplate.Header.OemTableId, &OemTableId, sizeof (UINT64));
-    mTcgServerAcpiTemplate.Header.OemRevision      = PcdGet32 (PcdAcpiDefaultOemRevision);
-    mTcgServerAcpiTemplate.Header.CreatorId        = PcdGet32 (PcdAcpiDefaultCreatorId);
-    mTcgServerAcpiTemplate.Header.CreatorRevision  = PcdGet32 (PcdAcpiDefaultCreatorRevision);
-    //
-    // The ACPI table must be checksumed before calling the InstallAcpiTable() 
-    // service of the ACPI table protocol to install it.
-    //
-    Checksum = CalculateCheckSum8 ((UINT8 *)&mTcgServerAcpiTemplate, sizeof (mTcgServerAcpiTemplate));
-    mTcgServerAcpiTemplate.Header.Checksum = Checksum;
-
-    mTcgServerAcpiTemplate.BaseAddress.Address = PcdGet64 (PcdTpmBaseAddress);
-    Status = AcpiTable->InstallAcpiTable (
-                            AcpiTable,
-                            &mTcgServerAcpiTemplate,
-                            sizeof (mTcgServerAcpiTemplate),
-                            &TableKey
-                            );
-  }
-
-  if (EFI_ERROR (Status)) {
-    DEBUG((EFI_D_ERROR, "Tcg Acpi Table installation failure"));
-  }
-}
-
-/**
   Exit Boot Services Event notification handler.
 
   Measure invocation and success of ExitBootServices.
@@ -1771,13 +1684,161 @@ InstallTrEE (
 }
 
 /**
-  The driver's entry point. It publishes EFI TrEE Protocol.
+  The function initialize TrEE protocol.
 
-  @param[in] ImageHandle  The firmware allocated handle for the EFI image.  
-  @param[in] SystemTable  A pointer to the EFI System Table.
-  
-  @retval EFI_SUCCESS     The entry point is executed successfully.
-  @retval other           Some error occurs when executing this entry point.
+  @param[in]  SystemTable   EFI system table.
+
+  @retval EFI_SUCCESS     TrEE protocol is initialized.
+  @retval other           Some error occurs.
+**/
+EFI_STATUS
+InitializeTrEE (
+  IN    EFI_SYSTEM_TABLE            *SystemTable
+  )
+{
+    EFI_STATUS                    status = EFI_SUCCESS;
+    EFI_EVENT                     event;
+    VOID                          *registration;
+    TPML_PCR_SELECTION            Pcrs;
+    UINTN                         index;
+    UINT32                        tpmHashAlgorithmBitmap;
+    EFI_ACPI_TABLE_PROTOCOL *     acpiTable;
+
+    status = gBS->LocateProtocol(&gEfiAcpiTableProtocolGuid, NULL, (VOID**) &acpiTable);
+    if (EFI_ERROR(status))
+    {
+      goto Cleanup;
+    }
+
+    status = IntallTpm2AcpiTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+      goto Cleanup;
+    }
+
+    Tpm2RegisterTpm2DeviceLib((TPM2_DEVICE_INTERFACE *)TPM_BASE_ADDRESS);
+
+    //
+    // Fill information
+    // It is a contract between engine, vmwp and UEFI that vTPM supports at least
+    // 4KB max command and response buffer. Hardcode to 4KB in capability.
+    //
+    mTcgDxeData.BsCap.SupportedEventLogs = TREE_EVENT_LOG_FORMAT_TCG_1_2;
+    mTcgDxeData.BsCap.TrEEPresentFlag = TRUE;
+    mTcgDxeData.BsCap.MaxCommandSize = TREE_DEFAULT_MAX_COMMAND_SIZE;
+    mTcgDxeData.BsCap.MaxResponseSize = TREE_DEFAULT_MAX_RESPONSE_SIZE;
+    mTcgDxeData.BsCap.ManufacturerID = 'MSFT';
+
+    status = Tpm2GetCapabilityPcrs(&Pcrs);
+    if (EFI_ERROR (status))
+    {
+        DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityPcrs FAILED - %r!\n", status));
+        goto Cleanup;
+    }
+    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityPcrs Count - %08x\n", Pcrs.count));
+    tpmHashAlgorithmBitmap = 0;
+    for (index = 0; index < Pcrs.count; index++)
+    {
+        DEBUG ((EFI_D_ERROR, "hash - %x\n", Pcrs.pcrSelections[index].hash));
+        switch (Pcrs.pcrSelections[index].hash)
+        {
+            case TPM_ALG_SHA1:
+                tpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA1;
+                break;
+            case TPM_ALG_SHA256:
+                tpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA256;
+                break;
+            case TPM_ALG_SHA384:
+                tpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA384;
+                break;
+            case TPM_ALG_SHA512:
+                tpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA512;
+                break;
+            case TPM_ALG_SM3_256:
+                // TBD: Spec not define TREE_BOOT_HASH_ALG_SM3_256 yet
+                break;
+        }
+    }
+
+    mTcgDxeData.BsCap.HashAlgorithmBitmap = tpmHashAlgorithmBitmap;
+    DEBUG ((EFI_D_ERROR, "TrEE.HashAlgorithmBitmap - 0x%08x\n", mTcgDxeData.BsCap.HashAlgorithmBitmap));
+
+    //
+    // Setup the log area and copy event log from hob list to it
+    //
+    status = SetupEventLog ();
+    if (EFI_ERROR (status))
+    {
+        DEBUG ((EFI_D_ERROR, "SetupEventLog FAILED! -  %r\n", status));
+        goto Cleanup;
+    }
+
+    //
+    // Measure handoff tables, Boot#### variables etc.
+    //
+    status = EfiCreateEventReadyToBootEx (
+               TPL_CALLBACK,
+               OnReadyToBoot,
+               NULL,
+               &event
+               );
+    if (EFI_ERROR (status))
+    {
+        DEBUG ((EFI_D_ERROR, "EfiCreateEventReadyToBootEx FAILED! -  %r\n", status));
+        goto Cleanup;
+    }
+
+    status = gBS->CreateEventEx (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_NOTIFY,
+                    OnExitBootServices,
+                    NULL,
+                    &gEfiEventExitBootServicesGuid,
+                    &event
+                    );
+    if (EFI_ERROR (status))
+    {
+        DEBUG ((EFI_D_ERROR, "CreateEventEx[gEfiEventExitBootServicesGuid] FAILED! -  %r\n", status));
+        goto Cleanup;
+    }
+
+    //
+    // Measure Exit Boot Service failed
+    //
+    status = gBS->CreateEventEx (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_NOTIFY,
+                    OnExitBootServicesFailed,
+                    NULL,
+                    &gEventExitBootServicesFailedGuid,
+                    &event
+                    );
+    if (EFI_ERROR (status))
+    {
+        DEBUG ((EFI_D_ERROR, "CreateEventEx[gEventExitBootServicesFailedGuid] FAILED! -  %r\n", status));
+        goto Cleanup;
+    }
+
+    //
+    // Create event callback, because we need access variable on SecureBootPolicyVariable
+    // We should use VariableWriteArch instead of VariableArch, because Variable driver
+    // may update SecureBoot value based on last setting.
+    //
+    EfiCreateProtocolNotifyEvent (&gEfiVariableWriteArchProtocolGuid, TPL_CALLBACK, MeasureSecureBootPolicy, NULL, &registration);
+
+Cleanup:
+
+    return status;
+}
+
+/**
+  The function is TrEE protocol driver entry.
+
+  @param[in]  ImageHandle   Driver image handle.
+  @param[in]  SystemTable   EFI system table.
+
+  @retval EFI_SUCCESS     TrEE protocol driver is successfully dispatched.
+  @retval other           Some error occurs.
 **/
 EFI_STATUS
 EFIAPI
@@ -1786,158 +1847,31 @@ DriverEntry (
   IN    EFI_SYSTEM_TABLE            *SystemTable
   )
 {
-  EFI_STATUS                        Status;
-  EFI_EVENT                         Event;
-  VOID                              *Registration;
-  UINT32                            MaxCommandSize;
-  UINT32                            MaxResponseSize;
-  TPML_PCR_SELECTION                Pcrs;
-  UINTN                             Index;
-  UINT32                            TpmHashAlgorithmBitmap;
+    EFI_STATUS                    status = EFI_SUCCESS;
 
-  mImageHandle = ImageHandle;
+    mImageHandle = ImageHandle;
 
-  if (CompareGuid (PcdGetPtr(PcdTpmInstanceGuid), &gEfiTpmDeviceInstanceNoneGuid) ||
-      CompareGuid (PcdGetPtr(PcdTpmInstanceGuid), &gEfiTpmDeviceInstanceTpm12Guid)){
-    DEBUG ((EFI_D_ERROR, "No TPM2 instance required!\n"));
-    return EFI_UNSUPPORTED;
-  }
-
-  if (GetFirstGuidHob (&gTpmErrorHobGuid) != NULL) {
-    DEBUG ((EFI_D_ERROR, "TPM2 error!\n"));
-    return EFI_DEVICE_ERROR;
-  }
-  
-  Status = Tpm2RequestUseTpm ();
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "TPM2 not detected!\n"));
-    return Status;
-  }
-  
-  //
-  // Fill information
-  //
-  DEBUG ((EFI_D_INFO, "TrEE.ProtocolVersion  - %02x.%02x\n", mTcgDxeData.BsCap.ProtocolVersion.Major, mTcgDxeData.BsCap.ProtocolVersion.Minor));
-  DEBUG ((EFI_D_INFO, "TrEE.StructureVersion - %02x.%02x\n", mTcgDxeData.BsCap.StructureVersion.Major, mTcgDxeData.BsCap.StructureVersion.Minor));
-
-  Status = Tpm2GetCapabilityManufactureID (&mTcgDxeData.BsCap.ManufacturerID);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityManufactureID fail!\n"));
-  } else {
-    DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityManufactureID - %08x\n", mTcgDxeData.BsCap.ManufacturerID));
-  }
-
-  DEBUG_CODE (
-    UINT32                    FirmwareVersion1;
-    UINT32                    FirmwareVersion2;
-
-    Status = Tpm2GetCapabilityFirmwareVersion (&FirmwareVersion1, &FirmwareVersion2);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityFirmwareVersion fail!\n"));
-    } else {
-      DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityFirmwareVersion - %08x %08x\n", FirmwareVersion1, FirmwareVersion2));
+    DEBUG ((DEBUG_VERBOSE, ">>> TrEEDxe:DriverEntry\n"));
+    DEBUG ((DEBUG_VERBOSE, "    GetTpmEnabled %x\n", GetTpmEnabled));
+    if (GetTpmEnabled())
+    {
+        DEBUG ((DEBUG_VERBOSE, "GetTpmEnabled returned TRUE\n"));
+        status = InitializeTrEE(SystemTable);
+        if (EFI_ERROR (status))
+        {
+            DEBUG ((EFI_D_ERROR, "InitializeTrEE FAILED! -  %r\n", status));
+            goto Cleanup;
+        }
     }
-  );
-
-  Status = Tpm2GetCapabilityMaxCommandResponseSize (&MaxCommandSize, &MaxResponseSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityMaxCommandResponseSize fail!\n"));
-  } else {
-    mTcgDxeData.BsCap.MaxCommandSize  = (UINT16)MaxCommandSize;
-    mTcgDxeData.BsCap.MaxResponseSize = (UINT16)MaxResponseSize;
-    DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityMaxCommandResponseSize - %08x, %08x\n", MaxCommandSize, MaxResponseSize));
-  }
-
-  Status = Tpm2GetCapabilityPcrs (&Pcrs);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityPcrs fail!\n"));
-    TpmHashAlgorithmBitmap = TREE_BOOT_HASH_ALG_SHA1;
-  } else {
-    DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityPcrs Count - %08x\n", Pcrs.count));
-    TpmHashAlgorithmBitmap = 0;
-    for (Index = 0; Index < Pcrs.count; Index++) {
-      DEBUG ((EFI_D_INFO, "hash - %x\n", Pcrs.pcrSelections[Index].hash));
-      switch (Pcrs.pcrSelections[Index].hash) {
-      case TPM_ALG_SHA1:
-        TpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA1;
-        break;
-      case TPM_ALG_SHA256:
-        TpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA256;
-        break;
-      case TPM_ALG_SHA384:
-        TpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA384;
-        break;
-      case TPM_ALG_SHA512:
-        TpmHashAlgorithmBitmap |= TREE_BOOT_HASH_ALG_SHA512;
-        break;
-      case TPM_ALG_SM3_256:
-        // TBD: Spec not define TREE_BOOT_HASH_ALG_SM3_256 yet
-        break;
-      }
-    }
-  }
-  DEBUG ((EFI_D_INFO, "TPM.HashAlgorithmBitmap - 0x%08x\n", TpmHashAlgorithmBitmap));
-
-  DEBUG ((EFI_D_INFO, "TrEE.SupportedEventLogs - 0x%08x\n", mTcgDxeData.BsCap.SupportedEventLogs));
-  mTcgDxeData.BsCap.HashAlgorithmBitmap = TpmHashAlgorithmBitmap;
-  DEBUG ((EFI_D_INFO, "TrEE.HashAlgorithmBitmap - 0x%08x\n", mTcgDxeData.BsCap.HashAlgorithmBitmap));
-
-  if (mTcgDxeData.BsCap.TrEEPresentFlag) {
-    //
-    // Setup the log area and copy event log from hob list to it
-    //
-    Status = SetupEventLog ();
-    ASSERT_EFI_ERROR (Status);
 
     //
-    // Measure handoff tables, Boot#### variables etc.
+    // Install TrEEProtocol
     //
-    Status = EfiCreateEventReadyToBootEx (
-               TPL_CALLBACK,
-               OnReadyToBoot,
-               NULL,
-               &Event
-               );
+    status = InstallTrEE();
+    DEBUG ((EFI_D_ERROR, "InstallTrEE - %r\n", status));
 
-    Status = gBS->CreateEventEx (
-                    EVT_NOTIFY_SIGNAL,
-                    TPL_NOTIFY,
-                    OnExitBootServices,
-                    NULL,
-                    &gEfiEventExitBootServicesGuid,
-                    &Event
-                    );
+Cleanup:
+  DEBUG ((DEBUG_VERBOSE, "<<< TrEEDxe:DriverEntry status %x\n", status));
 
-    //
-    // Measure Exit Boot Service failed 
-    //
-    Status = gBS->CreateEventEx (
-                    EVT_NOTIFY_SIGNAL,
-                    TPL_NOTIFY,
-                    OnExitBootServicesFailed,
-                    NULL,
-                    &gEventExitBootServicesFailedGuid,
-                    &Event
-                    );
-
-    //
-    // Create event callback, because we need access variable on SecureBootPolicyVariable
-    // We should use VariableWriteArch instead of VariableArch, because Variable driver
-    // may update SecureBoot value based on last setting.
-    //
-    EfiCreateProtocolNotifyEvent (&gEfiVariableWriteArchProtocolGuid, TPL_CALLBACK, MeasureSecureBootPolicy, NULL, &Registration);
-  }
-
-  //
-  // Install ACPI Table
-  //
-  EfiCreateProtocolNotifyEvent (&gEfiAcpiTableProtocolGuid, TPL_CALLBACK, InstallAcpiTable, NULL, &Registration);
-
-  //
-  // Install TrEEProtocol
-  //
-  Status = InstallTrEE ();
-  DEBUG ((EFI_D_INFO, "InstallTrEE - %r\n", Status));
-
-  return Status;
+  return status;
 }

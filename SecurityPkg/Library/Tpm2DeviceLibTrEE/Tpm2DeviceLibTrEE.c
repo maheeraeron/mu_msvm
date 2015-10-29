@@ -15,12 +15,117 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/UefiBootServicesTableLib.h>
 #include <Library/Tpm2DeviceLib.h>
-#include <Protocol/TrEEProtocol.h>
+#include <Library/TimerLib.h>
 #include <IndustryStandard/Tpm20.h>
+#include <IndustryStandard/Tpm2Acpi.h>
 
-EFI_TREE_PROTOCOL  *mTreeProtocol = NULL; 
+EFI_TPM2_ACPI_CONTROL_AREA  *mTpm2ControlArea = NULL;
+
+EFI_STATUS
+EFIAPI
+CRSubmitCommand (
+    IN  UINT32   InputParameterBlockSize,
+    IN  UINT8    *InputParameterBlock,
+    IN  UINT32   OutputParameterBlockSize,
+    IN  UINT8    *OutputParameterBlock
+    )
+/*++
+
+Routine Description:
+
+    This routine submits TPM command to vTPM engine.
+
+Arguments:
+
+    InputParameterBlockSize - Command size
+
+    InputParameterBlock - Command Buffer
+
+    OutputParameterBlockSize - Response buffer size
+
+    OutputParameterBlock - Response buffer
+
+Return Value:
+
+    EFI_STATUS
+
+--*/
+{
+    EFI_STATUS status = EFI_SUCCESS;
+    UINT32  outputParameterSize = OutputParameterBlockSize;
+    UINT32  waitTime;
+
+    if (mTpm2ControlArea == NULL)
+    {
+        status = EFI_NOT_READY;
+        goto Cleanup;
+    }
+
+    if (mTpm2ControlArea->Start != 0)
+    {
+        // pending command.
+        status = EFI_NOT_READY;
+        goto Cleanup;
+    }
+
+    if (mTpm2ControlArea->Error != 0)
+    {
+        // device in error state.
+        status = EFI_DEVICE_ERROR;
+        goto Cleanup;
+    }
+
+    // Check if command fits into command buffer.
+    if (mTpm2ControlArea->CommandSize < InputParameterBlockSize)
+    {
+        status = EFI_INVALID_PARAMETER;
+        goto Cleanup;
+    }
+
+    // Copy command to command buffer.
+    CopyMem((UINT8 *)mTpm2ControlArea->Command, InputParameterBlock, InputParameterBlockSize);
+
+    // Set Start to kick off command execution.
+    mTpm2ControlArea->Start = 1;
+
+    //
+    // Wait/Poll for 90 secs timeout.
+    //
+    for (waitTime = 0; waitTime < 90000 * 1000; waitTime += 30)
+    {
+        if (mTpm2ControlArea->Start != 0)
+        {
+            MicroSecondDelay (30);
+            continue;
+        }
+
+        if (mTpm2ControlArea->Error != 0)
+        {
+            status = EFI_DEVICE_ERROR;
+            goto Cleanup;
+        }
+
+        //
+        // Engine finished executing command, get the result back.
+        //
+        if (outputParameterSize > mTpm2ControlArea->ResponseSize)
+        {
+            outputParameterSize = mTpm2ControlArea->ResponseSize;
+        }
+
+        CopyMem(OutputParameterBlock, (UINT8*)mTpm2ControlArea->Response, outputParameterSize);
+        goto Cleanup;
+    }
+
+    status = EFI_TIMEOUT;
+    DEBUG ((EFI_D_ERROR, "SubmitCommand TIMEOUT - %r\n", status));
+
+Cleanup:
+
+    return status;
+}
+
 
 /**
   This service enables the sending of commands to the TPM2.
@@ -43,36 +148,37 @@ Tpm2SubmitCommand (
   IN UINT8             *OutputParameterBlock
   )
 {
-  EFI_STATUS                Status;
-  TPM2_RESPONSE_HEADER      *Header;
+    EFI_STATUS                status = EFI_SUCCESS;
+    UINT32                    outputParameterBlockSize = (*OutputParameterBlockSize);
+    TPM2_RESPONSE_HEADER      *header;
 
-  if (mTreeProtocol == NULL) {
-    Status = gBS->LocateProtocol (&gEfiTrEEProtocolGuid, NULL, (VOID **) &mTreeProtocol);
-    if (EFI_ERROR (Status)) {
-      //
-      // TrEE protocol is not installed. So, TPM2 is not present.
-      //
-      DEBUG ((EFI_D_ERROR, "Tpm2SubmitCommand - TrEE - %r\n", Status));
-      return EFI_NOT_FOUND;
+    if (InputParameterBlockSize < sizeof(TPM2_COMMAND_HEADER) || InputParameterBlock == NULL ||
+        outputParameterBlockSize < sizeof(TPM2_RESPONSE_HEADER) || OutputParameterBlock == NULL)
+    {
+        status = EFI_INVALID_PARAMETER;
+        goto Cleanup;
     }
-  }
-  //
-  // Assume when TrEE Protocol is ready, RequestUseTpm already done.
-  //
-  Status = mTreeProtocol->SubmitCommand (
-                            mTreeProtocol,
-                            InputParameterBlockSize,
-                            InputParameterBlock,
-                            *OutputParameterBlockSize,
-                            OutputParameterBlock
-                            );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  Header = (TPM2_RESPONSE_HEADER *)OutputParameterBlock;
-  *OutputParameterBlockSize = SwapBytes32 (Header->paramSize);
 
-  return EFI_SUCCESS;
+    status = CRSubmitCommand(InputParameterBlockSize,
+                                InputParameterBlock,
+                                outputParameterBlockSize,
+                                OutputParameterBlock
+                                );
+    if (EFI_ERROR (status))
+    {
+        goto Cleanup;
+    }
+
+    header = (TPM2_RESPONSE_HEADER *)OutputParameterBlock;
+    *OutputParameterBlockSize = SwapBytes32 (header->paramSize);
+    if (outputParameterBlockSize < (*OutputParameterBlockSize))
+    {
+        status = EFI_BUFFER_TOO_SMALL;
+    }
+
+Cleanup:
+
+    return status;
 }
 
 /**
@@ -88,22 +194,7 @@ Tpm2RequestUseTpm (
   VOID
   )
 {
-  EFI_STATUS   Status;
-
-  if (mTreeProtocol == NULL) {
-    Status = gBS->LocateProtocol (&gEfiTrEEProtocolGuid, NULL, (VOID **) &mTreeProtocol);
-    if (EFI_ERROR (Status)) {
-      //
-      // TrEE protocol is not installed. So, TPM2 is not present.
-      //
-      DEBUG ((EFI_D_ERROR, "Tpm2RequestUseTpm - TrEE - %r\n", Status));
-      return EFI_NOT_FOUND;
-    }
-  }
-  //
-  // Assume when TrEE Protocol is ready, RequestUseTpm already done.
-  //
-  return EFI_SUCCESS;
+    return EFI_SUCCESS;
 }
 
 /**
@@ -121,5 +212,7 @@ Tpm2RegisterTpm2DeviceLib (
   IN TPM2_DEVICE_INTERFACE   *Tpm2Device
   )
 {
-  return EFI_UNSUPPORTED;
+    mTpm2ControlArea = (EFI_TPM2_ACPI_CONTROL_AREA*)Tpm2Device;
+
+    return EFI_SUCCESS;
 }

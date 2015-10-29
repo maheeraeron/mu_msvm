@@ -38,6 +38,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   SecurityPkg/SecurityPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -49,19 +50,10 @@
   MemoryAllocationLib
 
 [Guids]
-  ## SOMETIMES_CONSUMES      ## Variable:L"MemoryOverwriteRequestControl"
-  ## PRODUCES                ## Variable:L"MemoryOverwriteRequestControl"
-  gEfiMemoryOverwriteControlDataGuid
-  gEfiEndOfDxeEventGroupGuid                  ## SOMETIMES_CONSUMES    ## Event
-
-[Protocols]
-  gEfiStorageSecurityCommandProtocolGuid      ## SOMETIMES_CONSUMES
-  gEfiBlockIoProtocolGuid                     ## SOMETIMES_CONSUMES
+  gEfiMemoryOverwriteControlDataGuid            # GUID ALWAYS_CONSUMED
+  gEfiEndOfDxeEventGroupGuid
 
 [Depex]
   gEfiVariableArchProtocolGuid AND
-  gEfiVariableWriteArchProtocolGuid AND
-  ( gEfiTcgProtocolGuid OR gEfiTrEEProtocolGuid )
+  gEfiVariableWriteArchProtocolGuid
 
-[UserExtensions.TianoCore."ExtraFiles"]
-  TcgMorExtra.uni

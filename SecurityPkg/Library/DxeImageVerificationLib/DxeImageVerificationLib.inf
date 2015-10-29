@@ -44,6 +44,7 @@
   MdeModulePkg/MdeModulePkg.dec
   CryptoPkg/CryptoPkg.dec
   SecurityPkg/SecurityPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -54,15 +55,16 @@
   BaseMemoryLib
   DebugLib
   DevicePathLib
-  BaseCryptLib
   SecurityManagementLib
   PeCoffLib
-  TpmMeasurementLib
+  BootEventLogLib
 
 [Protocols]
   gEfiFirmwareVolume2ProtocolGuid       ## SOMETIMES_CONSUMES
   gEfiBlockIoProtocolGuid               ## SOMETIMES_CONSUMES
   gEfiSimpleFileSystemProtocolGuid      ## SOMETIMES_CONSUMES
+  gEfiVariableWriteArchProtocolGuid
+  gEfiSecureBootCryptProtocolGuid           ## CONSUMES
 
 [Guids]
   ## SOMETIMES_CONSUMES   ## Variable:L"DB"
@@ -93,8 +95,12 @@
   gEfiCertX509Sha384Guid                ## SOMETIMES_CONSUMES    ## GUID     # Unique ID for the type of the signature.
   gEfiCertX509Sha512Guid                ## SOMETIMES_CONSUMES    ## GUID     # Unique ID for the type of the signature.
   gEfiCertPkcs7Guid                     ## SOMETIMES_CONSUMES    ## GUID     # Unique ID for the type of the certificate.
+  gEfiCertTypeRsa2048Sha256Guid
+  gEfiCertRsa2048Guid
 
 [Pcd]
   gEfiSecurityPkgTokenSpaceGuid.PcdOptionRomImageVerificationPolicy          ## SOMETIMES_CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdRemovableMediaImageVerificationPolicy     ## SOMETIMES_CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdFixedMediaImageVerificationPolicy         ## SOMETIMES_CONSUMES
+ [Depex]
+  gEfiSecureBootCryptProtocolGuid
