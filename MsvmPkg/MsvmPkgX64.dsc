@@ -171,17 +171,6 @@
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
 
-#
-# Library instances to use by default for UEFI Applications
-#
-[LibraryClasses.common.UEFI_APPLICATION]
-  FileHandleLib|ShellPkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
-  ShellCEntryLib|ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf
-  ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-  SortLib|ShellPkg/Library/UefiSortLib/UefiSortLib.inf
-  PathLib|ShellPkg/Library/BasePathLib/BasePathLib.inf
-  UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
-
 [PcdsFixedAtBuild.common]
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
@@ -242,6 +231,9 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
 
+[PcdsDynamicDefault]
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0
+
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.
@@ -281,7 +273,6 @@
     <LibraryClasses>
       CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
       GenericBdsLib|IntelFrameworkModulePkg/Library/GenericBdsLib/GenericBdsLib.inf
-      FileHandleLib|ShellPkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
       HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
       PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
       PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
@@ -327,7 +318,6 @@
   MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
   MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
   MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
-  MdeModulePkg/Universal/Network/Ip4ConfigDxe/Ip4ConfigDxe.inf
   MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
   MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
   MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
@@ -374,8 +364,3 @@
       HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
       Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
   }
-
-  #
-  # Test Applications
-  #
-  MsvmPkg/Havoc/Havoc.inf
