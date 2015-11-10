@@ -97,7 +97,13 @@ set EDK_TOOLS_PATH=%WORKSPACE%\BaseTools
 IF NOT EXIST "%EDK_TOOLS_PATH%\toolsetup.bat" goto BadBaseTools
 call %EDK_TOOLS_PATH%\toolsetup.bat %*
 if /I "%1"=="Reconfig" shift
-goto check_cygwin
+
+@REM
+@REM Set the title to make it clear that this razzle window is for UEFI
+@REM
+@title %_BuildBranch% - UEFI Workspace: %WORKSPACE%
+
+@goto check_cygwin
 
 :BadBaseTools
   @REM
