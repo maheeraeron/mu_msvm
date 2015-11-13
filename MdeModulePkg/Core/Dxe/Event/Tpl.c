@@ -62,6 +62,8 @@ CoreRaiseTpl (
   IN EFI_TPL      NewTpl
   )
 {
+  BOOLEAN     InterruptState;
+  UINT32      Mask;
   EFI_TPL     OldTpl;
 
   OldTpl = gEfiCurrentTpl;
@@ -70,6 +72,8 @@ CoreRaiseTpl (
     ASSERT (FALSE);
   }
   ASSERT (VALID_TPL (NewTpl));
+
+  InterruptState = GetInterruptState ();
 
   //
   // If raising to high level, disable interrupts
@@ -82,6 +86,38 @@ CoreRaiseTpl (
   // Set the new value
   //
   gEfiCurrentTpl = NewTpl;
+
+  //
+  // Remember the interrupt state so that it can be restored
+  // when lowering. This is necessary to avoid infinite stack
+  // recursion when CoreRaiseTpl is called in an interrupt handler
+  // with interrupts disabled and CoreRestoreTpl is later called.
+  // If interrupts are not disabled before restoring TPL, then
+  // another interrupt can arrive at the same TPL. By remembering
+  // this value, each recursive interrupt will at least increase
+  // TPL by one, resulting in a maximum recursion depth of
+  // TPL_HIGH_LEVEL.
+  //
+  // N.B. This must be done only after setting the TPL since the value
+  // may be updated by an interrupt handler at any time before this.
+  // It is safe to access gEfiOldInterruptState with interrupts
+  // enabled because the value of the high bits that may be changing
+  // in an interrupt handler will be ignored.
+  //
+
+  //
+  // The mask will contain all bits between NewTpl-1 and OldTpl
+  // This will propogate the current interrupt state to all TPLs between
+  // the new and old, such that when restoring the TPL interrupts are not
+  // prematurely restored.  Interrupts will only be restored once the TPL
+  // has been restored to the original old TPL.
+  //
+  Mask = (1 << NewTpl) - (1 << OldTpl);
+  if (InterruptState == FALSE) {
+    gEfiOldInterruptState &= ~Mask;
+  } else {
+    gEfiOldInterruptState |= Mask;
+  }
 
   return OldTpl;
 }
@@ -111,37 +147,50 @@ CoreRestoreTpl (
   }
   ASSERT (VALID_TPL (NewTpl));
 
-  //
-  // If lowering below HIGH_LEVEL, make sure
-  // interrupts are enabled
-  //
+  if (NewTpl == OldTpl) {
+    //
+    // Nothing needs to be done in this case.
+    // There should not be any pending events at a higher TPL.
+    //
+    ASSERT(((-2 << NewTpl) & gEventPending) == 0);
+    return;
+  }
 
   if (OldTpl >= TPL_HIGH_LEVEL  &&  NewTpl < TPL_HIGH_LEVEL) {
     gEfiCurrentTpl = TPL_HIGH_LEVEL;
   }
 
   //
-  // Dispatch any pending events
+  // Interrupts will be disabled while checking for pending events
+  // to ensure that once we have processed all events no
+  // events have a chance to be signalled before the TPL is actually restored
   //
+  // Dispatch any pending events at a higher TPL.
+  // This will temporarily raise the TPL to match the Notify TPL
+  // of each signalled event group.
+  //
+  // -2 << NewTpl results in a mask for all higher TPLs
+  // but *not* the current or lower TPLs
+  // (-2 = 0xfe = 11111110b)
+  // 
+  CoreSetInterruptState (FALSE);
+
   while (((-2 << NewTpl) & gEventPending) != 0) {
     gEfiCurrentTpl = (UINTN) HighBitSet64 (gEventPending);
     if (gEfiCurrentTpl < TPL_HIGH_LEVEL) {
       CoreSetInterruptState (TRUE);
     }
     CoreDispatchEventNotifies (gEfiCurrentTpl);
+
+    CoreSetInterruptState (FALSE);
   }
 
   //
-  // Set the new value
-  //
-
+  // Set the new value and enable interrupts if they were previously enabled.
+  // 
   gEfiCurrentTpl = NewTpl;
-
-  //
-  // If lowering below HIGH_LEVEL, make sure
-  // interrupts are enabled
-  //
-  if (gEfiCurrentTpl < TPL_HIGH_LEVEL) {
+  
+  if ((gEfiOldInterruptState & (1 << NewTpl))) {
     CoreSetInterruptState (TRUE);
   }
 

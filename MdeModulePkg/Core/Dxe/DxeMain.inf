@@ -74,6 +74,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   BaseMemoryLib
@@ -98,6 +99,7 @@
   DebugAgentLib
   CpuExceptionHandlerLib
   PcdLib
+  CrashDumpAgentLib
 
 [Guids]
   gEfiEventMemoryMapChangeGuid                  ## PRODUCES             ## Event
@@ -174,6 +176,7 @@
   gEfiVariableArchProtocolGuid                  ## CONSUMES
   gEfiCapsuleArchProtocolGuid                   ## CONSUMES
   gEfiWatchdogTimerArchProtocolGuid             ## CONSUMES
+  gEfiCpu2ProtocolGuid                          ## SOMETIMES_CONSUMES
 
 [FeaturePcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFrameworkCompatibilitySupport	   ## CONSUMES

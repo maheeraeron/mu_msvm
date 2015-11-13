@@ -19,7 +19,14 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 ///
 /// gEfiCurrentTpl - Current Task priority level
 ///
-EFI_TPL  gEfiCurrentTpl = TPL_APPLICATION;
+volatile EFI_TPL  gEfiCurrentTpl = TPL_APPLICATION;
+
+//
+// gEfiOldInterruptState - The interrupt state at the time TPL was raised.
+//                         Bitmask where each bit represents the interrupt state
+//                         for the corresponding TPL.
+//
+volatile UINT32   gEfiOldInterruptState = 0;
 
 ///
 /// gEventQueueLock - Protects the event queues
@@ -198,6 +205,8 @@ CoreDispatchEventNotifies (
     ASSERT (Event->NotifyFunction != NULL);
     Event->NotifyFunction (Event, Event->NotifyContext);
 
+    ASSERT (gEfiCurrentTpl == Event->NotifyTpl);
+
     //
     // Check for next pending event
     //
@@ -340,17 +349,6 @@ CoreCreateEventEx (
   OUT EFI_EVENT               *Event
   )
 {
-  //
-  // If it's a notify type of event, check for invalid NotifyTpl
-  //
-  if ((Type & (EVT_NOTIFY_WAIT | EVT_NOTIFY_SIGNAL)) != 0) {
-    if (NotifyTpl != TPL_APPLICATION &&
-        NotifyTpl != TPL_CALLBACK &&
-        NotifyTpl != TPL_NOTIFY) {
-      return EFI_INVALID_PARAMETER;
-    }
-  }
-
   return CoreCreateEventInternal (Type, NotifyTpl, NotifyFunction, NotifyContext, EventGroup, Event);
 }
 
@@ -665,11 +663,14 @@ CoreWaitForEvent (
 {
   EFI_STATUS      Status;
   UINTN           Index;
+  EFI_TPL         Tpl;
 
   //
-  // Can only WaitForEvent at TPL_APPLICATION
+  // Allow waiting at any TPL with interrupts enabled. This is a change
+  // from the UEFI specification, but it's necessary in many cases to support
+  // poll-free I/O.
   //
-  if (gEfiCurrentTpl != TPL_APPLICATION) {
+  if (gEfiCurrentTpl >= TPL_HIGH_LEVEL) {
     return EFI_UNSUPPORTED;
   }
 
@@ -683,6 +684,14 @@ CoreWaitForEvent (
 
   for(;;) {
 
+    //
+    // Raise to the highest level that allows interrupts, then disable
+    // interrupts. This ensures that interrupts remain disabled but can
+    // be explicitly enabled below without changing TPL.
+    //
+    Tpl = CoreRaiseTpl (TPL_HIGH_LEVEL - 1);
+    CoreSetInterruptState (FALSE);
+
     for(Index = 0; Index < NumberOfEvents; Index++) {
 
       Status = CoreCheckEvent (UserEvents[Index]);
@@ -694,14 +703,30 @@ CoreWaitForEvent (
         if (UserIndex != NULL) {
           *UserIndex = Index;
         }
+        CoreSetInterruptState (TRUE);
+        CoreRestoreTpl (Tpl);
         return Status;
       }
     }
 
     //
-    // Signal the Idle event
+    // If the CPU supports safely waiting for an interrupt to arrive
+    // and enabling interrupts, then do that to go idle. Otherwise,
+    // enable interrupts and signal the idle event to cause the CPU
+    // to sleep.
     //
-    CoreSignalEvent (gIdleLoopEvent);
+    // The latter approach has a race condition where an interrupt
+    // arrives that signals one of the events this routine is waiting
+    // on, but the CPU is put to sleep anyway.
+    //
+    if (gCpu2 != NULL) {
+      gCpu2->WaitForAndEnableInterrupt (gCpu2);
+      CoreRestoreTpl (Tpl);
+    } else {
+      CoreSetInterruptState (TRUE);
+      CoreRestoreTpl (Tpl);
+      CoreSignalEvent (gIdleLoopEvent);
+    }
   }
 }
 

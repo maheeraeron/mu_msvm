@@ -50,5 +50,18 @@ SetDataSelectors PROC PUBLIC
     ret
 SetDataSelectors ENDP
 
+;------------------------------------------------------------------------------
+; VOID
+; EFIAPI
+; SleepAndEnable (
+;   VOID
+;   );
+;------------------------------------------------------------------------------
+SleepAndEnable PROC PUBLIC
+    sti
+    hlt
+    ret
+SleepAndEnable ENDP
+
 END
 

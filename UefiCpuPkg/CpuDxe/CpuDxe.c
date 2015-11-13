@@ -96,6 +96,10 @@ EFI_CPU_ARCH_PROTOCOL  gCpu = {
   4                           // DmaBufferAlignment
 };
 
+EFI_CPU2_PROTOCOL gCpu2 = {
+  CpuWaitForAndEnableInterrupt,
+};
+
 //
 // CPU Arch Protocol Functions
 //
@@ -406,6 +410,25 @@ CpuSetMemoryAttributes (
              );
 
   return (EFI_STATUS) Status;
+}
+
+/**
+  Waits for an interrupt to arrive, then enables CPU interrupts.
+
+  @param  This              Protocol instance structure
+
+  @retval EFI_SUCCESS       If interrupts were enabled in the CPU
+
+**/
+EFI_STATUS
+EFIAPI
+CpuWaitForAndEnableInterrupt (
+  IN EFI_CPU2_PROTOCOL          *This
+  )
+{
+  SleepAndEnable ();
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -849,42 +872,51 @@ InitializeCpu (
   EFI_EVENT   IdleLoopEvent;
 
   InitializeFloatingPointUnits ();
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitializeFloatingPointUnits\n"));
 
   //
   // Make sure interrupts are disabled
   //
   DisableInterrupts ();
+  DEBUG((EFI_D_INFO, "InitializeCpu: After DisableInterrupts\n"));
 
   //
   // Init GDT for DXE
   //
   InitGlobalDescriptorTable ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitGlobalDescriptorTable\n"));
+  
   //
   // Setup IDT pointer, IDT and interrupt entry points
   //
   InitInterruptDescriptorTable ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitInterruptDescriptorTable\n"));
+  
   //
   // Enable the local APIC for Virtual Wire Mode.
   //
   ProgramVirtualWireMode ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After ProgramVirtualWireMode\n"));
+  
   //
   // Install CPU Architectural Protocol
   //
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mCpuHandle,
                   &gEfiCpuArchProtocolGuid, &gCpu,
+                  &gEfiCpu2ProtocolGuid, &gCpu2,
                   NULL
                   );
   ASSERT_EFI_ERROR (Status);
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InstallMultipleProtocolInterfaces\n"));
+  
 
   //
   // Refresh GCD memory space map according to MTRR value.
   //
   RefreshGcdMemoryAttributes ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After RefreshGcdMemoryAttributes\n"));
+  
   //
   // Setup a callback for idle events
   //
@@ -899,7 +931,8 @@ InitializeCpu (
   ASSERT_EFI_ERROR (Status);
 
   InitializeMpSupport ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitializeMpSupport\n"));
+  
   return Status;
 }
 

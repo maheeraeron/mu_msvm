@@ -18,6 +18,7 @@
 #include <PiDxe.h>
 
 #include <Protocol/Cpu.h>
+#include <Protocol/Cpu2.h>
 
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -220,6 +221,20 @@ CpuSetMemoryAttributes (
   );
 
 /**
+  Waits for an interrupt to arrive, then enables CPU interrupts.
+
+  @param  This              Protocol instance structure
+
+  @retval EFI_SUCCESS       If interrupts were enabled in the CPU
+
+**/
+EFI_STATUS
+EFIAPI
+CpuWaitForAndEnableInterrupt (
+  IN EFI_CPU2_PROTOCOL          *This
+  );
+
+/**
   Initialize Global Descriptor Table.
 
 **/
@@ -252,5 +267,14 @@ SetDataSelectors (
   UINT16 Selector
   );
 
+/**
+  Halts the processor until an interrupt arrives, then enables interrupts.
+
+**/
+VOID
+EFIAPI
+SleepAndEnable (
+  VOID
+  );
 #endif
 

@@ -282,3 +282,12 @@ DebugPrintLevelEnabled (
   return (BOOLEAN) ((ErrorLevel & PcdGet32(PcdFixedDebugPrintErrorLevel)) != 0);
 }
 
+
+VOID
+EFIAPI
+DebugPollDebugger(
+    VOID
+    )
+{
+}
+

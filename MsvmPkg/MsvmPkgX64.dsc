@@ -21,6 +21,8 @@
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = MsvmPkg/MsvmPkgX64.fdf
 
+  DEBUGLIB_SERIAL                = 1
+
 ################################################################################
 #
 # BuildOptions Section - extra build flags
@@ -55,7 +57,12 @@
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
   CrashDumpAgentLib|MdeModulePkg/Library/CrashDumpAgentLibNull/CrashDumpAgentLibNull.inf
+!if DEBUGLIB_SERIAL
+  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+!else
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+!endif
+  DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LocalApicLib|UefiCpuPkg/Library/BaseXApicLib/BaseXApicLib.inf
@@ -66,7 +73,11 @@
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+!if DEBUGLIB_SERIAL
+  SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
+!else
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+!endif
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   TimerLib|MsvmPkg/Library/HvTimerLib/HvTimerLib.inf
   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
@@ -81,11 +92,6 @@
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
   PeiServicesTablePointerLib|MdePkg/Library/PeiServicesTablePointerLibIdt/PeiServicesTablePointerLibIdt.inf
-!ifdef SEC_PEI_SERIAL_DEBUG
-  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
-  SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
-!endif
-  DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
 
 #
 # Library instances to use by default for SEC
@@ -121,8 +127,6 @@
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
-  DebugAgentLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
-  DebugLib|MsvmPkg/Library/KdDebugLib/KdDebugLib.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|MdeModulePkg/Library/DxeDpcLib/DxeDpcLib.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
@@ -150,12 +154,9 @@
 # Library instances to use by default for DXE CORE
 #
 [LibraryClasses.common.DXE_CORE]
-  CrashDumpAgentLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
-  DebugAgentLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
-  PeCoffExtraActionLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
 
 #
 # Library instances to use by default for all DXE Drivers
@@ -167,7 +168,6 @@
 # Library instances to use by default for DXE Runtime Drivers
 #
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
-  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
 
@@ -180,7 +180,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
 !else
   # This default turns on errors and warnings
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
 !endif
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xFF
 
@@ -224,6 +224,9 @@
   # Override defaults to indicate only US english support
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangCodes|"engeng"
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes|"en;en-US"
+
+  # Configure max supported number of Logical Processorss
+  gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
 
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE

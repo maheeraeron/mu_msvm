@@ -121,6 +121,7 @@ InitGlobalDescriptorTable (
 {
   GDT_ENTRIES *gdt;
   IA32_DESCRIPTOR gdtPtr;
+  DEBUG((EFI_D_INFO, "InitGlobalDescriptorTable: Entered\n"));
 
   //
   // Allocate Runtime Data for the GDT
@@ -133,6 +134,7 @@ InitGlobalDescriptorTable (
   // Initialize all GDT entries
   //
   CopyMem (gdt, &GdtTemplate, sizeof (GdtTemplate));
+  DEBUG((EFI_D_INFO, "InitGlobalDescriptorTable: AllocateRuntimePool & CopyMem\n"));
 
   //
   // Write GDT register
@@ -140,11 +142,14 @@ InitGlobalDescriptorTable (
   gdtPtr.Base = (UINT32)(UINTN)(VOID*) gdt;
   gdtPtr.Limit = (UINT16) (sizeof (GdtTemplate) - 1);
   AsmWriteGdtr (&gdtPtr);
-
+  DEBUG((EFI_D_INFO, "InitGlobalDescriptorTable: After AsmWriteGdtr\n"));
+  
   //
   // Update selector (segment) registers base on new GDT
   //
   SetCodeSelector ((UINT16)CPU_CODE_SEL);
+  DEBUG((EFI_D_INFO, "InitGlobalDescriptorTable: After SetCodeSelector\n"));
   SetDataSelectors ((UINT16)CPU_DATA_SEL);
+  DEBUG((EFI_D_INFO, "InitGlobalDescriptorTable: After SetDataSelectors\n"));
 }
 
