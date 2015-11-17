@@ -538,8 +538,12 @@ typedef struct {
   EFI_GUID                 FormSetGuid;
   EFI_FORM_ID              FormId;
   UI_MENU_SELECTION        *Selection;
-
-  LIST_ENTRY           FormHistoryList;
+  FORM_BROWSER_FORMSET     *SystemLevelFormSet;
+  EFI_QUESTION_ID          CurFakeQestId;
+  BOOLEAN                  HiiPackageListUpdated;
+  BOOLEAN                  FinishRetrieveCall;
+  LIST_ENTRY               FormHistoryList;
+  LIST_ENTRY               FormSetList;
 } BROWSER_CONTEXT;
 
 #define BROWSER_CONTEXT_FROM_LINK(a)  CR (a, BROWSER_CONTEXT, Link, BROWSER_CONTEXT_SIGNATURE)
@@ -586,6 +590,9 @@ extern SETUP_DRIVER_PRIVATE_DATA mPrivateData;
 extern CHAR16            *gEmptyString;
 
 extern UI_MENU_SELECTION  *gCurrentSelection;
+extern BOOLEAN            mHiiPackageListUpdated;
+extern UINT16             mCurFakeQestId;
+extern BOOLEAN            mFinishRetrieveCall;
 
 //
 // Global Procedure Defines
@@ -1308,6 +1315,7 @@ SetScope (
   @retval EFI_INVALID_PARAMETER  KeyData is NULL.
   @retval EFI_NOT_FOUND          KeyData is not found to be unregistered.
   @retval EFI_UNSUPPORTED        Key represents a printable character. It is conflicted with Browser.
+  @retval EFI_ALREADY_STARTED    Key already been registered for one hot key.
 **/
 EFI_STATUS
 EFIAPI
