@@ -369,7 +369,7 @@ Return Value:
     channelDescriptor->EventsLost    = channel->Ring.Stats.LostWrites;
     channelDescriptor->EventsWritten = channel->Stats.Written;
 
-    WriteBiosDevice(BiosConfigEventLogFlush, (UINT32)channelDescriptor);
+    WriteBiosDevice(BiosConfigEventLogFlush, (UINT32)(UINTN)channelDescriptor);
 
     EventChannelUnlock(channel);
  

@@ -64,17 +64,17 @@ Environment:
 //
 // Encodes an index as a handle for use with the given table
 //
-#define HANDLE_TABLE_ENCODE(_Index, _Table) (EFI_HANDLE)(((_Index) | ((_Table)->TableKey)) + 1)
+#define HANDLE_TABLE_ENCODE(_Index, _Table) (EFI_HANDLE)(UINTN)(((_Index) | ((_Table)->TableKey)) + 1)
 
 //
 // Decodes a handle into an index removing the key, user flags, and bias.
 //
-#define HANDLE_TABLE_INDEX(_Handle)         (((UINT32)(_Handle) & HANDLE_TABLE_INDEX_MASK) - 1)
+#define HANDLE_TABLE_INDEX(_Handle) (((UINT32)(UINTN)(_Handle) & HANDLE_TABLE_INDEX_MASK) - 1)
 
 //
 // Isolates the key from a handle. This produces an un-shifted key
 //
-#define HANDLE_TABLE_KEY(_Handle)           ((UINT32)(_Handle) & HANDLE_TABLE_KEY_MASK)
+#define HANDLE_TABLE_KEY(_Handle) ((UINT32)(UINTN)(_Handle) & HANDLE_TABLE_KEY_MASK)
 
 //
 // Actual handle table

@@ -1329,7 +1329,7 @@ DriverEntry (
     return EFI_DEVICE_ERROR;
   }
 
-  mTcgDxeData.TpmHandle = (TIS_TPM_HANDLE)(UINTN)TPM_BASE_ADDRESS;
+  mTcgDxeData.TpmHandle = (TIS_TPM_HANDLE)TPM_BASE_ADDRESS;
   Status = TisPcRequestUseTpm (mTcgDxeData.TpmHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "TPM not detected!\n"));

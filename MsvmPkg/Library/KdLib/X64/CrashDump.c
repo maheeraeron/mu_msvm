@@ -303,7 +303,7 @@ EfiCrashDumpAddTriageInfo(
 
     pMemoryRegion->Header.SubType = MEMORY_REGION_TYPE_STACK;
     pMemoryRegion->Address = (UINT64)EfiKdPcr.NtTib.StackBase;
-    pMemoryRegion->Size    = (UINT32)EfiKdPcr.NtTib.StackLimit;
+    pMemoryRegion->Size    = (UINT32)(UINTN)EfiKdPcr.NtTib.StackLimit;
 
     //
     // PRCB Block
