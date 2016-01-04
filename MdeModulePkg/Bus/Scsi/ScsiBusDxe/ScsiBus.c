@@ -1007,9 +1007,10 @@ ScsiExecuteSCSICommand (
                                                 ExtRequestPacket,
                                                 NULL
                                                 );
-      if (Event != NULL) {
+      if ((!EFI_ERROR(Status)) && (Event != NULL)) {
         //
-        // Signal Event to tell caller to pick up the SCSI IO Packet.
+        // Signal Event to tell caller to pick up the SCSI IO packet if the
+        // PassThru() succeeds.
         //
         gBS->SignalEvent (Event);
       }
@@ -1039,7 +1040,7 @@ ScsiExecuteSCSICommand (
       //
       Status = gBS->CreateEvent (
                        EVT_NOTIFY_SIGNAL,
-                       TPL_CALLBACK,
+                       TPL_NOTIFY,
                        NotifyFunction,
                        &EventData,
                        &PacketEvent

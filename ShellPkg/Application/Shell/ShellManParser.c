@@ -15,7 +15,26 @@
 
 #include "Shell.h"
 
-CHAR16 EFIAPI InternalShellCharToUpper (IN CHAR16  Char);
+/**
+  Convert a Unicode character to upper case only if
+  it maps to a valid small-case ASCII character.
+
+  This internal function only deal with Unicode character
+  which maps to a valid small-case ASCII character, i.e.
+  L'a' to L'z'. For other Unicode character, the input character
+  is returned directly.
+
+  @param  Char  The character to convert.
+
+  @retval LowerCharacter   If the Char is with range L'a' to L'z'.
+  @retval Unchanged        Otherwise.
+
+**/
+CHAR16
+EFIAPI 
+InternalShellCharToUpper (
+  IN CHAR16  Char
+  );
 
 /**
   Verifies that the filename has .MAN on the end.
@@ -196,6 +215,7 @@ ManBufferFindSections(
         SectionLen = StrLen(SectionName);
         SectionName = StrStr(Sections, SectionName);
         if (SectionName == NULL) {
+          SHELL_FREE_NON_NULL(TempString);
           continue;
         }
         if (*(SectionName + SectionLen) == CHAR_NULL || *(SectionName + SectionLen) == L',') {
@@ -231,6 +251,7 @@ ManBufferFindSections(
     }
     SHELL_FREE_NON_NULL(TempString);
   }
+  SHELL_FREE_NON_NULL(TempString);
   if (!Found && !EFI_ERROR(Status)) {
     return (EFI_NOT_FOUND);
   }
@@ -630,7 +651,7 @@ ManFileFindTitleSection(
   // Do not pass any leading path information that may be present to IsTitleHeader().
   //
   Start = StrLen(Command);
-  while (Start
+  while ((Start != 0)
          && (*(Command + Start - 1) != L'\\')
          && (*(Command + Start - 1) != L'/')
          && (*(Command + Start - 1) != L':')) {

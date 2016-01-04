@@ -1485,7 +1485,7 @@ ScsiRead10CommandEx (
   //
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
+                  TPL_NOTIFY,
                   ScsiLibNotify,
                   Context,
                   &SelfEvent
@@ -1494,7 +1494,17 @@ ScsiRead10CommandEx (
     goto ErrorExit;
   }
 
-  return ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, SelfEvent);
+  Status = ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, SelfEvent);
+  if (EFI_ERROR(Status)) {
+    //
+    // Since ScsiLibNotify() will not be signaled if ExecuteScsiCommand()
+    // returns with error, close the event here.
+    //
+    gBS->CloseEvent (SelfEvent);
+    goto ErrorExit;
+  } else {
+    return EFI_SUCCESS;
+  }
 
 ErrorExit:
   if (Context != NULL) {
@@ -1659,7 +1669,7 @@ ScsiWrite10CommandEx (
   //
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
+                  TPL_NOTIFY,
                   ScsiLibNotify,
                   Context,
                   &SelfEvent
@@ -1668,7 +1678,17 @@ ScsiWrite10CommandEx (
     goto ErrorExit;
   }
 
-  return ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, Event);
+  Status = ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, SelfEvent);
+  if (EFI_ERROR(Status)) {
+    //
+    // Since ScsiLibNotify() will not be signaled if ExecuteScsiCommand()
+    // returns with error, close the event here.
+    //
+    gBS->CloseEvent (SelfEvent);
+    goto ErrorExit;
+  } else {
+    return EFI_SUCCESS;
+  }
 
 ErrorExit:
   if (Context != NULL) {
@@ -1833,7 +1853,7 @@ ScsiRead16CommandEx (
   //
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
+                  TPL_NOTIFY,
                   ScsiLibNotify,
                   Context,
                   &SelfEvent
@@ -1842,7 +1862,17 @@ ScsiRead16CommandEx (
     goto ErrorExit;
   }
 
-  return ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, Event);
+  Status = ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, SelfEvent);
+  if (EFI_ERROR(Status)) {
+    //
+    // Since ScsiLibNotify() will not be signaled if ExecuteScsiCommand()
+    // returns with error, close the event here.
+    //
+    gBS->CloseEvent (SelfEvent);
+    goto ErrorExit;
+  } else {
+    return EFI_SUCCESS;
+  }
 
 ErrorExit:
   if (Context != NULL) {
@@ -2007,7 +2037,7 @@ ScsiWrite16CommandEx (
   //
   Status = gBS->CreateEvent (
                   EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
+                  TPL_NOTIFY,
                   ScsiLibNotify,
                   Context,
                   &SelfEvent
@@ -2016,7 +2046,17 @@ ScsiWrite16CommandEx (
     goto ErrorExit;
   }
 
-  return ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, Event);
+  Status = ScsiIo->ExecuteScsiCommand (ScsiIo, CommandPacket, SelfEvent);
+  if (EFI_ERROR(Status)) {
+    //
+    // Since ScsiLibNotify() will not be signaled if ExecuteScsiCommand()
+    // returns with error, close the event here.
+    //
+    gBS->CloseEvent (SelfEvent);
+    goto ErrorExit;
+  } else {
+    return EFI_SUCCESS;
+  }
 
 ErrorExit:
   if (Context != NULL) {
