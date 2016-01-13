@@ -133,7 +133,7 @@ InitGlobalDescriptorTable (
   GDT_ENTRIES *gdt;
   IA32_DESCRIPTOR gdtPtr;
   DEBUG((EFI_D_INFO, "InitGlobalDescriptorTable: Entered\n"));
-
+  __debugbreak();
   //
   // Allocate Runtime Data for the GDT
   //

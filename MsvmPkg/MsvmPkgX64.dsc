@@ -273,7 +273,7 @@
     NULL|SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf
     NULL|SecurityPkg/Library/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf
   }
-  UefiCpuPkg/CpuDxe/CpuDxe.inf
+  MsvmPkg/CpuDxe/CpuDxe.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   IntelFrameworkModulePkg/Universal/BdsDxe/BdsDxe.inf {

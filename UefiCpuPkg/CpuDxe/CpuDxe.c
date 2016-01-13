@@ -18,7 +18,6 @@
 //
 // Global Variables
 //
-BOOLEAN                   InterruptState = FALSE;
 EFI_HANDLE                mCpuHandle = NULL;
 BOOLEAN                   mIsFlushingGCD;
 UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;
@@ -157,7 +156,6 @@ CpuEnableInterrupt (
 {
   EnableInterrupts ();
 
-  InterruptState = TRUE;
   return EFI_SUCCESS;
 }
 
@@ -179,7 +177,6 @@ CpuDisableInterrupt (
 {
   DisableInterrupts ();
 
-  InterruptState = FALSE;
   return EFI_SUCCESS;
 }
 
@@ -205,7 +202,7 @@ CpuGetInterruptState (
     return EFI_INVALID_PARAMETER;
   }
 
-  *State = InterruptState;
+  *State = GetInterruptState ();
   return EFI_SUCCESS;
 }
 
@@ -846,7 +843,7 @@ InitInterruptDescriptorTable (
   EFI_STATUS                     Status;
   EFI_VECTOR_HANDOFF_INFO        *VectorInfoList;
   EFI_VECTOR_HANDOFF_INFO        *VectorInfo;
-
+  __debugbreak();
   VectorInfo = NULL;
   Status = EfiGetSystemConfigurationTable (&gEfiVectorHandoffTableGuid, (VOID **) &VectorInfoList);
   if (Status == EFI_SUCCESS && VectorInfoList != NULL) {
@@ -909,8 +906,8 @@ InitializeCpu (
   //
   // Init GDT for DXE
   //
-  InitGlobalDescriptorTable ();
-  DEBUG((EFI_D_INFO, "InitializeCpu: After InitGlobalDescriptorTable\n"));
+  //InitGlobalDescriptorTable ();
+  //DEBUG((EFI_D_INFO, "InitializeCpu: After InitGlobalDescriptorTable\n"));
   
   //
   // Setup IDT pointer, IDT and interrupt entry points
@@ -936,7 +933,6 @@ InitializeCpu (
   ASSERT_EFI_ERROR (Status);
   DEBUG((EFI_D_INFO, "InitializeCpu: After InstallMultipleProtocolInterfaces\n"));
   
-
   //
   // Refresh GCD memory space map according to MTRR value.
   //

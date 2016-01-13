@@ -152,11 +152,11 @@ TCG_DXE_DATA                 mTcgDxeData = {
     sizeof (TREE_BOOT_SERVICE_CAPABILITY_1_0),     // Size
     { 1, 0 },                       // StructureVersion
     { 1, 0 },                       // ProtocolVersion
-    TREE_BOOT_HASH_ALG_SHA1,        // HashAlgorithmBitmap
-    TREE_EVENT_LOG_FORMAT_TCG_1_2,  // SupportedEventLogs
-    TRUE,                           // TrEEPresentFlag
-    TREE_DEFAULT_MAX_COMMAND_SIZE,  // MaxCommandSize
-    TREE_DEFAULT_MAX_RESPONSE_SIZE, // MaxResponseSize
+    0,                              // HashAlgorithmBitmap
+    0,                              // SupportedEventLogs
+    FALSE,                          // TrEEPresentFlag
+    0,                              // MaxCommandSize
+    0,                              // MaxResponseSize
     0                               // ManufacturerID
   },
   &mTcgClientAcpiTemplate,
