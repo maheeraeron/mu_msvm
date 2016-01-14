@@ -1623,6 +1623,8 @@ Udp6Demultiplex (
     }
   }
 
+  gRT->GetTime (&RxData.TimeStamp, NULL);
+
   Udp6Session                  = &RxData.UdpSession;
   Udp6Session->SourcePort      = NTOHS (Udp6Header->SrcPort);
   Udp6Session->DestinationPort = NTOHS (Udp6Header->DstPort);
