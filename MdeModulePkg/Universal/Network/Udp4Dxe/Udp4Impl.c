@@ -1633,6 +1633,8 @@ Udp4Demultiplex (
     }
   }
 
+  gRT->GetTime (&RxData.TimeStamp, NULL);
+
   Udp4Session                  = &RxData.UdpSession;
   Udp4Session->SourcePort      = NTOHS (Udp4Header->SrcPort);
   Udp4Session->DestinationPort = NTOHS (Udp4Header->DstPort);

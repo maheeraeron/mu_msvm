@@ -131,6 +131,22 @@ ArpOnFrameRcvdDpc (
     goto RECYCLE_RXDATA;
   }
 
+  // 
+  // Validate hardware address length (HLEN) and protocol address length (PLEN)
+  // describe addresses that will be within the bounds of the packet payload size. 
+  // In other words ensure the actual ARP packet address fields in aggregate are 
+  // not greater than the packet payload size minus the ARP fixed header size.
+  //
+  // Note the HwAddrLen was validated above to match the interface type address size.
+  // The ProtoAddrLen can vary depending on the bound protocol.  The exact match
+  // for the bound protocol is checked below inside the NET_LIST_FOR_EACH loop.
+  // This check just ensures addresses are within the packet buffer.
+  //
+  if ((((UINT32)Head->HwAddrLen + (UINT32)Head->ProtoAddrLen) * 2) > 
+      (RxData->DataLength - sizeof(ARP_HEAD))) {
+    goto RECYCLE_RXDATA;
+  }
+    
   //
   // Set the pointers to the addresses contained in the arp packet.
   //
