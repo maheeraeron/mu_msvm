@@ -271,5 +271,7 @@ Exit:
 
 InvalidParamExit:
 
+    // DEBUG((EFI_D_VERBOSE, "NetvscDxe!SnpTransmit returning %r\n", status));
+
     return status;
 }
