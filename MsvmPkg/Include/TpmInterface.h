@@ -44,6 +44,12 @@ enum
     TpmDataPort            = 0x1044,   // 4 ports for 32-bit access
 };
 
+enum
+{
+    TcgProtocolTrEE         = 0,
+    TcgProtocolTcg2         = 1,
+};
+
 //
 // I/O port command defintiions
 //
@@ -89,4 +95,9 @@ enum
     // PPI function Id 8
     //
     TpmIoPPIGetUserConfirmation  = 8,    // do not change
+
+    //
+    // Get Tcg Protocol Version
+    //
+    TpmIoGetTcgProtocolVersion   = 32,
 };

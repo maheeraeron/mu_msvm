@@ -127,7 +127,6 @@
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
-  CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
   DebugAgentLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
   DebugLib|MsvmPkg/Library/KdDebugLib/KdDebugLib.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
@@ -184,7 +183,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
 !else
   # This default turns on errors and warnings
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
 !endif
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xFF
 
