@@ -2,6 +2,7 @@
   Implementation of EFI_HTTP_PROTOCOL protocol interfaces.
 
   Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+  (C) Copyright 2015 Hewlett Packard Enterprise Development LP<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -243,7 +244,6 @@ EfiHttpRequest (
   UINTN                         UrlLen;
   CHAR16                        *HostNameStr;
   HTTP_TOKEN_WRAP               *Wrap;
-  HTTP_TCP_TOKEN_WRAP           *TcpWrap;
   CHAR8                         *FileUrl;
   
   if ((This == NULL) || (Token == NULL)) {
@@ -290,7 +290,6 @@ EfiHttpRequest (
   HostName    = NULL;
   Wrap        = NULL;
   HostNameStr = NULL;
-  TcpWrap     = NULL;
 
   //
   // Parse the URI of the remote host.
@@ -779,6 +778,8 @@ HttpBodyParserCallback (
   )
 {
   HTTP_TOKEN_WRAP               *Wrap;
+  UINTN                         BodyLength;
+  CHAR8                         *Body;
 
   if (EventType != BodyParseEventOnComplete) {
     return EFI_SUCCESS;
@@ -789,7 +790,14 @@ HttpBodyParserCallback (
   }
 
   Wrap = (HTTP_TOKEN_WRAP *) Context;
-  Wrap->HttpInstance->NextMsg = Data;
+  Body = Wrap->HttpToken->Message->Body;
+  BodyLength = Wrap->HttpToken->Message->BodyLength;
+  if (Data < Body + BodyLength) {
+    Wrap->HttpInstance->NextMsg = Data;
+  } else {
+    Wrap->HttpInstance->NextMsg = NULL;
+  }
+  
 
   //
   // Free Tx4Token or Tx6Token since already received corrsponding HTTP response.

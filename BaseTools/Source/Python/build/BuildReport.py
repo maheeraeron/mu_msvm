@@ -41,6 +41,7 @@ from Common.DataType import TAB_BRG_PCD
 from Common.DataType import TAB_BRG_LIBRARY
 from Common.DataType import TAB_BACK_SLASH
 from Common.LongFilePathSupport import OpenLongFilePath as open
+from Common.MultipleWorkspace import MultipleWorkspace as mws
 
 ## Pattern to extract contents in EDK DXS files
 gDxsDependencyPattern = re.compile(r"DEPENDENCY_START(.+)DEPENDENCY_END", re.DOTALL)
@@ -77,13 +78,13 @@ gLineMaxLength = 120
 gEndOfLine = "\r\n"
 
 ## Tags for section start, end and separator
-gSectionStart = ">" + "=" * (gLineMaxLength-2) + "<"
-gSectionEnd = "<" + "=" * (gLineMaxLength-2) + ">" + "\n"
+gSectionStart = ">" + "=" * (gLineMaxLength - 2) + "<"
+gSectionEnd = "<" + "=" * (gLineMaxLength - 2) + ">" + "\n"
 gSectionSep = "=" * gLineMaxLength
 
 ## Tags for subsection start, end and separator
-gSubSectionStart = ">" + "-" * (gLineMaxLength-2) + "<"
-gSubSectionEnd = "<" + "-" * (gLineMaxLength-2) + ">"
+gSubSectionStart = ">" + "-" * (gLineMaxLength - 2) + "<"
+gSubSectionEnd = "<" + "-" * (gLineMaxLength - 2) + ">"
 gSubSectionSep = "-" * gLineMaxLength
 
 
@@ -232,7 +233,7 @@ class DepexParser(object):
     def __init__(self, Wa):
         self._GuidDb = {}
         for Pa in Wa.AutoGenObjectList:
-            for Package in Pa.PackageList:        
+            for Package in Pa.PackageList:
                 for Protocol in Package.Protocols:
                     GuidValue = GuidStructureStringToGuidString(Package.Protocols[Protocol])
                     self._GuidDb[GuidValue.upper()] = Protocol
@@ -264,8 +265,8 @@ class DepexParser(object):
                 GuidString = self._GuidDb.get(GuidValue, GuidValue)
                 Statement = "%s %s" % (Statement, GuidString)
             DepexStatement.append(Statement)
-            OpCode = DepexFile.read(1)     
-        
+            OpCode = DepexFile.read(1)
+
         return DepexStatement
     
 ##
@@ -360,7 +361,7 @@ class DepexReport(object):
     #
     def __init__(self, M):
         self.Depex = ""
-        self._DepexFileName = os.path.join(M.BuildDir, "OUTPUT", M.Module.BaseName + ".depex") 
+        self._DepexFileName = os.path.join(M.BuildDir, "OUTPUT", M.Module.BaseName + ".depex")
         ModuleType = M.ModuleType
         if not ModuleType:
             ModuleType = gComponentType2ModuleType.get(M.ComponentType, "")
@@ -535,7 +536,7 @@ class ModuleReport(object):
             # If a module complies to PI 1.1, promote Module type to "SMM_DRIVER"
             #
             if ModuleType == "DXE_SMM_DRIVER":
-                PiSpec =  M.Module.Specification.get("PI_SPECIFICATION_VERSION", "0x00010000")
+                PiSpec = M.Module.Specification.get("PI_SPECIFICATION_VERSION", "0x00010000")
                 if int(PiSpec, 0) >= 0x0001000A:
                     ModuleType = "SMM_DRIVER"
             self.DriverType = gDriverTypeMap.get(ModuleType, "0x2 (FREE_FORM)")
@@ -812,20 +813,20 @@ class PcdReport(object):
                     # Report PCD item according to their override relationship
                     #
                     if DecMatch and InfMatch:
-                        FileWrite(File, '    %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '('+Pcd.DatumType+')', PcdValue.strip()))
+                        FileWrite(File, '    %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '(' + Pcd.DatumType + ')', PcdValue.strip()))
                     else:
                         if DscMatch:
                             if (Pcd.TokenCName, Key) in self.FdfPcdSet:
-                                FileWrite(File, ' *F %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '('+Pcd.DatumType+')', PcdValue.strip()))
+                                FileWrite(File, ' *F %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '(' + Pcd.DatumType + ')', PcdValue.strip()))
                             else:
-                                FileWrite(File, ' *P %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '('+Pcd.DatumType+')', PcdValue.strip()))
+                                FileWrite(File, ' *P %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '(' + Pcd.DatumType + ')', PcdValue.strip()))
                         else:
-                            FileWrite(File, ' *M %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '('+Pcd.DatumType+')', PcdValue.strip()))
-                    
+                            FileWrite(File, ' *M %-*s: %6s %10s = %-22s' % (self.MaxLen, Pcd.TokenCName, TypeName, '(' + Pcd.DatumType + ')', PcdValue.strip()))
+
                     if TypeName in ('DYNHII', 'DEXHII', 'DYNVPD', 'DEXVPD'):
                         for SkuInfo in Pcd.SkuInfoList.values():
                             if TypeName in ('DYNHII', 'DEXHII'):
-                                FileWrite(File, '%*s: %s: %s' % (self.MaxLen + 4, SkuInfo.VariableGuid, SkuInfo.VariableName, SkuInfo.VariableOffset))        
+                                FileWrite(File, '%*s: %s: %s' % (self.MaxLen + 4, SkuInfo.VariableGuid, SkuInfo.VariableName, SkuInfo.VariableOffset))
                             else:
                                 FileWrite(File, '%*s' % (self.MaxLen + 4, SkuInfo.VpdOffset))
                                
@@ -1235,12 +1236,13 @@ class FdRegionReport(object):
                     DecDefaultValue = Package.Pcds[TokenCName, TokenSpaceGuidCName, DecType].DefaultValue
                     PlatformPcds[(TokenCName, TokenSpaceGuidCName)] = DecDefaultValue
         #
-        # Collect PCDs defined in DSC common section
+        # Collect PCDs defined in DSC file
         #
-        Platform = Wa.BuildDatabase[Wa.MetaFile, 'COMMON']
-        for (TokenCName, TokenSpaceGuidCName) in Platform.Pcds:
-            DscDefaultValue = Platform.Pcds[(TokenCName, TokenSpaceGuidCName)].DefaultValue
-            PlatformPcds[(TokenCName, TokenSpaceGuidCName)] = DscDefaultValue
+        for arch in Wa.ArchList:
+            Platform = Wa.BuildDatabase[Wa.MetaFile, arch]
+            for (TokenCName, TokenSpaceGuidCName) in Platform.Pcds:
+                DscDefaultValue = Platform.Pcds[(TokenCName, TokenSpaceGuidCName)].DefaultValue
+                PlatformPcds[(TokenCName, TokenSpaceGuidCName)] = DscDefaultValue
 
         #
         # Add PEI and DXE a priori files GUIDs defined in PI specification.
@@ -1255,7 +1257,7 @@ class FdRegionReport(object):
         for Pa in Wa.AutoGenObjectList:
             for ModuleKey in Pa.Platform.Modules:
                 M = Pa.Platform.Modules[ModuleKey].M
-                InfPath = os.path.join(Wa.WorkspaceDir, M.MetaFile.File)
+                InfPath = mws.join(Wa.WorkspaceDir, M.MetaFile.File)
                 self._GuidsDb[M.Guid.upper()] = "%s (%s)" % (M.Module.BaseName, InfPath)
 
         #
@@ -1277,7 +1279,7 @@ class FdRegionReport(object):
                             Guid = GuidStructureByteArrayToGuidString(GuidValue).upper()
                     for Section in Ffs.SectionList:
                         try:
-                            ModuleSectFile = os.path.join(Wa.WorkspaceDir, Section.SectFileName)
+                            ModuleSectFile = mws.join(Wa.WorkspaceDir, Section.SectFileName)
                             self._GuidsDb[Guid] = ModuleSectFile
                         except AttributeError:
                             pass
@@ -1385,6 +1387,32 @@ class FdReport(object):
         self.BaseAddress = Fd.BaseAddress
         self.Size = Fd.Size
         self.FdRegionList = [FdRegionReport(FdRegion, Wa) for FdRegion in Fd.RegionList]
+        self.FvPath = os.path.join(Wa.BuildDir, "FV")
+        self.VpdFilePath = os.path.join(self.FvPath, "%s.map" % Wa.Platform.VpdToolGuid)
+        self.VPDBaseAddress = 0
+        self.VPDSize = 0
+        self.VPDInfoList = []
+        for index, FdRegion in enumerate(Fd.RegionList):
+            if str(FdRegion.RegionType) is 'FILE' and Wa.Platform.VpdToolGuid in str(FdRegion.RegionDataList):
+                self.VPDBaseAddress = self.FdRegionList[index].BaseAddress
+                self.VPDSize = self.FdRegionList[index].Size
+                break
+
+        if os.path.isfile(self.VpdFilePath):
+            fd = open(self.VpdFilePath, "r")
+            Lines = fd.readlines()
+            for Line in Lines:
+                Line = Line.strip()
+                if len(Line) == 0 or Line.startswith("#"):
+                    continue
+                try:
+                    PcdName, SkuId, Offset, Size, Value = Line.split("#")[0].split("|")
+                    PcdName, SkuId, Offset, Size, Value = PcdName.strip(), SkuId.strip(), Offset.strip(), Size.strip(), Value.strip()
+                    Offset = '0x%08X' % (int(Offset, 16) + self.VPDBaseAddress)
+                    self.VPDInfoList.append("%s | %s | %s | %s | %s" % (PcdName, SkuId, Offset, Size, Value))
+                except:
+                    EdkLogger.error("BuildReport", CODE_ERROR, "Fail to parse VPD information file %s" % self.VpdFilePath)
+            fd.close()
 
     ##
     # Generate report for the firmware device.
@@ -1405,6 +1433,15 @@ class FdReport(object):
             for FdRegionItem in self.FdRegionList:
                 FdRegionItem.GenerateReport(File)
 
+        if len(self.VPDInfoList) > 0:
+            FileWrite(File, gSubSectionStart)
+            FileWrite(File, "FD VPD Region")
+            FileWrite(File, "Base Address:       0x%X" % self.VPDBaseAddress)
+            FileWrite(File, "Size:               0x%X (%.0fK)" % (self.VPDSize, self.VPDSize / 1024.0))
+            FileWrite(File, gSubSectionSep)
+            for item in self.VPDInfoList:
+                FileWrite(File, item)
+            FileWrite(File, gSubSectionEnd)
         FileWrite(File, gSectionEnd)
 
 

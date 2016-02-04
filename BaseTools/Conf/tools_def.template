@@ -305,6 +305,15 @@ DEFINE SOURCERY_CYGWIN_TOOLS = /cygdrive/c/Program Files/CodeSourcery/Sourcery G
 #                             Required to build platforms or ACPI tables:
 #                               Intel(r) ACPI Compiler (iasl.exe) from
 #                               https://acpica.org/downloads
+#   VS2015      -win32-  Requires:
+#                             Microsoft Visual Studio 2015 Professional Edition
+#                             Microsoft Windows Server 2003 Driver Development Kit (Microsoft WINDDK) version 3790.1830
+#                        Optional:
+#                             Required to build EBC drivers:
+#                               Intel(r) Compiler for Efi Byte Code (Intel(r) EBC Compiler)
+#                             Required to build platforms or ACPI tables:
+#                               Intel(r) ACPI Compiler (iasl.exe) from
+#                               https://acpica.org/downloads
 #   DDK3790     -win32-  Requires:
 #                             Microsoft Windows Server 2003 Driver Development Kit (Microsoft WINDDK) version 3790.1830
 #                        Optional:
@@ -357,7 +366,7 @@ DEFINE SOURCERY_CYGWIN_TOOLS = /cygdrive/c/Program Files/CodeSourcery/Sourcery G
 #                               Intel(r) ACPI Compiler from
 #                               https://acpica.org/downloads
 #   CLANG35     -Linux,Windows-  Requires:
-#                             Clang v3.5 or later, and GNU binutils targeting aarch64-linux-gnu
+#                             Clang v3.5 or later, and GNU binutils targeting aarch64-linux-gnu or arm-linux-gnueabi
 #                        Optional:
 #                             Required to build platforms or ACPI tables:
 #                               Intel(r) ACPI Compiler from
@@ -464,6 +473,15 @@ DEFINE SOURCERY_CYGWIN_TOOLS = /cygdrive/c/Program Files/CodeSourcery/Sourcery G
 #                             Required to build platforms or ACPI tables:
 #                               Microsoft ASL ACPI Compiler (asl.exe) v4.0.0 from
 #                               http://download.microsoft.com/download/2/c/1/2c16c7e0-96c1-40f5-81fc-3e4bf7b65496/microsoft_asl_compiler-v4-0-0.msi
+#   VS2015xASL  -win32-  Requires:
+#                             Microsoft Visual Studio 2015 Professional Edition
+#                             Microsoft Windows Server 2003 Driver Development Kit (Microsoft WINDDK) version 3790.1830
+#                        Optional:
+#                             Required to build EBC drivers:
+#                               Intel(r) Compiler for Efi Byte Code (Intel(r) EBC Compiler)
+#                             Required to build platforms or ACPI tables:
+#                               Microsoft ASL ACPI Compiler (asl.exe) v4.0.0 from
+#                               http://download.microsoft.com/download/2/c/1/2c16c7e0-96c1-40f5-81fc-3e4bf7b65496/microsoft_asl_compiler-v4-0-0.msi
 #   DDK3790xASL -win32-  Requires:
 #                             Microsoft Windows Server 2003 Driver Development Kit (Microsoft WINDDK) version 3790.1830
 #                        Optional:
@@ -542,6 +560,13 @@ DEFINE SOURCERY_CYGWIN_TOOLS = /cygdrive/c/Program Files/CodeSourcery/Sourcery G
 #                             Required to build platforms or ACPI tables:
 #                               Intel(r) ACPI Compiler (iasl.exe) from
 #                               https://acpica.org/downloads
+#   VS2015x86   -win64-  Requires:
+#                             Microsoft Visual Studio 2015 (x86) Professional Edition
+#                             Microsoft Windows Server 2003 Driver Development Kit (Microsoft WINDDK) version 3790.1830
+#                        Optional:
+#                             Required to build platforms or ACPI tables:
+#                               Intel(r) ACPI Compiler (iasl.exe) from
+#                               https://acpica.org/downloads
 #   ICCx86      -win64-  Requires:
 #                             Intel C Compiler V9.1(x86)
 #                        Dependencies:
@@ -598,6 +623,13 @@ DEFINE SOURCERY_CYGWIN_TOOLS = /cygdrive/c/Program Files/CodeSourcery/Sourcery G
 #                               http://download.microsoft.com/download/2/c/1/2c16c7e0-96c1-40f5-81fc-3e4bf7b65496/microsoft_asl_compiler-v4-0-0.msi
 #  VS2013x86xASL -win64- Requires:
 #                             Microsoft Visual Studio 2013 (x86) Professional
+#                             Microsoft Windows Server 2003 Driver Development Kit(Microsoft WINDDK) version 3790.1830 
+#                        Optional:
+#                             Required to build platforms or ACPI tables:
+#                               Microsoft ASL ACPI Compiler (asl.exe) v4.0.0 from
+#                               http://download.microsoft.com/download/2/c/1/2c16c7e0-96c1-40f5-81fc-3e4bf7b65496/microsoft_asl_compiler-v4-0-0.msi
+#  VS2015x86xASL -win64- Requires:
+#                             Microsoft Visual Studio 2015 (x86) Professional
 #                             Microsoft Windows Server 2003 Driver Development Kit(Microsoft WINDDK) version 3790.1830 
 #                        Optional:
 #                             Required to build platforms or ACPI tables:
@@ -2613,7 +2645,7 @@ NOOPT_VS2010x86xASL_IPF_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /LTCG /DLL /OPT:R
 #   VS2012  - Microsoft Visual Studio 2012 Professional Edition with Intel ASL
 #   ASL     - Intel ACPI Source Language Compiler
 ####################################################################################
-#   VS2012           - Microsoft Visual Studio 2012 Premium Edition
+#   VS2012           - Microsoft Visual Studio 2012 Professional Edition
 *_VS2012_*_*_FAMILY               = MSFT
 
 *_VS2012_*_MAKE_PATH              = DEF(VS2012_BIN)\nmake.exe
@@ -2731,7 +2763,7 @@ NOOPT_VS2012_X64_DLINK_FLAGS  = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /OPT
 #   VS2012  - Microsoft Visual Studio 2012 Professional Edition with Microsoft ASL
 #   ASL     - Microsoft ACPI Source Language Compiler (asl.exe)
 ####################################################################################
-#   VS2012xASL           - Microsoft Visual Studio 2012 Premium Edition
+#   VS2012xASL           - Microsoft Visual Studio 2012 Professional Edition
 *_VS2012xASL_*_*_FAMILY        = MSFT
 
 *_VS2012xASL_*_MAKE_PATH       = DEF(VS2012_BIN)\nmake.exe
@@ -3079,7 +3111,7 @@ NOOPT_VS2012x86xASL_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT
 #   VS2013  - Microsoft Visual Studio 2013 Professional Edition with Intel ASL
 #   ASL     - Intel ACPI Source Language Compiler
 ####################################################################################
-#   VS2013           - Microsoft Visual Studio 2013 Premium Edition
+#   VS2013           - Microsoft Visual Studio 2013 Professional Edition
 *_VS2013_*_*_FAMILY               = MSFT
 
 *_VS2013_*_MAKE_PATH              = DEF(VS2013_BIN)\nmake.exe
@@ -3197,7 +3229,7 @@ NOOPT_VS2013_X64_DLINK_FLAGS  = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /OPT
 #   VS2013  - Microsoft Visual Studio 2013 Professional Edition with Microsoft ASL
 #   ASL     - Microsoft ACPI Source Language Compiler (asl.exe)
 ####################################################################################
-#   VS2013xASL           - Microsoft Visual Studio 2013 Premium Edition
+#   VS2013xASL           - Microsoft Visual Studio 2013 Professional Edition
 *_VS2013xASL_*_*_FAMILY        = MSFT
 
 *_VS2013xASL_*_MAKE_PATH       = DEF(VS2013_BIN)\nmake.exe
@@ -3546,7 +3578,7 @@ NOOPT_VS2013x86xASL_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT
 #   VS2015  - Microsoft Visual Studio 2015 Professional Edition with Intel ASL
 #   ASL     - Intel ACPI Source Language Compiler
 ####################################################################################
-#   VS2015           - Microsoft Visual Studio 2013 Premium Edition
+#   VS2015           - Microsoft Visual Studio 2015 Professional Edition
 *_VS2015_*_*_FAMILY               = MSFT
 
 *_VS2015_*_MAKE_PATH              = DEF(VS2015_BIN)\nmake.exe
@@ -3664,7 +3696,7 @@ NOOPT_VS2015_X64_DLINK_FLAGS  = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /OPT
 #   VS2015  - Microsoft Visual Studio 2015 Professional Edition with Microsoft ASL
 #   ASL     - Microsoft ACPI Source Language Compiler (asl.exe)
 ####################################################################################
-#   VS2015xASL           - Microsoft Visual Studio 2013 Premium Edition
+#   VS2015xASL           - Microsoft Visual Studio 2015 Professional Edition
 *_VS2015xASL_*_*_FAMILY        = MSFT
 
 *_VS2015xASL_*_MAKE_PATH       = DEF(VS2015_BIN)\nmake.exe
@@ -3776,10 +3808,10 @@ NOOPT_VS2015xASL_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:RE
 
 
 ####################################################################################
-#   VS2015x86       - Microsoft Visual Studio 2013 (x86) professional with Intel ASL
+#   VS2015x86       - Microsoft Visual Studio 2015 (x86) professional with Intel ASL
 #   ASL  - Intel ACPI Source Language Compiler (iasl.exe)
 ####################################################################################
-#   VS2015x86           - Microsoft Visual Studio 2013 (x86) professional Edition with Intel ASL
+#   VS2015x86           - Microsoft Visual Studio 2015 (x86) professional Edition with Intel ASL
 *_VS2015x86_*_*_FAMILY        = MSFT
 
 *_VS2015x86_*_MAKE_PATH       = DEF(VS2015x86_BIN)\nmake.exe
@@ -3892,7 +3924,7 @@ NOOPT_VS2015x86_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF
 
 
 ####################################################################################
-#   VS2015x86xASL     - Microsoft Visual Studio 2013 (x86) professional with Microsoft ASL
+#   VS2015x86xASL     - Microsoft Visual Studio 2015 (x86) professional with Microsoft ASL
 #   ASL  - Microsoft ACPI Source Language Compiler (asl.exe)
 ####################################################################################
 *_VS2015x86xASL_*_*_FAMILY        = MSFT
@@ -4004,6 +4036,7 @@ NOOPT_VS2015x86xASL_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT
 *_VS2015x86xASL_EBC_VFRPP_FLAGS         = /nologo /E /TC /DVFRCOMPILE /FI$(MODULE_NAME)StrDefs.h
 *_VS2015x86xASL_EBC_SLINK_FLAGS         = /lib /NOLOGO /MACHINE:EBC
 *_VS2015x86xASL_EBC_DLINK_FLAGS         = "C:\Program Files (x86)\Intel\EBC\Lib\EbcLib.lib" /NOLOGO /NODEFAULTLIB /MACHINE:EBC /OPT:REF /ENTRY:$(IMAGE_ENTRY_POINT) /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER /MAP /ALIGN:32 /DRIVER
+
 
 ####################################################################################
 #
@@ -4285,11 +4318,11 @@ NOOPT_DDK3790xASL_IPF_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /LTCG /DLL /OPT:REF
 DEBUG_*_*_OBJCOPY_ADDDEBUGFLAG     = --add-gnu-debuglink=$(DEBUG_DIR)/$(MODULE_NAME).debug
 RELEASE_*_*_OBJCOPY_ADDDEBUGFLAG   =
 
-DEFINE GCC_ALL_CC_FLAGS            = -g -Os -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -c -include AutoGen.h
+DEFINE GCC_ALL_CC_FLAGS            = -g -Os -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -c -include AutoGen.h -fno-common
 DEFINE GCC_IA32_CC_FLAGS           = DEF(GCC_ALL_CC_FLAGS) -m32 -malign-double -freorder-blocks -freorder-blocks-and-partition -O2 -mno-stack-arg-probe
 DEFINE GCC_X64_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -mno-red-zone -Wno-address -mno-stack-arg-probe
 DEFINE GCC_IPF_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -minline-int-divide-min-latency
-DEFINE GCC_ARM_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -mword-relocations -mlittle-endian -mabi=aapcs -mapcs -fno-short-enums -save-temps -fsigned-char -ffunction-sections -fdata-sections -fomit-frame-pointer -Wno-address -mthumb -mfloat-abi=soft
+DEFINE GCC_ARM_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -mlittle-endian -mabi=aapcs -fno-short-enums -save-temps -fsigned-char -ffunction-sections -fdata-sections -fomit-frame-pointer -Wno-address -mthumb -mfloat-abi=soft
 DEFINE GCC_AARCH64_CC_FLAGS        = DEF(GCC_ALL_CC_FLAGS) -mlittle-endian -fno-short-enums -save-temps -fverbose-asm -fsigned-char  -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-builtin -Wno-address -fno-asynchronous-unwind-tables
 DEFINE GCC_DLINK_FLAGS_COMMON      = -nostdlib --pie
 DEFINE GCC_DLINK2_FLAGS_COMMON     = --script=$(EDK_TOOLS_PATH)/Scripts/GccBase.lds
@@ -4316,7 +4349,7 @@ DEFINE GCC_IPF_RC_FLAGS            = -I binary -O elf64-ia64-little   -B ia64   
 DEFINE GCC_ARM_RC_FLAGS            = -I binary -O elf32-littlearm     -B arm     --rename-section .data=.hii
 DEFINE GCC_AARCH64_RC_FLAGS        = -I binary -O elf64-littleaarch64 -B aarch64 --rename-section .data=.hii
 
-DEFINE GCC44_ALL_CC_FLAGS            = -g -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -c -include AutoGen.h -DSTRING_ARRAY_NAME=$(BASE_NAME)Strings
+DEFINE GCC44_ALL_CC_FLAGS            = -g -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -c -include AutoGen.h -fno-common -DSTRING_ARRAY_NAME=$(BASE_NAME)Strings
 DEFINE GCC44_IA32_CC_FLAGS           = DEF(GCC44_ALL_CC_FLAGS) -m32 -malign-double -fno-stack-protector -D EFI32 -fno-asynchronous-unwind-tables
 DEFINE GCC44_X64_CC_FLAGS            = DEF(GCC44_ALL_CC_FLAGS) -m64 -fno-stack-protector "-DEFIAPI=__attribute__((ms_abi))" -DNO_BUILTIN_VA_FUNCS -mno-red-zone -Wno-address -mcmodel=large -fno-asynchronous-unwind-tables
 DEFINE GCC44_IA32_X64_DLINK_COMMON   = -nostdlib -n -q --gc-sections -z common-page-size=0x20
@@ -4347,7 +4380,7 @@ DEFINE GCC46_X64_DLINK_FLAGS         = DEF(GCC45_X64_DLINK_FLAGS)
 DEFINE GCC46_X64_DLINK2_FLAGS        = DEF(GCC45_X64_DLINK2_FLAGS)
 DEFINE GCC46_ASM_FLAGS               = DEF(GCC45_ASM_FLAGS)
 DEFINE GCC46_ARM_ASM_FLAGS           = $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) DEF(GCC_ASM_FLAGS) -mlittle-endian
-DEFINE GCC46_ARM_CC_FLAGS            = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) DEF(GCC44_ALL_CC_FLAGS) DEF(GCC_ARM_CC_FLAGS) -fstack-protector
+DEFINE GCC46_ARM_CC_FLAGS            = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) DEF(GCC44_ALL_CC_FLAGS) DEF(GCC_ARM_CC_FLAGS) -fstack-protector -mword-relocations
 DEFINE GCC46_ARM_DLINK_FLAGS         = DEF(GCC_ARM_DLINK_FLAGS) --oformat=elf32-littlearm
 DEFINE GCC46_ARM_DLINK2_FLAGS        = DEF(GCC_DLINK2_FLAGS_COMMON) --defsym=PECOFF_HEADER_SIZE=0x220
 DEFINE GCC46_ARM_ASLDLINK_FLAGS      = DEF(GCC_ARM_ASLDLINK_FLAGS) --oformat=elf32-littlearm
@@ -5151,7 +5184,29 @@ RELEASE_GCC49_AARCH64_CC_FLAGS   = DEF(GCC49_AARCH64_CC_FLAGS) -Wno-unused-but-s
 *_CLANG35_*_ASLPP_PATH           = ENV(CLANG35_BIN)clang
 
 DEFINE CLANG35_WARNING_OVERRIDES = -Wno-parentheses-equality -Wno-tautological-compare -Wno-tautological-constant-out-of-range-compare -Wno-empty-body
+DEFINE CLANG35_ARM_CC_FLAGS      = DEF(GCC_ARM_CC_FLAGS) -target armv7-a -mstrict-align -mllvm -arm-use-movt=0 DEF(CLANG35_WARNING_OVERRIDES)
 DEFINE CLANG35_AARCH64_CC_FLAGS  = DEF(GCC_AARCH64_CC_FLAGS) -target aarch64 -mcmodel=small -mstrict-align DEF(CLANG35_WARNING_OVERRIDES)
+
+##################
+# CLANG35 ARM definitions
+##################
+*_CLANG35_ARM_SLINK_PATH         = ENV(CLANG35_ARM_PREFIX)ar
+*_CLANG35_ARM_DLINK_PATH         = ENV(CLANG35_ARM_PREFIX)ld
+*_CLANG35_ARM_ASLDLINK_PATH      = ENV(CLANG35_ARM_PREFIX)ld
+*_CLANG35_ARM_RC_PATH            = ENV(CLANG35_ARM_PREFIX)objcopy
+
+*_CLANG35_ARM_ASLCC_FLAGS        = DEF(GCC_ASLCC_FLAGS)
+*_CLANG35_ARM_ASLDLINK_FLAGS     = DEF(GCC_ARM_ASLDLINK_FLAGS)
+*_CLANG35_ARM_ASM_FLAGS          = DEF(GCC_ASM_FLAGS) $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) -target armv7-a -Qunused-arguments
+*_CLANG35_ARM_DLINK_FLAGS        = DEF(GCC_ARM_DLINK_FLAGS)
+*_CLANG35_ARM_DLINK2_FLAGS       = DEF(GCC_DLINK2_FLAGS_COMMON) --defsym=PECOFF_HEADER_SIZE=0x220
+*_CLANG35_ARM_PLATFORM_FLAGS     =
+*_CLANG35_ARM_PP_FLAGS           = DEF(GCC_PP_FLAGS) $(ARCHCC_FLAGS) $(PLATFORM_FLAGS)
+*_CLANG35_ARM_RC_FLAGS           = DEF(GCC_ARM_RC_FLAGS)
+*_CLANG35_ARM_VFRPP_FLAGS        = DEF(GCC_VFRPP_FLAGS) $(ARCHCC_FLAGS) $(PLATFORM_FLAGS)
+
+  DEBUG_CLANG35_ARM_CC_FLAGS     = DEF(CLANG35_ARM_CC_FLAGS) $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -O0
+RELEASE_CLANG35_ARM_CC_FLAGS     = DEF(CLANG35_ARM_CC_FLAGS) $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -Oz
 
 ##################
 # CLANG35 AARCH64 definitions
@@ -7184,7 +7239,7 @@ RELEASE_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c    -Os       -W
 
 DEFINE RVCT_ALL_ASM_FLAGS   = --diag_suppress=1786 --diag_error=warning --apcs /interwork
 DEFINE RVCT_ALL_CC_FLAGS    = --c90 -c --no_autoinline --asm --gnu --apcs /interwork --signed_chars --no_unaligned_access --split_sections --enum_is_int --preinclude AutoGen.h --diag_suppress=186 --diag_warning 167 --diag_error=warning --diag_style=ide --protect_stack
-DEFINE RVCT_ALL_DLINK_FLAGS = --ro-base 0 --no_scanlib --reloc --no_exceptions --datacompressor off --strict --symbols --diag_style=ide --no_legacyalign
+DEFINE RVCT_ALL_DLINK_FLAGS = --no_scanlib --no_exceptions --datacompressor off --strict --symbols --diag_style=ide --no_legacyalign --scatter $(EDK_TOOLS_PATH)/Scripts/Rvct-Align32.sct
 
 ####################################################################################
 #
@@ -7208,7 +7263,7 @@ RELEASE_RVCT_ARM_DLINK_FLAGS     = $(ARCHDLINK_FLAGS) DEF(RVCT_ALL_DLINK_FLAGS) 
 
 
 *_RVCT_ARM_ASM_FLAGS       = $(ARCHASM_FLAGS) $(PLATFORM_FLAGS) DEF(RVCT_ALL_ASM_FLAGS)
-*_RVCT_ARM_PP_FLAGS        = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -E
+*_RVCT_ARM_PP_FLAGS        = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -E --preinclude AutoGen.h
 *_RVCT_ARM_VFRPP_FLAGS     = $(ARCHCC_FLAGS) $(PLATFORM_FLAGS) -E  -DVFRCOMPILE --preinclude $(DEST_DIR_DEBUG)/$(MODULE_NAME)StrDefs.h
 *_RVCT_ARM_MAKE_PATH       = nmake /NOLOGO
 *_RVCT_ARM_SLINK_FLAGS     = --partial -o

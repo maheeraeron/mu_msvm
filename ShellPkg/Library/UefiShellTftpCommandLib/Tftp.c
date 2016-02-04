@@ -197,6 +197,7 @@ DownloadFile (
 **/
 STATIC 
 EFI_STATUS 
+EFIAPI
 CheckPacket (
   IN EFI_MTFTP4_PROTOCOL  *This,
   IN EFI_MTFTP4_TOKEN     *Token,
@@ -340,6 +341,7 @@ ShellCommandRunTftp (
   }
 
   RemoteFilePath = ShellCommandLineGetRawValue (CheckPackage, 2);
+  ASSERT(RemoteFilePath != NULL);
   AsciiRemoteFilePath = AllocatePool (
                           (StrLen (RemoteFilePath) + 1) * sizeof (CHAR8)
                           );
@@ -940,6 +942,7 @@ Error :
 **/
 STATIC
 EFI_STATUS
+EFIAPI
 CheckPacket (
   IN EFI_MTFTP4_PROTOCOL  *This,
   IN EFI_MTFTP4_TOKEN     *Token,
@@ -953,6 +956,7 @@ CheckPacket (
   UINTN             Index;
   UINTN             LastStep;
   UINTN             Step;
+  EFI_STATUS        Status;
 
   if ((NTOHS (Packet->OpCode)) != EFI_MTFTP4_OPCODE_DATA) {
     return EFI_SUCCESS;
@@ -982,7 +986,10 @@ CheckPacket (
 
   ShellPrintEx (-1, -1, L"%s", mTftpProgressDelete);
 
-  StrCpy (Progress, mTftpProgressFrame);
+  Status = StrCpyS (Progress, TFTP_PROGRESS_MESSAGE_SIZE, mTftpProgressFrame);
+  if (EFI_ERROR(Status)) {
+    return Status;
+  }
   for (Index = 1; Index < Step; Index++) {
     Progress[Index] = L'=';
   }

@@ -150,6 +150,9 @@ HttpTcpReceiveNotifyDpc (
     gBS->CloseEvent (Wrap->TcpWrap.Rx6Token.CompletionToken.Event);
     
     if (EFI_ERROR (Wrap->TcpWrap.Rx6Token.CompletionToken.Status)) {
+      Wrap->HttpToken->Status = Wrap->TcpWrap.Rx6Token.CompletionToken.Status;
+      gBS->SignalEvent (Wrap->HttpToken->Event);
+      FreePool (Wrap);
       return ;
     }
 
@@ -157,6 +160,9 @@ HttpTcpReceiveNotifyDpc (
     gBS->CloseEvent (Wrap->TcpWrap.Rx4Token.CompletionToken.Event);
     
     if (EFI_ERROR (Wrap->TcpWrap.Rx4Token.CompletionToken.Status)) {
+      Wrap->HttpToken->Status = Wrap->TcpWrap.Rx4Token.CompletionToken.Status;
+      gBS->SignalEvent (Wrap->HttpToken->Event);
+      FreePool (Wrap);
       return ;
     }
   }
@@ -1029,10 +1035,8 @@ HttpConfigureTcp4 (
   EFI_TCP4_CONFIG_DATA       *Tcp4CfgData;
   EFI_TCP4_ACCESS_POINT      *Tcp4AP;
   EFI_TCP4_OPTION            *Tcp4Option;
-  HTTP_TCP_TOKEN_WRAP        *TcpWrap;
 
   ASSERT (HttpInstance != NULL);
-  TcpWrap = &Wrap->TcpWrap;
 
 
   Tcp4CfgData = &HttpInstance->Tcp4CfgData;
