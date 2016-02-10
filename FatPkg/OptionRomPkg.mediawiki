@@ -1,0 +1,5 @@
+<!-- [[Category:EDKII Packages]] -->
+This package is designed to interoperate with the EDK II open source and this package is required to build PCI compliant Option ROM image for all CPU architectures, including EBC target. A single driver can support mixes of EFI 1.1, UEFI 2.0 and UEFI 2.1. 
+
+===Source Repository===
+{{Edk2SubPkg|OptionRomPkg}}

@@ -1,0 +1,41 @@
+__NOTOC__
+==Step-by-step Instructions==
+==GitHub Help==
+
+GitHub (https://help.github.com/index.html) provides step-by-step instructions for user registration and basic features supported by GitHub 
+
+* Setup GitHub for Linux | Windows | MAC | All (https://help.github.com/articles/set-up-git)
+* To download and install a Git GUI interface (http://git-scm.com/)
+
+==='''GitHub EDK II Project Repositories'''===
+
+* The EDK II project repository is available at https://github.com/tianocore/edk2. 
+* Prebuilt Windows tools are available at https://github.com/tianocore/edk2-BaseTools-win32. 
+* Please note that FatPkg is not included in the EDKII project repository, it is an independent repository which can be found at https://github.com/tianocore/edk2-FatPkg.
+* Content that is not released under an accepted open source license can be found at https://github.com/tianocore/edk2-non-osi.<BR>
+
+=='''How to Setup the EDK II Tree'''==
+
+
+A few different build environment types are documented.  If instructions are not available for your exact system configuration, you may still be able to tweak the instructions to work on your system.
+
+* [[Using EDK II with Native GCC]] (Recommended when using newer versions of Linux)
+* [[Windows systems]]
+* [[Xcode]] (Mac OS X)
+* Other [[Unix-like systems]] (For '''older''' Linux distributions, or when using Cygwin or Mac OS X)
+
+
+'''Note:''' Some of the following examples use the Multiple Workspace feature to configure the EDK II BaseTools.  More information on the Multiple Workspace feature can be found at the following location. <BR>
+* [[Multiple_Workspace]]
+
+
+==  EDK II Development Process ==
+After setting up your build environment see  [[EDK II Development Process]] for making contributions to the EDK II Project.
+
+==Further Help==
+
+If you have questions about the code or run into obstacles getting things to work for you, please join our [[edk2-devel]] email list and ask your EDK II related questions on the list.
+
+How to Write a simple UEFI EDK II Application, see: [[Getting Started Writing Simple Application]]
+
+Understanding the basic setup of .DSC, .DEC, and .INF files [[Build Description Files]]

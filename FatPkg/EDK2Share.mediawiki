@@ -1,0 +1,12 @@
+<!-- [[Category:EDKII Share]] -->
+{{project-summary
+|sum=EDK II Share project|cat=none
+|lic=none
+|own=laurie0131 |docs=http://sourceforge.net/projects/edk2share/files
+|src=https://edk2share.svn.sourceforge.net/svnroot/edk2share/trunk
+|dev=http://sourceforge.net/projects/edk2share/develop}}
+
+'''Separate Sourceforge project to have EDK II contributed source code and applications'''
+* non-supported
+* untested
+* separate SVN repository

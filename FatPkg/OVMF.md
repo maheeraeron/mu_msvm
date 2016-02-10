@@ -1,0 +1,1 @@
+Moved to [http://www.tianocore.org/ovmf](http://www.tianocore.org/ovmf/).

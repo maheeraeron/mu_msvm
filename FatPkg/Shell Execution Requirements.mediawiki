@@ -1,0 +1,64 @@
+{{UEFIShell}}
+
+= Shell Requirements =
+The shell is explicitly defined as a UEFI 2.1+ Application.  That means that is has a requirement on a completed system table and many protocols.  
+The shell will use features only found in UEFI 2.3+ (such as SimpleTextInputEx), but will function with a reduced feature set without these features.  Note that these reductions in functionality may make the the shell non-spec compliant.
+
+== Table Requirements ==
+The shell uses many functions found on the System Table or sub-tables.
+
+=== System Table ===
+*EFI Table Header
+*ConsoleInHandle
+*ConIn
+*ConsoleOutHandle
+*ConOut
+*StandardErrorHandle
+*StdErr
+
+=== Boot Services ===
+All major sections of this table are used.
+*Event, Timer, and Task Priority Services
+*Memory Allocation Services
+*Protocol Handler Services
+*Image Services
+*Miscelaneous Boot Services
+
+=== Runtime Services ===
+Many sections of this table are used.
+*Variable Services
+*Time Services
+*Miscelaneous Runtime Services
+
+==Protocol Dependancy==
+The shell uses many UEFI standard protocols to perform.
+=== Required ===
+*gEfiSimpleTextInProtocolGuid
+*gEfiSimpleTextOutProtocolGuid
+*gEfiSimpleFileSystemProtocolGuid
+*gEfiLoadedImageProtocolGuid
+*gEfiComponentName2ProtocolGuid
+*gEfiUnicodeCollation2ProtocolGuid
+*gEfiDevicePathProtocolGuid
+*gEfiDevicePathToTextProtocolGuid
+*gEfiPciRootBridgeIoProtocolGuid
+*gEfiBlockIoProtocolGuid
+=== Optional ===
+These are used for shell nesting operations, but are not required by the first shell instance.
+*gEfiShellProtocolGuid
+*gEfiShellParametersProtocolGuid
+=== Reduced Feature Optional ===
+Lacking these protocols will reduce the feature set.
+*gEfiSimpleTextInputExProtocolGuid
+
+=== Command Dependant ===
+The main shell and some commands will function without these.  Some commands may not function.
+*gEfiSimplePointerProtocolGuid
+*gEfiDriverHealthProtocolGuid
+*gEfiDriverFamilyOverrideProtocolGuid
+*gEfiHiiConfigAccessProtocolGuid
+*gEfiHiiDatabaseProtocolGuid
+*gEfiCpuArchProtocolGuid
+*gEfiIp6ProtocolGuid
+*gEfiIp6ServiceBindingProtocolGuid
+*gEfiIp6ConfigProtocolGuid

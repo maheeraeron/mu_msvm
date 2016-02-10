@@ -1,0 +1,89 @@
+{{UEFIShell}}
+
+A Shell application is a UEFI Application that consumes a shell protocol.  For clarity a UEFI application is a binary that is unloaded upon return from the entry point routine.  The protocols are produced by the shell are EFI_SHELL_PROTOCOL (produced on the shell handle) and EFI_SHELL_PARAMETERS_PROTOCOL (produced on the child application’s handle).  
+ Use OpenProtocol function to get the protocol pointers.
+==Using EFI_SHELL_PROTOCOL==
+There may be more than 1 instance of this protocol, and the goal of the application should be to open the instance produced by the immediate parent shell.  From EFI_LOADED_IMAGE_PROTOCOL you would get the handle of your parent and attempt to open the protocol on that handle before doing an open-ended search for the protocol.
+==Features of EFI_SHELL_PROTOCOL==
+The EFI_SHELL_PROTOCOL provides access to support functions of the shell.  This is how SHELL_FILE_HANDLEs are created and destroyed, file names are interpreted, environment variables are get and set, and things of that nature.  See the UEFI Shell Specification 2.0 for all the details on the protocol.
+==Using EFI_SHELL_PARAMETERS_PROTOCOL==
+There is a single instance of this protocol on the handle of each child application.  You can search your own ImageHandle to find the correct instance of this protocol.
+==Features of EFI_SHELL_PARAMETERS_PROTOCOL==
+The EFI_SHELL_PARAMETERS_PROTOCOL provides primarily StdIn, StdOut, and StdErr to shell applications.  When a user on the command line does something like redirect StdErr to a file, it will change the StdErr member on this protocol to automatically write to that file.
+==Using the ShellLib==
+The ShellLib has at a single library instance: UefiShellLib.  This provides an easy way to access the above protocols and has a few extra support functions that are related, but not dependant on the protocols.
+The UefiShellLib instance has another very significant feature.  It will work on the EDK Shell in a seamless fashion.  When the functions are different between the underlying protocols, your application does not need to change at all.
+
+List of functions of ShellLib:
+*ShellGetFileInfo
+*ShellSetFileInfo
+*ShellOpenFileByDevicePath
+*ShellOpenFileByName
+*ShellCreateDirectory
+*ShellReadFile
+*ShellWriteFile
+*ShellCloseFile
+*ShellDeleteFile
+*ShellSetFilePosition
+*ShellGetFilePosition
+*ShellFlushFile
+*ShellFindFirstFile
+*ShellFindNextFile
+*ShellGetFileSize
+*ShellGetExecutionBreakFlag
+*ShellGetEnvironmentVariable
+*ShellSetEnvironmentVariable
+*ShellExecute
+*ShellGetCurrentDir
+*ShellSetPageBreakMode
+*ShellOpenFileMetaArg
+*ShellCloseFileMetaArg
+*ShellFindFilePath
+*ShellFindFilePathEx
+*ShellCommandLineParseEx
+*ShellCommandLineFreeVarList
+*ShellCommandLineGetFlag
+*ShellCommandLineGetValue
+*ShellCommandLineGetRawValue
+*ShellCommandLineGetCount
+*ShellCommandLineCheckDuplicate	ShellInitialize
+*ShellPrintEx
+*ShellPrintHiiEx
+*ShellIsDirectory
+*ShellIsFile
+*ShellIsFileInPath
+*StrnCatGrow
+*ShellCopySearchAndReplace
+*ShellIsHexaDecimalDigitCharacter
+*ShellIsDecimalDigitCharacter
+*ShellPromptForResponse
+*ShellPromptForResponseHii
+*ShellIsHexOrDecimalNumber
+*ShellConvertStringToUint64
+*ShellFileExists
+
+==A Simple Shell Application ==
+
+  EFI_STATUS
+  EFIAPI
+  UefiMain (
+    IN EFI_HANDLE        ImageHandle,
+    IN EFI_SYSTEM_TABLE  *SystemTable
+    )
+  {
+    EFI_STATUS                     Status;
+    EFI_SHELL_PARAMETERS_PROTOCOL  *ShellParameters
+    //
+    // See if we have a shell parameters placed on us
+    //
+    Status = gBS->OpenProtocol (
+                  gImageHandle,
+                  &gEfiShellParametersProtocolGuid,
+                  (VOID **) &ShellParameters,
+                  gImageHandle,
+                  NULL,
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                 );
+  }
+
+This application starts the process of getting access to a shell protocol.

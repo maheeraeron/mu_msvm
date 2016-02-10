@@ -1,0 +1,58 @@
+<!-- [[Category:EDKIIBuildTools]] -->
+= Tool Information = 
+This is a table of all of the tools that are part of the [[edk2-buildtools| EDK II Build Tools]] project.
+
+To build these tools see [[BuildTool Setup Guide]].
+
+
+<div class="t_projects">
+<table >
+<tr><th>Tool Name</th><th>Tool Description</th></tr>
+<tr><td>BootSectImage.exe</td><td>parses the content of input file with Filename and prints BPB information to the screen. When patch option is specified it will patch BPB information using information from an input file or MBR.</td></tr>
+
+<tr><td>Build.exe</td><td>the master command line (CLI) tool that provides a single command for selecting various build options.</td></tr>
+
+<tr><td>EfiLdrImage.exe</td><td>combines PE files into one with EFI loader header. 
+
+</td></tr><tr><td>EfiRom.exe</td><td>is used to build an Option ROM image from UEFI PE32 file(s) and/or legacy option ROM images that conform to PCI 2.3 or PCI 3.0 specifications for Option ROM layout
+
+</td></tr><tr><td>GenBootSector.exe</td><td>reads boot sector data of a drive into file or writes the boot sector data to a drive from a file. 
+
+</td></tr><tr><td>GenDepex.exe</td><td>parses the input dependency expression string or the preprocessed DSX file to generate the binary PI dependency expression according to module type. 
+
+</td></tr><tr><td>GenFds.exe</td><td>generates the Ffs, Fv, FD and Section data depending on the selected command line options. 
+
+</td></tr><tr><td>GenFfs.exe</td><td>generates FFS files for inclusion in a firmware volume. 
+
+</td></tr><tr><td>GenFV.exe</td><td>generates a PI firmware volume image or a UEFI capsule image from the PI firmware files or the binary files, which conforms to the firmware volume image format defined in PI specification or UEFI capsule image format defined in UEFI specification. 
+
+</td></tr><tr><td>GenFw.exe</td><td>processes a PE32 image to get image data or image file.
+
+</td></tr><tr><td>GenPage.exe</td><td>is composed of two parts: the page table part, placed at the offset specified from option, and the non-page table part which is placed at the beginning of the output file. 
+
+</td></tr><tr><td>GenPatchPcdTable.exe</td><td> searches the image map file to find every patchable PCD name and its real address, then parses the binary EFI image to get each section name and address, and calculates PCD offset in the binary EFI image and writes it into the output file.
+
+</td></tr><tr><td>GenSec.exe</td><td>GenSec generates valid EFI_SECTION type files, which conform to the firmware file section defined in the PI specification, from PE32/PE32+/COFF image files or other binary files. 
+
+</td></tr><tr><td>GenVtf.exe</td><td> generates the Boot Strap File (AKA Volume Top File, or VTF) for IPF images. 
+
+</td></tr><tr><td>LzmaCompress.exe</td><td>encodes or decodes files with LZMA encode or decode algorithm. 
+
+</td></tr><tr><td>PatchPcdValue.exe</td><td>sets the specific value into the binary image according to the input PCD offset and type. 
+
+</td></tr><tr><td>Spd2Dec.exe</td><td> converts an SPD file to a DEC file. 
+
+</td></tr><tr><td>Split.exe</td><td> creates two Binary files either in the same directory as the current working directory or in the specified directory. 
+
+</td></tr><tr><td>TargetTool.exe</td><td>prints current build setting, clear current setting, or modify the current setting in target.txt. 
+
+</td></tr><tr><td>TianoCompress.exe</td><td> encodes or decodes files with EFI extension encode or decode algorithm.
+ 
+</td></tr><tr><td>Trim.exe</td><td> processes the preprocessed file by Compiler to remove the unused content to generate the file to be processed further by EDKII tools. 
+
+</td></tr><tr><td>VfrCompile.exe</td><td> parses the preprocessed UEFI and Framework VFR file to generate UEFI IFR opcode table, Binary Data and IFR listing file. 
+ 
+</td></tr><tr><td>VolInfo.exe</td><td>displays the contents of a firmware volume residing in a file for informational purposes.
+</td></tr>
+</table>
+</div>

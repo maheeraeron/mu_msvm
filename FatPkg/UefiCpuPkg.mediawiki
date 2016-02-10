@@ -1,0 +1,5 @@
+<!-- [[Category:EDKII Packages]] -->
+This Package provides UEFI compatible CPU modules and libraries 
+
+===Source Repository===
+{{Edk2SubPkg|UefiCpuPkg}}
