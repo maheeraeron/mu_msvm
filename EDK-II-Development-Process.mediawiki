@@ -1,0 +1,35 @@
+=EDK II Development Process=
+
+First check out [[Getting Started with EDK II]] for downloading the latest EDK II development project with your build environment.   
+
+
+
+=='''Development Process for the EDK II Project'''==
+The developer process for the EDK II project is:<BR>
+#	Setup the EDK II tree if you do not have one<BR>
+#	Create and checkout a topic branch for new feature or bug fix<BR>
+#	Make changes in the working tree<BR>
+#	Break up working tree changes into independent commits
+#*       Commits should contain one logical change
+#*       Commits should build / boot if possible to support use of bisect<BR>
+#	Follow the commit message template given below when writing commit messages<BR>
+#	Use the ‘PatchCheck.py’ script under ‘edk2\BaseTools\Scripts’ directory to verify the commits are correctly formatted<BR>
+#	Update the master branch (pull or fetch/merge)<BR>
+#	Rebase the topic branch onto master branch<BR>
+#	Create patch (serial) to the <a href="mailto:edk2-devel-bounces@lists.01.org?Subject=Patch> edk2-devel </a> mailing list or upload the topic branch to your forked EDK II project and send the URL and branch name of the fork to the above mailing list<BR>
+#	Modify local commits based on the review feedbacks and repeat steps 3 to 9<BR>
+
+<BR>
+<BR>
+The maintainer process for the EDK II project is:<BR>
+#	Determine if a patch has met the review requirements for the package<BR>
+#	Update the master branch<BR>
+#	Create and checkout an integration branch<BR>
+#	Integrate reviewed commits on the integration branch<BR>
+#	Rebase commit message to include any reviewed-by or other attributions<BR>
+#	Push changes to the EDKII project repository<BR>
+#*	Pushing the integration branch directly to origin/master is preferred<BR>
+
+=='''See Also'''==
+* [[Commit-Message-Format]]
+* [[Code-Style]]

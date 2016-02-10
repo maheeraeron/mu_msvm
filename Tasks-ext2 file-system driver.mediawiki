@@ -1,0 +1,36 @@
+<!-- [[Category:GSOC2011]] -->
+<!-- [[Category:Tasks]] -->
+Develop an [[Wikipedia:Ext2|ext2]] filesystem driver.  (read-only support would be useful as a first step)
+
+* Difficulty: Medium ... Hard
+* Language: C
+* Mentor: {{sfuser|geekboy15a}}
+* Suggested by: {{sfuser|rsun3}}
+
+=Current Status=
+* Being worked on by Alin Rus for [[GSOC2011]]
+** Source: https://github.com/rraf/Ext2Pkg
+
+=Details=
+Filesystems in UEFI can be accessed through the SimpleFileSystem protocol.  This protocol is the defined within [https://edk2.svn.sourceforge.net/svnroot/edk2/trunk/edk2/MdePkg/Include/Protocol/SimpleFileSystem.h SimpleFileSystem.h].
+
+This project should be completed with a [[BSD License]].
+This would mean that GPL licenses ext2 code or header files cannot be used.
+You would need to investigate ext2's disk format by looking for documentation,
+consulting with ext2(+) developers, or (as a last resort) by examining the disk contents.
+
+It may be possible to leverage [[BSD License|BSD licensed]] code from a
+reputable open source project, but using 3rd-party code does add
+some extra complexity (see [[Code Contributions]]).
+
+=Development environment=
+Building: This project can be completed on any edk2 supported OS or toolchain.
+
+Testing: [http://www.tianocore.org/ovmf/ OVMF] would probably provide the easiest environment for testing your project.  You should be able to build your driver into OVMF and then run OVMF with a hard disk image that contains an ext2 file-system.
+
+=Further Discussion=
+This project would be for an edk2 based driver, so please discuss the project on [[edk2-devel]].
+
+=See Also=
+* [[Tasks]]
+* [[GSOC2011#Read-only ext2 driver]]

@@ -1,0 +1,248 @@
+{{UDK2014}}
+
+<span style="font-size: 15.0pt; text-align: center; font-family: Verdana; color: #004280; font-weight: bold; font-style: normal">
+=='''UEFI and EDK II Learning and Development'''==
+</span>
+
+Welcome to UEFI and EDK II Learning and Development.  The courses below are provided to help you increase your knowledge of UEFI and EDK II and to aid you in performing UEFI- and EDK II-related tasks.
+These courses are provided and produced as a courtesy of Intel Corporation. 
+
+To view the online courses, you'll need   [http://sourceforge.net/projects/edk2/files/Training/Flash_Instructions.pdf/download Adobe* Flash Player 10] or higher with Microsoft Internet Explorer. (Also works with 
+[http://www.adobe.com/products/flashplayer.html Adobe Flash Player] 13)  Before you begin a course, review the course objectives and intended audience to determine if the course is right for you.  Then, click the course link to begin.  Enjoy learning more about UEFI and EDK II!
+
+
+<br>
+How to download: Download each lesson’s '''Zip file**'''  into your local directory.  Then unzip each one and run each of  the .htm files locally. The Flash Player is still required.
+
+==='''Courses'''===
+
+<div class="t_projects">
+<table width="100%">
+<tr>
+    <th colspan="4" style="background-color:#a9c6dd">
+'''Defining Specifications' Role in Firmware & Initializing the Boot Process''' Lessons 0 - 5 </th>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+Intended Audience:Firmware/Software Engineers <br>
+Course Goal:Initialize the boot process by following the UEFI specifications
+</td>
+</tr>    
+<tr>
+        <th>Download</th>
+        <th>Description</th>
+    </tr>
+<tr></tr>
+<tr>
+
+  <td>
+[https://github.com/tianocore-docs/Training/raw/master/Online/intro/Defining_Specifications_Role_in_Firmware.zip Zip file**] 
+  <br>
+ 
+  </td>
+
+  <td>
+
+'''Lesson 0: Defining Specifications' Role in Firmware'''<br>
+  
+  </td>
+
+
+</tr>
+
+<!-- COMMENT  -->
+<tr>
+
+  <td>
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson1/Lesson_1_PEI_and_Course_Intro.zip Zip File**] 
+  <br>
+ 
+  </td>
+
+  <td>
+
+'''Lesson 1: Course Introduction and Pre-EFI (PEI) and Security (SEC) Phases'''  <br>
+  
+  </td>
+
+
+</tr>
+<!-- COMMENT  -->
+<tr>
+
+  <td>
+ 
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson2/Lesson_2_DXE.zip Zip File**]
+ 
+  </td>
+
+  <td>
+  
+''' Lesson 2: Driver Execution Environment (DXE)'''<br>
+  
+  </td>
+
+
+</tr>
+<!-- COMMENT  -->
+<!-- COMMENT  -->
+<tr>
+
+  <td>
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson3/Lesson_3_Drivers.zip Zip File**]
+ 
+ 
+  </td>
+
+  <td>
+  '''Lesson 3: UEFI Drivers '''<br>
+  
+  </td>
+
+
+</tr>
+<!-- COMMENT  -->
+<!-- COMMENT  -->
+<tr>
+
+  <td>
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson4/Lesson_4_Firmware.zip Zip File**] 
+ 
+  </td>
+
+  <td>
+  '''Lesson 4: Firmware and Data Storage'''<br>
+  
+  </td>
+
+
+</tr>
+<!-- COMMENT  -->
+<!-- COMMENT  -->
+<tr>
+
+  <td>
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson5/Lesson_5_BDS_HII.zip Zip File**]
+ 
+  </td>
+
+  <td>
+  '''Lesson 5: Boot Device Selection (BDS) and Human Interface Infrastructure (HII)'''<br>
+  
+  </td>
+
+
+</tr>
+<!-- COMMENT  -->
+<!-- COMMENT  -->
+
+<!-- COMMENT  -->
+<!-- COMMENT  -->
+
+</table>
+<hr>
+
+===Training Course Detailed Descriptions ===
+''(downloads below are the same as above)''
+
+'''Lesson 0: Defining Specifications' Role in Firmware'''<br>
+Intended Audience: Firmware/Software Engineers 
+Course Goal: Briefly explore the history and role of specifications in firmware 
+
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/Intro/Defining_Specifications_Role_in_Firmware.zip Lesson 0 Zip file**] 
+
+
+Lesson 0: <br>
+Course Objectives: When you complete the course, you will be able to:
+* Identify and define the Legacy BIOS and UEFI specifications
+* Compare the similarities and differences of Legacy BIOS and UEFI
+* Define Platform Initialization and explain its evolution from “The Framework” to “Platform Initialization”
+* Explain the benefits of Platform Initialization
+* Define EDK I and II and their purposes
+
+<hr>
+
+'''Initializing the Boot Process'''  Lessons 1 - 5 <br>
+Intended Audience:Firmware/Software Engineers 
+Course Goal:Initialize the boot process by following the UEFI specifications
+
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson1/Lesson_1_PEI_and_Course_Intro.zip Lesson 1 Zip File**] 
+
+
+'''Lesson 1: Course Introduction and Pre-EFI (PEI) and Security (SEC) Phases''' <br>
+When you complete this lesson, you will be able to: 
+* Access EDK II to assist you in in using commercial compilers, providing for self-hosted development, and supplying libraries to assist in managing common tasks. 
+* Use tools to assist you in Platform Initialization 
+* Define and implement types of debugging allowed with EDK II 
+* Identify the responsibilities of the Security phase 
+* Define PEI and its purpose, functions, attributes, and components 
+* Describe PEI’s relationship to memory 
+* Explain HOBs, their purpose, and contribution to the PEI phase 
+* Transition from the PEI phase to the DXE phase.  
+
+
+
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson2/Lesson_2_DXE.zip Lesson 2 Zip File**]
+
+
+''' Lesson 2: Driver Execution Environment (DXE)'''<br>
+When you complete this lesson, you will be able to: 
+* Summarize the DXE phase and its purpose, functions, properties, attributes, and components * Identify the responsibilities of the DXE phase 
+* Describe events and their role in the DXE phase 
+* Define architectural protocols and their role in the DXE phase 
+* Compare and contrast the two types of DXE drivers: Early DXE Phase Drivers and UEFI Drivers 
+* Explain System Management Mode Services’ characteristics, services, and role in PI. 
+
+
+
+
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson3/Lesson_3_Drivers.zip Lesson 3 Zip File**]
+
+'''Lesson 3: UEFI Drivers '''<br>
+When you complete this lesson, you will be able to:
+*    Summarize UEFI drivers’ attribute, functions, and contents
+*    Compare and contrast drivers and applications
+*    Define UEFI protocols and explain their properties
+*    Outline the UEFI driver design process
+*    Identify and define the types of UEFI drivers
+*    Describe the necessary and recommended protocols for writing UEFI drivers
+
+
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson4/Lesson_4_Firmware.zip Lesson 4 Zip File**] 
+
+
+'''Lesson 4: Firmware and Data Storage'''<br>
+When you complete this lesson, you will be able to:
+*	Define Firmware Storage, Firmware Files, Firmware File Systems, and Firmware Volumes and explain their hierarchical relationship.
+*	Define Terse Image
+*	Explain why using a Terse Image is more beneficial than using a UEFI Image
+*	Locate firmware storage in a physical memory map
+*	Load drivers from a non-flash location
+
+
+
+[https://github.com/tianocore-docs/Training/raw/master/Online/lesson5/Lesson_5_BDS_HII.zip Lesson 5 Zip File**]
+
+'''Lesson 5: Boot Device Selection (BDS) and Human Interface Infrastructure (HII)'''<br>
+When you complete this lesson, you will be able to: 
+* Explain the primary steps of the BDS Phase 
+* Define BDS’s goals 
+* Identify BDS’ functions and components 
+* Define global defined variables 
+* Identify a UEFI device path 
+* Search for handles in the handle database 
+* Define HII and identify its components 
+* Explain how data communicates with HII, the user, and UEFI drivers 
+* Identify the functions of the HII database 
+* Define Visual Forms Representation (VFR) 
+* Define Internal Forms Representation (IFR) 
+* Select Data from Forms Using HII 
+

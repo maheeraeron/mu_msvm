@@ -1,0 +1,31 @@
+<!-- [[Category:EDKII Packages]] -->
+<!-- [[Category:EADK]] -->
+
+'''Standard Library''' Information.
+
+The Standard Library component of the UDK is made up of three seperate, but interconnected, [[EDKII Packages|packages]].
+
+== AppLib ==
+The AppPkg Package provides applications that use Standard Libraries.
+
+[https://edk2.svn.sourceforge.net/svnroot/edk2/trunk/edk2/AppPkg/ReadMe.txt ReadMe]
+===Source Repository===
+{{Edk2SubPkg|AppPkg}}
+
+== StdLib == 
+The StdLib Packages provide native UDK implemenations of standard libraries.
+
+[https://edk2.svn.sourceforge.net/svnroot/edk2/trunk/edk2/StdLib/ReadMe.txt ReadMe]
+===Source Repository===
+{{Edk2SubPkg|StdLib}}
+
+== StdLibPrivateInternalFiles == 
+The StdLibPrivateInternalFiles Package of files for use by StdLib only.  Do not use directly.
+
+[https://edk2.svn.sourceforge.net/svnroot/edk2/trunk/edk2/StdLibPrivateInternalFiles/ReadMe.txt ReadMe]
+===Source Repository===
+{{Edk2SubPkg|StdLibPrivateInternalFiles}}
+
+==Standard Library Engineering Resources==
+* <tbd>
+* <tbd>

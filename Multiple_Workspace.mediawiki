@@ -1,0 +1,31 @@
+==='''Introduction:'''===
+An update to the EDKII build tools now allows the setting of multiple paths that will be searched when attempting to resolve the location of packages.  This new feature allows for more flexibility when designing a tree layout or combining sources from different sources.  The new functionality is enabled through the addition of a new environment variable (PACKAGES_PATH). 
+
+The PACKAGES_PATH variable is an ordered list of additional search paths using the default path separator of the host OS between each entry.  The first path in the list has the highest priority and the last path has the lowest priority.  The path specified by the WORKSPACE variable always has the highest search priority over any PACKAGE_PATH entries.
+
+To use this feature, the PACKAGES_PATH environment variable must be set prior to running the edksetup script.  The reason for this is that the edksetup script determines the location of the Conf and BaseTools directory location based on the values of the WORKSPACE and PACKAGES_PATH environment variables.
+
+The use of the PACKAGES_PATH environment variable is optional and if it is not defined the build will function like it has in the past.
+
+==='''Environment Variables:'''===
+*         WORKSPACE
+**    Location of the Build directory
+**    Always highest search priority
+*        PACKAGES_PATH
+**   List of additional paths to search for packages using OS path separator character
+**   Paths are listed in priority order
+
+'''Example:'''
+  set WORKSPACE=c:\efi\test
+  set PACKAGES_PATH=%WORKSPACE%\platform;%WORKSPACE%\edk2
+
+In this case WORKSPACE is the container for two trees as well as the location of the Build directory.  The example assumes the set of code packages for a given platform are contained in the platform directory.  While the code packages from the open source repository are contained in the edk2 directory.
+
+When the build tools are run with this configuration the directories will be scanned in the following order to find packages listed in the DSC and FDF files.
+#       c:\efi\test
+#       c:\efi\test\platform
+#       c:\efi\test\edk2
+
+'''Summary:'''
+*         Use of PACKAGES_PATH is not required
+*         PACKAGES_PATH must be set prior to running the edksetup script for correct tool configuration

@@ -1,0 +1,168 @@
+<div class="t_projects">
+<table>
+<tr><th colspan="4" style="background-color:#a9c6dd">EDK II White papers</th></tr>
+<tr>
+<td>'''Download PDF'''</td>
+<td>
+'''Title'''<Br>
+'''Description'''<br>
+*'''Date Published'''<BR>
+
+
+
+</td>
+</tr>
+
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_SMM.pdf  .PDF] or [https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_SMM.vsd .VSD]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_SMM.pdf  EDK II Topology SMM] - White Paper contributed by Lee Hamel<BR>
+EDK II Topology – SMM: Topology of how SMM is set up and executed
+
+* Jan 2016
+</td>
+</tr>
+
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_S3.pdf  .PDF] or
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_S3.vsd .VSD]<BR>
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_S3.pdf EDK II Topology S3 ] - White Paper contributed by Lee Hamel<BR>
+EDK II Topology - S3: Topology of how S3 is set up and executed
+
+* Jan 2016
+</td>
+</tr>
+
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_PCI_Enumeration.pdf  .PDF] or [https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_PCI_Enumeration.vsd .VSD]
+
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/EDK_II_Topology_-_PCI_Enumeration.pdf  EDK II Topology PCI Enumeration] - White Paper contributed by Lee Hamel<BR>
+EDK II Topology - PCI Enumeration: Topology of how PCI Enumeration is set up and executed
+
+
+* Jan 2016
+</td>
+</tr>
+
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/UDK_Build_Integration_of_Reset_Vector.pdf PDF]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/Edk_II_Topology/UDK_Build_Integration_of_Reset_Vector.pdf UDK Build Integration of Reset Vector]  - White Paper contributed by Lee Hamel<BR>
+How the Reset Vector is integrated into a UDK build
+
+* Jan 2016
+</td>
+</tr>
+
+
+<tr>
+<td>
+
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/EDKIIHttpBootGettingStartedGuide_0_7.pdf  .PDF] 
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/EDKIIHttpBootGettingStartedGuide_0_7.pdf EDK II HTTP Boot Getting Started Guide] <BR>
+This document is a getting started guide for using the HTTP boot capability introduced in the UEFI Specification, revision 2.5.
+* Dec 2015 Rev 0.7
+</td>
+</tr>
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_Implementing_UEFI_Authenticated_Variables_in_SMM_with_EDKII_V2.pdf .PDF]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_Implementing_UEFI_Authenticated_Variables_in_SMM_with_EDKII_V2.pdf 
+A Tour Beyond BIOS Implementing UEFI Authenticated Variables in SMM with EDKII]
+<br>
+This paper presents the internal structure and boot flow of the SMM-based UEFI Authenticated Variable driver in the MDE Module Package and Security Package of the EDKII.
+<br>
+Prerequisite
+This paper assumes that audience has EDKII/UEFI firmware development experience. He or she should also be familiar with UEFI/PI firmware infrastructure, such as SEC, PEI, DXE, runtime phase.
+
+* Oct 2015 
+</td>
+</tr>
+
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_Implementing_S3_resume_with_EDKII_V2.pdf  .PDF]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_Implementing_S3_resume_with_EDKII_V2.pdf A Tour Beyond BIOS Implementing S3 Resume with EDKII]
+<br>
+This paper presents the internal structure and boot flow of PI S3 resume design, as implemented in the EDKII.
+
+<br>
+Prerequisite
+This paper assumes that audience has EDKII/UEFI firmware development experience. He or she should also be familiar with UEFI/PI/ACPI firmware infrastructure, such as SEC, PEI, DXE, runtime phase, and S-states.
+* Oct 2015 
+</td>
+</tr>
+
+
+<tr>
+    <td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_into_UEFI_Secure_Boot_White_Paper.pdf PDF] or
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_into_UEFI_Secure_Boot_White_Paper.zip Zip]
+
+    </td>
+
+    <td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/A_Tour_Beyond_BIOS_into_UEFI_Secure_Boot_White_Paper.pdf A Tour Beyond BIOS into UEFI Secure Boot White Paper] <br>
+This document provides an overview of the implementation and intent behind the UEFI Secure Boot feature and capability of UEFI Specification, Version 2.3.1C, http://www.uefi.org 
+
+The goal of the paper is to provide
+*	an understanding of the motivations behind this capability
+*	a walk-through of the implementation 
+*	a future evolution.
+
+This paper targets firmware, software, and BIOS engineers. 
+* July 2012
+    </td>
+</tr>
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/EDK_II_Build_Decoded.pdf .PDF]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/EDK_II_Build_Decoded.pdf EDK II Build Decoded]<BR>
+
+Discussion of the files that are used in a build and their purpose.
+* April 2012
+
+</td>
+</tr>
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/How-to-Create_VS_Solution_for_Existing_Code.pdf .PDF]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/White_Papers/How-to-Create_VS_Solution_for_Existing_Code.pdf How to create Visual Studio solution]<BR>
+How to create a Visual Studio solution for an EDK II tree.
+* April 2012
+</td>
+</tr>
+<tr>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/User_Docs/PerformanceOptimization_1_0.pdf .PDF]
+</td>
+<td>
+[https://github.com/tianocore-docs/Docs/raw/master/User_Docs/PerformanceOptimization_1_0.pdf EDK II Performance Optimization]<BR>
+This paper focuses on techniques and methodologies which can be used to characterize and optimize the performance of EDK II based firmware.
+(PDF)
+* April 2010
+</td>
+</tr>
+</table>
+<!-- [[Category:EDKII]] -->
+<!-- [[Category:Documents]] -->

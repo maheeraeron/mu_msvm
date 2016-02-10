@@ -1,0 +1,11 @@
+Documents including Specification, User Manuals, White Papers, and other member contributions are listed here.
+==[http://www.tianocore.org/edk2/ EDK II] Documents==
+*[[EDK II Documents]]
+
+== [[EDK]] Documents ==
+*[[EDK User Documentation]]
+*[[EDK Member Documents]]
+
+<!-- [[Category:EDK]] -->
+<!-- [[Category:Documents]] -->
+<!-- [[Category:EDKII]] -->

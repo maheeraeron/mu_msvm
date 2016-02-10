@@ -1,0 +1,106 @@
+__NOTOC__
+==Common instructions for Linux==
+
+A significant portion of the steps are common on the various UNIX-like platforms.  You should start with the instructions for the operating system that most closely matches your platform, and it will direct you here at the appropriate time.
+
+===Get the edk2 source tree using Git ===
+
+<pre>
+bash$ mkdir ~/src
+bash$ cd ~/src
+bash$ git clone https://github.com/tianocore/edk2
+</pre>
+
+====For EDKII project developers:====
+*	Clone the EDK II project repository
+**	git clone https://github.com/tianocore/edk2
+*	Change to the edk2 directory
+*	Build the tools
+**	make -C BaseTools
+*	Run the edksetup.sh script
+**	. edksetup.sh
+When the above steps are done, you can work in the edk2 directory for code development.
+
+====For FatPkg developers:====
+*	Create a workspace directory
+*	Change to the workspace directory
+*	Clone the EDK II project repository
+**	git clone https://github.com/tianocore/edk2
+*	Clone the edk2-FatPkg repository to “FatPkg”
+**	git clone https://github.com/tianocore/edk2-FatPkg FatPkg
+*	Build the tools
+**	make -C edk2/BaseTools
+*	Set environment variables
+**	WORKSPACE – The workspace directory created above
+**	PACKAGES_PATH – Set it to $WORKSPACE/edk2
+Example:
+  export WORKSPACE=/Sample/Path
+  export PACKAGES_PATH=$WORKSPACE/edk2
+*	Run the edksetup.sh script
+**	. edk2/edksetup.sh
+When the above steps are done, the directory structure will look like:
+  Sample
+    └───Path (WORKSPACE)
+       ├───edk2
+       └───FatPkg
+
+===Build the EDK II BaseTools===
+
+<pre>
+bash$ make -C edk2/BaseTools
+</pre>
+
+===Setup build shell environment===
+
+<pre>
+bash$ cd ~/src/edk2
+bash$ export EDK_TOOLS_PATH=$HOME/src/edk2/BaseTools
+bash$ . edksetup.sh BaseTools
+</pre>
+
+===Modify Conf Files===
+
+You will need to edit the Conf/tools_def.txt and Conf/target.txt files.  These changes will enable the MdeModulePkg to be built using the GCC 4.4 compiler.
+
+====Set Build Target Information====
+
+For the Conf/target.txt file, find the following lines:
+
+<pre>
+ACTIVE_PLATFORM       = Nt32Pkg/Nt32Pkg.dsc
+TOOL_CHAIN_TAG        = MYTOOLS
+</pre>
+
+And change the corresponding lines to match these:
+
+<pre>
+ACTIVE_PLATFORM       = MdeModulePkg/MdeModulePkg.dsc
+TOOL_CHAIN_TAG        = GCC44
+</pre>
+
+Note: The 'gcc --version' command can be used to find out your GCC version.  Use the '''GCC45''' toolchain for gcc 4.5.* and the '''GCC46''' toolchain for gcc 4.6.*.
+
+Optionally, you may consider finding:
+
+<pre>
+TARGET_ARCH           = IA32
+</pre>
+
+...and changing it if your GCC 4.4 installation supports 64-bit builds.  You can change it to either 'X64', or even 'IA32 X64' which will build both architectures.
+
+===Build Hello World!  (and the rest of MdeModulePkg)===
+
+Now you should be able to simply run the build command to compile the MdeModulePkg.
+
+<pre>
+bash$ build
+</pre>
+
+One result of the build is that you should have the HelloWorld UEFI application:
+<pre>
+bash$ ls Build/MdeModule/DEBUG_*/*/HelloWorld.efi
+</pre>
+
+===Build [http://www.tianocore.org/ovmf/ OVMF]===
+
+Once your build environment is set up you might be interested in [[How to build OVMF|building the OVMF platform]] which is included in the main edk2 source tree.  Since [http://www.tianocore.org/ovmf/ OVMF] builds a full system firmware image this may be of interest to UEFI system firmware developers.
