@@ -1,0 +1,18 @@
+<!-- [[Category:FAQ]] -->
+<!-- [[Category:EDKII]] -->
+<!-- [[Category:EDK]] -->
+<!-- [[Category:EBC]] -->
+
+Frequently asked questions about EDK and EBC
+
+=== What is EBC? ===
+Intel® C Compiler for EFI Byte Code Product In-Depth.  Compiles C source code UEFI driver into interpretive language instead of the native archtecture (e.g. IA32, x64 or IPF)
+
+
+===Can you write a shell app in EBC?===
+Yes, it is possible. Please check the ULA for the EBC compiler. [http://software.intel.com/sites/products/documentation/EULA/Intel_SW_Dev_Products_EULA.pdf Intel SW EULA]  I believe that has the specific details on driver/app support.  There are no known technical issues with using EBC for Shell Applications or UEFI Applications.  This is mainly a validation issue.  Another issue is that the UEFI 2.3 Specification Section 2.6.2 item (19), states that the EBC interpreter is only required if a platform intends to support EBC drivers in containers for add in devices.  This means that the EBC interpreter is optional and may not be available on all platforms.  As a result, a Shell Application or UEFI Application that is compiled for EBC may not be able to run on all platforms. 
+Intel® C Compiler for EFI Byte Code 
+Product In-Depth
+
+===Add-in cards need to support legacy image as well as EBC.  Any conversion tools?===
+There are no tools to help convert a Legacy Option ROM sources or binaries to a UEFI complaint driver.  Once a UEFI complaint driver is designed and implemented, it may be cross compiled to EBC.  There are some compatibility issues that the UEFI driver writer must be aware of in order to implement a UEFI driver is C that is compatible with native mode compilers as well as the EBC compiler.  Chapter 19 of the EFI Driver Writers Guide at http://developer.intel.com/technology/efi/dg.htm  describes the porting considerations when using the EBC compiler.

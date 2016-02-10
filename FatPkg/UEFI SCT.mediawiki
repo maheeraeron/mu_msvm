@@ -1,0 +1,30 @@
+<!-- [[Category:UEFI]] -->
+<!-- [[Category:SCT]] -->
+
+
+
+=UEFI Self-Certification Tests (SCT)=
+
+== '''UEFI''' ==
+
+The Unified Extensible Firmware Interface, or UEFI, specifies the layer between an operating system and the platform firmware.
+
+UEFI related specifications also cover various other aspects of firmware below the firmware/OS interface.  These specifications can be found at http://www.uefi.org.  
+ 
+
+== '''UEFI SCT''' ==
+The UEFI Self-Certification Tests (SCT) is a toolset for platform firmware developers to validate UEFI implementations on IA-32, X64, and Itanium Architecture-based platforms for compliance to the UEFI Specification. The toolset features a Test Harness for executing built-in UEFI Compliance Tests, as well as for integrating user-defined tests that were developed using the UEFI SCT open source code. 
+
+The Latest version of the UEFI  SCT can be found at http://www.uefi.org
+
+
+Download the [https://sourceforge.net/projects/edk2/files/General%20Documentation/UEFI%20SCT%20Case%20Writers%20Guide_0_91.pdf/download UEFI SCT Case Writers Guide 91. pdf]
+
+
+
+== '''PI SCT ''' ==
+The Pre-EFI Initialization (PEI) Self-Certification Test (SCT) utility is used to perform self-certification testing on the PEI code. 
+The latest Version of the PI SCT can be downloaded from: 
+[https://sourceforge.net/projects/pi-sct/files/PI1.2_Sct_.2_Release_Mar_05_2013/PI1.2-SCT.2Release-Mar052013.zip/download PI1.2 SCT.2 Release.zip]
+
+As PI1.2 introduces the SMM contents—currently not supported by EDK—PI SCT test cases for new contents in PI1.2 must be built with EDKII style build tools. Currently, all of the PI1.2 SCT packages are in the EDKII style, which means you can not use EDK to build PI SCT from this point forward. More information about [[EDKII]]

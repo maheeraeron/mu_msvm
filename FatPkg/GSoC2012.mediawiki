@@ -1,0 +1,99 @@
+==News==
+* Tianocore is applying to be a mentoring organization for the Google Summer of Code 2012
+* Here is the [http://www.google-melange.com/gsoc/events/google/gsoc2012 official GSoC 2012 timeline]
+
+==Students==
+'''Next Steps'''
+* Look over our [[Tasks]] page and find one (or more) projects that sound interesting to you.
+* You '''must''' submit your project proposal for the tianocore organization on the [http://www.google-melange.com/gsoc/homepage/google/gsoc2012 GSoC2012 (google-melange.com)] page before [http://www.google-melange.com/gsoc/events/google/gsoc2012 April 6, 2012 at 19:00 UTC].
+** There is an application template below
+** The application deadline is '''final''', so don't be late!
+** You can submit applications for more than one project if you find multiple projects interesting. Although, you can only be able to be assigned to a single project in the end.
+* Please join our [[edk2-devel]] email list and start asking about the project you are interested in
+** Let us know if you need more information!
+
+'''More information'''
+* Feel free to suggest you own project idea.  (It is best to discuss your idea first on [[edk2-devel]].)
+* Tianocore GSoC page: http://www.google-melange.com/gsoc/org/google/gsoc2012/tianocore
+
+Note: We primarily use the [[BSD License]], and it is generally expected that your project will be completed utilizing this license.
+
+==Application Template==
+
+Students, please prepare a project proposal with the following information:
+* Contact information (email)
+* Personal description, qualifications
+** skills
+** past projects/experiences
+** any previous open source contributions
+* Explain your interest in UEFI or firmware
+* Your plans for the project 
+** high level plan
+** 1st draft timeline
+* Will you be able to become a [[Member Types#Basic Contributor|Basic Contributor]] by agreeing to our [[Contribution Agreement]]?  (Just answer yes or no.  If yes, then we would complete this process separately.)
+
+This application/project proposal will need to be uploaded to the main GSoC website between [http://www.google-melange.com/gsoc/events/google/gsoc2012 March 26th and April 6th].  The accepted applications will be announced on [http://www.google-melange.com/gsoc/events/google/gsoc2012 April 23rd].
+
+To submit your application visit the Google Summer of Code site, and submit your application with the tianocore project.
+* http://www.google-melange.com/gsoc/org/google/gsoc2012/tianocore
+
+==Potential Mentors==
+If you are interested in mentoring a project:
+* Please contact us on the [[edk2-devel]] email list, or contact {{sfuser|jljusten}}.
+* We would look for mentors with experience with edk2 and/or other open source projects.
+* If you have a project idea that you prefer to mentor, let us know about it.
+<!--
+To become a mentor for our project:
+* Visit http://www.google-melange.com/gsoc/request/google/gsoc2012/tianocore
+** Please only request to be a member after you've discussed it with {{sfuser|jljusten}}.
+-->
+
+==Contacts==
+For most questions, please email the [[edk2-devel]] email list.  If this doesn't work, contact {{sfuser|jljusten}} directly.
+
+==See Also==
+* [[GSOC2011]]
+* [[Tasks]]
+
+<!--
+
+==Students==
+
+===Getting Started===
+For GSoC2011 Google has posted some useful
+[http://google-opensource.blogspot.com/2011/03/dos-and-donts-of-google-summer-of-code.html DOs and DON'Ts for students].
+
+Aside from Google's recommendations, here are some things you should look over before starting the main work on your project:
+# Review our [[Code Style]]
+#* Including the parts about commit messages and commit partitioning.
+# (Optional) Complete the process to become a [[Member Types#Basic Contributor|Basic Contributor]] if you'd like to be able to contribute code into our edk2 tree.
+# Determine where you are going to initially host your code
+#* Your mentor will want to see progress on your project every few days, and this will be much easier in a separate project
+#* Determine which source control system you will use.  Subversion would be a good first choice.  Git could be an options as well.  (You'll want to include your mentor in this choice.)
+#* Some code hosting options: [http://code.google.com/hosting google], [http://sourceforge.net sourceforge], [https://github.com/ github]
+
+===Working on the Project===
+Here are some recommendations for use during the summer while working on your project:
+# [http://www.google.com/search?q=commit+early+commit+often Commit early, commit often]
+#* Besides being a good practice in general, this will allow your mentor to see your progress.
+#* Proper [[Commit Partitioning]] can allow you to check in changes up to several per day.
+# Ask questions earlier rather than later.
+#* Use the [[edk2-devel]] list first, and your mentor second.  You should interact with our community as much as possible.
+#* Questions are good.  Perhaps it'll point out some documentation that we need for our community.
+# Create a timeline with some intermediate goals for your project.
+#* Discuss the situation with your mentor if you need to adjust your goals.
+# Don't copy source code, except from the main [http://www.tianocore.org/edk2/ EDK II] tree.
+#* If you think some BSD licensed code from another project is required, make sure you discuss it with your mentor and  {{sfuser|jljusten}}.
+# If you have an issue, and your mentor is not able to help you, then contact {{sfuser|jljusten}}.
+
+==Mentors==
+# Be sure to look over Google's [http://google-opensource.blogspot.com/2011/04/dos-and-donts-of-google-summer-of-code_21.html DOs and DON'Ts for mentors].
+# Review the student section above
+# Monitor your students work in their source repository
+#* If you are not seeing regular updates, make sure your student is not getting into trouble
+#* You should be in communication with your student, or seeing good results in their source repository at least every few days (at a minimum).
+# If you have an issue, please contact {{sfuser|jljusten}}.
+
+-->
+
+<!-- [[Category:GSoC]] -->

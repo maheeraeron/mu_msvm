@@ -1,0 +1,19 @@
+<!-- [[Category:EDKII Packages]] -->
+
+Developer's UEFI Emulation (DUET) on Edk2
+
+DuetPkg description :
+* Export EFI/UEFI interface
+* Support IA32 and X64 architecture
+* Chipset/Platform independent
+* Boot from Floppy,  USB (Legacy Free Consideration), Hard Disk
+* Support boot to EFI/UEFI Shell
+
+How to Build for EDK II
+[http://edk2.svn.sourceforge.net/svnroot/edk2/trunk/edk2/DuetPkg/ReadMe.txt/download ReadMe.txt]
+
+===Source Repository===
+{{Edk2SubPkg|DuetPkg}}
+
+===UDK2010.SR1 Notes===
+No new notes

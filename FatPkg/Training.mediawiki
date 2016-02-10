@@ -1,0 +1,11 @@
+{{UDK2014}}
+<span style="font-size: 15.0pt; text-align: center; font-family: Verdana; color: #004280; font-weight: bold; font-style: normal">UDK2014 | UDK2015 Training Page</span>
+
+
+== Training ==
+
+
+* <a href="https://github.com/tianocore/tianocore.github.io/wiki/UEFI EDKII Learning Dev" title="UEFI EDKII Learning Dev"> UEFI and EDK II Learning and Development </a>- These online courses are provided to help you increase your knowledge of UEFI specification and EDK II and to aid you in performing UEFI- and EDK II-related tasks.
+
+* Request for training material: <a href="mailto:laurie0131@users.sourceforge.net?Subject=UEFI%20Training%20Material&body=UEFI%20Training%20Material>  Material-Request</a>
+

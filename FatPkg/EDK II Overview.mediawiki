@@ -1,0 +1,17 @@
+<!-- [[Category:EDKII]] -->
+The [http://www.tianocore.org/edk2/ EDK II] project is the response to the EFI community’s request for a better build and version tracking environment for UEFI and PI development. The main difference between the EDK II to the original EDK is the '''Enhanced Build Environment''' of the EDK II. 
+The advantages of the Enhanced Build Environment include: 
+
+* Operating System independence 
+* Flexibility in choosing the compiler and assembler tools 
+* The ability to generate working code using open source build tools and applications 
+* Enhanced development and build capability of modules and module packages 
+* Use of build configuration tools and data sets to provide flexible process
+* Online source control allows users to contribute code and become participants
+
+The EDK II enhanced build environment is a significant departure from the build environment of the original EDK. There are many new concepts and features in the EDK II, which have altered the environment. If you are familiar with the original EDK these changes will be obvious, while the benefits of them will be apparent to everyone. The new structure, along with package owners is documented in the [[EDKII Packages]]. 
+
+It is important to note, that the compiled results of the EDK II are equivalent to the original EDK, the changes are in the build environment and only affect the sources at that level. Any differences in the code files are only to support the changes in the build environment, once the modules are created, they are functionally identical. 
+
+The EDK II is classified at a development level project and the EDK is an official level project. The EDK is still intended to be used for volume production and shipments while the EDK II is being further refined through additional development. 
+As the EDK II project matures and the active participation of the EFI open source community members expand the project’s scope (features, functionality, and support) the EDK II project will grow into an official level project. In the mean time, we are pleased in your interest in the EDK II project and encourage your participation and feedback.

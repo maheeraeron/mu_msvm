@@ -1,0 +1,45 @@
+=GitHub Help=
+
+GitHub (https://help.github.com/index.html) provides step-by-step instructions for user registration and basic features supported by GitHub 
+
+* Setup GitHub for Linux | Windows | MAC | All (https://help.github.com/articles/set-up-git)
+* To download and install a Git GUI interface (http://git-scm.com/)
+
+=='''GitHub EDK II Project Repositories'''==
+
+* The EDK II Build BaseTools repository is available at https://github.com/tianocore/buildtools-BaseTools. 
+* The EDK II project repository is available at https://github.com/tianocore/edk2. 
+* Prebuilt Windows tools are available at https://github.com/tianocore/edk2-BaseTools-win32. 
+* Please note that FatPkg is not included in the EDKII project repository, it is an independent repository which can be found at https://github.com/tianocore/edk2-FatPkg.
+* Content that is not released under an accepted open source license can be found at https://github.com/tianocore/edk2-non-osi.<BR>
+= Getting the extra tools=
+== Compiler ==
+For both the BuildTools and [http://www.tianocore.org/edk2/ EDK II] projects, you will need to obtain a compiler from somewhere else. These instructions do not cover obtaining or installation of a compiler tools chain. The BuildTools projects only requires a C compiler; an assembler or ACPI assembler are not required to build tools in this project. BaseTools assume that a compiler is already configured in the environment.
+
+== Python ==
+The BaseTools project supports the Makefile based build for EDK II. All Tools are written in either C or Python. The C tools must compile on all operating systems with various compilers, so the code is written using simple, standard functions and libraries. The Python-based tools are written assuming the features that were available in Python. GUI applications can be created in Python, using the wxPython package and all Python applications can be converted to run under a native OS (Windows, Linux or OS/X.) via the [[Python Tools]].
+
+The tools in this section are NOT required to build the EDK II project; they are needed to compile the
+BaseTools used to build the EDK II project.
+
+The Python tools are available in the DevelopmentTools folder, available via SVN. Be sure to check-out the appropriate tool set for your OS.
+
+*Linux and OS/X developers using a command line, create a directory that will be used to hold the files, then change to that directory. 
+**Replace URL with apropriate one from [[Python Tools]]. Installation and configuration for these tools are left to the developer.
+*The command line for obtaining these files is:
+'''svn co <URL>'''
+
+
+
+Refer to documentation in either the UserManuals or Source folders for more information. 
+* BuildTools [https://github.com/tianocore/buildtools-BaseTools/tree/master/UserManuals User Manuals]
+
+='''How to Setup the EDK II Tree'''=
+See [[Getting Started with EDK II]]
+
+==  EDK II Development Process ==
+After setting up your build environment see  [[EDK II Development Process]] for making contributions to the EDK II Project.
+
+=Further Help=
+
+If you have questions about the code or run into obstacles getting things to work for you, please join our [[edk2-devel]] email list and ask your EDK II related questions on the list.

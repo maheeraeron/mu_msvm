@@ -1,0 +1,44 @@
+<!-- [[Category:EDK]] -->
+{{project-summary
+|sum=SNP NT32 Network I/O|cat=none
+|lic=[http://www.opensource.org/licenses/bsd-license.php BSD]
+|own=rli6, xlee |docs=http://sourceforge.net/projects/network-io/files
+|src=https://network-io.svn.sourceforge.net/svnroot/network-io/trunk
+|dev=http://sourceforge.net/projects/network-io/develop}}
+== Welcome to the Network IO Project. ==
+'''Introduction to the Network-IO Project'''
+{|border="0" align="right"
+|-
+|[[Image:Networklayer.jpg]]<br>
+|-align="center"
+|'''Figure 1. UEFI Network layering'''
+|}
+
+This is a sub-project of the EDK project. Beginning with the developer snapshot 20060807, the UEFI network stack support has been added to the EDK. The UEFI network stack drivers bring the support of TCP/IP networking to EDK, with different drivers implementing different TCP/IP protocols. The hierarchal layering of the drivers is shown at right. (For further information about the UEFI network stack, read the chapter 20-24 of The UEFI specification 2.0 from [http://www.uefi.org UEFI.org])
+
+To help develop networking applications, this sub-project provides a SNPNT32 driver which implements the EFI_SIMPLE_NETWORK_PROTOCOL for the NT32 platform. This driver in conjunction with the UEFI network stack drivers can be used to develop and test networking applications on Windows® NT operating system through the EDK’s NT32 platform emulation environment.
+
+The SNPNT32 driver depends on the WinPcap® to transmit and receive packets on the Windows® system. To limit the number of symbols imported into the NT32 platform, SnpNt32 call the functions in the SnpNt32Io dynamic library to transmit/receive packets. The SnpNt32Io library in turn consumes the service provided by WinPcap®. This sub-project (Network-IO) produces the SnpNt32Io library.
+
+The Network-IO project was released under the BSD license .
+
+'''Using the Network-IO'''
+
+The UEFI network stack getting started guide contains detailed instructions to start to use the UEFI network stack on NT32 emulator. You can find more information there.
+
+Download the [http://sourceforge.net/projects/network-io/files/Documents/EFINetworkStackGettingStarted.pdf/download UEFI Network Stack Getting Started Guide(pdf)] for guidance on building and using the library to enable UEFI network stack under NT32 Platform Emulator
+
+Download the [https://sourceforge.net/projects/network-io/files/Releases/Development%20Snapshots/NeworkIo-Dev-Snapshot-20090420.zip/download developer snapshot] or official release of the Network-IO project.
+
+'''Other Common Links and Downloads'''
+
+*Directory of [https://sourceforge.net/projects/network-io/files/Releases/Development%20Snapshots Network-IO Source Code Snapshots (Development Versions)]
+*Directory of Network-IO Source Code Snapshots (Official Releases) 
+*Link to the TianoCore Community Project 
+*Link to the [http://www.uefi.org/ UEFI2.0 Specification]  
+*Download [http://www.winpcap.org/ WinPcap® library]
+*Archives of the "Dev" Mailing List 
+
+'''Project Points of Contact'''
+
+*Network-IO Project Owner (China): Ruth Li, Intel Corporation, ruth.li@intel.com

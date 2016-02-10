@@ -1,0 +1,2 @@
+<!-- [[Category:EDKII Packages]] -->
+Demo EDK II project StartCore http://edk2-startcore.sourceforge.net/

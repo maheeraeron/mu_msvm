@@ -1,0 +1,9 @@
+Please refer to [https://edk2.svn.sourceforge.net/svnroot/edk2/trunk/edk2/MdePkg/Contributions.txt Contributions.txt] for more information.
+
+Contributions.txt should also be available in the source tree. (Older source releases may not have the file.)
+
+See also
+
+[[Commit Message Format]]
+
+[[Code Style]]

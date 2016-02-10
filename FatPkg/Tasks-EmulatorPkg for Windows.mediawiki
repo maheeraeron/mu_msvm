@@ -1,0 +1,43 @@
+Create a Windows based host environment for [[EmulatorPkg]].
+
+* Difficulty: Medium
+* Language: C
+* Mentor:
+* Suggested by: {{sfuser|andrewfish}}
+
+= Details =
+EmulatorPkg is very similar in many respects to the [[Nt32Pkg]],
+but it should be generic enough to replace both [[Nt32Pkg]] and
+[[UnixPkg]].
+
+This task would be to enable a Windows host environment for
+EmulatorPkg so we can consider deprecating Nt32Pkg and UnixPkg
+in favor of using EmulatorPkg.
+
+= Development environment =
+Building: This project most likely would be completed on
+Windows with Visual Studio C++.
+
+It would also be desireable to be able to support building
+and running the Windows host on Linux by building with mingw
+and running under Wine.  Therefore, it would also be possible
+to develop this project under Linux.
+
+Testing: Run the emulator on Windows or with Wine.
+
+= Sub-goals =
+Some possible sub-goals for the driver
+* Enter SEC phase of EmulatorPkg boot
+* Enter PEI phase of EmulatorPkg boot
+* Enter DXE phase of EmulatorPkg boot
+* Enable multi-threading support
+* Enable networking support
+
+= Further Discussion =
+Please discuss the project on [[edk2-devel]].
+
+= See Also =
+* [[Tasks]]
+* [[GSoC2012#Port EmulatorPkg to Windows]]
+
+<!-- [[Category:Tasks]] -->

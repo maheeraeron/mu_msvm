@@ -1,0 +1,298 @@
+There are 4 security related features in SecurityPkg including [[SecurityPkg#TPM|TPM]], [[SecurityPkg#UID|User identification (UID)]], [[SecurityPkg#Secure Boot|secure boot]], and [[SecurityPkg#Authenticated Variable|authenticated variable]].
+
+More information: 
+* [http://sourceforge.net/projects/edk2/files/UDK2010%20Releases/UDK2010.SR1/Readme_Security.txt/download ReadMe.txt]
+* [[How-to-Enable-Security | How to enable Security]] with EDK II
+* [http://sourceforge.net/projects/edk2/files/General%20Documentation/SigningUefiImages%20-v1dot31.pdf/download How to Sign UEFI Drivers & Applications V1.31.pdf]
+* [https://docs.google.com/file/d/0BxgB4JDywk3MWnM0WmNXMHBTcm8/edit?pli=1 Secure Boot Ecosystem Challenges PDF]-From ToorCamp 2012, Presentation by Vincent Zimmer 
+* [http://sourceforge.net/projects/edk2/files/General%20Documentation/A_Tour_Beyond_BIOS_into_UEFI_Secure_Boot_White_Paper.pdf/download  A Tour Beyond BIOS into UEFI Secure Boot PDF]
+
+
+
+==TPM==
+The Trusted Platform Module (TPM) is a passive hardware device on the system board. UEFI TCG Measured Boot takes use of TPM device to construct the basic trusted computing environment based on S-CRTM (Static Core Root of Trust for Measurement). The implementation includes a set of TCG-compliant modules that provide the necessary functionality as described by the TCG specifications for the TPM component. These modules deeply rely on the TCG-defined specifications. Basically, they provide the capabilities to initialize and operate a TPM device and implement the TCG-defined services (performing measurement and logging data/events, physical presence, memory overwrite request, etc) for S-CRTM based attestation of the UEFI platform. 
+
+==UID==
+The UID framework implements EFI_USER_MANAGER_PROTOCOL, EFI_USER_CREDENTIAL_PROTOCOL and EFI_DEFERRED_IMAGE_LOAD_PROTOCOL, and supports user identity management, user access privilege management, user identification policy management, static multi-factor authentication, and publishes the current user profile in the EFI System Configuration Table after user authentication.
+
+==Secure Boot==
+This secure boot mechanism allows the firmware to authenticate a UEFI image, such as an operating system loader or an option ROM. This provides the capability to ensure that the firmware drivers are loaded only in an owner-authorized fashion and provides a common means to ensure platforms security and integrity over systems running UEFI-based firmware. 
+
+==Authenticated Variable==
+Authenticated variable service is an enhancement on Variable Service in UEFI, which provides a means to restrict operation on certain sensitive storage data. If the EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS is set, both the identity of operator and integrity of data will be authenticated before write the variable into storage.
+
+
+=='''Signing Tools'''==
+This section lists signing tools and resources for UEFI Secure Boot on Linux. 
+It is far from an exhaustive list but hopefully will be a  helpful  starting point.
+This version was created Jan. 31, 2013 and will be updated periodically.
+Please send recommended changes to: 
+[mailto:edk2-devel@lists.sourceforge.net?subject=Secure%20Boot%20Signing%20Tools%20Question Edk2 Devel Mail list] - To join the email list goto: [http://lists.sourceforge.net/lists/listinfo/edk2-devel Join Edk2 Devel Mail list]
+
+ 
+==='''Linux tools for signing UEFI images'''===
+<table  width="100%" style="border-collapse: collapse" bordercolor="#0000011">
+<tr>
+<td><b><font face="Calibri">Tool</font></b></td>
+		<td><b><font face="Calibri">Link</font></b></td>
+</tr>
+<tr>
+		<td width="141">
+<span style="font-size:11.0pt;
+  font-family:&quot;Calibri&quot;,&quot;sans-serif&quot;">
+sbsigntool </span>
+</td>
+<td>
+<span style="font-size:11.0pt;
+  font-family:&quot;Calibri&quot;,&quot;sans-serif&quot;">
+git://kernel.ubuntu.com/jk/sbsigntool
+		</span></td>
+	</tr>
+<tr>
+		<td width="141">
+<span style="font-size:11.0pt;
+  font-family:&quot;Calibri&quot;,&quot;sans-serif&quot;">
+  
+pesign </span></td>
+		<td>
+		
+		<span style="font-size:11.0pt;
+  font-family:&quot;Calibri&quot;,&quot;sans-serif&quot;">
+https://github.com/vathpela/pesign </span></td>
+	</tr>
+</table>
+
+==='''Linux Secure Boot Resources''' ===
+**	UEFI Secure Boot support in several  Linux distros, 
+**	creating keys and certificates, 
+**	signing images for development and production, 
+**	And more …
+
+
+<!--TABLE 2 -->
+----
+<!--"TABLE START" -->
+
+<table width="100%">
+<tr>
+<th>
+Link
+</th>
+<th>
+Description
+</th>
+
+</tr>
+<!--"Row" -->
+<tr>
+<th colspan="2" style="background-color:#a9c6dd">'''Ubuntu''' </th>
+</tr>
+<tr>
+<td>
+[https://wiki.ubuntu.com/SecurityTeam/SecureBoot ubuntu]
+</td>
+<td width=150>
+OVMF tips, creating keys & certificates, configuring secure boot , signing test images with sbsign, updating key databases
+</td>
+</tr>
+<!--"end Row" -->
+
+<!--"Row" -->
+<tr>
+<td>
+[http://jk.ozlabs.org/docs/sbkeysync-maintaing-uefi-key-databases/ jk.ozlabs.org]
+</td>
+<td>
+creating keys & certificates, tools for signing variables and maintaining key databases 
+</td>
+</tr>
+<!--"end Row" -->
+<!--"Row" -->
+<tr>
+<th colspan="2" style="background-color:#a9c6dd">
+'''SUSE'''
+</th>
+</tr>
+<tr>
+<td>
+[https://www.suse.com/blogs/uefi-secure-boot-overview overview]
+</td>
+<td>
+Backgrounder
+</td>
+</tr>
+<!--"end Row" -->
+<!--"Row" -->
+<tr>
+<td>
+[https://www.suse.com/blogs/uefi-secure-boot-pla suse.com]
+</td>
+<td>
+shim loader description
+</td>
+</tr>
+<!--"end Row" -->
+<!--"Row" -->
+<tr>
+<td>
+[https://www.suse.com/blogs/uefi-secure-boot-details suse.com/details]
+</td>
+<td>
+MOK description
+</td>
+</tr>
+<!--"end Row" -->
+<!--"Row" -->
+<tr>
+<td>
+[http://en.opensuse.org/openSUSE:UEFI_Secure_boot_using_qemu-kvm en.opensuse.org]
+</td>
+<td>
+Secure Boot in OVMF & lockdown.efi
+</td>
+</tr>
+<!--"end Row" -->
+
+<!--"Row" -->
+<tr>
+<td>
+[http://en.opensuse.org/SDB:UEFI_EDK2_Build_Howto_On_openSUSE12_1 en.opensuse.org]
+</td>
+<td>
+Building EDK2
+</td>
+</tr>
+<!--"end Row" -->
+<!--"Row" -->
+<tr>
+<th colspan="2" style="background-color:#a9c6dd">
+'''Fedora'''
+</th>
+</tr>
+<tr>
+<td>
+[https://fedoraproject.org/wiki/Secureboot fedoraproject.org]
+</td>
+<td>
+Backgrounder
+</td>
+</tr>
+<!--"end Row" -->
+
+<!--"Row" -->
+<tr>
+<td>
+[https://fedoraproject.org/wiki/Features/SecureBoot Secureboot]
+</td>
+<td>
+Status
+</td>
+</tr>
+<!--"end Row" -->
+<!--"Row" -->
+<tr>
+
+<td>
+[https://fedoraproject.org/wiki/Secure_Boot_Testing  Testing]
+</td>
+<td>
+Images for testing  
+</td>
+</tr>
+<!--"end Row" -->
+
+
+<!--"Row" -->
+<tr>
+<th colspan="2" style="background-color:#a9c6dd">
+'''Linux Foundation'''
+</th>
+</tr>
+<tr>
+<td>
+[http://blog.hansenpartnership.com/uefi-secure-boot/  uefi-secure-boot]
+</td>
+<td>
+using MS UEFI CA to sign images 
+</td>
+</tr>
+<!--"end Row" -->
+
+
+</table>
+
+<!--"TABLE END" -->
+
+
+=='''Signing - Secure Boot Results'''==
+==== '''a Linux Loaders and Kernels'''====
+*EFI_STUB Kernel - has been signed with the Microsoft* SignTool and successfully secure booted.  Fixes are available in tip:x86/efi branch at:
+::http://git.kernel.org/?p=linux/kernel/git/tip/tip.git;a=shortlog;h=refs/heads/x86/efi
+*efilinux Loader - has been signed with the Microsoft* SignTool and successfully secure booted.   These fixes have been merged into the 'next' branch prior to being merged into the 'master' branch and a planned 1.1 release: 
+:: https://github.com/mfleming/efilinux 
+:::The .reloc section fix on x86-64 was merged into the efi-linux library’s sourceforge repository and a new version was released (3.0q).
+
+==== ''' UEFI Applications Built with UDK Linux Tool Chains'''====
+
+* UDK GCC44 & GCC46 UDK Tool Chain
+::UEFI applications (such as HelloWorld.efi) built with the GCC44 and GCC46 UDK tool chains have been signed with the Microsoft* SignTool and successfully secure booted.
+*UDK UNIXGCC UDK Tool Chain
+::UEFI applications built with the UNIXGCC tool chain are not currently secure bootable.  This problem is under investigation.
+
+<br>
+=='''Images with Multiple Signatures'''==
+This section describes support for Authenticode-signed UEFI images with multiple signatures,  references sample certificates and images and describes  patches to enable this support .  
+ 
+===1 Background===
+ 
+The Authenticode signature is in a location called the "Attribute Certificate Table" in a UEFI image. According to the UEFI and PE/COFF specifications, the Attribute Certificate Table is composed of a set of contiguous certificate entries (a list of certificates), and each certificate entry contains an independent Authenticode signature.    
+ 
+However, revision 2.3.1B of the UEFI Specification has  no explicit description about the verification policy for the multiple certificate entries in a UEFI image, but the Authenticode specification does not preclude this case of multiple entries.
+ 
+Currently, both the SignTool from MSFT and the DxeImageVerificationLib from the SecurityPkg on http://www.tianocore.org  treat the Attribute Certificate Table as a single certificate.   So if one re-signs a UEFI image with a new certificate, the MSFT  SignTool will overwrite the old certificate entry with the new one. And the verification library assumes that there is only one certificate entry in the attribute certificate table.   
+ 
+Other Sign Tools are now emerging that can create UEFI images with multiple signatures.
+ 
+===2 Sample Images===
+ 
+Some sample UEFI images and their certificates can be found at:
+http://pjones.fedorapeople.org/multisign/
+ 
+They are:
+ 
+*	pjones.cer - public key with a DN that basically says "pjones"
+*	PeterJones.cer - different public key with a DN that says "PeterJones" instead 
+*	hello-0.efi - "Normal, unsigned HelloWorld.efi
+*	hello-1.efi - same binary, signed with "pjones"
+*	hello-2.efi - same binary, signed with "pjones" and then with "PeterJones".
+ 
+Note:  the 28-Jun-2012 12:41 version of both .cer files [which had lengths of 294]  were corrupt.  
+ 
+===3 DxeImageVerificationLib  Patch===
+ 
+Verification of UEFI images with multiple signatures can be enabled with a small patch to the IsPkcsSignedDataVerifiedBySignatureList routine in SecurityPkg\Library\DxeImageVerificationLib\DxeImageVerificationLib.c.
+ 
+Patches are based based on SVN r13505
+
+Rev2 handles N certificates in an image and validates each WIN_CERTIFICATE header found in the image
+
+Rev1 only supported 2 certificates in an image.
+
+*Rev2 - patch [http://sourceforge.net/projects/edk2/files/UDK2010%20Releases/UDK2010.SR1.UP1/DxeImageVerificationLib-%20MultipleCertPOC-rev2-r13505.patch/download <<DxeImageVerificationLib-MultipleCertPOC-rev2-r13505.patch>>] 
+*Rev1 – patch [http://sourceforge.net/projects/edk2/files/UDK2010%20Releases/UDK2010.SR1.UP1/DxeImageVerificationLib-MultipleCertPOC-r13505.patch/download <<DxeImageVerificationLib-MultipleCertPOC-r13505.patch>>]
+
+===4 Scenarios===
+ 
+*	Enroll pjones.cer in PK, KEK & DB,  
+**	both hello-1.efi and hello-2.efi run.
+*	Enroll PeterJones.cer  in PK, KEK & DB,  
+**	now only  hello-2.efi runs.
+
+==Source Repository==
+{{Edk2SubPkg|SecurityPkg}}
+
+===UDK2010.SR1 Notes===
+[https://sourceforge.net/projects/edk2/files/UDK2010%20Releases/UDK2010.SR1/Notes/SecurityPkg%20Notes.txt/download Security Notes.txt]
+
+<!-- [[Category:EDKII Packages]] -->
+<!-- [[Category:Security]] -->
