@@ -1,5 +1,0 @@
-<!-- [[Category:EDKII Packages]] -->
-The '''FatBinPkg''' contains a binary of the FAT file system driver for inclusion in [http://www.tianocore.org/edk2/ EDK II] platforms.
-
-===Source Repository===
-{{Edk2SubPkg|FatBinPkg}}

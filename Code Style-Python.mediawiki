@@ -1,3 +1,0 @@
-<!-- [[Category:EDKIIBuildTools]] -->
-<!-- [[Category:CodeStyle]] -->
-For our Python coding, we follow the standard [http://www.python.org/dev/peps/pep-0008 Style Guide for Python Code].

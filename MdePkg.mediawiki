@@ -1,6 +1,0 @@
-<!-- [[Category:EDKII Packages]] -->
-The Module Development Environment Package provides all definitions(including functions, MACROs, structures and library classes) and libraries instances, which are defined in MDE Specification. 
-It also provides the definitions(including PPIs/PROTOCOLs/GUIDs) of EFI1.10/UEFI2.3.1/PI1.2 and some Industry Standards. 
-
-===Source Repository===
-{{Edk2SubPkg|MdePkg}}

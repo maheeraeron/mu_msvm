@@ -1,8 +1,0 @@
-*[[EDK II Specifications]]
-*[[EDK II User Documentation]]
-*[[EDK II Libraries and Helper files]]
-*[[EDK II white papers]]
-*[[Driver-Developer| EDK II Driver Developer Page]]
-
-<!-- [[Category:EDKII]] -->
-<!-- [[Category:Documents]] -->
