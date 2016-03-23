@@ -1,7 +1,0 @@
-<!-- [[Category:EDKII Packages]] -->
-<!-- [[Category:EFI Shell]] -->
-<!-- [[Category:EDK]] -->
-The '''EdkShellPkg''' contains meta data files for building the [[EDK]] [[Efi-shell|Shell]] for building in an [http://www.tianocore.org/edk2/ EDK II] platform.
-
-===Source Repository===
-{{Edk2SubPkg|EdkshellPkg}}

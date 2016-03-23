@@ -1,6 +1,0 @@
-Please refer to the following
-[https://www.linaro.org/projects/server/ Linaro Enterprise Group (LEG)]
-articles in the Linaro wiki:
-
-* [https://wiki.linaro.org/LEG/UEFIforQEMU Using UEFI in QEMU/KVM (AArch64 + AArch32)]
-* [https://wiki.linaro.org/LEG/UEFIforXEN Using UEFI in a Xen domU (AArch64)]

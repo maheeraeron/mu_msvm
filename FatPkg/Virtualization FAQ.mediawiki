@@ -1,8 +1,0 @@
-<!-- [[Category:FAQ]] -->
-<!-- [[Category:Virtualization]] -->
-<!-- [[Category:EDKII]] -->
-
-Virtualization questions
-
-===Can I remove Hardware components and run in a virtualized environment?===
-Just interact with hypervisor? Yes, but at the very least, hypervisor aware replacements would be required in order to implement the UEFI architectural protocols. This effort would likely be similar in scope to a new platform / chipset port. Providing implementations of the DXE Architectural Protocols for the hypervisor environment would allow the DXE Core to run. However, in order to get a console and a bootable hard drive or network boot scenario to work, additional UEFI Drivers would be required for console input devices, console output devices, and boot devices that would work correctly in a hypervisor environment. Additionally, the SEC and PEI phases that are responsible for initializing permanent memory would likely need to perform hypervisor specific actions to initialize and detect the amount of system memory and properly describe these in a HOB list.

@@ -1,5 +1,0 @@
-<!-- [[Category:EDK]] -->
-{{project-summary|sum=Contributions to the EDK for expanded functionality|cat= development-platform|lic=[http://www.opensource.org/licenses/bsd-license.php BSD]|own=ecohen, eugenecohen, [http://sourceforge.net/users/michaelkrau/ Michael Krau]
-|docs=http://sourceforge.net/projects/edkcontrib/files
-|src=https://edkcontrib.svn.sourceforge.net/svnroot/edkcontrib/trunk/Edk
-|dev=http://sourceforge.net/projects/edkcontrib/develop}}

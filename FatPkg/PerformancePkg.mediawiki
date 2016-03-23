@@ -1,5 +1,0 @@
-<!-- [[Category:EDKII Packages]] -->
-The Performance Package provides documentation and tools to enable you to add performance measurement capabilities to your code, generate performance data, interpret it, and use the data to improve the performance of the code.  These tools consist of a TimerLib instance which uses the CPU's TimeStamp Counter and the Dp shell application which reports the gathered performance data in several different formats.
-
-===Source Repository===
-{{Edk2SubPkg|PerformancePkg}}

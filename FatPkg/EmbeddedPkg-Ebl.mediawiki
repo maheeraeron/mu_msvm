@@ -1,7 +1,0 @@
-=== How to delete an environement variable ===
-The EBL command 'set' can be used to set an ASCII string value to a UEFI environment variable (eg: 'set myvariable myvalue').
-But this command can also be used to unset a variable by typing:
-<pre>
-set myvariable
-</pre>
-This line deletes the UEFI environment variable myvariable.
