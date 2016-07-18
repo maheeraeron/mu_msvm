@@ -71,14 +71,23 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 ///
 #define IA32_PG_P                   BIT0
 #define IA32_PG_RW                  BIT1
+#define IA32_PG_U                   BIT2
 #define IA32_PG_WT                  BIT3
 #define IA32_PG_CD                  BIT4
 #define IA32_PG_A                   BIT5
+#define IA32_PG_D                   BIT6
 #define IA32_PG_PS                  BIT7
 #define IA32_PG_PAT_2M              BIT12
 #define IA32_PG_PAT_4K              IA32_PG_PS
 #define IA32_PG_PMNT                BIT62
 #define IA32_PG_NX                  BIT63
+
+#define PAGE_ATTRIBUTE_BITS         (IA32_PG_RW | IA32_PG_P)
+//
+// Bits 1, 2, 5, 6 are reserved in the IA32 PAE PDPTE
+// X64 PAE PDPTE does not have such restriction
+//
+#define IA32_PAE_PDPTE_ATTRIBUTE_BITS    (IA32_PG_P)
 
 //
 // Size of Task-State Segment defined in IA32 Manual
@@ -285,11 +294,11 @@ SmmRelocationSemaphoreComplete (
 /// The type of SMM CPU Information
 ///
 typedef struct {
-  SPIN_LOCK                         Busy;
+  SPIN_LOCK                         *Busy;
   volatile EFI_AP_PROCEDURE         Procedure;
   volatile VOID                     *Parameter;
-  volatile UINT32                   Run;
-  volatile BOOLEAN                  Present;
+  volatile UINT32                   *Run;
+  volatile BOOLEAN                  *Present;
 } SMM_CPU_DATA_BLOCK;
 
 typedef enum {
@@ -304,17 +313,19 @@ typedef struct {
   // so that UC cache-ability can be set together.
   //
   SMM_CPU_DATA_BLOCK            *CpuData;
-  volatile UINT32               Counter;
+  volatile UINT32               *Counter;
   volatile UINT32               BspIndex;
-  volatile BOOLEAN              InsideSmm;
-  volatile BOOLEAN              AllCpusInSync;
+  volatile BOOLEAN              *InsideSmm;
+  volatile BOOLEAN              *AllCpusInSync;
   volatile SMM_CPU_SYNC_MODE    EffectiveSyncMode;
   volatile BOOLEAN              SwitchBsp;
   volatile BOOLEAN              *CandidateBsp;
 } SMM_DISPATCHER_MP_SYNC_DATA;
 
+#define MSR_SPIN_LOCK_INIT_NUM 15
+
 typedef struct {
-  SPIN_LOCK    SpinLock;
+  SPIN_LOCK    *SpinLock;
   UINT32       MsrIndex;
 } MP_MSR_LOCK;
 
@@ -344,6 +355,44 @@ typedef struct {
   UINT64                            MtrrBaseMaskPtr;        // Offset 0x58
 } PROCESSOR_SMM_DESCRIPTOR;
 
+
+///
+/// All global semaphores' pointer
+///
+typedef struct {
+  volatile UINT32      *Counter;
+  volatile BOOLEAN     *InsideSmm;
+  volatile BOOLEAN     *AllCpusInSync;
+  SPIN_LOCK            *PFLock;
+  SPIN_LOCK            *CodeAccessCheckLock;
+} SMM_CPU_SEMAPHORE_GLOBAL;
+
+///
+/// All semaphores for each processor
+///
+typedef struct {
+  SPIN_LOCK                         *Busy;
+  volatile UINT32                   *Run;
+  volatile BOOLEAN                  *Present;
+} SMM_CPU_SEMAPHORE_CPU;
+
+///
+/// All MSRs semaphores' pointer and counter
+///
+typedef struct {
+  SPIN_LOCK            *Msr;
+  UINTN                AvailableCounter;
+} SMM_CPU_SEMAPHORE_MSR;
+
+///
+/// All semaphores' information
+///
+typedef struct {
+  SMM_CPU_SEMAPHORE_GLOBAL          SemaphoreGlobal;
+  SMM_CPU_SEMAPHORE_CPU             SemaphoreCpu;
+  SMM_CPU_SEMAPHORE_MSR             SemaphoreMsr;
+} SMM_CPU_SEMAPHORES;
+
 extern IA32_DESCRIPTOR                     gcSmiGdtr;
 extern IA32_DESCRIPTOR                     gcSmiIdtr;
 extern VOID                                *gcSmiIdtrPtr;
@@ -359,17 +408,23 @@ extern UINTN                               mSmmStackArrayEnd;
 extern UINTN                               mSmmStackSize;
 extern EFI_SMM_CPU_SERVICE_PROTOCOL        mSmmCpuService;
 extern IA32_DESCRIPTOR                     gcSmiInitGdtr;
+extern SMM_CPU_SEMAPHORES                  mSmmCpuSemaphores;
+extern UINTN                               mSemaphoreSize;
+extern SPIN_LOCK                           *mPFLock;
+extern SPIN_LOCK                           *mConfigSmmCodeAccessCheckLock;
 
 /**
   Create 4G PageTable in SMRAM.
 
   @param          ExtraPages       Additional page numbers besides for 4G memory
+  @param          Is32BitPageTable Whether the page table is 32-bit PAE
   @return         PageTable Address
 
 **/
 UINT32
 Gen4GPageTable (
-  IN      UINTN                     ExtraPages
+  IN      UINTN                     ExtraPages,
+  IN      BOOLEAN                   Is32BitPageTable
   );
 
 
@@ -425,6 +480,21 @@ VOID
 EFIAPI
 InitializeIDTSmmStackGuard (
   VOID
+  );
+
+/**
+  Initialize Gdt for all processors.
+  
+  @param[in]   Cr3          CR3 value.
+  @param[out]  GdtStepSize  The step size for GDT table.
+
+  @return GdtBase for processor 0.
+          GdtBase for processor X is: GdtBase + (GdtStepSize * X)
+**/
+VOID *
+InitGdt (
+  IN  UINTN  Cr3,
+  OUT UINTN  *GdtStepSize
   );
 
 /**
@@ -572,6 +642,15 @@ PerformRemainingTasks (
   );
 
 /**
+  Perform the pre tasks.
+
+**/
+VOID
+PerformPreTasks (
+  VOID
+  );
+
+/**
   Initialize MSR spin lock by MSR index.
 
   @param  MsrIndex       MSR index value.
@@ -694,4 +773,25 @@ VOID
 DumpModuleInfoByIp (
   IN  UINTN              CallerIpAddress
   );
+
+/**
+  This API provides a way to allocate memory for page table.
+
+  This API can be called more once to allocate memory for page tables.
+
+  Allocates the number of 4KB pages of type EfiRuntimeServicesData and returns a pointer to the
+  allocated buffer.  The buffer returned is aligned on a 4KB boundary.  If Pages is 0, then NULL
+  is returned.  If there is not enough memory remaining to satisfy the request, then NULL is
+  returned.
+
+  @param  Pages                 The number of 4 KB pages to allocate.
+
+  @return A pointer to the allocated buffer or NULL if allocation fails.
+
+**/
+VOID *
+AllocatePageTableMemory (
+  IN UINTN           Pages
+  );
+
 #endif

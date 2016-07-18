@@ -4,7 +4,7 @@
 
   Copyright (C) 2014, Red Hat, Inc.
   (C) Copyright 2013 Hewlett-Packard Development Company, L.P.<BR>
-  Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2016, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -1265,18 +1265,13 @@ UpdateStdInStdOutStdErr(
           &TempHandle,
           EFI_FILE_MODE_READ,
           0);
-        if (InUnicode) {
-          //
-          // Chop off the 0xFEFF if it's there...
-          //
-          RemoveFileTag(&TempHandle);
-        } else if (!EFI_ERROR(Status)) {
-          //
-          // Create the ASCII->Unicode conversion layer
-          //
-          TempHandle = CreateFileInterfaceFile(TempHandle, FALSE);
-        }
         if (!EFI_ERROR(Status)) {
+          if (!InUnicode) {
+            //
+            // Create the ASCII->Unicode conversion layer
+            //
+            TempHandle = CreateFileInterfaceFile(TempHandle, FALSE);
+          }
           ShellParameters->StdIn = TempHandle;
           gST->ConIn = CreateSimpleTextInOnFile(TempHandle, &gST->ConsoleInHandle);
         }

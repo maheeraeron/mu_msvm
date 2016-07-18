@@ -175,6 +175,7 @@ InitializeLanguage (
   EFI_STATUS                  Status;
   CHAR8                       *LangCode;
   CHAR8                       *Lang;
+  UINTN                       LangSize;
   CHAR8                       *CurrentLang;
   UINTN                       OptionCount;
   CHAR16                      *StringBuffer;
@@ -272,9 +273,10 @@ InitializeLanguage (
       }
 
       if (EFI_ERROR (Status)) {
-        StringBuffer = AllocatePool (AsciiStrSize (Lang) * sizeof (CHAR16));
+        LangSize = AsciiStrSize (Lang);
+        StringBuffer = AllocatePool (LangSize * sizeof (CHAR16));
         ASSERT (StringBuffer != NULL);
-        AsciiStrToUnicodeStr (Lang, StringBuffer);
+        AsciiStrToUnicodeStrS (Lang, StringBuffer, LangSize);
       }
 
       ASSERT (StringBuffer != NULL);
@@ -734,7 +736,7 @@ GetOptionalStringByIndex (
     *String = GetStringById (STRING_TOKEN (STR_MISSING_STRING));
   } else {
     *String = AllocatePool (StrSize * sizeof (CHAR16));
-    AsciiStrToUnicodeStr (OptionalStrStart, *String);
+    AsciiStrToUnicodeStrS (OptionalStrStart, *String, StrSize);
   }
 
   return EFI_SUCCESS;
@@ -989,8 +991,10 @@ BdsSetConsoleMode (
                   //
                   // Update text mode PCD.
                   //
-                  PcdSet32 (PcdConOutColumn, mSetupTextModeColumn);
-                  PcdSet32 (PcdConOutRow, mSetupTextModeRow);
+                  Status = PcdSet32S (PcdConOutColumn, mSetupTextModeColumn);
+                  ASSERT_EFI_ERROR (Status);
+                  Status = PcdSet32S (PcdConOutRow, mSetupTextModeRow);
+                  ASSERT_EFI_ERROR (Status);
                   FreePool (Info);
                   return EFI_SUCCESS;
                 }
@@ -1031,10 +1035,14 @@ BdsSetConsoleMode (
   // Set PCD to Inform GraphicsConsole to change video resolution.
   // Set PCD to Inform Consplitter to change text mode.
   //
-  PcdSet32 (PcdVideoHorizontalResolution, NewHorizontalResolution);
-  PcdSet32 (PcdVideoVerticalResolution, NewVerticalResolution);
-  PcdSet32 (PcdConOutColumn, NewColumns);
-  PcdSet32 (PcdConOutRow, NewRows);
+  Status = PcdSet32S (PcdVideoHorizontalResolution, NewHorizontalResolution);
+  ASSERT_EFI_ERROR (Status);
+  Status = PcdSet32S (PcdVideoVerticalResolution, NewVerticalResolution);
+  ASSERT_EFI_ERROR (Status);
+  Status = PcdSet32S (PcdConOutColumn, NewColumns);
+  ASSERT_EFI_ERROR (Status);
+  Status = PcdSet32S (PcdConOutRow, NewRows);
+  ASSERT_EFI_ERROR (Status);
   
   
   //

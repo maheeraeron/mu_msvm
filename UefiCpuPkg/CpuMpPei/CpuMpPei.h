@@ -1,7 +1,7 @@
 /** @file
   Definitions to install Multiple Processor PPI.
 
-  Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -21,6 +21,7 @@
 #include <Ppi/SecPlatformInformation.h>
 #include <Ppi/SecPlatformInformation2.h>
 #include <Ppi/EndOfPeiPhase.h>
+#include <Ppi/VectorHandoffInfo.h>
 
 #include <Register/Cpuid.h>
 #include <Register/LocalApic.h>
@@ -39,6 +40,7 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiCpuLib.h>
 #include <Library/CpuLib.h>
+#include <Library/CpuExceptionHandlerLib.h>
 
 #include "Microcode.h"
 
@@ -64,8 +66,7 @@ typedef enum {
 //
 typedef struct {
   UINT8             *RendezvousFunnelAddress;
-  UINTN             PModeEntryOffset;
-  UINTN             LModeEntryOffset;
+  UINTN             ModeEntryOffset;
   UINTN             RendezvousFunnelSize;
 } MP_ASSEMBLY_ADDRESS_MAP;
 
@@ -83,25 +84,6 @@ typedef struct _PEI_CPU_MP_DATA  PEI_CPU_MP_DATA;
 
 #pragma pack(1)
 
-typedef union {
-  struct {
-    UINT32  LimitLow    : 16;
-    UINT32  BaseLow     : 16;
-    UINT32  BaseMid     : 8;
-    UINT32  Type        : 4;
-    UINT32  System      : 1;
-    UINT32  Dpl         : 2;
-    UINT32  Present     : 1;
-    UINT32  LimitHigh   : 4;
-    UINT32  Software    : 1;
-    UINT32  Reserved    : 1;
-    UINT32  DefaultSize : 1;
-    UINT32  Granularity : 1;
-    UINT32  BaseHigh    : 8;
-  } Bits;
-  UINT64  Uint64;
-} IA32_GDT;
-
 //
 // MP CPU exchange information for AP reset code
 // This structure is required to be packed because fixed field offsets
@@ -115,9 +97,10 @@ typedef struct {
   IA32_DESCRIPTOR       GdtrProfile;
   IA32_DESCRIPTOR       IdtrProfile;
   UINTN                 BufferStart;
-  UINTN                 PmodeOffset;
+  UINTN                 ModeOffset;
   UINTN                 NumApsExecuting;
-  UINTN                 LmodeOffset;
+  UINTN                 CodeSegment;
+  UINTN                 DataSegment;
   UINTN                 Cr3;
   PEI_CPU_MP_DATA       *PeiCpuMpData;
 } MP_CPU_EXCHANGE_INFO;
@@ -317,6 +300,16 @@ SecPlatformInformation2 (
   IN CONST EFI_PEI_SERVICES                   **PeiServices,
   IN OUT UINT64                               *StructureSize,
      OUT EFI_SEC_PLATFORM_INFORMATION_RECORD2 *PlatformInformationRecord2
+  );
+
+/**
+  Detect whether specified processor can find matching microcode patch and load it.
+
+  @param PeiCpuMpData        Pointer to PEI CPU MP Data
+**/
+VOID
+MicrocodeDetect (
+  IN PEI_CPU_MP_DATA            *PeiCpuMpData
   );
 
 #endif

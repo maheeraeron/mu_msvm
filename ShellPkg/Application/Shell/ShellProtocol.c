@@ -3,7 +3,7 @@
   manipulation, and initialization of EFI_SHELL_PROTOCOL.
 
   (C) Copyright 2014 Hewlett-Packard Development Company, L.P.<BR>
-  Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2016, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -1441,6 +1441,7 @@ InternalShellExecuteDevicePath(
   }
 
   InitializeListHead(&OrigEnvs);
+  ZeroMem(&ShellParamsProtocol, sizeof(EFI_SHELL_PARAMETERS_PROTOCOL));
 
   NewHandle = NULL;
   
@@ -1483,6 +1484,20 @@ InternalShellExecuteDevicePath(
     EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 
   if (!EFI_ERROR(Status)) {
+    //
+    // If the image is not an app abort it.
+    //
+    if (LoadedImage->ImageCodeType != EfiLoaderCode){
+      ShellPrintHiiEx(
+        -1, 
+        -1, 
+        NULL,
+        STRING_TOKEN (STR_SHELL_IMAGE_NOT_APP),
+        ShellInfoObject.HiiHandle
+      );
+      goto UnloadImage;
+    }
+
     ASSERT(LoadedImage->LoadOptionsSize == 0);
     if (NewCmdLine != NULL) {
       LoadedImage->LoadOptionsSize  = (UINT32)StrSize(NewCmdLine);
@@ -1588,6 +1603,109 @@ FreeAlloc:
 
   return(Status);
 }
+
+/**
+  internal worker function to load and run an image in the current shell.
+
+  @param CommandLine            Points to the NULL-terminated UCS-2 encoded string
+                                containing the command line. If NULL then the command-
+                                line will be empty.
+  @param Environment            Points to a NULL-terminated array of environment
+                                variables with the format 'x=y', where x is the
+                                environment variable name and y is the value. If this
+                                is NULL, then the current shell environment is used.
+                
+  @param[out] StartImageStatus  Returned status from the command line.
+
+  @retval EFI_SUCCESS       The command executed successfully. The  status code
+                            returned by the command is pointed to by StatusCode.
+  @retval EFI_INVALID_PARAMETER The parameters are invalid.
+  @retval EFI_OUT_OF_RESOURCES Out of resources.
+  @retval EFI_UNSUPPORTED   Nested shell invocations are not allowed.
+**/
+EFI_STATUS
+EFIAPI
+InternalShellExecute(
+  IN CONST CHAR16                   *CommandLine OPTIONAL,
+  IN CONST CHAR16                   **Environment OPTIONAL,
+  OUT EFI_STATUS                    *StartImageStatus OPTIONAL
+  )
+{
+  EFI_STATUS                    Status;
+  EFI_STATUS                    CleanupStatus;
+  LIST_ENTRY                    OrigEnvs;
+
+  InitializeListHead(&OrigEnvs);
+
+  //
+  // Save our current environment settings for later restoration if necessary
+  //
+  if (Environment != NULL) {
+    Status = GetEnvironmentVariableList(&OrigEnvs);
+    if (!EFI_ERROR(Status)) {
+      Status = SetEnvironmentVariables(Environment);
+    } else {
+      return Status;
+    }
+  }
+
+  Status = RunShellCommand(CommandLine, StartImageStatus);
+
+  // Restore environment variables
+  if (!IsListEmpty(&OrigEnvs)) {
+    CleanupStatus = SetEnvironmentVariableList(&OrigEnvs);
+    ASSERT_EFI_ERROR (CleanupStatus);
+  }
+
+  return(Status);
+}
+
+/**
+  Determine if the UEFI Shell is currently running with nesting enabled or disabled.
+
+  @retval FALSE   nesting is required
+  @retval other   nesting is enabled
+**/
+STATIC
+BOOLEAN
+EFIAPI
+NestingEnabled(
+)
+{
+  EFI_STATUS  Status;
+  CHAR16      *Temp;
+  CHAR16      *Temp2;
+  UINTN       TempSize;
+  BOOLEAN     RetVal;
+
+  RetVal = TRUE;
+  Temp   = NULL;
+  Temp2  = NULL;
+
+  if (ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoNest) {
+    TempSize = 0;
+    Temp     = NULL;
+    Status = SHELL_GET_ENVIRONMENT_VARIABLE(mNoNestingEnvVarName, &TempSize, Temp);
+    if (Status == EFI_BUFFER_TOO_SMALL) {
+      Temp = AllocateZeroPool(TempSize + sizeof(CHAR16));
+      if (Temp != NULL) {
+        Status = SHELL_GET_ENVIRONMENT_VARIABLE(mNoNestingEnvVarName, &TempSize, Temp);
+      }
+    }
+    Temp2 = StrnCatGrow(&Temp2, NULL, mNoNestingTrue, 0);
+    if (Temp != NULL && Temp2 != NULL && StringNoCaseCompare(&Temp, &Temp2) == 0) {
+      //
+      // Use the no nesting method.
+      //
+      RetVal = FALSE;
+    }
+  }
+
+  SHELL_FREE_NON_NULL(Temp);
+  SHELL_FREE_NON_NULL(Temp2);
+  return (RetVal);
+}
+
 /**
   Execute the command line.
 
@@ -1611,7 +1729,7 @@ FreeAlloc:
                             variables with the format 'x=y', where x is the
                             environment variable name and y is the value. If this
                             is NULL, then the current shell environment is used.
-  @param StatusCode         Points to the status code returned by the command.
+  @param StatusCode         Points to the status code returned by the CommandLine.
 
   @retval EFI_SUCCESS       The command executed successfully. The  status code
                             returned by the command is pointed to by StatusCode.
@@ -1635,19 +1753,14 @@ EfiShellExecute(
   CHAR16                    *Temp;
   EFI_DEVICE_PATH_PROTOCOL  *DevPath;
   UINTN                     Size;
-  EFI_STATUS                CalleeStatusCode;
 
-  CalleeStatusCode = EFI_SUCCESS;
-  
   if ((PcdGet8(PcdShellSupportLevel) < 1)) {
     return (EFI_UNSUPPORTED);
   }
 
-  if (Environment != NULL) {
-    // If Environment isn't null, load a new image of the shell with its own
-    // environment
+  if (NestingEnabled()) {
     DevPath = AppendDevicePath (ShellInfoObject.ImageDevPath, ShellInfoObject.FileDevPath);
- 
+
     DEBUG_CODE_BEGIN();
     Temp = ConvertDevicePathToText(ShellInfoObject.FileDevPath, TRUE, TRUE);
     FreePool(Temp);
@@ -1676,19 +1789,10 @@ EfiShellExecute(
     FreePool(DevPath);
     FreePool(Temp);
   } else {
-    // If Environment is NULL, we are free to use and mutate the current shell
-    // environment. This is much faster as uses much less memory.
-
-    if (CommandLine == NULL) {
-      CommandLine = L"";
-    }
-
-    Status = RunShellCommand (CommandLine, &CalleeStatusCode);
-
-    // Pass up the command's exit code if the caller wants it
-    if (StatusCode != NULL) {
-      *StatusCode = (EFI_STATUS) CalleeStatusCode;
-    }
+    Status = InternalShellExecute(
+      (CONST CHAR16*)CommandLine,
+      (CONST CHAR16**)Environment,
+      StatusCode);
   }
 
   return(Status);
@@ -2602,7 +2706,6 @@ EfiShellGetEnvEx(
   EFI_STATUS  Status;
   VOID        *Buffer;
   UINTN       Size;
-  LIST_ENTRY  List;
   ENV_VAR_LIST *Node;
   CHAR16      *CurrentWriteLocation;
 
@@ -2610,21 +2713,13 @@ EfiShellGetEnvEx(
   Buffer = NULL;
 
   if (Name == NULL) {
-    //
-    // Get all our environment variables
-    //
-    InitializeListHead(&List);
-    Status = GetEnvironmentVariableList(&List);
-    if (EFI_ERROR(Status)){
-      return (NULL);
-    }
 
     //
     // Build the semi-colon delimited list. (2 passes)
     //
-    for ( Node = (ENV_VAR_LIST*)GetFirstNode(&List)
-      ; !IsNull(&List, &Node->Link)
-      ; Node = (ENV_VAR_LIST*)GetNextNode(&List, &Node->Link)
+    for ( Node = (ENV_VAR_LIST*)GetFirstNode(&gShellEnvVarList.Link)
+      ; !IsNull(&gShellEnvVarList.Link, &Node->Link)
+      ; Node = (ENV_VAR_LIST*)GetNextNode(&gShellEnvVarList.Link, &Node->Link)
      ){
       ASSERT(Node->Key != NULL);
       Size += StrSize(Node->Key);
@@ -2634,16 +2729,13 @@ EfiShellGetEnvEx(
 
     Buffer = AllocateZeroPool(Size);
     if (Buffer == NULL) {
-      if (!IsListEmpty (&List)) {
-        FreeEnvironmentVariableList(&List);
-      }
       return (NULL);
     }
     CurrentWriteLocation = (CHAR16*)Buffer;
 
-    for ( Node = (ENV_VAR_LIST*)GetFirstNode(&List)
-      ; !IsNull(&List, &Node->Link)
-      ; Node = (ENV_VAR_LIST*)GetNextNode(&List, &Node->Link)
+    for ( Node = (ENV_VAR_LIST*)GetFirstNode(&gShellEnvVarList.Link)
+      ; !IsNull(&gShellEnvVarList.Link, &Node->Link)
+      ; Node = (ENV_VAR_LIST*)GetNextNode(&gShellEnvVarList.Link, &Node->Link)
      ){
       ASSERT(Node->Key != NULL);
       StrCpyS( CurrentWriteLocation, 
@@ -2653,37 +2745,43 @@ EfiShellGetEnvEx(
       CurrentWriteLocation += StrLen(CurrentWriteLocation) + 1;
     }
 
-    //
-    // Free the list...
-    //
-    if (!IsListEmpty (&List)) {
-      FreeEnvironmentVariableList(&List);
-    }
   } else {
     //
     // We are doing a specific environment variable
     //
+    Status = ShellFindEnvVarInList(Name, (CHAR16**)&Buffer, &Size, Attributes);
 
-    //
-    // get the size we need for this EnvVariable
-    //
-    Status = SHELL_GET_ENVIRONMENT_VARIABLE_AND_ATTRIBUTES(Name, Attributes, &Size, Buffer);
-    if (Status == EFI_BUFFER_TOO_SMALL) {
+    if (EFI_ERROR(Status)){
       //
-      // Allocate the space and recall the get function
+      // get the size we need for this EnvVariable
       //
-      Buffer = AllocateZeroPool(Size);
       Status = SHELL_GET_ENVIRONMENT_VARIABLE_AND_ATTRIBUTES(Name, Attributes, &Size, Buffer);
-    }
-    //
-    // we didnt get it (might not exist)
-    // free the memory if we allocated any and return NULL
-    //
-    if (EFI_ERROR(Status)) {
-      if (Buffer != NULL) {
-        FreePool(Buffer);
+      if (Status == EFI_BUFFER_TOO_SMALL) {
+        //
+        // Allocate the space and recall the get function
+        //
+        Buffer = AllocateZeroPool(Size);
+        Status = SHELL_GET_ENVIRONMENT_VARIABLE_AND_ATTRIBUTES(Name, Attributes, &Size, Buffer);
       }
-      return (NULL);
+      //
+      // we didnt get it (might not exist)
+      // free the memory if we allocated any and return NULL
+      //
+      if (EFI_ERROR(Status)) {
+        if (Buffer != NULL) {
+          FreePool(Buffer);
+        }
+        return (NULL);
+      } else {
+        //
+        // If we did not find the environment variable in the gShellEnvVarList
+        // but get it from UEFI variable storage successfully then we need update
+        // the gShellEnvVarList.
+        //
+        ShellFreeEnvVarList ();
+        Status = ShellInitEnvVarList ();
+        ASSERT (Status == EFI_SUCCESS);
+      }
     }
   }
 
@@ -2743,14 +2841,35 @@ InternalEfiShellSetEnv(
   IN BOOLEAN Volatile
   )
 {
+  EFI_STATUS      Status;
+  UINT32          Atts;
+
+  Atts = 0x0;
+  
   if (Value == NULL || StrLen(Value) == 0) {
-    return (SHELL_DELETE_ENVIRONMENT_VARIABLE(Name));
+    Status = SHELL_DELETE_ENVIRONMENT_VARIABLE(Name);
+    if (!EFI_ERROR(Status)) {
+      ShellRemvoeEnvVarFromList(Name);
+    }
+    return Status;
   } else {
     SHELL_DELETE_ENVIRONMENT_VARIABLE(Name);
     if (Volatile) {
-      return (SHELL_SET_ENVIRONMENT_VARIABLE_V(Name, StrSize(Value), Value));
+      Status = SHELL_SET_ENVIRONMENT_VARIABLE_V(Name, StrSize(Value), Value);
+      if (!EFI_ERROR(Status)) {
+        Atts   &= ~EFI_VARIABLE_NON_VOLATILE;
+        Atts   |= EFI_VARIABLE_BOOTSERVICE_ACCESS;
+        ShellAddEnvVarToList(Name, Value, StrSize(Value), Atts);
+      }
+      return Status;
     } else {
-      return (SHELL_SET_ENVIRONMENT_VARIABLE_NV(Name, StrSize(Value), Value));
+      Status = SHELL_SET_ENVIRONMENT_VARIABLE_NV(Name, StrSize(Value), Value);
+      if (!EFI_ERROR(Status)) {
+        Atts   |= EFI_VARIABLE_NON_VOLATILE;
+        Atts   |= EFI_VARIABLE_BOOTSERVICE_ACCESS;
+        ShellAddEnvVarToList(Name, Value, StrSize(Value), Atts);
+      } 
+      return Status;
     }
   }
 }
@@ -2814,6 +2933,11 @@ EfiShellSetEnv(
         gUnicodeCollation,
         (CHAR16*)Name,
         L"uefiversion") == 0
+    ||(!ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoNest &&
+      gUnicodeCollation->StriColl(
+        gUnicodeCollation,
+        (CHAR16*)Name,
+        (CHAR16*)mNoNestingEnvVarName) == 0)
        ){
     return (EFI_INVALID_PARAMETER);
   }
@@ -2827,7 +2951,7 @@ EfiShellSetEnv(
   FileSystemMapping is not NULL, it returns the current directory associated with the
   FileSystemMapping. In both cases, the returned name includes the file system
   mapping (i.e. fs0:\current-dir).
-  
+
   Note that the current directory string should exclude the tailing backslash character.
 
   @param FileSystemMapping      A pointer to the file system mapping. If NULL,
@@ -2981,7 +3105,7 @@ EfiShellSetCurDir(
       ASSERT((MapListItem->CurrentDirectoryPath == NULL && Size == 0) || (MapListItem->CurrentDirectoryPath != NULL));
       if (MapListItem->CurrentDirectoryPath != NULL) {
         MapListItem->CurrentDirectoryPath[StrLen(MapListItem->CurrentDirectoryPath)-1] = CHAR_NULL;
-      }
+    }
     }
   } else {
     //

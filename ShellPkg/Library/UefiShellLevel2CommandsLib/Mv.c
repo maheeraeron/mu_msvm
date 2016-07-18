@@ -2,7 +2,7 @@
   Main file for mv shell level 2 function.
 
   (C) Copyright 2013-2015 Hewlett-Packard Development Company, L.P.<BR>
-  Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2016, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -483,18 +483,21 @@ ValidateAndMoveFiles(
   Response          = *Resp;
   Attr              = 0;
   CleanFilePathStr  = NULL;
+  FullCwd           = NULL;
 
-  FullCwd = AllocateZeroPool(StrSize(Cwd) + sizeof(CHAR16));
-  if (FullCwd == NULL) {
-    return SHELL_OUT_OF_RESOURCES;
-  } else {
-    StrCpyS(FullCwd, StrSize(Cwd)/sizeof(CHAR16)+1, Cwd);
-    StrCatS(FullCwd, StrSize(Cwd)/sizeof(CHAR16)+1, L"\\");
-  }
+  if (Cwd != NULL) {
+    FullCwd = AllocateZeroPool(StrSize(Cwd) + sizeof(CHAR16));
+    if (FullCwd == NULL) {
+      return SHELL_OUT_OF_RESOURCES;
+    } else {
+      StrCpyS(FullCwd, StrSize(Cwd)/sizeof(CHAR16)+1, Cwd);
+      StrCatS(FullCwd, StrSize(Cwd)/sizeof(CHAR16)+1, L"\\");
+    }
+  } 
 
   Status = ShellLevel2StripQuotes (DestParameter, &CleanFilePathStr);
   if (EFI_ERROR (Status)) {
-    FreePool (FullCwd);
+    SHELL_FREE_NON_NULL(FullCwd);
     if (Status == EFI_OUT_OF_RESOURCES) {
       return SHELL_OUT_OF_RESOURCES;
     } else {
@@ -511,7 +514,7 @@ ValidateAndMoveFiles(
   FreePool (CleanFilePathStr);
 
   if (ShellStatus != SHELL_SUCCESS) {
-    FreePool (FullCwd);
+    SHELL_FREE_NON_NULL (FullCwd);
     return (ShellStatus);
   }
   DestPath = PathCleanUpDirectories(DestPath);
@@ -526,7 +529,7 @@ ValidateAndMoveFiles(
     SHELL_FREE_NON_NULL(DestPath);
     SHELL_FREE_NON_NULL(HiiOutput);
     SHELL_FREE_NON_NULL(HiiResultOk);
-    FreePool (FullCwd);
+    SHELL_FREE_NON_NULL(FullCwd);
     return (SHELL_OUT_OF_RESOURCES);
   }
 
@@ -588,7 +591,7 @@ ValidateAndMoveFiles(
           //
           // indicate to stop everything
           //
-          FreePool(FullCwd);
+          SHELL_FREE_NON_NULL(FullCwd);
           return (SHELL_ABORTED);
         case ShellPromptResponseAll:
           *Resp = Response;
@@ -599,7 +602,7 @@ ValidateAndMoveFiles(
           break;
         default:
           FreePool(Response);
-          FreePool(FullCwd);
+          SHELL_FREE_NON_NULL(FullCwd);
           return SHELL_ABORTED;
       }
       Status = ShellDeleteFileByName(FullDestPath!=NULL? FullDestPath:DestPath);
@@ -646,7 +649,7 @@ ValidateAndMoveFiles(
   SHELL_FREE_NON_NULL(DestPath);
   SHELL_FREE_NON_NULL(HiiOutput);
   SHELL_FREE_NON_NULL(HiiResultOk);
-  FreePool (FullCwd);
+  SHELL_FREE_NON_NULL(FullCwd);
   return (ShellStatus);
 }
 
@@ -731,7 +734,7 @@ ShellCommandRunMv (
             //
             // ValidateAndMoveFiles will report errors to the screen itself
             //
-            CwdSize = StrSize(ShellGetCurrentDir(NULL)) + 1;
+            CwdSize = StrSize(ShellGetCurrentDir(NULL)) + sizeof(CHAR16);
             Cwd = AllocateZeroPool(CwdSize);
             ASSERT (Cwd != NULL);
             StrCpyS(Cwd, CwdSize/sizeof(CHAR16), ShellGetCurrentDir(NULL));

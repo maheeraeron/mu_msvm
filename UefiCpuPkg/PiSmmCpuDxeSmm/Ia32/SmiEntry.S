@@ -24,7 +24,6 @@ ASM_GLOBAL  ASM_PFX(gcSmiHandlerSize)
 ASM_GLOBAL  ASM_PFX(gSmiCr3)
 ASM_GLOBAL  ASM_PFX(gSmiStack)
 ASM_GLOBAL  ASM_PFX(gSmbase)
-ASM_GLOBAL  ASM_PFX(FeaturePcdGet (PcdCpuSmmDebug))
 ASM_GLOBAL  ASM_PFX(FeaturePcdGet (PcdCpuSmmStackGuard))
 ASM_GLOBAL  ASM_PFX(gSmiHandlerIdtr)
 
@@ -124,7 +123,7 @@ L11:
 L12:                                       # as cr4.PGE is not set here, refresh cr3
     movl    %eax, %cr4                     # in PreModifyMtrrs() to flush TLB.
     movl    %cr0, %ebx
-    orl     $0x080000000, %ebx             # enable paging
+    orl     $0x080010000, %ebx             # enable paging + WP
     movl    %ebx, %cr0
     leal    DSC_OFFSET(%edi),%ebx
     movw    DSC_DS(%ebx),%ax
@@ -148,43 +147,22 @@ L5:
 #   jmp     _SmiHandler                 # instruction is not needed
 
 _SmiHandler:
-    cmpb    $0, ASM_PFX(FeaturePcdGet (PcdCpuSmmDebug))
-    jz      L3
+    movl    (%esp), %ebx
 
-L6:
-    call    L1
-L1:
-    popl    %ebp
-    movl    $0x80000001, %eax
-    cpuid
-    btl     $29, %edx                   # check cpuid to identify X64 or IA32
-    leal    (0x7fc8 - (L1 - _SmiEntryPoint))(%ebp), %edi
-    leal    4(%edi), %esi
-    jnc     L2
-    addl    $4, %esi
-L2:
-    movl    (%esi), %ecx
-    movl    (%edi), %edx
-L7:
-    movl    %ecx, %dr6
-    movl    %edx, %dr7                  # restore DR6 & DR7 before running C code
-L3:
-
-    pushl   (%esp)
-
+    pushl   %ebx
+    movl    $ASM_PFX(CpuSmmDebugEntry), %eax
+    call    *%eax
+    popl    %ecx
+    
+    pushl   %ebx
     movl    $ASM_PFX(SmiRendezvous), %eax
     call    *%eax
     popl    %ecx
 
-
-    cmpb    $0, ASM_PFX(FeaturePcdGet (PcdCpuSmmDebug))
-    jz      L4
-
-    movl    %dr6, %ecx
-    movl    %dr7, %edx
-    movl    %ecx, (%esi)
-    movl    %edx, (%edi)
-L4:
+    pushl   %ebx
+    movl    $ASM_PFX(CpuSmmDebugExit), %eax
+    call    *%eax
+    popl    %ecx
 
     rsm
 

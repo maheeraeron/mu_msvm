@@ -500,7 +500,6 @@ DrawBootPopupMenu (
   EFI_STRING            String;
   UINTN                 Index;
   UINTN                 Width;  
-  UINTN                 Height;
   UINTN                 StartCol;
   UINTN                 StartRow;
   UINTN                 PrintRow;
@@ -514,7 +513,6 @@ DrawBootPopupMenu (
   SavedAttribute = gST->ConOut->Mode->Attribute;
   gST->ConOut->SetAttribute (gST->ConOut, EFI_WHITE | EFI_BACKGROUND_BLUE);
   Width    = BootMenuData->MenuScreen.Width;
-  Height   = BootMenuData->MenuScreen.Height;
   StartCol = BootMenuData->MenuScreen.StartCol;
   StartRow = BootMenuData->MenuScreen.StartRow;
   ItemCountPerScreen = BootMenuData->ScrollBarControl.ItemCountPerScreen;
@@ -810,8 +808,10 @@ BdsSetConsoleMode (
                   //
                   // Update text mode PCD.
                   //
-                  PcdSet32 (PcdConOutColumn, mSetupTextModeColumn);
-                  PcdSet32 (PcdConOutRow, mSetupTextModeRow);
+                  Status = PcdSet32S (PcdConOutColumn, mSetupTextModeColumn);
+                  ASSERT_EFI_ERROR (Status);
+                  Status = PcdSet32S (PcdConOutRow, mSetupTextModeRow);
+                  ASSERT_EFI_ERROR (Status);
                   FreePool (Info);
                   return EFI_SUCCESS;
                 }
@@ -852,11 +852,14 @@ BdsSetConsoleMode (
   // Set PCD to Inform GraphicsConsole to change video resolution.
   // Set PCD to Inform Consplitter to change text mode.
   //
-  PcdSet32 (PcdVideoHorizontalResolution, NewHorizontalResolution);
-  PcdSet32 (PcdVideoVerticalResolution, NewVerticalResolution);
-  PcdSet32 (PcdConOutColumn, NewColumns);
-  PcdSet32 (PcdConOutRow, NewRows);
-  
+  Status = PcdSet32S (PcdVideoHorizontalResolution, NewHorizontalResolution);
+  ASSERT_EFI_ERROR (Status);
+  Status = PcdSet32S (PcdVideoVerticalResolution, NewVerticalResolution);
+  ASSERT_EFI_ERROR (Status);
+  Status = PcdSet32S (PcdConOutColumn, NewColumns);
+  ASSERT_EFI_ERROR (Status);
+  Status = PcdSet32S (PcdConOutRow, NewRows);
+  ASSERT_EFI_ERROR (Status);
   
   //
   // Video mode is changed, so restart graphics console driver and higher level driver.

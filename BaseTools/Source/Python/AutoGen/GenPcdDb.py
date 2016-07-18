@@ -1,7 +1,7 @@
 ## @file
 # Routines for generating Pcd Database
 #
-# Copyright (c) 2013 - 2015, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials
 # are licensed and made available under the terms and conditions of the BSD License
 # which accompanies this distribution.  The full text of the license may be found at
@@ -1141,6 +1141,16 @@ def CreatePcdDatabasePhaseSpecificAutoGen (Platform, Phase):
         CName = Pcd.TokenCName
         TokenSpaceGuidCName = Pcd.TokenSpaceGuidCName
 
+        for PcdItem in GlobalData.MixedPcd:
+            if (Pcd.TokenCName, Pcd.TokenSpaceGuidCName) in GlobalData.MixedPcd[PcdItem]:
+                CName = PcdItem[0]
+
+        if GlobalData.BuildOptionPcd:
+            for PcdItem in GlobalData.BuildOptionPcd:
+                if (Pcd.TokenSpaceGuidCName, CName) == (PcdItem[0], PcdItem[1]):
+                    Pcd.DefaultValue = PcdItem[2]
+                    break
+
         EdkLogger.debug(EdkLogger.DEBUG_3, "PCD: %s %s (%s : %s)" % (CName, TokenSpaceGuidCName, Pcd.Phase, Phase))
 
         if Pcd.Phase == 'PEI':
@@ -1464,6 +1474,17 @@ def CreatePcdDatabasePhaseSpecificAutoGen (Platform, Phase):
         if len(Pcd.SkuInfoList) > 1:
             Dict['PCD_ORDER_TOKEN_NUMBER_MAP'][GeneratedTokenNumber] = SkuEnablePcdIndex
             SkuEnablePcdIndex += 1
+
+        for PcdItem in GlobalData.MixedPcd:
+            if (Pcd.TokenCName, Pcd.TokenSpaceGuidCName) in GlobalData.MixedPcd[PcdItem]:
+                CName = PcdItem[0]
+
+        if GlobalData.BuildOptionPcd:
+            for PcdItem in GlobalData.BuildOptionPcd:
+                if (Pcd.TokenSpaceGuidCName, CName) == (PcdItem[0], PcdItem[1]):
+                    Pcd.DefaultValue = PcdItem[2]
+                    break
+
         EdkLogger.debug(EdkLogger.DEBUG_1, "PCD = %s.%s" % (CName, TokenSpaceGuidCName))
         EdkLogger.debug(EdkLogger.DEBUG_1, "phase = %s" % Phase)
         EdkLogger.debug(EdkLogger.DEBUG_1, "GeneratedTokenNumber = %s" % str(GeneratedTokenNumber))

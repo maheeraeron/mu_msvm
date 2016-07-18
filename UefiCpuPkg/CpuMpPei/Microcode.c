@@ -1,7 +1,7 @@
 /** @file
   Implementation of loading microcode on processors.
 
-  Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -36,10 +36,11 @@ GetCurrentMicrocodeSignature (
 /**
   Detect whether specified processor can find matching microcode patch and load it.
 
+  @param PeiCpuMpData        Pointer to PEI CPU MP Data
 **/
 VOID
 MicrocodeDetect (
-  VOID
+  IN PEI_CPU_MP_DATA            *PeiCpuMpData
   )
 {
   UINT64                                  MicrocodePatchAddress;
@@ -53,11 +54,11 @@ MicrocodeDetect (
   UINTN                                   Index;
   UINT8                                   PlatformId;
   UINT32                                  RegEax;
+  UINT32                                  CurrentRevision;
   UINT32                                  LatestRevision;
   UINTN                                   TotalSize;
   UINT32                                  CheckSum32;
   BOOLEAN                                 CorrectMicrocode;
-  INT32                                   CurrentSignature;
   MICROCODE_INFO                          MicrocodeInfo;
 
   ZeroMem (&MicrocodeInfo, sizeof (MICROCODE_INFO));
@@ -66,6 +67,14 @@ MicrocodeDetect (
   if (MicrocodePatchRegionSize == 0) {
     //
     // There is no microcode patches
+    //
+    return;
+  }
+
+  CurrentRevision = GetCurrentMicrocodeSignature ();
+  if (CurrentRevision != 0) {
+    //
+    // Skip loading microcode if it has been loaded successfully
     //
     return;
   }
@@ -179,22 +188,26 @@ MicrocodeDetect (
     MicrocodeEntryPoint = (EFI_CPU_MICROCODE_HEADER *) (((UINTN) MicrocodeEntryPoint) + TotalSize);
   } while (((UINTN) MicrocodeEntryPoint < MicrocodeEnd));
 
-  if (LatestRevision > 0) {
+  if (LatestRevision > CurrentRevision) {
     //
-    // Get microcode update signature of currently loaded microcode update
+    // BIOS only authenticate updates that contain a numerically larger revision
+    // than the currently loaded revision, where Current Signature < New Update
+    // Revision. A processor with no loaded update is considered to have a
+    // revision equal to zero.
     //
-    CurrentSignature = GetCurrentMicrocodeSignature ();
+    AsmWriteMsr64 (
+      EFI_MSR_IA32_BIOS_UPDT_TRIG,
+      (UINT64) (UINTN) MicrocodeInfo.MicrocodeData
+      );
     //
-    // If no microcode update has been loaded, then trigger microcode load.
+    // Get and check new microcode signature
     //
-    if (CurrentSignature == 0) {
-      AsmWriteMsr64 (
-        EFI_MSR_IA32_BIOS_UPDT_TRIG,
-        (UINT64) (UINTN) MicrocodeInfo.MicrocodeData
-        );
-      MicrocodeInfo.Load = TRUE;
-    } else {
-      MicrocodeInfo.Load = FALSE;
+    CurrentRevision = GetCurrentMicrocodeSignature ();
+    if (CurrentRevision != LatestRevision) {
+      AcquireSpinLock(&PeiCpuMpData->MpLock);
+      DEBUG ((EFI_D_ERROR, "Updated microcode signature [0x%08x] does not match \
+                loaded microcode signature [0x%08x]\n", CurrentRevision, LatestRevision));
+      ReleaseSpinLock(&PeiCpuMpData->MpLock);
     }
   }
 }

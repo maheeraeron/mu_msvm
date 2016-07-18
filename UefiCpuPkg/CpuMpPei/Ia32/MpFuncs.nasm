@@ -1,5 +1,5 @@
 ;------------------------------------------------------------------------------ ;
-; Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
 ; This program and the accompanying materials
 ; are licensed and made available under the terms and conditions of the BSD License
 ; which accompanies this distribution.  The full text of the license may be found at
@@ -48,12 +48,19 @@ BITS 16
     mov        si,  BufferStartLocation
     mov        ebx, [si]
 
-    mov        di,  PmodeOffsetLocation
-    mov        eax, [di]
+    mov        si,  ModeOffsetLocation
+    mov        eax, [si]
+    mov        si,  CodeSegmentLocation
+    mov        edx, [si]
     mov        di,  ax
-    sub        di,  06h
+    sub        di,  02h
+    mov        [di], dx
+    sub        di,  04h
     add        eax, ebx
     mov        [di],eax
+
+    mov        si,  DataSegmentLocation
+    mov        edx, [si]
 
     mov        si, GdtrLocation
 o32 lgdt       [cs:si]
@@ -68,15 +75,14 @@ o32 lidt       [cs:si]
     or         eax, 000000003h                 ;Set PE bit (bit #0) & MP
     mov        cr0, eax
 
-    jmp        PROTECT_MODE_CS:strict dword 0  ; far jump to protected mode
+    jmp        0:strict dword 0                ; far jump to protected mode
 BITS 32
 Flat32Start:                                   ; protected mode entry point
-    mov        ax, PROTECT_MODE_DS
-    mov        ds, ax
-    mov        es, ax
-    mov        fs, ax
-    mov        gs, ax
-    mov        ss, ax
+    mov        ds, dx
+    mov        es, dx
+    mov        fs, dx
+    mov        gs, dx
+    mov        ss, dx
 
     mov        esi, ebx
     mov        edi, esi
@@ -143,8 +149,7 @@ ASM_PFX(AsmGetAddressMap):
     mov        ebx,  [ebp + 24h]
     mov        dword [ebx], RendezvousFunnelProcStart
     mov        dword [ebx +  4h], Flat32Start - RendezvousFunnelProcStart
-    mov        dword [ebx +  8h], 0
-    mov        dword [ebx + 0ch], RendezvousFunnelProcEnd - RendezvousFunnelProcStart
+    mov        dword [ebx +  8h], RendezvousFunnelProcEnd - RendezvousFunnelProcStart
 
     popad
     ret
@@ -222,28 +227,3 @@ OtherLoaded:
 
     popad
     ret
-
-global ASM_PFX(AsmInitializeGdt)
-ASM_PFX(AsmInitializeGdt):
-  push         ebp
-  mov          ebp, esp
-  pushad
-  mov          edi, [ebp + 8]      ; Load GDT register
-
-  lgdt         [edi]      ; and update the GDTR
-
-  push         PROTECT_MODE_CS
-  mov          eax, ASM_PFX(SetCodeSelectorFarJump)
-  push         eax
-  retf
-ASM_PFX(SetCodeSelectorFarJump):
-  mov          ax, PROTECT_MODE_DS ; Update the Base for the new selectors, too
-  mov          ds, ax
-  mov          es, ax
-  mov          fs, ax
-  mov          gs, ax
-  mov          ss, ax
-
-  popad
-  pop          ebp
-  ret

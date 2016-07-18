@@ -1,7 +1,7 @@
 ## @file
 # Global variables for GenFds
 #
-#  Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2007 - 2016, Intel Corporation. All rights reserved.<BR>
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -68,6 +68,7 @@ class GenFdsGlobalVariable:
     BuildRuleFamily = "MSFT"
     ToolChainFamily = "MSFT"
     __BuildRuleDatabase = None
+    GuidToolDefinition = {}
     
     #
     # The list whose element are flags to indicate if large FFS or SECTION files exist in FV.
@@ -284,8 +285,6 @@ class GenFdsGlobalVariable:
         GenFdsGlobalVariable.FfsDir = os.path.join(GenFdsGlobalVariable.FvDir, 'Ffs')
         if not os.path.exists(GenFdsGlobalVariable.FfsDir) :
             os.makedirs(GenFdsGlobalVariable.FfsDir)
-        if ArchList != None:
-            GenFdsGlobalVariable.ArchList = ArchList
 
         T_CHAR_LF = '\n'
         #

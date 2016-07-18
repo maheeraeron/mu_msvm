@@ -1,7 +1,7 @@
 /** @file
 Agent Module to load other modules to deploy SMM Entry Vector for X86 CPU.
 
-Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2009 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -104,7 +104,7 @@ BOOLEAN                  mSmmCodeAccessCheckEnable = FALSE;
 //
 // Spin lock used to serialize setting of SMM Code Access Check feature
 //
-SPIN_LOCK                mConfigSmmCodeAccessCheckLock;
+SPIN_LOCK                *mConfigSmmCodeAccessCheckLock = NULL;
 
 /**
   Initialize IDT to setup exception handlers for SMM.
@@ -246,7 +246,7 @@ SmmReadSaveState (
     // the pseudo register value for EFI_SMM_SAVE_STATE_REGISTER_PROCESSOR_ID is returned in Buffer.
     // Otherwise, EFI_NOT_FOUND is returned.
     //
-    if (mSmmMpSyncData->CpuData[CpuIndex].Present) {
+    if (*(mSmmMpSyncData->CpuData[CpuIndex].Present)) {
       *(UINT64 *)Buffer = gSmmCpuPrivate->ProcessorInfo[CpuIndex].ProcessorId;
       return EFI_SUCCESS;
     } else {
@@ -254,7 +254,7 @@ SmmReadSaveState (
     }
   }
 
-  if (!mSmmMpSyncData->CpuData[CpuIndex].Present) {
+  if (!(*(mSmmMpSyncData->CpuData[CpuIndex].Present))) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -760,6 +760,9 @@ PiCpuSmmEntry (
   UINTN                      NumberOfEnabledProcessors;
   UINTN                      Index;
   VOID                       *Buffer;
+  UINTN                      BufferPages;
+  UINTN                      TileCodeSize;
+  UINTN                      TileDataSize;
   UINTN                      TileSize;
   VOID                       *GuidHob;
   EFI_SMRAM_DESCRIPTOR       *SmramDescriptor;
@@ -942,9 +945,13 @@ PiCpuSmmEntry (
   // specific context in a PROCESSOR_SMM_DESCRIPTOR, and the SMI entry point.  This size
   // is rounded up to nearest power of 2.
   //
-  TileSize = sizeof (SMRAM_SAVE_STATE_MAP) + sizeof (PROCESSOR_SMM_DESCRIPTOR) + GetSmiHandlerSize () - 1;
+  TileCodeSize = GetSmiHandlerSize ();
+  TileCodeSize = ALIGN_VALUE(TileCodeSize, SIZE_4KB);
+  TileDataSize = sizeof (SMRAM_SAVE_STATE_MAP) + sizeof (PROCESSOR_SMM_DESCRIPTOR);
+  TileDataSize = ALIGN_VALUE(TileDataSize, SIZE_4KB);
+  TileSize = TileDataSize + TileCodeSize - 1;
   TileSize = 2 * GetPowerOfTwo32 ((UINT32)TileSize);
-  DEBUG ((EFI_D_INFO, "SMRAM TileSize = %08x\n", TileSize));
+  DEBUG ((EFI_D_INFO, "SMRAM TileSize = 0x%08x (0x%08x, 0x%08x)\n", TileSize, TileCodeSize, TileDataSize));
 
   //
   // If the TileSize is larger than space available for the SMI Handler of CPU[i],
@@ -966,12 +973,14 @@ PiCpuSmmEntry (
   // Intel486 processors: FamilyId is 4
   // Pentium processors : FamilyId is 5
   //
+  BufferPages = EFI_SIZE_TO_PAGES (SIZE_32KB + TileSize * (mMaxNumberOfCpus - 1));
   if ((FamilyId == 4) || (FamilyId == 5)) {
-    Buffer = AllocateAlignedPages (EFI_SIZE_TO_PAGES (SIZE_32KB + TileSize * (mMaxNumberOfCpus - 1)), SIZE_32KB);
+    Buffer = AllocateAlignedPages (BufferPages, SIZE_32KB);
   } else {
-    Buffer = AllocatePages (EFI_SIZE_TO_PAGES (SIZE_32KB + TileSize * (mMaxNumberOfCpus - 1)));
+    Buffer = AllocateAlignedPages (BufferPages, SIZE_4KB);
   }
   ASSERT (Buffer != NULL);
+  DEBUG ((EFI_D_INFO, "SMRAM SaveState Buffer (0x%08x, 0x%08x)\n", Buffer, EFI_PAGES_TO_SIZE(BufferPages)));
 
   //
   // Allocate buffer for pointers to array in  SMM_CPU_PRIVATE_DATA.
@@ -1329,7 +1338,7 @@ ConfigSmmCodeAccessCheckOnCurrentProcessor (
   //
   // Release the spin lock user to serialize the updates to the SMM Feature Control MSR
   //
-  ReleaseSpinLock (&mConfigSmmCodeAccessCheckLock);
+  ReleaseSpinLock (mConfigSmmCodeAccessCheckLock);
 }
 
 /**
@@ -1365,13 +1374,13 @@ ConfigSmmCodeAccessCheck (
   //
   // Initialize the lock used to serialize the MSR programming in BSP and all APs
   //
-  InitializeSpinLock (&mConfigSmmCodeAccessCheckLock);
+  InitializeSpinLock (mConfigSmmCodeAccessCheckLock);
 
   //
   // Acquire Config SMM Code Access Check spin lock.  The BSP will release the
   // spin lock when it is done executing ConfigSmmCodeAccessCheckOnCurrentProcessor().
   //
-  AcquireSpinLock (&mConfigSmmCodeAccessCheckLock);
+  AcquireSpinLock (mConfigSmmCodeAccessCheckLock);
 
   //
   // Enable SMM Code Access Check feature on the BSP.
@@ -1388,7 +1397,7 @@ ConfigSmmCodeAccessCheck (
       // Acquire Config SMM Code Access Check spin lock.  The AP will release the
       // spin lock when it is done executing ConfigSmmCodeAccessCheckOnCurrentProcessor().
       //
-      AcquireSpinLock (&mConfigSmmCodeAccessCheckLock);
+      AcquireSpinLock (mConfigSmmCodeAccessCheckLock);
 
       //
       // Call SmmStartupThisAp() to enable SMM Code Access Check on an AP.
@@ -1399,16 +1408,45 @@ ConfigSmmCodeAccessCheck (
       //
       // Wait for the AP to release the Config SMM Code Access Check spin lock.
       //
-      while (!AcquireSpinLockOrFail (&mConfigSmmCodeAccessCheckLock)) {
+      while (!AcquireSpinLockOrFail (mConfigSmmCodeAccessCheckLock)) {
         CpuPause ();
       }
 
       //
       // Release the Config SMM Code Access Check spin lock.
       //
-      ReleaseSpinLock (&mConfigSmmCodeAccessCheckLock);
+      ReleaseSpinLock (mConfigSmmCodeAccessCheckLock);
     }
   }
+}
+
+/**
+  This API provides a way to allocate memory for page table.
+
+  This API can be called more once to allocate memory for page tables.
+
+  Allocates the number of 4KB pages of type EfiRuntimeServicesData and returns a pointer to the
+  allocated buffer.  The buffer returned is aligned on a 4KB boundary.  If Pages is 0, then NULL
+  is returned.  If there is not enough memory remaining to satisfy the request, then NULL is
+  returned.
+
+  @param  Pages                 The number of 4 KB pages to allocate.
+
+  @return A pointer to the allocated buffer or NULL if allocation fails.
+
+**/
+VOID *
+AllocatePageTableMemory (
+  IN UINTN           Pages
+  )
+{
+  VOID  *Buffer;
+
+  Buffer = SmmCpuFeaturesAllocatePageTableMemory (Pages);
+  if (Buffer != NULL) {
+    return Buffer;
+  }
+  return AllocatePages (Pages);
 }
 
 /**
@@ -1436,9 +1474,44 @@ PerformRemainingTasks (
     //
     ConfigSmmCodeAccessCheck ();
 
+    SmmCpuFeaturesCompleteSmmReadyToLock ();
+
     //
     // Clean SMM ready to lock flag
     //
     mSmmReadyToLock = FALSE;
+  }
+}
+
+/**
+  Perform the pre tasks.
+
+**/
+VOID
+PerformPreTasks (
+  VOID
+  )
+{
+  //
+  // Restore SMM Configuration in S3 boot path.
+  //
+  if (mRestoreSmmConfigurationInS3) {
+    //
+    // Need make sure gSmst is correct because below function may use them.
+    //
+    gSmst->SmmStartupThisAp      = gSmmCpuPrivate->SmmCoreEntryContext.SmmStartupThisAp;
+    gSmst->CurrentlyExecutingCpu = gSmmCpuPrivate->SmmCoreEntryContext.CurrentlyExecutingCpu;
+    gSmst->NumberOfCpus          = gSmmCpuPrivate->SmmCoreEntryContext.NumberOfCpus;
+    gSmst->CpuSaveStateSize      = gSmmCpuPrivate->SmmCoreEntryContext.CpuSaveStateSize;
+    gSmst->CpuSaveState          = gSmmCpuPrivate->SmmCoreEntryContext.CpuSaveState;
+
+    //
+    // Configure SMM Code Access Check feature if available.
+    //
+    ConfigSmmCodeAccessCheck ();
+
+    SmmCpuFeaturesCompleteSmmReadyToLock ();
+
+    mRestoreSmmConfigurationInS3 = FALSE;
   }
 }

@@ -21,6 +21,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <io.h>
 #endif
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -197,8 +198,11 @@ GetShdrByIndex (
   UINT32 Num
   )
 {
-  if (Num >= mEhdr->e_shnum)
-    return NULL;
+  if (Num >= mEhdr->e_shnum) {
+    Error (NULL, 0, 3000, "Invalid", "GetShdrByIndex: Index %u is too high.", Num);
+    exit(EXIT_FAILURE);
+  }
+
   return (Elf_Shdr*)((UINT8*)mShdrBase + Num * mEhdr->e_shentsize);
 }
 
@@ -255,6 +259,62 @@ IsDataShdr (
   return (BOOLEAN) (Shdr->sh_flags & (SHF_WRITE | SHF_ALLOC)) == (SHF_ALLOC | SHF_WRITE);
 }
 
+STATIC
+BOOLEAN
+IsStrtabShdr (
+  Elf_Shdr *Shdr
+  )
+{
+  Elf_Shdr *Namedr = GetShdrByIndex(mEhdr->e_shstrndx);
+
+  return (BOOLEAN) (strcmp((CHAR8*)mEhdr + Namedr->sh_offset + Shdr->sh_name, ELF_STRTAB_SECTION_NAME) == 0);
+}
+
+STATIC
+Elf_Shdr *
+FindStrtabShdr (
+  VOID
+  )
+{
+  UINT32 i;
+  for (i = 0; i < mEhdr->e_shnum; i++) {
+    Elf_Shdr *shdr = GetShdrByIndex(i);
+    if (IsStrtabShdr(shdr)) {
+      return shdr;
+    }
+  }
+  return NULL;
+}
+
+STATIC
+const UINT8 *
+GetSymName (
+  Elf_Sym *Sym
+  )
+{
+  if (Sym->st_name == 0) {
+    return NULL;
+  }
+
+  Elf_Shdr *StrtabShdr = FindStrtabShdr();
+  if (StrtabShdr == NULL) {
+    return NULL;
+  }
+
+  assert(Sym->st_name < StrtabShdr->sh_size);
+
+  UINT8* StrtabContents = (UINT8*)mEhdr + StrtabShdr->sh_offset;
+
+  bool foundEnd = false;
+  UINT32 i;
+  for (i= Sym->st_name; (i < StrtabShdr->sh_size) && !foundEnd; i++) {
+    foundEnd = StrtabContents[i] == 0;
+  }
+  assert(foundEnd);
+
+  return StrtabContents + Sym->st_name;
+}
+
 //
 // Elf functions interface implementation
 //
@@ -287,7 +347,7 @@ ScanSections64 (
     mCoffOffset += sizeof (EFI_IMAGE_NT_HEADERS64);
   break;
   default:
-    VerboseMsg ("%s unknown e_machine type. Assume X64", (UINTN)mEhdr->e_machine);
+    VerboseMsg ("%s unknown e_machine type %hu. Assume X64", mInImageName, mEhdr->e_machine);
     mCoffOffset += sizeof (EFI_IMAGE_NT_HEADERS64);
   break;
   }
@@ -664,9 +724,18 @@ WriteSections64 (
         // header location.
         //
         if (Sym->st_shndx == SHN_UNDEF
-            || Sym->st_shndx == SHN_ABS
-            || Sym->st_shndx > mEhdr->e_shnum) {
-          Error (NULL, 0, 3000, "Invalid", "%s bad symbol definition.", mInImageName);
+            || Sym->st_shndx >= mEhdr->e_shnum) {
+          const UINT8 *SymName = GetSymName(Sym);
+          if (SymName == NULL) {
+            SymName = (const UINT8 *)"<unknown>";
+          }
+
+          Error (NULL, 0, 3000, "Invalid",
+                 "%s: Bad definition for symbol '%s'@%#llx or unsupported symbol type.  "
+                 "For example, absolute and undefined symbols are not supported.",
+                 mInImageName, SymName, Sym->st_value);
+
+          exit(EXIT_FAILURE);
         }
         SymShdr = GetShdrByIndex(Sym->st_shndx);
 
@@ -767,6 +836,9 @@ WriteSections64 (
           case R_AARCH64_LD_PREL_LO19:
           case R_AARCH64_CALL26:
           case R_AARCH64_JUMP26:
+          case R_AARCH64_PREL64:
+          case R_AARCH64_PREL32:
+          case R_AARCH64_PREL16:
             //
             // The GCC toolchains (i.e., binutils) may corrupt section relative
             // relocations when emitting relocation sections into fully linked
@@ -855,20 +927,13 @@ WriteRelocations64 (
 
             switch (ELF_R_TYPE(Rel->r_info)) {
             case R_AARCH64_ADR_PREL_LO21:
-              break;
-
             case R_AARCH64_CONDBR19:
-              break;
-
             case R_AARCH64_LD_PREL_LO19:
-              break;
-
             case R_AARCH64_CALL26:
-              break;
-
             case R_AARCH64_JUMP26:
-              break;
-
+            case R_AARCH64_PREL64:
+            case R_AARCH64_PREL32:
+            case R_AARCH64_PREL16:
             case R_AARCH64_ADR_PREL_PG_HI21:
             case R_AARCH64_ADD_ABS_LO12_NC:
             case R_AARCH64_LDST8_ABS_LO12_NC:
@@ -876,6 +941,12 @@ WriteRelocations64 (
             case R_AARCH64_LDST32_ABS_LO12_NC:
             case R_AARCH64_LDST64_ABS_LO12_NC:
             case R_AARCH64_LDST128_ABS_LO12_NC:
+              //
+              // No fixups are required for relative relocations, provided that
+              // the relative offsets between sections have been preserved in
+              // the ELF to PE/COFF conversion. We have already asserted that
+              // this is the case in WriteSections64 ().
+              //
               break;
 
             case R_AARCH64_ABS64:

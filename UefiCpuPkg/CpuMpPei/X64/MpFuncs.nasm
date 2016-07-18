@@ -1,5 +1,5 @@
 ;------------------------------------------------------------------------------ ;
-; Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
 ; This program and the accompanying materials
 ; are licensed and made available under the terms and conditions of the BSD License
 ; which accompanies this distribution.  The full text of the license may be found at
@@ -37,10 +37,9 @@ ASM_PFX(RendezvousFunnelProc):
 RendezvousFunnelProcStart:
 ; At this point CS = 0x(vv00) and ip= 0x0.
 ; Save BIST information to ebp firstly
-BITS 16
 
-    mov        eax, 1234h
-    mov        ebp, eax                        ; save BIST information
+BITS 16
+    mov        ebp, eax                        ; Save BIST information
 
     mov        ax, cs
     mov        ds, ax
@@ -53,23 +52,16 @@ BITS 16
     mov        si,  BufferStartLocation
     mov        ebx, [si]
 
-    mov        di,  PmodeOffsetLocation
+    mov        di,  ModeOffsetLocation
     mov        eax, [di]
+    mov        di,  CodeSegmentLocation
+    mov        edx, [di]
     mov        di,  ax
-    sub        di,  06h
+    sub        di,  02h  
+    mov        [di],dx                         ; Patch long mode CS
+    sub        di,  04h
     add        eax, ebx
-    mov        [di],eax
-
-    mov        di, LmodeOffsetLocation
-    mov        eax, [di]
-    mov        di,  ax
-    sub        di,  06h
-    add        eax, ebx
-    mov        [di],eax
-
-
-    mov        si, Cr3Location
-    mov        ecx,[si]                        ; ECX is keeping the value of CR3
+    mov        [di],eax                        ; Patch address
 
     mov        si, GdtrLocation
 o32 lgdt       [cs:si]
@@ -78,43 +70,38 @@ o32 lgdt       [cs:si]
 o32 lidt       [cs:si]
 
 
+    mov        di,  DataSegmentLocation
+    mov        edi, [di]                   ; Save long mode DS in edi
+
+    mov        si, Cr3Location             ; Save CR3 in ecx
+    mov        ecx, [si]
+
     xor        ax,  ax
-    mov        ds,  ax
+    mov        ds,  ax                     ; Clear data segment
 
-    mov        eax, cr0                        ;Get control register 0
-    or         eax, 000000003h                 ;Set PE bit (bit #0) & MP
+    mov        eax, cr0                    ; Get control register 0
+    or         eax, 000000003h             ; Set PE bit (bit #0) & MP
     mov        cr0, eax
-
-    jmp        PROTECT_MODE_CS:strict dword 0  ; far jump to protected mode
-BITS 32
-Flat32Start:                                   ; protected mode entry point
-    mov        ax, PROTECT_MODE_DS
-    mov        ds, ax
-    mov        es, ax
-    mov        fs, ax
-    mov        gs, ax
-    mov        ss, ax
 
     mov        eax, cr4
     bts        eax, 5
     mov        cr4, eax
 
-    mov        cr3, ecx
+    mov        cr3, ecx                    ; Load CR3
 
+    mov        ecx, 0c0000080h             ; EFER MSR number
+    rdmsr                                  ; Read EFER
+    bts        eax, 8                      ; Set LME=1
+    wrmsr                                  ; Write EFER
 
-    mov        ecx, 0c0000080h             ; EFER MSR number.
-    rdmsr                                  ; Read EFER.
-    bts        eax, 8                      ; Set LME=1.
-    wrmsr                                  ; Write EFER.
+    mov        eax, cr0                    ; Read CR0
+    bts        eax, 31                     ; Set PG=1
+    mov        cr0, eax                    ; Write CR0
 
-    mov        eax, cr0                    ; Read CR0.
-    bts        eax, 31                     ; Set PG=1.
-    mov        cr0, eax                    ; Write CR0.
-
-    jmp        LONG_MODE_CS:strict dword 0 ; far jump to long mode
+    jmp        0:strict dword 0  ; far jump to long mode
 BITS 64
 LongModeStart:
-    mov        ax,  LONG_MODE_DS
+    mov        eax, edi
     mov        ds,  ax
     mov        es,  ax
     mov        ss,  ax
@@ -172,6 +159,7 @@ CProcedureInvoke:
     sub        rsp, 20h
     call       rax               ; invoke C function
     add        rsp, 20h
+    jmp        $
 
 RendezvousFunnelProcEnd:
 
@@ -182,9 +170,8 @@ global ASM_PFX(AsmGetAddressMap)
 ASM_PFX(AsmGetAddressMap):
     mov        rax, ASM_PFX(RendezvousFunnelProc)
     mov        qword [rcx], rax
-    mov        qword [rcx +  8h], Flat32Start - RendezvousFunnelProcStart
-    mov        qword [rcx + 10h], LongModeStart - RendezvousFunnelProcStart
-    mov        qword [rcx + 18h], RendezvousFunnelProcEnd - RendezvousFunnelProcStart
+    mov        qword [rcx +  8h], LongModeStart - RendezvousFunnelProcStart
+    mov        qword [rcx + 10h], RendezvousFunnelProcEnd - RendezvousFunnelProcStart
     ret
 
 ;-------------------------------------------------------------------------------------
@@ -292,30 +279,3 @@ OtherLoaded:
     pop        rax
 
     ret
-
-global ASM_PFX(AsmInitializeGdt)
-ASM_PFX(AsmInitializeGdt):
-    push       rbp
-    mov        rbp, rsp
-
-    lgdt       [rcx]  ; update the GDTR
-
-    sub        rsp, 0x10
-    mov        rax, ASM_PFX(SetCodeSelectorFarJump)
-    mov        [rsp], rax
-    mov        rdx, LONG_MODE_CS
-    mov        [rsp + 4], dx    ; get new CS
-    jmp        far dword [rsp]  ; far jump with new CS
-ASM_PFX(SetCodeSelectorFarJump):
-    add        rsp, 0x10
-
-    mov        rax, LONG_MODE_DS          ; get new DS
-    mov        ds, ax
-    mov        es, ax
-    mov        fs, ax
-    mov        gs, ax
-    mov        ss, ax
-
-    pop        rbp
-
-  ret

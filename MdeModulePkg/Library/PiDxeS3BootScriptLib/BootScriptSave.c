@@ -1,7 +1,7 @@
 /** @file
-  Save the S3 data to S3 boot script. 
- 
-  Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
+  Save the S3 data to S3 boot script.
+
+  Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions
@@ -123,6 +123,14 @@ EFI_GUID                         mBootScriptTableBaseGuid = {
 EFI_GUID                         mBootScriptSmmPrivateDataGuid = {
   0x627ee2da, 0x3bf9, 0x439b, { 0x92, 0x9f, 0x2e, 0xe, 0x6e, 0x9d, 0xba, 0x62 }
 };
+
+EFI_EVENT                        mEventDxeSmmReadyToLock = NULL;
+VOID                             *mRegistrationSmmExitBootServices = NULL;
+VOID                             *mRegistrationSmmLegacyBoot = NULL;
+VOID                             *mRegistrationSmmReadyToLock = NULL;
+BOOLEAN                          mS3BootScriptTableAllocated = FALSE;
+BOOLEAN                          mS3BootScriptTableSmmAllocated = FALSE;
+EFI_SMM_SYSTEM_TABLE2            *mBootScriptSmst = NULL;
 
 /**
   This is an internal function to add a terminate node the entry, recalculate the table 
@@ -417,8 +425,8 @@ S3BootScriptSmmAtRuntimeCallBack (
   @param  ImageHandle   The firmware allocated handle for the EFI image.
   @param  SystemTable   A pointer to the EFI System Table.
 
-  @retval  RETURN_SUCCESS            Allocate the global memory space to store S3 boot script table private data
-  @retval  RETURN_OUT_OF_RESOURCES   No enough memory to allocated.
+  @retval RETURN_SUCCESS    The constructor always returns RETURN_SUCCESS.
+
 **/
 RETURN_STATUS
 EFIAPI
@@ -433,9 +441,7 @@ S3BootScriptLibInitialize (
   VOID                           *Registration;
   EFI_SMM_BASE2_PROTOCOL         *SmmBase2;
   BOOLEAN                        InSmm;
-  EFI_SMM_SYSTEM_TABLE2          *Smst;
   EFI_PHYSICAL_ADDRESS           Buffer;
-  EFI_EVENT                      Event;
 
   S3TablePtr = (SCRIPT_TABLE_PRIVATE_DATA*)(UINTN)PcdGet64(PcdS3BootScriptTablePrivateDataPtr);
   //
@@ -449,24 +455,24 @@ S3BootScriptLibInitialize (
                     EFI_SIZE_TO_PAGES(sizeof(SCRIPT_TABLE_PRIVATE_DATA)),
                     &Buffer
                     );
-    if (EFI_ERROR (Status)) {
-      return RETURN_OUT_OF_RESOURCES;
-    }
+    ASSERT_EFI_ERROR (Status);
+    mS3BootScriptTableAllocated = TRUE;
     S3TablePtr = (VOID *) (UINTN) Buffer;
 
-    PcdSet64 (PcdS3BootScriptTablePrivateDataPtr, (UINT64) (UINTN)S3TablePtr); 
-    ZeroMem (S3TablePtr, sizeof(SCRIPT_TABLE_PRIVATE_DATA));  
+    Status = PcdSet64S (PcdS3BootScriptTablePrivateDataPtr, (UINT64) (UINTN)S3TablePtr);
+    ASSERT_EFI_ERROR (Status);
+    ZeroMem (S3TablePtr, sizeof(SCRIPT_TABLE_PRIVATE_DATA));
     //
     // Create event to notify the library system enter the SmmLocked phase.
     //
-    Event = EfiCreateProtocolNotifyEvent  (
-              &gEfiDxeSmmReadyToLockProtocolGuid,
-              TPL_CALLBACK,
-              S3BootScriptEventCallBack,
-              NULL,
-              &Registration
-              );
-    ASSERT (Event != NULL);
+    mEventDxeSmmReadyToLock = EfiCreateProtocolNotifyEvent (
+                                &gEfiDxeSmmReadyToLockProtocolGuid,
+                                TPL_CALLBACK,
+                                S3BootScriptEventCallBack,
+                                NULL,
+                                &Registration
+                                );
+    ASSERT (mEventDxeSmmReadyToLock != NULL);
   }
   mS3BootScriptTablePtr = S3TablePtr;
 
@@ -487,7 +493,7 @@ S3BootScriptLibInitialize (
   //
   // Good, we are in SMM
   //
-  Status = SmmBase2->GetSmstLocation (SmmBase2, &Smst);
+  Status = SmmBase2->GetSmstLocation (SmmBase2, &mBootScriptSmst);
   if (EFI_ERROR (Status)) {
     return RETURN_SUCCESS;
   }
@@ -497,35 +503,33 @@ S3BootScriptLibInitialize (
   // The Boot script private data in SMM is not be initialized. create it
   //
   if (S3TableSmmPtr == 0) {
-    Status = Smst->SmmAllocatePool (
-                     EfiRuntimeServicesData,
-                     sizeof(SCRIPT_TABLE_PRIVATE_DATA),
-                     (VOID **) &S3TableSmmPtr
-                     );
-    if (EFI_ERROR (Status)) {
-      return RETURN_OUT_OF_RESOURCES;
-    }
+    Status = mBootScriptSmst->SmmAllocatePool (
+                                EfiRuntimeServicesData,
+                                sizeof(SCRIPT_TABLE_PRIVATE_DATA),
+                                (VOID **) &S3TableSmmPtr
+                                );
+    ASSERT_EFI_ERROR (Status);
+    mS3BootScriptTableSmmAllocated = TRUE;
 
-    PcdSet64 (PcdS3BootScriptTablePrivateSmmDataPtr, (UINT64) (UINTN)S3TableSmmPtr);
+    Status = PcdSet64S (PcdS3BootScriptTablePrivateSmmDataPtr, (UINT64) (UINTN)S3TableSmmPtr);
+    ASSERT_EFI_ERROR (Status);
     ZeroMem (S3TableSmmPtr, sizeof(SCRIPT_TABLE_PRIVATE_DATA));
 
     //
     // Register SmmExitBootServices and SmmLegacyBoot notification.
     //
-    Registration = NULL;
-    Status = Smst->SmmRegisterProtocolNotify (
-                     &gEdkiiSmmExitBootServicesProtocolGuid,
-                     S3BootScriptSmmAtRuntimeCallBack,
-                     &Registration
-                     );
+    Status = mBootScriptSmst->SmmRegisterProtocolNotify (
+                                &gEdkiiSmmExitBootServicesProtocolGuid,
+                                S3BootScriptSmmAtRuntimeCallBack,
+                                &mRegistrationSmmExitBootServices
+                                );
     ASSERT_EFI_ERROR (Status);
 
-    Registration = NULL;
-    Status = Smst->SmmRegisterProtocolNotify (
-                     &gEdkiiSmmLegacyBootProtocolGuid,
-                     S3BootScriptSmmAtRuntimeCallBack,
-                     &Registration
-                     );
+    Status = mBootScriptSmst->SmmRegisterProtocolNotify (
+                                &gEdkiiSmmLegacyBootProtocolGuid,
+                                S3BootScriptSmmAtRuntimeCallBack,
+                                &mRegistrationSmmLegacyBoot
+                                );
     ASSERT_EFI_ERROR (Status);
   }
   mS3BootScriptTableSmmPtr = S3TableSmmPtr;
@@ -533,16 +537,103 @@ S3BootScriptLibInitialize (
   //
   // Register SmmReadyToLock notification.
   //
-  Registration = NULL;
-  Status = Smst->SmmRegisterProtocolNotify (
-                   &gEfiSmmReadyToLockProtocolGuid,
-                   S3BootScriptSmmEventCallBack,
-                   &Registration
-                   );
+  Status = mBootScriptSmst->SmmRegisterProtocolNotify (
+                              &gEfiSmmReadyToLockProtocolGuid,
+                              S3BootScriptSmmEventCallBack,
+                              &mRegistrationSmmReadyToLock
+                              );
   ASSERT_EFI_ERROR (Status);
 
   return RETURN_SUCCESS;
 }
+
+/**
+  Library Destructor to free the resources allocated by
+  S3BootScriptLibInitialize() and unregister callbacks.
+
+  NOTICE: The destructor doesn't support unloading as a separate action, and it
+  only supports unloading if the containing driver's entry point function fails.
+
+  @param ImageHandle        The firmware allocated handle for the EFI image.
+  @param SystemTable        A pointer to the EFI System Table.
+
+  @retval RETURN_SUCCESS    The destructor always returns RETURN_SUCCESS.
+
+**/
+RETURN_STATUS
+EFIAPI
+S3BootScriptLibDeinitialize (
+  IN EFI_HANDLE             ImageHandle,
+  IN EFI_SYSTEM_TABLE       *SystemTable
+  )
+{
+  EFI_STATUS                Status;
+
+  DEBUG ((EFI_D_INFO, "%a() in %a module\n", __FUNCTION__, gEfiCallerBaseName));
+
+  if (mEventDxeSmmReadyToLock != NULL) {
+    //
+    // Close the DxeSmmReadyToLock event.
+    //
+    Status = gBS->CloseEvent (mEventDxeSmmReadyToLock);
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  if (mBootScriptSmst != NULL) {
+    if (mRegistrationSmmExitBootServices != NULL) {
+      //
+      // Unregister SmmExitBootServices notification.
+      //
+      Status = mBootScriptSmst->SmmRegisterProtocolNotify (
+                                  &gEdkiiSmmExitBootServicesProtocolGuid,
+                                  NULL,
+                                  &mRegistrationSmmExitBootServices
+                                  );
+      ASSERT_EFI_ERROR (Status);
+    }
+    if (mRegistrationSmmLegacyBoot != NULL) {
+      //
+      // Unregister SmmLegacyBoot notification.
+      //
+      Status = mBootScriptSmst->SmmRegisterProtocolNotify (
+                                  &gEdkiiSmmLegacyBootProtocolGuid,
+                                  NULL,
+                                  &mRegistrationSmmLegacyBoot
+                                  );
+      ASSERT_EFI_ERROR (Status);
+    }
+    if (mRegistrationSmmReadyToLock != NULL) {
+      //
+      // Unregister SmmReadyToLock notification.
+      //
+      Status = mBootScriptSmst->SmmRegisterProtocolNotify (
+                                  &gEfiSmmReadyToLockProtocolGuid,
+                                  NULL,
+                                  &mRegistrationSmmReadyToLock
+                                  );
+      ASSERT_EFI_ERROR (Status);
+    }
+  }
+
+  //
+  // Free the resources allocated and set PCDs to 0.
+  //
+  if (mS3BootScriptTableAllocated) {
+    Status = gBS->FreePages ((EFI_PHYSICAL_ADDRESS) (UINTN) mS3BootScriptTablePtr, EFI_SIZE_TO_PAGES(sizeof(SCRIPT_TABLE_PRIVATE_DATA)));
+    ASSERT_EFI_ERROR (Status);
+    Status = PcdSet64S (PcdS3BootScriptTablePrivateDataPtr, 0);
+    ASSERT_EFI_ERROR (Status);
+  }
+  if ((mBootScriptSmst != NULL) && mS3BootScriptTableSmmAllocated) {
+    Status = mBootScriptSmst->SmmFreePool (mS3BootScriptTableSmmPtr);
+    ASSERT_EFI_ERROR (Status);
+    Status = PcdSet64S (PcdS3BootScriptTablePrivateSmmDataPtr, 0);
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  return RETURN_SUCCESS;
+}
+
 /**
   To get the start address from which a new boot time s3 boot script entry will write into.
   If the table is not exist, the functio will first allocate a buffer for the table

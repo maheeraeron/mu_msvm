@@ -1178,7 +1178,7 @@ typedef enum {
   Prompt the user and return the resultant answer to the requestor.
 
   This function will display the requested question on the shell prompt and then
-  wait for an apropriate answer to be input from the console.
+  wait for an appropriate answer to be input from the console.
 
   If the SHELL_PROMPT_REQUEST_TYPE is SHELL_PROMPT_REQUEST_TYPE_YESNO, ShellPromptResponseTypeQuitContinue
   or SHELL_PROMPT_REQUEST_TYPE_YESNOCANCEL then *Response is of type SHELL_PROMPT_RESPONSE.
@@ -1333,6 +1333,7 @@ ShellFileHandleReturnLine(
 
   @retval EFI_SUCCESS           The operation was successful.  The line is stored in
                                 Buffer.
+  @retval EFI_END_OF_FILE       There are no more lines in the file.
   @retval EFI_INVALID_PARAMETER Handle was NULL.
   @retval EFI_INVALID_PARAMETER Size was NULL.
   @retval EFI_BUFFER_TOO_SMALL  Size was not large enough to store the line.

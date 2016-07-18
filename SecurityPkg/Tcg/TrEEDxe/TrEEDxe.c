@@ -55,8 +55,6 @@ typedef struct {
   EFI_GUID                               *VendorGuid;
 } VARIABLE_TYPE;
 
-#define  EFI_TCG_LOG_AREA_SIZE        0x10000
-
 #define  TREE_DEFAULT_MAX_COMMAND_SIZE        0x1000
 #define  TREE_DEFAULT_MAX_RESPONSE_SIZE       0x1000
 
@@ -180,6 +178,8 @@ EFI_HANDLE mImageHandle;
   Caution: This function may receive untrusted input.
   PE/COFF image is external input, so this function will validate its data structure
   within this image buffer before use.
+
+  Notes: PE/COFF image is checked by BasePeCoffLib PeCoffLoaderGetImageInfo().
 
   @param[in]  PCRIndex       TPM PCR index
   @param[in]  ImageAddress   Start address of image buffer.
@@ -949,19 +949,19 @@ SetupEventLog (
       Status = gBS->AllocatePages (
                       AllocateMaxAddress,
                       EfiACPIMemoryNVS,
-                      EFI_SIZE_TO_PAGES (EFI_TCG_LOG_AREA_SIZE),
+                      EFI_SIZE_TO_PAGES (PcdGet32 (PcdTcgLogAreaMinLen)),
                       &Lasa
                       );
       if (EFI_ERROR (Status)) {
         return Status;
       }
       mTcgDxeData.EventLogAreaStruct[Index].Lasa = Lasa;
-      mTcgDxeData.EventLogAreaStruct[Index].Laml = EFI_TCG_LOG_AREA_SIZE;
+      mTcgDxeData.EventLogAreaStruct[Index].Laml = PcdGet32 (PcdTcgLogAreaMinLen);
       //
       // To initialize them as 0xFF is recommended 
       // because the OS can know the last entry for that.
       //
-      SetMem ((VOID *)(UINTN)Lasa, EFI_TCG_LOG_AREA_SIZE, 0xFF);
+      SetMem ((VOID *)(UINTN)Lasa, PcdGet32 (PcdTcgLogAreaMinLen), 0xFF);
   }
 
   //
@@ -969,10 +969,10 @@ SetupEventLog (
   //
     if (PcdGet8 (PcdTpmPlatformClass) == TCG_PLATFORM_TYPE_CLIENT) {
       mTcgClientAcpiTemplate.Lasa = mTcgDxeData.EventLogAreaStruct[0].Lasa;
-      mTcgClientAcpiTemplate.Laml = EFI_TCG_LOG_AREA_SIZE;
+      mTcgClientAcpiTemplate.Laml = PcdGet32 (PcdTcgLogAreaMinLen);
     } else {
       mTcgServerAcpiTemplate.Lasa = mTcgDxeData.EventLogAreaStruct[0].Lasa;
-      mTcgServerAcpiTemplate.Laml = EFI_TCG_LOG_AREA_SIZE;
+      mTcgServerAcpiTemplate.Laml = PcdGet32 (PcdTcgLogAreaMinLen);
     }
 
   //

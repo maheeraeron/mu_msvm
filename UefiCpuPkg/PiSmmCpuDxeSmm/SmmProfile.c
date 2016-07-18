@@ -1,7 +1,7 @@
 /** @file
 Enable SMM profile.
 
-Copyright (c) 2012 - 2015, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2012 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -342,7 +342,6 @@ InitProtectedMemRange (
   UINTN                            NumberOfSpliteRange;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap;
   UINTN                            TotalSize;
-  EFI_STATUS                       Status;
   EFI_PHYSICAL_ADDRESS             ProtectBaseAddress;
   EFI_PHYSICAL_ADDRESS             ProtectEndAddress;
   EFI_PHYSICAL_ADDRESS             Top2MBAlignedAddress;
@@ -358,10 +357,10 @@ InitProtectedMemRange (
   //
   // Get MMIO ranges from GCD and add them into protected memory ranges.
   //
-  Status = gDS->GetMemorySpaceMap (
-                &NumberOfDescriptors,
-                &MemorySpaceMap
-                );
+  gDS->GetMemorySpaceMap (
+       &NumberOfDescriptors,
+       &MemorySpaceMap
+       );
   for (Index = 0; Index < NumberOfDescriptors; Index++) {
     if (MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo) {
       NumberOfMmioDescriptors++;
@@ -552,14 +551,14 @@ InitPaging (
           //
           ASSERT (Address == (*Pte & PHYSICAL_ADDRESS_MASK));
 
-          Pt = AllocatePages (1);
+          Pt = AllocatePageTableMemory (1);
           ASSERT (Pt != NULL);
 
           // Split it
           for (Level4 = 0; Level4 < SIZE_4KB / sizeof(*Pt); Level4++) {
-            Pt[Level4] = Address + ((Level4 << 12) | IA32_PG_RW | IA32_PG_P);
+            Pt[Level4] = Address + ((Level4 << 12) | PAGE_ATTRIBUTE_BITS);
           } // end for PT
-          *Pte = (UINTN)Pt | IA32_PG_RW | IA32_PG_P;
+          *Pte = (UINTN)Pt | PAGE_ATTRIBUTE_BITS;
         } // end if IsAddressSplit
       } // end for PTE
     } // end for PDE
@@ -608,7 +607,7 @@ InitPaging (
             //
             // Patch to remove Present flag and RW flag
             //
-            *Pte = *Pte & (INTN)(INT32)(~(IA32_PG_RW | IA32_PG_P));
+            *Pte = *Pte & (INTN)(INT32)(~PAGE_ATTRIBUTE_BITS);
           }
           if (Nx && mXdSupported) {
             *Pte = *Pte | IA32_PG_NX;
@@ -621,7 +620,7 @@ InitPaging (
           }
           for (Level4 = 0; Level4 < SIZE_4KB / sizeof(*Pt); Level4++, Pt++) {
             if (!IsAddressValid (Address, &Nx)) {
-              *Pt = *Pt & (INTN)(INT32)(~(IA32_PG_RW | IA32_PG_P));
+              *Pt = *Pt & (INTN)(INT32)(~PAGE_ATTRIBUTE_BITS);
             }
             if (Nx && mXdSupported) {
               *Pt = *Pt | IA32_PG_NX;
@@ -776,18 +775,16 @@ InitSmmProfileCallBack (
   IN EFI_HANDLE      Handle
   )
 {
-  EFI_STATUS         Status;
-
   //
   // Save to variable so that SMM profile data can be found.
   //
-  Status = gRT->SetVariable (
-                  SMM_PROFILE_NAME,
-                  &gEfiCallerIdGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  sizeof(mSmmProfileBase),
-                  &mSmmProfileBase
-                  );
+  gRT->SetVariable (
+         SMM_PROFILE_NAME,
+         &gEfiCallerIdGuid,
+         EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+         sizeof(mSmmProfileBase),
+         &mSmmProfileBase
+         );
 
   //
   // Get Software SMI from FADT
@@ -928,10 +925,13 @@ InitSmmProfileInternal (
 /**
   Check if XD feature is supported by a processor.
 
+  @param[in,out] Buffer  The pointer to private data buffer.
+
 **/
 VOID
+EFIAPI
 CheckFeatureSupported (
-  VOID
+  IN OUT VOID   *Buffer
   )
 {
   UINT32                 RegEax;
@@ -1001,7 +1001,7 @@ CheckProcessorFeature (
   //
   // Check if XD and BTS are supported on all processors.
   //
-  CheckFeatureSupported ();
+  CheckFeatureSupported (NULL);
 
   //
   //Check on other processors if BSP supports this
@@ -1009,7 +1009,7 @@ CheckProcessorFeature (
   if (mXdSupported || mBtsSupported) {
     MpServices->StartupAllAPs (
                   MpServices,
-                  (EFI_AP_PROCEDURE) CheckFeatureSupported,
+                  CheckFeatureSupported,
                   TRUE,
                   NULL,
                   0,
@@ -1244,7 +1244,7 @@ RestorePageTableBelow4G (
     //
     PageTable[PTIndex] = (PFAddress & ~((1ull << 21) - 1));
     PageTable[PTIndex] |= (UINT64)IA32_PG_PS;
-    PageTable[PTIndex] |= (UINT64)(IA32_PG_RW | IA32_PG_P);
+    PageTable[PTIndex] |= (UINT64)PAGE_ATTRIBUTE_BITS;
     if ((ErrorCode & IA32_PF_EC_ID) != 0) {
       PageTable[PTIndex] &= ~IA32_PG_NX;
     }
@@ -1277,7 +1277,7 @@ RestorePageTableBelow4G (
     // Set new entry
     //
     PageTable[PTIndex] = (PFAddress & ~((1ull << 12) - 1));
-    PageTable[PTIndex] |= (UINT64)(IA32_PG_RW | IA32_PG_P);
+    PageTable[PTIndex] |= (UINT64)PAGE_ATTRIBUTE_BITS;
     if ((ErrorCode & IA32_PF_EC_ID) != 0) {
       PageTable[PTIndex] &= ~IA32_PG_NX;
     }
@@ -1308,7 +1308,6 @@ SmmProfilePFHandler (
   SMM_PROFILE_ENTRY     *SmmProfileEntry;
   UINT64                SmiCommand;
   EFI_STATUS            Status;
-  UINTN                 SwSmiCpuIndex;
   UINT8                 SoftSmiValue;
   EFI_SMM_SAVE_STATE_IO_INFO    IoInfo;
 
@@ -1352,10 +1351,6 @@ SmmProfilePFHandler (
     }
 
     //
-    // Try to find which CPU trigger SWSMI
-    //
-    SwSmiCpuIndex = 0;
-    //
     // Indicate it is not software SMI
     //
     SmiCommand    = 0xFFFFFFFFFFFFFFFFULL;
@@ -1365,10 +1360,6 @@ SmmProfilePFHandler (
         continue;
       }
       if (IoInfo.IoPort == mSmiCommandPort) {
-        //
-        // Great! Find it.
-        //
-        SwSmiCpuIndex = Index;
         //
         // A software SMI triggered by SMI command port has been found, get SmiCommand from SMI command port.
         //

@@ -1,7 +1,7 @@
 /** @file
   This is THE shell (application)
 
-  Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2016, Intel Corporation. All rights reserved.<BR>
   (C) Copyright 2013-2014 Hewlett-Packard Development Company, L.P.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -25,6 +25,7 @@ SHELL_INFO ShellInfoObject = {
   FALSE,
   {
     {{
+      0,
       0,
       0,
       0,
@@ -69,6 +70,9 @@ SHELL_INFO ShellInfoObject = {
 STATIC CONST CHAR16 mScriptExtension[]      = L".NSH";
 STATIC CONST CHAR16 mExecutableExtensions[] = L".NSH;.EFI";
 STATIC CONST CHAR16 mStartupScript[]        = L"startup.nsh";
+CONST CHAR16 mNoNestingEnvVarName[]         = L"nonesting";
+CONST CHAR16 mNoNestingTrue[]               = L"True";
+CONST CHAR16 mNoNestingFalse[]              = L"False";
 
 /**
   Cleans off leading and trailing spaces and tabs.
@@ -338,6 +342,7 @@ UefiMain (
   UINTN                           Size;
   EFI_HANDLE                      ConInHandle;
   EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *OldConIn;
+  SPLIT_LIST                      *Split;
 
   if (PcdGet8(PcdShellSupportLevel) > 3) {
     return (EFI_UNSUPPORTED);
@@ -441,6 +446,8 @@ UefiMain (
     Status = CommandInit();
     ASSERT_EFI_ERROR(Status);
 
+    Status = ShellInitEnvVarList ();
+
     //
     // Check the command line
     //
@@ -455,6 +462,29 @@ UefiMain (
     if (PcdGet8(PcdShellSupportLevel) >= 1) {
       Status = ShellCommandCreateInitialMappingsAndPaths();
     }
+
+    //
+    // Set the environment variable for nesting support
+    //
+    Size = 0;
+    TempString = NULL;
+    if (!ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoNest) {
+      //
+      // No change.  require nesting in Shell Protocol Execute()
+      //
+      StrnCatGrow(&TempString,
+                  &Size,
+                  L"False",
+                  0);
+    } else {
+      StrnCatGrow(&TempString,
+                  &Size,
+                  mNoNestingTrue,
+                  0);
+    }
+    Status = InternalEfiShellSetEnv(mNoNestingEnvVarName, TempString, TRUE);
+    SHELL_FREE_NON_NULL(TempString);
+    Size = 0;
 
     //
     // save the device path for the loaded image and the device path for the filepath (under loaded image)
@@ -646,7 +676,17 @@ FreeResources:
   }
 
   if (!IsListEmpty(&ShellInfoObject.SplitList.Link)){
-    ASSERT(FALSE); ///@todo finish this de-allocation.
+    ASSERT(FALSE); ///@todo finish this de-allocation (free SplitStdIn/Out when needed).
+
+    for ( Split = (SPLIT_LIST*)GetFirstNode (&ShellInfoObject.SplitList.Link)
+        ; !IsNull (&ShellInfoObject.SplitList.Link, &Split->Link)
+        ; Split = (SPLIT_LIST *)GetNextNode (&ShellInfoObject.SplitList.Link, &Split->Link)
+     ) {
+      RemoveEntryList (&Split->Link);
+      FreePool (Split);
+    }
+
+    DEBUG_CODE (InitializeListHead (&ShellInfoObject.SplitList.Link););
   }
 
   if (ShellInfoObject.ShellInitSettings.FileName != NULL) {
@@ -674,6 +714,8 @@ FreeResources:
     FreePool(ShellInfoObject.ConsoleInfo);
     DEBUG_CODE(ShellInfoObject.ConsoleInfo = NULL;);
   }
+
+  ShellFreeEnvVarList ();
 
   if (ShellCommandGetExit()) {
     return ((EFI_STATUS)ShellCommandGetExitCode());
@@ -873,12 +915,19 @@ ProcessCommandLine(
   // like a shell option (which is assumed to be `file-name`).
 
   Status = gBS->LocateProtocol (
-                  &gEfiUnicodeCollationProtocolGuid,
+                  &gEfiUnicodeCollation2ProtocolGuid,
                   NULL,
                   (VOID **) &UnicodeCollation
                   );
   if (EFI_ERROR (Status)) {
-    return Status;
+    Status = gBS->LocateProtocol (
+                    &gEfiUnicodeCollationProtocolGuid,
+                    NULL,
+                    (VOID **) &UnicodeCollation
+                    );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
 
   // Set default options
@@ -891,6 +940,7 @@ ProcessCommandLine(
   ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoVersion    = FALSE;
   ShellInfoObject.ShellInitSettings.BitUnion.Bits.Delay        = FALSE;
   ShellInfoObject.ShellInitSettings.BitUnion.Bits.Exit         = FALSE;
+  ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoNest       = FALSE;
   ShellInfoObject.ShellInitSettings.Delay = 5;
 
   //
@@ -949,6 +999,13 @@ ProcessCommandLine(
                                  CurrentArg
                                  ) == 0) {
       ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoVersion    = TRUE;
+    }
+    else if (UnicodeCollation->StriColl (
+                                 UnicodeCollation,
+                                 L"-nonest",
+                                 CurrentArg
+                                 ) == 0) {
+      ShellInfoObject.ShellInitSettings.BitUnion.Bits.NoNest       = TRUE;
     }
     else if (UnicodeCollation->StriColl (
                                  UnicodeCollation,
@@ -1324,7 +1381,7 @@ AddLineToCommandHistory(
   BUFFER_LIST *Walker;
   UINT16       MaxHistoryCmdCount;
   UINT16       Count;
-  
+
   Count = 0;
   MaxHistoryCmdCount = PcdGet16(PcdShellMaxHistoryCommandCount);
   
@@ -1697,11 +1754,12 @@ RunSplitCommand(
   //
   // Note that the original StdIn is now the StdOut...
   //
-  if (Split->SplitStdOut != NULL && Split->SplitStdOut != StdIn) {
+  if (Split->SplitStdOut != NULL) {
     ShellInfoObject.NewEfiShellProtocol->CloseFile(ConvertShellHandleToEfiFileProtocol(Split->SplitStdOut));
   }
   if (Split->SplitStdIn != NULL) {
     ShellInfoObject.NewEfiShellProtocol->CloseFile(ConvertShellHandleToEfiFileProtocol(Split->SplitStdIn));
+    FreePool (Split->SplitStdIn);
   }
 
   FreePool(Split);
@@ -2452,7 +2510,7 @@ SetupAndRunCommandOrFile(
   IN   CHAR16                         *CmdLine,
   IN   CHAR16                         *FirstParameter,
   IN   EFI_SHELL_PARAMETERS_PROTOCOL  *ParamProtocol,
-  OUT EFI_STATUS                    *CommandStatus
+  OUT EFI_STATUS                      *CommandStatus
 )
 {
   EFI_STATUS                Status;
@@ -2460,6 +2518,7 @@ SetupAndRunCommandOrFile(
   SHELL_FILE_HANDLE         OriginalStdOut;
   SHELL_FILE_HANDLE         OriginalStdErr;
   SYSTEM_TABLE_INFO         OriginalSystemTableInfo;
+  CONST SCRIPT_FILE         *ConstScriptFile;
 
   //
   // Update the StdIn, StdOut, and StdErr for redirection to environment variables, files, etc... unicode and ASCII
@@ -2479,7 +2538,12 @@ SetupAndRunCommandOrFile(
   // Now print errors
   //
   if (EFI_ERROR(Status)) {
-    ShellPrintHiiEx(-1, -1, NULL, STRING_TOKEN (STR_SHELL_ERROR), ShellInfoObject.HiiHandle, (VOID*)(Status));
+    ConstScriptFile = ShellCommandGetCurrentScriptFile();
+    if (ConstScriptFile == NULL || ConstScriptFile->CurrentCommand == NULL) {
+      ShellPrintHiiEx(-1, -1, NULL, STRING_TOKEN (STR_SHELL_ERROR), ShellInfoObject.HiiHandle, (VOID*)(Status));
+    } else {
+      ShellPrintHiiEx(-1, -1, NULL, STRING_TOKEN (STR_SHELL_ERROR_SCRIPT), ShellInfoObject.HiiHandle, (VOID*)(Status), ConstScriptFile->CurrentCommand->Line);
+    }
   }
 
   //

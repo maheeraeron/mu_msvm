@@ -25,7 +25,6 @@ typedef struct {
   VOID     *MicrocodeData;
   UINTN    MicrocodeSize;
   UINT32   ProcessorId;
-  BOOLEAN  Load;
 } MICROCODE_INFO;
 
 //
@@ -55,14 +54,5 @@ typedef struct {
   UINT32  ProcessorFlag;
   UINT32  ProcessorChecksum;
 } EFI_CPU_MICROCODE_EXTENDED_TABLE;
-
-/**
-  Detect whether specified processor can find matching microcode patch and load it.
-
-**/
-VOID
-MicrocodeDetect (
-  VOID
-  );
 
 #endif
