@@ -76,6 +76,18 @@ Author:
 #define OFFSET_OF_AUTHINFO2_CERT_DATA ((OFFSET_OF (EFI_VARIABLE_AUTHENTICATION_2, AuthInfo)) + \
                     (OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData)))
 
+//
+// Defines for the guid and variables associated with the private HyperV namespace.
+//
+#define HYPERV_PRIVATE_NAMESPACE \
+  { 0x610b9e98, 0xc6f6, 0x47f8, 0x8b, 0x47, 0x2d, 0x2d, 0xa0, 0xd5, 0x2a, 0x91 }
+
+//
+// The attribute for this volative variable is BS.
+//
+#define OSLOADER_INDICATIONS_NAME     L"OsLoaderIndications"
+
+
 
 //
 // Module variables.
@@ -928,14 +940,33 @@ Returns:
 
 --*/
 {
-    //
-    // Signal the NVRAM store.
-    //    
-    NvramExitBootServicesHandler();
+    EFI_GUID hyperVGuid = HYPERV_PRIVATE_NAMESPACE;
+    EFI_STATUS status;
+    UINT32 supportedIndications;
+    VARIABLE_HEADER* variable;
+    BOOLEAN vsmAware;
+
+    vsmAware = FALSE;
 
     //
-    // Volatile store does nothing.
-    //    
+    // Fetch necessary state for exitbootservices from volatile store.
+    //
+    status = FindVariable(OSLOADER_INDICATIONS_NAME,
+                          &hyperVGuid, 
+                          &variable);
+
+    if ((status == EFI_SUCCESS) && 
+        (variable != NULL) && 
+        (DataSizeOfVariable(variable) == sizeof (UINT32)))
+    {
+        supportedIndications = *(PUINT32)GetVariableDataPtr(variable);
+        vsmAware = (supportedIndications & 1);
+    }
+
+    //
+    // Signal the NVRAM store.
+    //
+    NvramExitBootServicesHandler(vsmAware);
 }
 
 

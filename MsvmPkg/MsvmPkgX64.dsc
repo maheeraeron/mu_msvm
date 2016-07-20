@@ -230,6 +230,9 @@
 
   # Configure max supported number of Logical Processorss
   gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
+  
+  # Publish UEFI PropertiesTable.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|TRUE
 
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE

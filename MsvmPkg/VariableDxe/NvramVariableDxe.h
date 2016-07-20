@@ -32,7 +32,9 @@ NvramAddressChangeHandler();
 
 extern
 VOID
-NvramExitBootServicesHandler();
+NvramExitBootServicesHandler(
+    __in BOOLEAN VsmAware
+    );
 
 extern
 EFI_STATUS

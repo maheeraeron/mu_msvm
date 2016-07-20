@@ -70,3 +70,4 @@
 [Guids]
   gEfiVmbusChannelDevicePathGuid      # CONSUMES
   gEfiEventExitBootServicesGuid       # CONSUMES
+  gEfiEndOfDxeEventGroupGuid          # CONSUMES

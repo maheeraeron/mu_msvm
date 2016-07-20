@@ -63,7 +63,6 @@ Abstract:
 #include <Protocol/vmbus.h>
 #include <Protocol/Emcl.h>
 #include <Library/EmclLib.h>
-#include <Library/ConfigLib.h>
 #include "PlatformConsole.h"
 
 //

@@ -88,7 +88,7 @@ enum
     // Set TPM operation requested by the OS.
     // PPI function Id 7
     //
-    TpmIoPPISetOperation         = 7,    // do not change
+    TpmIoPPISetOperation         = 7,    // do not change. This is TpmIoPPISetOperationArg3Integer1
 
     //
     // Get user confirmation status for operation. Used in PPI over ACPI.
@@ -97,7 +97,17 @@ enum
     TpmIoPPIGetUserConfirmation  = 8,    // do not change
 
     //
+    // The command to set PPI func ID 7 Arg3 (Package) Integer 2.
+    //
+    TpmIoPPISetOperationArg3Integer2  = 32,
+
+    //
     // Get Tcg Protocol Version
     //
-    TpmIoGetTcgProtocolVersion   = 32,
+    TpmIoGetTcgProtocolVersion   = 64,
+
+    //
+    // Report the supported hash bitmap in TPM capability.
+    //
+    TpmIoCapabilityHashAlgBitmap = 65,
 };

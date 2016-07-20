@@ -30,7 +30,7 @@ Abstract:
         1                                                   \
     },
 
-#define MAX_PROCESSORS 64
+#define MAX_PROCESSORS 240
 
 #pragma pack(push, 1)
 
@@ -38,6 +38,7 @@ typedef struct _VM_APIC_TABLE
 {
     EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER Header;
     EFI_ACPI_3_0_IO_APIC_STRUCTURE IoApic;
+    EFI_ACPI_3_0_LOCAL_APIC_NMI_STRUCTURE LocalApicNmi;
     EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE Override1;
     EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE Override2;
     EFI_ACPI_3_0_PROCESSOR_LOCAL_APIC_STRUCTURE LocalApicTable[MAX_PROCESSORS];

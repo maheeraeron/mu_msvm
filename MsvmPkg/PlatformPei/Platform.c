@@ -418,7 +418,7 @@ Return Value:
         }
     } while (cursor < ((UINT8 *)acpiHdr + acpiHdr->Length));
     DEBUG_CODE_END();
-        
+
     return srat;
 }
 
@@ -499,13 +499,89 @@ Return Value:
         range++;
     } while ((UINT8*)range < ((UINT8*)memMap + MemMapSize));
     DEBUG_CODE_END();
-        
+
     return memMap;
+}
+
+
+UINTN
+GetPageTableSize(
+    _In_ CONST UINT8 PhysicalAddressBits
+    )
+/*++
+
+Routine Description:
+
+    Calculates the page table size.
+
+Arguments:
+
+    PhysicalAddressBits - The physical address width of the CPU in bits.
+
+Return Value:
+
+    The page table size.
+
+--*/
+{
+    BOOLEAN page1GSupport;
+    UINT32  regEax;
+    UINT32  regEdx;
+    UINT32  pml4Entries;
+    UINT32  pdpEntries;
+    UINTN   totalPages;
+
+    //
+    // If DXE is 32-bit return zero.
+    //
+#ifdef MDE_CPU_IA32
+    if (!FeaturePcdGet(PcdDxeIplSwitchToLongMode)) {
+    return 0;
+    }
+#endif
+
+    //
+    // The code below is based on CreateIdentityMappingPageTables() in
+    // "MdeModulePkg/Core/DxeIplPeim/X64/VirtualMemory.c".
+    //
+    page1GSupport = FALSE;
+    if (PcdGetBool(PcdUse1GPageTable))
+    {
+        AsmCpuid(0x80000000, &regEax, NULL, NULL, NULL);
+        if (regEax >= 0x80000001)
+        {
+            AsmCpuid(0x80000001, NULL, NULL, NULL, &regEdx);
+            if ((regEdx & BIT26) != 0)
+            {
+                page1GSupport = TRUE;
+            }
+        }
+    }
+
+    if (PhysicalAddressBits <= 39)
+    {
+        pml4Entries = 1;
+        pdpEntries = 1 << (PhysicalAddressBits - 30);
+        ASSERT(pdpEntries <= 0x200);
+    }
+    else
+    {
+        pml4Entries = 1 << (PhysicalAddressBits - 39);
+        ASSERT(pml4Entries <= 0x200);
+        pdpEntries = 512;
+    }
+
+    totalPages = page1GSupport ? pml4Entries + 1 :
+                               (pdpEntries + 1) * pml4Entries + 1;
+    ASSERT(totalPages <= 0x40201);
+
+    return (UINTN)(EFI_PAGES_TO_SIZE(totalPages));
 }
 
 
 VOID
 AddFirstMemoryRange(
+    _In_ CONST UINT8 PhysicalAddressBits,
     _In_ CONST UINTN Length,
     _In_ CONST UINTN BiosSize
 )
@@ -519,6 +595,8 @@ Routine Description:
     so the HOB add functions can be used.
 
 Arguments:
+
+    PhysicalAddressBits - The physical address width of the CPU in bits.
 
     Length - The size in bytes of the first memory range.
 
@@ -535,38 +613,89 @@ Return Value:
 
     //
     // Establish PEI memory first so we can create HOBs in the formal PEI heap.
-    // Base at 1MB, size max 64MB, avoid firmware image at top of RAM.
+    // This memory range is, by design, the memory below 4GB.
+    // The base and size of PEI memory is constrained by several things:
+    // - Avoid the 0-1MB range, so base PEI memory at 1MB.
+    // - Avoid the firmware volume that sometimes exists at the top of this range
+    // - Don't consume more than really necessary, 64MB is sufficient for misc pei allocations
+    // - Try to include a page table on x64 that can be large when cpu address width is large
+    //
+    // Insufficient room for a large page table is not fatal as the DXE page table creation
+    // code has been updated to fall back to a smaller table.  This will still permit really
+    // small VMs on machines with lots of address bits.
     //
     peiBase = BASE_1MB;
-    peiSize = Length - (peiBase + BiosSize);
-    peiSize = MIN(peiSize, SIZE_64MB);
-
+    peiSize = MIN(Length - (peiBase + BiosSize),
+                  (GetPageTableSize(PhysicalAddressBits) + SIZE_64MB));
     ASSERT((peiBase + peiSize) <= (Length - BiosSize));
-
     status = PublishSystemMemory(peiBase, peiSize);
     ASSERT_EFI_ERROR(status);
 
     //
-    // Memory from 0 to 640K.
+    // The first memory range is special in that we have to account for
+    // three special cases within it.
+    //
+    // 1) Even though the host actually puts memory between GPA 640K and 768K
+    //    it can't be declared as existing. Linux fails to boot if memory
+    //    is declared there. This happens to be the PCAT legacy VGA MMIO range.
+    //
+    // 2) The memory between 768K and 1MB exists but can't be declared as
+    //    reguler system memory.  At least one Windows boot driver (Intel
+    //    iaStorAV) attempts to access this area with MmMapIoSpace. If this
+    //    memory is marked system memory that can apparently trigger a bugcheck.
+    //    Therefore this slice is marked reserved. It exists but shouldn't
+    //    really be used.
+    //
+    // 2) The top firmware-sized piece of this memory range has to marked
+    //    as pre-allocated for UEFI Boot Services as that is where the UEFI
+    //    firmware volume actually resides. This piece of memory is available
+    //    to a guest OS after ExitBootServices().
+    //
+    //           top +---------------------------------------------------
+    //               | System Memory   - mark allocated for Boot Services
+    // top - fw size +---------------------------------------------------
+    //               | System Memory
+    // 1MB  0x100000 +---------------------------------------------------
+    //               | Reserved Memory - legacy device ROM & BIOS
+    // 768KB 0xC0000 +---------------------------------------------------
+    //                 Empty           - legacy VGA MMIO
+    // 640KB 0xA0000 +---------------------------------------------------
+    //               | System Memory
+    //           0x0 +---------------------------------------------------
+    //
+
+    //
+    // Declare System Memory from 0 to 640K.
     //
     HobAddMemoryRange(0, SIZE_512KB + SIZE_128KB);
 
     //
-    // Reserved Memory from 768K to 1MB.
+    // Skip the range from 640K to 768K (legacy VGA MMIO range) by not
+    // declaring anything in that range.
+    //
+
+    //
+    // Declare Reserved Memory from 768K to 1MB.
     //
     HobAddReservedMemoryRange(BASE_512KB + SIZE_256KB, SIZE_256KB);
 
     //
-    // Memory from 1MB to start of UEFI code.
+    // Declare System Memory from 1MB to the top.
     //
-    HobAddMemoryRange(BASE_1MB, Length - (BASE_1MB + BiosSize));
+    HobAddMemoryRange(BASE_1MB, Length - SIZE_1MB);
 
     //
-    // Memory containing UEFI code.
-    // Mark this as allocated so DXE will avoid using this memory
-    // for pool allocations
+    // Memory containing UEFI code must be marked allocated.
+    // UEFI DXE will avoid using this memory for pool allocations and
+    // guest OS will be able to reclaim them after ExitBootServices().
+    //
+    // The firmware is copied to the top of this memory range.
+    // A piece of the firmware is also copied to the 128K below 1MB
+    // but it is marked reserved above and there is no need to account
+    // for it as allocated. The UEFI code will ignore reserved memory.
     //
     HobAddAllocatedMemoryRange(Length - BiosSize, BiosSize);
+
 }
 
 
@@ -620,7 +749,40 @@ Return Value:
 
     DEBUG((DEBUG_VERBOSE, ">>> InitializeMemoryMap\n"));
 
-    if (VDevVersion == VDevVersion3)
+    //
+    // Determine the number of physical address bits.
+    //
+    AsmCpuid(CPUID_FUNCTION_EXTENDED_MAX_FUNCTION, &maximumFunction, NULL, NULL, NULL);
+    if (maximumFunction >= CPUID_FUNCTION_EXTENDED_ADDRESS_SPACE_SIZES)
+    {
+        AsmCpuid(CPUID_FUNCTION_EXTENDED_ADDRESS_SPACE_SIZES,
+                 &addressSpaceSizes.Value,
+                 NULL,
+                 NULL,
+                 NULL);
+
+        physicalAddressBits = addressSpaceSizes.PhysicalAddressBits;
+
+        //
+        // Limit to max 48 bits of address width as that is the design in DXE.
+        //
+        if (physicalAddressBits > 48)
+        {
+            DEBUG((DEBUG_WARN, "--- InitializeMemoryMap limiting address width to 48bits\n"));
+            physicalAddressBits = 48;
+        }
+    }
+    else
+    {
+        //
+        // The processor does not support the required query, which means
+        // the processor only supports 36 physical address bits.
+        //
+        physicalAddressBits = 36;
+    }
+    ASSERT(physicalAddressBits >= 36 && physicalAddressBits <= 48);
+
+    if (VDevVersion >= VDevVersion3)
     {
         ASSERT(MemMap != NULL);
         //
@@ -635,7 +797,10 @@ Return Value:
             //
             if (range->BaseAddress == 0)
             {
-                AddFirstMemoryRange(range->Length, ConfigPageV3->BiosSizePages * SIZE_4KB);
+                AddFirstMemoryRange(
+                    physicalAddressBits,
+                    range->Length,
+                    ConfigPageV3->BiosSizePages * SIZE_4KB);
             }
             else
             {
@@ -683,7 +848,10 @@ Return Value:
                     //
                     if (base == 0)
                     {
-                        AddFirstMemoryRange(size, ConfigPageV2->BiosSizePages * SIZE_4KB);
+                        AddFirstMemoryRange(
+                            physicalAddressBits,
+                            size,
+                            ConfigPageV2->BiosSizePages * SIZE_4KB);
                     }
                     else
                     {
@@ -722,7 +890,7 @@ Return Value:
     //
     // Low and high MMIO range
     //
-    if (VDevVersion == VDevVersion3)
+    if (VDevVersion >= VDevVersion3)
     {
         HobAddMmioRange(
             ConfigPageV3->LowMmioGapBasePages * SIZE_4KB,
@@ -755,31 +923,7 @@ Return Value:
         );
 
     //
-    // Determine the number of physical address bits.
-    //
-    AsmCpuid(CPUID_FUNCTION_EXTENDED_MAX_FUNCTION, &maximumFunction, NULL, NULL, NULL);
-    if (maximumFunction >= CPUID_FUNCTION_EXTENDED_ADDRESS_SPACE_SIZES)
-    {
-        AsmCpuid(CPUID_FUNCTION_EXTENDED_ADDRESS_SPACE_SIZES,
-                 &addressSpaceSizes.Value,
-                 NULL,
-                 NULL,
-                 NULL);
-
-        physicalAddressBits = addressSpaceSizes.PhysicalAddressBits;
-    }
-    else
-    {
-        //
-        // The processor does not support the required query, which means
-        // the processor only supports 36 physical address bits.
-        //
-        physicalAddressBits = 36;
-    }
-    ASSERT(physicalAddressBits >= 36 && physicalAddressBits <= 52);
-
-    //
-    // CPU HOB with resultant address width and 16-bits of IO space.
+    // Add CPU HOB with resultant address width and 16-bits of IO space.
     //
     HobAddCpu(physicalAddressBits, 16);
 
@@ -882,41 +1026,35 @@ Return Value:
     DEBUG((DEBUG_VERBOSE, "--- VDev version is %d.%d\n", vDevVersion >> 8, vDevVersion & 0xFF));
 
     //
-    // Validate the version number and get the config page.
+    // Validate the version number, get the config page, and then some data from it.
     //
     switch(vDevVersion)
     {
         case VDevVersion2:
             configPageV2 = GetV2ConfigPage(PeiServices);
+            sratSize = configPageV2->SratSize;
+            memMapSize = 0; // not in V2 config page
             break;
 
         case VDevVersion3:
+        case VDevVersion4:
             configPageV3 = GetV3ConfigPage(PeiServices);
+            sratSize = configPageV3->SratSize;
+            memMapSize = configPageV3->MemoryMapSize;
             break;
 
         default:
-            DEBUG((DEBUG_ERROR, "** VDev version 0x%x not supported\n", vDevVersion));
-            ASSERT(FALSE);
-            return EFI_DEVICE_ERROR;
+            DEBUG((DEBUG_WARN, "** VDev version 0x%x not recognized\n", vDevVersion));
+            // assume latest config page version
+            configPageV3 = GetV3ConfigPage(PeiServices);
+            sratSize = configPageV3->SratSize;
+            memMapSize = configPageV3->MemoryMapSize;
+            break;
     }
 
     //
     // Get the SRAT.
     //
-    switch (vDevVersion)
-    {
-        case VDevVersion2:
-            sratSize = configPageV2->SratSize;
-            break;
-
-        case VDevVersion3:
-            sratSize = configPageV3->SratSize;
-            break;
-
-        default:
-            ASSERT(FALSE);
-            return EFI_DEVICE_ERROR;
-    }
     srat = GetSRAT(PeiServices, sratSize);
     if (srat == NULL)
     {
@@ -926,20 +1064,6 @@ Return Value:
     //
     // Get the Memory Map.
     //
-    switch (vDevVersion)
-    {
-        case VDevVersion2:
-            memMapSize = 0; // not in V2
-            break;
-
-        case VDevVersion3:
-            memMapSize = configPageV3->MemoryMapSize;
-            break;
-
-        default:
-            ASSERT(FALSE);
-            return EFI_DEVICE_ERROR;
-    }
     memMap = GetMemoryMap(PeiServices, memMapSize);
     if (memMapSize > 0 && memMap == NULL)
     {
@@ -964,15 +1088,13 @@ Return Value:
             break;
 
         case VDevVersion3:
+        case VDevVersion4:
+        default: // assume latest config page version
             HobAddGuidData(
                 &gMsvmConfigPageV3Guid,
                 configPageV3,
                 sizeof(BIOS_CONFIG_PAGE_V3));
             break;
-
-        default:
-            ASSERT(FALSE);
-            return EFI_DEVICE_ERROR;
     }
 
     //

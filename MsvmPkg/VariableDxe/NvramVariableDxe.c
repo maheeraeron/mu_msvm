@@ -158,7 +158,7 @@ Return Value:
                                 EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)),
                                 &mNvramCommandDescriptorGpa);
     if (EFI_ERROR(status))
-    {
+    {
         mNvramCommandDescriptorGpa = 0;
         goto Cleanup;
     }
@@ -172,7 +172,7 @@ Return Value:
                                 EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE),
                                 &mNvramCommandDataBufferGpa);
     if (EFI_ERROR(status))
-    {
+    {
         mNvramCommandDataBufferGpa = 0;
         goto Cleanup;
     }
@@ -188,14 +188,14 @@ Cleanup:
     if (EFI_ERROR(status))
     {
         if (mNvramCommandDataBufferGpa != 0)
-        {
+        {
             gBS->FreePages(
                 mNvramCommandDataBufferGpa, 
                 EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE));
             mNvramCommandDataBufferGpa = 0;
         }
         if (mNvramCommandDescriptorGpa != 0)
-        {
+        {
             gBS->FreePages(
                 mNvramCommandDescriptorGpa, 
                 EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)));
@@ -242,6 +242,7 @@ Return Value:
 
 VOID
 NvramExitBootServicesHandler(
+    __in BOOLEAN VsmAware
     )
 /*++
 
@@ -252,16 +253,18 @@ Routine Description:
 
 Arguments:
 
-    None
-    
+    VsmAware - Supplies a boolean indicating if any boot app opt-ed to leverage 
+               VSM by setting the necessary bit in OsLoaderIndcationsSupported.
+
 Returns:
 
     None
-    
+
 --*/
 {
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Command = NvramSignalRuntimeCommand;
+    mNvramCommandDescriptor->U.SignalRuntimeCommand.S.VsmAware = VsmAware;
     (void)IssueBiosDeviceNvramCommand();
 }
 
@@ -690,7 +693,7 @@ Returns:
     // Do nothing if no format string.
     //
     if (Format == NULL)
-    {
+    {
         return;
     }
 

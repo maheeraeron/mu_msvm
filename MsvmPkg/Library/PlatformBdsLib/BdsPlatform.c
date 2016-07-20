@@ -825,115 +825,22 @@ Returns:
   return;
 }
 
-
-EFI_STATUS
+STATIC
+VOID
 EFIAPI
-XenonBoot(
-    VOID
+EmptyCallbackFunction (
+    IN EFI_EVENT                Event,
+    IN VOID                     *Context
     )
 /*++
 
 Routine Description:
 
-  Boot from VMBus File System device before attempting other boot orders.
-
-Arguments:
-
-  None.
-
-Returns:
-
-  EFI_STATUS.
-
-  On success, the function should give control to the boot application
-    and not return.
+    Empty callback function for CreateEventEx
 
 --*/
 {
-    EFI_STATUS status;
-    UINTN bufferSize = 0;
-    EFI_HANDLE *buffer = NULL;
-    UINTN index;
-    UINTN index2;
-
-    //
-    // Find device handles that implement Efi Simple File System Protocol
-    // and which are VMBus Filesystem channels.
-    //
-
-    status = gBS->LocateHandle(ByProtocol,
-                      &gEfiSimpleFileSystemProtocolGuid,
-                      NULL,
-                      &bufferSize,
-                      NULL);
-
-    if (status == EFI_BUFFER_TOO_SMALL)
-    {
-        status = gBS->AllocatePool(EfiBootServicesData, bufferSize, (VOID**)&buffer);
-    }
-
-    if (EFI_ERROR(status) || buffer == NULL)
-    {
-        goto Cleanup;
-    }
-
-    status = gBS->LocateHandle(ByProtocol,
-                  &gEfiSimpleFileSystemProtocolGuid,
-                  NULL,
-                  &bufferSize,
-                  buffer);
-
-    if (EFI_ERROR(status))
-    {
-        goto Cleanup;
-    }
-
-    //
-    // Filter out non-vmbus devices.
-    //
-
-    index2 = 0;
-    for (index = 0; index < bufferSize / sizeof(EFI_HANDLE); index++)
-    {
-        if (!EFI_ERROR(EmclChannelTypeSupported(buffer[index], &GUID_VMBFS_INTERFACE_TYPE, NULL)))
-        {
-            ASSERT(index2 <= index);
-
-            buffer[index2] = buffer[index];
-            index2++;
-        }
-    }
-
-    for (index = 0; index < index2; index++)
-    {
-        //
-        // Create a Boot Option just enough to let BDS boot from it.
-        //
-
-        BDS_COMMON_OPTION bootOption;
-        UINTN exitDataSize;
-        CHAR16* exitData;
-        EFI_DEVICE_PATH_PROTOCOL *filePath;
-
-        bootOption.Signature = BDS_LOAD_OPTION_SIGNATURE;
-
-        ZeroMem(&bootOption, sizeof(bootOption));
-
-        filePath = FileDevicePath (buffer[index], L"\\bootmgfw.efi");
-        bootOption.DevicePath = filePath;
-        bootOption.BootCurrent = 0xffff; // This should be a boot number not used by the nvram.
-
-        status = BdsLibBootViaBootOption(&bootOption, filePath, &exitDataSize, &exitData);
-
-        //
-        // Should not return if boot is successful.
-        //
-    }
-
-Cleanup:
-    return status;
 }
-
 
 //============================================================================
 // Begin Exported Platform BDS Library Functions
@@ -961,6 +868,7 @@ Returns:
 
 --*/
 {
+    EFI_EVENT endOfDxeEvent;
     EFI_STATUS status;
 
     DEBUG((EFI_D_INFO, "PlatformBdsInit\n"));
@@ -975,6 +883,22 @@ Returns:
                                 &gEfiEventExitBootServicesGuid,
                                 &mExitBootServicesEvent);
     ASSERT_EFI_ERROR(status);
+
+    //
+    // Signal EndOfDxe PI Event
+    //
+    status = gBS->CreateEventEx (
+                 EVT_NOTIFY_SIGNAL,
+                 TPL_CALLBACK,
+                 EmptyCallbackFunction,
+                 NULL,
+                 &gEfiEndOfDxeEventGroupGuid,
+                 &endOfDxeEvent
+                 );
+    if (!EFI_ERROR (status)) {
+        gBS->SignalEvent (endOfDxeEvent);
+        gBS->CloseEvent (endOfDxeEvent);
+    }
 }
 
 
@@ -1031,11 +955,6 @@ Returns:
     // Perform platform specific connect sequence
     //
     ConnectSequence();
-
-    if (GetIsXenon())
-    {
-        XenonBoot();
-    }
 
     return ;
 }

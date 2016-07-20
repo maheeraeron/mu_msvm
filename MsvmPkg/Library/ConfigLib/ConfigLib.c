@@ -32,9 +32,9 @@ Author:
 static BOOLEAN gConfigLibInitialized = FALSE;
 
 //
-// Private global that indicates which VDev config version is active.
+// Private global that indicates which config version is active.
 //
-static UINT32 gVDevVersion = 0;
+static UINT32 gConfigVersion = 0;
 
 //
 // Private global pointer to the V2 config page.
@@ -56,6 +56,13 @@ static void *gSrat = NULL;
 //
 static UINT32 gMemmapSize = 0;
 static void *gMemmap = NULL;
+
+//
+// Config page versions.
+//
+static const UINT32 ConfigPageV2 = 2;
+static const UINT32 ConfigPageV3 = 3;
+
 
 #ifdef DUMP_CONFIG_PAGES
 static
@@ -211,7 +218,7 @@ Return Value:
     hob = GetFirstGuidHob(&gMsvmConfigPageV2Guid);
     if (hob != NULL)
     {
-        gVDevVersion = VDevVersion2;
+        gConfigVersion = ConfigPageV2;
         gConfigPageV2 = (BIOS_CONFIG_PAGE_V2 *)GET_GUID_HOB_DATA(hob);
     }
     else
@@ -222,7 +229,7 @@ Return Value:
         hob = GetFirstGuidHob(&gMsvmConfigPageV3Guid);
         if (hob != NULL)
         {
-            gVDevVersion = VDevVersion3;
+            gConfigVersion = ConfigPageV3;
             gConfigPageV3 = (BIOS_CONFIG_PAGE_V3 *)GET_GUID_HOB_DATA(hob);
         }
     }
@@ -243,7 +250,7 @@ Return Value:
     if (hob != NULL)
     {
         gMemmap = GET_GUID_HOB_DATA(hob);
-        gMemmapSize = GET_GUID_HOB_DATA_SIZE(hob);        
+        gMemmapSize = GET_GUID_HOB_DATA_SIZE(hob);
     }
 
 #ifdef DUMP_CONFIG_PAGES
@@ -253,31 +260,6 @@ Return Value:
 
     gConfigLibInitialized = TRUE;
 
-}
-
-
-UINT32
-GetVDevVersion(
-    void
-    )
-/*++
-
-Routine Description:
-
-    Returns the current VDev version.
-
-Arguments:
-
-    None
-
-Return Value:
-
-    The current VDev version.
-
---*/
-{
-    ConfigLibInitialize();
-    return gVDevVersion;
 }
 
 
@@ -303,7 +285,7 @@ Return Value:
 {
     UINT32 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->SratSize;
     }
@@ -410,7 +392,7 @@ Return Value:
 {
     UINT32 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->BiosSizePages;
     }
@@ -444,7 +426,7 @@ Return Value:
 {
     UINT32 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->ProcessorCount;
     }
@@ -478,7 +460,7 @@ Return Value:
 {
     UINT64 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->LowMmioGapBasePages;
     }
@@ -512,7 +494,7 @@ Return Value:
 {
     UINT64 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->LowMmioGapLengthPages;
     }
@@ -546,7 +528,7 @@ Return Value:
 {
     UINT64 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->HighMmioGapBasePages;
     }
@@ -580,7 +562,7 @@ Return Value:
 {
     UINT64 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->HighMmioGapLengthPages;
     }
@@ -614,7 +596,7 @@ Return Value:
 {
     void* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = gConfigPageV3->Entropy;
     }
@@ -647,7 +629,7 @@ Return Value:
 --*/
 {
     EFI_GUID* ptr;
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = (EFI_GUID*)gConfigPageV3->BiosGuid;
     }
@@ -681,7 +663,7 @@ Return Value:
 {
     CHAR8* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = gConfigPageV3->SystemSerialNumber;
     }
@@ -715,7 +697,7 @@ Return Value:
 {
     CHAR8* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = gConfigPageV3->BaseSerialNumber;
     }
@@ -749,7 +731,7 @@ Return Value:
 {
     CHAR8* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = gConfigPageV3->ChassisSerialNumber;
     }
@@ -783,7 +765,7 @@ Return Value:
 {
     CHAR8* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = gConfigPageV3->ChassisAssetTag;
     }
@@ -817,7 +799,7 @@ Return Value:
 {
     CHAR8* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = gConfigPageV3->BiosLockString;
     }
@@ -851,7 +833,7 @@ Return Value:
 {
     void* ptr;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         ptr = (void *)&gConfigPageV3->ProcessorInformation;
     }
@@ -885,7 +867,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.DebuggerEnabled == 1 ? TRUE : FALSE;
     }
@@ -919,7 +901,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.SerialControllersEnabled == 1 ? TRUE : FALSE;
     }
@@ -953,7 +935,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.PauseAfterBootFailure == 1 ? TRUE : FALSE;
     }
@@ -987,7 +969,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.PxeIpV6 == 1 ? TRUE : FALSE;
     }
@@ -1021,7 +1003,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.TpmEnabled == 1 ? TRUE : FALSE;
     }
@@ -1055,7 +1037,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.LoadOempTable == 1 ? TRUE : FALSE;
     }
@@ -1088,7 +1070,7 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.HibernateEnabled == 1 ? TRUE : FALSE;
     }
@@ -1148,7 +1130,7 @@ Return Value:
 {
     UINT32 value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
         value = gConfigPageV3->Flags.ConsoleMode;
     }
@@ -1160,7 +1142,8 @@ Return Value:
 }
 
 BOOLEAN
-GetIsXenon(
+GetMemoryAttributesTableEnabled
+(
     void
     )
 /*++
@@ -1181,9 +1164,9 @@ Return Value:
 {
     BOOLEAN value;
     ConfigLibInitialize();
-    if (gVDevVersion == VDevVersion3)
+    if (gConfigVersion == ConfigPageV3)
     {
-        value = gConfigPageV3->Flags.IsXenon == 1 ? TRUE : FALSE;
+        value = gConfigPageV3->Flags.MemoryAttributesTableEnabled == 1 ? TRUE : FALSE;
     }
     else
     {

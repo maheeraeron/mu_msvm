@@ -8,7 +8,7 @@ Module Name:
 
 Abstract:
 
-    This is the Hyper-V specific platform code that creates the SMBIOS table.
+    This is the Hyper-V specific platform code that creates the SMBIOS table.
 
     This driver will make a best effort to add all the SMBIOS v2.4 required
     structures. Failure is not fatal and may result in some of the required
@@ -62,19 +62,23 @@ static CHAR8 VIRTUAL_MACHINE_STRING[] = "Virtual Machine";
 static CHAR8 NONE_STRING[]            = "None";
 
 //
-// Memory device location string declarations.
+// Memory device location string size including null.
+// Naming convention is "MXXXX" where XXXX are hex digits.
 //
-#define LOCATION_STRING_SIZE 4
+#define LOCATION_STRING_SIZE 6
 
 //
 // Maximum SMBIOS memory regions to create.
+// 0xFFFF is more than enough for any anticipated memory scale.
+// LOCATION_STRING_SIZE above is dependent on this max.
 //
-static const UINT64 gMaxMemoryRegions = 255;
+static const UINT64 gMaxMemoryRegions = 0xFFFFULL;
 
 //
 // Maximum memory size per SMBIOS v2.4 memory device.
+// 15 bits in megabyte units, so max 31 gigabytes per device.
 //
-static const UINT64 gMaxSizePerMemoryDevice = (0x7FFFULL * SIZE_1MB); // 15 bits, MB units
+static const UINT64 gMaxSizePerMemoryDevice = (0x7FFFULL * SIZE_1MB);
 
 //
 // Helper macro to init SMBIOS structure header.
@@ -93,7 +97,7 @@ typedef struct {
 //
 // Callback definition for EnumerateMemoryRanges function.
 //
-typedef 
+typedef
 VOID
 (*ENUMERATE_MEMMAP_CALLBACK)(
     VM_MEMORY_RANGE* Range,
@@ -103,7 +107,7 @@ VOID
 
 VOID
 NumberToMemoryLocationString(
-    _In_ UINT8                   Number,
+    _In_ UINT16                                     Number,
     _Out_writes_bytes_(LOCATION_STRING_SIZE) CHAR8* Buffer
 )
 /*++
@@ -111,13 +115,13 @@ NumberToMemoryLocationString(
 Routine Description:
 
     Utility function to create a memory device location string.
-    The string is of the form "Mdd" where dd is 00 to FF.
+    The string is of the form "Mxxxx" where xxxx is 0000 to FFFF.
 
 Arguments:
 
-    Number - A number value between 0 and 255 (0xFF).
+    Number - A number value between 0 and FFFF (65535).
 
-    String - A pointer to a pre-allocated string buffer of at least 4 bytes.
+    String - A pointer to a pre-allocated string buffer of at least 6 bytes.
 
 Return Value:
 
@@ -128,7 +132,9 @@ Return Value:
     static const CHAR8* hexdigits = "0123456789ABCDEF";
 
     *Buffer++ = 'M';
-    *Buffer++ = hexdigits[Number >> 4];
+    *Buffer++ = hexdigits[(Number >> 12) & 0xF];
+    *Buffer++ = hexdigits[(Number >> 8) & 0xF];
+    *Buffer++ = hexdigits[(Number >> 4) & 0xF];
     *Buffer++ = hexdigits[Number & 0xF];
     *Buffer = 0;
 }
@@ -603,7 +609,7 @@ Return Value:
     UINT32 i;
     UINT32 procCount = GetProcessorCount();
     VOID *cpuInfo = GetSmbiosV24CpuInfo();
-    
+
     //
     // This particular structure is constructed by the BIOS VDev and
     // provided in the config page.  Simply add 1 per configured processor.
@@ -1205,12 +1211,12 @@ Routine Description:
 
     Callback function for EnumerateMemoryRanges that counts the number
     of SMBIOS Memory regions required to represent a memory range.
-    
+
 Arguments:
 
     Range - A pointer to an memory range.
 
-    Context - The context pointer.  Expected to be a UINT64* 
+    Context - The context pointer.  Expected to be a UINT64*
               pointer in which to accumulate the regions.
 
 Return Value:
@@ -1220,7 +1226,7 @@ Return Value:
 --*/
 {
     UINT64 *numMemoryRegions = (UINT64 *)Context;
-    
+
     //
     // Compute the number of SMBIOS Memory regions that will represent
     // the size expressed by the memory map range structure.
@@ -1229,7 +1235,7 @@ Return Value:
 }
 
 
-VOID 
+VOID
 AddMemoryRegionsFromMemoryRange(
     VM_MEMORY_RANGE *Range,
     VOID *Context
@@ -1238,9 +1244,9 @@ AddMemoryRegionsFromMemoryRange(
 
 Routine Description:
 
-    Callback function for EnumerateMemoryRanges to add one or more 
+    Callback function for EnumerateMemoryRanges to add one or more
     SMBIOS Memory Regions to represent a memory range.
-    
+
 Arguments:
 
     Range - A pointer to a memory range.
@@ -1257,15 +1263,15 @@ Return Value:
     UINT64 base = Range->BaseAddress;
     UINT64 size = Range->Length;
     CHAR8 location[LOCATION_STRING_SIZE];
-    
-    // 
-    // Add memory regions until this memory map entry (range) is consumed or 
+
+    //
+    // Add memory regions until this memory map entry (range) is consumed or
     // the maximum number of SMBIOS memory regions is reached.
     //
     while ((context->CurrentRegion < gMaxMemoryRegions) && (size > 0))
     {
         context->CurrentRegion++;
-        NumberToMemoryLocationString((UINT8)context->CurrentRegion, location);
+        NumberToMemoryLocationString((UINT16)context->CurrentRegion, location);
         AddMemoryRegion(
             context->Smbios,
             base,
@@ -1292,7 +1298,7 @@ Routine Description:
 
     Utility function to enumerate all the memory ranges in the memory map.
     Calls the passed in callback function for each range.
-    
+
 Arguments:
 
     Memmap - A pointer to the memory map.
@@ -1310,7 +1316,7 @@ Return Value:
 --*/
 {
     VM_MEMORY_RANGE *cursor;
-    
+
     for (cursor = Memmap; cursor < (Memmap + MemmapLength); cursor++)
     {
         Callback(cursor, Context);
@@ -1334,7 +1340,7 @@ Routine Description:
     Memory Device Mapped Address (type 20)
 
     The memory structures on a physical machine typically represent the
-    physical memory devices/modules installed.  In a virtual machine this can 
+    physical memory devices/modules installed.  In a virtual machine this can
     only be simulated.  The most accurate simulation is to create a memory
     device for each non-hot-add region expressed in the SRAT.
 
@@ -1352,13 +1358,13 @@ Return Value:
     VM_MEMORY_RANGE* memmap;
     UINT32 memmapLength;
     UINT64 regions;
-    
+
     memmap = (VM_MEMORY_RANGE *)GetMemmap();
     memmapLength = GetMemmapSize() / (UINT32)sizeof(VM_MEMORY_RANGE);
 
     //
-    // Calculate the number of SMBIOS memory regions required to represent 
-    // starting RAM in the machine. This requires a first pass through the 
+    // Calculate the number of SMBIOS memory regions required to represent
+    // starting RAM in the machine. This requires a first pass through the
     // memmap entries.
     //
     regions = 0;
@@ -1369,13 +1375,13 @@ Return Value:
         (VOID *)&regions);
 
     //
-    // Limit the SMBIOS memory regions to this implementation's maximum. 
+    // Limit the SMBIOS memory regions to this implementation's maximum.
     //
     if (regions > gMaxMemoryRegions)
     {
         regions = gMaxMemoryRegions;
     }
-    
+
     //
     // Add the single SMBIOS Physical Memory Array structure (type 16)
     // using the count of require regions from above.
@@ -1387,8 +1393,8 @@ Return Value:
             (UINT16)regions))
     {
         //
-        // Enumerate the memory regions again and add one or more 
-        // SMBIOS memory regions represent each entry. 
+        // Enumerate the memory regions again and add one or more
+        // SMBIOS memory regions represent each entry.
         //
         context.Smbios = Smbios;
         context.CurrentRegion = 0;
@@ -1487,8 +1493,11 @@ Return Value:
     AddAllStructures(smbios);
 
     //
-    // Return an artificial error so the driver does not stay resident.
+    // Return success and leave this driver resident even though it is unnecessary.
+    // There is currently no graceful way for drivers to exit with success and not stay loaded.
+    // A driver failure can confuse anyone debugging the firmware. Since this is a boot services
+    // driver the memory will be reclaimed by the OS.
     //
-    return EFI_DEVICE_ERROR;
+    return EFI_SUCCESS;
 }
 

@@ -56,6 +56,18 @@ VM_APIC_TABLE APIC =
     },
 
     //
+    // Local APIC NMI source.
+    //
+
+    {
+        EFI_ACPI_3_0_LOCAL_APIC_NMI,
+        sizeof(EFI_ACPI_3_0_LOCAL_APIC_NMI_STRUCTURE),
+        0xFF, // ACPI Processor ID - 0xFF indicates all processors.
+        0,    // Flags
+        1     // LINT#
+    },
+
+    //
     // Map PIC IRQ0 to APIC IRQ2.
     //
 

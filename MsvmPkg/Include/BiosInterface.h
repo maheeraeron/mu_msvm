@@ -234,7 +234,8 @@ typedef struct _SMBIOS_CPU_INFORMATION_LEGACY
 enum
 {
     VDevVersion2   = MAKE_VDEV_VERSION(2, 0),
-    VDevVersion3   = MAKE_VDEV_VERSION(3, 0)
+    VDevVersion3   = MAKE_VDEV_VERSION(3, 0),
+    VDevVersion4   = MAKE_VDEV_VERSION(4, 0)
 };
 
 //
@@ -328,8 +329,8 @@ typedef struct _BIOS_CONFIG_PAGE_V3
         UINT32 TpmEnabled:1;
         UINT32 HibernateEnabled:1;
         UINT32 ConsoleMode:2;
+        UINT32 MemoryAttributesTableEnabled:1;
         UINT32 Reserved:22;
-        UINT32 IsXenon:1;
     } Flags;
 } BIOS_CONFIG_PAGE_V3;
 
@@ -447,6 +448,16 @@ typedef struct _NVRAM_COMMAND_DESCRIPTOR
             UINT64 RemainingVariableStorage;
             UINT64 MaximumVariableSize;
         } QueryInfo;
+
+        union 
+        {
+            struct
+            {
+                UINT64 VsmAware : 1;
+                UINT64 Unused   : 63;
+            } S;
+            UINT64 AsUINT64;
+        }SignalRuntimeCommand;
     } U;
 } NVRAM_COMMAND_DESCRIPTOR, *PNVRAM_COMMAND_DESCRIPTOR;
 

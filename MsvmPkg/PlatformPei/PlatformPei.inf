@@ -44,8 +44,8 @@
     gMsvmConfigPageV2Guid
     gSratGuid
     gMemmapGuid
-    
-    
+
+
 [LibraryClasses]
     DebugLib
     HobLib
@@ -59,10 +59,11 @@
 [Pcd]
     gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvBase
     gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvSize
+    gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable
 
 [Ppis]
     gEfiPeiMasterBootModePpiGuid
-    
+
 [Depex]
     TRUE
 
