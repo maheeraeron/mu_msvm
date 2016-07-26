@@ -155,6 +155,26 @@ VAR_CHECK_ITEM  mIfConfig6SetCheckList[] = {
 };
 
 /**
+  Free the ARG_LIST.
+
+  @param List Pointer to ARG_LIST to free.
+**/
+VOID
+IfConfig6FreeArgList (
+  ARG_LIST       *List
+)
+{
+  ARG_LIST       *Next;
+  while (List->Next != NULL) {
+    Next = List->Next;
+    FreePool (List);
+    List = Next;
+  }
+
+  FreePool (List);
+}
+
+/**
   Split a string with specified separator and save the substring to a list.
 
   @param[in]    String       The pointer of the input string.
@@ -181,15 +201,19 @@ IfConfig6SplitStrToList (
   //
   // Copy the CONST string to a local copy.
   //
-  Str     = AllocateCopyPool (StrSize (String), String);
-  ASSERT (Str != NULL);
+  Str = AllocateCopyPool (StrSize (String), String);
+  if (Str == NULL) {
+    return NULL;
+  }
   ArgStr  = Str;
 
   //
   // init a node for the list head.
   //
   ArgNode = (ARG_LIST *) AllocateZeroPool (sizeof (ARG_LIST));
-  ASSERT (ArgNode != NULL);
+  if (ArgNode == NULL) {
+    return NULL;
+  }
   ArgList = ArgNode;
 
   //
@@ -201,7 +225,14 @@ IfConfig6SplitStrToList (
       ArgNode->Arg  = ArgStr;
       ArgStr        = Str + 1;
       ArgNode->Next = (ARG_LIST *) AllocateZeroPool (sizeof (ARG_LIST));
-      ASSERT (ArgNode->Next != NULL);
+      if (ArgNode->Next == NULL) {
+        //
+        // Free the local copy of string stored in the first node
+        //
+        FreePool (ArgList->Arg);
+        IfConfig6FreeArgList (ArgList);
+        return NULL;
+      }
       ArgNode = ArgNode->Next;
     }
 
@@ -1057,6 +1088,7 @@ IfConfig6ShowInterfaceInfo (
   }
 
   ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_IFCONFIG6_INFO_BREAK), gShellNetwork2HiiHandle);
+  ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_IFCONFIG6_INFO_NEWLINE), gShellNetwork2HiiHandle);
 
   return SHELL_SUCCESS;
 }
@@ -1065,6 +1097,7 @@ IfConfig6ShowInterfaceInfo (
   The clean process of the IfConfig6 application.
 
   @param[in]   IfList    The pointer of IfList(interface list).
+  @param[in]   IfName    The pointer of interface name.
 
   @retval SHELL_SUCCESS  The IfConfig6 clean processed successfully.
   @retval others         The IfConfig6 clean process failed.
@@ -1072,7 +1105,8 @@ IfConfig6ShowInterfaceInfo (
 **/
 SHELL_STATUS
 IfConfig6ClearInterfaceInfo (
-  IN LIST_ENTRY    *IfList
+  IN LIST_ENTRY    *IfList,
+  IN CHAR16        *IfName
   )
 {
   EFI_STATUS                Status;
@@ -1081,7 +1115,6 @@ IfConfig6ClearInterfaceInfo (
   IFCONFIG6_INTERFACE_CB    *IfCb;
   EFI_IP6_CONFIG_POLICY     Policy;
 
-  Policy = Ip6ConfigPolicyAutomatic;
   Entry  = IfList->ForwardLink;
   Status = EFI_SUCCESS;
   ShellStatus = SHELL_SUCCESS;
@@ -1091,11 +1124,30 @@ IfConfig6ClearInterfaceInfo (
   }
 
   //
-  // Go through the interface list.
+  // Go through the interface list.If the interface name is specified, then
+  // need to refresh the configuration.
   //
   while (Entry != IfList) {
 
     IfCb = BASE_CR (Entry, IFCONFIG6_INTERFACE_CB, Link);
+
+    if ((IfName != NULL) && (StrCmp (IfName, IfCb->IfInfo->Name) == 0)) {
+      Policy = Ip6ConfigPolicyManual;
+
+      Status = IfCb->IfCfg->SetData (
+                              IfCb->IfCfg,
+                              Ip6ConfigDataTypePolicy,
+                              sizeof (EFI_IP6_CONFIG_POLICY),
+                              &Policy
+                              );
+      if (EFI_ERROR (Status)) {
+        ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_GEN_ERR_AD), gShellNetwork2HiiHandle, L"ifconfig6");
+        ShellStatus = SHELL_ACCESS_DENIED;
+        break;
+      }
+    }
+
+    Policy = Ip6ConfigPolicyAutomatic;
 
     Status = IfCb->IfCfg->SetData (
                             IfCb->IfCfg,
@@ -1105,6 +1157,7 @@ IfConfig6ClearInterfaceInfo (
                             );
 
     if (EFI_ERROR (Status)) {
+      ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_GEN_ERR_AD), gShellNetwork2HiiHandle, L"ifconfig6");
       ShellStatus = SHELL_ACCESS_DENIED;
       break;
     }
@@ -1616,7 +1669,7 @@ IfConfig6 (
     break;
 
   case IfConfig6OpClear:
-    ShellStatus = IfConfig6ClearInterfaceInfo (&Private->IfList);
+    ShellStatus = IfConfig6ClearInterfaceInfo (&Private->IfList, Private->IfName);
     break;
 
   case IfConfig6OpSet:
@@ -1646,8 +1699,6 @@ IfConfig6Cleanup (
   LIST_ENTRY                *Entry;
   LIST_ENTRY                *NextEntry;
   IFCONFIG6_INTERFACE_CB    *IfCb;
-  ARG_LIST                  *ArgNode;
-  ARG_LIST                  *ArgHead;
 
   ASSERT (Private != NULL);
 
@@ -1655,15 +1706,7 @@ IfConfig6Cleanup (
   // Clean the list which save the set config Args.
   //
   if (Private->VarArg != NULL) {
-    ArgHead = Private->VarArg;
-
-    while (ArgHead->Next != NULL) {
-      ArgNode = ArgHead->Next;
-      FreePool (ArgHead);
-      ArgHead = ArgNode;
-    }
-
-    FreePool (ArgHead);
+    IfConfig6FreeArgList (Private->VarArg);
   }
 
   if (Private->IfName != NULL)
@@ -1777,8 +1820,12 @@ ShellCommandRunIfconfig6 (
     Private->OpCode = IfConfig6OpList;
     ValueStr = ShellCommandLineGetValue (ParamPackage, L"-l");
     if (ValueStr != NULL) {
-      Str             = AllocateCopyPool (StrSize (ValueStr), ValueStr);
-      ASSERT (Str != NULL);
+      Str = AllocateCopyPool (StrSize (ValueStr), ValueStr);
+      if (Str == NULL) {
+        ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_GEN_OUT_MEM), gShellNetwork2HiiHandle, L"ifconfig6");
+        ShellStatus = SHELL_OUT_OF_RESOURCES;
+        goto ON_EXIT;
+      }
       Private->IfName = Str;
     }
   }
@@ -1789,8 +1836,12 @@ ShellCommandRunIfconfig6 (
     Private->OpCode = IfConfig6OpClear;
     ValueStr = ShellCommandLineGetValue (ParamPackage, L"-r");
     if (ValueStr != NULL) {
-      Str             = AllocateCopyPool (StrSize (ValueStr), ValueStr);
-      ASSERT (Str != NULL);
+      Str = AllocateCopyPool (StrSize (ValueStr), ValueStr);
+      if (Str == NULL) {
+        ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_GEN_OUT_MEM), gShellNetwork2HiiHandle, L"ifconfig6");
+        ShellStatus = SHELL_OUT_OF_RESOURCES;
+        goto ON_EXIT;
+      }
       Private->IfName = Str;
     }
   }
@@ -1808,8 +1859,12 @@ ShellCommandRunIfconfig6 (
     //
     // To split the configuration into multi-section.
     //
-    ArgList         = IfConfig6SplitStrToList (ValueStr, L' ');
-    ASSERT (ArgList != NULL);
+    ArgList = IfConfig6SplitStrToList (ValueStr, L' ');
+    if (ArgList == NULL) {
+      ShellPrintHiiEx (-1, -1, NULL, STRING_TOKEN (STR_GEN_OUT_MEM), gShellNetwork2HiiHandle, L"ifconfig6");
+      ShellStatus = SHELL_OUT_OF_RESOURCES;
+      goto ON_EXIT;
+    }
 
     Private->OpCode = IfConfig6OpSet;
     Private->IfName = ArgList->Arg;

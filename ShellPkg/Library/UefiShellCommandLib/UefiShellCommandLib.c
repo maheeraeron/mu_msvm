@@ -30,6 +30,7 @@ STATIC UINTN                              mProfileListSize;
 STATIC UINTN                              mFsMaxCount = 0;
 STATIC UINTN                              mBlkMaxCount = 0;
 STATIC BUFFER_LIST                        mFileHandleList;
+STATIC CHAR16                             *mRawCmdLine = NULL;
 
 STATIC CONST CHAR8 Hex[] = {
   '0',
@@ -80,6 +81,191 @@ CommandInit(
     }
   }
   return (EFI_SUCCESS);
+}
+
+/**
+  Return the pointer to the first occurrence of any character from a list of characters.
+
+  @param[in] String                 The string to parse
+  @param[in] CharacterList          The list of character to look for
+  @param[in] IgnoreEscapedCharacter TRUE to ignore escaped characters
+
+  @return The location of the first character in the String.
+  @return Pointer to the ending NULL character of the String.
+**/
+CONST CHAR16*
+EFIAPI
+ShellFindFirstCharacter (
+  IN CONST CHAR16  *String,
+  IN CONST CHAR16  *CharacterList,
+  IN CONST BOOLEAN IgnoreEscapedCharacter
+  )
+{
+  UINTN WalkChar;
+  UINTN WalkStr;
+
+  for (WalkStr = 0; WalkStr < StrLen (String); WalkStr++) {
+    if (IgnoreEscapedCharacter && (String[WalkStr] == L'^')) {
+      WalkStr++;
+      continue;
+    }
+    for (WalkChar = 0; WalkChar < StrLen (CharacterList); WalkChar++) {
+      if (String[WalkStr] == CharacterList[WalkChar]) {
+        return &String[WalkStr];
+      }
+    }
+  }
+  return &String[WalkStr];
+}
+
+/**
+  Return the next parameter's end from a command line string.
+
+  @param[in] String        the string to parse
+**/
+CONST CHAR16*
+FindEndOfParameter(
+  IN CONST CHAR16 *String
+  )
+{
+  CONST CHAR16 *First;
+  CONST CHAR16 *CloseQuote;
+
+  First = ShellFindFirstCharacter (String, L" \"", TRUE);
+
+  //
+  // nothing, all one parameter remaining
+  //
+  if (*First == CHAR_NULL) {
+    return (First);
+  }
+
+  //
+  // If space before a quote (or neither found, i.e. both CHAR_NULL),
+  // then that's the end.
+  //
+  if (*First == L' ') {
+    return (First);
+  }
+
+  CloseQuote = ShellFindFirstCharacter (First+1, L"\"", TRUE);
+
+  //
+  // We did not find a terminator...
+  //
+  if (*CloseQuote == CHAR_NULL) {
+    return (NULL);
+  }
+
+  return (FindEndOfParameter (CloseQuote+1));
+}
+
+/**
+  Return the next parameter from a command line string.
+
+  This function moves the next parameter from Walker into NextParameter and moves
+  Walker up past that parameter for recursive calling.  When the final parameter
+  is moved *Walker will be set to NULL;
+
+  This will also remove all remaining ^ characters after processing.
+
+  @param[in, out] Walker          pointer to string of command line.  Adjusted to
+                                  reminaing command line on return
+  @param[in, out] NextParameter   pointer to string of command line item extracted.
+  @param[in]      Length          buffer size of TempParameter.
+  @param[in]      StripQuotation  if TRUE then strip the quotation marks surrounding
+                                  the parameters.
+
+  @return   EFI_INALID_PARAMETER  A required parameter was NULL or pointed to a NULL or empty string.
+  @return   EFI_NOT_FOUND         A closing " could not be found on the specified string
+**/
+EFI_STATUS
+EFIAPI
+ShellGetNextParameter (
+  IN OUT CHAR16   **Walker,
+  IN OUT CHAR16   *NextParameter,
+  IN CONST UINTN  Length,
+  IN BOOLEAN      StripQuotation
+  )
+{
+  CONST CHAR16 *NextDelim;
+
+  if (Walker           == NULL
+    ||*Walker          == NULL
+    ||NextParameter    == NULL
+    ){
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // make sure we dont have any leading spaces
+  //
+  while ((*Walker)[0] == L' ') {
+    (*Walker)++;
+  }
+
+  //
+  // make sure we still have some params now...
+  //
+  if (StrLen(*Walker) == 0) {
+    DEBUG_CODE (
+      *Walker = NULL;
+    );
+    return (EFI_INVALID_PARAMETER);
+  }
+
+  NextDelim = FindEndOfParameter(*Walker);
+
+  if (NextDelim == NULL){
+    DEBUG_CODE (
+      *Walker = NULL;
+    );
+    return (EFI_NOT_FOUND);
+  }
+
+  StrnCpyS(NextParameter, Length / sizeof(CHAR16), (*Walker), NextDelim - *Walker);
+
+  //
+  // Add a CHAR_NULL if we didnt get one via the copy
+  //
+  if (*NextDelim != CHAR_NULL) {
+    NextParameter[NextDelim - *Walker] = CHAR_NULL;
+  }
+
+  //
+  // Update Walker for the next iteration through the function
+  //
+  *Walker = (CHAR16*)NextDelim;
+
+  //
+  // Remove any non-escaped quotes in the string
+  // Remove any remaining escape characters in the string
+  //
+  for (NextDelim = ShellFindFirstCharacter(NextParameter, L"\"^", FALSE)
+    ; *NextDelim != CHAR_NULL
+    ; NextDelim = ShellFindFirstCharacter(NextDelim, L"\"^", FALSE)
+    ) {
+    if (*NextDelim == L'^') {
+
+      //
+      // eliminate the escape ^
+      //
+      CopyMem ((CHAR16*)NextDelim, NextDelim + 1, StrSize (NextDelim + 1));
+      NextDelim++;
+    } else if (*NextDelim == L'\"') {
+
+      //
+      // eliminate the unescaped quote
+      //
+      if (StripQuotation) {
+        CopyMem ((CHAR16*)NextDelim, NextDelim + 1, StrSize (NextDelim + 1));
+      } else {
+        NextDelim++;
+      }
+    }
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -546,9 +732,14 @@ ShellCommandRegisterCommandName (
   // allocate memory for new struct
   //
   Node = AllocateZeroPool(sizeof(SHELL_COMMAND_INTERNAL_LIST_ENTRY));
-  ASSERT(Node != NULL);
+  if (Node == NULL) {
+    return RETURN_OUT_OF_RESOURCES;
+  }
   Node->CommandString = AllocateCopyPool(StrSize(CommandString), CommandString);
-  ASSERT(Node->CommandString != NULL);
+  if (Node->CommandString == NULL) {
+    FreePool (Node);
+    return RETURN_OUT_OF_RESOURCES;
+  }
 
   Node->GetManFileName  = GetManFileName;
   Node->CommandHandler  = CommandHandler;
@@ -807,11 +998,20 @@ ShellCommandRegisterAlias (
   // allocate memory for new struct
   //
   Node = AllocateZeroPool(sizeof(ALIAS_LIST));
-  ASSERT(Node != NULL);
+  if (Node == NULL) {
+    return RETURN_OUT_OF_RESOURCES;
+  }
   Node->CommandString = AllocateCopyPool(StrSize(Command), Command);
+  if (Node->CommandString == NULL) {
+    FreePool (Node);
+    return RETURN_OUT_OF_RESOURCES;
+  }
   Node->Alias = AllocateCopyPool(StrSize(Alias), Alias);
-  ASSERT(Node->CommandString != NULL);
-  ASSERT(Node->Alias != NULL);
+  if (Node->Alias == NULL) {
+    FreePool (Node->CommandString);
+    FreePool (Node);
+    return RETURN_OUT_OF_RESOURCES;
+  }
 
   InsertHeadList (&mAliasList.Link, &Node->Link);
 
@@ -1303,7 +1503,10 @@ ShellCommandCreateInitialMappingsAndPaths(
     // Get all Device Paths
     //
     DevicePathList = AllocateZeroPool(sizeof(EFI_DEVICE_PATH_PROTOCOL*) * Count);
-    ASSERT(DevicePathList != NULL);
+    if (DevicePathList == NULL) {
+      SHELL_FREE_NON_NULL (HandleList);
+      return EFI_OUT_OF_RESOURCES;
+    }
 
     for (Count = 0 ; HandleList[Count] != NULL ; Count++) {
       DevicePathList[Count] = DevicePathFromHandle(HandleList[Count]);
@@ -1360,7 +1563,10 @@ ShellCommandCreateInitialMappingsAndPaths(
     // Get all Device Paths
     //
     DevicePathList = AllocateZeroPool(sizeof(EFI_DEVICE_PATH_PROTOCOL*) * Count);
-    ASSERT(DevicePathList != NULL);
+    if (DevicePathList == NULL) {
+      SHELL_FREE_NON_NULL (HandleList);
+      return EFI_OUT_OF_RESOURCES;
+    }
 
     for (Count = 0 ; HandleList[Count] != NULL ; Count++) {
       DevicePathList[Count] = DevicePathFromHandle(HandleList[Count]);
@@ -1664,6 +1870,50 @@ ShellFileHandleEof(
 }
 
 /**
+  Function to get the original CmdLine string for current command.
+
+  @return     A pointer to the buffer of the original command string.
+              It's the caller's responsibility to free the buffer.
+**/
+CHAR16*
+EFIAPI
+ShellGetRawCmdLine (
+  VOID
+  )
+{
+  if (mRawCmdLine == NULL) {
+    return NULL;
+  } else {
+    return AllocateCopyPool(StrSize(mRawCmdLine), mRawCmdLine);
+  }
+}
+
+/**
+  Function to store the raw command string.
+
+  The alias and variables have been replaced and spaces are trimmed.
+
+  @param[in] CmdLine     the command line string to store.
+**/
+VOID
+EFIAPI
+ShellSetRawCmdLine (
+  IN CONST CHAR16     *CmdLine
+  )
+{
+  SHELL_FREE_NON_NULL(mRawCmdLine);
+
+  if (CmdLine != NULL) {
+    //
+    // The spaces in the beginning and end are trimmed.
+    //
+    ASSERT (*CmdLine != L' ');
+    ASSERT (CmdLine[StrLen (CmdLine) - 1] != L' ');
+    mRawCmdLine = AllocateCopyPool (StrSize(CmdLine), CmdLine);
+  }
+}
+
+/**
   Frees any BUFFER_LIST defined type.
 
   @param[in] List     The BUFFER_LIST object to free.
@@ -1747,7 +1997,7 @@ DumpHex (
 
 /**
   Dump HEX data into buffer.
-   
+
   @param[in] Buffer     HEX data to be dumped in Buffer.
   @param[in] Indent     How many spaces to indent the output.
   @param[in] Offset     The offset of the printing.
