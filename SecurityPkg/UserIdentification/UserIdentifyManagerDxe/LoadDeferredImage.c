@@ -100,17 +100,36 @@ LoadDeferredImage (
                       &ImageHandle
                       );
       if (!EFI_ERROR (Status)) {
+//
+//    Deviate from the UEFI specification which states
+//    that the watchdog timer is enabled for 5 minutes prior to loading
+//    a UEFI boot application and disabled after the boot application
+//    returns.
+//
+//    In Hyper-V we want the watchdog to be active until the OS boots
+//    (i.e. ExitBootServices is called) to detect UEFI code issues.
+//
+#ifdef UEFI_COMPLIANT_IMAGE_WATCHDOG
         //
         // Before calling the image, enable the Watchdog Timer for
         // a 5 Minute period
         //
-        gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x00, NULL);
+        gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x00, NULL);
+#endif
+
         Status = gBS->StartImage (ImageHandle, &ExitDataSize, &ExitData);
-    
+
+#ifdef UEFI_COMPLIANT_IMAGE_WATCHDOG
         //
         // Clear the Watchdog Timer after the image returns.
         //
         gBS->SetWatchdogTimer (0x0000, 0x0000, 0x0000, NULL);
+#else
+        //
+        // Re-enable the Watchdog Timer after the image returns
+        //
+        gBS->SetWatchdogTimer (5 * 60, 0x0000, 0x0000, NULL);
+#endif      
       }
       DriverIndex++;
     } while (TRUE);

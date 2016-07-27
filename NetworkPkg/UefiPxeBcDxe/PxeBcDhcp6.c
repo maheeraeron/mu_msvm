@@ -1702,6 +1702,7 @@ PxeBcDhcp6CallBack (
   switch (Dhcp6Event) {
 
   case Dhcp6SendSolicit:
+    AsciiPrint(".");
     //
     // Record the first Solicate msg time
     //
@@ -1716,6 +1717,7 @@ PxeBcDhcp6CallBack (
     break;
 
   case Dhcp6RcvdAdvertise:
+    AsciiPrint(".");
     Status = EFI_NOT_READY;
     if (Private->OfferNum < PXEBC_OFFER_MAX_NUM) {
       //
@@ -1727,6 +1729,7 @@ PxeBcDhcp6CallBack (
     break;
 
   case Dhcp6SendRequest:
+    AsciiPrint(".");
     //
     // Store the request packet as seed packet for discover.
     //
@@ -1758,6 +1761,7 @@ PxeBcDhcp6CallBack (
     break;
 
   case Dhcp6RcvdReply:
+    AsciiPrint(".");
     //
     // Cache the dhcp ack to Private->Dhcp6Ack, but it's not the final ack in mode data
     // without verification.
@@ -2091,6 +2095,10 @@ PxeBcDhcp6Sarr (
     Dhcp6->Stop (Dhcp6);
     return Status;
   }
-  
+
+  AsciiPrint ("\n  Station IP address is ");
+  PxeBcShowIp6Addr (&Private->StationIp.v6);
+  AsciiPrint ("\n");
+
   return EFI_SUCCESS;
 }

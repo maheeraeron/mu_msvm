@@ -71,6 +71,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/PcdLib.h>
 #include <Library/DxeServicesLib.h>
 #include <Library/ReportStatusCodeLib.h>
+#include <Library/BootEventLogLib.h>
 
 #if !defined (EFI_REMOVABLE_MEDIA_FILE_NAME)
     #if defined (MDE_CPU_EBC)

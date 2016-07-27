@@ -830,6 +830,11 @@ EfiDhcp4Start (
       DhcpSb->UdpIo->Protocol.Udp4->Poll (DhcpSb->UdpIo->Protocol.Udp4);
     }
 
+    //
+    // Allow the next message to show without preceding empty spaces.
+    //
+    AsciiPrint ("\r");
+
     return DhcpSb->IoStatus;
   }
 

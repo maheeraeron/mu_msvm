@@ -1,0 +1,65 @@
+## @file
+#  Eventlog Runtime Dxe driver
+#  Produces the Event Log and Status Code Runtime protocols.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010016
+  BASE_NAME                      = EventLogDxe
+  FILE_GUID                      = 25C0E0C2-E18D-42A0-AA05-E8B080054152
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EventLogDxeEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+#
+
+[Sources]
+  EventLogDxe.h
+  StatusCode.c
+  EventLogDxe.c
+  EfiHandleTable.c
+  EfiRing.c
+  EventLogger.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  HobLib
+  PcdLib
+  DebugLib
+  BaseMemoryLib
+  BaseLib
+  IoLib
+  TimerLib
+
+
+[Guids]
+  gMemoryStatusCodeRecordGuid                   ## CONSUMES ## HOB
+  gStatusCodeEventChannelGuid                   ## CONSUMES
+
+[Protocols]
+  gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES
+  gEfiEventLogProtocolGuid                      ## PRODUCES
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
+  gUefiMsvmPkgTokenSpaceGuid.PcdEventLogMaxChannels
+  gUefiMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
+
+[Depex]
+  TRUE

@@ -14,6 +14,84 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "PcRtc.h"
 
+#define TICKS_PER_MILLISECOND       10000
+#define TIME_CACHE_EXPIRY_PERIOD    (500 * TICKS_PER_MILLISECOND)
+
+UINT64 gHvRefTimeAtLastUpdate;
+EFI_TIME gCachedTime;
+
+__inline
+BOOLEAN
+IsCacheValid(
+  )
+/*++
+
+  Routine Description:
+
+    Checks if the cached Time is valid.
+
+  Returns:
+
+    TRUE        -Cache is valid.
+
+    FALSE       -Cache is uninitialized, stale or unusable.
+
+--*/
+{
+  UINT64 ticksElapsedSinceLastUpdate; 
+  UINT64 currentHvRefTime;
+
+  currentHvRefTime = GetPerformanceCounter();
+  ticksElapsedSinceLastUpdate = currentHvRefTime - gHvRefTimeAtLastUpdate;
+
+  return (gHvRefTimeAtLastUpdate > 0 && 
+    ticksElapsedSinceLastUpdate > 0 &&
+    ticksElapsedSinceLastUpdate < TIME_CACHE_EXPIRY_PERIOD);
+}
+
+__inline
+VOID
+GetCachedTime(
+  OUT EFI_TIME *Time
+  )
+/*++
+
+  Routine Description:
+
+    Retrieves cached value of CurrentTime.
+    NOTE: This function does not check if the cache is still valid. The check
+    needs to be performed by the caller.
+
+  Arguments:
+
+    Time        -Pointer to EFI_TIME variable for output.
+
+--*/
+{
+  *Time = gCachedTime;
+}
+
+__inline
+VOID
+SetCachedTime(
+  IN EFI_TIME *Time
+  )
+/*++
+
+  Routine Description:
+
+    Cache given value of CurrentTime.
+
+  Arguments:
+
+    Time        -Pointer to EFI_TIME value to be cached.
+
+--*/
+{
+  gHvRefTimeAtLastUpdate = GetPerformanceCounter();
+  gCachedTime = *Time;
+}
+
 /**
   Compare the Hour, Minute and Second of the From time and the To time.
   
@@ -105,6 +183,8 @@ PcRtcInit (
   UINT32          TimerVar;
   BOOLEAN         Enabled;
   BOOLEAN         Pending;
+
+  gHvRefTimeAtLastUpdate = 0;
 
   //
   // Acquire RTC Lock to make access to RTC atomic
@@ -349,59 +429,70 @@ PcRtcGetTime (
     return EFI_INVALID_PARAMETER;
 
   }
-  //
-  // Acquire RTC Lock to make access to RTC atomic
-  //
-  if (!EfiAtRuntime ()) {
-    EfiAcquireLock (&Global->RtcLock);
-  }
-  //
-  // Wait for up to 0.1 seconds for the RTC to be updated
-  //
-  Status = RtcWaitToUpdate (PcdGet32 (PcdRealTimeClockUpdateTimeout));
-  if (EFI_ERROR (Status)) {
+
+  if (!IsCacheValid()) {
+      //
+      // Acquire RTC Lock to make access to RTC atomic
+      //
+      if (!EfiAtRuntime ()) {
+        EfiAcquireLock (&Global->RtcLock);
+      }
+      //
+      // Wait for up to 0.1 seconds for the RTC to be updated
+      //
+      Status = RtcWaitToUpdate (PcdGet32 (PcdRealTimeClockUpdateTimeout));
+      if (EFI_ERROR (Status)) {
+          if (!EfiAtRuntime ()) {
+            EfiReleaseLock (&Global->RtcLock);
+          }
+        return Status;
+      }
+      //
+      // Read Register B
+      //
+      RegisterB.Data = RtcRead (RTC_ADDRESS_REGISTER_B);
+
+      //
+      // Get the Time/Date/Daylight Savings values.
+      //
+      Time->Second  = RtcRead (RTC_ADDRESS_SECONDS);
+      Time->Minute  = RtcRead (RTC_ADDRESS_MINUTES);
+      Time->Hour    = RtcRead (RTC_ADDRESS_HOURS);
+      Time->Day     = RtcRead (RTC_ADDRESS_DAY_OF_THE_MONTH);
+      Time->Month   = RtcRead (RTC_ADDRESS_MONTH);
+      Time->Year    = RtcRead (RTC_ADDRESS_YEAR);
+
+      //
+      // Release RTC Lock.
+      //
       if (!EfiAtRuntime ()) {
         EfiReleaseLock (&Global->RtcLock);
       }
-    return Status;
+
+      //
+      // Get the variable that contains the TimeZone and Daylight fields
+      //
+      Time->TimeZone  = Global->SavedTimeZone;
+      Time->Daylight  = Global->Daylight;
+
+      //
+      // Make sure all field values are in correct range
+      //
+      Status = ConvertRtcTimeToEfiTime (Time, RegisterB);
+      if (!EFI_ERROR (Status)) {
+        Status = RtcTimeFieldsValid (Time);
+      }
+      if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
+      }
+  
+    SetCachedTime(Time);
   }
-  //
-  // Read Register B
-  //
-  RegisterB.Data = RtcRead (RTC_ADDRESS_REGISTER_B);
-
-  //
-  // Get the Time/Date/Daylight Savings values.
-  //
-  Time->Second  = RtcRead (RTC_ADDRESS_SECONDS);
-  Time->Minute  = RtcRead (RTC_ADDRESS_MINUTES);
-  Time->Hour    = RtcRead (RTC_ADDRESS_HOURS);
-  Time->Day     = RtcRead (RTC_ADDRESS_DAY_OF_THE_MONTH);
-  Time->Month   = RtcRead (RTC_ADDRESS_MONTH);
-  Time->Year    = RtcRead (RTC_ADDRESS_YEAR);
-
-  //
-  // Release RTC Lock.
-  //
-  if (!EfiAtRuntime ()) {
-    EfiReleaseLock (&Global->RtcLock);
-  }
-
-  //
-  // Get the variable that contains the TimeZone and Daylight fields
-  //
-  Time->TimeZone  = Global->SavedTimeZone;
-  Time->Daylight  = Global->Daylight;
-
-  //
-  // Make sure all field values are in correct range
-  //
-  Status = ConvertRtcTimeToEfiTime (Time, RegisterB);
-  if (!EFI_ERROR (Status)) {
-    Status = RtcTimeFieldsValid (Time);
-  }
-  if (EFI_ERROR (Status)) {
-    return EFI_DEVICE_ERROR;
+  else {
+    //
+    // Return cached value of Time.
+    //
+    GetCachedTime(Time);
   }
 
   //
@@ -534,6 +625,8 @@ PcRtcSetTime (
   Global->SavedTimeZone = Time->TimeZone;
   Global->Daylight      = Time->Daylight;
 
+  SetCachedTime(Time);
+
   return EFI_SUCCESS;
 }
 
@@ -561,6 +654,12 @@ PcRtcGetWakeupTime (
   IN  PC_RTC_MODULE_GLOBALS  *Global
   )
 {
+#if 1
+  //
+  // Hyper-V RTC emulation doesn't support wakeup.
+  //
+  return EFI_UNSUPPORTED;
+#else
   EFI_STATUS      Status;
   RTC_REGISTER_B  RegisterB;
   RTC_REGISTER_C  RegisterC;
@@ -650,6 +749,7 @@ PcRtcGetWakeupTime (
   }
 
   return EFI_SUCCESS;
+#endif
 }
 
 /**
@@ -674,6 +774,12 @@ PcRtcSetWakeupTime (
   IN PC_RTC_MODULE_GLOBALS  *Global
   )
 {
+#if 1
+  //
+  // Hyper-V RTC emulation doesn't support wakeup.
+  //
+  return EFI_UNSUPPORTED;
+#else
   EFI_STATUS            Status;
   EFI_TIME              RtcTime;
   RTC_REGISTER_B        RegisterB;
@@ -796,6 +902,7 @@ PcRtcSetWakeupTime (
     EfiReleaseLock (&Global->RtcLock);
   }
   return EFI_SUCCESS;
+#endif
 }
 
 

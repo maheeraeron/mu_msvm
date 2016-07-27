@@ -1210,9 +1210,11 @@ PxeBcDhcp4CallBack (
     // Cache the DHCPv4 discover packet to mode data directly.
     // It need to check SendGuid as well as Dhcp4SendRequest.
     //
+    AsciiPrint(".");
     CopyMem (&Mode->DhcpDiscover.Dhcpv4, &Packet->Dhcp4, Packet->Length);
 
   case Dhcp4SendRequest:
+    AsciiPrint(".");
     if (Mode->SendGUID) {
       //
       // Send the system Guid instead of the MAC address as the hardware address if required.
@@ -1228,6 +1230,7 @@ PxeBcDhcp4CallBack (
     break;
 
   case Dhcp4RcvdOffer:
+    AsciiPrint(".");
     Status = EFI_NOT_READY;
     if (Private->OfferNum < PXEBC_OFFER_MAX_NUM) {
       //
@@ -1258,7 +1261,7 @@ PxeBcDhcp4CallBack (
     // without verification.
     //
     ASSERT (Private->SelectIndex != 0);
-
+    AsciiPrint(".");
     PxeBcCopyDhcp4Ack (Private, Packet, FALSE);
     break;
 

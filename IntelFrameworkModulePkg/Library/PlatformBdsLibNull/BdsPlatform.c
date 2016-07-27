@@ -147,7 +147,8 @@ PlatformBdsBootFail (
   IN  BDS_COMMON_OPTION  *Option,
   IN  EFI_STATUS         Status,
   IN  CHAR16             *ExitData,
-  IN  UINTN              ExitDataSize
+  IN  UINTN              ExitDataSize,
+  IN  BOOLEAN            LastBootOption
   )
 {
 }

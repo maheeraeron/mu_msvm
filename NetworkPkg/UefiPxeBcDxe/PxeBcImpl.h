@@ -52,6 +52,8 @@
 #include <Library/DpcLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/PcdLib.h>
+#include <PiDxe.h>
+#include <Library/ConfigLib.h>
 
 typedef struct _PXEBC_PRIVATE_DATA  PXEBC_PRIVATE_DATA;
 typedef struct _PXEBC_PRIVATE_PROTOCOL PXEBC_PRIVATE_PROTOCOL;
@@ -79,6 +81,7 @@ typedef struct _PXEBC_VIRTUAL_NIC   PXEBC_VIRTUAL_NIC;
 #define PXEBC_PRIVATE_DATA_FROM_PXEBC(a)      CR (a, PXEBC_PRIVATE_DATA, PxeBc, PXEBC_PRIVATE_DATA_SIGNATURE)
 #define PXEBC_PRIVATE_DATA_FROM_ID(a)         CR (a, PXEBC_PRIVATE_DATA, Id, PXEBC_PRIVATE_DATA_SIGNATURE)
 #define PXEBC_VIRTUAL_NIC_FROM_LOADFILE(a)    CR (a, PXEBC_VIRTUAL_NIC, LoadFile, PXEBC_VIRTUAL_NIC_SIGNATURE)
+#define PXEBC_PRIVATE_DATA_FROM_LOADFILE(a)   CR (a, PXEBC_PRIVATE_DATA, LoadFile, PXEBC_PRIVATE_DATA_SIGNATURE)
 
 typedef union {
   PXEBC_DHCP4_PACKET_CACHE            Dhcp4;
@@ -101,6 +104,8 @@ struct _PXEBC_PRIVATE_DATA {
   UINT32                                    Signature;
   EFI_HANDLE                                Controller;
   EFI_HANDLE                                Image;
+
+  EFI_LOAD_FILE_PROTOCOL                    LoadFile;
 
   PXEBC_PRIVATE_PROTOCOL                    Id;
   EFI_SIMPLE_NETWORK_PROTOCOL               *Snp; 
@@ -162,7 +167,8 @@ struct _PXEBC_PRIVATE_DATA {
   BOOLEAN                                   IsOfferSorted;
   BOOLEAN                                   IsProxyRecved;
   BOOLEAN                                   IsDoDiscover;
-
+  BOOLEAN                                   IsIpV6;
+  
   EFI_IP_ADDRESS                            TmpStationIp;
   EFI_IP_ADDRESS                            StationIp;
   EFI_IP_ADDRESS                            SubnetMask;

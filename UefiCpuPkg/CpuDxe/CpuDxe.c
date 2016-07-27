@@ -18,7 +18,6 @@
 //
 // Global Variables
 //
-BOOLEAN                   InterruptState = FALSE;
 EFI_HANDLE                mCpuHandle = NULL;
 BOOLEAN                   mIsFlushingGCD;
 UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;
@@ -96,6 +95,10 @@ EFI_CPU_ARCH_PROTOCOL  gCpu = {
   4                           // DmaBufferAlignment
 };
 
+EFI_CPU2_PROTOCOL gCpu2 = {
+  CpuWaitForAndEnableInterrupt,
+};
+
 //
 // CPU Arch Protocol Functions
 //
@@ -153,7 +156,6 @@ CpuEnableInterrupt (
 {
   EnableInterrupts ();
 
-  InterruptState = TRUE;
   return EFI_SUCCESS;
 }
 
@@ -175,7 +177,6 @@ CpuDisableInterrupt (
 {
   DisableInterrupts ();
 
-  InterruptState = FALSE;
   return EFI_SUCCESS;
 }
 
@@ -201,7 +202,7 @@ CpuGetInterruptState (
     return EFI_INVALID_PARAMETER;
   }
 
-  *State = InterruptState;
+  *State = GetInterruptState ();
   return EFI_SUCCESS;
 }
 
@@ -432,6 +433,25 @@ CpuSetMemoryAttributes (
     }
   }
   return (EFI_STATUS) Status;
+}
+
+/**
+  Waits for an interrupt to arrive, then enables CPU interrupts.
+
+  @param  This              Protocol instance structure
+
+  @retval EFI_SUCCESS       If interrupts were enabled in the CPU
+
+**/
+EFI_STATUS
+EFIAPI
+CpuWaitForAndEnableInterrupt (
+  IN EFI_CPU2_PROTOCOL          *This
+  )
+{
+  SleepAndEnable ();
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -823,7 +843,7 @@ InitInterruptDescriptorTable (
   EFI_STATUS                     Status;
   EFI_VECTOR_HANDOFF_INFO        *VectorInfoList;
   EFI_VECTOR_HANDOFF_INFO        *VectorInfo;
-
+  __debugbreak();
   VectorInfo = NULL;
   Status = EfiGetSystemConfigurationTable (&gEfiVectorHandoffTableGuid, (VOID **) &VectorInfoList);
   if (Status == EFI_SUCCESS && VectorInfoList != NULL) {
@@ -875,42 +895,50 @@ InitializeCpu (
   EFI_EVENT   IdleLoopEvent;
 
   InitializeFloatingPointUnits ();
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitializeFloatingPointUnits\n"));
 
   //
   // Make sure interrupts are disabled
   //
   DisableInterrupts ();
+  DEBUG((EFI_D_INFO, "InitializeCpu: After DisableInterrupts\n"));
 
   //
   // Init GDT for DXE
   //
-  InitGlobalDescriptorTable ();
-
+  //InitGlobalDescriptorTable ();
+  //DEBUG((EFI_D_INFO, "InitializeCpu: After InitGlobalDescriptorTable\n"));
+  
   //
   // Setup IDT pointer, IDT and interrupt entry points
   //
   InitInterruptDescriptorTable ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitInterruptDescriptorTable\n"));
+  
   //
   // Enable the local APIC for Virtual Wire Mode.
   //
   ProgramVirtualWireMode ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After ProgramVirtualWireMode\n"));
+  
   //
   // Install CPU Architectural Protocol
   //
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mCpuHandle,
                   &gEfiCpuArchProtocolGuid, &gCpu,
+                  &gEfiCpu2ProtocolGuid, &gCpu2,
                   NULL
                   );
   ASSERT_EFI_ERROR (Status);
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InstallMultipleProtocolInterfaces\n"));
+  
   //
   // Refresh GCD memory space map according to MTRR value.
   //
   RefreshGcdMemoryAttributes ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After RefreshGcdMemoryAttributes\n"));
+  
   //
   // Setup a callback for idle events
   //
@@ -925,7 +953,8 @@ InitializeCpu (
   ASSERT_EFI_ERROR (Status);
 
   InitializeMpSupport ();
-
+  DEBUG((EFI_D_INFO, "InitializeCpu: After InitializeMpSupport\n"));
+  
   return Status;
 }
 

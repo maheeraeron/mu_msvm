@@ -237,7 +237,7 @@ CallBootManager (
   //
   GroupMultipleLegacyBootOption4SameType ();
 
-  InitializeListHead (&mBootOptionsList);
+  BdsLibOptionListCleanup (&mBootOptionsList);
   BdsLibBuildOptionFromVar (&mBootOptionsList, L"BootOrder");
 
   HiiHandle = gBootManagerPrivate.HiiHandle;
@@ -389,7 +389,7 @@ CallBootManager (
     PlatformBdsBootSuccess (gOption);
   } else {
     gOption->StatusString = GetStringById (STRING_TOKEN (STR_BOOT_FAILED));
-    PlatformBdsBootFail (gOption, Status, ExitData, ExitDataSize);
+    PlatformBdsBootFail (gOption, Status, ExitData, ExitDataSize, FALSE);
     gST->ConOut->OutputString (
                   gST->ConOut,
                   GetStringById (STRING_TOKEN (STR_ANY_KEY_CONTINUE))

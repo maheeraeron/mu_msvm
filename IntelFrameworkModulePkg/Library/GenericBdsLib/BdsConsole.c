@@ -1060,7 +1060,22 @@ EnableQuietBoot (
         continue;
       }
     }
-
+    
+    //
+    // Make sure the logo will actually fit. If not, skip it.
+    // FUTURE: 08-Feb-2013 kharp - We could position and then clip the logo
+    //
+    if ((Height > SizeOfY) || (Width > SizeOfX)) {
+      // Remove the ASSERT if clipping is implemented.
+      ASSERT(FALSE);
+      
+      if (Badging == NULL) {
+        goto Done;
+      } else {
+        continue;
+      }
+    }
+    
     //
     // Calculate the display position according to Attribute.
     //
@@ -1120,6 +1135,8 @@ EnableQuietBoot (
       DestY = CoordinateY;
       break;
     }
+
+    DEBUG((EFI_D_INFO, "Setting Logo @ %d,%d (%dx%d)\n", DestX, DestY, Width, Height));
 
     if ((DestX >= 0) && (DestY >= 0)) {
       if (GraphicsOutput != NULL) {

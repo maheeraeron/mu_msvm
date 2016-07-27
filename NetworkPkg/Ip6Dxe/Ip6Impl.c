@@ -1515,7 +1515,7 @@ EfiIp6Receive (
   }
 
   //
-  // Check whether the toke is already on the receive queue.
+  // Check whether the token is already on the receive queue.
   //
   Status = NetMapIterate (&IpInstance->RxTokens, Ip6TokenExist, Token);
 

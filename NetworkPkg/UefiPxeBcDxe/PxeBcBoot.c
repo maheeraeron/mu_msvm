@@ -14,6 +14,7 @@
 **/
 
 #include "PxeBcImpl.h"
+#include <Library/BootEventLogLib.h>
 
 
 /**
@@ -569,10 +570,11 @@ PxeBcDhcp4BootInfo (
   //
   // Display all the information: boot server address, boot file name and boot file size.
   //
-  AsciiPrint ("\n  Server IP address is ");
+  AsciiPrint ("  Server IP address is ");
   PxeBcShowIp4Addr (&Private->ServerIp.v4);
   AsciiPrint ("\n  NBP filename is %a", Private->BootFileName);
   AsciiPrint ("\n  NBP filesize is %d Bytes", Private->BootFileSize);
+  AsciiPrint ("\n");
 
   return Status;
 }
@@ -681,10 +683,10 @@ PxeBcDhcp6BootInfo (
   //
   // Display all the information: boot server address, boot file name and boot file size.
   //
-  AsciiPrint ("\n  Server IP address is ");
+  AsciiPrint ("  Server IP address is ");
   PxeBcShowIp6Addr (&Private->ServerIp.v6);
-  AsciiPrint ("\n  NBP filename is %a", Private->BootFileName);
-  AsciiPrint ("\n  NBP filesize is %d Bytes", Private->BootFileSize);
+  AsciiPrint ("\n  NBP filename is %a\n", Private->BootFileName);
+  AsciiPrint ("  NBP filesize is %d Bytes\n", Private->BootFileSize);
 
   return Status;
 }
@@ -1138,6 +1140,7 @@ PxeBcLoadBootFile (
   EFI_STATUS                          Status;
   EFI_PXE_BASE_CODE_PROTOCOL          *PxeBc;
   EFI_PXE_BASE_CODE_MODE              *PxeBcMode;
+  BOOT_DEVICE_STATUS                  DeviceStatus = NetworkBootUnexpectedFailure;
 
   NewMakeCallback = FALSE;
   PxeBc           = &Private->PxeBc;
@@ -1201,7 +1204,7 @@ PxeBcLoadBootFile (
   //
   // Begin to download the bootfile if everything is ready.
   //
-  AsciiPrint ("\n Downloading NBP file...\n");
+  AsciiPrint ("  Downloading NBP file...\n");
   if (PxeBcMode->UsingIpv6) {
     Status = PxeBcReadBootFileList (
                Private,
@@ -1228,32 +1231,54 @@ ON_EXIT:
   PxeBcUninstallCallback(Private, NewMakeCallback);
 
   if (Status == EFI_SUCCESS) {
-    AsciiPrint ("\n  Succeed to download NBP file.\n");
+    AsciiPrint ("  Successfully downloaded NBP file.\n");
     return EFI_SUCCESS;
   } else if (Status == EFI_BUFFER_TOO_SMALL && Buffer != NULL) {
+    DeviceStatus = NetworkBootBufferTooSmall;
     AsciiPrint ("\n  PXE-E05: Buffer size is smaller than the requested file.\n");
   } else if (Status == EFI_DEVICE_ERROR) {
+    DeviceStatus = NetworkBootDeviceError;
     AsciiPrint ("\n  PXE-E07: Network device error.\n");
   } else if (Status == EFI_OUT_OF_RESOURCES) {
+    DeviceStatus = NetworkBootNoResources;
     AsciiPrint ("\n  PXE-E09: Could not allocate I/O buffers.\n");
   } else if (Status == EFI_NO_MEDIA) {
+    DeviceStatus = NetworkBootMediaDisconnected;
     AsciiPrint ("\n  PXE-E12: Could not detect network connection.\n");
   } else if (Status == EFI_NO_RESPONSE) {
+    DeviceStatus = NetworkBootNoResponse;
     AsciiPrint ("\n  PXE-E16: No offer received.\n");
   } else if (Status == EFI_TIMEOUT) {
+    DeviceStatus = NetworkBootServerTimeout;
     AsciiPrint ("\n  PXE-E18: Server response timeout.\n");
   } else if (Status == EFI_ABORTED) {
+    DeviceStatus = NetworkBootCancelled;
     AsciiPrint ("\n  PXE-E21: Remote boot cancelled.\n");
   } else if (Status == EFI_ICMP_ERROR) {
+    DeviceStatus = NetworkBootIcmpError;
     AsciiPrint ("\n  PXE-E22: Client received ICMP error from server.\n");
   } else if (Status == EFI_TFTP_ERROR) {
+    DeviceStatus = NetworkBootTftpError;
     AsciiPrint ("\n  PXE-E23: Client received TFTP error from server.\n");
   } else if (Status == EFI_NOT_FOUND) {
+    DeviceStatus = NetworkBootNoBootFile;
     AsciiPrint ("\n  PXE-E53: No boot filename received.\n");
   } else if (Status != EFI_BUFFER_TOO_SMALL) {
+    DeviceStatus = NetworkBootUnexpectedFailure;
     AsciiPrint ("\n  PXE-E99: Unexpected network error.\n");
   }
 
+  //
+  // Check for DHCP failure and provide a specific failure.
+  // This provides a better indication as to when the failure
+  // occurred than a generic timeout status code.
+  //
+  if (Private->PxeBc.Mode->DhcpDiscoverValid != TRUE)
+  {
+    DeviceStatus = NetworkBootDhcpFailed;
+  }
+
+  BootDeviceEventUpdate(DeviceStatus, Status);
   return Status;
 }
 

@@ -1,0 +1,66 @@
+## @file
+# Serial driver for standard UARTS on an ISA bus.
+#
+#
+# Copyright (c) Microsoft Corporation
+#
+# Module Name:
+#
+#     SerialBusDxe.inf
+#
+# Abstract:
+#
+#     This is the inf file for the SerialsDxe driver
+#
+# Author:
+#
+#     Larry Cleeton (lcleeton) 07-Oct-2014
+#
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SerialDxe
+  FILE_GUID                      = 23510367-1393-4DF8-A7C7-4B86313829C5
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SerialEntryPoint
+
+[Sources]
+  MsvmSerial.h
+  Serial.h
+  ComponentName.c
+  Serial.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+  PcdLib
+  ReportStatusCodeLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  DevicePathLib
+  UefiLib
+  UefiDriverEntryPoint
+  DebugLib
+  IoLib
+  ConfigLib
+
+[Guids]
+  gEfiUartDevicePathGuid
+
+[Protocols]
+  gEfiSerialIoProtocolGuid                      ## PRODUCES
+  gEfiDevicePathProtocolGuid                    ## CONSUMES
+
+[FeaturePcd]
+  gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdIsaBusSerialUseHalfHandshake|FALSE
+
+[FixedPcd]
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits

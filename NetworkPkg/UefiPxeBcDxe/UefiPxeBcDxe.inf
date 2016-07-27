@@ -55,6 +55,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 
 [LibraryClasses]
@@ -69,6 +70,8 @@
   DpcLib
   DevicePathLib
   PcdLib
+  BootEventLogLib
+  ConfigLib
 
 [Protocols]
   ## TO_START

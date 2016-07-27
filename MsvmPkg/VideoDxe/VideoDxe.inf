@@ -1,0 +1,43 @@
+[Defines]
+    INF_VERSION = 0x00010005
+    BASE_NAME = VideoDxe
+    FILE_GUID = 1cb52863-97b7-4fce-892b-0ef2838befbd
+    MODULE_TYPE = UEFI_DRIVER
+    VERSION_STRING = 1.0
+    ENTRY_POINT = VideoDxeDriverEntryPoint
+
+
+[Sources]
+    ComponentName.c
+    VideoChannelDxe.c
+    VideoDxe.h
+    VideoDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    UefiDriverEntryPoint
+    DebugLib
+    UefiLib
+    BaseLib
+    BaseMemoryLib
+    MemoryAllocationLib
+    UefiBootServicesTableLib
+    DevicePathLib
+    EmclLib
+    DxeServicesTableLib
+
+[Protocols]
+    gEfiVmbusProtocolGuid           #CONSUMES
+    gEfiEmclProtocolGuid            #CONSUMES
+    gEfiDevicePathProtocolGuid      #PRODUCES
+    gEfiGraphicsOutputProtocolGuid  #PRODUCES
+    gEfiDriverBindingProtocolGuid   #PRODUCES
+    gEfiComponentNameProtocolGuid   #PRODUCES
+    gEfiComponentName2ProtocolGuid  #PRODUCES
+
+[Guids]
+    gEfiEventExitBootServicesGuid   #CONSUMES
+    gEfiVmbusChannelDevicePathGuid  #CONSUMES

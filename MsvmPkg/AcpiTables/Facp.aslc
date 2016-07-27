@@ -1,0 +1,97 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    Facp.aslc
+
+Abstract:
+
+    Defines the FACP fixed acpi table.
+
+Author:
+
+    Rich Yampell (richyam) 6-Jul-2012
+
+--*/
+
+#include <Base.h>
+#include <AcpiTables.h>
+#include <PowerManagementInterface.h>
+
+EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE FACP =
+{
+    STANDARD_HEADER(EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
+                    sizeof(EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE),
+                    EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION)
+    0,                                      // 32 Bit Physical Ptr to FACS Table
+    0,                                      // 32 Bit Physical Ptr to DSDT
+    1,                                      // set to 1 for compatibility with ACPI 1.0
+    EFI_ACPI_3_0_PM_PROFILE_UNSPECIFIED,    // unspecified power management profile
+    9,                                      // system vector for SCI interrupt
+    0,                                      // SMI command port (not used in VM UEFI)
+    0,                                      // data to be written thence to generate software SMI to enable acpi
+    0,                                      //  "    "  "    "       "    "     "        "     "   " disable acpi
+    0,                                      //  "    "  "    "       "    " enter the S4BIOS state
+    0,                                      // SW SMI value to assume processor control responsibility
+    PowerMgmtDefaultBaseRegister +          // power mgt 1a event reg blk port
+        PowerMgmtStatusRegOffset,
+    0,                                      // power mgt 1b event reg blk port
+    PowerMgmtDefaultBaseRegister +          // power mgt 1a ctrl reg blk port
+        PowerMgmtControlRegOffset,
+    0,                                      // power mgt 1b ctrl reg blk port
+    0,                                      // power mgt 2 ctrl reg blk port
+    PowerMgmtDefaultBaseRegister +          // power mgt timer ctrl reg blk port
+        PowerMgmtTimerRegOffset,
+    PowerMgmtDefaultBaseRegister +          // general purpose event 0 reg blk port
+        PowerMgmtGenPurposeStatusRegOffset,
+    0,                                      // general purpose event 1 reg blk port
+    4,                                      // pm1 evt length
+    2,                                      // pm1 cnt length
+    0,                                      // pm2 cnt length
+    4,                                      // pm tmr length
+    4,                                      // gpe0 blk length
+    0,                                      // gpe1 blk length
+    0,                                      // offset in gpe model where gpe1 events start
+    0,                                      // SW SMI value to indicate OS supports for _CST object and C States Changed Notification
+    101,                                    // worst case hw latency to enter/exit C2 state (> 100 == disable)
+    1001,                                   // worst case hw latency to enter/exit C3 state (> 1000 == disable)
+    0,                                      // cache flush size (KB)
+    0,                                      // min. cache line size (bytes)
+    0,                                      // duty offset -- bit index for start of throttle enable value
+    0,                                      // duty width -- width (in bits) of throttle enable value
+    0xd,                                    // index to day-of-month alarm in RTC CMOS RAM
+    0,                                      // index to month-of-year alarm in RTC CMOS RAM
+    0,                                      // index to century in RTC CMOS RAM
+    EFI_ACPI_3_0_VGA_NOT_PRESENT,           // IA-PC Boot Architecture Flags
+    0,                                      // reserved
+    (EFI_ACPI_3_0_WBINVD |                  // Flags
+     EFI_ACPI_3_0_PROC_C1 |
+     EFI_ACPI_3_0_PWR_BUTTON |
+     EFI_ACPI_3_0_SLP_BUTTON |
+     EFI_ACPI_3_0_RTC_S4 |
+     EFI_ACPI_3_0_TMR_VAL_EXT |
+     EFI_ACPI_3_0_RESET_REG_SUP |
+     EFI_ACPI_3_0_USE_PLATFORM_CLOCK),
+    {                                       // Reset register
+        EFI_ACPI_3_0_SYSTEM_IO,
+        8,
+        0,
+        EFI_ACPI_3_0_BYTE,
+        PowerMgmtDefaultBaseRegister + PowerMgmtResetRegister
+    },
+    PowerMgmtResetValue,                        // Value to write to reset register
+};
+
+
+VOID*
+ReferenceAcpiTable()
+{
+    //
+    // Reference the table being generated to prevent the optimizer from removing the
+    // data structure from the exeutable
+    //
+    return (VOID*) &FACP;
+}
+

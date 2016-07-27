@@ -1,0 +1,51 @@
+#
+# Copyright (c) Microsoft Corporation
+#
+# Module Name:
+#
+#   VariableDxe.inf
+#
+# Abstract
+#
+#   Component description file for Variable module
+#
+
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = VariableRuntimeDxe
+    FILE_GUID                      = CBD2E4D5-7068-4FF5-B462-9822B4AD8D60
+    MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+    VERSION_STRING                 = 1.0
+    ENTRY_POINT                    = VariableServiceInitialize
+
+[Sources]
+    VariableDxe.c
+    NvramVariableDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    BaseMemoryLib
+    BaseLib
+    DebugLib
+    UefiBootServicesTableLib
+    UefiRuntimeLib
+    UefiDriverEntryPoint
+    IoLib
+    PrintLib
+    MemoryAllocationLib
+
+[Protocols]
+    gEfiVariableWriteArchProtocolGuid             ## ALWAYS_PRODUCES
+    gEfiVariableArchProtocolGuid                  ## ALWAYS_PRODUCES
+
+[Guids]
+    gEfiEventVirtualAddressChangeGuid
+    gEfiEventExitBootServicesGuid
+    gEfiGlobalVariableGuid
+    
+[Depex]
+    TRUE

@@ -98,6 +98,7 @@ PlatformBdsPolicyBehavior (
   @param  Status                  The status returned from failed boot.
   @param  ExitData                The exit data returned from failed boot.
   @param  ExitDataSize            The exit data size returned from failed boot.
+  @param  LastBootOption          Whether it is the last boot option.
 
 **/
 VOID
@@ -106,7 +107,8 @@ PlatformBdsBootFail (
   IN  BDS_COMMON_OPTION  *Option,
   IN  EFI_STATUS         Status,
   IN  CHAR16             *ExitData,
-  IN  UINTN              ExitDataSize
+  IN  UINTN              ExitDataSize,
+  IN  BOOLEAN            LastBootOption
   );
 
 /**

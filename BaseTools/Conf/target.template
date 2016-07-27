@@ -23,22 +23,22 @@
 #                                               build. This line is required if and only if the current
 #                                               working directory does not contain one or more description
 #                                               files.
-ACTIVE_PLATFORM       = Nt32Pkg/Nt32Pkg.dsc
+ACTIVE_PLATFORM       = MsvmPkg/MsvmPkgX64.dsc
 
 #  TARGET                List       Optional    Zero or more of the following: DEBUG, RELEASE, NOOPT
 #                                               UserDefined; separated by a space character.
 #                                               If the line is missing or no value is specified, all
-#                                               valid targets specified in the platform description file 
-#                                               will attempt to be built. The following line will build 
+#                                               valid targets specified in the platform description file
+#                                               will attempt to be built. The following line will build
 #                                               DEBUG platform target.
-TARGET                = DEBUG
+TARGET                = RELEASE
 
 #  TARGET_ARCH           List       Optional    What kind of architecture is the binary being target for.
 #                                               One, or more, of the following, IA32, IPF, X64, EBC, ARM
 #                                               or AArch64.
 #                                               Multiple values can be specified on a single line, using
 #                                               space charaters to separate the values.  These are used
-#                                               during the parsing of a platform description file, 
+#                                               during the parsing of a platform description file,
 #                                               restricting the build output target(s.)
 #                                               The Build Target ARCH is determined by (precedence high to low):
 #                                                 Command-line: -a ARCH option
@@ -47,7 +47,7 @@ TARGET                = DEBUG
 #                                               If not specified, then all valid architectures specified
 #                                               in the platform file, for which tools are available, will be
 #                                               built.
-TARGET_ARCH           = IA32
+TARGET_ARCH           = X64
 
 #  TOOL_DEFINITION_FILE  Filename  Optional   Specify the name of the filename to use for specifying
 #                                             the tools to use for the build.  If not specified,
@@ -57,16 +57,16 @@ TOOL_CHAIN_CONF       = Conf/tools_def.txt
 #  TAGNAME               List      Optional   Specify the name(s) of the tools_def.txt TagName to use.
 #                                             If not specified, all applicable TagName tools will be
 #                                             used for the build.  The list uses space character separation.
-TOOL_CHAIN_TAG        = MYTOOLS
+TOOL_CHAIN_TAG        = VS2015xASL
 
 # MAX_CONCURRENT_THREAD_NUMBER  NUMBER  Optional  The number of concurrent threads. Recommend to set this
 #                                                 value to one more than the number of your compurter
 #                                                 cores or CPUs. Less than 2 means disable multithread build.
-MAX_CONCURRENT_THREAD_NUMBER = 1
+MAX_CONCURRENT_THREAD_NUMBER = 4
 
 
 # BUILD_RULE_CONF  Filename Optional  Specify the file name to use for the build rules that are followed
-#                                     when generating Makefiles. If not specified, the file: 
+#                                     when generating Makefiles. If not specified, the file:
 #                                     WORKSPACE/Conf/build_rule.txt will be used
 BUILD_RULE_CONF = Conf/build_rule.txt
 

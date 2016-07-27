@@ -1,0 +1,724 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    NvramVariableDxe.c
+
+Abstract:
+
+    Hyper-V NVRAM Variable Services driver. 
+
+    The module acts as a proxy and sends non-volatile variable requests
+    to the Hyper-V BIOS VDev.
+
+Author:
+
+    Larry Cleeton (lcleeton) - 07-Mar-2013
+
+--*/
+
+
+#include <Library/BaseMemoryLib.h>
+#include <Library/Baselib.h>
+#include <Library/IoLib.h>
+#include <Library/DebugLib.h>
+#include <Library/UefiRuntimeLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/PrintLib.h>
+#include <BiosConfigPageGuid.h>
+#include <BiosInterface.h>
+#include <NvramVariableDxe.h>
+
+
+#define WITHIN_4_GB_LL (0xFFFFFFFFLL)
+
+//
+// Module variables
+//
+
+//
+// Descriptor and Data buffers.
+//
+static EFI_PHYSICAL_ADDRESS        mNvramCommandDescriptorGpa   = 0;
+static PNVRAM_COMMAND_DESCRIPTOR   mNvramCommandDescriptor      = NULL;
+static EFI_PHYSICAL_ADDRESS        mNvramCommandDataBufferGpa   = 0;
+static UINT8*                      mNvramCommandDataBuffer      = NULL;
+
+
+//
+// Private routines
+//
+
+EFI_STATUS
+IssueBiosDeviceNvramCommand()
+/*++
+
+Routine Description:
+
+    Performs an enlightened NVRAM command through the BiosDevice.
+
+Arguments:
+
+    None.
+
+Returns:
+
+    EFI_STATUS
+
+--*/
+{
+    //
+    // Send the request to the BIOS VDev.
+    // Cast of descriptor GPA is safe as it allocated below 4GB.
+    //
+    IoWrite32(BiosAddressPort, BiosConfigNvramCommand);
+    IoWrite32(BiosDataPort, (UINT32)mNvramCommandDescriptorGpa);
+
+    if (mNvramCommandDescriptor->Status == 0)
+    {
+        return EFI_SUCCESS;
+    }
+    else
+    {
+        return ENCODE_ERROR(mNvramCommandDescriptor->Status);
+    }
+}
+
+
+VOID*
+Allocate32BitMemory(
+    __in UINT32 Size
+    )
+/*++
+
+Routine Description:
+
+    Allocates memory in 32-bit address space (below 4GB).
+
+Arguments:
+
+    Size - The number of bytes to allocate.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    VOID* answer = (void*) WITHIN_4_GB_LL;
+
+    if (EFI_ERROR(gBS->AllocatePages(AllocateMaxAddress,
+                                     EfiRuntimeServicesData,
+                                     EFI_SIZE_TO_PAGES(Size),
+                                     (EFI_PHYSICAL_ADDRESS*) &answer)))
+    {
+        return NULL;
+    }
+
+    return answer;
+}
+
+
+//
+// Entry points
+//
+
+
+EFI_STATUS
+NvramInitialize(
+    )
+/*++
+
+Routine Description:
+
+    Initializes this module.
+
+Arguments:
+
+    None.
+
+Return Value:
+
+    TRUE on successful initialization.
+
+--*/
+{
+    EFI_STATUS status = EFI_SUCCESS;
+    
+#define BELOW_4GB (0xFFFFFFFFULL)
+    
+    //
+    // Allocate the descriptor from physcial memory below 4GB.
+    //
+    mNvramCommandDescriptorGpa = BELOW_4GB;
+    status = gBS->AllocatePages(AllocateMaxAddress,
+                                EfiRuntimeServicesData,
+                                EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)),
+                                &mNvramCommandDescriptorGpa);
+    if (EFI_ERROR(status))
+    {
+        mNvramCommandDescriptorGpa = 0;
+        goto Cleanup;
+    }
+
+    //
+    // Allocate the name/data buffer from physcial memory below 4GB.
+    //
+    mNvramCommandDataBufferGpa = BELOW_4GB;
+    status = gBS->AllocatePages(AllocateMaxAddress,
+                                EfiRuntimeServicesData,
+                                EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE),
+                                &mNvramCommandDataBufferGpa);
+    if (EFI_ERROR(status))
+    {
+        mNvramCommandDataBufferGpa = 0;
+        goto Cleanup;
+    }
+
+    //
+    // Addresses are identity mapped before runtime.  GVA == GPA at this point.
+    //
+    mNvramCommandDescriptor = (PNVRAM_COMMAND_DESCRIPTOR)mNvramCommandDescriptorGpa;
+    mNvramCommandDataBuffer = (UINT8*)mNvramCommandDataBufferGpa;
+
+Cleanup:
+
+    if (EFI_ERROR(status))
+    {
+        if (mNvramCommandDataBufferGpa != 0)
+        {
+            gBS->FreePages(
+                mNvramCommandDataBufferGpa, 
+                EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE));
+            mNvramCommandDataBufferGpa = 0;
+        }
+        if (mNvramCommandDescriptorGpa != 0)
+        {
+            gBS->FreePages(
+                mNvramCommandDescriptorGpa, 
+                EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)));
+            mNvramCommandDescriptorGpa = 0;
+        }
+    }
+
+    return status;
+}
+
+
+VOID
+NvramAddressChangeHandler()
+/*++
+
+Routine Description:
+
+    Callback to handle converting internal pointers due to   
+    the page tables being updated.
+    
+Arguments:
+
+    None.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EFI_STATUS status;
+    
+    //
+    // Physical addresses (GPA's) won't change.  
+    // Convert the virtual addresses of the buffers.
+    //
+    status = EfiConvertPointer(0, (void**)&mNvramCommandDescriptor);
+    ASSERT(!EFI_ERROR(status));
+    status = EfiConvertPointer(0, (void**)&mNvramCommandDataBuffer);
+    ASSERT(!EFI_ERROR(status));
+}
+
+
+
+VOID
+NvramExitBootServicesHandler(
+    __in BOOLEAN VsmAware
+    )
+/*++
+
+Routine Description:
+
+    Callback to handle when ExitBootServices is called by an application/boot loader.
+    This function simply notifies the BIOS VDev of this event.
+
+Arguments:
+
+    VsmAware - Supplies a boolean indicating if any boot app opt-ed to leverage 
+               VSM by setting the necessary bit in OsLoaderIndcationsSupported.
+
+Returns:
+
+    None
+
+--*/
+{
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Command = NvramSignalRuntimeCommand;
+    mNvramCommandDescriptor->U.SignalRuntimeCommand.S.VsmAware = VsmAware;
+    (void)IssueBiosDeviceNvramCommand();
+}
+
+
+
+EFI_STATUS
+NvramQueryInfo(
+    __in  UINT32  Attributes,
+    __out UINT64* MaximumVariableStorageSize,
+    __out UINT64* RemainingVariableStorageSize,
+    __out UINT64* MaximumVariableSize
+    )
+/*++
+
+Routine Description:
+
+    This code returns information about the EFI variables.
+
+Arguments:
+
+    Attributes - Attributes bitmask to specify the type of variables
+                 on which to return information.
+    MaximumVariableStorageSize - Pointer to the maximum size of the storage space available
+                                 for the EFI variables associated with the attributes specified.
+    RemainingVariableStorageSize - Pointer to the remaining size of the storage space available
+                                   for EFI variables associated with the attributes specified.
+    MaximumVariableSize - Pointer to the maximum size of an individual EFI variables
+                          associated with the attributes specified.
+
+Returns:
+
+    EFI STATUS:
+
+        EFI_INVALID_PARAMETER - An invalid combination of attribute bits was supplied.
+
+        EFI_SUCCESS - Query successfully.
+
+        EFI_UNSUPPORTED - The attribute is not supported on this platform.
+
+--*/
+{
+    EFI_STATUS status;
+
+    ASSERT(MaximumVariableStorageSize);
+    ASSERT(RemainingVariableStorageSize);
+    ASSERT(MaximumVariableSize);
+
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
+    mNvramCommandDescriptor->Command = NvramQueryInfoCommand;
+    mNvramCommandDescriptor->U.QueryInfo.Attributes = Attributes;
+
+    status = IssueBiosDeviceNvramCommand();
+    if (status == EFI_SUCCESS)
+    {
+        *MaximumVariableStorageSize =
+            mNvramCommandDescriptor->U.QueryInfo.MaximumVariableStorage;
+        *RemainingVariableStorageSize =
+            mNvramCommandDescriptor->U.QueryInfo.RemainingVariableStorage;
+        *MaximumVariableSize =
+            mNvramCommandDescriptor->U.QueryInfo.MaximumVariableSize;
+    }
+    return status;
+}
+
+
+EFI_STATUS
+NvramSetVariable(
+    __in CHAR16*   VariableName,
+    __in EFI_GUID* VendorGuid,
+    __in UINT32    Attributes,
+    __in UINTN     DataSize,
+    __in void*     Data
+    )
+/*++
+
+Routine Description:
+
+    Sets a NVRAM variable.
+
+Arguments:
+
+    VariableName - Name of variable to be found.
+
+    VendorGuid - Variable vendor GUID.
+
+    Attributes - Attribute value of the variable set.
+
+    DataSize - Size of Data.
+
+    Data - Data pointer
+
+Returns:
+
+    EFI_STATUS
+
+--*/
+{
+    UINTN length;
+
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
+    mNvramCommandDescriptor->Command = NvramSetVariableCommand;
+    mNvramCommandDescriptor->U.VariableCommand.VariableAttributes = Attributes;
+
+    length = StrSize(VariableName);
+    ASSERT(length <= (UINT32) -1);
+    if (length > (UINT32) -1)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    ASSERT(DataSize <= (UINT32) -1);
+    if (DataSize > (UINT32) -1)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    //
+    // Everything must be able to fit inside the bounce buffer.
+    //
+    if ((length + DataSize) > EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    CopyMem(mNvramCommandDataBuffer, VariableName, length);
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameAddress = mNvramCommandDataBufferGpa;
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes = (UINT32) length;
+    mNvramCommandDescriptor->U.VariableCommand.VariableVendorGuid = *VendorGuid;
+
+    //
+    // Data follows the name.
+    //
+    CopyMem(mNvramCommandDataBuffer + length, Data, DataSize);
+    mNvramCommandDescriptor->U.VariableCommand.VariableDataAddress = 
+        mNvramCommandDataBufferGpa + length;
+    mNvramCommandDescriptor->U.VariableCommand.VariableDataBytes = (UINT32) DataSize;
+
+    return IssueBiosDeviceNvramCommand();
+}
+
+
+EFI_STATUS
+NvramGetVariable(
+    __in           CHAR16*   VariableName,
+    __in           EFI_GUID* VendorGuid,
+    __out OPTIONAL UINT32*   Attributes,
+    __in __out     UINTN*    DataSize,
+    __out          void*     Data
+    )
+/*++
+
+Routine Description:
+
+    Gets an NV variable.
+
+Arguments:
+
+    VariableName - Name of variable to be found.
+
+    VendorGuid - Variable vendor GUID.
+
+    Attributes - Attribute value of the variable found.
+
+    DataSize - Size of Data.
+
+    Data - Data pointer.
+
+Returns:
+
+    EFI_STATUS
+
+--*/
+{
+    UINTN length;
+    UINT32 dataSize;
+    EFI_STATUS status;
+
+    ASSERT(VariableName != NULL);
+    ASSERT(VendorGuid != NULL);
+    ASSERT(DataSize != NULL);
+    ASSERT((Data != NULL) || (*DataSize == 0));
+
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
+    mNvramCommandDescriptor->Command = NvramGetVariableCommand;
+
+
+    //
+    // Check the length of the name string.
+    //
+    length = StrSize(VariableName);
+    ASSERT(length <= (UINT32)-1);
+    if (length > EFI_MAX_VARIABLE_NAME_SIZE)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    //
+    // *DataSize can be larger than allowed variable size.
+    // However cap it before sending.
+    //
+    dataSize = (UINT32)*DataSize;
+    if (dataSize > EFI_MAX_VARIABLE_DATA_SIZE)
+    {
+        dataSize = EFI_MAX_VARIABLE_DATA_SIZE;
+    }
+
+
+
+    CopyMem(mNvramCommandDataBuffer, VariableName, length);
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameAddress = mNvramCommandDataBufferGpa;
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes = (UINT32) length;
+    mNvramCommandDescriptor->U.VariableCommand.VariableVendorGuid = *VendorGuid;
+    mNvramCommandDescriptor->U.VariableCommand.VariableDataAddress =
+        mNvramCommandDataBufferGpa + length;
+    mNvramCommandDescriptor->U.VariableCommand.VariableDataBytes = dataSize;
+
+    status = IssueBiosDeviceNvramCommand();
+    if (status == EFI_SUCCESS)
+    {
+        if (Attributes != NULL)
+        {
+            *Attributes = mNvramCommandDescriptor->U.VariableCommand.VariableAttributes;
+        }
+
+        *DataSize = mNvramCommandDescriptor->U.VariableCommand.VariableDataBytes;
+
+        //
+        // Copy data out of the bounce buffer.
+        //
+
+        CopyMem(Data, mNvramCommandDataBuffer + length, *DataSize);
+    }
+    else if (status == EFI_BUFFER_TOO_SMALL)
+    {
+        //
+        // This shouldn't happen, it means that the variable was larger
+        // than allowed by the bounce buffer, and thus, the spec.
+        //
+        if (mNvramCommandDescriptor->U.VariableCommand.VariableDataBytes <= *DataSize)
+        {
+            status = EFI_DEVICE_ERROR;
+        }
+        else
+        {
+            *DataSize = mNvramCommandDescriptor->U.VariableCommand.VariableDataBytes;
+        }
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+NvramGetFirstVariableName(
+    __out UINTN*    VariableNameSize,
+    __out CHAR16*   VariableName,
+    __inout EFI_GUID* VendorGuid
+    )
+/*++
+
+Routine Description:
+
+    This code gets the first NV variable.
+
+Arguments:
+
+    VariableNameSize - Size of the VariableName buffer on input,
+                       size of the variable string on output.
+
+    VariableName - The last VariableName returned, or an empty string on input,
+                   the next variable name on output.
+
+    VendorGuid - The last VendorGuid that was returned on input, the VendorGuid
+                 of the next variable on output.
+
+Returns:
+
+    EFI_STATUS
+
+--*/
+{
+    EFI_STATUS status;
+
+    ASSERT(VariableNameSize != NULL);
+    ASSERT(VendorGuid != NULL);
+    ASSERT(VariableName != NULL);
+
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
+    mNvramCommandDescriptor->Command = NvramGetFirstVariableNameCommand;
+
+    if (*VariableNameSize  > (UINT32)-1)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    if (*VariableNameSize > EFI_MAX_VARIABLE_NAME_SIZE)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameAddress = mNvramCommandDataBufferGpa;
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes = (UINT32) *VariableNameSize;
+    mNvramCommandDescriptor->U.VariableCommand.VariableVendorGuid = *VendorGuid;
+
+    status = IssueBiosDeviceNvramCommand();
+    if (status == EFI_SUCCESS)
+    {
+        *VendorGuid = mNvramCommandDescriptor->U.VariableCommand.VariableVendorGuid;
+        *VariableNameSize = mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes;
+
+        CopyMem(VariableName, mNvramCommandDataBuffer, *VariableNameSize);
+    }
+    else if (status == EFI_BUFFER_TOO_SMALL)
+    {
+        *VariableNameSize = mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes;
+    }
+    return status;
+}
+
+
+
+EFI_STATUS
+NvramGetNextVariableName(
+    __inout UINTN*    VariableNameSize,
+    __inout CHAR16*   VariableName,
+    __inout EFI_GUID* VendorGuid
+    )
+/*++
+
+Routine Description:
+
+    This code gets the next NV variable, or the first NV variable.
+
+Arguments:
+
+    VariableNameSize - Size of the VariableName buffer on input,
+                       size of the variable string on output.
+
+    VariableName - The last VariableName returned, or an empty string on input,
+                   the next variable name on output.
+
+    VendorGuid - The last VendorGuid that was returned on input, the VendorGuid
+                 of the next variable on output.
+
+Returns:
+
+    EFI_STATUS
+
+--*/
+{
+    EFI_STATUS status;
+
+    ASSERT(VariableNameSize != NULL);
+    ASSERT(VendorGuid != NULL);
+    ASSERT(VariableName != NULL);
+
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
+    mNvramCommandDescriptor->Command = NvramGetNextVariableNameCommand;
+
+    if (*VariableNameSize  > (UINT32) -1)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    if (*VariableNameSize > EFI_MAX_VARIABLE_NAME_SIZE)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    CopyMem(mNvramCommandDataBuffer, VariableName, *VariableNameSize);
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameAddress = mNvramCommandDataBufferGpa;
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes = (UINT32) *VariableNameSize;
+    mNvramCommandDescriptor->U.VariableCommand.VariableVendorGuid = *VendorGuid;
+
+    status = IssueBiosDeviceNvramCommand();
+    if (status == EFI_SUCCESS)
+    {
+        *VendorGuid = mNvramCommandDescriptor->U.VariableCommand.VariableVendorGuid;
+        *VariableNameSize = mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes;
+
+        CopyMem(VariableName, mNvramCommandDataBuffer, *VariableNameSize);
+    }
+    else if (status == EFI_BUFFER_TOO_SMALL)
+    {
+        *VariableNameSize = mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes;
+    }
+    return status;
+}
+
+extern
+VOID
+NvramDebugLog(
+    __in CONST CHAR8 *Format,
+    ...
+    )
+/*++
+
+Routine Description:
+
+    Formats and sends a log message to the BIOS VDev.
+
+Arguments:
+
+    Format - the printf style format string.
+
+    ... - the parameters dependent on the format string.
+    
+Returns:
+
+    EFI_STATUS
+
+--*/
+{
+    CHAR16 buffer[128];
+    VA_LIST marker;
+    UINTN length;
+
+    ASSERT(sizeof(buffer) < EFI_MAX_VARIABLE_NAME_SIZE);
+
+    //
+    // Do nothing if no format string.
+    //
+    if (Format == NULL)
+    {
+        return;
+    }
+
+    //
+    // Convert the parameters to a Unicode String
+    //
+    VA_START(marker, Format);
+    UnicodeVSPrintAsciiFormat(buffer, sizeof(buffer), Format, marker);
+    VA_END (marker);
+
+    //
+    // Put the string (plus null) in data buffer.
+    //
+    length = StrSize(buffer);
+    CopyMem(mNvramCommandDataBuffer, buffer, length);
+
+    //
+    // Send the string.
+    //
+    ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
+    mNvramCommandDescriptor->Command = NvramDebugStringCommand;
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameAddress = mNvramCommandDataBufferGpa;
+    mNvramCommandDescriptor->U.VariableCommand.VariableNameBytes = (UINT32)length;
+
+    (void)IssueBiosDeviceNvramCommand();
+}
+
+

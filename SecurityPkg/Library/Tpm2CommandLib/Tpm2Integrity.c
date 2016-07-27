@@ -1,7 +1,7 @@
 /** @file
   Implement TPM2 Integrity related command.
 
-Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved. <BR>
+Copyright (c) 2013, Intel Corporation. All rights reserved. <BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -470,7 +470,7 @@ Tpm2PcrAllocate (
     WriteUnaligned16 ((UINT16 *)Buffer, SwapBytes16(PcrAllocation->pcrSelections[Index].hash));
     Buffer += sizeof(UINT16);
     *(UINT8 *)Buffer = PcrAllocation->pcrSelections[Index].sizeofSelect;
-    Buffer++;
+    Buffer += sizeof(UINT8);
     CopyMem (Buffer, PcrAllocation->pcrSelections[Index].pcrSelect, PcrAllocation->pcrSelections[Index].sizeofSelect);
     Buffer += PcrAllocation->pcrSelections[Index].sizeofSelect;
   }
@@ -490,14 +490,10 @@ Tpm2PcrAllocate (
              &ResultBufSize,
              ResultBuf
              );
-  if (EFI_ERROR(Status)) {
-    goto Done;
-  }
 
   if (ResultBufSize > sizeof(Res)) {
     DEBUG ((EFI_D_ERROR, "Tpm2PcrAllocate: Failed ExecuteCommand: Buffer Too Small\r\n"));
-    Status = EFI_BUFFER_TOO_SMALL;
-    goto Done;
+    return EFI_BUFFER_TOO_SMALL;
   }
 
   //
@@ -506,8 +502,7 @@ Tpm2PcrAllocate (
   RespSize = SwapBytes32(Res.Header.paramSize);
   if (RespSize > sizeof(Res)) {
     DEBUG ((EFI_D_ERROR, "Tpm2PcrAllocate: Response size too large! %d\r\n", RespSize));
-    Status = EFI_BUFFER_TOO_SMALL;
-    goto Done;
+    return EFI_BUFFER_TOO_SMALL;
   }
 
   //
@@ -515,8 +510,7 @@ Tpm2PcrAllocate (
   //
   if (SwapBytes32(Res.Header.responseCode) != TPM_RC_SUCCESS) {
     DEBUG((EFI_D_ERROR,"Tpm2PcrAllocate: Response Code error! 0x%08x\r\n", SwapBytes32(Res.Header.responseCode)));
-    Status = EFI_DEVICE_ERROR;
-    goto Done;
+    return EFI_DEVICE_ERROR;
   }
 
   //
@@ -527,11 +521,5 @@ Tpm2PcrAllocate (
   *SizeNeeded = SwapBytes32(Res.SizeNeeded);
   *SizeAvailable = SwapBytes32(Res.SizeAvailable);
 
-Done:
-  //
-  // Clear AuthSession Content
-  //
-  ZeroMem (&Cmd, sizeof(Cmd));
-  ZeroMem (&Res, sizeof(Res));
-  return Status;
+  return EFI_SUCCESS;
 }

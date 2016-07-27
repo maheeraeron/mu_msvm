@@ -1,0 +1,33 @@
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = EmclDxe
+    FILE_GUID                      = 45386216-9A17-46AE-AD49-423112FBFFB8
+    MODULE_TYPE                    = DXE_DRIVER
+    VERSION_STRING                 = 1.0
+
+    ENTRY_POINT                    = EmclDriverInitialize
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    UefiBootServicesTableLib
+    UefiLib
+    BaseLib
+    DebugLib
+    UefiDriverEntryPoint
+    MemoryAllocationLib
+
+[Sources]
+    Emcl.c
+    RingBufferWrapper.c
+
+[Protocols]
+    gEfiEmclProtocolGuid                #PRODUCES
+    gEfiEmclTagProtocolGuid             #PRODUCES
+    gEfiVmbusProtocolGuid               #CONSUMES
+
+[Depex]
+    TRUE
+

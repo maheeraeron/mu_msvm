@@ -14,7 +14,7 @@
 **/
 
 #include "PxeBcImpl.h"
-
+#include <Library/BootEventLogLib.h>
 
 /**
   Enables the use of the PXE Base Code Protocol functions.
@@ -80,7 +80,6 @@ EfiPxeBcStart (
   }
 
   if (Mode->UsingIpv6) {
-    AsciiPrint ("\n>>Start PXE over IPv6");
     //
     // Configure udp6 instance to receive data.
     //
@@ -133,7 +132,6 @@ EfiPxeBcStart (
       goto ON_ERROR;
     }
   } else {
-    AsciiPrint ("\n>>Start PXE over IPv4");
     //
     // Configure udp4 instance to receive data.
     //
@@ -442,6 +440,8 @@ EfiPxeBcDhcp (
     return EFI_NOT_STARTED;
   }
 
+  AsciiPrint("Performing DHCP Negotiation...");
+
   if (Mode->UsingIpv6) {
 
     //
@@ -637,7 +637,7 @@ EfiPxeBcDiscover (
       }
       if (Index != Info->IpCnt) {
         //
-        // It's invalid if the first server doesn't accecpt any response
+        // It's invalid if the first server doesn't accept any response
         // but any of the other servers does accept any response.
         //
         Status = EFI_INVALID_PARAMETER;
@@ -2267,13 +2267,6 @@ EfiPxeLoadFileCallback (
     return EFI_PXE_BASE_CODE_CALLBACK_STATUS_CONTINUE;
   }
 
-  if (PacketLength != 0 && PacketPtr != NULL) {
-    //
-    // Print '.' when transmit a packet
-    //
-    AsciiPrint (".");
-  }
-
   return EFI_PXE_BASE_CODE_CALLBACK_STATUS_CONTINUE;
 }
 
@@ -2332,8 +2325,8 @@ EfiPxeLoadFile (
     return EFI_INVALID_PARAMETER;
   }
   
-  VirtualNic = PXEBC_VIRTUAL_NIC_FROM_LOADFILE (This);
-  Private    = VirtualNic->Private;
+  Private    = PXEBC_PRIVATE_DATA_FROM_LOADFILE (This);
+  VirtualNic = Private->IsIpV6 ? Private->Ip6Nic : Private->Ip4Nic;
   PxeBc      = &Private->PxeBc;
   UsingIpv6  = FALSE;
   Status     = EFI_DEVICE_ERROR;
@@ -2355,6 +2348,7 @@ EfiPxeLoadFile (
   MediaPresent = TRUE;
   NetLibDetectMedia (Private->Controller, &MediaPresent);
   if (!MediaPresent) {
+    BootDeviceEventUpdate(NetworkBootMediaDisconnected, EFI_NO_MEDIA);
     return EFI_NO_MEDIA;
   }
 
@@ -2363,6 +2357,20 @@ EfiPxeLoadFile (
   //
   if (VirtualNic == Private->Ip6Nic) {
     UsingIpv6 = TRUE;
+  }
+
+  //
+  //  This function may be called twice,
+  //  - Once with a zero sized buffer to get the required size 
+  //    (at this point DHCP and NBP discovery will be performed if needed).
+  //  - A second time with an appropriately sized buffer allowing the image to actually be 
+  //    downloaded.
+  //
+  //  We only want to clear the console and print the message once.
+  //
+  if (*BufferSize == 0) {
+    gST->ConOut->ClearScreen(gST->ConOut);
+    AsciiPrint ("PXE Network Boot using IPv%c ( ESC to cancel )\n", ((UsingIpv6) ? '6' : '4'));
   }
 
   //

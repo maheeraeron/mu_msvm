@@ -26,6 +26,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -73,6 +74,7 @@
 
 [Protocols]
   gEfiCpuArchProtocolGuid                       ## PRODUCES
+  gEfiCpu2ProtocolGuid                          ## PRODUCES
   gEfiMpServiceProtocolGuid                     ## SOMETIMES_PRODUCES
 
 [Guids]

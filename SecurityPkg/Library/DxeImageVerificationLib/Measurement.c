@@ -1,7 +1,7 @@
 /** @file
   Measure TrEE required variable.
 
-Copyright (c) 2013 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2013, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -15,8 +15,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <PiDxe.h>
 #include <Guid/ImageAuthentication.h>
 #include <IndustryStandard/UefiTcgPlatform.h>
-#include <Protocol/TrEEProtocol.h>
-
+#include <Protocol/Tcg2Protocol.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -98,9 +97,9 @@ AssignVendorGuid (
 
   @param[in]  VarName           A Null-terminated string that is the name of the vendor's variable.
   @param[in]  VendorGuid        A unique identifier for the vendor.
-  @param[in]  VarData           The content of the variable data.  
-  @param[in]  VarSize           The size of the variable data.  
- 
+  @param[in]  VarData           The content of the variable data.
+  @param[in]  VarSize           The size of the variable data.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
 **/
@@ -152,8 +151,8 @@ AddDataMeasured (
 
   @param[in]  VarName           A Null-terminated string that is the name of the vendor's variable.
   @param[in]  VendorGuid        A unique identifier for the vendor.
-  @param[in]  VarData           The content of the variable data.  
-  @param[in]  VarSize           The size of the variable data.  
+  @param[in]  VarData           The content of the variable data.
+  @param[in]  VarSize           The size of the variable data.
 
   @retval TRUE  The data is already measured.
   @retval FALSE The data is not measured yet.
@@ -198,7 +197,7 @@ IsSecureAuthorityVariable (
   UINTN   Index;
 
   for (Index = 0; Index < sizeof(mVariableType)/sizeof(mVariableType[0]); Index++) {
-    if ((StrCmp (VariableName, mVariableType[Index].VariableName) == 0) && 
+    if ((StrCmp (VariableName, mVariableType[Index].VariableName) == 0) &&
         (CompareGuid (VendorGuid, mVariableType[Index].VendorGuid))) {
       return TRUE;
     }
@@ -207,13 +206,75 @@ IsSecureAuthorityVariable (
 }
 
 /**
+  Tpm20 measure and log data, and extend the measurement result into a specific PCR.
+
+  @param[in]  PcrIndex         PCR Index.
+  @param[in]  EventType        Event type.
+  @param[in]  EventLog         Measurement event log.
+  @param[in]  LogLen           Event log length in bytes.
+  @param[in]  HashData         The start of the data buffer to be hashed, extended.
+  @param[in]  HashDataLen      The length, in bytes, of the buffer referenced by HashData
+
+  @retval EFI_SUCCESS           Operation completed successfully.
+  @retval EFI_UNSUPPORTED       TPM device not available.
+  @retval EFI_OUT_OF_RESOURCES  Out of memory.
+  @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
+**/
+EFI_STATUS
+TpmMeasureAndLogData (
+  IN UINT32             PcrIndex,
+  IN UINT32             EventType,
+  IN VOID               *EventLog,
+  IN UINT32             LogLen,
+  IN VOID               *HashData,
+  IN UINT64             HashDataLen
+  )
+{
+  EFI_STATUS                Status;
+  EFI_TCG2_PROTOCOL         *Tcg2Protocol;
+  EFI_TCG2_EVENT            *Tcg2Event;
+
+  //
+  // TPMPresentFlag is checked in HashLogExtendEvent
+  //
+  Status = gBS->LocateProtocol (&gEfiTcg2ProtocolGuid, NULL, (VOID **) &Tcg2Protocol);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Tcg2Event = (EFI_TCG2_EVENT *) AllocateZeroPool (LogLen + sizeof (EFI_TCG2_EVENT));
+  if(Tcg2Event == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Tcg2Event->Size = (UINT32)LogLen + sizeof (EFI_TCG2_EVENT) - sizeof(Tcg2Event->Event);
+  Tcg2Event->Header.HeaderSize    = sizeof(EFI_TCG2_EVENT_HEADER);
+  Tcg2Event->Header.HeaderVersion = EFI_TCG2_EVENT_HEADER_VERSION;
+  Tcg2Event->Header.PCRIndex      = PcrIndex;
+  Tcg2Event->Header.EventType     = EventType;
+  CopyMem (&Tcg2Event->Event[0], EventLog, LogLen);
+
+  Status = Tcg2Protocol->HashLogExtendEvent (
+                           Tcg2Protocol,
+                           0,
+                           (EFI_PHYSICAL_ADDRESS)(UINTN)HashData,
+                           HashDataLen,
+                           Tcg2Event
+                           );
+  FreePool (Tcg2Event);
+
+  return Status;
+}
+
+
+/**
   Measure and log an EFI variable, and extend the measurement result into a specific PCR.
 
   @param[in]  VarName           A Null-terminated string that is the name of the vendor's variable.
   @param[in]  VendorGuid        A unique identifier for the vendor.
-  @param[in]  VarData           The content of the variable data.  
-  @param[in]  VarSize           The size of the variable data.  
- 
+  @param[in]  VarData           The content of the variable data.
+  @param[in]  VarSize           The size of the variable data.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
   @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
@@ -312,7 +373,7 @@ SecureBootHook (
              Data,
              DataSize
              );
-  DEBUG ((EFI_D_INFO, "MeasureBootPolicyVariable - %r\n", Status));
+  DEBUG ((EFI_D_ERROR, "MeasureBootPolicyVariable - %r\n", Status));
 
   if (!EFI_ERROR (Status)) {
     AddDataMeasured (VariableName, VendorGuid, Data, DataSize);

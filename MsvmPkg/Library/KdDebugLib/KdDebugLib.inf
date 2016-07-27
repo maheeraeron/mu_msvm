@@ -1,0 +1,33 @@
+## @file
+#  Instance of Debug Library based on the KD debug agent library.
+#  It uses Print Library to produce formatted output strings.
+##
+
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = KdDebugLib
+    FILE_GUID                      = 3a944d9c-74dd-4df2-98aa-79322a91f1ee
+    MODULE_TYPE                    = BASE
+    VERSION_STRING                 = 1.0
+    LIBRARY_CLASS                  = DebugLib 
+    CONSTRUCTOR                    = KdDebugLibConstructor
+
+[Sources]
+    DebugLib.c
+
+[Sources.X64]
+    X64/debugstb.asm   | MSFT
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    BaseMemoryLib
+    PcdLib
+    PrintLib
+    BaseLib
+    DebugPrintErrorLevelLib
+
+[Pcd]
+gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel  ## CONSUMES

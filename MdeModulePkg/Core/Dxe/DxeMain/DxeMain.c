@@ -34,6 +34,7 @@ EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *gWatchdogTimer = NULL;
 // DXE Core globals for optional protocol dependencies
 //
 EFI_SMM_BASE2_PROTOCOL            *gSmmBase2      = NULL;
+EFI_CPU2_PROTOCOL                 *gCpu2          = NULL;
 
 //
 // DXE Core Global used to update core loaded image protocol handle
@@ -222,6 +223,41 @@ EFI_DECOMPRESS_PROTOCOL  gEfiDecompress = {
 //
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_LOAD_FIXED_ADDRESS_CONFIGURATION_TABLE    gLoadModuleAtFixAddressConfigurationTable = {0, 0};
 
+/**
+ Initializes an image context for DXECORE
+
+ Hyper-V debugger requires a more complete image context than the stock
+ Tiano core UEFI implementation.
+
+ @param ImageContext    PE_COFF_LOADER_IMAGE_CONTEXT to initialize
+
+**/
+VOID
+InitializeDxeCoreImageContext(
+  IN OUT    PE_COFF_LOADER_IMAGE_CONTEXT    *ImageContext
+  )
+{
+  EFI_IMAGE_DOS_HEADER *DosHdr;
+
+  ZeroMem(ImageContext, sizeof(*ImageContext));
+
+  ImageContext->ImageAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)gDxeCoreLoadedImage->ImageBase;
+  ImageContext->PdbPointer   = PeCoffLoaderGetPdbPointer ((VOID*) (UINTN) ImageContext->ImageAddress);
+  ImageContext->ImageSize    = gDxeCoreLoadedImage->ImageSize;
+
+  DosHdr = (EFI_IMAGE_DOS_HEADER*)ImageContext->ImageAddress;
+
+  if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE)
+  {
+    ImageContext->PeCoffHeaderOffset = DosHdr->e_lfanew;
+  }
+  else
+  {
+    ImageContext->PeCoffHeaderOffset = 0;
+  }
+}
+
+
 // Main entry point to the DXE Core
 //
 
@@ -248,6 +284,8 @@ DxeMain (
   EFI_VECTOR_HANDOFF_INFO       *VectorInfoList;
   EFI_VECTOR_HANDOFF_INFO       *VectorInfo;
 
+  DEBUG((DEBUG_VERBOSE, ">>> DxeMain\n"));
+
   //
   // Setup the default exception handlers
   //
@@ -264,11 +302,19 @@ DxeMain (
   //
   InitializeDebugAgent (DEBUG_AGENT_INIT_DXE_CORE, HobStart, NULL);
 
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after InitializeDebugAgent\n"));
+  
   //
   // Initialize Memory Services
   //
   CoreInitializeMemoryServices (&HobStart, &MemoryBaseAddress, &MemoryLength);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInitializeMemoryServices\n"));
 
+  //
+  // Initialize crash dump agent after memory services are available.
+  //
+  InitializeCrashDumpAgent(HobStart);
+  
   MemoryProfileInit (HobStart);
 
   //
@@ -287,26 +333,28 @@ DxeMain (
   // Start the Image Services.
   //
   Status = CoreInitializeImageServices (HobStart);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInitializeImageServices\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
   // Report DXE Core image information to the PE/COFF Extra Action Library
   //
-  ZeroMem (&ImageContext, sizeof (ImageContext));
-  ImageContext.ImageAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)gDxeCoreLoadedImage->ImageBase;
-  ImageContext.PdbPointer   = PeCoffLoaderGetPdbPointer ((VOID*) (UINTN) ImageContext.ImageAddress);
+  InitializeDxeCoreImageContext(&ImageContext);
   PeCoffLoaderRelocateImageExtraAction (&ImageContext);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after PeCoffLoaderRelocateImageExtraAction\n"));
 
   //
   // Initialize the Global Coherency Domain Services
   //
   Status = CoreInitializeGcdServices (&HobStart, MemoryBaseAddress, MemoryLength);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInitializeGcdServices\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
   // Call constructor for all libraries
   //
   ProcessLibraryConstructorList (gDxeCoreImageHandle, gDxeCoreST);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after ProcessLibraryConstructorList\n"));
   PERF_END   (NULL,"PEI", NULL, 0) ;
   PERF_START (NULL,"DXE", NULL, 0) ;
 
@@ -314,18 +362,21 @@ DxeMain (
   // Install the DXE Services Table into the EFI System Tables's Configuration Table
   //
   Status = CoreInstallConfigurationTable (&gEfiDxeServicesTableGuid, gDxeCoreDS);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInstallConfigurationTable\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
   // Install the HOB List into the EFI System Tables's Configuration Table
   //
   Status = CoreInstallConfigurationTable (&gEfiHobListGuid, HobStart);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInstallConfigurationTable\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
   // Install Memory Type Information Table into the EFI System Tables's Configuration Table
   //
   Status = CoreInstallConfigurationTable (&gEfiMemoryTypeInformationGuid, &gMemoryTypeInformation);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInstallConfigurationTable\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
@@ -351,6 +402,7 @@ DxeMain (
   // configuration table.
   //
   CoreInitializeDebugImageInfoTable ();
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInitializeDebugImageInfoTable\n"));
   CoreNewDebugImageInfoEntry (
     EFI_DEBUG_IMAGE_INFO_TYPE_NORMAL,
     gDxeCoreLoadedImage,
@@ -384,6 +436,7 @@ DxeMain (
   //
   Status = CoreInitializeEventServices ();
   ASSERT_EFI_ERROR (Status);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInitializeEventServices\n"));
 
   MemoryProfileInstallProtocol ();
 
@@ -429,6 +482,8 @@ DxeMain (
              &gEfiDecompressProtocolGuid,           &gEfiDecompress,
              NULL
              );
+  DEBUG((DEBUG_VERBOSE, 
+         "--- DxeMain - after CoreInstallMultipleProtocolInterfaces (decompress)\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
@@ -437,11 +492,13 @@ DxeMain (
   // Also register for the GUIDs of optional protocols.
   //
   CoreNotifyOnProtocolInstallation ();
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreNotifyOnProtocolInstallation\n"));
 
   //
   // Produce Firmware Volume Protocols, one for each FV in the HOB list.
   //
   Status = FwVolBlockDriverInit (gDxeCoreImageHandle, gDxeCoreST);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after FwVolBlockDriverInit\n"));
   ASSERT_EFI_ERROR (Status);
 
   Status = FwVolDriverInit (gDxeCoreImageHandle, gDxeCoreST);
@@ -451,6 +508,7 @@ DxeMain (
   // Produce the Section Extraction Protocol
   //
   Status = InitializeSectionExtraction (gDxeCoreImageHandle, gDxeCoreST);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after InitializeSectionExtraction\n"));
   ASSERT_EFI_ERROR (Status);
 
   //
@@ -458,6 +516,7 @@ DxeMain (
   //
   PERF_START (NULL,"CoreInitializeDispatcher", "DxeMain", 0) ;
   CoreInitializeDispatcher ();
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreInitializeDispatcher\n"));
   PERF_END (NULL,"CoreInitializeDispatcher", "DxeMain", 0) ;
 
   //
@@ -465,6 +524,7 @@ DxeMain (
   //
   PERF_START (NULL, "CoreDispatcher", "DxeMain", 0);
   CoreDispatcher ();
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreDispatcher\n"));
   PERF_END (NULL, "CoreDispatcher", "DxeMain", 0);
 
   //
@@ -472,6 +532,7 @@ DxeMain (
   //
   DEBUG_CODE_BEGIN ();
     CoreDisplayMissingArchProtocols ();
+    DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreDisplayMissingArchProtocols\n"));
   DEBUG_CODE_END ();
 
   //
@@ -480,6 +541,7 @@ DxeMain (
   //
   DEBUG_CODE_BEGIN ();
     CoreDisplayDiscoveredNotDispatched ();
+    DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreDisplayDiscoveredNotDispatched\n"));
   DEBUG_CODE_END ();
 
   //
@@ -496,6 +558,7 @@ DxeMain (
       );    
   }
   ASSERT_EFI_ERROR (Status);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after CoreAllEfiServicesAvailable\n"));
 
   //
   // Report Status code before transfer control to BDS
@@ -506,10 +569,16 @@ DxeMain (
     );
 
   //
+  // Enable interrupts
+  //
+  gCpu->EnableInterrupt(gCpu);
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - after EnableInterrupt\n"));
+
+  //
   // Transfer control to the BDS Architectural Protocol
   //
   gBds->Entry (gBds);
-
+  DEBUG((DEBUG_VERBOSE, "--- DxeMain - unexpected return from BDS\n"));
   //
   // BDS should never return
   //
@@ -734,6 +803,11 @@ CoreExitBootServices (
   gTimer->SetTimerPeriod (gTimer, 0);
 
   //
+  // Disable watchdog.
+  //
+  gBS->SetWatchdogTimer(0, 0, 0, NULL);
+
+  //
   // Terminate memory services if the MapKey matches
   //
   Status = CoreTerminateMemoryMap (MapKey);
@@ -749,6 +823,16 @@ CoreExitBootServices (
   // Notify other drivers that we are exiting boot services.
   //
   CoreNotifySignalList (&gEfiEventExitBootServicesGuid);
+
+  //
+  // Disable interrupt of Debug timer.
+  //
+  SaveAndSetDebugTimerInterrupt (FALSE);
+
+  //
+  // Disable CPU Interrupts
+  //
+  gCpu->DisableInterrupt (gCpu);
 
   //
   // Report that ExitBootServices() has been called
