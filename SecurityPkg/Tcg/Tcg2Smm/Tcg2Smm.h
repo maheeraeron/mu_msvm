@@ -1,7 +1,7 @@
 /** @file
   The header file for Tcg2 SMM driver.
   
-Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials 
 are licensed and made available under the terms and conditions of the BSD License 
 which accompanies this distribution.  The full text of the license may be found at 
@@ -37,6 +37,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/TpmMeasurementLib.h>
 #include <Library/Tpm2DeviceLib.h>
 #include <Library/Tcg2PhysicalPresenceLib.h>
+#include <Library/IoLib.h>
+
+#include <IndustryStandard/TpmPtp.h>
 
 #pragma pack(1)
 typedef struct {
@@ -83,5 +86,11 @@ typedef struct {
 //
 #define MOR_REQUEST_SUCCESS                                        0
 #define MOR_REQUEST_GENERAL_FAILURE                                1
+
+//
+// Physical Presence Interface Version supported by Platform
+//
+#define PHYSICAL_PRESENCE_VERSION_TAG                              "$PV"
+#define PHYSICAL_PRESENCE_VERSION_SIZE                             4
 
 #endif  // __TCG_SMM_H__

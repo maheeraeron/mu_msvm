@@ -347,7 +347,7 @@ MeasureFvImage (
   TCG_PCR_EVENT_HDR                 TcgEventHdr;
   TIS_TPM_HANDLE                    TpmHandle;
 
-  TpmHandle = (TIS_TPM_HANDLE)TPM_BASE_ADDRESS;
+  TpmHandle = (TIS_TPM_HANDLE) (UINTN) TPM_BASE_ADDRESS;
 
   //
   // Check if it is in Excluded FV list
@@ -559,7 +559,7 @@ PhysicalPresencePpiNotifyCallback (
   TIS_TPM_HANDLE                    TpmHandle;
   TPM_PHYSICAL_PRESENCE             PhysicalPresenceValue;
 
-  TpmHandle        = (TIS_TPM_HANDLE)TPM_BASE_ADDRESS;
+  TpmHandle        = (TIS_TPM_HANDLE) (UINTN) TPM_BASE_ADDRESS;
 
   Status = TpmCommGetCapability (PeiServices, TpmHandle, NULL, &LifetimeLock, &CmdEnable);
   if (EFI_ERROR (Status)) {
@@ -699,7 +699,7 @@ PeimEntryMP (
   mMeasuredChildFvInfo = (EFI_PLATFORM_FIRMWARE_BLOB *) AllocateZeroPool (sizeof (EFI_PLATFORM_FIRMWARE_BLOB) * PcdGet32 (PcdPeiCoreMaxFvSupported));
   ASSERT (mMeasuredChildFvInfo != NULL);
 
-  TpmHandle = (TIS_TPM_HANDLE)TPM_BASE_ADDRESS;
+  TpmHandle = (TIS_TPM_HANDLE)(UINTN)TPM_BASE_ADDRESS;
   Status = TisPcRequestUseTpm ((TIS_PC_REGISTERS_PTR)TpmHandle);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -776,7 +776,7 @@ PeimEntryMA (
   }
 
   if (!mImageInMemory) {
-    TpmHandle = (TIS_TPM_HANDLE)TPM_BASE_ADDRESS;
+    TpmHandle = (TIS_TPM_HANDLE)(UINTN)TPM_BASE_ADDRESS;
     Status = TisPcRequestUseTpm ((TIS_PC_REGISTERS_PTR)TpmHandle);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "TPM not detected!\n"));

@@ -1,9 +1,7 @@
 ## @file
-#  Initializes TPM 2.0 device and measure FVs in PEI phase
+#  This module will initialize TPM2 device and measure FVs in PEI phase.
 #
-#  This module will initialize TPM device, measure reported FVs and BIOS version.
-#
-# Copyright (c) 2013 - 2015, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2013, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials
 # are licensed and made available under the terms and conditions of the BSD License
 # which accompanies this distribution. The full text of the license may be found at
@@ -16,7 +14,6 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = TrEEPei
-  MODULE_UNI_FILE                = TrEEPei.uni
   FILE_GUID                      = CA5A1928-6523-409d-A9FE-5DCC87387222
   MODULE_TYPE                    = PEIM
   VERSION_STRING                 = 1.0

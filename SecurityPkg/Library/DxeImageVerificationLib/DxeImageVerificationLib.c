@@ -1,5 +1,5 @@
 /** @file
-  Implement image verification services for secure boot service
+  Implement image verification services for secure boot service in UEFI2.3.1.
 
   Caution: This file requires additional review when modified.
   This library will have external input - PE/COFF image.
@@ -12,7 +12,7 @@
   DxeImageVerificationHandler(), HashPeImageByType(), HashPeImage() function will accept
   untrusted PE/COFF image and validate its data structure within this image buffer before use.
 
-Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2009 - 2013, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -26,14 +26,14 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "DxeImageVerificationLib.h"
 #include "BiosInterface.h"
 #include <Library/BootEventLogLib.h>
-#include <Protocol/TrEEProtocol.h>
+#include <Protocol/Tcg2Protocol.h>
 
 #define SHA1_DIGEST_SIZE 20
 #define SHA256_DIGEST_SIZE 32
 
 #define UINT32_MAX 0xffffffff
 
-BOOLEAN                             mTrEEPresent = FALSE;
+BOOLEAN                             mTcg2Present = FALSE;
 
 //
 // Caution: This is used by a function which may receive untrusted input.
@@ -87,16 +87,6 @@ HASH_TABLE mHash[] = {
   { L"SHA256", SHA256_DIGEST_SIZE, &mHashOidValue[14], 9, HashAlgSha256}
 };
 
-/**
-  SecureBoot Hook for processing image verification.
-
-  @param[in] VariableName                 Name of Variable to be found.
-  @param[in] VendorGuid                   Variable vendor GUID.
-  @param[in] DataSize                     Size of Data found. If size is less than the
-                                          data, this value contains the required size.
-  @param[in] Data                         Data pointer.
-
-**/
 VOID
 EFIAPI
 SecureBootHook (
@@ -894,9 +884,9 @@ AddImageExeInfo (
 
   if (Name != NULL) {
     NameStringLen = StrSize (Name);
-  } else {
-    NameStringLen = sizeof (CHAR16);
-  }
+    } else {
+      NameStringLen = sizeof (CHAR16);
+    }
 
   ImageExeInfoTable = NULL;
   EfiGetSystemConfigurationTable (&gEfiImageSecurityDatabaseGuid, (VOID **) &ImageExeInfoTable);
@@ -971,6 +961,8 @@ AddImageExeInfo (
   @param[in]  Signature           Pointer to signature that is searched for.
   @param[in]  CertType            Pointer to hash algrithom.
   @param[in]  SignatureSize       Size of Signature.
+  @param[out] SigDataFound        Pointer to receive the buffer of the EFI_SIGNATURE_DATA found.
+  @param[out] SigDataFoundSize    Pointer to receive the size of the EFI_SIGNATURE_DATA found.
 
   @return TRUE                    Found the signature in the variable database.
   @return FALSE                   Not found the signature in the variable database.
@@ -994,7 +986,6 @@ IsSignatureFoundInDatabase (
   UINTN               Index;
   UINTN               CertCount;
   BOOLEAN             IsFound;
-
   //
   // Read signature database variable.
   //
@@ -1028,7 +1019,7 @@ IsSignatureFoundInDatabase (
           //
           // Find the signature in database.
           //
-          if (SigDataFound != NULL && SigDataFoundSize != NULL && mTrEEPresent) {
+          if (SigDataFound != NULL && SigDataFoundSize != NULL && mTcg2Present) {
             *SigDataFound = (UINT8 *) AllocateZeroPool (CertList->SignatureSize);
             if (*SigDataFound == NULL) {
               goto Done;
@@ -1036,7 +1027,7 @@ IsSignatureFoundInDatabase (
             *SigDataFoundSize = CertList->SignatureSize;
             CopyMem(*SigDataFound, Cert, CertList->SignatureSize);
           }
-        
+
           IsFound = TRUE;
           break;
         }
@@ -1149,7 +1140,7 @@ IsPkcsSignedDataVerifiedBySignatureList (
                              );
           }
           if (VerifyStatus) {
-            if (SigDataFound != NULL && SigDataFoundSize != NULL && mTrEEPresent) {
+            if (SigDataFound != NULL && SigDataFoundSize != NULL && mTcg2Present) {
               *SigDataFound = (UINT8 *) AllocateZeroPool (CertList->SignatureSize);
               if (*SigDataFound == NULL) {
                 goto Done;
@@ -1253,7 +1244,6 @@ DxeImageVerificationHandler (
   UINTN                                AuthDataSize;
   EFI_IMAGE_DATA_DIRECTORY             *SecDataDir;
   UINT32                               OffSet;
-  CHAR16                               *NameStr;
   BOOLEAN                              EventLogged = FALSE;
   UINT8                                *SigData;
   UINT32                               SigDataSize;
@@ -1297,20 +1287,14 @@ DxeImageVerificationHandler (
   //
   // If policy is always/never execute, return directly.
   //
-  if (Policy == ALWAYS_EXECUTE) {
+  if (Policy == ALWAYS_EXECUTE)
+  {
     return EFI_SUCCESS;
-  } else if (Policy == NEVER_EXECUTE) {
+  }
+  else if (Policy == NEVER_EXECUTE)
+  {
     BootDeviceEventUpdate(SecureBootPolicyDenied, EFI_ACCESS_DENIED);
     return EFI_ACCESS_DENIED;
-  }
-
-  //
-  // The policy QUERY_USER_ON_SECURITY_VIOLATION and ALLOW_EXECUTE_ON_SECURITY_VIOLATION
-  // violates the UEFI spec and has been removed.
-  //
-  ASSERT (Policy != QUERY_USER_ON_SECURITY_VIOLATION && Policy != ALLOW_EXECUTE_ON_SECURITY_VIOLATION);
-  if (Policy == QUERY_USER_ON_SECURITY_VIOLATION || Policy == ALLOW_EXECUTE_ON_SECURITY_VIOLATION) {
-    CpuDeadLoop ();
   }
 
   GetEfiGlobalVariable2 (EFI_SECURE_BOOT_MODE_NAME, (VOID**)&SecureBoot, NULL);
@@ -1472,7 +1456,7 @@ DxeImageVerificationHandler (
   //
   for (OffSet = SecDataDir->VirtualAddress;
        OffSet < (SecDataDir->VirtualAddress + SecDataDir->Size);
-       OffSet += (WinCertificate->dwLength + ALIGN_SIZE (WinCertificate->dwLength))) {
+       OffSet += WinCertificate->dwLength, OffSet += ALIGN_SIZE (OffSet)) {
     WinCertificate = (WIN_CERTIFICATE *) (mImageBase + OffSet);
     if ((SecDataDir->VirtualAddress + SecDataDir->Size - OffSet) <= sizeof (WIN_CERTIFICATE) ||
         (SecDataDir->VirtualAddress + SecDataDir->Size - OffSet) < WinCertificate->dwLength) {
@@ -1563,6 +1547,7 @@ DxeImageVerificationHandler (
     }
   }
 
+
   if (OffSet != (SecDataDir->VirtualAddress + SecDataDir->Size)) {
     //
     // The Size in Certificate Table or the attribute certicate table is corrupted.
@@ -1593,7 +1578,7 @@ DxeImageVerificationHandler (
       }
       SignatureList->SignatureHeaderSize  = 0;
       SignatureList->SignatureListSize    = (UINT32) SignatureListSize;
-      SignatureList->SignatureSize        = (UINT32) (sizeof (EFI_SIGNATURE_DATA) - 1 + mImageDigestSize);
+      SignatureList->SignatureSize        = (UINT32) mImageDigestSize;
       CopyMem (&SignatureList->SignatureType, &mCertType, sizeof (EFI_GUID));
       Signature = (EFI_SIGNATURE_DATA *) ((UINT8 *) SignatureList + sizeof (EFI_SIGNATURE_LIST));
       CopyMem (Signature->SignatureData, mImageDigest, mImageDigestSize);
@@ -1610,13 +1595,7 @@ Done:
     //
     // Policy decides to defer or reject the image; add its information in image executable information table.
     //
-    NameStr = ConvertDevicePathToText (File, FALSE, TRUE);
-    AddImageExeInfo (Action, NameStr, File, SignatureList, SignatureListSize);
-    if (NameStr != NULL) {
-      DEBUG((EFI_D_INFO, "The image doesn't pass verification: %s\n", NameStr));
-      FreePool(NameStr);
-    }
-
+    AddImageExeInfo (Action, NULL, File, SignatureList, SignatureListSize);
     Status = EFI_ACCESS_DENIED;
 
     if (!EventLogged)
@@ -1628,7 +1607,7 @@ Done:
   }
 
   if (Status == EFI_SUCCESS && SigData != NULL) {
-    ASSERT(mTrEEPresent);
+    ASSERT(mTcg2Present);
     SecureBootHook (EFI_IMAGE_SECURITY_DATABASE, &gEfiImageSecurityDatabaseGuid, SigDataSize, SigData);
   }
 
@@ -1674,41 +1653,6 @@ CryptProtocolCallBack (
 }
 
 /**
-  On Ready To Boot Services Event notification handler.
-
-  Add the image execution information table if it is not in system configuration table.
-
-  @param[in]  Event     Event whose notification function is being invoked
-  @param[in]  Context   Pointer to the notification function's context
-
-**/
-VOID
-EFIAPI
-OnReadyToBoot (
-  IN      EFI_EVENT               Event,
-  IN      VOID                    *Context
-  )
-{
-  EFI_IMAGE_EXECUTION_INFO_TABLE  *ImageExeInfoTable;
-  UINTN                           ImageExeInfoTableSize;
-
-  EfiGetSystemConfigurationTable (&gEfiImageSecurityDatabaseGuid, (VOID **) &ImageExeInfoTable);
-  if (ImageExeInfoTable != NULL) {
-    return;
-  }
-
-  ImageExeInfoTableSize = sizeof (EFI_IMAGE_EXECUTION_INFO_TABLE);
-  ImageExeInfoTable     = (EFI_IMAGE_EXECUTION_INFO_TABLE *) AllocateRuntimePool (ImageExeInfoTableSize);
-  if (ImageExeInfoTable == NULL) {
-    return ;
-  }
-
-  ImageExeInfoTable->NumberOfImages = 0;
-  gBS->InstallConfigurationTable (&gEfiImageSecurityDatabaseGuid, (VOID *) ImageExeInfoTable);
-
-}
-
-/**
   Register security measurement handler.
 
   @param  ImageHandle   ImageHandle of the loaded driver.
@@ -1725,33 +1669,32 @@ DxeImageVerificationLibConstructor (
 {
   EFI_STATUS          Status = EFI_SUCCESS;
   VOID                *Registration;
-  EFI_TREE_PROTOCOL   *TrEEProtocol = NULL;
-  TREE_BOOT_SERVICE_CAPABILITY ProtocolCapability = {0};
-  EFI_EVENT            Event;
+  EFI_TCG2_PROTOCOL   *Tcg2Protocol = NULL;
+  EFI_TCG2_BOOT_SERVICE_CAPABILITY ProtocolCapability;
 
-  Status = gBS->LocateProtocol (&gEfiTrEEProtocolGuid, NULL, (VOID **) &TrEEProtocol);
+  Status = gBS->LocateProtocol (&gEfiTcg2ProtocolGuid, NULL, (VOID **) &Tcg2Protocol);
   if (EFI_ERROR (Status)) {
-      // TrEE protocol should already be installed.
+      // TCG2 protocol should already be installed.
       ASSERT(FALSE);
-      DEBUG ((EFI_D_ERROR, "TrEE protocol not found. TrEEDxe not dispatched %r\n", Status));
+      DEBUG ((EFI_D_ERROR, "TCG2 protocol not found. Tcg2Dxe not dispatched %r\n", Status));
       goto Done;
   }
 
   //
-  // Check TrEE presence.
+  // Check TPM presence.
   //
-  ProtocolCapability.Size = sizeof(TREE_BOOT_SERVICE_CAPABILITY);
-  Status = TrEEProtocol->GetCapability(TrEEProtocol, &ProtocolCapability);
+  ProtocolCapability.Size = sizeof(ProtocolCapability);
+  Status = Tcg2Protocol->GetCapability(Tcg2Protocol, &ProtocolCapability);
   if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "TrEE GetCapability FAILED %r\n", Status));
+      DEBUG ((EFI_D_ERROR, "Tcg2 GetCapability FAILED %r\n", Status));
       goto Done;
   }
-  if (ProtocolCapability.TrEEPresentFlag == FALSE) {
-      DEBUG ((EFI_D_ERROR, "TrEE device not present.\n"));
+  if (ProtocolCapability.TPMPresentFlag == FALSE) {
+      DEBUG ((EFI_D_INFO, "Tcg2 device not present.\n"));
       goto Done;
   }
 
-  mTrEEPresent = TRUE;
+  mTcg2Present = TRUE;
 
 Done:
 
@@ -1765,16 +1708,6 @@ Done:
       NULL,
       &Registration
       );
-
-  //
-  // Register the event to publish the image execution table.
-  //
-  EfiCreateEventReadyToBootEx (
-    TPL_CALLBACK,
-    OnReadyToBoot,
-    NULL,
-    &Event
-    );
 
   return RegisterSecurity2Handler (
           DxeImageVerificationHandler,

@@ -1,13 +1,13 @@
 /** @file
   This module implements Tcg2 Protocol.
-  
+
 Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials 
-are licensed and made available under the terms and conditions of the BSD License 
-which accompanies this distribution.  The full text of the license may be found at 
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
 http://opensource.org/licenses/bsd-license.php
 
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS, 
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
@@ -15,17 +15,19 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <PiDxe.h>
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/PeImage.h>
+#include <IndustryStandard/SmBios.h>
 #include <IndustryStandard/TcpaAcpi.h>
 
 #include <Guid/GlobalVariable.h>
+#include <Guid/SmBios.h>
 #include <Guid/HobList.h>
 #include <Guid/TcgEventHob.h>
 #include <Guid/EventGroup.h>
 #include <Guid/EventExitBootServiceFailed.h>
 #include <Guid/ImageAuthentication.h>
-#include <Guid/TpmInstance.h>
 
 #include <Protocol/DevicePath.h>
+#include <Protocol/AcpiTable.h>
 #include <Protocol/MpService.h>
 #include <Protocol/VariableWrite.h>
 #include <Protocol/Tcg2Protocol.h>
@@ -33,21 +35,21 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/UefiDriverEntryPoint.h>
 #include <Library/HobLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/BaseLib.h>
+#include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/Tpm2CommandLib.h>
-#include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
 #include <Library/Tpm2DeviceLib.h>
 #include <Library/HashLib.h>
 #include <Library/PerformanceLib.h>
-#include <Library/ReportStatusCodeLib.h>
-#include <Library/Tcg2PhysicalPresenceLib.h>
+#include <Library/ConfigLib.h>
+#include <Tpminterface.h>
+
+extern GUID gVmBiosConfigPageGuid;
 
 #define PERF_ID_TCG2_DXE  0x3120
 
@@ -63,13 +65,13 @@ typedef struct {
 #define  TCG2_DEFAULT_MAX_RESPONSE_SIZE       0x1000
 
 typedef struct {
-  EFI_GUID               *EventGuid;
+  EFI_GUID                   *EventGuid;
   EFI_TCG2_EVENT_LOG_FORMAT  LogFormat;
 } TCG2_EVENT_INFO_STRUCT;
 
 TCG2_EVENT_INFO_STRUCT mTcg2EventInfo[] = {
-  {&gTcgEventEntryHobGuid,             EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2},
-  {&gTcgEvent2EntryHobGuid,            EFI_TCG2_EVENT_LOG_FORMAT_TCG_2},
+    {&gTcgEventEntryHobGuid,             EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2},
+    {&gTcgEvent2EntryHobGuid,            EFI_TCG2_EVENT_LOG_FORMAT_TCG_2},
 };
 
 #define TCG_EVENT_LOG_AREA_COUNT_MAX   2
@@ -92,21 +94,22 @@ typedef struct _TCG_DXE_DATA {
   EFI_TCG2_FINAL_EVENTS_TABLE       *FinalEventsTable[TCG_EVENT_LOG_AREA_COUNT_MAX];
 } TCG_DXE_DATA;
 
-TCG_DXE_DATA                 mTcgDxeData = {
+TCG_DXE_DATA mTcgDxeData = {
   {
     sizeof (EFI_TCG2_BOOT_SERVICE_CAPABILITY),     // Size
-    { 1, 1 },                           // StructureVersion
-    { 1, 1 },                           // ProtocolVersion
-    EFI_TCG2_BOOT_HASH_ALG_SHA1,        // HashAlgorithmBitmap
-    EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2,  // SupportedEventLogs
-    TRUE,                               // TPMPresentFlag
+    {1, 1},                             // StructureVersion
+    {1, 1},                             // ProtocolVersion
+    0,                                  // HashAlgorithmBitmap
+    0,                                  // SupportedEventLogs
+    FALSE,                              // TPMPresentFlag
     TCG2_DEFAULT_MAX_COMMAND_SIZE,      // MaxCommandSize
     TCG2_DEFAULT_MAX_RESPONSE_SIZE,     // MaxResponseSize
-    0,                                  // ManufacturerID
-    0,  // NumberOfPCRBanks
-    0,  // ActivePcrBanks
+    'MSFT',                             // ManufacturerID
+    0,                                  // NumberOfPCRBanks
+    0,                                  // ActivePcrBanks
   },
 };
+
 
 UINTN  mBootAttempts  = 0;
 CHAR16 mBootVarName[] = L"BootOrder";
@@ -120,6 +123,13 @@ VARIABLE_TYPE  mVariableType[] = {
 };
 
 EFI_HANDLE mImageHandle;
+
+UINT32 mTcgProtocolVersion;
+
+EFI_STATUS
+IntallTpm2AcpiTable(
+    IN EFI_ACPI_TABLE_PROTOCOL* AcpiTable
+    );
 
 /**
   Measure PE image into TPM log based on the authenticode image hashing in
@@ -145,6 +155,7 @@ MeasurePeImageAndExtend (
   IN  UINTN                     ImageSize,
   OUT TPML_DIGEST_VALUES        *DigestList
   );
+
 
 /**
 
@@ -322,16 +333,16 @@ GetProcessorsCpuLocation (
 
   @retval EFI_SUCCESS            Operation completed successfully.
   @retval EFI_DEVICE_ERROR       The command was unsuccessful.
-                                 The ProtocolCapability variable will not be populated. 
+                                 The ProtocolCapability variable will not be populated.
   @retval EFI_INVALID_PARAMETER  One or more of the parameters are incorrect.
                                  The ProtocolCapability variable will not be populated.
   @retval EFI_BUFFER_TOO_SMALL   The ProtocolCapability variable is too small to hold the full response.
-                                 It will be partially populated (required Size field will be set). 
+                                 It will be partially populated (required Size field will be set).
 **/
 EFI_STATUS
 EFIAPI
 Tcg2GetCapability (
-  IN EFI_TCG2_PROTOCOL                    *This,
+  IN EFI_TCG2_PROTOCOL                *This,
   IN OUT EFI_TCG2_BOOT_SERVICE_CAPABILITY *ProtocolCapability
   )
 {
@@ -340,15 +351,16 @@ Tcg2GetCapability (
   if ((This == NULL) || (ProtocolCapability == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
-  
+
   DEBUG ((EFI_D_INFO, "Size - 0x%x\n", ProtocolCapability->Size));
   DEBUG ((EFI_D_INFO, " 1.1 - 0x%x, 1.0 - 0x%x\n", sizeof(EFI_TCG2_BOOT_SERVICE_CAPABILITY), sizeof(TREE_BOOT_SERVICE_CAPABILITY_1_0)));
 
-  if (ProtocolCapability->Size < mTcgDxeData.BsCap.Size) {
+  if ((ProtocolCapability->Size < mTcgDxeData.BsCap.Size) ||
+      (mTcgProtocolVersion == TcgProtocolTrEE)) {
     //
     // Handle the case that firmware support 1.1 but OS only support 1.0.
     //
-    if ((mTcgDxeData.BsCap.ProtocolVersion.Major > 0x01) || 
+    if ((mTcgDxeData.BsCap.ProtocolVersion.Major > 0x01) ||
         ((mTcgDxeData.BsCap.ProtocolVersion.Major == 0x01) && ((mTcgDxeData.BsCap.ProtocolVersion.Minor > 0x00)))) {
       if (ProtocolCapability->Size >= sizeof(TREE_BOOT_SERVICE_CAPABILITY_1_0)) {
         CopyMem (ProtocolCapability, &mTcgDxeData.BsCap, sizeof(TREE_BOOT_SERVICE_CAPABILITY_1_0));
@@ -357,14 +369,13 @@ Tcg2GetCapability (
         ProtocolCapability->StructureVersion.Minor = 0;
         ProtocolCapability->ProtocolVersion.Major = 1;
         ProtocolCapability->ProtocolVersion.Minor = 0;
-        DEBUG ((EFI_D_ERROR, "TreeGetCapability (Compatible) - %r\n", EFI_SUCCESS));
+        DEBUG ((EFI_D_INFO, "TreeGetCapability (Compatible) - %r\n", EFI_SUCCESS));
         return EFI_SUCCESS;
       }
     }
     ProtocolCapability->Size = mTcgDxeData.BsCap.Size;
     return EFI_BUFFER_TOO_SMALL;
   }
-
   CopyMem (ProtocolCapability, &mTcgDxeData.BsCap, mTcgDxeData.BsCap.Size);
   DEBUG ((EFI_D_INFO, "Tcg2GetCapability - %r\n", EFI_SUCCESS));
   return EFI_SUCCESS;
@@ -513,7 +524,7 @@ DumpEvent2 (
 
 /**
   This function returns size of TCG PCR event 2.
-  
+
   @param[in]  TcgPcrEvent2     TCG PCR event 2 structure.
 
   @return size of TCG PCR event 2.
@@ -561,9 +572,9 @@ GetPcrEvent2Size (
 **/
 VOID
 DumpEventLog (
-  IN EFI_TCG2_EVENT_LOG_FORMAT   EventLogFormat,
-  IN EFI_PHYSICAL_ADDRESS        EventLogLocation,
-  IN EFI_PHYSICAL_ADDRESS        EventLogLastEntry,
+  IN EFI_TCG2_EVENT_LOG_FORMAT EventLogFormat,
+  IN EFI_PHYSICAL_ADDRESS  EventLogLocation,
+  IN EFI_PHYSICAL_ADDRESS  EventLogLastEntry,
   IN EFI_TCG2_FINAL_EVENTS_TABLE *FinalEventsTable
   )
 {
@@ -573,7 +584,7 @@ DumpEventLog (
   UINTN                     NumberOfEvents;
 
   DEBUG ((EFI_D_INFO, "EventLogFormat: (0x%x)\n", EventLogFormat));
-  
+
   switch (EventLogFormat) {
   case EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2:
     EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)EventLogLocation;
@@ -597,7 +608,7 @@ DumpEventLog (
     break;
   case EFI_TCG2_EVENT_LOG_FORMAT_TCG_2:
     //
-    // Dump first event	
+    // Dump first event
     //
     EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)EventLogLocation;
     DumpEvent (EventHdr);
@@ -632,7 +643,7 @@ DumpEventLog (
 
 /**
   The EFI_TCG2_PROTOCOL Get Event Log function call allows a caller to
-  retrieve the address of a given event log and its last entry. 
+  retrieve the address of a given event log and its last entry.
 
   @param[in]  This               Indicates the calling context
   @param[in]  EventLogFormat     The type of the event log for which the information is requested.
@@ -730,14 +741,14 @@ Tcg2GetEventLog (
 /**
   Add a new entry to the Event Log.
 
-  @param[in, out] EventLogPtr     Pointer to the Event Log data.  
-  @param[in, out] LogSize         Size of the Event Log.  
+  @param[in, out] EventLogPtr     Pointer to the Event Log data.
+  @param[in, out] LogSize         Size of the Event Log.
   @param[in]      MaxSize         Maximum size of the Event Log.
-  @param[in]      NewEventHdr     Pointer to a TCG_PCR_EVENT_HDR/TCG_PCR_EVENT_EX data structure.  
+  @param[in]      NewEventHdr     Pointer to a TCG_PCR_EVENT_HDR/TCG_PCR_EVENT_EX data structure.
   @param[in]      NewEventHdrSize New event header size.
-  @param[in]      NewEventData    Pointer to the new event data.  
+  @param[in]      NewEventData    Pointer to the new event data.
   @param[in]      NewEventSize    New event data size.
-  
+
   @retval EFI_SUCCESS           The new event log entry was added.
   @retval EFI_OUT_OF_RESOURCES  No enough memory to log the new event.
 
@@ -770,6 +781,7 @@ TcgCommLogEvent (
     DEBUG ((EFI_D_INFO, "  NewLogSize - 0x%x\n", NewLogSize));
     DEBUG ((EFI_D_INFO, "  LogSize    - 0x%x\n", *LogSize));
     DEBUG ((EFI_D_INFO, "TcgCommLogEvent - %r\n", EFI_OUT_OF_RESOURCES));
+
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -788,9 +800,9 @@ TcgCommLogEvent (
   Add a new entry to the Event Log.
 
   @param[in] EventLogFormat  The type of the event log for which the information is requested.
-  @param[in] NewEventHdr     Pointer to a TCG_PCR_EVENT_HDR/TCG_PCR_EVENT_EX data structure.  
+  @param[in] NewEventHdr     Pointer to a TCG_PCR_EVENT_HDR/TCG_PCR_EVENT_EX data structure.
   @param[in] NewEventHdrSize New event header size.
-  @param[in] NewEventData    Pointer to the new event data.  
+  @param[in] NewEventData    Pointer to the new event data.
   @param[in] NewEventSize    New event data size.
 
   @retval EFI_SUCCESS           The new event log entry was added.
@@ -809,7 +821,13 @@ TcgDxeLogEvent (
   EFI_STATUS                Status;
   UINTN                     Index;
   TCG_EVENT_LOG_AREA_STRUCT *EventLogAreaStruct;
-  
+  TCG_EVENT_LOG_AREA_STRUCT *EventLogAreaStructArray[TCG_EVENT_LOG_AREA_COUNT_MAX];
+  UINTN                     LogAreaIndex;
+  UINTN                     LogAreasToExtend;
+
+  Status = EFI_SUCCESS;
+  LogAreasToExtend = 1;
+
   for (Index = 0; Index < sizeof(mTcg2EventInfo)/sizeof(mTcg2EventInfo[0]); Index++) {
     if (EventLogFormat == mTcg2EventInfo[Index].LogFormat) {
       break;
@@ -820,35 +838,44 @@ TcgDxeLogEvent (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (!mTcgDxeData.GetEventLogCalled[Index]) {
-    EventLogAreaStruct = &mTcgDxeData.EventLogAreaStruct[Index];
-  } else {
-    EventLogAreaStruct = &mTcgDxeData.FinalEventLogAreaStruct[Index];
+  EventLogAreaStructArray[0] = &mTcgDxeData.EventLogAreaStruct[Index];
+  EventLogAreaStructArray[1] = &mTcgDxeData.FinalEventLogAreaStruct[Index];
+
+  if (mTcgDxeData.GetEventLogCalled[Index]) {
+    LogAreasToExtend = 2;
   }
 
-  if (EventLogAreaStruct->EventLogTruncated) {
-    return EFI_VOLUME_FULL;
-  }
+  for (LogAreaIndex = 0; LogAreaIndex < LogAreasToExtend; LogAreaIndex++) {
+    EventLogAreaStruct = EventLogAreaStructArray[LogAreaIndex];
 
-  EventLogAreaStruct->LastEvent = (UINT8*)(UINTN)EventLogAreaStruct->Lasa;
-  Status = TcgCommLogEvent (
-             &EventLogAreaStruct->LastEvent,
-             &EventLogAreaStruct->EventLogSize,
-             (UINTN)EventLogAreaStruct->Laml,
-             NewEventHdr,
-             NewEventHdrSize,
-             NewEventData,
-             NewEventSize
-             );
-  
-  if (Status == EFI_DEVICE_ERROR) {
-    return EFI_DEVICE_ERROR;
-  } else if (Status == EFI_OUT_OF_RESOURCES) {
-    EventLogAreaStruct->EventLogTruncated = TRUE;
-    return EFI_VOLUME_FULL;
-  } else if (Status == EFI_SUCCESS) {
+    if (EventLogAreaStruct->EventLogTruncated) {
+      return EFI_VOLUME_FULL;
+    }
+
+    EventLogAreaStruct->LastEvent = (UINT8*)(UINTN)EventLogAreaStruct->Lasa;
+    Status = TcgCommLogEvent (
+               &EventLogAreaStruct->LastEvent,
+               &EventLogAreaStruct->EventLogSize,
+               (UINTN)EventLogAreaStruct->Laml,
+               NewEventHdr,
+               NewEventHdrSize,
+               NewEventData,
+               NewEventSize
+               );
+
+    if (Status == EFI_DEVICE_ERROR) {
+      return EFI_DEVICE_ERROR;
+    } else if (Status == EFI_OUT_OF_RESOURCES) {
+      EventLogAreaStruct->EventLogTruncated = TRUE;
+      return EFI_VOLUME_FULL;
+    } else if (Status != EFI_SUCCESS) {
+      return Status;
+    }
+
     EventLogAreaStruct->EventLogStarted = TRUE;
-    if (mTcgDxeData.GetEventLogCalled[Index]) {
+
+    if (LogAreaIndex == 1) {
+      // This is final event log area
       (mTcgDxeData.FinalEventsTable[Index])->NumberOfEvents ++;
     }
   }
@@ -868,10 +895,10 @@ TcgDxeLogEvent (
 **/
 EFI_STATUS
 Tpm2GetDigestFromDigestList (
-  IN TPMI_ALG_HASH      HashAlg,
-  IN TPML_DIGEST_VALUES *DigestList,
-  IN VOID               *Digest
-  )
+    IN  TPMI_ALG_HASH      HashAlg,
+    IN  TPML_DIGEST_VALUES *DigestList,
+    IN  VOID               *Digest
+    )
 {
   UINTN  Index;
   UINT16 DigestSize;
@@ -1122,11 +1149,11 @@ TcgDxeLogHashEvent (
   and add an entry to the Event Log.
 
   @param[in]      Flags         Bitmap providing additional information.
-  @param[in]      HashData      Physical address of the start of the data buffer 
+  @param[in]      HashData      Physical address of the start of the data buffer
                                 to be hashed, extended, and logged.
   @param[in]      HashDataLen   The length, in bytes, of the buffer referenced by HashData
-  @param[in, out] NewEventHdr   Pointer to a TCG_PCR_EVENT_HDR data structure.  
-  @param[in]      NewEventData  Pointer to the new event data.  
+  @param[in, out] NewEventHdr   Pointer to a TCG_PCR_EVENT_HDR data structure.
+  @param[in]      NewEventData  Pointer to the new event data.
 
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  No enough memory to log the new event.
@@ -1135,12 +1162,12 @@ TcgDxeLogHashEvent (
 **/
 EFI_STATUS
 TcgDxeHashLogExtendEvent (
-  IN      UINT64                    Flags,
-  IN      UINT8                     *HashData,
-  IN      UINT64                    HashDataLen,
-  IN OUT  TCG_PCR_EVENT_HDR         *NewEventHdr,
-  IN      UINT8                     *NewEventData
-  )
+    IN      UINT64                    Flags,
+    IN      UINT8                     *HashData,
+    IN      UINT64                    HashDataLen,
+    IN OUT  TCG_PCR_EVENT_HDR         *NewEventHdr,
+    IN      UINT8                     *NewEventData
+    )
 {
   EFI_STATUS                        Status;
   TPML_DIGEST_VALUES                DigestList;
@@ -1164,10 +1191,6 @@ TcgDxeHashLogExtendEvent (
   if (Status == EFI_DEVICE_ERROR) {
     DEBUG ((EFI_D_ERROR, "TcgDxeHashLogExtendEvent - %r. Disable TPM.\n", Status));
     mTcgDxeData.BsCap.TPMPresentFlag = FALSE;
-    REPORT_STATUS_CODE (
-      EFI_ERROR_CODE | EFI_ERROR_MINOR,
-      (PcdGet32 (PcdStatusCodeSubClassTpmDevice) | EFI_P_EC_INTERFACE_ERROR)
-      );
   }
 
   return Status;
@@ -1176,13 +1199,13 @@ TcgDxeHashLogExtendEvent (
 /**
   The EFI_TCG2_PROTOCOL HashLogExtendEvent function call provides callers with
   an opportunity to extend and optionally log events without requiring
-  knowledge of actual TPM commands. 
+  knowledge of actual TPM commands.
   The extend operation will occur even if this function cannot create an event
-  log entry (e.g. due to the event log being full). 
+  log entry (e.g. due to the event log being full).
 
   @param[in]  This               Indicates the calling context
   @param[in]  Flags              Bitmap providing additional information.
-  @param[in]  DataToHash         Physical address of the start of the data buffer to be hashed. 
+  @param[in]  DataToHash         Physical address of the start of the data buffer to be hashed.
   @param[in]  DataToHashLen      The length in bytes of the buffer referenced by DataToHash.
   @param[in]  Event              Pointer to data buffer containing information about the event.
 
@@ -1242,10 +1265,6 @@ Tcg2HashLogExtendEvent (
     if (Status == EFI_DEVICE_ERROR) {
       DEBUG ((EFI_D_ERROR, "MeasurePeImageAndExtend - %r. Disable TPM.\n", Status));
       mTcgDxeData.BsCap.TPMPresentFlag = FALSE;
-      REPORT_STATUS_CODE (
-        EFI_ERROR_CODE | EFI_ERROR_MINOR,
-        (PcdGet32 (PcdStatusCodeSubClassTpmDevice) | EFI_P_EC_INTERFACE_ERROR)
-        );
     }
   } else {
     Status = TcgDxeHashLogExtendEvent (
@@ -1272,17 +1291,17 @@ Tcg2HashLogExtendEvent (
   @retval EFI_SUCCESS            The command byte stream was successfully sent to the device and a response was successfully received.
   @retval EFI_DEVICE_ERROR       The command was not successfully sent to the device or a response was not successfully received from the device.
   @retval EFI_INVALID_PARAMETER  One or more of the parameters are incorrect.
-  @retval EFI_BUFFER_TOO_SMALL   The output parameter block is too small. 
+  @retval EFI_BUFFER_TOO_SMALL   The output parameter block is too small.
 **/
 EFI_STATUS
 EFIAPI
 Tcg2SubmitCommand (
-  IN EFI_TCG2_PROTOCOL *This,
-  IN UINT32            InputParameterBlockSize,
-  IN UINT8             *InputParameterBlock,
-  IN UINT32            OutputParameterBlockSize,
-  IN UINT8             *OutputParameterBlock
-  )
+    IN EFI_TCG2_PROTOCOL *This,
+    IN UINT32            InputParameterBlockSize,
+    IN UINT8             *InputParameterBlock,
+    IN UINT32            OutputParameterBlockSize,
+    IN UINT8             *OutputParameterBlock
+    )
 {
   EFI_STATUS    Status;
 
@@ -1306,12 +1325,14 @@ Tcg2SubmitCommand (
   }
 
   Status = Tpm2SubmitCommand (
-             InputParameterBlockSize,
-             InputParameterBlock,
-             &OutputParameterBlockSize,
-             OutputParameterBlock
-             );
+           InputParameterBlockSize,
+           InputParameterBlock,
+           &OutputParameterBlockSize,
+           OutputParameterBlock
+           );
+
   DEBUG ((EFI_D_INFO, "Tcg2SubmitCommand - %r\n", Status));
+
   return Status;
 }
 
@@ -1322,7 +1343,7 @@ Tcg2SubmitCommand (
   @param[out] ActivePcrBanks  Pointer to the variable receiving the bitmap of currently active PCR banks.
 
   @retval EFI_SUCCESS           The bitmap of active PCR banks was stored in the ActivePcrBanks parameter.
-  @retval EFI_INVALID_PARAMETER One or more of the parameters are incorrect. 
+  @retval EFI_INVALID_PARAMETER One or more of the parameters are incorrect.
 **/
 EFI_STATUS
 EFIAPI
@@ -1354,8 +1375,7 @@ Tcg2SetActivePCRBanks (
   IN UINT32            ActivePcrBanks
   )
 {
-  EFI_STATUS  Status;
-  UINT32      ReturnCode;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
   DEBUG ((EFI_D_INFO, "Tcg2SetActivePCRBanks ... (0x%x)\n", ActivePcrBanks));
 
@@ -1369,25 +1389,20 @@ Tcg2SetActivePCRBanks (
     //
     // Need clear previous SET_PCR_BANKS setting
     //
-    ReturnCode = Tcg2PhysicalPresenceLibSubmitRequestToPreOSFunction (TCG2_PHYSICAL_PRESENCE_NO_ACTION, 0);
+    IoWrite32(TpmControlPort, TpmIoPPISetOperation);
+    IoWrite32(TpmDataPort, 0);  // PPIOperationNoOp
   } else {
-    ReturnCode = Tcg2PhysicalPresenceLibSubmitRequestToPreOSFunction (TCG2_PHYSICAL_PRESENCE_SET_PCR_BANKS, ActivePcrBanks);
-  }
-
-  if (ReturnCode == TCG_PP_SUBMIT_REQUEST_TO_PREOS_SUCCESS) {
-    Status = EFI_SUCCESS;
-  } else if (ReturnCode == TCG_PP_SUBMIT_REQUEST_TO_PREOS_GENERAL_FAILURE) {
-    Status = EFI_OUT_OF_RESOURCES;
-  } else if (ReturnCode == TCG_PP_SUBMIT_REQUEST_TO_PREOS_NOT_IMPLEMENTED) {
-    Status = EFI_UNSUPPORTED;
-  } else {
-    Status = EFI_DEVICE_ERROR;
+    IoWrite32(TpmControlPort, TpmIoPPISetOperationArg3Integer2);
+    IoWrite32(TpmDataPort, ActivePcrBanks);
+    IoWrite32(TpmControlPort, TpmIoPPISetOperation);
+    IoWrite32(TpmDataPort, 23); // PPIOperationSetPCRBanks
   }
 
   DEBUG ((EFI_D_INFO, "Tcg2SetActivePCRBanks - %r\n", Status));
 
   return Status;
 }
+
 
 /**
   This service retrieves the result of a previous invocation of SetActivePcrBanks.
@@ -1407,18 +1422,19 @@ Tcg2GetResultOfSetActivePcrBanks (
   OUT UINT32             *Response
   )
 {
-  UINT32  ReturnCode;
-
   if ((OperationPresent == NULL) || (Response == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
-  
-  ReturnCode = Tcg2PhysicalPresenceLibReturnOperationResponseToOsFunction (OperationPresent, Response);
-  if (ReturnCode == TCG_PP_RETURN_TPM_OPERATION_RESPONSE_SUCCESS) {
-    return EFI_SUCCESS;
-  } else {
-    return EFI_UNSUPPORTED;
+
+  IoWrite32(TpmControlPort, TpmIoPPIGetLastOperation);
+  *OperationPresent = IoRead32(TpmDataPort);
+
+  if (*OperationPresent != 0) {
+      IoWrite32(TpmControlPort, TpmIoPPIGetLastResult);
+      *Response = IoRead32(TpmDataPort);
   }
+
+  return EFI_SUCCESS;
 }
 
 EFI_TCG2_PROTOCOL mTcg2Protocol = {
@@ -1451,12 +1467,12 @@ SetupEventLog (
   UINT32                          DigestListBinSize;
   UINT32                          EventSize;
   TCG_EfiSpecIDEventStruct        *TcgEfiSpecIdEventStruct;
-  UINT8                           TempBuf[sizeof(TCG_EfiSpecIDEventStruct) + (HASH_COUNT * sizeof(TCG_EfiSpecIdEventAlgorithmSize)) + sizeof(UINT8)];
   TCG_PCR_EVENT_HDR               FirstPcrEvent;
   TCG_EfiSpecIdEventAlgorithmSize *DigestSize;
   TCG_EfiSpecIdEventAlgorithmSize *TempDigestSize;
   UINT8                           *VendorInfoSize;
   UINT32                          NumberOfAlgorithms;
+  UINT8                           TempBuf[sizeof(TCG_EfiSpecIDEventStruct) + sizeof(NumberOfAlgorithms) + (HASH_COUNT * sizeof(TCG_EfiSpecIdEventAlgorithmSize)) + sizeof(UINT8)];
 
   DEBUG ((EFI_D_INFO, "SetupEventLog\n"));
 
@@ -1464,7 +1480,7 @@ SetupEventLog (
   // 1. Create Log Area
   //
   for (Index = 0; Index < sizeof(mTcg2EventInfo)/sizeof(mTcg2EventInfo[0]); Index++) {
-    if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
+      if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
       mTcgDxeData.EventLogAreaStruct[Index].EventLogFormat = mTcg2EventInfo[Index].LogFormat;
       Lasa = (EFI_PHYSICAL_ADDRESS) (SIZE_4GB - 1);
       Status = gBS->AllocatePages (
@@ -1479,7 +1495,7 @@ SetupEventLog (
       mTcgDxeData.EventLogAreaStruct[Index].Lasa = Lasa;
       mTcgDxeData.EventLogAreaStruct[Index].Laml = EFI_TCG_LOG_AREA_SIZE;
       //
-      // To initialize them as 0xFF is recommended 
+      // To initialize them as 0xFF is recommended
       // because the OS can know the last entry for that.
       //
       SetMem ((VOID *)(UINTN)Lasa, EFI_TCG_LOG_AREA_SIZE, 0xFF);
@@ -1605,7 +1621,7 @@ SetupEventLog (
       }
     }
   }
-  
+
   //
   // 3. Sync data from PEI to DXE
   //
@@ -1614,10 +1630,11 @@ SetupEventLog (
     if ((mTcgDxeData.BsCap.SupportedEventLogs & mTcg2EventInfo[Index].LogFormat) != 0) {
       GuidHob.Raw = GetHobList ();
       Status = EFI_SUCCESS;
-      while (!EFI_ERROR (Status) && 
+      while (!EFI_ERROR (Status) &&
              (GuidHob.Raw = GetNextGuidHob (mTcg2EventInfo[Index].EventGuid, GuidHob.Raw)) != NULL) {
         TcgEvent    = GET_GUID_HOB_DATA (GuidHob.Guid);
         GuidHob.Raw = GET_NEXT_HOB (GuidHob);
+
         switch (mTcg2EventInfo[Index].LogFormat) {
         case EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2:
           Status = TcgDxeLogEvent (
@@ -1650,8 +1667,8 @@ SetupEventLog (
 /**
   Measure and log an action string, and extend the measurement result into PCR[5].
 
-  @param[in] String           A specific string that indicates an Action event.  
-  
+  @param[in] String           A specific string that indicates an Action event.
+
   @retval EFI_SUCCESS         Operation completed successfully.
   @retval EFI_DEVICE_ERROR    The operation was unsuccessful.
 
@@ -1688,17 +1705,46 @@ MeasureHandoffTables (
   )
 {
   EFI_STATUS                        Status;
+  SMBIOS_TABLE_ENTRY_POINT          *SmbiosTable;
   TCG_PCR_EVENT_HDR                 TcgEvent;
   EFI_HANDOFF_TABLE_POINTERS        HandoffTables;
   UINTN                             ProcessorNum;
   EFI_CPU_PHYSICAL_LOCATION         *ProcessorLocBuf;
 
   ProcessorLocBuf = NULL;
-  Status = EFI_SUCCESS;
+
+  //
+  // Measure SMBIOS with EV_EFI_HANDOFF_TABLES to PCR[1]
+  //
+  Status = EfiGetSystemConfigurationTable (
+             &gEfiSmbiosTableGuid,
+             (VOID **) &SmbiosTable
+             );
+
+  if (!EFI_ERROR (Status) && SmbiosTable != NULL) {
+    TcgEvent.PCRIndex  = 1;
+    TcgEvent.EventType = EV_EFI_HANDOFF_TABLES;
+    TcgEvent.EventSize = sizeof (HandoffTables);
+
+    HandoffTables.NumberOfTables = 1;
+    HandoffTables.TableEntry[0].VendorGuid  = gEfiSmbiosTableGuid;
+    HandoffTables.TableEntry[0].VendorTable = SmbiosTable;
+
+    DEBUG ((DEBUG_INFO, "The Smbios Table starts at: 0x%x\n", SmbiosTable->TableAddress));
+    DEBUG ((DEBUG_INFO, "The Smbios Table size: 0x%x\n", SmbiosTable->TableLength));
+
+    Status = TcgDxeHashLogExtendEvent (
+               0,
+               (UINT8*)(UINTN)SmbiosTable->TableAddress,
+               SmbiosTable->TableLength,
+               &TcgEvent,
+               (UINT8*)&HandoffTables
+               );
+  }
 
   if (PcdGet8 (PcdTpmPlatformClass) == TCG_PLATFORM_TYPE_SERVER) {
     //
-    // Tcg Server spec. 
+    // Tcg Server spec.
     // Measure each processor EFI_CPU_PHYSICAL_LOCATION with EV_TABLE_OF_DEVICES to PCR[1]
     //
     Status = GetProcessorsCpuLocation(&ProcessorLocBuf, &ProcessorNum);
@@ -1730,7 +1776,7 @@ MeasureHandoffTables (
 /**
   Measure and log Separator event, and extend the measurement result into a specific PCR.
 
-  @param[in] PCRIndex         PCR index.  
+  @param[in] PCRIndex         PCR index.
 
   @retval EFI_SUCCESS         Operation completed successfully.
   @retval EFI_DEVICE_ERROR    The operation was unsuccessful.
@@ -1762,13 +1808,13 @@ MeasureSeparatorEvent (
 /**
   Measure and log an EFI variable, and extend the measurement result into a specific PCR.
 
-  @param[in]  PCRIndex          PCR Index.  
-  @param[in]  EventType         Event type.  
+  @param[in]  PCRIndex          PCR Index.
+  @param[in]  EventType         Event type.
   @param[in]  VarName           A Null-terminated string that is the name of the vendor's variable.
   @param[in]  VendorGuid        A unique identifier for the vendor.
-  @param[in]  VarData           The content of the variable data.  
-  @param[in]  VarSize           The size of the variable data.  
- 
+  @param[in]  VarData           The content of the variable data.
+  @param[in]  VarSize           The size of the variable data.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
   @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
@@ -1795,11 +1841,10 @@ MeasureVariable (
   VarNameLength      = StrLen (VarName);
   TcgEvent.PCRIndex  = PCRIndex;
   TcgEvent.EventType = EventType;
-
   TcgEvent.EventSize = (UINT32)(sizeof (*VarLog) + VarNameLength * sizeof (*VarName) + VarSize
                         - sizeof (VarLog->UnicodeName) - sizeof (VarLog->VariableData));
 
-  VarLog = (EFI_VARIABLE_DATA_TREE *)AllocatePool (TcgEvent.EventSize);
+  VarLog = (EFI_VARIABLE_DATA_TREE*)AllocatePool (TcgEvent.EventSize);
   if (VarLog == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
@@ -1847,13 +1892,13 @@ MeasureVariable (
 /**
   Read then Measure and log an EFI variable, and extend the measurement result into a specific PCR.
 
-  @param[in]  PCRIndex          PCR Index.  
-  @param[in]  EventType         Event type.  
+  @param[in]  PCRIndex          PCR Index.
+  @param[in]  EventType         Event type.
   @param[in]   VarName          A Null-terminated string that is the name of the vendor's variable.
   @param[in]   VendorGuid       A unique identifier for the vendor.
-  @param[out]  VarSize          The size of the variable data.  
-  @param[out]  VarData          Pointer to the content of the variable.  
- 
+  @param[out]  VarSize          The size of the variable data.
+  @param[out]  VarData          Pointer to the content of the variable.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
   @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
@@ -1905,9 +1950,9 @@ ReadAndMeasureVariable (
 
   @param[in]   VarName          A Null-terminated string that is the name of the vendor's variable.
   @param[in]   VendorGuid       A unique identifier for the vendor.
-  @param[out]  VarSize          The size of the variable data.  
-  @param[out]  VarData          Pointer to the content of the variable.  
- 
+  @param[out]  VarSize          The size of the variable data.
+  @param[out]  VarData          Pointer to the content of the variable.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
   @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
@@ -1936,9 +1981,9 @@ ReadAndMeasureBootVariable (
 
   @param[in]   VarName          A Null-terminated string that is the name of the vendor's variable.
   @param[in]   VendorGuid       A unique identifier for the vendor.
-  @param[out]  VarSize          The size of the variable data.  
-  @param[out]  VarData          Pointer to the content of the variable.  
- 
+  @param[out]  VarSize          The size of the variable data.
+  @param[out]  VarData          Pointer to the content of the variable.
+
   @retval EFI_SUCCESS           Operation completed successfully.
   @retval EFI_OUT_OF_RESOURCES  Out of memory.
   @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
@@ -2058,32 +2103,6 @@ MeasureAllSecureVariables (
   return EFI_SUCCESS;
 }
 
-/**
-  Measure and log launch of FirmwareDebugger, and extend the measurement result into a specific PCR.
-
-  @retval EFI_SUCCESS           Operation completed successfully.
-  @retval EFI_OUT_OF_RESOURCES  Out of memory.
-  @retval EFI_DEVICE_ERROR      The operation was unsuccessful.
-
-**/
-EFI_STATUS
-MeasureLaunchOfFirmwareDebugger (
-  VOID
-  )
-{
-  TCG_PCR_EVENT_HDR                 TcgEvent;
-
-  TcgEvent.PCRIndex  = 7;
-  TcgEvent.EventType = EV_EFI_ACTION;
-  TcgEvent.EventSize = sizeof(FIRMWARE_DEBUGGER_EVENT_STRING) - 1;
-  return TcgDxeHashLogExtendEvent (
-           0,
-           (UINT8 *)FIRMWARE_DEBUGGER_EVENT_STRING,
-           sizeof(FIRMWARE_DEBUGGER_EVENT_STRING) - 1,
-           &TcgEvent,
-           (UINT8 *)FIRMWARE_DEBUGGER_EVENT_STRING
-           );
-}
 
 /**
   Measure and log all Secure Boot Policy, and extend the measurement result into a specific PCR.
@@ -2116,11 +2135,6 @@ MeasureSecureBootPolicy (
   Status = gBS->LocateProtocol (&gEfiVariableWriteArchProtocolGuid, NULL, (VOID **)&Protocol);
   if (EFI_ERROR (Status)) {
     return;
-  }
-
-  if (PcdGetBool (PcdFirmwareDebuggerInitialized)) {
-    Status = MeasureLaunchOfFirmwareDebugger ();
-    DEBUG ((EFI_D_INFO, "MeasureLaunchOfFirmwareDebugger - %r\n", Status));
   }
 
   Status = MeasureAllSecureVariables ();
@@ -2215,7 +2229,7 @@ OnReadyToBoot (
                EFI_RETURNING_FROM_EFI_APPLICATOIN
                );
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "%s not Measured. Error!\n", EFI_RETURNING_FROM_EFI_APPLICATOIN));
+        DEBUG ((EFI_D_ERROR, "%s not Measured. Error!\n", EFI_RETURNING_FROM_EFI_APPLICATOIN));
     }
   }
 
@@ -2293,12 +2307,11 @@ OnExitBootServicesFailed (
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "%s not Measured. Error!\n", EFI_EXIT_BOOT_SERVICES_FAILED));
   }
-
 }
 
 /**
   The function install Tcg2 protocol.
-  
+
   @retval EFI_SUCCESS     Tcg2 protocol is installed.
   @retval other           Some error occurs.
 **/
@@ -2320,176 +2333,132 @@ InstallTcg2 (
   return Status;
 }
 
-/**
-  The driver's entry point. It publishes EFI Tcg2 Protocol.
 
-  @param[in] ImageHandle  The firmware allocated handle for the EFI image.  
-  @param[in] SystemTable  A pointer to the EFI System Table.
-  
-  @retval EFI_SUCCESS     The entry point is executed successfully.
-  @retval other           Some error occurs when executing this entry point.
+/**
+  The function initialize TCG2 protocol.
+
+  @param[in]  SystemTable   EFI system table.
+
+  @retval EFI_SUCCESS     TCG2 protocol is initialized.
+  @retval other           Some error occurs.
 **/
 EFI_STATUS
-EFIAPI
-DriverEntry (
-  IN    EFI_HANDLE                  ImageHandle,
-  IN    EFI_SYSTEM_TABLE            *SystemTable
+InitializeTcg2 (
+  IN    EFI_SYSTEM_TABLE          *SystemTable
   )
 {
-  EFI_STATUS                        Status;
-  EFI_EVENT                         Event;
-  VOID                              *Registration;
-  UINT32                            MaxCommandSize;
-  UINT32                            MaxResponseSize;
-  TPML_PCR_SELECTION                Pcrs;
-  UINTN                             Index;
-  EFI_TCG2_EVENT_ALGORITHM_BITMAP   TpmHashAlgorithmBitmap;
-  UINT32                            ActivePCRBanks;
-  UINT32                            NumberOfPCRBanks;
+    EFI_STATUS                    Status;
+    EFI_EVENT                     Event;
+    VOID                          *Registration;
+    TPML_PCR_SELECTION            Pcrs;
+    UINTN                         Index;
+    UINT32                        TpmHashAlgorithmBitmap;
+    EFI_ACPI_TABLE_PROTOCOL *     AcpiTable;
+    UINT32                        ActivePCRBanks;
+    UINT32                        NumberOfPCRBanks;
 
-  mImageHandle = ImageHandle;
-
-  if (CompareGuid (PcdGetPtr(PcdTpmInstanceGuid), &gEfiTpmDeviceInstanceNoneGuid) ||
-      CompareGuid (PcdGetPtr(PcdTpmInstanceGuid), &gEfiTpmDeviceInstanceTpm12Guid)){
-    DEBUG ((EFI_D_ERROR, "No TPM2 instance required!\n"));
-    return EFI_UNSUPPORTED;
-  }
-
-  if (GetFirstGuidHob (&gTpmErrorHobGuid) != NULL) {
-    DEBUG ((EFI_D_ERROR, "TPM2 error!\n"));
-    return EFI_DEVICE_ERROR;
-  }
-  
-  Status = Tpm2RequestUseTpm ();
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "TPM2 not detected!\n"));
-    return Status;
-  }
-  
-  //
-  // Fill information
-  //
-  ASSERT (TCG_EVENT_LOG_AREA_COUNT_MAX == sizeof(mTcg2EventInfo)/sizeof(mTcg2EventInfo[0]));
-  
-  mTcgDxeData.BsCap.Size = sizeof(EFI_TCG2_BOOT_SERVICE_CAPABILITY);
-  mTcgDxeData.BsCap.ProtocolVersion.Major = 1;
-  mTcgDxeData.BsCap.ProtocolVersion.Minor = 1;
-  mTcgDxeData.BsCap.StructureVersion.Major = 1;
-  mTcgDxeData.BsCap.StructureVersion.Minor = 1;
-
-  DEBUG ((EFI_D_INFO, "Tcg2.ProtocolVersion  - %02x.%02x\n", mTcgDxeData.BsCap.ProtocolVersion.Major, mTcgDxeData.BsCap.ProtocolVersion.Minor));
-  DEBUG ((EFI_D_INFO, "Tcg2.StructureVersion - %02x.%02x\n", mTcgDxeData.BsCap.StructureVersion.Major, mTcgDxeData.BsCap.StructureVersion.Minor));
-
-  Status = Tpm2GetCapabilityManufactureID (&mTcgDxeData.BsCap.ManufacturerID);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityManufactureID fail!\n"));
-  } else {
-    DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityManufactureID - %08x\n", mTcgDxeData.BsCap.ManufacturerID));
-  }
-
-  DEBUG_CODE (
-    UINT32                    FirmwareVersion1;
-    UINT32                    FirmwareVersion2;
-
-    Status = Tpm2GetCapabilityFirmwareVersion (&FirmwareVersion1, &FirmwareVersion2);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityFirmwareVersion fail!\n"));
-    } else {
-      DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityFirmwareVersion - %08x %08x\n", FirmwareVersion1, FirmwareVersion2));
+    //
+    // Query vDev the Tcg protocol version
+    //
+    IoWrite32(TpmControlPort, TpmIoGetTcgProtocolVersion);
+    mTcgProtocolVersion = IoRead32(TpmDataPort);
+    if ((mTcgProtocolVersion != TcgProtocolTrEE) &&
+        (mTcgProtocolVersion != TcgProtocolTcg2)) {
+        return EFI_DEVICE_ERROR;
     }
-  );
 
-  Status = Tpm2GetCapabilityMaxCommandResponseSize (&MaxCommandSize, &MaxResponseSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityMaxCommandResponseSize fail!\n"));
-  } else {
-    mTcgDxeData.BsCap.MaxCommandSize  = (UINT16)MaxCommandSize;
-    mTcgDxeData.BsCap.MaxResponseSize = (UINT16)MaxResponseSize;
-    DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityMaxCommandResponseSize - %08x, %08x\n", MaxCommandSize, MaxResponseSize));
-  }
+    Status = gBS->LocateProtocol(&gEfiAcpiTableProtocolGuid, NULL, (VOID**) &AcpiTable);
+    if (EFI_ERROR(Status)) {
+        return Status;
+    }
 
-  //
-  // Get supported PCR and current Active PCRs
-  //
-  Status = Tpm2GetCapabilityPcrs (&Pcrs);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityPcrs fail!\n"));
-    TpmHashAlgorithmBitmap = EFI_TCG2_BOOT_HASH_ALG_SHA1;
-    NumberOfPCRBanks = 1;
-    ActivePCRBanks = EFI_TCG2_BOOT_HASH_ALG_SHA1;
-  } else {
-    DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityPcrs Count - %08x\n", Pcrs.count));
-    NumberOfPCRBanks = 0;
-    TpmHashAlgorithmBitmap = 0;
-    ActivePCRBanks = 0;
-    for (Index = 0; Index < Pcrs.count; Index++) {
-      DEBUG ((EFI_D_INFO, "hash - %x\n", Pcrs.pcrSelections[Index].hash));
-      switch (Pcrs.pcrSelections[Index].hash) {
-      case TPM_ALG_SHA1:
-        TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA1;
-        NumberOfPCRBanks ++;
-        if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA1;
-        }        
-        break;
-      case TPM_ALG_SHA256:
-        TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA256;
-        NumberOfPCRBanks ++;
-        if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA256;
+    Status = IntallTpm2AcpiTable(AcpiTable);
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
+
+    Tpm2RegisterTpm2DeviceLib((TPM2_DEVICE_INTERFACE *)(UINTN)TPM_BASE_ADDRESS);
+
+    //
+    // Fill information
+    //
+    ASSERT (TCG_EVENT_LOG_AREA_COUNT_MAX == sizeof(mTcg2EventInfo)/sizeof(mTcg2EventInfo[0]));
+    mTcgDxeData.BsCap.Size = sizeof(EFI_TCG2_BOOT_SERVICE_CAPABILITY);
+    mTcgDxeData.BsCap.ProtocolVersion.Major = 1;
+    mTcgDxeData.BsCap.ProtocolVersion.Minor = 1;
+    mTcgDxeData.BsCap.StructureVersion.Major = 1;
+    mTcgDxeData.BsCap.StructureVersion.Minor = 1;
+    mTcgDxeData.BsCap.TPMPresentFlag = TRUE;
+
+    //
+    // Get supported PCR and current Active PCRs
+    //
+    Status = Tpm2GetCapabilityPcrs(&Pcrs);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_ERROR, "Tpm2GetCapabilityPcrs fail!\n"));
+      TpmHashAlgorithmBitmap = EFI_TCG2_BOOT_HASH_ALG_SHA1;
+      NumberOfPCRBanks = 1;
+      ActivePCRBanks = EFI_TCG2_BOOT_HASH_ALG_SHA1;
+    } else {
+      DEBUG ((EFI_D_INFO, "Tpm2GetCapabilityPcrs Count - %08x\n", Pcrs.count));
+      NumberOfPCRBanks = 0;
+      TpmHashAlgorithmBitmap = 0;
+      ActivePCRBanks = 0;
+      for (Index = 0; Index < Pcrs.count; Index++) {
+        DEBUG ((EFI_D_INFO, "hash - %x\n", Pcrs.pcrSelections[Index].hash));
+        switch (Pcrs.pcrSelections[Index].hash) {
+        case TPM_ALG_SHA1:
+          TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA1;
+          NumberOfPCRBanks ++;
+          if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
+            ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA1;
+          }
+          break;
+        case TPM_ALG_SHA256:
+          TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA256;
+          NumberOfPCRBanks ++;
+          if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
+            ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA256;
+          }
+          break;
+        case TPM_ALG_SHA384:
+          TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA384;
+          NumberOfPCRBanks ++;
+          if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
+            ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA384;
+          }
+          break;
+        case TPM_ALG_SHA512:
+          TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA512;
+          NumberOfPCRBanks ++;
+          if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
+            ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA512;
+          }
+          break;
+        case TPM_ALG_SM3_256:
+          TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SM3_256;
+          NumberOfPCRBanks ++;
+          if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
+            ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SM3_256;
+          }
+          break;
         }
-        break;
-      case TPM_ALG_SHA384:
-        TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA384;
-        NumberOfPCRBanks ++;
-        if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA384;
-        }
-        break;
-      case TPM_ALG_SHA512:
-        TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SHA512;
-        NumberOfPCRBanks ++;
-        if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SHA512;
-        }
-        break;
-      case TPM_ALG_SM3_256:
-        TpmHashAlgorithmBitmap |= EFI_TCG2_BOOT_HASH_ALG_SM3_256;
-        NumberOfPCRBanks ++;
-        if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          ActivePCRBanks |= EFI_TCG2_BOOT_HASH_ALG_SM3_256;
-        }
-        break;
       }
     }
-  }
-  mTcgDxeData.BsCap.HashAlgorithmBitmap = TpmHashAlgorithmBitmap & PcdGet32 (PcdTcg2HashAlgorithmBitmap);
-  mTcgDxeData.BsCap.ActivePcrBanks = ActivePCRBanks & PcdGet32 (PcdTcg2HashAlgorithmBitmap);
 
-  if (PcdGet32 (PcdTcg2NumberOfPCRBanks) == 0) {
+    PcdSet32 (PcdTpm2HashMask, ActivePCRBanks);
+
+    mTcgDxeData.BsCap.HashAlgorithmBitmap = TpmHashAlgorithmBitmap;
+    mTcgDxeData.BsCap.ActivePcrBanks = ActivePCRBanks;
     mTcgDxeData.BsCap.NumberOfPCRBanks = NumberOfPCRBanks;
-  } else {
-    mTcgDxeData.BsCap.NumberOfPCRBanks = PcdGet32 (PcdTcg2NumberOfPCRBanks);
-    if (PcdGet32 (PcdTcg2NumberOfPCRBanks) > NumberOfPCRBanks) {
-      DEBUG ((EFI_D_ERROR, "ERROR: PcdTcg2NumberOfPCRBanks(0x%x) > NumberOfPCRBanks(0x%x)\n", PcdGet32 (PcdTcg2NumberOfPCRBanks), NumberOfPCRBanks));
-      mTcgDxeData.BsCap.NumberOfPCRBanks = NumberOfPCRBanks;
+    mTcgDxeData.BsCap.SupportedEventLogs = EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2 | EFI_TCG2_EVENT_LOG_FORMAT_TCG_2;
+    if ((mTcgDxeData.BsCap.ActivePcrBanks & TREE_BOOT_HASH_ALG_SHA1) == 0) {
+      //
+      // No need to expose TCG1.2 event log if SHA1 bank does not exist.
+      //
+      mTcgDxeData.BsCap.SupportedEventLogs &= ~TREE_EVENT_LOG_FORMAT_TCG_1_2;
     }
-  }
 
-  mTcgDxeData.BsCap.SupportedEventLogs = EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2 | EFI_TCG2_EVENT_LOG_FORMAT_TCG_2;
-  if ((mTcgDxeData.BsCap.ActivePcrBanks & TREE_BOOT_HASH_ALG_SHA1) == 0) {
-    //
-    // No need to expose TCG1.2 event log if SHA1 bank does not exist.
-    //
-    mTcgDxeData.BsCap.SupportedEventLogs &= ~TREE_EVENT_LOG_FORMAT_TCG_1_2;
-  }
-
-  DEBUG ((EFI_D_INFO, "Tcg2.SupportedEventLogs - 0x%08x\n", mTcgDxeData.BsCap.SupportedEventLogs));
-  DEBUG ((EFI_D_INFO, "Tcg2.HashAlgorithmBitmap - 0x%08x\n", mTcgDxeData.BsCap.HashAlgorithmBitmap));
-  DEBUG ((EFI_D_INFO, "Tcg2.NumberOfPCRBanks      - 0x%08x\n", mTcgDxeData.BsCap.NumberOfPCRBanks));
-  DEBUG ((EFI_D_INFO, "Tcg2.ActivePcrBanks        - 0x%08x\n", mTcgDxeData.BsCap.ActivePcrBanks));
-
-  if (mTcgDxeData.BsCap.TPMPresentFlag) {
     //
     // Setup the log area and copy event log from hob list to it
     //
@@ -2516,7 +2485,7 @@ DriverEntry (
                     );
 
     //
-    // Measure Exit Boot Service failed 
+    // Measure Exit Boot Service failed
     //
     Status = gBS->CreateEventEx (
                     EVT_NOTIFY_SIGNAL,
@@ -2533,13 +2502,50 @@ DriverEntry (
     // may update SecureBoot value based on last setting.
     //
     EfiCreateProtocolNotifyEvent (&gEfiVariableWriteArchProtocolGuid, TPL_CALLBACK, MeasureSecureBootPolicy, NULL, &Registration);
+
+    IoWrite32(TpmControlPort, TpmIoCapabilityHashAlgBitmap);
+    IoWrite32(TpmDataPort, mTcgDxeData.BsCap.HashAlgorithmBitmap);
+
+    return Status;
+}
+
+
+/**
+  The driver's entry point. It publishes EFI Tcg2 Protocol.
+
+  @param[in] ImageHandle  The firmware allocated handle for the EFI image.
+  @param[in] SystemTable  A pointer to the EFI System Table.
+
+  @retval EFI_SUCCESS     The entry point is executed successfully.
+  @retval other           Some error occurs when executing this entry point.
+**/
+EFI_STATUS
+EFIAPI
+DriverEntry (
+  IN    EFI_HANDLE                  ImageHandle,
+  IN    EFI_SYSTEM_TABLE            *SystemTable
+  )
+{
+  EFI_STATUS  Status;
+
+  mImageHandle = ImageHandle;
+
+  if (GetTpmEnabled())
+  {
+    Status = InitializeTcg2(SystemTable);
+    if (EFI_ERROR (Status))
+    {
+        DEBUG ((EFI_D_ERROR, "InitializeTcg2 FAILED! -  %r\n", Status));
+        return Status;
+    }
   }
 
   //
   // Install Tcg2Protocol
   //
-  Status = InstallTcg2 ();
+  Status = InstallTcg2();
   DEBUG ((EFI_D_INFO, "InstallTcg2 - %r\n", Status));
 
   return Status;
 }
+
