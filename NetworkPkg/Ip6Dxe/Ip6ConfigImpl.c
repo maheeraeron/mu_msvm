@@ -324,108 +324,15 @@ Ip6ConfigReadConfigData (
   IN OUT IP6_CONFIG_INSTANCE  *Instance
   )
 {
-  EFI_STATUS              Status;
-  UINTN                   VarSize;
-  IP6_CONFIG_VARIABLE     *Variable;
-  IP6_CONFIG_DATA_ITEM    *DataItem;
-  UINTN                   Index;
-  IP6_CONFIG_DATA_RECORD  DataRecord;
-  CHAR8                   *Data;
-
   //
-  // Try to read the configuration variable.
+  // No longer implemented for Hyper-V. See MSFT:8310881. A data layout change
+  // of the persisted data caused failure to boot issues. It is actually not necessary
+  // to persist this information as Hyper-V doesn't support an IPv6 configuration other
+  // than defaults.
   //
-  VarSize = 0;
-  Status  = gRT->GetVariable (
-                   VarName,
-                   &gEfiIp6ConfigProtocolGuid,
-                   NULL,
-                   &VarSize,
-                   NULL
-                   );
-
-  if (Status == EFI_BUFFER_TOO_SMALL) {
-    //
-    // Allocate buffer and read the config variable.
-    //
-    Variable = AllocatePool (VarSize);
-    if (Variable == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-
-    Status = gRT->GetVariable (
-                    VarName,
-                    &gEfiIp6ConfigProtocolGuid,
-                    NULL,
-                    &VarSize,
-                    Variable
-                    );
-    if (EFI_ERROR (Status) || (UINT16) (~NetblockChecksum ((UINT8 *) Variable, (UINT32) VarSize)) != 0) {
-      //
-      // GetVariable still error or the variable is corrupted.
-      // Fall back to the default value.
-      //
-      FreePool (Variable);
-
-      //
-      // Remove the problematic variable and return EFI_NOT_FOUND, a new
-      // variable will be set again.
-      //
-      gRT->SetVariable (
-             VarName,
-             &gEfiIp6ConfigProtocolGuid,
-             IP6_CONFIG_VARIABLE_ATTRIBUTE,
-             0,
-             NULL
-             );
-
-      return EFI_NOT_FOUND;
-    }
-
-    //
-    // Get the IAID we use.
-    //
-    Instance->IaId = Variable->IaId;
-
-    for (Index = 0; Index < Variable->DataRecordCount; Index++) {
-
-      CopyMem (&DataRecord, &Variable->DataRecord[Index], sizeof (DataRecord));
-
-      DataItem = &Instance->DataItem[DataRecord.DataType];
-      if (DATA_ATTRIB_SET (DataItem->Attribute, DATA_ATTRIB_SIZE_FIXED) &&
-          (DataItem->DataSize != DataRecord.DataSize)
-          ) {
-        //
-        // Perhaps a corrupted data record...
-        //
-        continue;
-      }
-
-      if (!DATA_ATTRIB_SET (DataItem->Attribute, DATA_ATTRIB_SIZE_FIXED)) {
-        //
-        // This data item has variable length data.
-        //
-        DataItem->Data.Ptr = AllocatePool (DataRecord.DataSize);
-        if (DataItem->Data.Ptr == NULL) {
-          //
-          // no memory resource
-          //
-          continue;
-        }
-      }
-
-      Data = (CHAR8 *) Variable + DataRecord.Offset;
-      CopyMem (DataItem->Data.Ptr, Data, DataRecord.DataSize);
-
-      DataItem->DataSize = DataRecord.DataSize;
-      DataItem->Status   = EFI_SUCCESS;
-    }
-
-    FreePool (Variable);
-    return EFI_SUCCESS;
-  }
-
-  return Status;
+  // EFI_NOT_FOUND will cause caller to use configuration defaults.
+  //
+  return EFI_NOT_FOUND;
 }
 
 /**
@@ -444,65 +351,11 @@ Ip6ConfigWriteConfigData (
   IN IP6_CONFIG_INSTANCE  *Instance
   )
 {
-  UINTN                   Index;
-  UINTN                   VarSize;
-  IP6_CONFIG_DATA_ITEM    *DataItem;
-  IP6_CONFIG_VARIABLE     *Variable;
-  IP6_CONFIG_DATA_RECORD  *DataRecord;
-  CHAR8                   *Heap;
-  EFI_STATUS              Status;
-
-  VarSize = sizeof (IP6_CONFIG_VARIABLE) - sizeof (IP6_CONFIG_DATA_RECORD);
-
-  for (Index = 0; Index < Ip6ConfigDataTypeMaximum; Index++) {
-
-    DataItem = &Instance->DataItem[Index];
-    if (!DATA_ATTRIB_SET (DataItem->Attribute, DATA_ATTRIB_VOLATILE) && !EFI_ERROR (DataItem->Status)) {
-
-      VarSize += sizeof (IP6_CONFIG_DATA_RECORD) + DataItem->DataSize;
-    }
-  }
-
-  Variable = AllocatePool (VarSize);
-  if (Variable == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  Variable->IaId            = Instance->IaId;
-  Heap                      = (CHAR8 *) Variable + VarSize;
-  Variable->DataRecordCount = 0;
-
-  for (Index = 0; Index < Ip6ConfigDataTypeMaximum; Index++) {
-
-    DataItem = &Instance->DataItem[Index];
-    if (!DATA_ATTRIB_SET (DataItem->Attribute, DATA_ATTRIB_VOLATILE) && !EFI_ERROR (DataItem->Status)) {
-
-      Heap -= DataItem->DataSize;
-      CopyMem (Heap, DataItem->Data.Ptr, DataItem->DataSize);
-
-      DataRecord           = &Variable->DataRecord[Variable->DataRecordCount];
-      DataRecord->DataType = (EFI_IP6_CONFIG_DATA_TYPE) Index;
-      DataRecord->DataSize = (UINT32) DataItem->DataSize;
-      DataRecord->Offset   = (UINT16) (Heap - (CHAR8 *) Variable);
-
-      Variable->DataRecordCount++;
-    }
-  }
-
-  Variable->Checksum = 0;
-  Variable->Checksum = (UINT16) ~NetblockChecksum ((UINT8 *) Variable, (UINT32) VarSize);
-
-  Status = gRT->SetVariable (
-                  VarName,
-                  &gEfiIp6ConfigProtocolGuid,
-                  IP6_CONFIG_VARIABLE_ATTRIBUTE,
-                  VarSize,
-                  Variable
-                  );
-
-  FreePool (Variable);
-
-  return Status;
+  //
+  // Not implemented for Hyper-V. See Ip6ConfigReadConfigData comments.
+  // All callers ignore return value.
+  //
+  return EFI_UNSUPPORTED;
 }
 
 /**
