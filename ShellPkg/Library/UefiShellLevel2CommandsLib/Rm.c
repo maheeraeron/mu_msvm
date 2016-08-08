@@ -43,7 +43,7 @@ IsDirectoryEmpty (
   FileInfo = NULL;
 
   for (FileHandleFindFirstFile(FileHandle, &FileInfo)
-    ;  !NoFile
+    ;  (FileInfo != NULL) && !NoFile
     ;  FileHandleFindNextFile(FileHandle, FileInfo, &NoFile)
    ){
     if (StrStr(FileInfo->FileName, L".") != FileInfo->FileName
