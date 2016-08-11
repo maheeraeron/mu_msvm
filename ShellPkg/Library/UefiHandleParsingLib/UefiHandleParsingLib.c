@@ -727,8 +727,9 @@ DriverEfiVersionProtocolDumpInformation(
   ASSERT_EFI_ERROR(Status);
 
   RetVal = AllocateZeroPool(VersionStringSize);
-  ASSERT(RetVal != NULL);
-  UnicodeSPrint(RetVal, VersionStringSize, L"0x%08x", DriverEfiVersion->FirmwareVersion);
+  if (RetVal != NULL) {
+    UnicodeSPrint (RetVal, VersionStringSize, L"0x%08x", DriverEfiVersion->FirmwareVersion);
+  }
   return (RetVal);
 }
 /**
@@ -2217,10 +2218,11 @@ InternalShellInitHandleList(
   }
   for (mHandleList.NextIndex = 1 ; mHandleList.NextIndex <= HandleCount ; mHandleList.NextIndex++){
     ListWalker = AllocateZeroPool(sizeof(HANDLE_LIST));
-    ASSERT(ListWalker != NULL);
-    ListWalker->TheHandle = HandleBuffer[mHandleList.NextIndex-1];
-    ListWalker->TheIndex  = mHandleList.NextIndex;
-    InsertTailList(&mHandleList.List.Link,&ListWalker->Link);
+    if (ListWalker != NULL) {
+      ListWalker->TheHandle = HandleBuffer[mHandleList.NextIndex - 1];
+      ListWalker->TheIndex = mHandleList.NextIndex;
+      InsertTailList (&mHandleList.List.Link, &ListWalker->Link);
+    }
   }
   FreePool(HandleBuffer);
   return (EFI_SUCCESS);
@@ -2288,7 +2290,9 @@ ConvertHandleToHandleIndex(
   FreePool (ProtocolBuffer);
 
   ListWalker = AllocateZeroPool(sizeof(HANDLE_LIST));
-  ASSERT(ListWalker != NULL);
+  if (ListWalker == NULL) {
+    return 0;
+  }
   ListWalker->TheHandle = TheHandle;
   ListWalker->TheIndex  = mHandleList.NextIndex++;
   InsertTailList(&mHandleList.List.Link,&ListWalker->Link);
@@ -2415,7 +2419,11 @@ ParseHandleDatabaseByRelationshipWithType (
   }
 
   *HandleType = AllocateZeroPool (*HandleCount * sizeof (UINTN));
-  ASSERT(*HandleType != NULL);
+  if (*HandleType == NULL) {
+    SHELL_FREE_NON_NULL (*HandleBuffer);
+    *HandleCount = 0;
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   DriverBindingHandleIndex = -1;
   for (HandleIndex = 0; HandleIndex < *HandleCount; HandleIndex++) {
@@ -2671,26 +2679,28 @@ ParseHandleDatabaseByRelationship (
         // Allocate a handle buffer for the number of handles that matched the attributes in Mask
         //
         *MatchingHandleBuffer = AllocateZeroPool ((*MatchingHandleCount +1)* sizeof (EFI_HANDLE));
-        ASSERT(*MatchingHandleBuffer != NULL);
-
-        for (HandleIndex = 0,*MatchingHandleCount = 0
-          ;  HandleIndex < HandleCount
-          ;  HandleIndex++
-         ){
-          //
-          // Fill the allocated buffer with the handles that matched the attributes in Mask
-          //
-          if ((HandleType[HandleIndex] & Mask) == Mask) {
-            (*MatchingHandleBuffer)[(*MatchingHandleCount)++] = HandleBuffer[HandleIndex];
+        if (*MatchingHandleBuffer == NULL) {
+          Status = EFI_OUT_OF_RESOURCES;
+        } else {
+          for (HandleIndex = 0, *MatchingHandleCount = 0
+               ;  HandleIndex < HandleCount
+               ;  HandleIndex++
+               ) {
+            //
+            // Fill the allocated buffer with the handles that matched the attributes in Mask
+            //
+            if ((HandleType[HandleIndex] & Mask) == Mask) {
+              (*MatchingHandleBuffer)[(*MatchingHandleCount)++] = HandleBuffer[HandleIndex];
+            }
           }
-        }
 
-        //
-        // Make the last one NULL
-        //
-        (*MatchingHandleBuffer)[*MatchingHandleCount] = NULL;
+          //
+          // Make the last one NULL
+          //
+          (*MatchingHandleBuffer)[*MatchingHandleCount] = NULL;
 
-        Status = EFI_SUCCESS;
+          Status = EFI_SUCCESS;
+        } // *MatchingHandleBuffer == NULL (ELSE)
       } // MacthingHandleBuffer == NULL (ELSE)
     } // *MatchingHandleCount  == 0 (ELSE)
   } // no error on ParseHandleDatabaseByRelationshipWithType
@@ -2703,6 +2713,9 @@ ParseHandleDatabaseByRelationship (
     FreePool (HandleType);
   }
 
+  ASSERT ((MatchingHandleBuffer == NULL) ||
+          (*MatchingHandleCount == 0 && *MatchingHandleBuffer == NULL) ||
+          (*MatchingHandleCount != 0 && *MatchingHandleBuffer != NULL));
   return Status;
 }
 
@@ -2794,6 +2807,9 @@ ParseHandleDatabaseForChildControllers(
   } else {
     FreePool(HandleBufferForReturn);
   }
+  ASSERT ((MatchingHandleBuffer == NULL) ||
+          (*MatchingHandleCount == 0 && *MatchingHandleBuffer == NULL) ||
+          (*MatchingHandleCount != 0 && *MatchingHandleBuffer != NULL));
 
   return (EFI_SUCCESS);
 }

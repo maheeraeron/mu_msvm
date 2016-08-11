@@ -2021,6 +2021,7 @@ InternalCommandLineParse (
   UINTN                         Count;
   CONST CHAR16                  *TempPointer;
   UINTN                         CurrentValueSize;
+  CHAR16                        *NewValue;
 
   CurrentItemPackage = NULL;
   GetItemValue = 0;
@@ -2119,8 +2120,15 @@ InternalCommandLineParse (
       // get the item VALUE for a previous flag
       //
       CurrentValueSize = ValueSize + StrSize(Argv[LoopCounter]) + sizeof(CHAR16);
-      CurrentItemPackage->Value = ReallocatePool(ValueSize, CurrentValueSize, CurrentItemPackage->Value);
-      ASSERT(CurrentItemPackage->Value != NULL);
+      NewValue = ReallocatePool(ValueSize, CurrentValueSize, CurrentItemPackage->Value);
+      if (NewValue == NULL) {
+        SHELL_FREE_NON_NULL (CurrentItemPackage->Value);
+        SHELL_FREE_NON_NULL (CurrentItemPackage);
+        ShellCommandLineFreeVarList (*CheckPackage);
+        *CheckPackage = NULL;
+        return EFI_OUT_OF_RESOURCES;
+      }
+      CurrentItemPackage->Value = NewValue;
       if (ValueSize == 0) {
         StrCpyS( CurrentItemPackage->Value, 
                   CurrentValueSize/sizeof(CHAR16), 
@@ -2968,13 +2976,14 @@ ShellPrintHiiEx(
   CHAR16            *HiiFormatString;
   EFI_STATUS        RetVal;
 
+  RetVal = EFI_DEVICE_ERROR;
+
   VA_START (Marker, HiiFormatHandle);
   HiiFormatString = HiiGetString(HiiFormatHandle, HiiFormatStringId, Language);
-  ASSERT(HiiFormatString != NULL);
-
-  RetVal = InternalShellPrintWorker(Col, Row, HiiFormatString, Marker);
-
-  SHELL_FREE_NON_NULL(HiiFormatString);
+  if (HiiFormatString != NULL) {
+    RetVal = InternalShellPrintWorker (Col, Row, HiiFormatString, Marker);
+    SHELL_FREE_NON_NULL (HiiFormatString);
+  }
   VA_END(Marker);
 
   return (RetVal);
