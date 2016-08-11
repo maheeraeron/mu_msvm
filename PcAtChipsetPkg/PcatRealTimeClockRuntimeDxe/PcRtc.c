@@ -16,6 +16,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define TICKS_PER_MILLISECOND       10000
 #define TIME_CACHE_EXPIRY_PERIOD    (500 * TICKS_PER_MILLISECOND)
+
 UINT64 gHvRefTimeAtLastUpdate;
 EFI_TIME gCachedTime;
 
@@ -25,7 +26,7 @@ EFI_TIME gCachedTime;
 UINTN mDayOfMonth[] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 //
-// 
+//
 // The name of NV variable to store the timezone and daylight saving information.
 //
 CHAR16 mTimeZoneVariableName[] = L"RTC";
@@ -36,22 +37,24 @@ IsCacheValid(
   )
 /*++
   Routine Description:
+
     Checks if the cached Time is valid.
 
   Returns:
+
     TRUE        -Cache is valid.
 
     FALSE       -Cache is uninitialized, stale or unusable.
 
 --*/
 {
-  UINT64 ticksElapsedSinceLastUpdate; 
+  UINT64 ticksElapsedSinceLastUpdate;
   UINT64 currentHvRefTime;
 
   currentHvRefTime = GetPerformanceCounter();
   ticksElapsedSinceLastUpdate = currentHvRefTime - gHvRefTimeAtLastUpdate;
 
-  return (gHvRefTimeAtLastUpdate > 0 && 
+  return (gHvRefTimeAtLastUpdate > 0 &&
     ticksElapsedSinceLastUpdate > 0 &&
     ticksElapsedSinceLastUpdate < TIME_CACHE_EXPIRY_PERIOD);
 }
@@ -66,9 +69,11 @@ GetCachedTime(
   Routine Description:
 
     Retrieves cached value of CurrentTime.
+    NOTE: This function does not check if the cache is still valid. The check
     needs to be performed by the caller.
+
   Arguments:
-CHAR16 mTimeZoneVariableName[] = L"RTC";
+
     Time        -Pointer to EFI_TIME variable for output.
 
 --*/
@@ -99,7 +104,7 @@ SetCachedTime(
 
 /**
   Compare the Hour, Minute and Second of the From time and the To time.
-  
+
   Only compare H/M/S in EFI_TIME and ignore other fields here.
 
   @param From   the first time
@@ -260,7 +265,7 @@ PcRtcInit (
   if (!EfiAtRuntime ()) {
     EfiReleaseLock (&Global->RtcLock);
   }
- 
+
   //
   // Get the data of Daylight saving and time zone, if they have been
   // stored in NV variable during previous boot.
@@ -278,7 +283,7 @@ PcRtcInit (
     Time.Daylight = (UINT8) (TimerVar >> 16);
   } else {
     Time.TimeZone = EFI_UNSPECIFIED_TIMEZONE;
-    Time.Daylight = 0;  
+    Time.Daylight = 0;
   }
 
   //
@@ -314,7 +319,7 @@ PcRtcInit (
   if (EFI_ERROR (Status)) {
     return EFI_DEVICE_ERROR;
   }
-  
+
   //
   // Reset wakeup time value to valid state when wakeup alarm is disabled and wakeup time is invalid.
   // Global variable has already had valid SavedTimeZone and Daylight,
@@ -324,9 +329,9 @@ PcRtcInit (
   if ((Enabled) || (!EFI_ERROR (Status))) {
     return EFI_SUCCESS;
   }
-  
+
   //
-  // When wakeup time is disabled and invalid, reset wakeup time register to valid state 
+  // When wakeup time is disabled and invalid, reset wakeup time register to valid state
   // but keep wakeup alarm disabled.
   //
   Time.Second = RTC_INIT_SECOND;
@@ -374,13 +379,13 @@ PcRtcInit (
     }
     return EFI_DEVICE_ERROR;
   }
-  
+
   //
   // Inhibit updates of the RTC
   //
   RegisterB.Bits.Set  = 1;
   RtcWrite (RTC_ADDRESS_REGISTER_B, RegisterB.Data);
- 
+
   //
   // Set RTC alarm time registers
   //
@@ -393,7 +398,7 @@ PcRtcInit (
   //
   RegisterB.Bits.Set = 0;
   RtcWrite (RTC_ADDRESS_REGISTER_B, RegisterB.Data);
- 
+
   //
   // Release RTC Lock.
   //
@@ -490,7 +495,7 @@ PcRtcGetTime (
       if (EFI_ERROR (Status)) {
         return EFI_DEVICE_ERROR;
       }
-  
+
     SetCachedTime(Time);
   }
   else {
@@ -569,7 +574,7 @@ PcRtcSetTime (
      }
     return Status;
   }
-  
+
   //
   // Write timezone and daylight to RTC variable
   //
@@ -888,7 +893,7 @@ PcRtcSetWakeupTime (
     }
     return EFI_DEVICE_ERROR;
   }
-  
+
   //
   // Inhibit updates of the RTC
   //
@@ -1032,7 +1037,7 @@ ConvertRtcTimeToEfiTime (
   @param    Timeout  Tell how long it should take to wait.
 
   @retval   EFI_DEVICE_ERROR   RTC device error.
-  @retval   EFI_SUCCESS        RTC is updated and ready.  
+  @retval   EFI_SUCCESS        RTC is updated and ready.
 **/
 EFI_STATUS
 RtcWaitToUpdate (
@@ -1213,7 +1218,7 @@ ConvertEfiTimeToRtcTime (
 
 /**
   Compare the Hour, Minute and Second of the From time and the To time.
-  
+
   Only compare H/M/S in EFI_TIME and ignore other fields here.
 
   @param From   the first time
@@ -1264,7 +1269,7 @@ IsWithinOneDay (
   //
   ASSERT (From->Month >=1);
   ASSERT (From->Month <=12);
-  
+
   if (From->Year == To->Year) {
     if (From->Month == To->Month) {
       if ((From->Day + 1) == To->Day) {
