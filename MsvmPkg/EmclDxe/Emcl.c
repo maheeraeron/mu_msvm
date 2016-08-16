@@ -631,7 +631,7 @@ Return Value:
     {
     case VmbusPacketTypeCompletion:
         completion =
-            (EMCL_COMPLETION_ENTRY*)Packet->Descriptor.TransactionId;
+            (EMCL_COMPLETION_ENTRY*)(UINTN)Packet->Descriptor.TransactionId;
 
         completion->CompletionRoutine(
             completion->CompletionContext,

@@ -609,7 +609,7 @@ Return Value:
         ASSERT(FALSE);
         goto Cleanup;
     }
-    ZeroMem((UINT8*)crBuffer, 2 * EFI_PAGE_SIZE);
+    ZeroMem((UINT8*)(UINTN)crBuffer, 2 * EFI_PAGE_SIZE);
 
     //
     // Send the request to the TPM VDev.

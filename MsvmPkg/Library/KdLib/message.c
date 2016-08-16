@@ -101,24 +101,24 @@ ResendPacket:
     // EfiKdSendPacket will never stop.
     //
 
-    if (EfiKdDebuggerNotPresent != FALSE) 
+    if (EfiKdDebuggerNotPresent != FALSE)
     {
         return ContinueSuccess;
     }
 
-    while (TRUE) 
+    while (TRUE)
     {
         //
         // Wait for State Manipulate Packet without timeout.
         //
 
-        do 
+        do
         {
             ReturnCode = EfiKdReceivePacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                                             &MessageHeader,
                                             &MessageData,
                                             &Length);
-            if (ReturnCode == (UINT16)EFI_KD_PACKET_RESEND) 
+            if (ReturnCode == (UINT16)EFI_KD_PACKET_RESEND)
             {
                 goto ResendPacket;
             }
@@ -129,7 +129,7 @@ ResendPacket:
         //
 
         //ConsolePrint(L"EfiKdSendWait: api number %x\r\n", ManipulateState.ApiNumber);
-        switch (ManipulateState.ApiNumber) 
+        switch (ManipulateState.ApiNumber)
         {
         case DbgKdReadVirtualMemoryApi:
             EfiKdReadVirtualMemory(&ManipulateState, &MessageData, ContextRecord);
@@ -180,11 +180,11 @@ ResendPacket:
             break;
 
         case DbgKdContinueApi:
-            if (NT_SUCCESS(ManipulateState.u.Continue.ContinueStatus) != FALSE) 
+            if (NT_SUCCESS(ManipulateState.u.Continue.ContinueStatus) != FALSE)
             {
                 return ContinueSuccess;
-            } 
-            else 
+            }
+            else
             {
                 return ContinueError;
             }
@@ -192,12 +192,12 @@ ResendPacket:
             break;
 
         case DbgKdContinueApi2:
-            if (NT_SUCCESS(ManipulateState.u.Continue2.ContinueStatus) != FALSE) 
+            if (NT_SUCCESS(ManipulateState.u.Continue2.ContinueStatus) != FALSE)
             {
                 EfiKdGetStateChange(&ManipulateState, ContextRecord);
                 return ContinueSuccess;
-            } 
-            else 
+            }
+            else
             {
                 return ContinueError;
             }
@@ -217,7 +217,7 @@ ResendPacket:
                                             &MessageData,
                                             ContextRecord);
 
-            if (Status) 
+            if (Status)
             {
                 ManipulateState.ApiNumber = DbgKdContinueApi;
                 ManipulateState.u.Continue.ContinueStatus = Status;
@@ -276,7 +276,7 @@ EfiKdpSetCommonState (
     WaitStateChange->Processor = 0;
     WaitStateChange->NumberProcessors = 1;
     WaitStateChange->Thread = 0;
-    PcMemory = (PCHAR)CONTEXT_TO_PROGRAM_COUNTER(ContextRecord);
+    PcMemory = (PCHAR)(UINTN)CONTEXT_TO_PROGRAM_COUNTER(ContextRecord);
     WaitStateChange->ProgramCounter = (UINT64)(LONG64)(LONG_PTR)PcMemory;
 
     ZeroMem(&WaitStateChange->AnyControlReport,
@@ -287,7 +287,7 @@ EfiKdpSetCommonState (
     //
 
     InstrStream = WaitStateChange->ControlReport.InstructionStream;
-    InstrCount = 
+    InstrCount =
         (UINT16)EfiKdMoveMemory((PCHAR)InstrStream, PcMemory, DBGKD_MAXSTREAM);
     WaitStateChange->ControlReport.InstructionCount = InstrCount;
 
@@ -298,7 +298,7 @@ EfiKdpSetCommonState (
     //
 
     if (EfiKdDeleteBreakpointRange((UINT_PTR)PcMemory,
-                                   (UINT_PTR)PcMemory + InstrCount - 1)) 
+                                   (UINT_PTR)PcMemory + InstrCount - 1))
     {
         EfiKdMoveMemory((PCHAR)InstrStream, PcMemory, InstrCount);
     }
@@ -334,13 +334,14 @@ Return Value:
 
 --*/
 {
-
     STRING MessageData;
     STRING MessageHeader;
     KCONTINUE_STATUS Status;
     DBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange;
 
-    do 
+    ZeroMem(&WaitStateChange, sizeof(WaitStateChange));
+
+    do
     {
         //
         // Construct the wait state change message and message descriptor.
@@ -354,13 +355,13 @@ Return Value:
                           &WaitStateChange);
 
         if (sizeof(EXCEPTION_RECORD) ==
-            sizeof(WaitStateChange.u.Exception.ExceptionRecord)) 
+            sizeof(WaitStateChange.u.Exception.ExceptionRecord))
         {
             EfiKdCopyMemory((PCHAR)&WaitStateChange.u.Exception.ExceptionRecord,
                             (PCHAR)ExceptionRecord,
                             sizeof(EXCEPTION_RECORD));
-        } 
-        else 
+        }
+        else
         {
             ExceptionRecord32To64((PEXCEPTION_RECORD32)ExceptionRecord,
                                   &WaitStateChange.u.Exception.ExceptionRecord);
@@ -446,7 +447,7 @@ Return Value:
         WaitStateChange.u.LoadSymbols.ProcessId = SymbolInfo->ProcessId;
         WaitStateChange.u.LoadSymbols.CheckSum = SymbolInfo->CheckSum;
         WaitStateChange.u.LoadSymbols.SizeOfImage = SymbolInfo->SizeOfImage;
-        if (ARGUMENT_PRESENT(PathName)) 
+        if (ARGUMENT_PRESENT(PathName))
         {
             WaitStateChange.u.LoadSymbols.PathNameLength =
                 EfiKdMoveMemory((PCHAR)EfiKdMessageBuffer,
@@ -457,8 +458,8 @@ Return Value:
             MessageData.Length = (UINT16)WaitStateChange.u.LoadSymbols.PathNameLength;
             MessageData.Buffer[MessageData.Length-1] = '\0';
             AdditionalData = &MessageData;
-        } 
-        else 
+        }
+        else
         {
             WaitStateChange.u.LoadSymbols.PathNameLength = 0;
             AdditionalData = NULL;

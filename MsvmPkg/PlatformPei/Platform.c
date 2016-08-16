@@ -582,8 +582,8 @@ Return Value:
 VOID
 AddFirstMemoryRange(
     _In_ CONST UINT8 PhysicalAddressBits,
-    _In_ CONST UINTN Length,
-    _In_ CONST UINTN BiosSize
+    _In_ CONST UINT64 Length,
+    _In_ CONST UINT64 BiosSize
 )
 /*++
 
@@ -609,7 +609,7 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    UINTN peiBase, peiSize;
+    UINT64 peiBase, peiSize;
 
     //
     // Establish PEI memory first so we can create HOBs in the formal PEI heap.

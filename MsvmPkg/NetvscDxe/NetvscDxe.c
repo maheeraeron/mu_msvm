@@ -412,7 +412,7 @@ Return Value:
         {
             break;
         }
-        TxQueueEnqueue(&AdapterInfo->FreeTxBuffersQueue, (VOID *) txBuffer);
+        TxQueueEnqueue(&AdapterInfo->FreeTxBuffersQueue, (VOID *) (UINTN) txBuffer);
     }
 
     AdapterInfo->RxFilter = 0;
@@ -1282,7 +1282,7 @@ Arguments:
                 switch(pQueryReqComplete->RequestId)
                 {
                 case PERM_NODE_ADDR_REQUEST_ID:
-                    nodeAddr = (PUINT8)((UINT64) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
+                    nodeAddr = (PUINT8)((UINTN) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
                     CopyMem(
                         &adapterInfo->PermNodeAddress,
                         nodeAddr,
@@ -1290,7 +1290,7 @@ Arguments:
                     break;
 
                 case CURR_NODE_ADDR_REQUEST_ID:
-                    nodeAddr = (PUINT8)((UINT64) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
+                    nodeAddr = (PUINT8)((UINTN) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
                     CopyMem(
                         &adapterInfo->CurrentNodeAddress,
                         nodeAddr,

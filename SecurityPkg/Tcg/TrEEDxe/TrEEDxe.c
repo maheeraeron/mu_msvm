@@ -483,7 +483,7 @@ TcgDxeLogEvent (
     //
     // Add new event to the log.
     //
-    LogArea->LastEvent = (UINT8*) (LogArea->Lasa + LogArea->EventLogSize);
+    LogArea->LastEvent = (UINT8*) (UINTN) (LogArea->Lasa + LogArea->EventLogSize);
     CopyMem ((UINT8*)LogArea->LastEvent, EventHdr, EventHdrSize);
     CopyMem ((UINT8*)(LogArea->LastEvent + EventHdrSize), EventData, EventDataSize);
     LogArea->EventLogSize += eventSize;
@@ -926,6 +926,8 @@ MeasureHandoffTables (
   EFI_HANDOFF_TABLE_POINTERS        HandoffTables;
   UINTN                             ProcessorNum;
   EFI_CPU_PHYSICAL_LOCATION         *ProcessorLocBuf;
+
+  ProcessorLocBuf = NULL;
 
   //
   // Measure SMBIOS with EV_EFI_HANDOFF_TABLES to PCR[1]

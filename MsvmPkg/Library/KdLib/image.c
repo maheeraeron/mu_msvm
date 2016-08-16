@@ -114,7 +114,7 @@ Routine Description:
 Arguments:
 
     ModuleList   - List to add the module info to.
-    
+
     ImageContext - A pointer to the load address of the module.
 
     AddedEntry   - Returns a pointer to the newly added entry.
@@ -157,14 +157,14 @@ Return Value:
     //
     ASSERT(ImageContext->ImageSize <= MAX_UINT32);
     entry->SizeOfImage = (UINT32)ImageContext->ImageSize;
-    entry->DllBase     = ImageContext->ImageAddress;
-    entry->EntryPoint  = ImageContext->EntryPoint;
+    entry->DllBase     = (UINTN)ImageContext->ImageAddress;
+    entry->EntryPoint  = (UINTN)ImageContext->EntryPoint;
 
     //
     // Checksum is not provided in the EFI image context
     // get it from the PE header directly.
     //
-    ntHeader = (EFI_IMAGE_OPTIONAL_HEADER_UNION*)((UINT8*)ImageContext->ImageAddress +
+    ntHeader = (EFI_IMAGE_OPTIONAL_HEADER_UNION*)((UINT8*)(UINTN)ImageContext->ImageAddress +
                 ImageContext->PeCoffHeaderOffset);
 
     if (ntHeader->Pe32.Signature == EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC)
@@ -315,7 +315,7 @@ Return Value:
         //   The string buffer is allocated directly after the LDR_DATA_TABLE_ENTRY
         //   struct.  Subtract to get to the start of LDR_DATA_TABLE_ENTRY.
         //
-        LDR_DATA_TABLE_ENTRY* oldEntry = 
+        LDR_DATA_TABLE_ENTRY* oldEntry =
             (PLDR_DATA_TABLE_ENTRY)((PUCHAR)pUnloadEntry->Name.Buffer - sizeof(LDR_DATA_TABLE_ENTRY));
 
         FreePool(oldEntry);
@@ -324,7 +324,7 @@ Return Value:
     pUnloadEntry->Name.Buffer = Module->BaseDllName.Buffer;
     pUnloadEntry->Name.Length = Module->BaseDllName.Length;
     pUnloadEntry->Name.MaximumLength = Module->BaseDllName.MaximumLength;
-    
+
     pUnloadEntry->StartAddress = (PVOID)Module->DllBase;
     pUnloadEntry->EndAddress   = (PUCHAR)Module->DllBase + Module->SizeOfImage;
     pUnloadEntry->CurrentTime  = GetPerformanceCounter();
@@ -413,7 +413,7 @@ PeCoffLoaderRelocateImageExtraAction (
 
 Routine Description:
 
-    Performs additional actions after a PE/COFF image has been loaded and 
+    Performs additional actions after a PE/COFF image has been loaded and
     relocated.
 
     If ImageContext is NULL, then ASSERT().
@@ -437,7 +437,7 @@ Return Value:
 
     ASSERT (ImageContext != NULL);
 
-    status = EfiKdAddModuleInfo(&EfiKdModuleList, 
+    status = EfiKdAddModuleInfo(&EfiKdModuleList,
                                 ImageContext,
                                 &entry);
     if (EFI_ERROR(status))
@@ -447,10 +447,10 @@ Return Value:
 
     //
     // Setup value of EfiKdModuleTableEntry.
-    // This only needs to be done if not set and will most likely point to the module 
+    // This only needs to be done if not set and will most likely point to the module
     // info for DxeCore (see first call to PeCoffLoaderRelocateImageExtraAction
     // in DxeMain).
-    // 
+    //
     if (EfiKdModuleDataTableEntry == NULL)
     {
         EfiKdModuleDataTableEntry = (PLDR_DATA_TABLE_ENTRY)EfiKdModuleList.ForwardLink;
@@ -470,8 +470,8 @@ PeCoffLoaderUnloadImageExtraAction (
 
 Routine Description:
 
-    Performs additional actions just before a PE/COFF image is unloaded.  Any 
-    resources that were allocated by PeCoffLoaderRelocateImageExtraAction() 
+    Performs additional actions just before a PE/COFF image is unloaded.  Any
+    resources that were allocated by PeCoffLoaderRelocateImageExtraAction()
     must be freed.
 
     If ImageContext is NULL, then ASSERT().
@@ -493,14 +493,14 @@ Return Value:
     ASSERT (ImageContext != NULL);
 
     status = EfiKdFindAndRemoveModuleInfo(&EfiKdModuleList,
-        ImageContext->ImageAddress,
+        (UINTN)ImageContext->ImageAddress,
         &module);
 
     if (EFI_ERROR(status))
     {
         //
         // Didn't find the module.  Typically because it was never loaded and
-        // this function is called for LoadImage() failure cleanup.  
+        // this function is called for LoadImage() failure cleanup.
         // Therefore don't try to create and send the unload message to the debugger.
         //
         return;

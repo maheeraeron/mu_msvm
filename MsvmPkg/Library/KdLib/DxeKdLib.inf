@@ -19,7 +19,6 @@
     UefiBootServicesTableLib
     BaseLib
     BaseMemoryLib
-    DebugLib
     MemoryAllocationLib
     LocalApicLib
     ResetSystemLib
@@ -42,6 +41,14 @@
     cp.c
     image.c
     CrashDumpAgent.c
+
+[Sources.Ia32]
+    Ia32/trapa.asm      | MSFT
+    Ia32/debugstb.asm   | MSFT
+    Ia32/state.asm      | MSFT
+    Ia32/debug.c        | MSFT
+    Ia32/cpuapi.c       | MSFT
+    Ia32/trapc.c        | MSFT
 
 [Sources.X64]
     X64/trapa.asm       | MSFT

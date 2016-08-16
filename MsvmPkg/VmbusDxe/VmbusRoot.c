@@ -28,6 +28,7 @@ Author:
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/SynchronizationLib.h>
 
 typedef struct _VMBUS_HOT_MESSAGE
 {
@@ -55,6 +56,65 @@ struct _VMBUS_ROOT_CONTEXT
     VMBUS_CHANNEL_CONTEXT *Channels[VMBUS_MAX_CHANNELS];
     UINT32 MaxInterruptUsed;
 };
+
+#if defined(MDE_CPU_IA32)
+
+
+BOOLEAN
+_BitScanForward64(
+    __deref_out_range(<, (sizeof(UINT64) * 8)) PULONG BitNumber,
+    __in UINT64 Mask
+    )
+/*++
+
+Routine Description:
+
+    This routine returns the first low order bit set in a 64bit mask, scanning
+    from the least signifcant bit to the most significant bit.
+
+Arguments:
+
+    BitNumber - Supplies a pointer to the variable that will receive the bit
+        number of the first low bit set (from 0 to 63), or zero if no bits are
+        set.
+
+    Mask - Supplies a bit mask that will be scanned for set bits.
+
+Return Value:
+
+    TRUE if a bit was set in Mask, FALSE if no bits were set.
+
+--*/
+{
+    unsigned long partialBitNumber;
+
+    if (_BitScanForward(&partialBitNumber, (unsigned long) Mask))
+    {
+        *BitNumber = partialBitNumber;
+        return TRUE;
+    }
+    else if (_BitScanForward(&partialBitNumber, (unsigned long) (Mask >> 32)))
+    {
+        *BitNumber = partialBitNumber + 32;
+        return TRUE;
+    }
+    else
+    {
+        *BitNumber = 0;
+        return FALSE;
+    }
+}
+
+UINT64 _InterlockedExchange64(UINT64* Target, UINT64 Value)
+{
+    UINT64 Old;
+    do Old = *Target;
+    while (InterlockedCompareExchange64(Target, Value, Old) != Old);
+    return Old;
+}
+
+
+#endif // defined(MDE_CPU_IA32)
 
 VOID
 EFIAPI

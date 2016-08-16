@@ -21,17 +21,8 @@
     .code
 
 EXTRN mErrorCodeFlag:DWORD ; Error code flags for exceptions
+EXTEN ExternalVectorTable:DWORD ; The external interrupt vector table
 
-;
-; point to the external interrupt vector table
-;
-ExternalVectorTablePtr DWORD 0
-
-InitializeExternalVectorTablePtr PROC PUBLIC
-    mov     eax, [esp+4]
-    mov     ExternalVectorTablePtr, eax
-    ret
-InitializeExternalVectorTablePtr ENDP
 
 ;------------------------------------------------------------------------------
 ; VOID
@@ -66,6 +57,19 @@ SetDataSelectors PROC PUBLIC
     mov     gs, cx
     ret
 SetDataSelectors ENDP
+
+;------------------------------------------------------------------------------
+; VOID
+; EFIAPI
+; SleepAndEnable (
+;   VOID
+;   );
+;------------------------------------------------------------------------------
+SleepAndEnable PROC PUBLIC
+    sti
+    hlt
+    ret
+SleepAndEnable ENDP
 
 ;---------------------------------------;
 ; CommonInterruptEntry                  ;
@@ -272,7 +276,7 @@ ErrorCodeAndVectorOnStack:
     push    dword ptr [ebp + 2 * 4]
 
 ;; call into exception handler
-    mov     eax, ExternalVectorTablePtr  ; get the interrupt vectors base
+    lea     eax, ExternalVectorTable  ; get the interrupt vectors base
     or      eax, eax                        ; NULL?
     jz      nullExternalExceptionHandler
 

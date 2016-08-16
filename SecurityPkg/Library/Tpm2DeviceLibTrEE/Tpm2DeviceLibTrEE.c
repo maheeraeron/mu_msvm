@@ -84,7 +84,7 @@ Return Value:
     }
 
     // Copy command to command buffer.
-    CopyMem((UINT8 *)mTpm2ControlArea->Command, InputParameterBlock, InputParameterBlockSize);
+    CopyMem((UINT8 *)(UINTN)mTpm2ControlArea->Command, InputParameterBlock, InputParameterBlockSize);
 
     // Set Start to kick off command execution.
     mTpm2ControlArea->Start = 1;
@@ -114,7 +114,7 @@ Return Value:
             outputParameterSize = mTpm2ControlArea->ResponseSize;
         }
 
-        CopyMem(OutputParameterBlock, (UINT8*)mTpm2ControlArea->Response, outputParameterSize);
+        CopyMem(OutputParameterBlock, (UINT8*)(UINTN)mTpm2ControlArea->Response, outputParameterSize);
         goto Cleanup;
     }
 
@@ -137,7 +137,7 @@ Cleanup:
 
   @retval EFI_SUCCESS            The command byte stream was successfully sent to the device and a response was successfully received.
   @retval EFI_DEVICE_ERROR       The command was not successfully sent to the device or a response was not successfully received from the device.
-  @retval EFI_BUFFER_TOO_SMALL   The output parameter block is too small. 
+  @retval EFI_BUFFER_TOO_SMALL   The output parameter block is too small.
 **/
 EFI_STATUS
 EFIAPI

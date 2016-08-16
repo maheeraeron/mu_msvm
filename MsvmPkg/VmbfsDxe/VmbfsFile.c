@@ -804,10 +804,10 @@ Return Value:
     }
     else
     {
-        CopyMem(Buffer, srcBuffer, bufferSize);
+        CopyMem(Buffer, srcBuffer, (UINTN)bufferSize);
     }
 
-    *BufferSize = bufferSize;
+    *BufferSize = (UINTN)bufferSize;
 
     return status;
 }

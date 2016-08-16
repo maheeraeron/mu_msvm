@@ -76,7 +76,23 @@ typedef VOID *PVOID;
 // General defines.
 //
 
+#if defined(MDE_CPU_X64)
 #define MemoryBarrier() __faststorefence()
+#elif defined(MDE_CPU_IA32)
+FORCEINLINE
+VOID
+MemoryBarrier (
+    VOID
+    )
+{
+    LONG Barrier;
+    __asm {
+        xchg Barrier, eax
+    }
+}
+#else
+#error Unsupported architecture
+#endif
 #define MemoryBarrierWithoutFence() _ReadWriteBarrier()
 
 #pragma intrinsic(__cpuid)
@@ -95,7 +111,7 @@ __cpuid(
 
 #define RTL_SIZEOF_THROUGH_FIELD(type, field) \
     (FIELD_OFFSET(type, field) + RTL_FIELD_SIZE(type, field))
-    
+
 #define CONTAINING_RECORD(Record, TYPE, Field) \
     ((TYPE *) ((CHAR8 *) (Record) - (CHAR8 *) &(((TYPE *) 0)->Field)))
 

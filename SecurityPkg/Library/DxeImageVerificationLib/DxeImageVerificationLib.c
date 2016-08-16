@@ -112,21 +112,21 @@ Allocate32BitMemory(
     __in UINT32 Size
     )
 {
-    void* answer;
+    EFI_PHYSICAL_ADDRESS answer;
 
     //
     // Request memory below the 32bit/4GB boundary.
     //
-    answer = (void *)(UINTN)(BASE_4GB - 1);
+    answer = (BASE_4GB - 1);
     if (EFI_ERROR(gBS->AllocatePages(AllocateMaxAddress,
                                      EfiBootServicesData,
                                      EFI_SIZE_TO_PAGES(Size),
-                                     (EFI_PHYSICAL_ADDRESS*) &answer)))
+                                     &answer)))
     {
         return NULL;
     }
 
-    return answer;
+    return (void*)(UINTN)answer;
 }
 
 /**

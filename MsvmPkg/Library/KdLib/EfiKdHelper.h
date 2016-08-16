@@ -134,6 +134,7 @@ typedef UINT64 HV_SPA, *PHV_SPA;
 typedef UINT8 *PUINT8;
 
 extern UINT32 KdTransportMaxPacketSize;
+extern UINT32 EfiKdTrapRoutine;
 
 #define _AMD64_
 
@@ -207,11 +208,76 @@ typedef AMD64_DBGKD_CONTROL_SET DBGKD_CONTROL_SET;
 C_ASSERT (sizeof (AMD64_DBGKD_CONTROL_SET) == 28);
 
 
-#else // not defined(_AMD64_)
+#elif defined(_IA32_)
+
+//
+// IA32 specific portion of KD header
+//
+
+//
+// DO NOT MODIFY THESE STRUCTURES.
+//
+// These sizes and offsets of these structures are hard-coded into KD, hence
+// they should be considered part of the "wire protocol" for the debugger.
+//
+
+#define PROGRAM_COUNTER(_context)   ((UINT_PTR)(_context)->Eip)
+
+#define DBGKD_MAXSTREAM 16
+
+typedef struct _X86_DBGKD_CONTROL_REPORT {
+    ULONG   Dr6;
+    ULONG   Dr7;
+    USHORT  InstructionCount;
+    USHORT  ReportFlags;
+    UCHAR   InstructionStream[DBGKD_MAXSTREAM];
+    USHORT  SegCs;
+    USHORT  SegDs;
+    USHORT  SegEs;
+    USHORT  SegFs;
+    ULONG   EFlags;
+} X86_DBGKD_CONTROL_REPORT, *PX86_DBGKD_CONTROL_REPORT;
+
+typedef X86_DBGKD_CONTROL_REPORT DBGKD_CONTROL_REPORT;
+
+typedef struct _DBGKD_ANY_CONTROL_REPORT
+{
+    union
+    {
+        X86_DBGKD_CONTROL_REPORT X86ControlReport;
+    };
+} DBGKD_ANY_CONTROL_REPORT, *PDBGKD_ANY_CONTROL_REPORT;
+
+#define X86_REPORT_INCLUDES_SEGS    0x0001
+// Indicates the current CS is a standard 32-bit flat segment.
+// This allows the debugger to avoid retrieving the
+// CS descriptor to see if it's 16-bit code or not.
+// Note that the V86 flag in EFlags must also be checked
+// when determining the code type.
+#define X86_REPORT_STANDARD_CS      0x0002
+
+//
+// The DBGKD_CONTROL_SET structure is packed with 4 byte packing.
+//
+
+#pragma pack(push, 4)
+
+typedef struct _X86_DBGKD_CONTROL_SET {
+    ULONG   TraceFlag;
+    ULONG   Dr7;
+    ULONG   CurrentSymbolStart;
+    ULONG   CurrentSymbolEnd;
+} X86_DBGKD_CONTROL_SET, *PX86_DBGKD_CONTROL_SET;
+
+#pragma pack()
+
+typedef IA32_DBGKD_CONTROL_SET DBGKD_CONTROL_SET;
+
+#else
 
 #error "Unknown architecture"
 
-#endif // defined(_AMD64_)
+#endif
 
 //
 // DbgKd APIs are for the portable kernel debugger
@@ -325,6 +391,15 @@ typedef enum _KD_PACKET_TYPE
 //
 // Pathname Data follows directly
 //
+
+typedef struct _DBGKD_LOAD_SYMBOLS32 {
+    ULONG PathNameLength;
+    ULONG BaseOfDll;
+    ULONG ProcessId;
+    ULONG CheckSum;
+    ULONG SizeOfImage;
+    BOOLEAN UnloadSymbols;
+} DBGKD_LOAD_SYMBOLS32, *PDBGKD_LOAD_SYMBOLS32;
 
 typedef struct _DBGKD_LOAD_SYMBOLS64
 {
@@ -1634,7 +1709,7 @@ typedef XSAVE_FORMAT XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
 // CONTEXT_DEBUG_REGISTERS specifies Dr0-Dr3 and Dr6-Dr7.
 //
 
-typedef struct DECLSPEC_ALIGN(16) _CONTEXT {
+typedef struct DECLSPEC_ALIGN(16) AMD64_CONTEXT {
 
     //
     // Register parameter home addresses.
@@ -1751,7 +1826,160 @@ typedef struct DECLSPEC_ALIGN(16) _CONTEXT {
     ULONG64 LastBranchFromRip;
     ULONG64 LastExceptionToRip;
     ULONG64 LastExceptionFromRip;
-} CONTEXT, *PCONTEXT;
+} AMD64_CONTEXT, *PAMD64_CONTEXT;
+
+//
+//  Define the size of the 80387 save area, which is in the context frame.
+//
+
+#define X86_SIZE_OF_80387_REGISTERS      80
+
+typedef struct _X86_FLOATING_SAVE_AREA {
+    ULONG   ControlWord;
+    ULONG   StatusWord;
+    ULONG   TagWord;
+    ULONG   ErrorOffset;
+    ULONG   ErrorSelector;
+    ULONG   DataOffset;
+    ULONG   DataSelector;
+    UCHAR   RegisterArea[X86_SIZE_OF_80387_REGISTERS];
+    ULONG   Cr0NpxState;
+} X86_FLOATING_SAVE_AREA;
+
+#define MAXIMUM_SUPPORTED_EXTENSION     512
+#define X86_CONTEXT_ALIGN               4
+
+//
+// Define the size of FP registers in the FXSAVE format
+//
+#define X86_SIZE_OF_FX_REGISTERS        128
+
+typedef struct DECLSPEC_ALIGN(16) _X86_FXSAVE_FORMAT {
+    USHORT  ControlWord;
+    USHORT  StatusWord;
+    USHORT  TagWord;
+    USHORT  ErrorOpcode;
+    ULONG   ErrorOffset;
+    ULONG   ErrorSelector;
+    ULONG   DataOffset;
+    ULONG   DataSelector;
+    ULONG   MXCsr;
+    ULONG   Reserved2;
+    UCHAR   RegisterArea[X86_SIZE_OF_FX_REGISTERS];
+    UCHAR   Reserved3[X86_SIZE_OF_FX_REGISTERS];
+    UCHAR   Reserved4[224];
+} X86_FXSAVE_FORMAT, *PX86_FXSAVE_FORMAT;
+
+
+//
+// Context Frame
+//
+//  This frame has a several purposes: 1) it is used as an argument to
+//  NtContinue, 2) is is used to constuct a call frame for APC delivery,
+//  and 3) it is used in the user level thread creation routines.
+//
+//  The layout of the record conforms to a standard call frame.
+//
+
+typedef struct DECLSPEC_ALIGN(16) X86_NT5_CONTEXT {
+
+    //
+    // The flags values within this flag control the contents of
+    // a CONTEXT record.
+    //
+    // If the context record is used as an input parameter, then
+    // for each portion of the context record controlled by a flag
+    // whose value is set, it is assumed that that portion of the
+    // context record contains valid context. If the context record
+    // is being used to modify a threads context, then only that
+    // portion of the threads context will be modified.
+    //
+    // If the context record is used as an IN OUT parameter to capture
+    // the context of a thread, then only those portions of the thread's
+    // context corresponding to set flags will be returned.
+    //
+    // The context record is never used as an OUT only parameter.
+    //
+
+    ULONG ContextFlags;
+
+    //
+    // This section is specified/returned if CONTEXT_DEBUG_REGISTERS is
+    // set in ContextFlags.  Note that CONTEXT_DEBUG_REGISTERS is NOT
+    // included in CONTEXT_FULL.
+    //
+
+    ULONG   Dr0;
+    ULONG   Dr1;
+    ULONG   Dr2;
+    ULONG   Dr3;
+    ULONG   Dr6;
+    ULONG   Dr7;
+
+    //
+    // This section is specified/returned if the
+    // ContextFlags word contians the flag CONTEXT_FLOATING_POINT.
+    //
+
+    X86_FLOATING_SAVE_AREA FloatSave;
+
+    //
+    // This section is specified/returned if the
+    // ContextFlags word contians the flag CONTEXT_SEGMENTS.
+    //
+
+    ULONG   SegGs;
+    ULONG   SegFs;
+    ULONG   SegEs;
+    ULONG   SegDs;
+
+    //
+    // This section is specified/returned if the
+    // ContextFlags word contians the flag CONTEXT_INTEGER.
+    //
+
+    ULONG   Edi;
+    ULONG   Esi;
+    ULONG   Ebx;
+    ULONG   Edx;
+    ULONG   Ecx;
+    ULONG   Eax;
+
+    //
+    // This section is specified/returned if the
+    // ContextFlags word contians the flag CONTEXT_CONTROL.
+    //
+
+    ULONG   Ebp;
+    ULONG   Eip;
+    ULONG   SegCs;              // MUST BE SANITIZED
+    ULONG   EFlags;             // MUST BE SANITIZED
+    ULONG   Esp;
+    ULONG   SegSs;
+
+    //
+    // This section is specified/returned if the ContextFlags word
+    // contains the flag CONTEXT_EXTENDED_REGISTERS.
+    // The format and contexts are processor specific
+    //
+
+    UCHAR   ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];
+
+} X86_NT5_CONTEXT;
+
+#if defined(MDE_CPU_IA32)
+
+typedef X86_NT5_CONTEXT CONTEXT, *PCONTEXT;
+
+#elif defined(MDE_CPU_X64)
+
+typedef AMD64_CONTEXT CONTEXT, *PCONTEXT;
+
+#else
+
+#error "Unsupported architecture"
+
+#endif
 
 //
 // Data structure for passing information to KdpReportLoadSymbolsStateChange
@@ -1839,7 +2067,7 @@ typedef CCHAR KPROCESSOR_MODE;
 //      record is used exclusively within the trap handling code.
 //
 
-typedef struct _KEXCEPTION_FRAME {
+typedef struct _AMD64_KEXCEPTION_FRAME {
 
 //
 // Home address for the parameter registers.
@@ -1906,7 +2134,74 @@ typedef struct _KEXCEPTION_FRAME {
 //
 
     ULONG64 Return;
-} KEXCEPTION_FRAME, *PKEXCEPTION_FRAME;
+} AMD64_KEXCEPTION_FRAME, *AMD64_PKEXCEPTION_FRAME;
+
+
+typedef struct X86_KEXCEPTION_FRAME {
+
+//
+// Home address for the parameter registers.
+//
+
+    ULONG P1Home;
+    ULONG P2Home;
+    ULONG P3Home;
+    ULONG P4Home;
+    ULONG P5;
+    ULONG Spare1;
+
+//
+// Saved nonvolatile floating registers.
+//
+
+    M128A Xmm6;
+    M128A Xmm7;
+    M128A Xmm8;
+    M128A Xmm9;
+    M128A Xmm10;
+    M128A Xmm11;
+    M128A Xmm12;
+    M128A Xmm13;
+    M128A Xmm14;
+    M128A Xmm15;
+
+//
+// Kernel callout frame variables.
+//
+
+    ULONG TrapFrame;
+    ULONG OutputBuffer;
+    ULONG OutputLength;
+    ULONG Spare2;
+
+//
+// Saved MXCSR when a thread is interrupted in kernel mode via a dispatch
+// interrupt.
+//
+
+    ULONG MxCsr;
+
+//
+// Saved nonvolatile register - not always saved.
+//
+
+    ULONG Ebp;
+
+//
+// Saved nonvolatile registers.
+//
+
+    ULONG Ebx;
+    ULONG Edi;
+    ULONG Esi;
+
+//
+// EFLAGS and return address.
+//
+
+    ULONG Return;
+} X86_KEXCEPTION_FRAME, *PX86_KEXCEPTION_FRAME;
+
 
 //
 // Trap frame
@@ -1917,7 +2212,7 @@ typedef struct _KEXCEPTION_FRAME {
 // registers.
 //
 
-typedef struct _KTRAP_FRAME {
+typedef struct _AMD64_KTRAP_FRAME {
 
 //
 // Home address for the parameter registers.
@@ -2104,7 +2399,103 @@ typedef struct _KTRAP_FRAME {
 //
 
     LONG CodePatchCycle;
-} KTRAP_FRAME, *PKTRAP_FRAME;
+} AMD64_KTRAP_FRAME, *PAMD64_PKTRAP_FRAME;
+
+//
+// Define the format of the x86 trap frame for BLUE and later OSes.
+//
+
+typedef struct _X86_KTRAP_FRAME_BLUE {
+    ULONG   DbgEbp;         // Copy of User EBP set up so KB will work.
+    ULONG   DbgEip;         // EIP of caller to system call, again, for KB.
+    ULONG   DbgArgMark;     // Marker to show no args here.
+
+//
+//  Temporary values used when frames are edited.
+//
+
+    USHORT  TempSegCs;
+    UCHAR   Logging;
+    UCHAR   FrameType;
+    ULONG   TempEsp;
+
+//
+//  Debug registers.
+//
+
+    ULONG   Dr0;
+    ULONG   Dr1;
+    ULONG   Dr2;
+    ULONG   Dr3;
+    ULONG   Dr6;
+    ULONG   Dr7;
+
+//
+//  Segment registers
+//
+
+    ULONG   SegGs;
+    ULONG   SegEs;
+    ULONG   SegDs;
+    ULONG   SegSs;
+
+//
+//  Volatile registers
+//
+
+    ULONG   Edx;
+    ULONG   Ecx;
+    ULONG   Eax;
+
+//
+//  Nesting state, not part of context record
+//
+
+    UCHAR   PreviousPreviousMode;
+    UCHAR   EntropyQueueDpc;                // decision whether to queue an entropy DPC
+    UCHAR   Reserved[2];
+
+    ULONG   MxCsr;                          // saved SSE control register
+
+    ULONG ExceptionList;
+                                            // Trash if caller was user mode.
+                                            // Saved exception list if caller
+                                            // was kernel mode or we're in
+                                            // an interrupt.
+
+//
+//  FS is TIB/PCR pointer, is here to make save sequence easy
+//
+
+    ULONG   SegFs;
+
+//
+//  Non-volatile registers
+//
+
+    ULONG   Edi;
+    ULONG   Esi;
+    ULONG   Ebx;
+    ULONG   Ebp;
+    ULONG   Esp;
+
+//
+//  Control registers
+//
+
+    ULONG   ErrCode;
+    ULONG   Eip;
+    ULONG   SegCs;
+    ULONG   EFlags;
+
+    ULONG   HardwareEsp;    // WARNING - segSS:esp are only here for stacks
+    ULONG   HardwareSegSs;  // that involve a ring transition.
+
+    ULONG   V86Es;          // these will be present for all transitions from
+    ULONG   V86Ds;          // V86 mode
+    ULONG   V86Fs;
+    ULONG   V86Gs;
+} X86_KTRAP_FRAME_BLUE, *PX86_KTRAP_FRAME_BLUE;
 
 
 #if 1
@@ -2128,6 +2519,155 @@ typedef struct _EXCEPTION_REGISTRATION_RECORD {
 } EXCEPTION_REGISTRATION_RECORD;
 
 typedef EXCEPTION_REGISTRATION_RECORD *PEXCEPTION_REGISTRATION_RECORD;
+
+
+//
+// Trap frame
+//
+//  NOTE - We deal only with 32bit registers, so the assembler equivalents
+//         are always the extended forms.
+//
+//  NOTE - Unless you want to run like slow molasses everywhere in the
+//         the system, this structure must be of DWORD length, DWORD
+//         aligned, and its elements must all be DWORD aligned.
+//
+//  NOTE WELL   -
+//
+//      The i386 does not build stack frames in a consistent format, the
+//      frames vary depending on whether or not a privilege transition
+//      was involved.
+//
+//      In order to make NtContinue work for both user mode and kernel
+//      mode callers, we must force a canonical stack.
+//
+//      If we're called from kernel mode, this structure is 8 bytes longer
+//      than the actual frame!
+//
+//  WARNING:
+//
+//      KTRAP_FRAME_LENGTH needs to be 16byte integral (at present.)
+//
+
+typedef struct _X86_KTRAP_FRAME {
+
+
+//
+// The following 3 fields are placed to make debugger backtraces work through
+// a trap frame.
+//
+
+    ULONG   DbgEbp;         // Copy of User EBP set up so KB will work.
+    ULONG   DbgEip;         // EIP of caller to system call, again, for KB.
+    ULONG   DbgArgMark;     // Marker to show no args here.
+
+//
+//  Temporary values used when frames are edited.
+//
+//
+//  NOTE:   Any code that wants ESP must materialize it, since it
+//          is not stored in the frame for kernel mode callers.
+//
+//          And code that sets ESP in a KERNEL mode frame, must put
+//          the new value in TempEsp, make sure that TempSegCs holds
+//          the real SegCs value, and put a special marker value into SegCs.
+//
+
+    USHORT  TempSegCs;
+    UCHAR   Logging;
+    UCHAR   FrameType;
+    ULONG   TempEsp;
+
+//
+//  Debug registers.
+//
+
+    ULONG   Dr0;
+    ULONG   Dr1;
+    ULONG   Dr2;
+    ULONG   Dr3;
+    ULONG   Dr6;
+    ULONG   Dr7;
+
+//
+//  Segment registers
+//
+
+    ULONG   SegGs;
+    ULONG   SegEs;
+    ULONG   SegDs;
+
+//
+//  Volatile registers
+//
+
+    ULONG   Edx;
+    ULONG   Ecx;
+    ULONG   Eax;
+
+//
+//  Nesting state, not part of context record
+//
+
+    UCHAR   PreviousPreviousMode;
+    UCHAR   EntropyQueueDpc;                // decision whether to queue an entropy DPC
+    UCHAR   Reserved[2];
+
+    ULONG   MxCsr;                          // saved SSE control register
+
+    PEXCEPTION_REGISTRATION_RECORD ExceptionList;
+                                            // Trash if caller was user mode.
+                                            // Saved exception list if caller
+                                            // was kernel mode or we're in
+                                            // an interrupt.
+
+//
+//  FS is TIB/PCR pointer, is here to make save sequence easy
+//
+
+    ULONG   SegFs;
+
+//
+//  Non-volatile registers
+//
+
+    ULONG   Edi;
+    ULONG   Esi;
+    ULONG   Ebx;
+    ULONG   Ebp;
+
+//
+//  Control registers
+//
+
+    ULONG   ErrCode;
+    ULONG   Eip;
+    ULONG   SegCs;
+    ULONG   EFlags;
+
+    ULONG   HardwareEsp;    // WARNING - segSS:esp are only here for stacks
+    ULONG   HardwareSegSs;  // that involve a ring transition.
+
+    ULONG   V86Es;          // these will be present for all transitions from
+    ULONG   V86Ds;          // V86 mode
+    ULONG   V86Fs;
+    ULONG   V86Gs;
+} X86_KTRAP_FRAME;
+
+#if defined(MDE_CPU_IA32)
+
+typedef X86_KTRAP_FRAME _KTRAP_FRAME, *PKTRAP_FRAME;
+typedef X86_KTRAP_FRAME KEXCEPTION_FRAME, *PKEXCEPTION_FRAME;
+
+#elif defined(MDE_CPU_X64)
+
+typedef AMD64_KTRAP_FRAME _KTRAP_FRAME, *PKTRAP_FRAME;
+typedef AMD64_KEXCEPTION_FRAME KEXCEPTION_FRAME, *PKEXCEPTION_FRAME;
+
+#else
+
+#error "Unsupported architecture"
+
+#endif
 
 typedef struct _NT_TIB {
     struct _EXCEPTION_REGISTRATION_RECORD *ExceptionList;
@@ -2318,6 +2858,23 @@ typedef enum {
     ContinueNextProcessor
 } KCONTINUE_STATUS;
 
+#if defined(MDE_CPU_IA32)
+
+#define CONTEXT_TO_PROGRAM_COUNTER(Context) ((Context)->Eip)
+
+#define CONTEXT_X86             0x00010000L
+
+// end_wx86
+#define CONTEXT_CONTROL         (CONTEXT_X86 | 0x00000001L)
+#define CONTEXT_INTEGER         (CONTEXT_X86 | 0x00000002L)
+#define CONTEXT_SEGMENTS        (CONTEXT_X86 | 0x00000004L)
+#define CONTEXT_FLOATING_POINT  (CONTEXT_X86 | 0x00000008L)
+#define CONTEXT_DEBUG_REGISTERS (CONTEXT_X86 | 0x00000010L)
+
+#define CONTEXT_FULL            (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT)
+
+#elif defined(MDE_CPU_X64)
+
 #define CONTEXT_TO_PROGRAM_COUNTER(Context) ((Context)->Rip)
 
 #define CONTEXT_AMD64           0x00100000L
@@ -2330,6 +2887,13 @@ typedef enum {
 #define CONTEXT_DEBUG_REGISTERS (CONTEXT_AMD64 | 0x00000010L)
 
 #define CONTEXT_FULL            (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT)
+
+#else
+
+#error "Unsupported architecture"
+
+#endif
+
 
 #define BAGDT_DATA_SELECTOR         0x30
 #define X86_REPORT_INCLUDES_SEGS    0x0001
@@ -2355,6 +2919,13 @@ typedef enum {
 #define EFLAGS_IF_SHIFT 9               // interrupt enable
 #define EFLAGS_SYSCALL_CLEAR (EFLAGS_IF_MASK | EFLAGS_DF_MASK | EFLAGS_TF_MASK | EFLAGS_NT_MASK)
 
+//
+// SEGMENT_MASK is used to throw away trash part of segment.  Part always
+// pushes or pops 32 bits to/from stack, but if it's a segment value,
+// high order 16 bits are trash.
+//
+
+#define SEGMENT_MASK    0xffff
 
 
 typedef struct {

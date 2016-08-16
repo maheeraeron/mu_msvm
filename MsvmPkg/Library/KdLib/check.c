@@ -106,7 +106,7 @@ Routine Description:
 
     This routine returns the phyiscal address for a physical address
     which is valid (mapped).
-    
+
     TODO: NOTE: I can't tell if this routine is suppose to map a physical
           address or return the physical address.  If so, this routine
           will need to be modified if we break 1:1 mapping.
@@ -126,7 +126,7 @@ Return Value:
     // EFI environment is identity mapped.
     //
 
-    return (PVOID)Address;
+    return (PVOID)(UINTN)Address;
 }
 
 

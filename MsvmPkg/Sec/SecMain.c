@@ -101,7 +101,7 @@ Return Value
 }
 
 #if defined(SECMAIN_DEBUG_NOISY)
-VOID 
+VOID
 DebugPrintGuid(
     _In_ EFI_GUID *Guid
     )
@@ -123,17 +123,17 @@ Return Value:
 
 --*/
 {
-    DebugPrint(DEBUG_VERBOSE, "%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X\n", 
-               Guid->Data1, 
-               Guid->Data2, 
-               Guid->Data3, 
-               Guid->Data4[0], 
-               Guid->Data4[1], 
-               Guid->Data4[2], 
+    DebugPrint(DEBUG_VERBOSE, "%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X\n",
+               Guid->Data1,
+               Guid->Data2,
+               Guid->Data3,
+               Guid->Data4[0],
+               Guid->Data4[1],
+               Guid->Data4[2],
                Guid->Data4[3],
-               Guid->Data4[4], 
-               Guid->Data4[5], 
-               Guid->Data4[6], 
+               Guid->Data4[4],
+               Guid->Data4[5],
+               Guid->Data4[6],
                Guid->Data4[7]);
 }
 
@@ -154,7 +154,7 @@ Arguments:
 
 Return Value:
 
-    A wide string representing the firmware volume filetype value 
+    A wide string representing the firmware volume filetype value
     or "*unknown*" if the value is out of range.
 
 --*/
@@ -195,7 +195,7 @@ Return Value:
 
 VOID
 DebugFvhDump(
-    _In_ EFI_FIRMWARE_VOLUME_HEADER *FVH, 
+    _In_ EFI_FIRMWARE_VOLUME_HEADER *FVH,
     _In_ PWSTR Indent
     )
 /*++
@@ -216,7 +216,7 @@ Return Value:
 
 --*/
 {
-    DebugPrint(DEBUG_VERBOSE, "%sFileSystemGuid:  ", Indent); DebugPrintGuid(&FVH->FileSystemGuid); 
+    DebugPrint(DEBUG_VERBOSE, "%sFileSystemGuid:  ", Indent); DebugPrintGuid(&FVH->FileSystemGuid);
     DebugPrint(DEBUG_VERBOSE, "%sFvLength:        0x%08X\n", Indent, FVH->FvLength);
     DebugPrint(DEBUG_VERBOSE, "%sSignature:       0x%08X\n", Indent, FVH->Signature);
     DebugPrint(DEBUG_VERBOSE, "%sAttributes:      0x%08X\n", Indent, FVH->Attributes);
@@ -236,7 +236,7 @@ DebugFhDump(
 Routine Description:
 
     Prints detailed information about a Firmware File System File Header to the debugger.
-    
+
 Arguments:
 
     FH - A pointer to a Firmware File System File Header.
@@ -249,9 +249,9 @@ Return Value:
 
 --*/
 {
-    DebugPrint(DEBUG_VERBOSE, "%sName:           ", Indent); DebugPrintGuid(&FH->Name); 
+    DebugPrint(DEBUG_VERBOSE, "%sName:           ", Indent); DebugPrintGuid(&FH->Name);
     DebugPrint(DEBUG_VERBOSE, "%sIntegrityCheck: 0x%04X\n", Indent, FH->IntegrityCheck.Checksum16);
-    DebugPrint(DEBUG_VERBOSE, "%sType:           0x%02X - %s\n", 
+    DebugPrint(DEBUG_VERBOSE, "%sType:           0x%02X - %s\n",
                Indent, FH->Type, FileTypeToString(FH->Type));
     DebugPrint(DEBUG_VERBOSE, "%sAttributes:     0x%08X\n", Indent, FH->Attributes);
     DebugPrint(DEBUG_VERBOSE, "%sSize:           0x%08X\n", Indent, Expand3ByteSize(FH->Size));
@@ -261,9 +261,9 @@ Return Value:
 
 VOID
 DebugHexDump(
-    _In_ EFI_PHYSICAL_ADDRESS Base, 
-    _In_ UINT32 Offset, 
-    _In_ UINT32 Len, 
+    _In_ EFI_PHYSICAL_ADDRESS Base,
+    _In_ UINT32 Offset,
+    _In_ UINT32 Len,
     _In_ PWSTR Indent)
 /*++
 
@@ -287,7 +287,7 @@ Return Value:
 
 --*/
 {
-    UCHAR *buffer = (UCHAR *)(Base + Offset);
+    UCHAR *buffer = (UCHAR *)(UINTN)(Base + Offset);
     UINT32 i, j;
     for (i = 0; i < Len; i += 16)
     {
@@ -301,10 +301,10 @@ Return Value:
 }
 
 
-VOID 
+VOID
 DebugVolDump(
-    _In_ EFI_PHYSICAL_ADDRESS Base, 
-    _In_ UINT32 Len, 
+    _In_ EFI_PHYSICAL_ADDRESS Base,
+    _In_ UINT32 Len,
     _In_ PWSTR Indent
     )
 /*++
@@ -318,7 +318,7 @@ Arguments:
     Base - The base address of the Firmware Volume.
 
     Len - The length of the volume in bytes.
-    
+
     Indent - A prefix string to output on each line. Typically spaces for indenting.
 
 Return Value:
@@ -330,14 +330,14 @@ Return Value:
     UINT32 imageOffset, volOffset, size;
     EFI_FIRMWARE_VOLUME_HEADER *fvh;
     EFI_FFS_FILE_HEADER *fh;
-    
+
     //
     // loop through the volumes in the image
     //
     for (imageOffset = 0; imageOffset < Len; /*empty*/)
     {
-        fvh = (EFI_FIRMWARE_VOLUME_HEADER *)(Base + imageOffset);
-        
+        fvh = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)(Base + imageOffset);
+
         DebugPrint(DEBUG_VERBOSE, "Firmware Volume Header\n\n");
         DebugHexDump(Base, imageOffset, sizeof(EFI_FIRMWARE_VOLUME_HEADER), L"    ");
         DebugPrint(DEBUG_VERBOSE, "\n");
@@ -354,7 +354,7 @@ Return Value:
             //
             volOffset = (volOffset + 7) & 0xfffffff8ULL;
 
-            fh = (EFI_FFS_FILE_HEADER *)(Base + imageOffset + volOffset);
+            fh = (EFI_FFS_FILE_HEADER *)(UINTN)(Base + imageOffset + volOffset);
             size = Expand3ByteSize(fh->Size);
 
             DebugPrint(DEBUG_VERBOSE, "\n    FFS File Header\n\n");
@@ -381,13 +381,13 @@ FindMainFv(
 
 Routine Description:
 
-    Finds the MAIN firmware volume.   
+    Finds the MAIN firmware volume.
 
-    TODO: This could be further optimized to avoid searching 
+    TODO: This could be further optimized to avoid searching
     downward in memory by adding support for the fixed-at-build
     PCDs in SEC and simply using the PcdMsvmFvBase value as the
     location of the MAIN FV.
-    
+
 Arguments:
 
     SecFv - Pointer to the SEC firmware volume header.
@@ -406,7 +406,7 @@ Return Value:
     EFI_STATUS                  status;
 
     DEBUG((DEBUG_VERBOSE,
-           ">>> FindMainFv(0x%x, 0x%x)\n", 
+           ">>> FindMainFv(0x%x, 0x%x)\n",
            (UINT32)(UINTN)SecFv,
            (UINT32)(UINTN)*MainFv
            ));
@@ -438,7 +438,7 @@ Return Value:
         //
         // Stop beyond 8MB
         //
-        if (distance > SIZE_8MB) 
+        if (distance > SIZE_8MB)
         {
             DEBUG((DEBUG_ERROR, "--- exceeded 8MB search limit looking for MAIN FV\n"));
             status = EFI_NOT_FOUND;
@@ -463,14 +463,14 @@ Return Value:
 
         //
         // Output the found volume header and stop searching.
-        //        
+        //
         *MainFv = fv;
         status = EFI_SUCCESS;
         break;
     }
 
     DEBUG((DEBUG_VERBOSE,
-           "<<< FindMainFv(0x%x, 0x%x) result 0x%x\n", 
+           "<<< FindMainFv(0x%x, 0x%x) result 0x%x\n",
            (UINT32)(UINTN)SecFv,
            (UINT32)(UINTN)*MainFv,
            status
@@ -586,7 +586,7 @@ Return Value:
     }
 
 Cleanup:
-    
+
     DEBUG((DEBUG_VERBOSE,
            "<<< FindFfsFile(0x%x, 0x%x, 0x%x) result 0x%x\n",
            (UINT32)(UINTN)Fv,
@@ -636,10 +636,10 @@ Return Value:
     UINT32                       size;
 
     DEBUG((DEBUG_VERBOSE,
-           ">>> FindFfsFileSection(0x%x, 0x%x, 0x%x)\n",
-           (UINT32)(UINTN)StartOfFile,
-           (UINT32)(UINTN)EndOfFile,
-           (UINT32)(UINTN)SectionType
+           ">>> FindFfsFileSection(0x%lx, 0x%lx, 0x%lx)\n",
+           StartOfFile,
+           EndOfFile,
+           SectionType
            ));
 
     //
@@ -668,7 +668,7 @@ Return Value:
         //
         section = (EFI_COMMON_SECTION_HEADER*)(UINTN)currentAddress;
         size = Expand3ByteSize(section->Size);
-        
+
 #if defined(SECMAIN_DEBUG_NOISY)
         DEBUG((DEBUG_VERBOSE, "--- Section: 0x%x\n", section));
         DEBUG((DEBUG_VERBOSE, "--- Section->Type: 0x%x\n", section->Type));
@@ -737,7 +737,7 @@ FindImageBaseInFv(
 
 Routine Description:
 
-    Finds the image base (entrypoint) in a particular file type in 
+    Finds the image base (entrypoint) in a particular file type in
     a firmware volume.
 
 Arguments:
@@ -761,10 +761,10 @@ Return Value:
     EFI_COMMON_SECTION_HEADER   *section;
 
     DEBUG((DEBUG_VERBOSE,
-           ">>> FindImageBaseInFv(0x%x, 0x%x, 0x%x)\n",
-           (UINT32)(UINTN)Fv,
+           ">>> FindImageBaseInFv(0x%lx, 0x%lx, 0x%lx)\n",
+           (EFI_PHYSICAL_ADDRESS)Fv,
            FileType,
-           (UINT32)(UINTN)*ImageBase
+           *ImageBase
            ));
 
 #if defined(SECMAIN_DEBUG_NOISY)
@@ -786,8 +786,8 @@ Return Value:
     //
     // First look for a PE32 section.
     //
-    status = FindFfsFileSection((EFI_PHYSICAL_ADDRESS)(file + 1),
-                                (EFI_PHYSICAL_ADDRESS)file + Fv->FvLength,
+    status = FindFfsFileSection((EFI_PHYSICAL_ADDRESS)(UINTN)(file + 1),
+                                (EFI_PHYSICAL_ADDRESS)(UINTN)file + Fv->FvLength,
                                 EFI_SECTION_PE32,
                                 &section);
 
@@ -796,8 +796,8 @@ Return Value:
         //
         // Alternative is a TE section.
         //
-        status = FindFfsFileSection((EFI_PHYSICAL_ADDRESS)(file + 1),
-                                    (EFI_PHYSICAL_ADDRESS)file + Fv->FvLength,
+        status = FindFfsFileSection((EFI_PHYSICAL_ADDRESS)(UINTN)(file + 1),
+                                    (EFI_PHYSICAL_ADDRESS)(UINTN)file + Fv->FvLength,
                                     EFI_SECTION_TE,
                                     &section);
         if (status != EFI_SUCCESS)
@@ -836,8 +836,8 @@ FindPeiCoreImageBase (
 
 Routine Description:
 
-    Finds and output the firmware volume containing the PEI CORE file and the 
-    PEI image base (entrypoint).    
+    Finds and output the firmware volume containing the PEI CORE file and the
+    PEI image base (entrypoint).
 
 Arguments:
 
@@ -878,7 +878,7 @@ Return Value:
     }
 
     DEBUG((DEBUG_VERBOSE,
-           "--- FindPeiCoreImageBase found main FV @ 0x%x\n", 
+           "--- FindPeiCoreImageBase found main FV @ 0x%x\n",
            (UINT32)(UINTN)mainFv
            ));
 
@@ -937,16 +937,16 @@ Arguments:
 
     SecCoreFv - A pointer to the SEC firmware volume.
 
-    PeiCoreFv - Returns a pointer to the PEI firmware volume. 
-                
-    PeiCoreEntryPoint - Returns a pointer to the PEI entry point. 
+    PeiCoreFv - Returns a pointer to the PEI firmware volume.
+
+    PeiCoreEntryPoint - Returns a pointer to the PEI entry point.
 
 Return Value:
 
     EFI_SUCCESS             - the PEI entry point was found.
     EFI_NOT_FOUND           - the PEI entry point was not found.
     EFI_VOLUME_CORRUPTED    - the volume, file, or section was not valid.
-    
+
 
 --*/
 {
@@ -1009,7 +1009,7 @@ Return Value:
 
     return;
 }
-  
+
 
 VOID
 EFIAPI
@@ -1028,7 +1028,7 @@ Arguments:
 
 Return Value:
 
-    None.    
+    None.
 
 --*/
 {
@@ -1038,17 +1038,17 @@ Return Value:
 
     SecCoreData = (EFI_SEC_PEI_HAND_OFF *)Context;
 
-    DEBUG((DEBUG_VERBOSE, 
-           ">>> SecStartupPhase2 @ %p (%p)\n", 
+    DEBUG((DEBUG_VERBOSE,
+           ">>> SecStartupPhase2 @ %p (%p)\n",
            SecStartupPhase2,
            Context));
 
     //
     // Find PEI Core entry point.
     // Also reports SEC and Pei Core debug information if remote debug is enabled.
-    // 
+    //
     FindAndReportEntryPoints((EFI_FIRMWARE_VOLUME_HEADER *)SecCoreData->BootFirmwareVolumeBase,
-                             &PeiCoreFv, 
+                             &PeiCoreFv,
                              &PeiCoreEntryPoint);
 
     //
@@ -1063,7 +1063,7 @@ Return Value:
     // This passes a pointer to the TemporaryRamMigration function as a PPI.
     //
     (*PeiCoreEntryPoint)(SecCoreData, (EFI_PEI_PPI_DESCRIPTOR *)&mPrivateDispatchTable);
-  
+
     //
     // If we get here then the PEI Core returned, which is not recoverable.
     //
@@ -1092,7 +1092,7 @@ Arguments:
 
 Return Value:
 
-    None.    
+    None.
 
 --*/
 {
@@ -1141,13 +1141,13 @@ Return Value:
     SecCoreData.DataSize = sizeof(EFI_SEC_PEI_HAND_OFF);
 
     SecCoreData.TemporaryRamSize       = SIZE_64KB;
-    SecCoreData.TemporaryRamBase       = 
+    SecCoreData.TemporaryRamBase       =
         (VOID*)((UINT8 *)TopOfCurrentStack - SecCoreData.TemporaryRamSize);
 
     SecCoreData.PeiTemporaryRamBase    = SecCoreData.TemporaryRamBase;
     SecCoreData.PeiTemporaryRamSize    = SecCoreData.TemporaryRamSize >> 1;
 
-    SecCoreData.StackBase              = 
+    SecCoreData.StackBase              =
         (UINT8 *)SecCoreData.TemporaryRamBase + SecCoreData.PeiTemporaryRamSize;
     SecCoreData.StackSize              = SecCoreData.TemporaryRamSize >> 1;
 
@@ -1173,17 +1173,17 @@ TemporaryRamMigration(
 
 Routine Description:
 
-    This function is called from PEI core to move data from temporary RAM 
+    This function is called from PEI core to move data from temporary RAM
     used in the SEC phase to RAM used by the PEI phase.
 
 Arguments:
 
     PeiServices - Pointer to the PEI Services Table.
-    
-    TemporaryMemoryBase - Source address in temporary memory from which this function 
+
+    TemporaryMemoryBase - Source address in temporary memory from which this function
                           will copy the temporary RAM contents.
-    
-    PermanentMemoryBase - Destination address in permanent memory into which this 
+
+    PermanentMemoryBase - Destination address in permanent memory into which this
                           function will copy the temporary RAM contents.
 
     CopySize - Amount of memory to migrate from temporary to permanent memory.
@@ -1202,11 +1202,11 @@ Return Value:
     DEBUG_AGENT_CONTEXT_POSTMEM_SEC  DebugAgentContext;
     BOOLEAN                          OldStatus;
     BASE_LIBRARY_JUMP_BUFFER         JumpBuffer;
-  
-  DEBUG((DEBUG_VERBOSE, ">>> TemporaryRamMigration@0x%x(0x%x, 0x%x, 0x%x)\n", 
+
+  DEBUG((DEBUG_VERBOSE, ">>> TemporaryRamMigration@0x%x(0x%x, 0x%x, 0x%x)\n",
          (UINT32)(UINTN)TemporaryRamMigration,
-         (UINT32)(UINTN)TemporaryMemoryBase, 
-         (UINT32)(UINTN)PermanentMemoryBase, 
+         (UINT32)(UINTN)TemporaryMemoryBase,
+         (UINT32)(UINTN)PermanentMemoryBase,
          CopySize));
 
     OldHeap = (VOID*)(UINTN)TemporaryMemoryBase;
@@ -1249,16 +1249,16 @@ Return Value:
 #endif
 #if defined (MDE_CPU_X64)
         JumpBuffer.Rsp = JumpBuffer.Rsp + DebugAgentContext.StackMigrateOffset;
-#endif    
+#endif
         LongJump(&JumpBuffer, (UINTN)-1);
     }
 
     SaveAndSetDebugTimerInterrupt(OldStatus);
 
-    DEBUG((DEBUG_VERBOSE, 
-           "<<< TemporaryRamMigration(0x%x, 0x%x, 0x%x)\n", 
-           (UINTN)TemporaryMemoryBase, 
-           (UINTN)PermanentMemoryBase, 
+    DEBUG((DEBUG_VERBOSE,
+           "<<< TemporaryRamMigration(0x%x, 0x%x, 0x%x)\n",
+           (UINTN)TemporaryMemoryBase,
+           (UINTN)PermanentMemoryBase,
            CopySize));
 
     return EFI_SUCCESS;

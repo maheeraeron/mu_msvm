@@ -51,7 +51,7 @@ InitializeCrashDumpAgent(
     )
 {
     EFI_PEI_HOB_POINTERS hob;
-    UINT8* dumpBuffer; 
+    UINT8* dumpBuffer;
 
     //
     // find and save the initial stack info from the HOB list
@@ -61,12 +61,12 @@ InitializeCrashDumpAgent(
     //   now since the other fields are not used in UEFI.
     //
     hob.Raw = HobList;
-    while ((hob.Raw = GetNextHob(EFI_HOB_TYPE_MEMORY_ALLOCATION, hob.Raw)) != NULL) 
+    while ((hob.Raw = GetNextHob(EFI_HOB_TYPE_MEMORY_ALLOCATION, hob.Raw)) != NULL)
     {
-        if (CompareGuid(&gEfiHobMemoryAllocStackGuid, &(hob.MemoryAllocationStack->AllocDescriptor.Name))) 
+        if (CompareGuid(&gEfiHobMemoryAllocStackGuid, &(hob.MemoryAllocationStack->AllocDescriptor.Name)))
         {
-            EfiKdPcr.NtTib.StackBase  = (PVOID)hob.MemoryAllocationStack->AllocDescriptor.MemoryBaseAddress;
-            EfiKdPcr.NtTib.StackLimit = (PVOID)hob.MemoryAllocationStack->AllocDescriptor.MemoryLength;
+            EfiKdPcr.NtTib.StackBase  = (PVOID)(UINTN)hob.MemoryAllocationStack->AllocDescriptor.MemoryBaseAddress;
+            EfiKdPcr.NtTib.StackLimit = (PVOID)(UINTN)hob.MemoryAllocationStack->AllocDescriptor.MemoryLength;
             // Stack size must be under 4GB to avoid truncation when it is converted
             // to UINT32 as required by the DMP format.
             ASSERT((UINT64)EfiKdPcr.NtTib.StackLimit < SIZE_4GB);
@@ -172,20 +172,44 @@ EfiBugCheckWithContext(
     // give the debugger one last chance to take a look.
     EfiKdBreakPointWithStatus(0);
 
+#if defined(MDE_CPU_IA32)
+
     if (EFI_ERROR(status))
     {
-        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE, 
-                    0, 
-                    0, 
+        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE_HIGH_DWORD,
+                    0,
+                    0,
+                    GUESTDUMP_TRIPLEFAULT_SIGNATURE_LOW_DWORD);
+    }
+    else
+    {
+        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE_HIGH_DWORD,
+                    (UINT64)EfiKdDumpBuffer.Buffer,
+                    EfiKdDumpBuffer.Offset,
+                    GUESTDUMP_TRIPLEFAULT_SIGNATURE_LOW_DWORD);
+    }
+
+#elif defined(MDE_CPU_X64)
+
+    if (EFI_ERROR(status))
+    {
+        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
+                    0,
+                    0,
                     0);
     }
     else
     {
-        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE, 
-                    (UINT64)EfiKdDumpBuffer.Buffer, 
-                    EfiKdDumpBuffer.Offset, 
+        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
+                    (UINT64)EfiKdDumpBuffer.Buffer,
+                    EfiKdDumpBuffer.Offset,
                     0);
     }
+
+#else
+#error "Unsupported architecture"
+#endif
+
 
 }
 
@@ -196,7 +220,7 @@ EfiBugCheckWithContext(
   or alignment padding.
 
   @param  Type    Type of block
- 
+
   @return Size of the block in bytes
 
 **/
@@ -231,7 +255,7 @@ EfiDumpBufferBlockSize(
 /**
   Initializes a dump buffer with the given
   backing buffer and size.
- 
+
   @param    DumpBuffer  EFI_DUMP_BUFFER to initialize
   @param    Buffer      Backing store buffer to use
   @param    BufferSize  Size of backing store.
@@ -262,7 +286,7 @@ EfiDumpBufferInitialize(
                         of the allocated block.
 
   @return  TRUE on success, FALSE on failure (not enough space)
-  
+
 **/
 BOOLEAN
 EfiDumpBufferAllocateBlock(
@@ -287,7 +311,7 @@ EfiDumpBufferAllocateBlock(
                             of the allocated block.
 
   @return  TRUE on success, FALSE on failure (not enough space)
-  
+
 **/
 BOOLEAN
 EfiDumpBufferAllocateBlockEx(
@@ -302,7 +326,7 @@ EfiDumpBufferAllocateBlockEx(
     UINT32 newOffset = MEMORY_DUMP_ALIGN_BLOCK(DumpBuffer->Offset + blockSize);
 
     *BlockStart = NULL;
- 
+
     if ((newOffset < DumpBuffer->Offset) ||     // addition overflow
         (newOffset > DumpBuffer->BufferSize))   // dump buffer overflow
     {

@@ -8,7 +8,7 @@ Module Name:
 
 Abstract:
 
-    Code file for the Secure Boot Cryptographic Driver, which implements both 
+    Code file for the Secure Boot Cryptographic Driver, which implements both
     EFI_SECUREBOOT_CRYPT_PROTOCOL and EFI_RNG_PROTOCOL protocols.
 
 Author:
@@ -88,19 +88,19 @@ Return Value:
 
 --*/
 {
-    void* answer;
+    EFI_PHYSICAL_ADDRESS answer;
 
-    answer = (void*) WITHIN_4_GB_LL;
+    answer = WITHIN_4_GB_LL;
 
     if (EFI_ERROR(gBS->AllocatePages(AllocateMaxAddress,
                                      EfiBootServicesData,
                                      EFI_SIZE_TO_PAGES(Size),
-                                     (EFI_PHYSICAL_ADDRESS*) &answer)))
+                                     &answer)))
     {
         return NULL;
     }
 
-    return answer;
+    return (void*)(UINTN)answer;
 }
 
 EFI_STATUS
@@ -146,12 +146,12 @@ SbCryptComputeHash(
     __in CONST VOID* Data,
     __in UINT32 DataLength,
      __out UINT8* HashValue,
-    __inout UINT32* HashValueLength    
+    __inout UINT32* HashValueLength
     )
 /**
 
 Routine Description:
-  
+
     Computes a hash over a data stream of bytes
 
 Arguments:
@@ -159,18 +159,18 @@ Arguments:
     HashAlgorithm - The type of hash algorithm to use
 
     Data - Pointer to the buffer containing the data to be hashed.
-    
+
     DataLength - Length of Data buffer in bytes.
-    
+
     HashValue - Pointer to a buffer that receives the hash digest value (32 bytes).
-    
-    HashValueLength - Pointer to the hash value length.                        
+
+    HashValueLength - Pointer to the hash value length.
 
 Returns:
 
     BOOLEAN
 
-**/            
+**/
 {
     EFI_STATUS commandStatus;
     ZeroMem(CryptoCommandDescriptor, sizeof(CRYPTO_COMMAND_DESCRIPTOR));
@@ -183,7 +183,7 @@ Returns:
     CryptoCommandDescriptor->U.ComputeHashParams.ValueLength = *HashValueLength;
 
     commandStatus = IssueCryptoCommand();
-    
+
     if (commandStatus == EFI_SUCCESS)
     {
         return TRUE;
@@ -210,29 +210,29 @@ SbCryptRsaPkcs1Verify (
 /**
 
 Routine Description:
-  
+
     Verifies the RSA-SSA signature with EMSA-PKCS1-v1_5 encoding scheme defined in
     RSA PKCS#1.
 
 Arguments:
 
     RsaContext  - Pointer to RSA context for signature verification.
-    
+
     RsaContextLength - Length of the RSA context (exponent)
-    
+
     MessageHash - Pointer to octet message hash to be checked.
-    
+
     HashLength - Length of the message hash in bytes.
-    
+
     Signature - Pointer to RSA PKCS1-v1_5 signature to be verified.
-    
+
     SigLength - Length of signature in bytes.
 
 Returns:
 
     BOOLEAN
 
-**/          
+**/
 {
     ZeroMem(CryptoCommandDescriptor, sizeof(CRYPTO_COMMAND_DESCRIPTOR));
     CryptoCommandDescriptor->Command = CryptoVerifyRsaPkcs1;
@@ -264,28 +264,28 @@ SbCryptPkcs7Verify (
 /**
 
 Routine Description:
-  
+
     Verifies the PKCS#7 signature against a trusted certificate according to the PKCS#7 RFC
 
 Arguments:
 
     Pkcs7SignedData - Pointer to the PKCS7 signature to be verified
-    
+
     DataSize - Size of the PKCS7 signature
-    
+
     TrustedCert - Pointer to the trusted X509 certificate
-    
+
     CertSize - Size of the trusted X509 certificate
-    
+
     Pkcs7Content - Pointer to the PKCS7 content
-    
+
     ContentSize - Size of the PKCS7 content
 
 Returns:
 
     BOOLEAN
 
-**/              
+**/
 {
     ZeroMem(CryptoCommandDescriptor, sizeof(CRYPTO_COMMAND_DESCRIPTOR));
     CryptoCommandDescriptor->Command = CryptoVerifyPkcs7;
@@ -296,7 +296,7 @@ Returns:
     CryptoCommandDescriptor->U.AuthenticodeOrPkcs7Params.TrustedCertSize = (UINT32) CertSize;
     CryptoCommandDescriptor->U.AuthenticodeOrPkcs7Params.HashOrPkcsDataAddress = (UINT64) Pkcs7Content;
     CryptoCommandDescriptor->U.AuthenticodeOrPkcs7Params.HashOrPkcsDataSize = (UINT32) ContentSize;
-    
+
     if (IssueCryptoCommand() == EFI_SUCCESS)
     {
         return TRUE;
@@ -317,28 +317,28 @@ SbCryptAuthenticodeVerify (
 /**
 
 Routine Description:
-  
+
     Verifies the authenticode signature against a trusted certificate according to the Authenticode specification
 
 Arguments:
 
     AuthData - Pointer to authenticode signature for signature verification.
-    
+
     DataSize - Size of the authenticode signature
-    
+
     TrustedCert - Pointer to the trusted X509 certificate
-    
+
     CertSize - Size of the trusted X509 certificate
-    
+
     ImageHash - Hash value of the image as computed by the authenticode specification
-    
+
     HashSize  - Hash value size
-    
+
 Returns:
 
     BOOLEAN
 
-**/                
+**/
 {
     ZeroMem(CryptoCommandDescriptor, sizeof(CRYPTO_COMMAND_DESCRIPTOR));
     CryptoCommandDescriptor->Command = CryptoVerifyAuthenticode;
@@ -349,7 +349,7 @@ Returns:
     CryptoCommandDescriptor->U.AuthenticodeOrPkcs7Params.TrustedCertSize = (UINT32) CertSize;
     CryptoCommandDescriptor->U.AuthenticodeOrPkcs7Params.HashOrPkcsDataAddress = (UINT64) ImageHash;
     CryptoCommandDescriptor->U.AuthenticodeOrPkcs7Params.HashOrPkcsDataSize = (UINT32) HashSize;
-    
+
     if (IssueCryptoCommand() == EFI_SUCCESS)
     {
         return TRUE;
@@ -358,7 +358,7 @@ Returns:
 }
 
 EFI_STATUS
-EFIAPI 
+EFIAPI
 SbCryptRngGetInfo (
     _In_    EFI_RNG_PROTOCOL    *This,
     _Inout_ UINTN               *RNGAlgorithmListSize,
@@ -367,29 +367,29 @@ SbCryptRngGetInfo (
 /**
 
 Routine Description:
-  
+
     Returns information about supported RNG algorithms.
 
 Arguments:
-    
+
     This - A pointer to the EFI_RNG_PROTOCOL instance.
 
-    RNGAlgorithmListSize - On input, the size in bytes of RNGAlgorithmList. On output 
+    RNGAlgorithmListSize - On input, the size in bytes of RNGAlgorithmList. On output
                            with a return code of EFI_SUCCESS, the size in bytes of the
                            data returned in RNGAlgorithmList. With a return code of
                            EFI_BUFFER_TOO_SMALL, the size of RNGAlgorithmList required
                            to obtain the list.
-    
+
     RNGAlgorithmList - A memory buffer filled with one EFI_RNG_ALGORITHM element for each
-                       supported RNG algorithm. The list must not change across multiple 
-                       calls to the same driver. The first algorithm in the list is the 
+                       supported RNG algorithm. The list must not change across multiple
+                       calls to the same driver. The first algorithm in the list is the
                        default algorithm for the driver.
-    
+
 Returns:
 
     EFI_STATUS
 
-**/        
+**/
 {
     EFI_STATUS status;
     EFI_GUID defaultAlgorithm = EFI_RNG_ALGORITHM_DEFAULT;
@@ -398,8 +398,8 @@ Returns:
     // Check parameters
     //
 
-    if (This == NULL || 
-        RNGAlgorithmListSize == NULL || 
+    if (This == NULL ||
+        RNGAlgorithmListSize == NULL ||
         RNGAlgorithmList == NULL)
     {
         return EFI_INVALID_PARAMETER;
@@ -434,16 +434,16 @@ SbCryptRngGetRng (
 /**
 
 Routine Description:
-  
+
     Produces and returns an RNG value using either the default or specified RNG algorithm.
 
 Arguments:
-    
+
     This - A pointer to the EFI_RNG_PROTOCOL instance.
 
     RNGAlgorithm - A pointer to the EFI_RNG_ALGORITHM that identifies the RNG algorithm to use.
                    May be NULL in which case the function will use its default RNG algorithm.
-    
+
     RNGValueLength - The length in bytes of the memory buffer pointed to by RNGValue.
 
     RNGValue - A memory buffer filled with the resulting RNG value.
@@ -452,7 +452,7 @@ Returns:
 
     EFI_STATUS
 
-**/       
+**/
 {
     EFI_GUID defaultAlgorith = EFI_RNG_ALGORITHM_DEFAULT;
 
@@ -460,7 +460,7 @@ Returns:
     // Check parameters
     //
 
-    if (This == NULL || 
+    if (This == NULL ||
         RNGValue == NULL)
     {
         return EFI_INVALID_PARAMETER;
@@ -487,7 +487,7 @@ Returns:
     CryptoCommandDescriptor->U.GetRandomNumberParams.BufferAddress = (UINT64) RNGValue;
     CryptoCommandDescriptor->U.GetRandomNumberParams.BufferSize = (UINT32) RNGValueLength;
 
-    return IssueCryptoCommand();     
+    return IssueCryptoCommand();
 }
 
 
@@ -500,37 +500,37 @@ SbCryptDriverInitialize(
 /**
 
 Routine Description:
-  
+
     Entry Point for secure boot Cryptographic Driver. This function installs secure boot Crypt Protocol.
 
 Arguments:
-    
+
     ImageHandle - Image handle of this driver.
-    
+
     SystemTable - A Pointer to the EFI System Table.
-    
+
 Returns:
 
     EFI_STATUS
 
-**/                  
+**/
 {
     EFI_STATUS  Status;
-    
+
     CryptoCommandDescriptor = (PCRYPTO_COMMAND_DESCRIPTOR) Allocate32BitMemory(sizeof(CRYPTO_COMMAND_DESCRIPTOR));
-    
+
     if (CryptoCommandDescriptor == NULL)
     {
         return EFI_NOT_STARTED;
     }
-    
+
     CryptoCommandDescriptorGpa = (UINTN) CryptoCommandDescriptor;
-  
+
     //
     // Install the protocols onto a new handle
     //
     Status = gBS->InstallMultipleProtocolInterfaces (
-                 &mSbCryptHandle, 
+                 &mSbCryptHandle,
                  &gEfiSecureBootCryptProtocolGuid,
                  &mSbCryptProtocol,
                  &gEfiRngProtocolGuid,
@@ -538,6 +538,6 @@ Returns:
                  NULL
                  );
     ASSERT_EFI_ERROR (Status);
-  
+
     return Status;
 }

@@ -8,7 +8,7 @@ Module Name:
 
 Abstract:
 
-    Hyper-V NVRAM Variable Services driver. 
+    Hyper-V NVRAM Variable Services driver.
 
     The module acts as a proxy and sends non-volatile variable requests
     to the Hyper-V BIOS VDev.
@@ -87,40 +87,6 @@ Returns:
 }
 
 
-VOID*
-Allocate32BitMemory(
-    __in UINT32 Size
-    )
-/*++
-
-Routine Description:
-
-    Allocates memory in 32-bit address space (below 4GB).
-
-Arguments:
-
-    Size - The number of bytes to allocate.
-
-Return Value:
-
-    None.
-
---*/
-{
-    VOID* answer = (void*) WITHIN_4_GB_LL;
-
-    if (EFI_ERROR(gBS->AllocatePages(AllocateMaxAddress,
-                                     EfiRuntimeServicesData,
-                                     EFI_SIZE_TO_PAGES(Size),
-                                     (EFI_PHYSICAL_ADDRESS*) &answer)))
-    {
-        return NULL;
-    }
-
-    return answer;
-}
-
-
 //
 // Entry points
 //
@@ -146,9 +112,9 @@ Return Value:
 --*/
 {
     EFI_STATUS status = EFI_SUCCESS;
-    
+
 #define BELOW_4GB (0xFFFFFFFFULL)
-    
+
     //
     // Allocate the descriptor from physcial memory below 4GB.
     //
@@ -180,8 +146,8 @@ Return Value:
     //
     // Addresses are identity mapped before runtime.  GVA == GPA at this point.
     //
-    mNvramCommandDescriptor = (PNVRAM_COMMAND_DESCRIPTOR)mNvramCommandDescriptorGpa;
-    mNvramCommandDataBuffer = (UINT8*)mNvramCommandDataBufferGpa;
+    mNvramCommandDescriptor = (PNVRAM_COMMAND_DESCRIPTOR)(UINTN)mNvramCommandDescriptorGpa;
+    mNvramCommandDataBuffer = (UINT8*)(UINTN)mNvramCommandDataBufferGpa;
 
 Cleanup:
 
@@ -190,14 +156,14 @@ Cleanup:
         if (mNvramCommandDataBufferGpa != 0)
         {
             gBS->FreePages(
-                mNvramCommandDataBufferGpa, 
+                mNvramCommandDataBufferGpa,
                 EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE));
             mNvramCommandDataBufferGpa = 0;
         }
         if (mNvramCommandDescriptorGpa != 0)
         {
             gBS->FreePages(
-                mNvramCommandDescriptorGpa, 
+                mNvramCommandDescriptorGpa,
                 EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)));
             mNvramCommandDescriptorGpa = 0;
         }
@@ -213,9 +179,9 @@ NvramAddressChangeHandler()
 
 Routine Description:
 
-    Callback to handle converting internal pointers due to   
+    Callback to handle converting internal pointers due to
     the page tables being updated.
-    
+
 Arguments:
 
     None.
@@ -227,9 +193,9 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    
+
     //
-    // Physical addresses (GPA's) won't change.  
+    // Physical addresses (GPA's) won't change.
     // Convert the virtual addresses of the buffers.
     //
     status = EfiConvertPointer(0, (void**)&mNvramCommandDescriptor);
@@ -253,7 +219,7 @@ Routine Description:
 
 Arguments:
 
-    VsmAware - Supplies a boolean indicating if any boot app opt-ed to leverage 
+    VsmAware - Supplies a boolean indicating if any boot app opt-ed to leverage
                VSM by setting the necessary bit in OsLoaderIndcationsSupported.
 
 Returns:
@@ -400,7 +366,7 @@ Returns:
     // Data follows the name.
     //
     CopyMem(mNvramCommandDataBuffer + length, Data, DataSize);
-    mNvramCommandDescriptor->U.VariableCommand.VariableDataAddress = 
+    mNvramCommandDescriptor->U.VariableCommand.VariableDataAddress =
         mNvramCommandDataBufferGpa + length;
     mNvramCommandDescriptor->U.VariableCommand.VariableDataBytes = (UINT32) DataSize;
 
@@ -676,7 +642,7 @@ Arguments:
     Format - the printf style format string.
 
     ... - the parameters dependent on the format string.
-    
+
 Returns:
 
     EFI_STATUS

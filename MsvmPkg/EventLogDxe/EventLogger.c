@@ -160,7 +160,7 @@ Return Value:
         return NULL;
     }
 
-    return (VOID*)address;
+    return (VOID*)(UINTN)address;
 }
 
 
@@ -372,10 +372,10 @@ Return Value:
     WriteBiosDevice(BiosConfigEventLogFlush, (UINT32)(UINTN)channelDescriptor);
 
     EventChannelUnlock(channel);
- 
+
     channel->Stats.Flush++;
     FreePages(channelDescriptor, EFI_SIZE_TO_PAGES(allocSize));
-    
+
     return EFI_SUCCESS;
 }
 
@@ -1026,7 +1026,7 @@ Return Value:
     // -- From this point on, no failures should occur ---
     //
     // 3. Write the event descriptor to the ring (potentially marked as pending)
-    // 4. If the event is pending, 
+    // 4. If the event is pending,
     //    Commit any previous pending data (marked as incomplete) and cache the current event data.
     //    Non-pending events will have their data written to the ring at this time.
     //

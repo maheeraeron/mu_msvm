@@ -1,0 +1,665 @@
+     title  "Trap Processing"
+;++
+;
+; Copyright (c) 1996  Microsoft Corporation
+;
+; Module Name:
+;
+;    trap.asm
+;
+; Abstract:
+;
+;    This module implements the code necessary to field and process i386
+;    trap conditions.
+;
+; Author:
+;
+;    David N. Cutler (davec) 1-Dec-96
+;
+; Environment:
+;
+;    Boot.
+;
+; Revision History:
+;
+;--
+
+.386p
+        .xlist
+KERNELONLY  equ     1
+include ks386.inc
+include callconv.inc
+include kimacro.inc
+include mac386.inc
+        .list
+
+        extrn   _EfiKdTrapRoutine:DWORD
+
+        page ,132
+        subttl "Equated Values"
+;
+; Debug register 6 (dr6) BS (single step) bit mask
+;
+
+DR6_BS_MASK                     EQU     4000H
+
+;
+; EFLAGS single step bit
+;
+
+EFLAGS_TF_BIT                   EQU     100h
+EFLAGS_OF_BIT                   EQU     4000H
+
+_TEXT$00   SEGMENT PUBLIC 'CODE'
+        ASSUME  DS:NOTHING, ES:NOTHING, SS:FLAT, FS:NOTHING, GS:NOTHING
+
+        page ,132
+        subttl "Macros"
+;++
+;
+; GENERATE_TRAP_FRAME
+;
+; Macro Dexcription:
+;
+;    This macro generates a trap frame and saves the current register state.
+;
+; Arguments:
+;
+;    MachineFrame (esp) - At the beginning of this operation, the stack pointer
+;       points to a machine frame with an error code pushed.
+;
+;--
+
+GENERATE_TRAP_FRAME macro
+
+;
+; Build trap frame minus the V86 and privilege level transition arguments.
+;
+; N.B. It is assumed that the error code has already been pushed on the stack.
+;
+
+        .errnz (TsErrCode - TsEbp - 4)
+        push    ebp                     ; save nonvolatile registers
+        push    ebx                     ;
+        push    esi                     ;
+        push    edi                     ;
+        .errnz (TsEbp - TsSegFs - 4 * 4)
+        push    fs                      ; save FS segment register
+        .errnz (TsSegFs - TsExceptionList - 4)
+        push    -1                      ; push dummy exception list
+        .errnz (TsExceptionList - TsMxCsr - 4)
+        push    0                       ; push dummy MxCsr
+        .errnz (TsMxCsr - TsPreviousPreviousMode - 4)
+        push    -1                      ; dummy previous mode
+        .errnz (TsPreviousPreviousMode - TsEax - 4)
+        push    eax                     ; save the volatile registers
+        push    ecx                     ;
+        push    edx                     ;
+        .errnz  (TsEax - TsSegDs - 3 * 4)
+        push    ds                      ; save segment registers
+        push    es                      ;
+        push    gs                      ;
+        sub     esp, TsSegGs            ; allocate remainder of trap frame
+        mov     ebp, esp                ; set ebp to base of trap frame
+        cld                             ; clear direction bit
+
+        endm
+
+        page ,132
+        subttl "Debug Exception"
+;++
+;
+; Routine Description:
+;
+;    Handle debug exceptions.
+;
+;    This exception is generated for the following reasons:
+;
+;    Instruction breakpoint fault.
+;    Data address breakpoint trap.
+;    General detect fault.
+;    Single-step trap.
+;    Task-switch breadkpoint trap.
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+; Return value:
+;
+;    None
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdDebugTrapOrFault
+_EfiKdDebugTrapOrFault proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+        push    0                       ; push dummy error code
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+        and     dword ptr [ebp] + TsEflags, not EFLAGS_TF_BIT ; clear TF flag
+        mov     eax, STATUS_SINGLE_STEP ; set exception code
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        xor     ecx, ecx                ; set number of parameters
+        call    _EfiCommonExceptionDispatch
+        jmp     _EfiKdExit                 ; dummy
+
+_EfiKdDebugTrapOrFault endp
+
+        page ,132
+        subttl "Unhandled Exception"
+;++
+; Routine Description:
+;
+;   This routine is entered on an unexpected trap. We will try to break in
+;   to the debugger if its present, otherwise we will restart the system.
+;
+; Arguments:
+;
+;   The standard exception frame is pushed by hardware on the kernel stack.
+;   There is no error code for this exception.
+;
+; Disposition:
+;
+;   A standard trap frame is constructed on the kernel stack, the exception
+;   parameters are loaded into registers, and the exception is dispatched via
+;   common code.
+;
+;--
+
+        align 16
+        public _EfiKdUnhandledException
+_EfiKdUnhandledException proc
+
+        GENERATE_TRAP_FRAME              ; generate trap frame
+
+        mov     eax, STATUS_NONCONTINUABLE_EXCEPTION    ; set exception code.
+        xor     ecx, ecx                                ; set number of parameters
+        call    _EfiCommonExceptionDispatch
+        jmp     _EfiKdExit
+
+_EfiKdUnhandledException endp
+
+        page ,132
+        subttl "Int 3 Breakpoint"
+;++
+;
+; Routine Description:
+;
+;    Handle int 3 (breakpoint).
+;
+;    This trap is caused by the int 3 instruction.
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+; Return value:
+;
+;    None
+;
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdBreakpointTrap
+_EfiKdBreakpointTrap proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+        push    0                       ; push dummy error code
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+        dec     dword ptr [ebp] + TsEip ; back up to int 3 instruction
+        mov     eax, STATUS_BREAKPOINT  ; set exception code
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        mov     ecx, 1                  ; set number of parameters
+        mov     edx, BREAKPOINT_BREAK   ; set service name
+        call    _EfiCommonExceptionDispatch             ; dispatch exception
+        jmp     _EfiKdExit                 ; dummy
+
+_EfiKdBreakpointTrap endp
+
+        page ,132
+        subttl "General Protect"
+;++
+;
+; Routine Description:
+;
+;    General protect violation.
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;       error code
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+; Return value:
+;
+;    N.B. There is no return from this fault.
+;
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdGeneralProtectionFault
+_EfiKdGeneralProtectionFault proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+EfiKdGeneralProtectionFault10:                            ;
+        mov     eax, STATUS_ACCESS_VIOLATION ; set exception code
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        mov     ecx, 1                  ; set number of parameters
+        mov     edx, [ebp] + TsErrCode  ; set error code
+        and     edx, 0FFFFH             ;
+        call    _EfiCommonExceptionDispatch             ; dispatch exception
+        jmp     EfiKdGeneralProtectionFault10             ; repeat
+
+_EfiKdGeneralProtectionFault endp
+
+        page ,132
+        subttl "Page Fault"
+;++
+;
+; Routine Description:
+;
+;    Page fault.
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;       error code
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+; Return value:
+;
+;    N.B. There is no return from this fault.
+;
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdPageFault
+_EfiKdPageFault proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+_EfiKdPageFault10:                            ;
+        mov     eax, STATUS_ACCESS_VIOLATION ; set exception code
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        mov     ecx, 3                  ; set number of parameters
+        mov     edx, [ebp] + TsErrCode  ; set read/write code
+        and     edx, 2                  ;
+        mov     edi, cr2                ; set fault address
+        xor     esi, esi                ; set previous mode
+        call    _EfiCommonExceptionDispatch             ; dispatch exception
+        jmp     _EfiKdPageFault10             ; repeat
+
+_EfiKdPageFault endp
+
+        page ,132
+        subttl "Fast Fail"
+;++
+;
+; Routine Description:
+;
+;    Handle int 29 (fast fail).
+;
+;    The trap is caused by an int 29 instruction.  This instruction indiates
+;    that the caller has become unrecoverably corrupted and must be terminated
+;    in the fastest way possible.
+;
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+;     FastFailCode (ecx) - Supplies the fast failure description code from
+;                          the original requestor.  Legal values are drawn from
+;                          the RTL_FAIL_FAST_* family of constants.
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdFastFailTrap
+_EfiKdFastFailTrap proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+;
+; Build trap frame minus the V86 and privilege level transition arguments.
+;
+
+        push    0                       ; push dummy error code
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+        mov     edx, [ebp] + TsEcx      ; set fast fail code (from caller)
+        mov     eax, STATUS_STACK_BUFFER_OVERRUN  ; set exception code
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        mov     ecx, 1                  ; one exception parameter
+        call    _EfiCommonExceptionDispatch             ; dispatch exception
+        jmp     _EfiKdExit                 ; dummy
+
+_EfiKdFastFailTrap endp
+
+        page ,132
+        subttl "Assertion Failure"
+;++
+;
+; Routine Description:
+;
+;    Handle int 2c (assertion breakpoint).
+;
+;    The trap is caused by an int 2c instruction. This instruction is used
+;    instead of an int 3 instruction to save space in target image.  The text
+;    in an int 2c assertion failure is an annotation in the symbol file instead
+;    of being carried in the target image.
+;
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdAssertionFailureTrap
+_EfiKdAssertionFailureTrap proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+;
+; Build trap frame minus the V86 and privilege level transition arguments.
+;
+
+        push    0                       ; push dummy error code
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+        mov     eax, STATUS_ASSERTION_FAILURE  ; set exception code
+        sub     dword ptr [ebp]+TsEip, 2       ; convert trap to a fault
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        xor     ecx, ecx                ; zero parameters
+        call    _EfiCommonExceptionDispatch             ; dispatch exception
+        jmp     _EfiKdExit                 ; dummy
+
+_EfiKdAssertionFailureTrap endp
+
+        page ,132
+        subttl "Debug Service"
+;++
+;
+; Routine Description:
+;
+;    Handle int 2d (debug service).
+;
+;    The trap is caused by an int 2d instruction. This instruction is used
+;    instead of an int 3 instruction so parameters can be passed to the
+;    requested debug service.
+;
+;    N.B. An int 3 instruction must immediately follow the int 2d instruction.
+;
+; Arguments:
+;
+;    On entry the stack contains:
+;
+;       eflags
+;       cs
+;       eip
+;
+;    N.B. There are no privilege transitions in the boot debugger. Therefore,
+;         the none of the previous ss, esp, or V86 registers are saved.
+;
+;     Service (eax) - Supplies the service to perform.
+;     Argument1 (ecx) - Supplies the first argument.
+;     Argument2 (edx) - Supplies the second argument.
+;
+;--
+
+        ASSUME  DS:NOTHING, SS:NOTHING, ES:NOTHING
+
+        align   16
+        public  _EfiKdDebugServiceTrap
+_EfiKdDebugServiceTrap proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+;
+; Build trap frame minus the V86 and privilege level transition arguments.
+;
+
+        push    0                       ; push dummy error code
+
+        GENERATE_TRAP_FRAME             ; generate trap frame
+
+;
+; Set exception parameters.
+;
+
+        mov     eax, STATUS_BREAKPOINT  ; set exception code
+        mov     ebx, [ebp] + TsEip      ; set address of faulting instruction
+        mov     ecx, 3                  ; set number of parameters
+        mov     edx, [ebp] + TsEax      ; set service name
+        mov     edi, [ebp] + TsEcx      ; set first argument value
+        mov     esi, [ebp] + TsEdx      ; set second argument value
+        call    _EfiCommonExceptionDispatch             ; dispatch exception
+
+        jmp     _EfiKdExit                 ; dummy
+
+_EfiKdDebugServiceTrap endp
+
+        page , 132
+        subttl "Exception Dispatch"
+;++
+;
+; Dispatch
+;
+; Routine Description:
+;
+;    This functions allocates an exception record, initializes the exception
+;    record, and calls the general exception dispatch routine.
+;
+; Arguments:
+;
+;    Code (eax) - Suppplies the exception code.
+;    Address (ebx) = Supplies the address of the exception.
+;    Number (ecx) = Supplies the number of parameters.
+;    Parameter1 (edx) - Supplies exception parameter 1;
+;    Parameter2 (edi) - Supplies exception parameter 2;
+;    Parameter3 (esi) - Supplies exception parameter 3.
+;
+; Return Value:
+;
+;    None.
+;
+;--
+
+      align     16
+      public _EfiCommonExceptionDispatch
+_EfiCommonExceptionDispatch proc
+; .FPO (ExceptionRecordLength / 4, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+;
+; Allocate and initialize exception record.
+;
+
+        sub     esp, ExceptionRecordLength ; allocate exception record
+        mov     [esp] + ErExceptionCode, eax ; set exception code
+        xor     eax, eax                ; zero register
+        mov     [esp] + ErExceptionFlags, eax ; zero exception flags
+        mov     [esp] + ErExceptionRecord, eax ; zero associated exception record
+        mov     [esp] + ErExceptionAddress, ebx ; set exception address
+        mov     [esp] + ErNumberParameters, ecx ; set number of parameters
+        mov     [esp] + ErExceptionInformation + 0, edx ; set parameter 1
+        mov     [esp] + ErExceptionInformation + 4, edi ; set parameter 2
+        mov     [esp] + ErExceptionInformation + 8, esi ; set parameter 3
+
+;
+; Save debug registers in trap frame.
+;
+
+        mov     eax, dr0                ; save dr0
+        mov     [ebp] + TsDr0, eax      ;
+        mov     eax, dr1                ; save dr1
+        mov     [ebp] + TsDr1, eax      ;
+        mov     eax, dr2                ; save dr2
+        mov     [ebp] + TsDr2, eax      ;
+        mov     eax, dr3                ; save dr3
+        mov     [ebp] + TsDr3, eax      ;
+        mov     eax, dr6                ; save dr6
+        mov     [ebp] + TsDr6, eax      ;
+        mov     eax, dr7                ; save dr7
+        mov     [ebp] + TsDr7, eax      ;
+
+;
+; Save previous stack address and segment selector.
+;
+
+        mov     eax, ss                 ; save stack segment register
+        mov     [ebp] + TsTempSegCs, eax ;
+        mov     [ebp] + TsTempEsp, ebp  ; compute previous stack address
+        add     [ebp] + TsTempEsp, TsEFlags + 4 ;
+
+;
+; Call the general exception dispatcher.
+;
+
+        mov     ecx, esp                ; set address of exception record
+        push    ebp                     ; push address of trap frame
+        push    0                       ; push address of exception frame
+        push    ecx                     ; push address of exception record
+        call    [_EfiKdTrapRoutine]     ; call dispatch routine
+        pop     ecx
+        pop     ecx
+        pop     ebp
+
+        add     esp, ExceptionRecordLength ; deallocate exception record
+        ret                             ;
+
+_EfiCommonExceptionDispatch endp
+
+        page ,132
+        subttl  "Common Trap Exit"
+;++
+;
+; Exit
+;
+; Routine Description:
+;
+;    This code is transfered to at the end of the processing for an exception.
+;    Its function is to restore machine state and continue execution.
+;
+; Arguments:
+;
+;    ebp - Supplies the address of the trap frame.
+;
+;   Return Value:
+;
+;    None.
+;
+;--
+
+        align   16
+        public  _EfiKdExit
+_EfiKdExit proc
+; .FPO (0, 0, 0, 0, 0, FPO_TRAPFRAME)
+
+        lea     esp, [ebp] + TsSegGs    ; get address of save area
+        pop     gs                      ; restore segment registers
+        pop     es                      ;
+        pop     ds                      ;
+        .errnz  (TsEax - TsSegDs - 3 * 4)
+        pop     edx                     ; restore volatile registers
+        pop     ecx                     ;
+        pop     eax                     ;
+        lea     esp, [ebp] + TsSegFs
+        pop     fs                      ; restore FS segment register
+        .errnz (TsEdi - TsSegFs - 4)
+        pop     edi                     ; restore nonvolatile registers
+        pop     esi                     ;
+        pop     ebx                     ;
+        pop     ebp                     ;
+        .errnz  (TsErrCode - TsEbp - 4)
+        add     esp, 4                  ; remove error code
+        iretd                           ; return
+
+_EfiKdExit endp
+
+_TEXT$00   ends
+        end
+

@@ -24,6 +24,8 @@ Author:
 // with the high DWORD in eax and the low DWORD in edx.
 //
 #define GUESTDUMP_TRIPLEFAULT_SIGNATURE 0x504d445453455547  // "GUESTDMP"
+#define GUESTDUMP_TRIPLEFAULT_SIGNATURE_LOW_DWORD 0x53455547    // put in edx
+#define GUESTDUMP_TRIPLEFAULT_SIGNATURE_HIGH_DWORD 0x504d4454   // put in eax
 
 
 /**
@@ -95,13 +97,13 @@ typedef struct
  * Basic information for a dump request
  * Header.Type = BlockTypeInfo
  */
-typedef struct 
+typedef struct
 {
     MEMORY_DUMP_BLOCK_HEADER    Header;
 
     // total number of blocks in the request
     UINT32                      BlockCount;
-    
+
     UINT32                      MajorVersion;
     UINT32                      MinorVersion;
     UINT32                      ProcessorCount;
@@ -134,7 +136,7 @@ typedef struct
 /**
  * Defines a list of loaded modules and names
  * Header.Type = BlockTypeModuleList
- * The module list is represented by two concatenated regions 
+ * The module list is represented by two concatenated regions
  *
  * The first region is an array made up of DUMP_DRIVER_ENTRY64 structures.
  * ModuleCount describes the size of the array. Each DUMP_DRIVER_ENTRY64

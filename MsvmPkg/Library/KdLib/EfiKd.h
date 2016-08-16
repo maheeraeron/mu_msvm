@@ -351,10 +351,10 @@ EfiKdBreakPointWithStatus(
 
 VOID
 TripleFault(
-    __in    UINT64  Rax,
-    __in    UINT64  Rbx,
-    __in    UINT64  Rcx,
-    __in    UINT64  Rdx
+    __in    UINTN   Rax,
+    __in    UINTN   Rbx,
+    __in    UINTN   Rcx,
+    __in    UINTN   Rdx
     );
 
 NTSTATUS
@@ -1025,3 +1025,11 @@ extern BOOLEAN EfiKdSubsystemInitialized;
 extern BOOLEAN EfiKdSubsystemEnabled;
 extern EFI_UNLOADED_MODULE EfiKdUnloadedModules[];
 extern ULONG EfiKdLastUnloadedModule;
+
+#if defined(MDE_CPU_IA32)
+
+// This points to the EfiKdTrap procedure and is being called from trapa.asm for Ia32.
+extern UINT32 EfiKdTrapRoutine;
+
+#endif
+

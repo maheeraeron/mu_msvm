@@ -638,7 +638,7 @@ Return Value:
         {
             CopyMem((UINT8 *)BltBuffer + (DstY * Delta) +
                         (DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
-                    (UINT8 *)context->Mode.FrameBufferBase + (SrcY * BytesPerScanLine) +
+                    (UINT8 *)(UINTN)context->Mode.FrameBufferBase + (SrcY * BytesPerScanLine) +
                         (SourceX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
                     BytesPerLine);
         }
@@ -655,25 +655,25 @@ Return Value:
                 SrcY  = SourceY + Height - Index - 1;
                 DstY  = DestinationY + Height - Index - 1;
             }
-            CopyMem((UINT8 *)context->Mode.FrameBufferBase + (DstY * BytesPerScanLine) +
+            CopyMem((UINT8 *)(UINTN)context->Mode.FrameBufferBase + (DstY * BytesPerScanLine) +
                         (DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
-                    (UINT8 *)context->Mode.FrameBufferBase + (SrcY * BytesPerScanLine) +
+                    (UINT8 *)(UINTN)context->Mode.FrameBufferBase + (SrcY * BytesPerScanLine) +
                         (SourceX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
                     BytesPerLine);
         }
         break;
 
     case EfiBltVideoFill:
-        SetMem32((UINT8 *)context->Mode.FrameBufferBase +
+        SetMem32((UINT8 *)(UINTN)context->Mode.FrameBufferBase +
                     (DestinationY * BytesPerScanLine) +
                     (DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
                  BytesPerLine,
                  *(UINT32 *)BltBuffer);
         for (DstY = DestinationY + 1; DstY < (Height + DestinationY); DstY++)
         {
-            CopyMem ((UINT8 *)context->Mode.FrameBufferBase + (DstY * BytesPerScanLine) +
+            CopyMem ((UINT8 *)(UINTN)context->Mode.FrameBufferBase + (DstY * BytesPerScanLine) +
                          (DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
-                     (UINT8 *)context->Mode.FrameBufferBase + (DestinationY * BytesPerScanLine) +
+                     (UINT8 *)(UINTN)context->Mode.FrameBufferBase + (DestinationY * BytesPerScanLine) +
                          (DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
                      BytesPerLine);
         }
@@ -682,7 +682,7 @@ Return Value:
     case EfiBltBufferToVideo:
         for (SrcY = SourceY, DstY = DestinationY; SrcY < (Height + SourceY); SrcY++, DstY++)
         {
-            CopyMem((UINT8 *)context->Mode.FrameBufferBase + (DstY * BytesPerScanLine) +
+            CopyMem((UINT8 *)(UINTN)context->Mode.FrameBufferBase + (DstY * BytesPerScanLine) +
                         (DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
                     (UINT8 *)BltBuffer + (SrcY * Delta) +
                         (SourceX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)),
