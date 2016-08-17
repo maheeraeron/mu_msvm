@@ -56,8 +56,39 @@ EFI_STATUS
   IN UINTN                             Height
   );
 
+
+/**
+  Returns information about the current boot logo if it is valid.
+
+  @param  This           The pointer to the Boot Logo protocol instance.
+  @param  BltBuffer      If supplied, and the boot logo is valid, contains an allocated
+                         Blt buffer containing the boot logo.  Callers must free this
+                         buffer when no longer needed.
+  @param  OffsetX        X offset of the actual logo from the start of the bitmap.
+  @param  OffsetY        Y offset of the actual logo from the start of the bitmap.
+  @param  Width          Width of logo.
+  @param  Height         Height of logo.
+  @param  Valid          TRUE if the logo has been set and is valid (not corrupt).
+  
+  @retval EFI_SUCCESS             The boot logo information was updated.
+  @retval EFI_INVALID_PARAMETER   One of the parameters has an invalid value.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_GET_BOOT_LOGO)(
+  IN EFI_BOOT_LOGO_PROTOCOL            *This,
+  OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL    **BltBuffer       OPTIONAL,
+  OUT UINTN                            *OffsetX,
+  OUT UINTN                            *OffsetY,
+  OUT UINTN                            *Width,
+  OUT UINTN                            *Height,
+  OUT BOOLEAN                          *Valid
+  );
+
 struct _EFI_BOOT_LOGO_PROTOCOL {
-  EFI_SET_BOOT_LOGO        SetBootLogo;
+  EFI_SET_BOOT_LOGO             SetBootLogo;
+  EFI_GET_BOOT_LOGO             GetBootLogoAttributes;
 };
 
 extern EFI_GUID gEfiBootLogoProtocolGuid;

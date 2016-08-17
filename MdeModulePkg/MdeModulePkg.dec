@@ -1378,6 +1378,9 @@
   # @Prompt Flag to request system reboot after processing capsule.
   gEfiMdeModulePkgTokenSpaceGuid.PcdSystemRebootAfterCapsuleProcessFlag|0x0001|UINT16|0x0000006d
 
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetGraphicsConsoleModeOnStart|TRUE|BOOLEAN|0x3000103B
+
+
   ## Publish PropertiesTable or not.
   #
   # If this PCD is TRUE, DxeCore publishs PropertiesTable.

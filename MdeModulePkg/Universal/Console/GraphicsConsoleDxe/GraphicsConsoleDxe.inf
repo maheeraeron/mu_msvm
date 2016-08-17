@@ -56,6 +56,7 @@
 
 [Protocols]
   gEfiDevicePathProtocolGuid                    ## TO_START
+  gEfiBootLogoProtocolGuid                      ## SOMETIMES_CONSUMES
   gEfiSimpleTextOutProtocolGuid                 ## BY_START
   gEfiGraphicsOutputProtocolGuid                ## TO_START
   gEfiUgaDrawProtocolGuid                       ## TO_START
@@ -70,6 +71,9 @@
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution   ## SOMETIMES_CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetGraphicsConsoleModeOnStart
 
 [UserExtensions.TianoCore."ExtraFiles"]
   GraphicsConsoleDxeExtra.uni

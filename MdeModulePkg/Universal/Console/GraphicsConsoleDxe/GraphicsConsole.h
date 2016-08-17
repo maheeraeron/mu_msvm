@@ -34,6 +34,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Protocol/HiiFont.h>
 #include <Protocol/HiiDatabase.h>
+#include <Protocol/BootLogo.h>
 
 
 extern EFI_COMPONENT_NAME_PROTOCOL   gGraphicsConsoleComponentName;
@@ -48,6 +49,12 @@ typedef union {
   EFI_WIDE_GLYPH    WideGlyph;
 } GLYPH_UNION;
 
+typedef enum {
+  ConsolePositionCenter,
+  ConsolePositionCenterBelowLogo,
+  ConsolePositionCenterBottom,
+  ConsolePositionLowerRight
+} GRAPHICS_CONSOLE_POSITION_ATTRIBUTE;
 //
 // Device Structure
 //
@@ -56,12 +63,26 @@ typedef union {
 typedef struct {
   UINTN   Columns;
   UINTN   Rows;
+  GRAPHICS_CONSOLE_POSITION_ATTRIBUTE   Position;
+  UINT32  Flags;
   INTN    DeltaX;
   INTN    DeltaY;
   UINT32  GopWidth;
   UINT32  GopHeight;
   UINT32  GopModeNumber;
 } GRAPHICS_CONSOLE_MODE_DATA;
+
+//
+// Flags for describing a mode (see GRAPHICS_CONSOLE_MODE_DATA.Flags)
+//
+#define MODE_FLAG_NONE             0x00000000
+
+// Mode is required
+#define MODE_FLAG_REQUIRED         0x00000001  
+
+// Mode is a "window" mode.  The entire screen is not used and
+// console operations (like Clear) only affect the window.
+#define MODE_FLAG_WINDOWED         0x00000002
 
 typedef struct {
   UINTN                            Signature;

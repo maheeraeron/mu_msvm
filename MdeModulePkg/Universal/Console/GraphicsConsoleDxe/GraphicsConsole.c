@@ -15,6 +15,27 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "GraphicsConsole.h"
 
 //
+// Padding (in console rows) between the boot logo and
+// console window.
+//
+#define GRAPHICS_CONSOLE_LOGO_PADDING_ROWS  2
+
+// Padding for windowed consoles (in pixels)
+// this will offset the window region from the edges of the screen
+// based on the window position.
+#define GRAPHICS_CONSOLE_WINDOW_PADDING     16
+
+//
+// Internally used flags.
+//
+
+// Indicates that the console window is positioned relative to the boot logo.
+#define GRAPHICS_CONSOLE_LOGO_RELATIVE_POSITIONING  0x00010000
+
+// Used for fast startup to indicate that a mode has not been set.
+#define GRAPHICS_CONSOLE_MODE_NOT_SET               -1
+
+//
 // Graphics Console Device Private Data template
 //
 GRAPHICS_CONSOLE_DEV    mGraphicsConsoleDevTemplate = {
@@ -46,7 +67,23 @@ GRAPHICS_CONSOLE_DEV    mGraphicsConsoleDevTemplate = {
 };
 
 GRAPHICS_CONSOLE_MODE_DATA mGraphicsConsoleModeData[] = {
-  {100, 31},
+
+  // Required Mode 0 per UEFI spec
+  {80, 25, ConsolePositionCenter, MODE_FLAG_REQUIRED},     
+  // Required Mode 1 per UEFI spec (but doesn't actually have to be implemented)
+  {80, 50},     
+  // Required Custom mode, default for Hyper-V
+  // windowed console below the logo.
+  {80, 16, ConsolePositionLowerRight, (MODE_FLAG_REQUIRED | MODE_FLAG_WINDOWED)},
+  // Hyper-V diagnostic console mode
+  // The column and row count are chosen such that the console is positioned below 
+  // the logo header.
+  // This positioning is somewhat fragile and will need to be updated if the 
+  // header size changes or the resolution changes (currently only 1024x768)
+  // Dependencies:
+  //  MsvmPkg\library\PlatformBdsLib\PlatformConsole.c  - Header drawing.
+  //  gUefiMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode - Mode number.
+  {125, 36, ConsolePositionCenterBottom, MODE_FLAG_REQUIRED},
   //
   // New modes can be added here.
   // The last entry is specific for full screen mode.
@@ -57,7 +94,7 @@ GRAPHICS_CONSOLE_MODE_DATA mGraphicsConsoleModeData[] = {
 EFI_HII_DATABASE_PROTOCOL   *mHiiDatabase;
 EFI_HII_FONT_PROTOCOL       *mHiiFont;
 EFI_HII_HANDLE              mHiiHandle;
-VOID                        *mHiiRegistration;
+EFI_EVENT                   mHiiRegistration;
 
 EFI_GUID             mFontPackageListGuid = {0xf5f219d3, 0x7006, 0x4648, {0xac, 0x8d, 0xd6, 0x1d, 0xfb, 0x7b, 0xc6, 0xad}};
 
@@ -240,10 +277,6 @@ InitializeGraphicsConsoleTextMode (
 {
   UINTN                       Index;
   UINTN                       Count;
-  GRAPHICS_CONSOLE_MODE_DATA  *ModeBuffer;
-  GRAPHICS_CONSOLE_MODE_DATA  *NewModeBuffer;
-  UINTN                       ValidCount;
-  UINTN                       ValidIndex;
   UINTN                       MaxColumns;
   UINTN                       MaxRows;  
   
@@ -261,98 +294,57 @@ InitializeGraphicsConsoleTextMode (
   MaxRows    = VerticalResolution / EFI_GLYPH_HEIGHT;
 
   //
-  // According to UEFI spec, all output devices support at least 80x25 text mode.
+  // Fill in the positioning and GOP info in the console mode table.
   //
-  ASSERT ((MaxColumns >= 80) && (MaxRows >= 25));
+  for (Index = 0; Index < Count; Index++)
+  {
+    GRAPHICS_CONSOLE_MODE_DATA *pCurMode = &mGraphicsConsoleModeData[Index];
 
-  //
-  // Add full screen mode to the last entry.
-  //
-  mGraphicsConsoleModeData[Count - 1].Columns = MaxColumns;
-  mGraphicsConsoleModeData[Count - 1].Rows    = MaxRows;
-
-  //
-  // Get defined mode buffer pointer.
-  //
-  ModeBuffer = mGraphicsConsoleModeData;
-
-  //
-  // Here we make sure that the final mode exposed does not include the duplicated modes,
-  // and does not include the invalid modes which exceed the max column and row.
-  // Reserve 2 modes for 80x25, 80x50 of graphics console.
-  //
-  NewModeBuffer = AllocateZeroPool (sizeof (GRAPHICS_CONSOLE_MODE_DATA) * (Count + 2));
-  ASSERT (NewModeBuffer != NULL);
-
-  //
-  // Mode 0 and mode 1 is for 80x25, 80x50 according to UEFI spec.
-  //
-  ValidCount = 0;  
-
-  NewModeBuffer[ValidCount].Columns       = 80;
-  NewModeBuffer[ValidCount].Rows          = 25;
-  NewModeBuffer[ValidCount].GopWidth      = HorizontalResolution;
-  NewModeBuffer[ValidCount].GopHeight     = VerticalResolution;
-  NewModeBuffer[ValidCount].GopModeNumber = GopModeNumber;
-  NewModeBuffer[ValidCount].DeltaX        = (HorizontalResolution - (NewModeBuffer[ValidCount].Columns * EFI_GLYPH_WIDTH)) >> 1;
-  NewModeBuffer[ValidCount].DeltaY        = (VerticalResolution - (NewModeBuffer[ValidCount].Rows * EFI_GLYPH_HEIGHT)) >> 1;      
-  ValidCount++;
-
-  if ((MaxColumns >= 80) && (MaxRows >= 50)) {
-    NewModeBuffer[ValidCount].Columns = 80;
-    NewModeBuffer[ValidCount].Rows    = 50;
-    NewModeBuffer[ValidCount].DeltaX  = (HorizontalResolution - (80 * EFI_GLYPH_WIDTH)) >> 1;
-    NewModeBuffer[ValidCount].DeltaY  = (VerticalResolution - (50 * EFI_GLYPH_HEIGHT)) >> 1;    
-  }
-  NewModeBuffer[ValidCount].GopWidth      = HorizontalResolution;
-  NewModeBuffer[ValidCount].GopHeight     = VerticalResolution;
-  NewModeBuffer[ValidCount].GopModeNumber = GopModeNumber;
-  ValidCount++;
-  
-  //
-  // Start from mode 2 to put the valid mode other than 80x25 and 80x50 in the output mode buffer.
-  //
-  for (Index = 0; Index < Count; Index++) {
-    if ((ModeBuffer[Index].Columns == 0) || (ModeBuffer[Index].Rows == 0) ||
-        (ModeBuffer[Index].Columns > MaxColumns) || (ModeBuffer[Index].Rows > MaxRows)) {
-      //
-      // Skip the pre-defined mode which is invalid or exceeds the max column and row.
-      //
-      continue;
+    //
+    // Error check and invalidate modes that don't fit the current GOP resolution
+    // ASSERT if required modes cannot be supported due to GOP limitations.
+    //
+    if ((pCurMode->Columns > MaxColumns) || (pCurMode->Rows > MaxRows))
+    {
+        //
+        // A required mode can't be used due to the display resolution.
+        // This indicates that the resolution was changed without considering the
+        // impact on console modes and is probably a bug.
+        //
+        ASSERT(!(pCurMode->Flags & MODE_FLAG_REQUIRED));
+        
+        // Invalidate this mode.
+        pCurMode->Columns = 0;
+        pCurMode->Rows    = 0;
+        continue;
     }
-    for (ValidIndex = 0; ValidIndex < ValidCount; ValidIndex++) {
-      if ((ModeBuffer[Index].Columns == NewModeBuffer[ValidIndex].Columns) &&
-          (ModeBuffer[Index].Rows == NewModeBuffer[ValidIndex].Rows)) {
-        //
-        // Skip the duplicated mode.
-        //
+
+    pCurMode->GopWidth      = HorizontalResolution;
+    pCurMode->GopHeight     = VerticalResolution;
+    pCurMode->GopModeNumber = GopModeNumber;
+
+    //
+    // Flag logo relative window positioning
+    // This will aid in quickly detmining if any differences
+    // in behavior are needed (e.g. screen clearing)
+    //
+    switch (pCurMode->Position)
+    {
+    case ConsolePositionCenterBelowLogo:
+        pCurMode->Flags |= GRAPHICS_CONSOLE_LOGO_RELATIVE_POSITIONING;
         break;
-      }
+    default:
+        // nothing needed
+        break;
     }
-    if (ValidIndex == ValidCount) {
-      NewModeBuffer[ValidCount].Columns       = ModeBuffer[Index].Columns;
-      NewModeBuffer[ValidCount].Rows          = ModeBuffer[Index].Rows;
-      NewModeBuffer[ValidCount].GopWidth      = HorizontalResolution;
-      NewModeBuffer[ValidCount].GopHeight     = VerticalResolution;
-      NewModeBuffer[ValidCount].GopModeNumber = GopModeNumber;
-      NewModeBuffer[ValidCount].DeltaX        = (HorizontalResolution - (NewModeBuffer[ValidCount].Columns * EFI_GLYPH_WIDTH)) >> 1;
-      NewModeBuffer[ValidCount].DeltaY        = (VerticalResolution - (NewModeBuffer[ValidCount].Rows * EFI_GLYPH_HEIGHT)) >> 1;
-      ValidCount++;
-    }
+
   }
  
-  DEBUG_CODE (
-    for (Index = 0; Index < ValidCount; Index++) {
-      DEBUG ((EFI_D_INFO, "Graphics - Mode %d, Column = %d, Row = %d\n", 
-                           Index, NewModeBuffer[Index].Columns, NewModeBuffer[Index].Rows));  
-    }
-  );
-  
   //
   // Return valid mode count and mode information buffer.
   //
-  *TextModeCount = ValidCount;
-  *TextModeData  = NewModeBuffer;
+  *TextModeCount = Count;
+  *TextModeData  = mGraphicsConsoleModeData;
   return EFI_SUCCESS;
 }
 
@@ -546,6 +538,9 @@ GraphicsConsoleControllerDriverStart (
           goto Error;
         }
       }
+    } else {
+      Status = EFI_UNSUPPORTED;
+      goto Error;
     }
   }
 
@@ -571,16 +566,21 @@ GraphicsConsoleControllerDriverStart (
   //
   Private->SimpleTextOutputMode.MaxMode = (INT32) MaxMode;
 
-  DEBUG_CODE_BEGIN ();
+  if (PcdGetBool(PcdSetGraphicsConsoleModeOnStart)) {
+    //
+    // Set the default mode
+    // FUTURE: 23-Jan-2013 Kharp - make the mode default configurable, Reset would also need to change
+    //
     Status = GraphicsConsoleConOutSetMode (&Private->SimpleTextOutput, 0);
     if (EFI_ERROR (Status)) {
+      DEBUG((EFI_D_ERROR, "Failed to set default console mode. Status %x\n", Status));
       goto Error;
     }
-    Status = GraphicsConsoleConOutOutputString (&Private->SimpleTextOutput, (CHAR16 *)L"Graphics Console Started\n\r");
-    if (EFI_ERROR (Status)) {
-      goto Error;
-    }  
-  DEBUG_CODE_END ();
+  } else {
+    // "Fast" Startup, Explicit SetMode is required by another UEFI app or driver
+    // before the console can be used.
+    Private->SimpleTextOutput.Mode->Mode = GRAPHICS_CONSOLE_MODE_NOT_SET;
+  }
 
   //
   // Install protocol interfaces for the Graphics Console device.
@@ -806,14 +806,37 @@ EfiLocateHiiProtocol (
   VOID
   )
 {
+  EFI_HANDLE  Handle;
+  UINTN       Size;
   EFI_STATUS  Status;
 
-  Status = gBS->LocateProtocol (&gEfiHiiDatabaseProtocolGuid, NULL, (VOID **) &mHiiDatabase);
+  Size = sizeof (EFI_HANDLE);
+
+  Status = gBS->LocateHandle (
+                  ByProtocol,
+                  &gEfiHiiDatabaseProtocolGuid,
+                  NULL,
+                  &Size,
+                  (VOID **) &Handle
+                  );
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Status = gBS->LocateProtocol (&gEfiHiiFontProtocolGuid, NULL, (VOID **) &mHiiFont);
+  Status = gBS->HandleProtocol (
+                  Handle,
+                  &gEfiHiiDatabaseProtocolGuid,
+                  (VOID **) &mHiiDatabase
+                  );
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  Status = gBS->HandleProtocol (
+                  Handle,
+                  &gEfiHiiFontProtocolGuid,
+                  (VOID **) &mHiiFont
+                  );
   return Status;
 }
 
@@ -846,13 +869,8 @@ GraphicsConsoleConOutReset (
   IN  BOOLEAN                          ExtendedVerification
   )
 {
-  EFI_STATUS    Status;
-  Status = This->SetMode (This, 0);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  Status = This->SetAttribute (This, EFI_TEXT_ATTR (This->Mode->Attribute & 0x0F, EFI_BACKGROUND_BLACK));
-  return Status;
+  This->SetAttribute (This, EFI_TEXT_ATTR (This->Mode->Attribute & 0x0F, EFI_BACKGROUND_BLACK));
+  return This->SetMode (This, 0);
 }
 
 
@@ -905,7 +923,7 @@ GraphicsConsoleConOutOutputString (
   INT32                 OriginAttribute;
   EFI_TPL               OldTpl;
 
-  if (This->Mode->Mode == -1) {
+  if (This->Mode->Mode == GRAPHICS_CONSOLE_MODE_NOT_SET) {
     //
     // If current mode is not valid, return error.
     //
@@ -1286,15 +1304,18 @@ GraphicsConsoleConOutSetMode (
   UINT32                          VerticalResolution;
   EFI_GRAPHICS_OUTPUT_PROTOCOL    *GraphicsOutput;
   EFI_UGA_DRAW_PROTOCOL           *UgaDraw;
+  EFI_BOOT_LOGO_PROTOCOL          *BootLogo = NULL;
   UINT32                          ColorDepth;
   UINT32                          RefreshRate;
   EFI_TPL                         OldTpl;
+  BOOLEAN                         NeedScreenCleared = FALSE;
 
   OldTpl = gBS->RaiseTPL (TPL_NOTIFY);
 
   Private   = GRAPHICS_CONSOLE_CON_OUT_DEV_FROM_THIS (This);
   GraphicsOutput = Private->GraphicsOutput;
   UgaDraw   = Private->UgaDraw;
+  ModeData  = &(Private->ModeData[ModeNumber]);
 
   //
   // Make sure the requested mode number is supported
@@ -1303,8 +1324,6 @@ GraphicsConsoleConOutSetMode (
     Status = EFI_UNSUPPORTED;
     goto Done;
   }
-  
-  ModeData  = &(Private->ModeData[ModeNumber]);
 
   if (ModeData->Columns <= 0 && ModeData->Rows <= 0) {
     Status = EFI_UNSUPPORTED;
@@ -1312,29 +1331,14 @@ GraphicsConsoleConOutSetMode (
   }
 
   //
-  // If the mode has been set at least one other time, then LineBuffer will not be NULL
+  // Try to locate the boot logo protocol.  This will be used later
+  // for positioning the console window relative to the logo.
   //
-  if (Private->LineBuffer != NULL) {
+  gBS->LocateProtocol (&gEfiBootLogoProtocolGuid, NULL, (VOID **) &BootLogo);
     //
     // If the new mode is the same as the old mode, then just return EFI_SUCCESS
-    //
-    if ((INT32) ModeNumber == This->Mode->Mode) {
-      //
-      // Clear the current text window on the current graphics console
-      //
-      This->ClearScreen (This);
-      Status = EFI_SUCCESS;
-      goto Done;
-    }
-    //
-    // Otherwise, the size of the text console and/or the GOP/UGA mode will be changed,
-    // so erase the cursor, and free the LineBuffer for the current mode
-    //
-    FlushCursor (This);
-
-    FreePool (Private->LineBuffer);
-  }
-
+  //
+  // FUTURE: 08-feb-2013 kharp - line buffer is not actually used, remove it!
   //
   // Attempt to allocate a line buffer for the requested mode number
   //
@@ -1348,7 +1352,31 @@ GraphicsConsoleConOutSetMode (
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
+  //
+  // If the mode has been set at least one other time, then LineBuffer will not be NULL
+  //
+  if (Private->LineBuffer != NULL) {
+    //
+    // Clear the current text window on the current graphics console
+    //
+    This->ClearScreen (This);
 
+    //
+    // If the new mode is the same as the old mode, then just return EFI_SUCCESS
+    //
+    if ((INT32) ModeNumber == This->Mode->Mode) {
+      FreePool (NewLineBuffer);
+      Status = EFI_SUCCESS;
+      goto Done;
+    }
+    //
+    // Otherwise, the size of the text console and/or the GOP/UGA mode will be changed,
+    // so erase the cursor, and free the LineBuffer for the current mode
+    //
+    FlushCursor (This);
+
+    FreePool (Private->LineBuffer);
+  }
   //
   // Assign the current line buffer to the newly allocated line buffer
   //
@@ -1368,20 +1396,10 @@ GraphicsConsoleConOutSetMode (
       }
     } else {
       //
-      // The current graphics mode is correct, so simply clear the entire display
+      // The current graphics mode is correct, but the display should be cleared
+      // (GOP mode set will clear the display).
       //
-      Status = GraphicsOutput->Blt (
-                          GraphicsOutput,
-                          &mGraphicsEfiColors[0],
-                          EfiBltVideoFill,
-                          0,
-                          0,
-                          0,
-                          0,
-                          ModeData->GopWidth,
-                          ModeData->GopHeight,
-                          0
-                          );
+      NeedScreenCleared = TRUE;
     }
   } else if (FeaturePcdGet (PcdUgaConsumeSupport)) {
     //
@@ -1415,18 +1433,7 @@ GraphicsConsoleConOutSetMode (
       //
       // The current graphics mode is correct, so simply clear the entire display
       //
-      Status = UgaDraw->Blt (
-                          UgaDraw,
-                          (EFI_UGA_PIXEL *) (UINTN) &mGraphicsEfiColors[0],
-                          EfiUgaVideoFill,
-                          0,
-                          0,
-                          0,
-                          0,
-                          ModeData->GopWidth,
-                          ModeData->GopHeight,
-                          0
-                          );
+      NeedScreenCleared = TRUE;
     }
   }
 
@@ -1436,12 +1443,136 @@ GraphicsConsoleConOutSetMode (
   This->Mode->Mode = (INT32) ModeNumber;
 
   //
+  // Position the console window.
+  //
+  switch (ModeData->Position)
+  {
+  case ConsolePositionCenter:
+    ModeData->DeltaX = (ModeData->GopWidth - (ModeData->Columns * EFI_GLYPH_WIDTH)) >> 1;
+    ModeData->DeltaY = (ModeData->GopHeight - (ModeData->Rows * EFI_GLYPH_HEIGHT)) >> 1;      
+
+    break;
+  
+  case ConsolePositionCenterBelowLogo:
+  {
+    EFI_STATUS LogoStatus;
+    UINTN LogoOffsetX;
+    UINTN LogoOffsetY;
+    UINTN LogoWidth;
+    UINTN LogoHeight;
+    BOOLEAN LogoValid;
+    
+    ModeData->DeltaX = (ModeData->GopWidth - (ModeData->Columns * EFI_GLYPH_WIDTH)) >> 1;
+
+    if (BootLogo != NULL) {
+      LogoStatus = BootLogo->GetBootLogoAttributes(BootLogo, 
+                               NULL,    // don't return actual logo
+                               &LogoOffsetX,
+                               &LogoOffsetY,
+                               &LogoWidth,
+                               &LogoHeight,
+                               &LogoValid);
+
+      if ((!EFI_ERROR(LogoStatus)) &&
+          (LogoValid)) 
+      {
+        //
+        // Locate the window below the logo with a small amount of padding
+        //
+        ModeData->DeltaY = LogoOffsetY + 
+                           LogoHeight + 
+                           (GRAPHICS_CONSOLE_LOGO_PADDING_ROWS * EFI_GLYPH_HEIGHT);
+
+        //
+        // Make sure the window fits
+        // FUTURE: 08-feb-2013 kharp - auto size if Rows == 0, clip the height instead of ASSERT.
+        // If implemented, we may want to keep a clear region to the bottom of the display.
+        //
+        ASSERT(((ModeData->Rows * EFI_GLYPH_HEIGHT) + ModeData->DeltaY) <= ModeData->GopHeight);
+      }
+
+    } else {
+      //
+      // No logo, just center it.
+      //
+      ModeData->DeltaY = (ModeData->GopHeight - (ModeData->Rows * EFI_GLYPH_HEIGHT)) >> 1;      
+    }
+
+    break;
+  }
+  case ConsolePositionCenterBottom:
+  {
+    //
+    // Center horizontally
+    // Vertically, start at the bottom and work up.
+    //
+    ModeData->DeltaX = (ModeData->GopWidth - (ModeData->Columns * EFI_GLYPH_WIDTH)) >> 1;
+    ModeData->DeltaY = (ModeData->GopHeight - 
+                         ((ModeData->Rows * EFI_GLYPH_HEIGHT) + GRAPHICS_CONSOLE_WINDOW_PADDING));
+    //
+    // Make sure the padding doesn't cause the delta to underflow.
+    // This could happen with a console mode that fills the entire
+    // screen.
+    //
+    if (ModeData->DeltaY < 0) {
+        ModeData->DeltaY = 0;
+    }
+
+    break;
+  }
+  case ConsolePositionLowerRight:
+  {
+    //
+    // Based on the modes columns and rows work backwards from the lower right corner
+    // of the screen.
+    // This will always fit on the screen since mode initialization verifies
+    // that a given text mode's columns and rows don't exceed the graphics
+    // mode's resolution.
+    //
+    ModeData->DeltaX = (ModeData->GopWidth - 
+                         ((ModeData->Columns * EFI_GLYPH_WIDTH) + GRAPHICS_CONSOLE_WINDOW_PADDING));
+    ModeData->DeltaY = (ModeData->GopHeight - 
+                         ((ModeData->Rows * EFI_GLYPH_HEIGHT) + GRAPHICS_CONSOLE_WINDOW_PADDING));
+
+    //
+    // Make sure the padding doesn't cause the delta to underflow.
+    // This could happen with a windowed console mode that fills the entire
+    // screen.
+    //
+    if (ModeData->DeltaX < 0) {
+        ModeData->DeltaX = 0;
+    }
+
+    if (ModeData->DeltaY < 0) {
+        ModeData->DeltaY = 0;
+    }
+    
+    break;
+  }
+  default:
+    ASSERT(FALSE);
+    // default to upper left
+    ModeData->DeltaX = 0;
+    ModeData->DeltaY = 0;
+  }
+  //
   // Move the text cursor to the upper left hand corner of the display and flush it
   //
   This->Mode->CursorColumn  = 0;
   This->Mode->CursorRow     = 0;
 
-  FlushCursor (This);  
+  //
+  // Clear the screen as needed
+  //
+  if (NeedScreenCleared) {
+    GraphicsConsoleConOutClearScreen(This);
+  } else {
+    //
+    // Clearing the screen will flush the cursor implicitly.
+    // Explicitly flush it in the case that we aren't clearing the screen
+    //
+    FlushCursor (This);    
+  }
 
   Status = EFI_SUCCESS;
 
@@ -1476,7 +1607,7 @@ GraphicsConsoleConOutSetAttribute (
 {
   EFI_TPL               OldTpl;
 
-  if ((Attribute | 0x7F) != 0x7F) {
+  if ((Attribute | 0xFF) != 0xFF) {
     return EFI_UNSUPPORTED;
   }
 
@@ -1526,21 +1657,52 @@ GraphicsConsoleConOutClearScreen (
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL Background;
   EFI_TPL                       OldTpl;
   
-  if (This->Mode->Mode == -1) {
-    //
-    // If current mode is not valid, return error.
-    //
+  UINTN  StartX;
+  UINTN  StartY;
+  UINTN  Width;
+  UINTN  Height;
+
+  //
+  // Verify the mode is valid before doing anything,
+  // This will also handle the case where a mode has not
+  // been set.
+  //
+  if (This->Mode->Mode >= (UINTN) This->Mode->MaxMode) {
     return EFI_UNSUPPORTED;
   }
 
   OldTpl = gBS->RaiseTPL (TPL_NOTIFY);
 
   Private   = GRAPHICS_CONSOLE_CON_OUT_DEV_FROM_THIS (This);
-  GraphicsOutput = Private->GraphicsOutput;
-  UgaDraw   = Private->UgaDraw;
-  ModeData  = &(Private->ModeData[This->Mode->Mode]);
 
-  GetTextColors (This, &Foreground, &Background);
+  ModeData       = &Private->ModeData[Private->SimpleTextOutput.Mode->Mode];
+  GraphicsOutput = Private->GraphicsOutput;
+  UgaDraw        = Private->UgaDraw; 
+
+  GetTextColors (&Private->SimpleTextOutput, &Foreground, &Background);
+
+  //
+  // Determine the area of the screen that needs to be cleared.
+  //
+  if (ModeData->Flags & MODE_FLAG_WINDOWED) {
+    
+    StartX    = (UINTN) ModeData->DeltaX;
+    StartY    = (UINTN) ModeData->DeltaY;
+    Width     = ModeData->Columns * EFI_GLYPH_WIDTH;
+    Height    = ModeData->Rows * EFI_GLYPH_HEIGHT;
+
+  } else {
+
+    StartX = 0;
+    StartY = 0;
+    Width  = ModeData->GopWidth;
+    Height = ModeData->GopHeight;
+
+  }
+
+  //
+  // Clear the requested region of the screen.
+  //
   if (GraphicsOutput != NULL) {
     Status = GraphicsOutput->Blt (
                         GraphicsOutput,
@@ -1548,10 +1710,10 @@ GraphicsConsoleConOutClearScreen (
                         EfiBltVideoFill,
                         0,
                         0,
-                        0,
-                        0,
-                        ModeData->GopWidth,
-                        ModeData->GopHeight,
+                        StartX,
+                        StartY,
+                        Width,
+                        Height,
                         0
                         );
   } else if (FeaturePcdGet (PcdUgaConsumeSupport)) {
@@ -1561,16 +1723,19 @@ GraphicsConsoleConOutClearScreen (
                         EfiUgaVideoFill,
                         0,
                         0,
-                        0,
-                        0,
-                        ModeData->GopWidth,
-                        ModeData->GopHeight,
+                        StartX,
+                        StartY,
+                        Width,
+                        Height,
                         0
                         );
   } else {
     Status = EFI_UNSUPPORTED;
   }
 
+  //
+  // Update the cursor location and flush it to the screen.
+  //
   This->Mode->CursorColumn  = 0;
   This->Mode->CursorRow     = 0;
 
@@ -1614,7 +1779,7 @@ GraphicsConsoleConOutSetCursorPosition (
   EFI_STATUS                  Status;
   EFI_TPL                     OldTpl;
 
-  if (This->Mode->Mode == -1) {
+  if (This->Mode->Mode == GRAPHICS_CONSOLE_MODE_NOT_SET) {
     //
     // If current mode is not valid, return error.
     //
@@ -1675,7 +1840,7 @@ GraphicsConsoleConOutEnableCursor (
 {
   EFI_TPL               OldTpl;
 
-  if (This->Mode->Mode == -1) {
+  if (This->Mode->Mode == GRAPHICS_CONSOLE_MODE_NOT_SET) {
     //
     // If current mode is not valid, return error.
     //
@@ -1904,7 +2069,7 @@ FlushCursor (
 
   CurrentMode = This->Mode;
 
-  if (!CurrentMode->CursorVisible) {
+  if ((CurrentMode->Mode == GRAPHICS_CONSOLE_MODE_NOT_SET) || (!CurrentMode->CursorVisible)) {
     return EFI_SUCCESS;
   }
 
