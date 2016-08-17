@@ -9,7 +9,8 @@
     FILE_GUID                      = 3a944d9c-74dd-4df2-98aa-79322a91f1ee
     MODULE_TYPE                    = BASE
     VERSION_STRING                 = 1.0
-    LIBRARY_CLASS                  = DebugLib
+# not compatible with DXE_RUNTIME_DRIVER don't add it
+    LIBRARY_CLASS                  = DebugLib|DXE_CORE DXE_DRIVER UEFI_DRIVER
     CONSTRUCTOR                    = KdDebugLibConstructor
 
 [Sources]

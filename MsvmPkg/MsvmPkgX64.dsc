@@ -21,7 +21,7 @@
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = MsvmPkg/MsvmPkgX64.fdf
 
-  DEBUGLIB_SERIAL                = 1
+  DEBUGLIB_SERIAL                = 0
 
 ################################################################################
 #
@@ -48,7 +48,7 @@
 ################################################################################
 
 #
-# Library instances to use by default for all modules and phases
+# Library instances to use by default for all modules and phases unless overridden below
 #
 [LibraryClasses]
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
@@ -85,7 +85,7 @@
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
 
 #
-# Library instances to use by default for SEC and PEI
+# Library instance overrides for SEC and PEI
 #
 [LibraryClasses.common.SEC, LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
   ExtractGuidedSectionLib|MdePkg/Library/BaseExtractGuidedSectionLib/BaseExtractGuidedSectionLib.inf
@@ -94,12 +94,12 @@
   PeiServicesTablePointerLib|MdePkg/Library/PeiServicesTablePointerLibIdt/PeiServicesTablePointerLibIdt.inf
 
 #
-# Library instances to use by default for SEC
+# Library instance overrides just for SEC
 #
 [LibraryClasses.common.SEC]
 
 #
-# Library instances to use by default for PEI
+# Library instance overrides for PEI
 #
 [LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
@@ -109,20 +109,20 @@
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
 
 #
-# Library instances to use by default for PEI CORE
+# Library instance overrides just for PEI CORE
 #
 [LibraryClasses.common.PEI_CORE]
   PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf
 
 #
-# Library instances to use by default for PEI Modules
+# Library instance overrides just for PEIMs
 #
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
 
 #
-# Library instances to use by default for DXE
+# Library instance overrides for DXE
 #
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
@@ -153,26 +153,27 @@
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
 
 #
-# Library instances to use by default for DXE CORE
+# Library instances overrides for just DXE CORE
 #
 [LibraryClasses.common.DXE_CORE]
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
   PeCoffExtraActionLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
-  
+
 #
-# Library instances to use by default for all DXE Drivers
+# Library instance overrides for all DXE Drivers
 #
 [LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER]
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
 
 #
-# Library instances to use by default for DXE Runtime Drivers
+# Library instance overrides for just DXE Runtime Drivers
 #
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
+  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 
 [PcdsFixedAtBuild.common]
   #
@@ -230,7 +231,7 @@
 
   # Configure max supported number of Logical Processorss
   gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
-  
+
   # Publish UEFI PropertiesTable.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|TRUE
 
