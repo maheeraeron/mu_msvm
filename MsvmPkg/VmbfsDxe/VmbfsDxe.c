@@ -32,6 +32,24 @@ VmbfsCleanup (
 
 EFI_STATUS
 EFIAPI
+VmbfsComponentNameGetDriverName (
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in CHAR8 *Language,
+    __out CHAR16 **DriverName
+    );
+
+EFI_STATUS
+EFIAPI
+VmbfsComponentNameGetControllerName(
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in_opt EFI_HANDLE ChildHandle,
+    __in CHAR8 *Language,
+    __out CHAR16 **ControllerName
+    );
+
+EFI_STATUS
+EFIAPI
 VmbfsSupported(
     _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
     _In_ EFI_HANDLE                     Controller,
@@ -386,6 +404,46 @@ Return Value:
     return EFI_SUCCESS;
 }
 
+//
+// Driver name table
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE gVmbfsDriverNameTable[] =
+{
+    { "eng;en", (CHAR16 *)L"Hyper-V VMBus FileSystem Driver"},
+    { NULL, NULL }
+};
+
+
+//
+// Controller name table
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE gVmbfsControllerNameTable[] =
+{
+    { "eng;en", (CHAR16 *)L"Hyper-V VMBus FileSystem Controller"},
+    { NULL, NULL }
+};
+
+
+//
+// EFI Component Name Protocol
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL gVmbfsComponentName =
+{
+    VmbfsComponentNameGetDriverName,
+    VmbfsComponentNameGetControllerName,
+    "eng"
+};
+
+//
+// EFI Component Name 2 Protocol
+//
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gVmbfsComponentName2 =
+{
+    (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) VmbfsComponentNameGetDriverName,
+    (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) VmbfsComponentNameGetControllerName,
+    "en"
+};
+
 
 EFI_DRIVER_BINDING_PROTOCOL gVmbfsDriverBindingProtocol =
 {
@@ -396,6 +454,137 @@ EFI_DRIVER_BINDING_PROTOCOL gVmbfsDriverBindingProtocol =
     0,
     0
 };
+
+
+EFI_STATUS
+EFIAPI
+VmbfsComponentNameGetDriverName (
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in CHAR8 *Language,
+    __out CHAR16 **DriverName
+    )
+/*++
+
+Routine Description:
+
+    Retrieves a Unicode string that is the user readable name of the EFI Driver.
+
+    This function retrieves the user readable name of a driver in the form of a
+    Unicode string. If the driver specified by This has a user readable name in
+    the language specified by Language, then a pointer to the driver name is
+    returned in DriverName, and EFI_SUCCESS is returned. If the driver specified
+    by This does not support the language specified by Language,
+    then EFI_UNSUPPORTED is returned.
+
+Arguments:
+
+    This - A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
+
+    Language - A pointer to a Null-terminated ASCII string array indicating the language.
+
+    DriverName - A pointer to the string to return.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    return LookupUnicodeString2(
+        Language,
+        This->SupportedLanguages,
+        gVmbfsDriverNameTable,
+        DriverName,
+        (BOOLEAN)(This == &gVmbfsComponentName));
+}
+
+
+EFI_STATUS
+EFIAPI
+VmbfsComponentNameGetControllerName(
+    __in EFI_COMPONENT_NAME_PROTOCOL *This,
+    __in EFI_HANDLE ControllerHandle,
+    __in_opt EFI_HANDLE ChildHandle,
+    __in CHAR8 *Language,
+    __out CHAR16 **ControllerName
+    )
+/*++
+
+Routine Description:
+
+    Retrieves a Unicode string that is the user readable name of the controller
+    that is being managed by a Driver.
+
+
+    This function retrieves the user readable name of the controller specified by
+    ControllerHandle and ChildHandle in the form of a Unicode string. If the
+    driver specified by This has a user readable name in the language specified by
+    Language, then a pointer to the controller name is returned in ControllerName,
+    and EFI_SUCCESS is returned.  If the driver specified by This is not currently
+    managing the controller specified by ControllerHandle and ChildHandle,
+    then EFI_UNSUPPORTED is returned.  If the driver specified by This does not
+    support the language specified by Language, then EFI_UNSUPPORTED is returned.
+
+Arguments:
+
+    This - A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
+
+    ControllerHandle - The handle of a controller that the driver specified by This
+           is managing.  This handle specifies the controller whose name is to be returned.
+
+    ChildHandle - The handle of the child controller to retrieve the name of. This is an
+        optional parameter that may be NULL.  It will be NULL for device drivers.  It will
+        also be NULL for a bus drivers that wish to retrieve the name of the bus controller.
+        It will not be NULL for a bus  driver that wishes to retrieve the name of a
+        child controller.
+
+    Language - A pointer to a Null-terminated ASCII string array indicating the language.
+        This is the language of the driver name that the caller is requesting, and it
+        must match one of the languages specified in SupportedLanguages. The number of
+        languages supported by a driver is up to the driver writer. Language is specified in
+        RFC 4646 or ISO 639-2 language code format.
+
+    ControllerName - A pointer to the Unicode string to return. This Unicode string is the
+        name of the controller specified by ControllerHandle and ChildHandle in the language
+        specified by Language from the point of view of the driver specified by This.
+
+Return Value:
+
+    EFI_STATUS.
+
+
+--*/
+{
+    EFI_STATUS status;
+
+    //
+    // Make sure this driver is currently managing a ControllerHandle
+    //
+    status = EfiTestManagedDevice(
+        ControllerHandle,
+        gVmbfsDriverBindingProtocol.DriverBindingHandle,
+        &gEfiEmclProtocolGuid
+        );
+    if (EFI_ERROR(status))
+    {
+        return status;
+    }
+
+    //
+    // ChildHandle must be NULL for a Device Driver
+    //
+    if (ChildHandle != NULL)
+    {
+        return EFI_UNSUPPORTED;
+    }
+
+    return LookupUnicodeString2(
+        Language,
+        This->SupportedLanguages,
+        gVmbfsControllerNameTable,
+        ControllerName,
+        (BOOLEAN)(This == &gVmbfsComponentName));
+}
 
 
 EFI_STATUS
@@ -430,12 +619,16 @@ Return Value:
     gVmbfsDriverBindingProtocol.ImageHandle = ImageHandle;
     gVmbfsDriverBindingProtocol.DriverBindingHandle = ImageHandle;
 
-    status = gBS->InstallMultipleProtocolInterfaces(
-                    &ImageHandle,
-                    &gEfiDriverBindingProtocolGuid,
-                    &gVmbfsDriverBindingProtocol,
-                    NULL);
-
+    //
+    // Install the DriverBinding and Component Name protocols onto the driver image handle.
+    //
+    status = EfiLibInstallDriverBindingComponentName2(ImageHandle,
+                                                      SystemTable,
+                                                      &gVmbfsDriverBindingProtocol,
+                                                      ImageHandle,
+                                                      &gVmbfsComponentName,
+                                                      &gVmbfsComponentName2
+                                                      );
     return status;
 }
 
