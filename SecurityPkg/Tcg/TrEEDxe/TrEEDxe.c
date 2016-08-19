@@ -314,7 +314,7 @@ TreeGetCapability (
   )
 {
     EFI_STATUS  status = EFI_SUCCESS;
-    DEBUG ((EFI_D_ERROR, "TreeGetCapability ...\n"));
+    DEBUG ((EFI_D_INFO, "TreeGetCapability ...\n"));
 
     if (This == NULL || ProtocolCapability == NULL)
     {
@@ -330,7 +330,7 @@ TreeGetCapability (
     }
 
     CopyMem (ProtocolCapability, &mTcgDxeData.BsCap, mTcgDxeData.BsCap.Size);
-    DEBUG ((EFI_D_ERROR, "TreeGetCapability - %r\n", EFI_SUCCESS));
+    DEBUG ((EFI_D_INFO, "TreeGetCapability - %r\n", EFI_SUCCESS));
 
 Cleanup:
 
@@ -1722,7 +1722,7 @@ DriverEntry (
     // Install TrEEProtocol
     //
     status = InstallTrEE();
-    DEBUG ((EFI_D_ERROR, "InstallTrEE - %r\n", status));
+    DEBUG ((EFI_D_INFO, "InstallTrEE - %r\n", status));
 
 Cleanup:
   DEBUG ((DEBUG_VERBOSE, "<<< TrEEDxe:DriverEntry status %x\n", status));
