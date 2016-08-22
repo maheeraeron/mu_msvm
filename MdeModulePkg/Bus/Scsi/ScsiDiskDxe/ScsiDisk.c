@@ -2302,6 +2302,17 @@ ScsiDiskReadSectors (
     MaxBlock         = 0xFFFFFFFF;
   }
 
+  //
+  // Limit maximum I/O size to 8MB on a 4KB sector disk, since StorVscDxe
+  // is limited to 8MB I/Os.
+  //
+  // FUTURE-jostarks: Either fix storvsp + KMCL to handle arbitary sized
+  // I/Os, or add communication between ScsiDisk and ScsiBus and
+  // ScsiPassThru to specify the maximum packet size. The splitting cannot
+  // be done in StorVscDxe without re-parsing the SCSI commands.
+  //
+  MaxBlock = 0x800;
+
   PtrBuffer = Buffer;
 
   while (BlocksRemaining > 0) {
@@ -2446,6 +2457,17 @@ ScsiDiskWriteSectors (
   } else {
     MaxBlock         = 0xFFFFFFFF;
   }
+
+  //
+  // Limit maximum I/O size to 8MB on a 4KB sector disk, since StorVscDxe
+  // is limited to 8MB I/Os.
+  //
+  // FUTURE-jostarks: Either fix storvsp + KMCL to handle arbitary sized
+  // I/Os, or add communication between ScsiDisk and ScsiBus and
+  // ScsiPassThru to specify the maximum packet size. The splitting cannot
+  // be done in StorVscDxe without re-parsing the SCSI commands.
+  //
+  MaxBlock = 0x800;
 
   PtrBuffer = Buffer;
 
