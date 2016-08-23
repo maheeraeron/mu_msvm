@@ -196,8 +196,10 @@ PcRtcInit (
   EFI_TIME        Time;
   UINTN           DataSize;
   UINT32          TimerVar;
+#ifndef PCRTC_WAKEUP_UNSUPPORTED
   BOOLEAN         Enabled;
   BOOLEAN         Pending;
+#endif
 
   gHvRefTimeAtLastUpdate = 0;
 
