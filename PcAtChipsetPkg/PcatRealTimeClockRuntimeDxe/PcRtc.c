@@ -14,6 +14,11 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "PcRtc.h"
 
+//
+// Hyper-V doesn't support the wakeup alarm.
+//
+#define PCRTC_WAKEUP_UNSUPPORTED 1
+
 #define TICKS_PER_MILLISECOND       10000
 #define TIME_CACHE_EXPIRY_PERIOD    (500 * TICKS_PER_MILLISECOND)
 
@@ -320,6 +325,8 @@ PcRtcInit (
     return EFI_DEVICE_ERROR;
   }
 
+#ifndef PCRTC_WAKEUP_UNSUPPORTED
+
   //
   // Reset wakeup time value to valid state when wakeup alarm is disabled and wakeup time is invalid.
   // Global variable has already had valid SavedTimeZone and Daylight,
@@ -405,6 +412,9 @@ PcRtcInit (
   if (!EfiAtRuntime ()) {
     EfiReleaseLock (&Global->RtcLock);
   }
+
+#endif
+
   return EFI_SUCCESS;
 }
 
@@ -678,7 +688,7 @@ PcRtcGetWakeupTime (
   IN  PC_RTC_MODULE_GLOBALS  *Global
   )
 {
-#if 1
+#ifdef PCRTC_WAKEUP_UNSUPPORTED
   //
   // Hyper-V RTC emulation doesn't support wakeup.
   //
@@ -798,7 +808,7 @@ PcRtcSetWakeupTime (
   IN PC_RTC_MODULE_GLOBALS  *Global
   )
 {
-#if 1
+#ifdef PCRTC_WAKEUP_UNSUPPORTED
   //
   // Hyper-V RTC emulation doesn't support wakeup.
   //
