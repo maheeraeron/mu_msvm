@@ -82,10 +82,6 @@ BdsDeleteBootOption (
                   0,
                   NULL
                   );
-  //
-  // Deleting variable with existing variable implementation shouldn't fail.
-  //
-  ASSERT_EFI_ERROR (Status);
 
   //
   // adjust boot order array
@@ -630,11 +626,10 @@ BdsDeleteAllInvalidLegacyBootOptions (
                   BootOrderSize,
                   BootOrder
                   );
-  //
-  // Shrinking variable with existing variable implementation shouldn't fail.
-  //
-  ASSERT_EFI_ERROR (Status);
-  FreePool (BootOrder);
+ 
+  if (BootOrder != NULL) {
+    FreePool (BootOrder);
+  }
 
   return Status;
 }
@@ -863,11 +858,11 @@ BdsAddNonExistingLegacyBootOptions (
                 &BootOrder,
                 &BootOrderSize
                 );
-      if (!EFI_ERROR (Status)) {
-        ASSERT (BootOrder != NULL);
-        BbsIndex     = Index;
-        OptionNumber = BootOrder[BootOrderSize / sizeof (UINT16) - 1];
+      if (EFI_ERROR (Status)) {
+        break;
       }
+      BbsIndex     = Index;
+      OptionNumber = BootOrder[BootOrderSize / sizeof (UINT16) - 1];
     }
 
     ASSERT (BbsIndex == Index);
@@ -2522,7 +2517,6 @@ Done:
 
   //
   // Clear Boot Current
-  // Deleting variable with current implementation shouldn't fail.
   //
   gRT->SetVariable (
         L"BootCurrent",
@@ -2966,10 +2960,6 @@ BdsLibDeleteOptionFromHandle (
                   BootOrderSize,
                   BootOrder
                   );
-  //
-  // Shrinking variable with existing variable implementation shouldn't fail.
-  //
-  ASSERT_EFI_ERROR (Status);
 
   FreePool (BootOrder);
 
@@ -3068,10 +3058,6 @@ BdsDeleteAllInvalidEfiBootOption (
                       NULL
                       );
       //
-      // Deleting variable with current variable implementation shouldn't fail.
-      //
-      ASSERT_EFI_ERROR (Status);
-      //
       // Mark this boot option in boot order as deleted
       //
       BootOrder[Index] = 0xffff;
@@ -3099,10 +3085,6 @@ BdsDeleteAllInvalidEfiBootOption (
                   Index2 * sizeof (UINT16),
                   BootOrder
                   );
-  //
-  // Shrinking variable with current variable implementation shouldn't fail.
-  //
-  ASSERT_EFI_ERROR (Status);
 
   FreePool (BootOrder);
 
@@ -3613,10 +3595,6 @@ BdsLibBootNext (
                     0,
                     NULL
                     );
-    //
-    // Deleting variable with current variable implementation shouldn't fail.
-    //
-    ASSERT_EFI_ERROR (Status);
 
     //
     // Start to build the boot option and try to boot
