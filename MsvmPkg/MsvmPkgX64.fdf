@@ -135,7 +135,7 @@ INF  MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 INF  IntelFrameworkModulePkg/Universal/StatusCode/Pei/StatusCodePei.inf
 INF  MsvmPkg/PlatformPei/PlatformPei.inf
 INF  MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
-INF  SecurityPkg/Tcg/TrEEPei/TrEEPei.inf
+INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
 
 FILE FV_IMAGE = A4EF5A93-3F1B-4232-A1C4-F0910E6D1D9C {
   SECTION COMPRESS PI_NONE {
@@ -234,7 +234,7 @@ INF NetworkPkg/TcpDxe/TcpDxe.inf
 INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
 INF NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
 INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
-INF SecurityPkg/Tcg/TrEEDxe/TrEEDxe.inf
+INF SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 

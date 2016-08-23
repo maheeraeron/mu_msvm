@@ -16,7 +16,6 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = Tcg2Pei
-  MODULE_UNI_FILE                = Tcg2Pei.uni
   FILE_GUID                      = A0C98B77-CBA5-4BB8-993B-4AF6CE33ECE4
   MODULE_TYPE                    = PEIM
   VERSION_STRING                 = 1.0
@@ -27,9 +26,6 @@
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
-# [BootMode]
-#   S3_RESUME                 ## SOMETIMES_CONSUMES
-#
 
 [Sources]
   Tcg2Pei.c
@@ -38,6 +34,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   SecurityPkg/SecurityPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   HobLib
@@ -45,47 +42,31 @@
   PeiServicesLib
   BaseMemoryLib
   DebugLib
-  Tpm2CommandLib
   PeiServicesTablePointerLib
   Tpm2DeviceLib
-  HashLib
+  HashLibTpm2
   PerformanceLib
-  MemoryAllocationLib
-  ReportStatusCodeLib
-  Tcg2PhysicalPresenceLib
+  IoLib
 
 [Guids]
   gTcgEventEntryHobGuid                                                ## PRODUCES               ## HOB
   gTpmErrorHobGuid                                                     ## SOMETIMES_PRODUCES     ## HOB
   gMeasuredFvHobGuid                                                   ## PRODUCES               ## HOB
   gTcgEvent2EntryHobGuid                                               ## PRODUCES               ## HOB
-  gEfiTpmDeviceInstanceNoneGuid                                        ## SOMETIMES_PRODUCES     ## GUID       # TPM device identifier
-  gEfiTpmDeviceInstanceTpm12Guid                                       ## SOMETIMES_PRODUCES     ## GUID       # TPM device identifier
+  gMsvmConfigPageV2Guid
+  gMsvmConfigPageV3Guid
 
 [Ppis]
   gEfiPeiFirmwareVolumeInfoPpiGuid                                     ## SOMETIMES_CONSUMES     ## NOTIFY
   gEfiPeiFirmwareVolumeInfo2PpiGuid                                    ## SOMETIMES_CONSUMES     ## NOTIFY
   gEfiPeiFirmwareVolumeInfoMeasurementExcludedPpiGuid                  ## SOMETIMES_CONSUMES
   gPeiTpmInitializedPpiGuid                                            ## SOMETIMES_PRODUCES
-  gPeiTpmInitializationDonePpiGuid                                     ## PRODUCES
   gEfiEndOfPeiSignalPpiGuid                                            ## SOMETIMES_CONSUMES     ## NOTIFY
 
 [Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString              ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid                     ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2InitializationPolicy            ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2SelfTestPolicy                  ## SOMETIMES_CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2ScrtmPolicy                     ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported              ## CONSUMES
-  gEfiSecurityPkgTokenSpaceGuid.PcdStatusCodeSubClassTpmDevice         ## SOMETIMES_CONSUMES
-  ## SOMETIMES_CONSUMES
-  ## SOMETIMES_PRODUCES
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString             ## SOMETIMES_CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported             ## CONSUMES
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                       ## CONSUMES
 
 [Depex]
-  gEfiPeiMasterBootModePpiGuid AND
-  gEfiPeiReadOnlyVariable2PpiGuid AND
-  gEfiTpmDeviceSelectedGuid
-
-[UserExtensions.TianoCore."ExtraFiles"]
-  Tcg2PeiExtra.uni
+  gEfiPeiMasterBootModePpiGuid

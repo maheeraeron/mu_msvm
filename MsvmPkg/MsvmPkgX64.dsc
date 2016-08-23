@@ -364,12 +364,12 @@
   # TPM related components
 
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
-  SecurityPkg/Tcg/TrEEDxe/TrEEDxe.inf {
+  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
     <LibraryClasses>
       HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
       Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
   }
-  SecurityPkg/Tcg/TrEEPei/TrEEPei.inf {
+  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
       HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
       Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
