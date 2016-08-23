@@ -95,7 +95,7 @@ if "%1"=="DEBUG" (
   exit /b 2
 )
 
-set _Object_Root=%1_VS2015xASL
+set _Object_Root=%1_NTDEV
 set _symSavePath=%SDXROOT%\vm\dv\bios\vdev\sym\%_nt_Flavor%
 set _FW_Source=%_UEFI_ROOT%\%_Object_Root%\FV\MSVM.fd
 set _FW_DestName=%SDXROOT%\vm\dv\bios\vdev\UEFIBIOS%_nt_Flavor%.bin
