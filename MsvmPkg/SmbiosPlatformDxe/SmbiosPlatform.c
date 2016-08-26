@@ -43,10 +43,10 @@ Author:
 // TODO: The release version values and release date should be automated
 //       to reflect the current version and date.
 //
-#define MAJOR_RELEASE_VERSION 1
+#define MAJOR_RELEASE_VERSION 2
 #define MINOR_RELEASE_VERSION 0
-static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v1.0";
-static CHAR8 RELEASE_DATE_STRING[] = "11/26/2012";
+static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v2.0";
+static CHAR8 RELEASE_DATE_STRING[] = "08/26/2016";
 
 //
 // Complying with SMBIOS v2.4 specification.
