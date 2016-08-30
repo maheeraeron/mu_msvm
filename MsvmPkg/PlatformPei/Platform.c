@@ -807,7 +807,14 @@ Return Value:
                 //
                 // Report subsequent memory regions directly.
                 //
-                HobAddMemoryRange(range->BaseAddress, range->Length);
+                if (range->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
+                {
+                    HobAddReservedMemoryRange(range->BaseAddress, range->Length);
+                }
+                else
+                {
+                    HobAddMemoryRange(range->BaseAddress, range->Length);
+                }
             }
 
             //

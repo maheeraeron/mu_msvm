@@ -238,14 +238,22 @@ enum
     VDevVersion4   = MAKE_VDEV_VERSION(4, 0)
 };
 
+
 //
-// Memory map related type.
+// Memory map range flags.
+//
+#define VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED  0x1
+
+
+//
+// Memory map related types.
 //
 typedef struct _VM_MEMORY_RANGE
 {
     UINT64  BaseAddress;
     UINT64  Length;
-
+    UINT32  Flags;
+    UINT32  Reserved;
 } VM_MEMORY_RANGE, *PVM_MEMORY_RANGE;
 
 
