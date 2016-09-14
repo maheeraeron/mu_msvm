@@ -1,5 +1,6 @@
 Build/
 Conf/
 tags/
+.vscode/
 *.log
 publishuefi.cmd
