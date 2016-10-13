@@ -21,6 +21,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <IndustryStandard/Tpm2Acpi.h>
 
 EFI_TPM2_ACPI_CONTROL_AREA  *mTpm2ControlArea = NULL;
+UINT8*   mCommandBuffer = NULL;
+UINT8*   mResponseBuffer = NULL;
+UINT32   mResponseSize = 0;
 
 EFI_STATUS
 EFIAPI
@@ -84,7 +87,7 @@ Return Value:
     }
 
     // Copy command to command buffer.
-    CopyMem((UINT8 *)(UINTN)mTpm2ControlArea->Command, InputParameterBlock, InputParameterBlockSize);
+    CopyMem(mCommandBuffer, InputParameterBlock, InputParameterBlockSize);
 
     // Set Start to kick off command execution.
     mTpm2ControlArea->Start = 1;
@@ -109,12 +112,12 @@ Return Value:
         //
         // Engine finished executing command, get the result back.
         //
-        if (outputParameterSize > mTpm2ControlArea->ResponseSize)
+        if (outputParameterSize > mResponseSize)
         {
-            outputParameterSize = mTpm2ControlArea->ResponseSize;
+            outputParameterSize = mResponseSize;
         }
 
-        CopyMem(OutputParameterBlock, (UINT8*)(UINTN)mTpm2ControlArea->Response, outputParameterSize);
+        CopyMem(OutputParameterBlock, mResponseBuffer, outputParameterSize);
         goto Cleanup;
     }
 
@@ -213,6 +216,9 @@ Tpm2RegisterTpm2DeviceLib (
   )
 {
     mTpm2ControlArea = (EFI_TPM2_ACPI_CONTROL_AREA*)Tpm2Device;
+    mCommandBuffer = (UINT8*)(UINTN)mTpm2ControlArea->Command;
+    mResponseBuffer = (UINT8*)(UINTN)mTpm2ControlArea->Response;
+    mResponseSize = (UINTN)mTpm2ControlArea->ResponseSize;
 
     return EFI_SUCCESS;
 }

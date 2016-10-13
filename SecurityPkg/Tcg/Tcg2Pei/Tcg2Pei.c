@@ -690,6 +690,7 @@ MeasureFvImage (
   @retval EFI_DEVICE_ERROR      The command was unsuccessful.
 
 **/
+#if defined(TCG2PEI_MEASURE_MAINBIOS)
 EFI_STATUS
 MeasureMainBios (
   VOID
@@ -738,6 +739,7 @@ MeasureMainBios (
 
   return EFI_SUCCESS;
 }
+#endif
 
 /**
   Measure and record the Firmware Volum Information once FvInfoPPI install.
@@ -911,8 +913,25 @@ PeimEntryMP (
     Status = MeasureCRTMVersion();
     ASSERT_EFI_ERROR (Status);
 
+    //
+    // Currently the MainBios size is 0x2F0000 bytes (~3MB). TPM device hashes
+    // the image in MAX_DIGEST_BUFFER size (1024). It introduces ~2000
+    // TPM_CC_SequenceUpdate TPM commands.
+    //
+    // Each TPM command is an intercept to vTPM vDev. The intercept path is
+    // ~38 micros sec on HP Z400. By excluding the MainBios measurement, VM
+    // boot overhead is reduced from 1736 ms to 177 ms on HP Z400.
+    //
+    // PCR[0] measurement is an indication of platform consistency. For example,
+    // it indicates whether MainBios has been updated. Using PCR[0] to seal and
+    // unseal data is fragile. Any usage to get into recovery should not use PCR[0].
+    // One can use PCR[0] to seal data and regenerate data if unseal fails.
+    // Hyper-V is measuring firmware version string to PCR[0] to indicate platform consistency.
+    //
+#if defined(TCG2PEI_MEASURE_MAINBIOS)
     Status = MeasureMainBios();
     ASSERT_EFI_ERROR (Status);
+#endif
 
     if (mFirmwareDebuggerEnabled) {
       Status = MeasureLaunchOfFirmwareDebugger();
