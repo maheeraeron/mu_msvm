@@ -425,6 +425,7 @@ Return Value:
 
 VOID *
 GetMemoryMap(
+    _In_ CONST UINT32 VDevVersion,
     _In_ CONST EFI_PEI_SERVICES**  PeiServices,
     _In_ UINT32 MemMapSize
     )
@@ -435,6 +436,8 @@ Routine Description:
     Gets the Memory Map table from the BIOS VDev.
 
 Arguments:
+
+    VDevVersion - The VDev version from the host.
 
     PeiServices - An indirect pointer to the PEI Services Table.
 
@@ -448,7 +451,6 @@ Return Value:
 {
     EFI_STATUS status;
     VOID *memMap = NULL;
-    PVM_MEMORY_RANGE range;
 
     //
     // If size is zero just return NULL.
@@ -468,19 +470,30 @@ Return Value:
         ASSERT(FALSE);
         return NULL;
     }
-    range = (PVM_MEMORY_RANGE)memMap;
+
+    //
+    // Init the first range length to zero. Nonzero length value after intercept
+    // to the VDev will indicate success.
+    //
+    if (VDevVersion >= 5)
+    {
+        ((PVM_MEMORY_RANGE_V5)memMap)->Length = 0;
+    }
+    else
+    {
+        ((PVM_MEMORY_RANGE)memMap)->Length = 0;
+    }
 
     //
     // Retrieve the data from the worker process.
     //
-    range->BaseAddress = 0;
-    range->Length = 0;
-    WriteBiosDevice(BiosConfigMemoryMap, (UINT32)(UINTN)range);
+    WriteBiosDevice(BiosConfigMemoryMap, (UINT32)(UINTN)memMap);
 
-    if (range->Length == 0)
+    if ((VDevVersion >= 5 && ((PVM_MEMORY_RANGE_V5)memMap)->Length == 0) ||
+        (((PVM_MEMORY_RANGE)memMap)->Length == 0))
     {
         //
-        // The memory was not updated.  This can happen if the worker
+        // The first range length was not updated.  This can happen if the worker
         // process is extremely low on memory.
         //
         DEBUG((DEBUG_ERROR, "*** Failed to get Memory Map from VDEv\n"));
@@ -493,11 +506,24 @@ Return Value:
     //
     DEBUG_CODE_BEGIN();
     DEBUG((DEBUG_VERBOSE, "--- Memory Map data @ %x Length %x\n", memMap, MemMapSize));
-    do
+    if (VDevVersion >= 5)
     {
-        DEBUG((DEBUG_VERBOSE, "    Base % 14lx Len % 14lx\n", range->BaseAddress, range->Length));
-        range++;
-    } while ((UINT8*)range < ((UINT8*)memMap + MemMapSize));
+        PVM_MEMORY_RANGE_V5 range = (PVM_MEMORY_RANGE_V5)memMap;
+        do
+        {
+            DEBUG((DEBUG_VERBOSE, "    Base % 14lx Len % 14lx\n", range->BaseAddress, range->Length));
+            range++;
+        } while ((UINT8*)range < ((UINT8*)memMap + MemMapSize));
+    }
+    else
+    {
+        PVM_MEMORY_RANGE range = (PVM_MEMORY_RANGE)memMap;
+        do
+        {
+            DEBUG((DEBUG_VERBOSE, "    Base % 14lx Len % 14lx\n", range->BaseAddress, range->Length));
+            range++;
+        } while ((UINT8*)range < ((UINT8*)memMap + MemMapSize));
+    }
     DEBUG_CODE_END();
 
     return memMap;
@@ -737,15 +763,9 @@ Return Value:
 
 --*/
 {
-    UINTN base, size;
-    UINT8 *cursor;
-    EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr;
-    EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *sratApic;
-    EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *sratMem;
     CPUID_ADDRESS_SPACE_SIZES addressSpaceSizes;
     UINT8 physicalAddressBits;
     UINT32 maximumFunction;
-    PVM_MEMORY_RANGE range;
 
     DEBUG((DEBUG_VERBOSE, ">>> InitializeMemoryMap\n"));
 
@@ -782,106 +802,170 @@ Return Value:
     }
     ASSERT(physicalAddressBits >= 36 && physicalAddressBits <= 48);
 
-    if (VDevVersion >= VDevVersion3)
+    //
+    // Process the memory map and create HOBs for memory regions..
+    //
+    switch (VDevVersion)
     {
-        ASSERT(MemMap != NULL);
-        //
-        // Loop through the Memory Map and create HOBs for RAM regions.
-        //
-        range = (PVM_MEMORY_RANGE)MemMap;
-        do
+        case VDevVersion2:
         {
             //
-            // First memory region is a special case that isn't fully
-            // described in the Memory Map.
+            // VDev version 2
             //
-            if (range->BaseAddress == 0)
+            // No separate memory map exists so derive memory map from the SRAT.
+            //
+            EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr;
+            UINT8 *cursor;
+            EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *sratApic;
+            EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *sratMem;
+            UINTN base, size;
+
+            //
+            // Loop through the SRAT entries and create HOBs for RAM regions.
+            //
+            acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER  *)Srat;
+            cursor = (UINT8 *)Srat;
+            cursor += sizeof(EFI_ACPI_4_0_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER);
+
+            do
             {
-                AddFirstMemoryRange(
-                    physicalAddressBits,
-                    range->Length,
-                    ConfigPageV3->BiosSizePages * SIZE_4KB);
-            }
-            else
-            {
-                //
-                // Report subsequent memory regions directly.
-                //
-                if (range->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
+                switch(*cursor)  // UINT8 Type always at start of struct
                 {
-                    HobAddReservedMemoryRange(range->BaseAddress, range->Length);
+                    case EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY:
+                        sratApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *)cursor;
+                        cursor += sratApic->Length;
+                        break;
+
+                    case EFI_ACPI_5_0_MEMORY_AFFINITY:
+                        sratMem = (EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *)cursor;
+
+                        base = (((UINT64)sratMem->AddressBaseHigh) << 32) |
+                                (UINT64)sratMem->AddressBaseLow;
+                        size = (((UINT64)sratMem->LengthHigh) << 32) |
+                                (UINT64)sratMem->LengthLow;
+
+                        //
+                        // First memory region is a special case that isn't fully
+                        // described in the SRAT.
+                        //
+                        if (base == 0)
+                        {
+                            AddFirstMemoryRange(
+                                physicalAddressBits,
+                                size,
+                                ConfigPageV2->BiosSizePages * SIZE_4KB);
+                        }
+                        else
+                        {
+                            //
+                            // Report subsequent memory regions directly *unless* they are hot-add.
+                            //
+                            if ((sratMem->Flags & EFI_ACPI_5_0_MEMORY_HOT_PLUGGABLE) !=
+                                EFI_ACPI_5_0_MEMORY_HOT_PLUGGABLE)
+                            {
+                                HobAddMemoryRange(base, size);
+                            }
+                        }
+
+                        cursor += sratMem->Length;
+                        break;
+
+                    default:
+                        sratMem = (EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *)cursor;
+                        cursor += sratMem->Length;
+                        break;
+
+                }
+            } while (cursor < ((UINT8 *)acpiHdr + acpiHdr->Length));
+        }
+        break;
+
+        case VDevVersion3:
+        case VDevVersion4:
+        {
+            //
+            // VDev versions 3 & 4
+            //
+            // A memory map range contains only base address and length.
+            //
+            // Loop through the Memory Map and create HOBs for RAM regions.
+            //
+            ASSERT(MemMap != NULL);
+            PVM_MEMORY_RANGE range = (PVM_MEMORY_RANGE)MemMap;
+            do
+            {
+                //
+                // First memory region is a special case that isn't fully
+                // described in the Memory Map.
+                //
+                if (range->BaseAddress == 0)
+                {
+                    AddFirstMemoryRange(
+                        physicalAddressBits,
+                        range->Length,
+                        ConfigPageV3->BiosSizePages * SIZE_4KB);
                 }
                 else
                 {
                     HobAddMemoryRange(range->BaseAddress, range->Length);
                 }
-            }
 
-            //
-            // Next memory map range.
-            //
-            range++;
-        } while ((UINT8*)range < ((UINT8*)MemMap + MemMapSize));
-    }
-    else
-    {
-        //
-        // Loop through the SRAT entries and create HOBs for RAM regions.
-        //
-        acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER  *)Srat;
-        cursor = (UINT8 *)Srat;
-        cursor += sizeof(EFI_ACPI_4_0_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER);
+                //
+                // Next memory map range.
+                //
+                range++;
+            } while ((UINT8*)range < ((UINT8*)MemMap + MemMapSize));
+        }
+        break;
 
-        do
+        case VDevVersion5:
+        default:
         {
-            switch(*cursor)  // UINT8 Type always at start of struct
+            //
+            // VDev version 5 and up
+            //
+            // A memory map range now contains base address, length, and attribute flags.
+            // The reserved bit allows for support of Intel SGX memory.
+            //
+            // Loop through the Memory Map and create HOBs for RAM regions.
+            //
+            ASSERT(MemMap != NULL);
+            PVM_MEMORY_RANGE_V5 rangeV5 = (PVM_MEMORY_RANGE_V5)MemMap;
+            do
             {
-                case EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY:
-                    sratApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *)cursor;
-                    cursor += sratApic->Length;
-                    break;
-
-                case EFI_ACPI_5_0_MEMORY_AFFINITY:
-                    sratMem = (EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *)cursor;
-
-                    base = (((UINT64)sratMem->AddressBaseHigh) << 32) |
-                            (UINT64)sratMem->AddressBaseLow;
-                    size = (((UINT64)sratMem->LengthHigh) << 32) |
-                            (UINT64)sratMem->LengthLow;
-
+                //
+                // First memory region is a special case that isn't fully
+                // described in the Memory Map.
+                //
+                if (rangeV5->BaseAddress == 0)
+                {
+                    AddFirstMemoryRange(
+                        physicalAddressBits,
+                        rangeV5->Length,
+                        ConfigPageV3->BiosSizePages * SIZE_4KB);
+                }
+                else
+                {
                     //
-                    // First memory region is a special case that isn't fully
-                    // described in the SRAT.
+                    // Report subsequent memory regions directly.
                     //
-                    if (base == 0)
+                    if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
                     {
-                        AddFirstMemoryRange(
-                            physicalAddressBits,
-                            size,
-                            ConfigPageV2->BiosSizePages * SIZE_4KB);
+                        HobAddReservedMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
                     }
                     else
                     {
-                        //
-                        // Report subsequent memory regions directly *unless* they are hot-add.
-                        //
-                        if ((sratMem->Flags & EFI_ACPI_5_0_MEMORY_HOT_PLUGGABLE) !=
-                            EFI_ACPI_5_0_MEMORY_HOT_PLUGGABLE)
-                        {
-                            HobAddMemoryRange(base, size);
-                        }
+                        HobAddMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
                     }
+                }
 
-                    cursor += sratMem->Length;
-                    break;
-
-                default:
-                    sratMem = (EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *)cursor;
-                    cursor += sratMem->Length;
-                    break;
-
-            }
-        } while (cursor < ((UINT8 *)acpiHdr + acpiHdr->Length));
+                //
+                // Next memory map range.
+                //
+                rangeV5++;
+            } while ((UINT8*)rangeV5 < ((UINT8*)MemMap + MemMapSize));
+        }
+        break;
     }
 
     //
@@ -1071,7 +1155,7 @@ Return Value:
     //
     // Get the Memory Map.
     //
-    memMap = GetMemoryMap(PeiServices, memMapSize);
+    memMap = GetMemoryMap(vDevVersion, PeiServices, memMapSize);
     if (memMapSize > 0 && memMap == NULL)
     {
         return EFI_DEVICE_ERROR;

@@ -235,26 +235,33 @@ enum
 {
     VDevVersion2   = MAKE_VDEV_VERSION(2, 0),
     VDevVersion3   = MAKE_VDEV_VERSION(3, 0),
-    VDevVersion4   = MAKE_VDEV_VERSION(4, 0)
+    VDevVersion4   = MAKE_VDEV_VERSION(4, 0),
+    VDevVersion5   = MAKE_VDEV_VERSION(5, 0)
 };
 
 
 //
-// Memory map range flags.
-//
-#define VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED  0x1
-
-
-//
-// Memory map related types.
+// Memory map for VDev versions 2-4
 //
 typedef struct _VM_MEMORY_RANGE
 {
     UINT64  BaseAddress;
     UINT64  Length;
+} VM_MEMORY_RANGE, *PVM_MEMORY_RANGE;
+
+
+//
+// Memory map beginning with VDev version 5
+//
+#define VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED  0x1
+
+typedef struct _VM_MEMORY_RANGE_V5
+{
+    UINT64  BaseAddress;
+    UINT64  Length;
     UINT32  Flags;
     UINT32  Reserved;
-} VM_MEMORY_RANGE, *PVM_MEMORY_RANGE;
+} VM_MEMORY_RANGE_V5, *PVM_MEMORY_RANGE_V5;
 
 
 // Configuration "page" that is requested by the UEFI firmware.
@@ -457,7 +464,7 @@ typedef struct _NVRAM_COMMAND_DESCRIPTOR
             UINT64 MaximumVariableSize;
         } QueryInfo;
 
-        union 
+        union
         {
             struct
             {
