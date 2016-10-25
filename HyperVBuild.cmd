@@ -12,7 +12,7 @@ if NOT DEFINED WORKSPACE (
   echo.
   echo Error --- Cannot find UEFI build Workspace
   echo This utility must be run from within a UEFI Workspace
-  echo Run edk2setup.bat from within a Razzle window and try again.
+  echo Run edk2setup.bat and try again.
   echo.
   exit /b 1
 )
