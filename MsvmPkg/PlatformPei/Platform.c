@@ -475,7 +475,7 @@ Return Value:
     // Init the first range length to zero. Nonzero length value after intercept
     // to the VDev will indicate success.
     //
-    if (VDevVersion >= 5)
+    if (VDevVersion >= VDevVersion5)
     {
         ((PVM_MEMORY_RANGE_V5)memMap)->Length = 0;
     }
@@ -489,7 +489,7 @@ Return Value:
     //
     WriteBiosDevice(BiosConfigMemoryMap, (UINT32)(UINTN)memMap);
 
-    if ((VDevVersion >= 5 && ((PVM_MEMORY_RANGE_V5)memMap)->Length == 0) ||
+    if ((VDevVersion >= VDevVersion5 && ((PVM_MEMORY_RANGE_V5)memMap)->Length == 0) ||
         (((PVM_MEMORY_RANGE)memMap)->Length == 0))
     {
         //
@@ -506,12 +506,13 @@ Return Value:
     //
     DEBUG_CODE_BEGIN();
     DEBUG((DEBUG_VERBOSE, "--- Memory Map data @ %x Length %x\n", memMap, MemMapSize));
-    if (VDevVersion >= 5)
+    if (VDevVersion >= VDevVersion5)
     {
         PVM_MEMORY_RANGE_V5 range = (PVM_MEMORY_RANGE_V5)memMap;
         do
         {
-            DEBUG((DEBUG_VERBOSE, "    Base % 14lx Len % 14lx\n", range->BaseAddress, range->Length));
+            DEBUG((DEBUG_VERBOSE, "    Base % 14lx Len % 14lx Flags % 8x\n",
+                range->BaseAddress, range->Length, range->Flags));
             range++;
         } while ((UINT8*)range < ((UINT8*)memMap + MemMapSize));
     }
@@ -550,12 +551,15 @@ Return Value:
 
 --*/
 {
+    BOOLEAN pcdUse1GPageTable;
     BOOLEAN page1GSupport;
     UINT32  regEax;
     UINT32  regEdx;
     UINT32  pml4Entries;
     UINT32  pdpEntries;
     UINTN   totalPages;
+
+    DEBUG((DEBUG_VERBOSE, ">>> GetPageTableSize(%d)\n", PhysicalAddressBits));
 
     //
     // If DXE is 32-bit return zero.
@@ -571,7 +575,9 @@ Return Value:
     // "MdeModulePkg/Core/DxeIplPeim/X64/VirtualMemory.c".
     //
     page1GSupport = FALSE;
-    if (PcdGetBool(PcdUse1GPageTable))
+   pcdUse1GPageTable = PcdGetBool(PcdUse1GPageTable);
+    DEBUG((DEBUG_VERBOSE, "PcdUse1GPageTable is %a\n", pcdUse1GPageTable ? "TRUE" : "FALSE" ));
+    if (pcdUse1GPageTable)
     {
         AsmCpuid(0x80000000, &regEax, NULL, NULL, NULL);
         if (regEax >= 0x80000001)
@@ -583,6 +589,7 @@ Return Value:
             }
         }
     }
+    DEBUG((DEBUG_VERBOSE, "page1GSupport is %a\n", page1GSupport ? "TRUE" : "FALSE"));
 
     if (PhysicalAddressBits <= 39)
     {
@@ -600,6 +607,9 @@ Return Value:
     totalPages = page1GSupport ? pml4Entries + 1 :
                                (pdpEntries + 1) * pml4Entries + 1;
     ASSERT(totalPages <= 0x40201);
+
+    DEBUG((DEBUG_VERBOSE, "<<< GetPageTableSize returning %ull\n",
+        (UINTN)EFI_PAGES_TO_SIZE(totalPages)));
 
     return (UINTN)(EFI_PAGES_TO_SIZE(totalPages));
 }
@@ -636,13 +646,14 @@ Return Value:
 {
     EFI_STATUS status;
     UINT64 peiBase, peiSize;
+    UINT64 pageTableSize;
+    DEBUG((DEBUG_VERBOSE, ">>> AddFirstMemoryRange\n"));
 
     //
     // Establish PEI memory first so we can create HOBs in the formal PEI heap.
-    // This memory range is, by design, the memory below 4GB.
+    // This first memory range is, by design, the memory below the MMIO range below 4GB.
     // The base and size of PEI memory is constrained by several things:
-    // - Avoid the 0-1MB range, so base PEI memory at 1MB.
-    // - Avoid the firmware volume that sometimes exists at the top of this range
+    // - Avoid the 0-1MB range, so base the PEI memory at 1MB.
     // - Don't consume more than really necessary, 64MB is sufficient for misc pei allocations
     // - Try to include a page table on x64 that can be large when cpu address width is large
     //
@@ -650,16 +661,17 @@ Return Value:
     // code has been updated to fall back to a smaller table.  This will still permit really
     // small VMs on machines with lots of address bits.
     //
+    pageTableSize = GetPageTableSize(PhysicalAddressBits);
     peiBase = BASE_1MB;
-    peiSize = MIN(Length - (peiBase + BiosSize),
-                  (GetPageTableSize(PhysicalAddressBits) + SIZE_64MB));
-    ASSERT((peiBase + peiSize) <= (Length - BiosSize));
+    peiSize = MIN((Length - peiBase), (pageTableSize + SIZE_64MB));
+    DEBUG((DEBUG_VERBOSE, "AddFirstMemoryRange: peiBase %lx peiSize %lx\n", peiBase, peiSize));
+    ASSERT((peiBase + peiSize) <= Length);
     status = PublishSystemMemory(peiBase, peiSize);
     ASSERT_EFI_ERROR(status);
 
     //
     // The first memory range is special in that we have to account for
-    // three special cases within it.
+    // two special cases within it.
     //
     // 1) Even though the host actually puts memory between GPA 640K and 768K
     //    it can't be declared as existing. Linux fails to boot if memory
@@ -672,14 +684,8 @@ Return Value:
     //    Therefore this slice is marked reserved. It exists but shouldn't
     //    really be used.
     //
-    // 2) The top firmware-sized piece of this memory range has to marked
-    //    as pre-allocated for UEFI Boot Services as that is where the UEFI
-    //    firmware volume actually resides. This piece of memory is available
-    //    to a guest OS after ExitBootServices().
     //
     //           top +---------------------------------------------------
-    //               | System Memory   - mark allocated for Boot Services
-    // top - fw size +---------------------------------------------------
     //               | System Memory
     // 1MB  0x100000 +---------------------------------------------------
     //               | Reserved Memory - legacy device ROM & BIOS
@@ -710,18 +716,7 @@ Return Value:
     //
     HobAddMemoryRange(BASE_1MB, Length - SIZE_1MB);
 
-    //
-    // Memory containing UEFI code must be marked allocated.
-    // UEFI DXE will avoid using this memory for pool allocations and
-    // guest OS will be able to reclaim them after ExitBootServices().
-    //
-    // The firmware is copied to the top of this memory range.
-    // A piece of the firmware is also copied to the 128K below 1MB
-    // but it is marked reserved above and there is no need to account
-    // for it as allocated. The UEFI code will ignore reserved memory.
-    //
-    HobAddAllocatedMemoryRange(Length - BiosSize, BiosSize);
-
+    DEBUG((DEBUG_VERBOSE, "<<< AddFirstMemoryRange\n"));
 }
 
 
@@ -742,8 +737,6 @@ Routine Description:
     triggering the MTRRs to be initialized.
 
 Arguments:
-
-    PeiServices - An indirect pointer to the PEI Services Table.
 
     VDevVersion - The version of the BIOS VDev.
 
@@ -768,7 +761,7 @@ Return Value:
     UINT32 maximumFunction;
 
     DEBUG((DEBUG_VERBOSE, ">>> InitializeMemoryMap\n"));
-
+    DEBUG((DEBUG_VERBOSE, "VDevVersion is %d.%d\n", VDevVersion >> 8, VDevVersion & 0xFF));
     //
     // Determine the number of physical address bits.
     //
@@ -798,9 +791,11 @@ Return Value:
         // The processor does not support the required query, which means
         // the processor only supports 36 physical address bits.
         //
+        DEBUG((DEBUG_WARN, "Can't query CPUID so defaulting address width to 36 bits\n"));
         physicalAddressBits = 36;
     }
     ASSERT(physicalAddressBits >= 36 && physicalAddressBits <= 48);
+    DEBUG((DEBUG_VERBOSE, "PhysicalAddressbits %d\n", physicalAddressBits));
 
     //
     // Process the memory map and create HOBs for memory regions..
@@ -894,6 +889,8 @@ Return Value:
             PVM_MEMORY_RANGE range = (PVM_MEMORY_RANGE)MemMap;
             do
             {
+                DEBUG((DEBUG_VERBOSE, "Range BaseAddress %lx \n", range->BaseAddress));
+                DEBUG((DEBUG_VERBOSE, "Range Length      %lx \n", range->Length));
                 //
                 // First memory region is a special case that isn't fully
                 // described in the Memory Map.
@@ -933,6 +930,10 @@ Return Value:
             PVM_MEMORY_RANGE_V5 rangeV5 = (PVM_MEMORY_RANGE_V5)MemMap;
             do
             {
+                DEBUG((DEBUG_VERBOSE, "BaseAddress %lx \n", rangeV5->BaseAddress));
+                DEBUG((DEBUG_VERBOSE, "Length      %lx \n", rangeV5->Length));
+                DEBUG((DEBUG_VERBOSE, "Flags       %x \n", rangeV5->Flags));
+
                 //
                 // First memory region is a special case that isn't fully
                 // described in the Memory Map.
@@ -1129,6 +1130,7 @@ Return Value:
 
         case VDevVersion3:
         case VDevVersion4:
+        case VDevVersion5:
             configPageV3 = GetV3ConfigPage(PeiServices);
             sratSize = configPageV3->SratSize;
             memMapSize = configPageV3->MemoryMapSize;
@@ -1180,6 +1182,7 @@ Return Value:
 
         case VDevVersion3:
         case VDevVersion4:
+        case VDevVersion5:
         default: // assume latest config page version
             HobAddGuidData(
                 &gMsvmConfigPageV3Guid,

@@ -1,9 +1,9 @@
 /** @file
-  x64 Virtual Memory Management Services in the form of an IA-32 driver.  
+  x64 Virtual Memory Management Services in the form of an IA-32 driver.
   Used to establish a 1:1 Virtual to Physical Mapping that is required to
   enter Long Mode (x64 64-bit mode).
 
-  While we make a 1:1 mapping (identity mapping) for all physical pages 
+  While we make a 1:1 mapping (identity mapping) for all physical pages
   we still need to use the MTRR's to ensure that the cachability attributes
   for all memory regions is correct.
 
@@ -24,7 +24,7 @@ http://opensource.org/licenses/bsd-license.php
 THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
-**/  
+**/
 
 #include "DxeIpl.h"
 #include "VirtualMemory.h"
@@ -150,7 +150,7 @@ CreateIdentityMappingPageTables (
   IN EFI_PHYSICAL_ADDRESS   StackBase,
   IN UINTN                  StackSize
   )
-{  
+{
   UINT32                                        RegEax;
   UINT32                                        RegEdx;
   UINT8                                         PhysicalAddressBits;
@@ -205,27 +205,49 @@ CreateIdentityMappingPageTables (
     PhysicalAddressBits = 48;
   }
 
-  //
-  // Calculate the table entries needed.
-  //
-  if (PhysicalAddressBits <= 39 ) {
-    NumberOfPml4EntriesNeeded = 1;
-    NumberOfPdpEntriesNeeded = (UINT32)LShiftU64 (1, (PhysicalAddressBits - 30));
-  } else {
-    NumberOfPml4EntriesNeeded = (UINT32)LShiftU64 (1, (PhysicalAddressBits - 39));
-    NumberOfPdpEntriesNeeded = 512;
-  }
 
-  //
-  // Pre-allocate big pages to avoid later allocations. 
-  //
-  if (!Page1GSupport) {
-    TotalPagesNum = (NumberOfPdpEntriesNeeded + 1) * NumberOfPml4EntriesNeeded + 1;
-  } else {
-    TotalPagesNum = NumberOfPml4EntriesNeeded + 1;
-  }
-  BigPageAddress = (UINTN) AllocatePages (TotalPagesNum);
+  do {
+
+    //
+    // Calculate the table entries needed.
+    //
+    if (PhysicalAddressBits <= 39 ) {
+      NumberOfPml4EntriesNeeded = 1;
+      NumberOfPdpEntriesNeeded = (UINT32)LShiftU64 (1, (PhysicalAddressBits - 30));
+    } else {
+      NumberOfPml4EntriesNeeded = (UINT32)LShiftU64 (1, (PhysicalAddressBits - 39));
+      NumberOfPdpEntriesNeeded = 512;
+    }
+
+    //
+    // Pre-allocate big pages to avoid later allocations.
+    //
+    if (!Page1GSupport) {
+      TotalPagesNum = (NumberOfPdpEntriesNeeded + 1) * NumberOfPml4EntriesNeeded + 1;
+    } else {
+      TotalPagesNum = NumberOfPml4EntriesNeeded + 1;
+    }
+    BigPageAddress = (UINTN) AllocatePages (TotalPagesNum);
+
+    if (BigPageAddress == 0)
+    {
+      //
+      // If not enough memory try smaller page table but not smaller than for 36 bits.
+      //
+      if (PhysicalAddressBits <= 36) {
+        break;
+      }
+      PhysicalAddressBits--;
+      DEBUG ((DEBUG_WARN,
+              "--- CreateIdentityMappingPageTables - Insufficient memory - trying addr width %d\n",
+              PhysicalAddressBits));
+    }
+  } while (BigPageAddress == 0);
+
   ASSERT (BigPageAddress != 0);
+  DEBUG((DEBUG_VERBOSE,
+         "--- CreateIdentityMappingPageTables new address %p\n",
+         BigPageAddress));
 
   //
   // By architecture only one PageMapLevel4 exists - so lets allocate storage for it.
@@ -252,7 +274,7 @@ CreateIdentityMappingPageTables (
 
     if (Page1GSupport) {
       PageDirectory1GEntry = (VOID *) PageDirectoryPointerEntry;
-    
+
       for (IndexOfPageDirectoryEntries = 0; IndexOfPageDirectoryEntries < 512; IndexOfPageDirectoryEntries++, PageDirectory1GEntry++, PageAddress += SIZE_1GB) {
         if (PcdGetBool (PcdSetNxForStack) && (PageAddress < StackBase + StackSize) && ((PageAddress + SIZE_1GB) > StackBase)) {
           Split1GPageTo2M (PageAddress, (UINT64 *) PageDirectory1GEntry, StackBase, StackSize);
@@ -271,7 +293,7 @@ CreateIdentityMappingPageTables (
         //
         // Each Directory Pointer entries points to a page of Page Directory entires.
         // So allocate space for them and fill them in in the IndexOfPageDirectoryEntries loop.
-        //       
+        //
         PageDirectoryEntry = (VOID *) BigPageAddress;
         BigPageAddress += SIZE_4KB;
 
