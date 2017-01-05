@@ -21,8 +21,6 @@
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = MsvmPkg/MsvmPkgX64.fdf
 
-  DEBUGLIB_SERIAL                = 0
-
 ################################################################################
 #
 # BuildOptions Section - extra build flags
@@ -57,7 +55,7 @@
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
   CrashDumpAgentLib|MdeModulePkg/Library/CrashDumpAgentLibNull/CrashDumpAgentLibNull.inf
-!if DEBUGLIB_SERIAL
+!ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
 !else
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
@@ -73,7 +71,7 @@
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
-!if DEBUGLIB_SERIAL
+!ifdef DEBUGLIB_SERIAL
   SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
 !else
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
