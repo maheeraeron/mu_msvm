@@ -2,8 +2,8 @@
 setlocal enableextensions enabledelayedexpansion
 
 rem
-rem This script automatically copies UEFI symbols from the secure depot to VM depot for check-in.
-rem it will also copy the firmware image as UEFIBIOS.BIN.
+rem This script does a clean build of the Hyper-V firmware to prepare for check-in to the vm depot.
+rem TODO: add ARM64
 rem
 
 echo UEFI Build Helper
@@ -48,7 +48,7 @@ goto :ParseArgs
 :ParseArgsComplete
 
 if "%_Target%"=="" (
-  set _Target=DEBUG RELEASE
+  set _Target=RELEASE
   echo.
   echo No build flavor specified, defaulting to !_Target!
   echo.
@@ -95,10 +95,8 @@ if "%1"=="DEBUG" (
   exit /b 2
 )
 
-set _Object_Root=%1_NTDEV
-set _symSavePath=%SDXROOT%\vm\dv\bios\vdev\sym\%_nt_Flavor%
+set _Object_Root=%1_VS2015xASL
 set _FW_Source=%_UEFI_ROOT%\%_Object_Root%\FV\MSVM.fd
-set _FW_DestName=%SDXROOT%\vm\dv\bios\vdev\UEFIBIOS%_nt_Flavor%.bin
 
 rem ----------------------------------
 rem Clean Build
