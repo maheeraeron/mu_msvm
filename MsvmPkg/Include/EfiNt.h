@@ -76,6 +76,8 @@ typedef VOID *PVOID;
 // General defines.
 //
 
+#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+
 #if defined(MDE_CPU_X64)
 #define MemoryBarrier() __faststorefence()
 #elif defined(MDE_CPU_IA32)
@@ -90,6 +92,147 @@ MemoryBarrier (
         xchg Barrier, eax
     }
 }
+#endif
+
+FORCEINLINE
+LONG
+ReadAcquire (
+    _In_ _Interlocked_operand_ LONG const volatile *Source
+    )
+
+{
+
+    LONG Value;
+
+    Value = *Source;
+    return Value;
+}
+
+FORCEINLINE
+LONG
+ReadNoFence (
+    _In_ _Interlocked_operand_ LONG const volatile *Source
+    )
+
+{
+
+    LONG Value;
+
+    Value = *Source;
+    return Value;
+}
+
+FORCEINLINE
+VOID
+WriteRelease (
+    _Out_ _Interlocked_operand_ LONG volatile *Destination,
+    _In_ LONG Value
+    )
+
+{
+
+    *Destination = Value;
+    return;
+}
+
+FORCEINLINE
+VOID
+WriteNoFence (
+    _Out_ _Interlocked_operand_ LONG volatile *Destination,
+    _In_ LONG Value
+    )
+
+{
+
+    *Destination = Value;
+    return;
+}
+
+FORCEINLINE
+VOID
+WriteNoFence16 (
+    _Out_ _Interlocked_operand_ SHORT volatile *Destination,
+    _In_ SHORT Value
+    )
+
+{
+
+    *Destination = Value;
+    return;
+}
+
+#elif defined(MDE_CPU_AARCH64)
+#define MemoryBarrier()             __dmb(_ARM64_BARRIER_SY)
+
+FORCEINLINE
+LONG
+ReadAcquire (
+    _In_ _Interlocked_operand_ LONG const volatile *Source
+    )
+
+{
+
+    LONG Value;
+
+    Value = __iso_volatile_load32((int *)Source);
+    __dmb(_ARM64_BARRIER_ISH);
+    return Value;
+}
+
+FORCEINLINE
+LONG
+ReadNoFence (
+    _In_ _Interlocked_operand_ LONG const volatile *Source
+    )
+
+{
+
+    LONG Value;
+
+    Value = __iso_volatile_load32((int *)Source);
+    return Value;
+}
+
+FORCEINLINE
+VOID
+WriteRelease (
+    _Out_ _Interlocked_operand_ LONG volatile *Destination,
+    _In_ LONG Value
+    )
+
+{
+
+    __dmb(_ARM64_BARRIER_ISH);
+    __iso_volatile_store32((int *)Destination, Value);
+    return;
+}
+
+FORCEINLINE
+VOID
+WriteNoFence (
+    _Out_ _Interlocked_operand_ LONG volatile *Destination,
+    _In_ LONG Value
+    )
+
+{
+
+    __iso_volatile_store32((int *)Destination, Value);
+    return;
+}
+
+FORCEINLINE
+VOID
+WriteNoFence16 (
+    _Out_ _Interlocked_operand_ SHORT volatile *Destination,
+    _In_ SHORT Value
+    )
+
+{
+
+    __iso_volatile_store16(Destination, Value);
+    return;
+}
+
 #else
 #error Unsupported architecture
 #endif

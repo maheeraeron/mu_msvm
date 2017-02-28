@@ -724,9 +724,11 @@ Return Value:
 --*/
 {
     EMCL_CONTEXT *context;
-    NTSTATUS ntStatus;
+    NTSTATUS status;
     EFI_TPL tpl;
     UINT32 ringOffset;
+    UINT32 currentOffset;
+    PVOID incomingBuffer;
     UINT32 bufferLength;
     EMCL_INCOMING_PACKET *incomingPacket;
     UINT32 receivedCount;
@@ -734,6 +736,7 @@ Return Value:
     EMCL_OUTGOING_PACKET *outgoingPacket;
 
     context = (EMCL_CONTEXT*)EventContext;
+    ringOffset = PkGetIncomingRingOffset(&context->PkLibContext);
 
     do
     {
@@ -741,16 +744,20 @@ Return Value:
 
         for (;;)
         {
-            ntStatus = PkGetIncomingPacketSize(&context->PkLibContext,
-                                               &bufferLength,
-                                               &ringOffset);
+            currentOffset = ringOffset;
+            status = PkGetReceiveBuffer(&context->PkLibContext,
+                                        &ringOffset,
+                                        &incomingBuffer,
+                                        &bufferLength);
 
-            if (ntStatus == STATUS_END_OF_FILE)
+            if (status == STATUS_END_OF_FILE)
             {
                 break;
             }
-
-            ASSERT(NT_SUCCESS(ntStatus));
+            else if (!NT_SUCCESS(status))
+            {
+                break;
+            }
 
             //
             // If packet allocation fails, set a flag which will cause a retry when
@@ -768,20 +775,32 @@ Return Value:
 
             context->AllocationFailure = FALSE;
 
-            ntStatus = PkReceivePacketSingleMapped(&context->PkLibContext,
-                                                   (PVMPACKET_DESCRIPTOR)incomingPacket,
-                                                   bufferLength,
-                                                   ringOffset);
+            PkReadPacketSingleMapped(&context->PkLibContext,
+                                     incomingPacket,
+                                     bufferLength,
+                                     currentOffset);
 
-            ASSERT(NT_SUCCESS(ntStatus));
+            //
+            // Replace with validated buffer length.
+            //
 
-            if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
-            {
-                context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
-            }
+            WriteNoFence16((SHORT*)&incomingPacket->Descriptor.Length8, (SHORT)(bufferLength / 8));
 
             EmclDispatchPacket(context, incomingPacket);
             ++receivedCount;
+        }
+
+        if (receivedCount > 0)
+        {
+            status = PkCompleteRemoval(&context->PkLibContext, ringOffset);
+            if (status == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+            {
+                context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
+            }
+            else if (!NT_SUCCESS(status))
+            {
+                break;
+            }
         }
     } while (receivedCount > 0);
 
@@ -795,15 +814,15 @@ Return Value:
         entry = GetFirstNode(&context->OutgoingQueue);
         outgoingPacket = BASE_CR(entry, EMCL_OUTGOING_PACKET, QueueLink);
 
-        ntStatus = PkSendPacketSingleMapped(&context->PkLibContext,
+        status = PkSendPacketSingleMapped(&context->PkLibContext,
                                             outgoingPacket->Buffer,
                                             outgoingPacket->BufferSize);
 
-        if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+        if (status == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
         {
             context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
         }
-        else if (!NT_SUCCESS(ntStatus))
+        else if (!NT_SUCCESS(status))
         {
             break;
         }

@@ -35,6 +35,8 @@ Author:
 #define ALIGN_UP(x, y) ALIGN_VALUE((x), sizeof(y))
 #define PAGE_SIZE EFI_PAGE_SIZE
 
+#define PMDL PVOID
+
 #define VMBUS_RING_BUFFER_SINGLE_MAPPED 1
 
 #include "Init.c"

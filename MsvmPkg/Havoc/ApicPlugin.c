@@ -12,10 +12,11 @@
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
+#include <Register/Cpuid.h>
 
 #define ARRAY_SIZE(x)   (sizeof(x) / sizeof(x[0]))
 
-typedef struct 
+typedef struct
 {
     LOCAL_APIC_ICR_LOW  Icr;
     UINT32              ApicId;
@@ -185,7 +186,7 @@ ApicInit(
     mIcr.Bits.DeliveryMode = LOCAL_APIC_DELIVERY_MODE_FIXED;
     mIcr.Bits.Level  = 1;
     mIcr.Bits.Vector = 0;    // auto
-    
+
     mApicId = GetApicId();
 
     //
@@ -207,7 +208,7 @@ ApicInit(
                 Print(L"Failed to setup interrupt handler. Status %r\n", status);
                 goto Cleanup;
             }
-            
+
             mIcr.Bits.Vector = vector;
         }
         else
@@ -217,7 +218,7 @@ ApicInit(
     }
 
 Cleanup:
-    
+
     return status;
 }
 

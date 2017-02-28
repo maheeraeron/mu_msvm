@@ -372,3 +372,15 @@
       HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
       Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
   }
+
+  !ifdef BUILD_HAVOC
+  MsvmPkg/Havoc/Havoc.inf {
+    <LibraryClasses>
+      ShellCEntryLib|ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf
+      ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
+      FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
+      SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
+      UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+  }
+  !endif
+
