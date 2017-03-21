@@ -45,5 +45,6 @@ Field(BIOS, ByteAcc, NoLock, Preserve)
     TCFG,8,         // TPM enabled/disabled
     PCFG,8,         // OEMP table load enabled/disabled
     HCFG,8,         // Hibernation enabled/disabled
+    NCFG,8,         // SCM (NVDIMMs) enabled/disabled
 }
 

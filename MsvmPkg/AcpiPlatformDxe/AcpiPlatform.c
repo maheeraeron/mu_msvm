@@ -232,6 +232,72 @@ Return Value:
     return status;
 }
 
+EFI_STATUS
+AcpiInstallNfitTable(
+    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table = NULL;
+    EFI_PHYSICAL_ADDRESS buffer;
+    UINT32 nfitSize;
+    UINTN tableHandle;
+
+    //
+    // Get the size of the NFIT
+    //
+    nfitSize = GetNfitSize();
+
+    //
+    // Size of 0 means no NFIT
+    // We dynamically determine the NFIT size since we need to support 
+    // hot-add of devices.
+    //
+    if (nfitSize == 0)
+    {
+        return EFI_SUCCESS;
+    }
+
+    #define BELOW_4GB (0xFFFFFFFFULL)
+    buffer = BELOW_4GB;
+    status = gBS->AllocatePages(AllocateMaxAddress,
+                                EfiBootServicesData,
+                                EFI_SIZE_TO_PAGES(nfitSize),
+                                &buffer);
+    table = (void*) buffer;
+    if (EFI_ERROR(status))
+    {
+        table = NULL;
+        goto Cleanup;
+    }
+
+    //
+    // Notify the vSCM vdev to populate the NFIT table
+    //
+    GetNfit((UINT64)table);
+
+    //
+    // Install the NFIT table
+    //
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
+    //
+    // Cleanup memory allocated for the NFIT table
+    //
+    if (table != NULL)
+    {
+        gBS->FreePages(buffer, EFI_SIZE_TO_PAGES(nfitSize));
+        table = NULL;
+    }
+
+Cleanup:
+
+    return status;
+}
+
 
 EFI_STATUS
 EFIAPI
@@ -355,6 +421,15 @@ Return Value:
     //
 
     status = AcpiInstallSratTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // Add the NFIT table.
+    //
+    status = AcpiInstallNfitTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;

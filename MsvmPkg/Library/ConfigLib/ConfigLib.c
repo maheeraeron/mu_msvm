@@ -23,6 +23,7 @@ Author:
 #include <Library/HobLib.h>
 #include <BiosInterface.h>
 #include <BiosConfigPageGuid.h>
+#include <BiosDeviceAccess.h>
 #include <SratGuid.h>
 #include <MemmapGuid.h>
 
@@ -320,6 +321,21 @@ Return Value:
     return gSrat;
 }
 
+UINT32
+GetNfitSize(
+    )
+{
+    return ReadBiosDevice(BiosConfigNfitSize);
+}
+
+void
+GetNfit(
+    UINT64 Address
+    )
+{
+    ASSERT((UINT64) Address < 0xFFFFFFFFULL);
+    WriteBiosDevice(BiosConfigNfitPopulate, (UINT32) Address);
+}
 
 UINT32
 GetMemmapSize(

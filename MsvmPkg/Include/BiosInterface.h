@@ -117,9 +117,19 @@ enum
     //
     BiosConfigMemoryMap                 = 0x33,
     //
-    // Intentional gap here - unimplemented values
+    // ARM64 RTC GetTime SetTime (RS2)
     //
-    BiosConfigDebug                     = 0xFF
+    BiosConfigGetTime                   = 0x34,
+    BiosConfigSetTime                   = 0x35,
+    //
+    // Debugger output
+    //
+    BiosDebugOutputString               = 0x36,
+    //
+    // vSCM NFIT (RS3)
+    //
+    BiosConfigNfitSize                  = 0x37,
+    BiosConfigNfitPopulate              = 0x38
 };
 
 

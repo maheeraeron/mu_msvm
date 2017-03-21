@@ -80,6 +80,8 @@ enum
 
 CONFIG_GET_UINT32   GetSratSize;
 CONFIG_GET_PTR      GetSrat;
+CONFIG_GET_UINT32   GetNfitSize;
+CONFIG_SET_UINT64   GetNfit;
 CONFIG_GET_UINT32   GetMemmapSize;
 CONFIG_GET_PTR      GetMemmap;
 CONFIG_GET_UINT32   GetBiosSizePages;

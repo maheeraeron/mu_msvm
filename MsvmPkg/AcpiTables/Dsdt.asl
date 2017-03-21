@@ -56,6 +56,14 @@ DefinitionBlock (
             {
                 LoadTable("OEM2", "MSFTVM", "VTPM2",,,)
             }
+
+            //
+            // Load the NVDIMMs if configured.
+            //
+            If(LGreater(NCFG, 0))
+            {
+                LoadTable("OEM3", "MSFTVM", "VSCM",,,)
+            }
         }
     }
 

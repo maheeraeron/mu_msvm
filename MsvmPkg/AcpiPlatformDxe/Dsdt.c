@@ -37,6 +37,7 @@ typedef struct _DSDT_AML_DATA
     UINT8  TpmEnabled;
     UINT8  OempEnabled;
     UINT8  HibernateEnabled;
+    UINT8  ScmEnabled;
 } DSDT_AML_DATA;
 
 typedef struct _DSDT_AML_DESCRIPTOR
@@ -206,6 +207,7 @@ Return Value:
     data->TpmEnabled = GetTpmEnabled();
     data->OempEnabled = GetOempEnabled();
     data->HibernateEnabled = GetHibernateEnabled();
+    data->ScmEnabled = (GetNfitSize() > 0);
 
     *AmlDataAddress = (UINT32)dataPages;
     status = EFI_SUCCESS;
