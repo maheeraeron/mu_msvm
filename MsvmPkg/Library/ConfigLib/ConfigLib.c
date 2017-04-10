@@ -336,6 +336,14 @@ GetNfit(
     ASSERT((UINT64) Address < 0xFFFFFFFFULL);
     WriteBiosDevice(BiosConfigNfitPopulate, (UINT32) Address);
 }
+void
+SetVpmemACPIBuffer(
+    UINT64 Address
+    )
+{
+    ASSERT((UINT64) Address < 0xFFFFFFFFULL);
+    WriteBiosDevice(BiosConfigVpmemSetACPIBuffer, (UINT32) Address);
+}
 
 UINT32
 GetMemmapSize(

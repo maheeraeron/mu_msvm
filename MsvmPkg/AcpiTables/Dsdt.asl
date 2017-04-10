@@ -56,14 +56,6 @@ DefinitionBlock (
             {
                 LoadTable("OEM2", "MSFTVM", "VTPM2",,,)
             }
-
-            //
-            // Load the NVDIMMs if configured.
-            //
-            If(LGreater(NCFG, 0))
-            {
-                LoadTable("OEM3", "MSFTVM", "VSCM",,,)
-            }
         }
     }
 
@@ -72,5 +64,14 @@ DefinitionBlock (
     Include("Asl/Synthetic.asl")
     Include("Asl/Lpc.asl")
     Include("Asl/Sleep.asl")
+
+
+    //
+    // Load the NVDIMMs if configured.
+    //
+    If(LGreater(NCFG, 0))
+    {
+        Include("Asl/Nvdm.asl")
+    }
 }
 

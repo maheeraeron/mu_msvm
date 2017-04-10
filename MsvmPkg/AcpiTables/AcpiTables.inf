@@ -31,7 +31,6 @@
     Oem1.asl
     Tpm2.asl
     Spcr.aslc
-    Scm1.asl
 
 [Packages]
     MdePkg/MdePkg.dec

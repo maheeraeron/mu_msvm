@@ -272,7 +272,7 @@ AcpiInstallNfitTable(
     }
 
     //
-    // Notify the vSCM vdev to populate the NFIT table
+    // Notify the vPMEM vdev to populate the NFIT table
     //
     GetNfit((UINT64)table);
 

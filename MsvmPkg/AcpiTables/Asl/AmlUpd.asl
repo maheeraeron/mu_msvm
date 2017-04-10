@@ -41,10 +41,11 @@ Field(BIOS, ByteAcc, NoLock, Preserve)
     GCAL,32,        // Lower 32 bits of address of Generation counter
     GCAH,32,        // Upper 32 bits of address of Generation counter
     PCNT,32,        // Processor count
+    NVDA,32,        // NVDIMM Method buffer address
     SCFG,8,         // Serial controller enabled/disabled
     TCFG,8,         // TPM enabled/disabled
     PCFG,8,         // OEMP table load enabled/disabled
     HCFG,8,         // Hibernation enabled/disabled
-    NCFG,8,         // SCM (NVDIMMs) enabled/disabled
+    NCFG,8,         // PMEM (NVDIMMs) enabled/disabled
 }
 

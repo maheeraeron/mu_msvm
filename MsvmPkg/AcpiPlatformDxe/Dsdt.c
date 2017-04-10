@@ -33,11 +33,12 @@ typedef struct _DSDT_AML_DATA
     UINT32 Mmio2LengthMb;
     UINT64 GenerationIdAddress;
     UINT32 ProcessorCount;
+    UINT32 NvdimmBufferAddress;
     UINT8  SerialControllerEnabled;
     UINT8  TpmEnabled;
     UINT8  OempEnabled;
     UINT8  HibernateEnabled;
-    UINT8  ScmEnabled;
+    UINT8  PmemEnabled;
 } DSDT_AML_DATA;
 
 typedef struct _DSDT_AML_DESCRIPTOR
@@ -47,82 +48,9 @@ typedef struct _DSDT_AML_DESCRIPTOR
 } DSDT_AML_DESCRIPTOR;
 
 #define DSDT_AML_DESCRIPTOR_SIGNATURE 0x0c00534f4942805bui64
+#define NVDIMM_IO_BUFFER_SIZE 4096
 
 #pragma pack()
-
-EFI_STATUS
-DsdtAllocateAmlData(
-    __out UINT32 *AmlDataAddress
-    );
-
-//
-// Entry point
-//
-
-EFI_STATUS
-DsdtInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Dsdt
-    )
-/*++
-
-Routine Description:
-
-    Initializes the Dsdt table.
-
-Arguments:
-
-    Dsdt - The Dsdt Table, expressed as an EFI_ACPI_DESCRIPTION_HEADER*.
-
-Return Value:
-
-    EFI_SUCCESS
-
---*/
-{
-    UINT32 amlData;
-    UINT8 *data;
-    UINT32 tableIndex;
-    DSDT_AML_DESCRIPTOR *descriptor;
-    EFI_STATUS status;
-
-    //
-    // Allocate the AML data that's used to share information with the
-    // DSDT table.
-    //
-
-    status = DsdtAllocateAmlData(&amlData);
-    if (EFI_ERROR(status))
-    {
-        goto Cleanup;
-    }
-
-    //
-    // The AML data must be pointed to by the DSDT directly via an
-    // OperationRegion labeled "BIOS". Find the position in the DSDT file
-    // where this operation region is described, then overwrite the 32-bit
-    // address that is already present with the physical address of the
-    // newly allocated data.
-    //
-
-    status = EFI_NOT_FOUND;
-    data = (UINT8 *)(Dsdt + 1);
-    for (tableIndex = 0;
-         tableIndex + sizeof(*descriptor) < Dsdt->Length;
-         tableIndex += 1)
-    {
-        descriptor = (DSDT_AML_DESCRIPTOR *)&data[tableIndex];
-        if (descriptor->Signature == DSDT_AML_DESCRIPTOR_SIGNATURE)
-        {
-            descriptor->PhysicalAddress = amlData;
-            status = EFI_SUCCESS;
-            break;
-        }
-    }
-
-Cleanup:
-    return status;
-}
-
 
 EFI_STATUS
 DsdtAllocateAmlData(
@@ -151,11 +79,13 @@ Return Value:
 {
     DSDT_AML_DATA *data;
     EFI_PHYSICAL_ADDRESS dataPages;
+    EFI_PHYSICAL_ADDRESS nvdimmBuffer;
     VOID *generationId;
     EFI_STATUS status;
 
     generationId = NULL;
     dataPages = 0;
+    nvdimmBuffer = 0;
 
     //
     // Allocate a page for the AML data in runtime services below 4GB. This
@@ -207,8 +137,28 @@ Return Value:
     data->TpmEnabled = GetTpmEnabled();
     data->OempEnabled = GetOempEnabled();
     data->HibernateEnabled = GetHibernateEnabled();
-    data->ScmEnabled = (GetNfitSize() > 0);
+    data->PmemEnabled = (GetNfitSize() > 0);
 
+    //
+    // Allocate space for the NVDIMM IO Buffer if VPMEM is enabled.
+    //
+    if (data->PmemEnabled) {
+        nvdimmBuffer = (EFI_PHYSICAL_ADDRESS)(UINT32)-1;
+        status = gBS->AllocatePages(AllocateMaxAddress,
+                                    EfiRuntimeServicesData,
+                                    EFI_SIZE_TO_PAGES(NVDIMM_IO_BUFFER_SIZE),
+                                    &nvdimmBuffer);
+        if (EFI_ERROR(status))
+        {
+            nvdimmBuffer = 0;
+            goto Cleanup;
+        }
+
+        ZeroMem((PVOID)nvdimmBuffer, NVDIMM_IO_BUFFER_SIZE);
+        SetVpmemACPIBuffer((UINT32)nvdimmBuffer);
+    }
+
+    data->NvdimmBufferAddress = (UINT32)nvdimmBuffer;
     *AmlDataAddress = (UINT32)dataPages;
     status = EFI_SUCCESS;
 
@@ -225,8 +175,82 @@ Cleanup:
         {
             gBS->FreePages(dataPages, EFI_SIZE_TO_PAGES(sizeof(*data)));
         }
+
+        if (nvdimmBuffer != 0)
+        {
+            gBS->FreePages(nvdimmBuffer, EFI_SIZE_TO_PAGES(NVDIMM_IO_BUFFER_SIZE));
+        }
     }
 
     return status;
 }
+
+//
+// Entry point
+//
+
+EFI_STATUS
+DsdtInitializeTable(
+    __inout EFI_ACPI_DESCRIPTION_HEADER* Dsdt
+    )
+/*++
+
+Routine Description:
+
+    Initializes the Dsdt table.
+
+Arguments:
+
+    Dsdt - The Dsdt Table, expressed as an EFI_ACPI_DESCRIPTION_HEADER*.
+
+Return Value:
+
+    EFI_SUCCESS
+
+--*/
+{
+    UINT32 amlData;
+    UINT8 *data;
+    UINT32 tableIndex;
+    DSDT_AML_DESCRIPTOR *descriptor;
+    EFI_STATUS status;
+
+    //
+    // Allocate the AML data that's used to share information with the
+    // DSDT table.
+    //
+
+    status = DsdtAllocateAmlData(&amlData);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // The AML data must be pointed to by the DSDT directly via an
+    // OperationRegion labeled "BIOS". Find the position in the DSDT file
+    // where this operation region is described, then overwrite the 32-bit
+    // address that is already present with the physical address of the
+    // newly allocated data.
+    //
+    
+    status = EFI_NOT_FOUND;
+    data = (UINT8 *)(Dsdt + 1);
+    for (tableIndex = 0;
+         tableIndex + sizeof(*descriptor) < Dsdt->Length;
+         tableIndex += 1)
+    {
+        descriptor = (DSDT_AML_DESCRIPTOR *)&data[tableIndex];
+        if (descriptor->Signature == DSDT_AML_DESCRIPTOR_SIGNATURE)
+        {
+            descriptor->PhysicalAddress = amlData;
+            status = EFI_SUCCESS;
+            break;
+        }
+    }
+
+Cleanup:
+    return status;
+}
+
 

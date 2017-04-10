@@ -126,10 +126,16 @@ enum
     //
     BiosDebugOutputString               = 0x36,
     //
-    // vSCM NFIT (RS3)
+    // vPMem NFIT (RS3)
     //
     BiosConfigNfitSize                  = 0x37,
-    BiosConfigNfitPopulate              = 0x38
+    BiosConfigNfitPopulate              = 0x38,
+    BiosConfigVpmemSetACPIBuffer        = 0x39,
+    //
+    // This value should be the maximum posible value for the
+    // address register with the exception of BiosConfigDebug.
+    //
+    BiosConfigMaxValue                  = BiosConfigVpmemSetACPIBuffer,
 };
 
 
