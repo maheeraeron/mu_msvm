@@ -270,6 +270,8 @@ typedef struct _VM_MEMORY_RANGE
 // Memory map beginning with VDev version 5
 //
 #define VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED  0x1
+#define VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY  0x2
+
 
 typedef struct _VM_MEMORY_RANGE_V5
 {

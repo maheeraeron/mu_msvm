@@ -36,6 +36,9 @@ Author:
      EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |   \
      EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE)
 
+#define PERSISTENT_MEMORY_FLAGS                         \
+    (MEMORY_FLAGS |                                     \
+     EFI_RESOURCE_ATTRIBUTE_PERSISTENT)
 
 const char * const gDebugMemoryFormat = "HOB Start % 17lx End %17lx %s\n";
 const char * const gDebugCpuFormat    = "HOB MemWidth %d IOWidth %d Cpu\n";
@@ -102,6 +105,41 @@ Return Value:
 {
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY, 
                                MEMORY_FLAGS, 
+                               BaseAddress, 
+                               Size);
+    DEBUG((DEBUG_VERBOSE, 
+           gDebugMemoryFormat, 
+           BaseAddress, 
+           BaseAddress + Size - 1, 
+           L"Memory"));
+}
+
+
+void
+HobAddPersistentMemoryRange(
+    __in EFI_PHYSICAL_ADDRESS BaseAddress,
+    __in UINT64               Size
+    )
+/*++
+
+Routine Description:
+
+    Adds a persistent memory range hob to the current hob list.
+
+Arguments:
+
+    BaseAddress - Base address of the memory range.
+
+    Size - Size of the memory range.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY, 
+                               PERSISTENT_MEMORY_FLAGS, 
                                BaseAddress, 
                                Size);
     DEBUG((DEBUG_VERBOSE, 

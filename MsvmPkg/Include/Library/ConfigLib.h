@@ -109,3 +109,4 @@ CONFIG_GET_BOOLEAN  GetHibernateEnabled;
 CONFIG_SET_UINT64   SetGenerationIdAddress;
 CONFIG_GET_UINT32   GetConsoleMode;
 CONFIG_GET_BOOLEAN  GetMemoryAttributesTableEnabled;
+CONFIG_GET_UINT32   GetVDevVersion;

@@ -575,7 +575,7 @@ Return Value:
     // "MdeModulePkg/Core/DxeIplPeim/X64/VirtualMemory.c".
     //
     page1GSupport = FALSE;
-   pcdUse1GPageTable = PcdGetBool(PcdUse1GPageTable);
+    pcdUse1GPageTable = PcdGetBool(PcdUse1GPageTable);
     DEBUG((DEBUG_VERBOSE, "PcdUse1GPageTable is %a\n", pcdUse1GPageTable ? "TRUE" : "FALSE" ));
     if (pcdUse1GPageTable)
     {
@@ -953,6 +953,10 @@ Return Value:
                     if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
                     {
                         HobAddReservedMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
+                    }
+                    else if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY)
+                    {
+                        HobAddPersistentMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
                     }
                     else
                     {

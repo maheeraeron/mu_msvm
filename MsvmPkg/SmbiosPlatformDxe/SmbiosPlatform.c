@@ -8,7 +8,8 @@ Module Name:
 
 Abstract:
 
-    This is the Hyper-V specific platform code that creates the SMBIOS table.
+    This is the Hyper-V specific platform code that creates the SMBIOS table.
+
 
     This driver will make a best effort to add all the SMBIOS v2.4 required
     structures. Failure is not fatal and may result in some of the required
@@ -100,7 +101,8 @@ typedef struct {
 typedef
 VOID
 (*ENUMERATE_MEMMAP_CALLBACK)(
-    VM_MEMORY_RANGE* Range,
+    UINT32 VDevVersion,
+    VOID *Range,
     VOID *Context
 );
 
@@ -856,6 +858,7 @@ BOOLEAN
 AddMemoryDevice(
     _In_ EFI_SMBIOS_PROTOCOL* Smbios,
     _In_ UINT64               Size,
+    _In_ UINT32               MemoryFlags,
     _In_ EFI_SMBIOS_HANDLE    PhysicalMemoryArrayHandle,
     _In_ EFI_SMBIOS_HANDLE    MemoryErrorHandle,
     _In_ CHAR8*               LocationString,
@@ -872,6 +875,8 @@ Arguments:
     Smbios - The smbios dxe protocol.
 
     Size - The amount of memory in the device (in bytes).
+    
+    MemoryFlags - Flags indicating special properties of the memory region.
 
     PhysicalMemoryArrayHandle - The handle of the PhysicalMemoryArray structure
         for this device.
@@ -968,6 +973,14 @@ Return Value:
             //
             memoryDevice.Formatted.Size = (UINT16) 0xffff;
         }
+    }
+
+    //
+    // If this is a persistent memory range, mark it as nonvolatile as well.
+    //
+    if ((MemoryFlags & VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY) != 0)
+    {
+        memoryDevice.Formatted.TypeDetail.Nonvolatile = 1;
     }
 
     //
@@ -1127,6 +1140,7 @@ AddMemoryRegion(
     _In_ EFI_SMBIOS_PROTOCOL* Smbios,
     _In_ UINT64 BaseAddress,
     _In_ UINT64 Length,
+    _In_ UINT32 MemoryFlags,
     _In_ CHAR8* LocationString,
     _In_ EFI_SMBIOS_HANDLE PhyscialMemoryArrayHandle,
     _In_ EFI_SMBIOS_HANDLE MemoryErrorHandle
@@ -1150,6 +1164,8 @@ Arguments:
 
     Length - the length of the memory device.
 
+    MemoryFlags - Flags indicating special properties of the memory region.
+
     LocationString - the identifying string for the device.
 
     PhysicalMemoryArrayHandle - the handle of the existing Physical Memory Array structure.
@@ -1170,6 +1186,7 @@ Return Value:
     //
     if (AddMemoryDevice(Smbios,
                         Length,
+                        MemoryFlags,
                         PhyscialMemoryArrayHandle,
                         MemoryErrorHandle,
                         LocationString,
@@ -1202,7 +1219,8 @@ Return Value:
 
 VOID
 AccumulateMemoryRegionsFromMemoryRange(
-    VM_MEMORY_RANGE *Range,
+    UINT32 VDevVersion,
+    VOID *Range,
     VOID *Context
     )
 /*++
@@ -1226,18 +1244,29 @@ Return Value:
 --*/
 {
     UINT64 *numMemoryRegions = (UINT64 *)Context;
+    UINT64 size;
+
+    if (VDevVersion < VDevVersion5)
+    {
+        size = ((PVM_MEMORY_RANGE)Range)->Length;
+    }
+    else
+    {
+        size = ((PVM_MEMORY_RANGE_V5)Range)->Length;
+    }
 
     //
     // Compute the number of SMBIOS Memory regions that will represent
     // the size expressed by the memory map range structure.
     //
-    *numMemoryRegions += ((Range->Length + gMaxSizePerMemoryDevice - 1) / gMaxSizePerMemoryDevice);
+    *numMemoryRegions += ((size + gMaxSizePerMemoryDevice - 1) / gMaxSizePerMemoryDevice);
 }
 
 
 VOID
 AddMemoryRegionsFromMemoryRange(
-    VM_MEMORY_RANGE *Range,
+    UINT32 VDevVersion,
+    VOID *Range,
     VOID *Context
     )
 /*++
@@ -1260,9 +1289,22 @@ Return Value:
 --*/
 {
     ADD_MEMORY_REGIONS_CONTEXT* context = (ADD_MEMORY_REGIONS_CONTEXT*)Context;
-    UINT64 base = Range->BaseAddress;
-    UINT64 size = Range->Length;
     CHAR8 location[LOCATION_STRING_SIZE];
+    UINT64 base;
+    UINT64 size;
+    UINT32 flags = 0;
+
+    if (VDevVersion < VDevVersion5)
+    {
+        base = ((PVM_MEMORY_RANGE)Range)->BaseAddress;
+        size = ((PVM_MEMORY_RANGE)Range)->Length;
+    }
+    else
+    {
+        base = ((PVM_MEMORY_RANGE_V5)Range)->BaseAddress;
+        size = ((PVM_MEMORY_RANGE_V5)Range)->Length;
+        flags = ((PVM_MEMORY_RANGE_V5)Range)->Flags;
+    }
 
     //
     // Add memory regions until this memory map entry (range) is consumed or
@@ -1276,6 +1318,7 @@ Return Value:
             context->Smbios,
             base,
             MIN(size, gMaxSizePerMemoryDevice),
+            flags,
             location,
             context->PhysicalMemoryArrayHandle,
             SMBIOS_HANDLE_PI_RESERVED);
@@ -1287,7 +1330,8 @@ Return Value:
 
 VOID
 EnumerateMemoryRanges(
-    VM_MEMORY_RANGE             *Memmap,
+    UINT32                      VDevVersion,
+    VOID                        *Memmap,
     UINT32                      MemmapLength,
     ENUMERATE_MEMMAP_CALLBACK   Callback,
     VOID *                      Context
@@ -1315,11 +1359,23 @@ Return Value:
 
 --*/
 {
-    VM_MEMORY_RANGE *cursor;
-
-    for (cursor = Memmap; cursor < (Memmap + MemmapLength); cursor++)
+    if (VDevVersion < VDevVersion5)
     {
-        Callback(cursor, Context);
+        VM_MEMORY_RANGE *cursor;
+
+        for (cursor = Memmap; cursor < ((PVM_MEMORY_RANGE)Memmap + MemmapLength); cursor++)
+        {
+            Callback(VDevVersion, cursor, Context);
+        }
+    }
+    else
+    {
+        VM_MEMORY_RANGE_V5 *cursor;
+
+        for (cursor = Memmap; cursor < ((PVM_MEMORY_RANGE_V5)Memmap + MemmapLength); cursor++)
+        {
+            Callback(VDevVersion, cursor, Context);
+        }
     }
 }
 
@@ -1355,12 +1411,16 @@ Return Value:
 --*/
 {
     ADD_MEMORY_REGIONS_CONTEXT context;
-    VM_MEMORY_RANGE* memmap;
+    PVOID memmap;
     UINT32 memmapLength;
+    UINT32 vdevVersion;
+    UINT32 memRangeSize;
     UINT64 regions;
 
-    memmap = (VM_MEMORY_RANGE *)GetMemmap();
-    memmapLength = GetMemmapSize() / (UINT32)sizeof(VM_MEMORY_RANGE);
+    vdevVersion = GetVDevVersion();
+    memmap = GetMemmap();
+    memRangeSize = (vdevVersion < VDevVersion5) ? sizeof(VM_MEMORY_RANGE) : sizeof(VM_MEMORY_RANGE_V5);
+    memmapLength = GetMemmapSize() / memRangeSize;
 
     //
     // Calculate the number of SMBIOS memory regions required to represent
@@ -1369,6 +1429,7 @@ Return Value:
     //
     regions = 0;
     EnumerateMemoryRanges(
+        vdevVersion,
         memmap,
         memmapLength,
         AccumulateMemoryRegionsFromMemoryRange,
@@ -1399,6 +1460,7 @@ Return Value:
         context.Smbios = Smbios;
         context.CurrentRegion = 0;
         EnumerateMemoryRanges(
+            vdevVersion,
             memmap,
             memmapLength,
             AddMemoryRegionsFromMemoryRange,

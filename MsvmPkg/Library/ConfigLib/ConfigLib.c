@@ -59,6 +59,11 @@ static UINT32 gMemmapSize = 0;
 static void *gMemmap = NULL;
 
 //
+// Private global that indicates the Vdev Version.
+//
+static UINT32 gVDevVersion = 0;
+
+//
 // Config page versions.
 //
 static const UINT32 ConfigPageV2 = 2;
@@ -184,6 +189,45 @@ Return Value:
 
 static
 void
+InitializeVdevVersion(
+    void
+)
+/*++
+
+Routine Description:
+
+    Caches the VDevVersion from the Worker process.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    None.
+
+--*/
+{
+    //
+    // Try to get the VDev version from the worker process.
+    //
+    gVDevVersion = ReadBiosDevice(BiosConfigVdevVersion);
+    if (gVDevVersion == 0)
+    {
+        //
+        // If the version comes back zero it must be the Windows Blue
+        // VDev that didn't support getting the version.
+        // Therefore it is implicitly version 2.
+        //
+        gVDevVersion = VDevVersion2;
+        DEBUG((DEBUG_VERBOSE, "*** VDev version returned as 0. Defaulting to V2 (512).\n"));
+    }
+    DEBUG((DEBUG_VERBOSE, "--- VDev version is %d.%d\n", vDevVersion >> 8, vDevVersion & 0xFF));
+
+}
+
+static
+void
 ConfigLibInitialize(
     void
     )
@@ -253,6 +297,11 @@ Return Value:
         gMemmap = GET_GUID_HOB_DATA(hob);
         gMemmapSize = GET_GUID_HOB_DATA_SIZE(hob);
     }
+
+    //
+    // Get the vdev version.
+    //
+    InitializeVdevVersion();
 
 #ifdef DUMP_CONFIG_PAGES
     DebugDumpConfigPageV2(gConfigPageV2);
@@ -324,6 +373,21 @@ Return Value:
 UINT32
 GetNfitSize(
     )
+/*++
+
+Routine Description:
+
+    Returns the size of the NFIT.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    The size of the NFIT.
+
+--*/
 {
     return ReadBiosDevice(BiosConfigNfitSize);
 }
@@ -332,14 +396,45 @@ void
 GetNfit(
     UINT64 Address
     )
+/*++
+
+Routine Description:
+
+    Gets the NFIT.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    None.
+
+--*/
 {
     ASSERT((UINT64) Address < 0xFFFFFFFFULL);
     WriteBiosDevice(BiosConfigNfitPopulate, (UINT32) Address);
 }
+
 void
 SetVpmemACPIBuffer(
     UINT64 Address
     )
+/*++
+
+Routine Description:
+
+    Sets the pointer to the VPMem ACPI Method Buffer.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    None.
+
+--*/
 {
     ASSERT((UINT64) Address < 0xFFFFFFFFULL);
     WriteBiosDevice(BiosConfigVpmemSetACPIBuffer, (UINT32) Address);
@@ -1199,3 +1294,27 @@ Return Value:
     return value;
 }
 
+UINT32
+GetVDevVersion
+(
+    void
+    )
+/*++
+
+Routine Description:
+
+    Returns the VDevVersion.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    The VDevVersion.
+
+--*/
+{
+    ConfigLibInitialize();
+    return gVDevVersion;
+}
