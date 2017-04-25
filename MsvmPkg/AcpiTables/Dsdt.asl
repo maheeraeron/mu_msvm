@@ -56,6 +56,14 @@ DefinitionBlock (
             {
                 LoadTable("OEM2", "MSFTVM", "VTPM2",,,)
             }
+
+            //
+            // Load the virtual battery if configured.
+            //
+            If(LGreater(BCFG, 0))
+            {
+                LoadTable("OEM4", "MSFTVM", "VBAT")
+            }
         }
     }
 

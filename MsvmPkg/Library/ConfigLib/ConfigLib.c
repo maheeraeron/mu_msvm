@@ -1200,6 +1200,34 @@ Return Value:
     return value;
 }
 
+BOOLEAN
+GetVirtualBatteryEnabled(
+    )
+/*++
+
+Routine Description:
+
+    Returns TRUE if the virtual battery device should be loaded.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    TRUE if virtual battery is enabled, FALSE otherwise.
+
+--*/
+{
+    BOOLEAN value = FALSE;
+    ConfigLibInitialize();
+    if (gConfigVersion == ConfigPageV3)
+    {
+        value = gConfigPageV3->Flags.VirutalBatteryEnabled == 1 ? TRUE : FALSE;
+    }
+    return value;
+}
+
 void
 SetGenerationIdAddress(
     UINT64 Value

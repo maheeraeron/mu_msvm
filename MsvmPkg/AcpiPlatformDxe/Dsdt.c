@@ -39,6 +39,7 @@ typedef struct _DSDT_AML_DATA
     UINT8  OempEnabled;
     UINT8  HibernateEnabled;
     UINT8  PmemEnabled;
+    UINT8  VirtualBatteryEnabled;
 } DSDT_AML_DATA;
 
 typedef struct _DSDT_AML_DESCRIPTOR
@@ -138,6 +139,7 @@ Return Value:
     data->OempEnabled = GetOempEnabled();
     data->HibernateEnabled = GetHibernateEnabled();
     data->PmemEnabled = (GetNfitSize() > 0);
+    data->VirtualBatteryEnabled = GetVirtualBatteryEnabled();
 
     //
     // Allocate space for the NVDIMM IO Buffer if VPMEM is enabled.
@@ -233,7 +235,7 @@ Return Value:
     // address that is already present with the physical address of the
     // newly allocated data.
     //
-    
+
     status = EFI_NOT_FOUND;
     data = (UINT8 *)(Dsdt + 1);
     for (tableIndex = 0;

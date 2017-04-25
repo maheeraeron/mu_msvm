@@ -363,7 +363,8 @@ typedef struct _BIOS_CONFIG_PAGE_V3
         UINT32 HibernateEnabled:1;
         UINT32 ConsoleMode:2;
         UINT32 MemoryAttributesTableEnabled:1;
-        UINT32 Reserved:22;
+        UINT32 VirutalBatteryEnabled:1;
+        UINT32 Reserved:21;
     } Flags;
 } BIOS_CONFIG_PAGE_V3;
 

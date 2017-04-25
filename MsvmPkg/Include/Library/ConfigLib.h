@@ -106,6 +106,7 @@ CONFIG_GET_BOOLEAN  GetPxeIpV6Enabled;
 CONFIG_GET_BOOLEAN  GetTpmEnabled;
 CONFIG_GET_BOOLEAN  GetOempEnabled;
 CONFIG_GET_BOOLEAN  GetHibernateEnabled;
+CONFIG_GET_BOOLEAN  GetVirtualBatteryEnabled;
 CONFIG_SET_UINT64   SetGenerationIdAddress;
 CONFIG_GET_UINT32   GetConsoleMode;
 CONFIG_GET_BOOLEAN  GetMemoryAttributesTableEnabled;

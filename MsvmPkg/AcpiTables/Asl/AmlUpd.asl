@@ -47,5 +47,6 @@ Field(BIOS, ByteAcc, NoLock, Preserve)
     PCFG,8,         // OEMP table load enabled/disabled
     HCFG,8,         // Hibernation enabled/disabled
     NCFG,8,         // PMEM (NVDIMMs) enabled/disabled
+    BCFG,8,         // Virtual Battery enabled/disabled
 }
 

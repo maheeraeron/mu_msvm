@@ -22,6 +22,7 @@
     VERSION_STRING                 = 1.0
 
 [Sources]
+    Battery.asl
     Facp.aslc
     Facs.aslc
     Waet.aslc
