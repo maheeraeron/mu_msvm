@@ -864,7 +864,7 @@ Return Value:
         goto Cleanup;
     }
 
-    Tpm2RegisterTpm2DeviceLib((TPM2_DEVICE_INTERFACE *)(UINTN)TPM_BASE_ADDRESS);
+    Tpm2RegisterTpm2DeviceLib((TPM2_DEVICE_INTERFACE *)(UINTN)FixedPcdGet32(PcdTpmBaseAddress));
 
 Cleanup:
 

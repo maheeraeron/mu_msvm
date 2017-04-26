@@ -12,8 +12,6 @@ Abstract:
 
 --*/
 
-#define MSVMPKG_MMIO_DEVICE_BATTERY 0xfed3f000
-
 DefinitionBlock (
     "vbat.aml",
     "OEM4",
@@ -27,7 +25,7 @@ DefinitionBlock (
     //
     // MMIO region for Virtual Battery
     //
-    OperationRegion(BATM, SystemMemory, MSVMPKG_MMIO_DEVICE_BATTERY, 0x1000)
+    OperationRegion(BATM, SystemMemory, FixedPcdGet32(PcdBatteryBase), 0x1000)
     Field(BATM, DWordAcc, NoLock, WriteAsZeros)
     {
         BSTA,32, // Battery Status

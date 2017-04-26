@@ -34,7 +34,16 @@
     Spcr.aslc
 
 [Packages]
+    MdeModulePkg/MdeModulePkg.dec
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
-    MdeModulePkg/MdeModulePkg.dec
+    PcAtChipsetPkg/PcAtChipsetPkg.dec
+    SecurityPkg/SecurityPkg.dec
+    UefiCpuPkg/UefiCpuPkg.dec
 
+[Pcd]
+    gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
+    gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress
+    gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress
+    gUefiMsvmPkgTokenSpaceGuid.PcdBatteryBase
+    gUefiMsvmPkgTokenSpaceGuid.PcdPmemBase

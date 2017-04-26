@@ -20,16 +20,6 @@ Author:
 #pragma once
 
 //
-// TPM register base address.
-// See TPM interface Spec (TIS)
-// For system software, the TPM has a 64 bit address of 0x0000_0000_FED4_xxxx.
-// The south bridge will route the entire address range
-// from 0xFED4_0000 through 0xFED4_4FFF to the TPM over SPI.
-// Virtual TPM control space uses one page of MMIO range.
-//
-#define TPM_BASE_ADDRESS           ((UINTN)0xfed40000)
-
-//
 // VTPM configuration ports. Each port is 8-bit long. Accessing 32 bits
 // requires 4 ports.
 //

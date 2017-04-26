@@ -19,9 +19,6 @@ Author:
 #include <Base.h>
 #include <AcpiTables.h>
 
-#define DEFAULT_IO_APIC_ADDRESS 0xFEC00000
-#define DEFAULT_LOCAL_APIC_ADDRESS 0xFEE00000
-
 #define DEFINE_OVERRIDE(IrqSource, Vector, Flags) \
     { \
         EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE, \
@@ -38,7 +35,7 @@ VM_APIC_TABLE APIC =
         STANDARD_HEADER(EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
                         sizeof(VM_APIC_TABLE),
                         EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
-        DEFAULT_LOCAL_APIC_ADDRESS,
+        FixedPcdGet32(PcdCpuLocalApicBaseAddress),
         0, // EFI_ACPI_3_0_PCAT_COMPAT flag is cleared; Hyper-V does not support the legacy PIC interface when running in UEFI mode.
     },
 
@@ -51,7 +48,7 @@ VM_APIC_TABLE APIC =
         sizeof(EFI_ACPI_3_0_IO_APIC_STRUCTURE),
         0, // IoApicId - updated at runtime
         0, // Reserved
-        DEFAULT_IO_APIC_ADDRESS,
+        FixedPcdGet32(PcdIoApicBaseAddress),
         0, // GlobalSystemInterruptBase
     },
 

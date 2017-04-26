@@ -233,6 +233,13 @@
   # Publish UEFI PropertiesTable.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|TRUE
 
+  # Base addresses of memory mapped devices in MMIO space.
+  gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress|0xFEE00000
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress|0xFEC00000
+  gUefiMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xFED3F000
+  gUefiMsvmPkgTokenSpaceGuid.PcdPmemBase|0xFED3D000
+
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE

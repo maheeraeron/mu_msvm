@@ -371,7 +371,7 @@ Scope(\_GPE)
             {
                 Notify (\_SB.NVDR.N063, 0x81)
             }
-            
+
             //
             // Clear the event register.
             //
@@ -750,14 +750,14 @@ Scope(\_SB)
         // to the host which method is being called on which
         // device.
         //
-        OperationRegion(NVIO, SystemMemory, 0xfed3d000, 4096)
+        OperationRegion(NVIO, SystemMemory, FixedPcdGet32(PcdPmemBase), 4096)
         Field(NVIO, DWordAcc, NoLock, WriteAsZeros)
         {
             RDSM,32, // Root  _DSM
             CDSM,32, // Child _DSM
             CLSI,32, // Child _LSI
             CLSR,32, // Child _LSR
-            NEV0,32, // NEV# is a NVDIMM Event Register. 
+            NEV0,32, // NEV# is a NVDIMM Event Register.
             NEV1,32, // NEV0 - NEV3 correspond to NFIT Health Event Notification (0x81 on NVDIMM Child Device).
             NEV2,32, //
             NEV3,32, //
@@ -765,7 +765,7 @@ Scope(\_SB)
         }
 
         //
-        // Operation Region for Method I/O buffer between the 
+        // Operation Region for Method I/O buffer between the
         // ACPI NVDIMM devices and the vPMEM vdev on the Host.
         // This address gets updated by the EFI firmware during
         // ACPI table initialization.
@@ -775,12 +775,12 @@ Scope(\_SB)
         {
             MBUF,4096 // Raw buffer that can be returned to callers
         }
-        
+
         Name (_HID, "ACPI0012")
         Name (_STA, 0xF)
 
         //
-        // This mutex protects the above NVDB OperationRegion. 
+        // This mutex protects the above NVDB OperationRegion.
         // It should be used as follows.
         // 1. Acquire NMTX
         // 2. Store method arguments in MBUF.
@@ -866,11 +866,11 @@ Scope(\_SB)
             // Return a buffer with bit 0 set to 0 indicating no functions supported
             // if we don't recognize the UUID.
             //
-            Return (Buffer(){0})  
+            Return (Buffer(){0})
         }
-        
+
         // CDSF - Generic Method for Child _DSMs.
-        // 
+        //
         // Arg0: UUID Unique function identifier
         // Arg1: Integer Revision Level
         // Arg2: Integer Function Index (0 = Return Supported Functions)
@@ -906,7 +906,7 @@ Scope(\_SB)
                                 Default
                                 {
                                     // We need to pack the function index and device index into a DWORD.
-                                    Name (INDX, Buffer(4) {}) 
+                                    Name (INDX, Buffer(4) {})
                                     CreateField (INDX, 0, 16, FIND) // Space for Function Index
                                     CreateField(INDX, 16, 16, DIND) // Space for Device Index
                                     Store (Arg2, FIND)
@@ -918,7 +918,7 @@ Scope(\_SB)
                                     // Copy the arguments into the method I/O buffer.
                                     //
                                     Store (DeRefOf(Index(Arg3,0)), MBUF)
-                                        
+
                                     //
                                     // Write the function and device indices
                                     // to the MMIO Page to signal the vdev.
@@ -952,16 +952,16 @@ Scope(\_SB)
             // Return a buffer with bit 0 set to 0 indicating no functions supported
             // if we don't recognize the UUID.
             //
-            Return (Buffer(){0})  
+            Return (Buffer(){0})
         }
 
         // LSIM - Generic Method for Child _LSIs.
-        // 
+        //
         // Arg0: Integer Device Index
         Method (LSIM, 1, Serialized, 0, {BuffObj})
         {
             Acquire (NMTX, 0xFFFF)
-                
+
             //
             // Write the device index
             // to the MMIO Page to signal the vdev.
@@ -979,7 +979,7 @@ Scope(\_SB)
         }
 
         // LSRM - Generic Method for Child _LSRs.
-        // 
+        //
         // Arg0: Integer(DWORD) Byte Offset.
         // Arg1: Integer(DWORD) Tranfer Byte Length.
         // Arg2: Integer Device Index.
@@ -988,7 +988,7 @@ Scope(\_SB)
             //
             // Pack up the arguments.
             //
-            Name (INPT, Buffer(4) {}) 
+            Name (INPT, Buffer(4) {})
             CreateField (INPT, 0, 32, BTOF) // Space for Byte Offset
             CreateField (INPT, 32, 32, TFLT) // Space for Transfer Length
             Store (Arg0, BTOF)
@@ -1000,7 +1000,7 @@ Scope(\_SB)
             // Copy the arguments.
             //
             CopyObject (INPT, MBUF)
-                
+
             //
             // Write the device index
             // to the MMIO Page to signal the vdev.

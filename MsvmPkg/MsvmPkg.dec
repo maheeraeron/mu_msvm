@@ -71,3 +71,12 @@
 
   # size of the platform string print buffer in Unicode (UTF-16) characters
   gUefiMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize|256|UINT32|0x4005
+
+  # Base addresses of memory mapped devices in MMIO space.
+  # The first three are defined by other package PCDs.
+  #   gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress is 0xFEE00000
+  #   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress is 0xFED40000
+  #   gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress is 0xFEC00000
+  # The rest are MsvmPkg PCDs.
+  gUefiMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xFED3F000|UINT32|0x5000
+  gUefiMsvmPkgTokenSpaceGuid.PcdPmemBase|0xFED3D000|UINT32|0x5001

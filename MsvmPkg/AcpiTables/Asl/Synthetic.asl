@@ -135,9 +135,9 @@ Scope(\_SB)
                 ResourceTemplate()
                 {
                     // I/O APIC
-                    Memory32Fixed (ReadWrite, 0xfec00000, 0x1000)
+                    Memory32Fixed (ReadWrite, FixedPcdGet32(PcdIoApicBaseAddress), 0x1000)
                     // Local APIC
-                    Memory32Fixed (ReadWrite, 0xfee00000, 0x1000)
+                    Memory32Fixed (ReadWrite, FixedPcdGet32(PcdCpuLocalApicBaseAddress), 0x1000)
                 })
         }
     }

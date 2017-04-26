@@ -37,7 +37,7 @@ DefinitionBlock (
             // Return the resource consumed by TPM device
             //
             Name (_CRS, ResourceTemplate () {
-                Memory32Fixed (ReadWrite, 0xfed40000, 0x1000)
+                Memory32Fixed (ReadWrite, FixedPcdGet32(PcdTpmBaseAddress), 0x1000)
             })
 
             Method (_STA, 0, NotSerialized)

@@ -83,6 +83,7 @@
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmPlatformClass               ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                       ## CONSUMES
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
 
 [Depex]
   TRUE

@@ -58,7 +58,7 @@ Return Value:
 
     mTpm20AcpiTable.StartMethod = EFI_TPM2_ACPI_TABLE_START_METHOD_COMMAND_RESPONSE_BUFFER_INTERFACE;
 
-    mTpm20AcpiTable.AddressOfControlArea = TPM_BASE_ADDRESS;
+    mTpm20AcpiTable.AddressOfControlArea = (UINT64)FixedPcdGet32(PcdTpmBaseAddress);
 
     mTpm20AcpiTable.Header.Checksum = CalculateCheckSum8((UINT8*)&mTpm20AcpiTable, sizeof(EFI_TPM2_ACPI_TABLE));
 }
