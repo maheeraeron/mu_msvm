@@ -23,9 +23,9 @@ Scope(\_GPE)
     // Method for notifying external changes to the control
     // method battery:
     //      E  - This event is edge triggered
-    //      10 - Use bit 10 in the General Purpose Event register described
+    //      0A - Use bit 10 (in hex!) in the General Purpose Event register described
     //           in the FADT
-    Method(_E10)
+    Method(_E0A)
     {
         // Read the Event registers.
         Store(\_SB.NVDR.NEV0, Local0)
@@ -44,162 +44,162 @@ Scope(\_GPE)
         //
         if (LNotEqual(Local0, 0))
         {
-            if (LNotEqual( NAnd(Local0, 0x00000001), 0))
+            if (LNotEqual( And(Local0, 0x00000001), 0))
             {
                 Notify (\_SB.NVDR.N000, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000002), 0))
+            if (LNotEqual( And(Local0, 0x00000002), 0))
             {
                 Notify (\_SB.NVDR.N001, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000004), 0))
+            if (LNotEqual( And(Local0, 0x00000004), 0))
             {
                 Notify (\_SB.NVDR.N002, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000008), 0))
+            if (LNotEqual( And(Local0, 0x00000008), 0))
             {
                 Notify (\_SB.NVDR.N003, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000010), 0))
+            if (LNotEqual( And(Local0, 0x00000010), 0))
             {
                 Notify (\_SB.NVDR.N004, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000020), 0))
+            if (LNotEqual( And(Local0, 0x00000020), 0))
             {
                 Notify (\_SB.NVDR.N005, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000040), 0))
+            if (LNotEqual( And(Local0, 0x00000040), 0))
             {
                 Notify (\_SB.NVDR.N006, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000080), 0))
+            if (LNotEqual( And(Local0, 0x00000080), 0))
             {
                 Notify (\_SB.NVDR.N007, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000100), 0))
+            if (LNotEqual( And(Local0, 0x00000100), 0))
             {
                 Notify (\_SB.NVDR.N008, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000200), 0))
+            if (LNotEqual( And(Local0, 0x00000200), 0))
             {
                 Notify (\_SB.NVDR.N009, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000400), 0))
+            if (LNotEqual( And(Local0, 0x00000400), 0))
             {
                 Notify (\_SB.NVDR.N010, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00000800), 0))
+            if (LNotEqual( And(Local0, 0x00000800), 0))
             {
                 Notify (\_SB.NVDR.N011, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00001000), 0))
+            if (LNotEqual( And(Local0, 0x00001000), 0))
             {
                 Notify (\_SB.NVDR.N012, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00002000), 0))
+            if (LNotEqual( And(Local0, 0x00002000), 0))
             {
                 Notify (\_SB.NVDR.N013, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00004000), 0))
+            if (LNotEqual( And(Local0, 0x00004000), 0))
             {
                 Notify (\_SB.NVDR.N014, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00008000), 0))
+            if (LNotEqual( And(Local0, 0x00008000), 0))
             {
                 Notify (\_SB.NVDR.N015, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00010000), 0))
+            if (LNotEqual( And(Local0, 0x00010000), 0))
             {
                 Notify (\_SB.NVDR.N016, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00020000), 0))
+            if (LNotEqual( And(Local0, 0x00020000), 0))
             {
                 Notify (\_SB.NVDR.N017, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00040000), 0))
+            if (LNotEqual( And(Local0, 0x00040000), 0))
             {
                 Notify (\_SB.NVDR.N018, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00080000), 0))
+            if (LNotEqual( And(Local0, 0x00080000), 0))
             {
                 Notify (\_SB.NVDR.N019, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00100000), 0))
+            if (LNotEqual( And(Local0, 0x00100000), 0))
             {
                 Notify (\_SB.NVDR.N020, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00200000), 0))
+            if (LNotEqual( And(Local0, 0x00200000), 0))
             {
                 Notify (\_SB.NVDR.N021, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00400000), 0))
+            if (LNotEqual( And(Local0, 0x00400000), 0))
             {
                 Notify (\_SB.NVDR.N022, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x00800000), 0))
+            if (LNotEqual( And(Local0, 0x00800000), 0))
             {
                 Notify (\_SB.NVDR.N023, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x01000000), 0))
+            if (LNotEqual( And(Local0, 0x01000000), 0))
             {
                 Notify (\_SB.NVDR.N024, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x02000000), 0))
+            if (LNotEqual( And(Local0, 0x02000000), 0))
             {
                 Notify (\_SB.NVDR.N025, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x04000000), 0))
+            if (LNotEqual( And(Local0, 0x04000000), 0))
             {
                 Notify (\_SB.NVDR.N026, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x08000000), 0))
+            if (LNotEqual( And(Local0, 0x08000000), 0))
             {
                 Notify (\_SB.NVDR.N027, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x10000000), 0))
+            if (LNotEqual( And(Local0, 0x10000000), 0))
             {
                 Notify (\_SB.NVDR.N028, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x20000000), 0))
+            if (LNotEqual( And(Local0, 0x20000000), 0))
             {
                 Notify (\_SB.NVDR.N029, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x40000000), 0))
+            if (LNotEqual( And(Local0, 0x40000000), 0))
             {
                 Notify (\_SB.NVDR.N030, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local0, 0x80000000), 0))
+            if (LNotEqual( And(Local0, 0x80000000), 0))
             {
                 Notify (\_SB.NVDR.N031, 0x81)
             }
@@ -212,162 +212,162 @@ Scope(\_GPE)
 
         if (LNotEqual(Local1, 0))
         {
-            if (LNotEqual( NAnd(Local1, 0x00000001), 0))
+            if (LNotEqual( And(Local1, 0x00000001), 0))
             {
                 Notify (\_SB.NVDR.N032, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000002), 0))
+            if (LNotEqual( And(Local1, 0x00000002), 0))
             {
                 Notify (\_SB.NVDR.N033, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000004), 0))
+            if (LNotEqual( And(Local1, 0x00000004), 0))
             {
                 Notify (\_SB.NVDR.N034, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000008), 0))
+            if (LNotEqual( And(Local1, 0x00000008), 0))
             {
                 Notify (\_SB.NVDR.N035, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000010), 0))
+            if (LNotEqual( And(Local1, 0x00000010), 0))
             {
                 Notify (\_SB.NVDR.N036, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000020), 0))
+            if (LNotEqual( And(Local1, 0x00000020), 0))
             {
                 Notify (\_SB.NVDR.N037, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000040), 0))
+            if (LNotEqual( And(Local1, 0x00000040), 0))
             {
                 Notify (\_SB.NVDR.N038, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000080), 0))
+            if (LNotEqual( And(Local1, 0x00000080), 0))
             {
                 Notify (\_SB.NVDR.N039, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000100), 0))
+            if (LNotEqual( And(Local1, 0x00000100), 0))
             {
                 Notify (\_SB.NVDR.N040, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000200), 0))
+            if (LNotEqual( And(Local1, 0x00000200), 0))
             {
                 Notify (\_SB.NVDR.N041, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000400), 0))
+            if (LNotEqual( And(Local1, 0x00000400), 0))
             {
                 Notify (\_SB.NVDR.N042, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00000800), 0))
+            if (LNotEqual( And(Local1, 0x00000800), 0))
             {
                 Notify (\_SB.NVDR.N043, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00001000), 0))
+            if (LNotEqual( And(Local1, 0x00001000), 0))
             {
                 Notify (\_SB.NVDR.N044, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00002000), 0))
+            if (LNotEqual( And(Local1, 0x00002000), 0))
             {
                 Notify (\_SB.NVDR.N045, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00004000), 0))
+            if (LNotEqual( And(Local1, 0x00004000), 0))
             {
                 Notify (\_SB.NVDR.N046, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00008000), 0))
+            if (LNotEqual( And(Local1, 0x00008000), 0))
             {
                 Notify (\_SB.NVDR.N047, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00010000), 0))
+            if (LNotEqual( And(Local1, 0x00010000), 0))
             {
                 Notify (\_SB.NVDR.N048, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00020000), 0))
+            if (LNotEqual( And(Local1, 0x00020000), 0))
             {
                 Notify (\_SB.NVDR.N049, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00040000), 0))
+            if (LNotEqual( And(Local1, 0x00040000), 0))
             {
                 Notify (\_SB.NVDR.N050, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00080000), 0))
+            if (LNotEqual( And(Local1, 0x00080000), 0))
             {
                 Notify (\_SB.NVDR.N051, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00100000), 0))
+            if (LNotEqual( And(Local1, 0x00100000), 0))
             {
                 Notify (\_SB.NVDR.N052, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00200000), 0))
+            if (LNotEqual( And(Local1, 0x00200000), 0))
             {
                 Notify (\_SB.NVDR.N053, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00400000), 0))
+            if (LNotEqual( And(Local1, 0x00400000), 0))
             {
                 Notify (\_SB.NVDR.N054, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x00800000), 0))
+            if (LNotEqual( And(Local1, 0x00800000), 0))
             {
                 Notify (\_SB.NVDR.N055, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x01000000), 0))
+            if (LNotEqual( And(Local1, 0x01000000), 0))
             {
                 Notify (\_SB.NVDR.N056, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x02000000), 0))
+            if (LNotEqual( And(Local1, 0x02000000), 0))
             {
                 Notify (\_SB.NVDR.N057, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x04000000), 0))
+            if (LNotEqual( And(Local1, 0x04000000), 0))
             {
                 Notify (\_SB.NVDR.N058, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x08000000), 0))
+            if (LNotEqual( And(Local1, 0x08000000), 0))
             {
                 Notify (\_SB.NVDR.N059, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x10000000), 0))
+            if (LNotEqual( And(Local1, 0x10000000), 0))
             {
                 Notify (\_SB.NVDR.N060, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x20000000), 0))
+            if (LNotEqual( And(Local1, 0x20000000), 0))
             {
                 Notify (\_SB.NVDR.N061, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x40000000), 0))
+            if (LNotEqual( And(Local1, 0x40000000), 0))
             {
                 Notify (\_SB.NVDR.N062, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local1, 0x80000000), 0))
+            if (LNotEqual( And(Local1, 0x80000000), 0))
             {
                 Notify (\_SB.NVDR.N063, 0x81)
             }
@@ -380,162 +380,162 @@ Scope(\_GPE)
 
         if (LNotEqual(Local2, 0))
         {
-            if (LNotEqual( NAnd(Local2, 0x00000001), 0))
+            if (LNotEqual( And(Local2, 0x00000001), 0))
             {
                 Notify (\_SB.NVDR.N064, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000002), 0))
+            if (LNotEqual( And(Local2, 0x00000002), 0))
             {
                 Notify (\_SB.NVDR.N065, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000004), 0))
+            if (LNotEqual( And(Local2, 0x00000004), 0))
             {
                 Notify (\_SB.NVDR.N066, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000008), 0))
+            if (LNotEqual( And(Local2, 0x00000008), 0))
             {
                 Notify (\_SB.NVDR.N067, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000010), 0))
+            if (LNotEqual( And(Local2, 0x00000010), 0))
             {
                 Notify (\_SB.NVDR.N068, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000020), 0))
+            if (LNotEqual( And(Local2, 0x00000020), 0))
             {
                 Notify (\_SB.NVDR.N069, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000040), 0))
+            if (LNotEqual( And(Local2, 0x00000040), 0))
             {
                 Notify (\_SB.NVDR.N070, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000080), 0))
+            if (LNotEqual( And(Local2, 0x00000080), 0))
             {
                 Notify (\_SB.NVDR.N071, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000100), 0))
+            if (LNotEqual( And(Local2, 0x00000100), 0))
             {
                 Notify (\_SB.NVDR.N072, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000200), 0))
+            if (LNotEqual( And(Local2, 0x00000200), 0))
             {
                 Notify (\_SB.NVDR.N073, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000400), 0))
+            if (LNotEqual( And(Local2, 0x00000400), 0))
             {
                 Notify (\_SB.NVDR.N074, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00000800), 0))
+            if (LNotEqual( And(Local2, 0x00000800), 0))
             {
                 Notify (\_SB.NVDR.N075, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00001000), 0))
+            if (LNotEqual( And(Local2, 0x00001000), 0))
             {
                 Notify (\_SB.NVDR.N076, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00002000), 0))
+            if (LNotEqual( And(Local2, 0x00002000), 0))
             {
                 Notify (\_SB.NVDR.N077, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00004000), 0))
+            if (LNotEqual( And(Local2, 0x00004000), 0))
             {
                 Notify (\_SB.NVDR.N078, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00008000), 0))
+            if (LNotEqual( And(Local2, 0x00008000), 0))
             {
                 Notify (\_SB.NVDR.N079, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00010000), 0))
+            if (LNotEqual( And(Local2, 0x00010000), 0))
             {
                 Notify (\_SB.NVDR.N080, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00020000), 0))
+            if (LNotEqual( And(Local2, 0x00020000), 0))
             {
                 Notify (\_SB.NVDR.N081, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00040000), 0))
+            if (LNotEqual( And(Local2, 0x00040000), 0))
             {
                 Notify (\_SB.NVDR.N082, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00080000), 0))
+            if (LNotEqual( And(Local2, 0x00080000), 0))
             {
                 Notify (\_SB.NVDR.N083, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00100000), 0))
+            if (LNotEqual( And(Local2, 0x00100000), 0))
             {
                 Notify (\_SB.NVDR.N084, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00200000), 0))
+            if (LNotEqual( And(Local2, 0x00200000), 0))
             {
                 Notify (\_SB.NVDR.N085, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00400000), 0))
+            if (LNotEqual( And(Local2, 0x00400000), 0))
             {
                 Notify (\_SB.NVDR.N086, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x00800000), 0))
+            if (LNotEqual( And(Local2, 0x00800000), 0))
             {
                 Notify (\_SB.NVDR.N087, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x01000000), 0))
+            if (LNotEqual( And(Local2, 0x01000000), 0))
             {
                 Notify (\_SB.NVDR.N088, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x02000000), 0))
+            if (LNotEqual( And(Local2, 0x02000000), 0))
             {
                 Notify (\_SB.NVDR.N089, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x04000000), 0))
+            if (LNotEqual( And(Local2, 0x04000000), 0))
             {
                 Notify (\_SB.NVDR.N090, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x08000000), 0))
+            if (LNotEqual( And(Local2, 0x08000000), 0))
             {
                 Notify (\_SB.NVDR.N091, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x10000000), 0))
+            if (LNotEqual( And(Local2, 0x10000000), 0))
             {
                 Notify (\_SB.NVDR.N092, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x20000000), 0))
+            if (LNotEqual( And(Local2, 0x20000000), 0))
             {
                 Notify (\_SB.NVDR.N093, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x40000000), 0))
+            if (LNotEqual( And(Local2, 0x40000000), 0))
             {
                 Notify (\_SB.NVDR.N094, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local2, 0x80000000), 0))
+            if (LNotEqual( And(Local2, 0x80000000), 0))
             {
                 Notify (\_SB.NVDR.N095, 0x81)
             }
@@ -548,162 +548,162 @@ Scope(\_GPE)
 
         if (LNotEqual(Local3, 0))
         {
-            if (LNotEqual( NAnd(Local3, 0x00000001), 0))
+            if (LNotEqual( And(Local3, 0x00000001), 0))
             {
                 Notify (\_SB.NVDR.N096, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000002), 0))
+            if (LNotEqual( And(Local3, 0x00000002), 0))
             {
                 Notify (\_SB.NVDR.N097, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000004), 0))
+            if (LNotEqual( And(Local3, 0x00000004), 0))
             {
                 Notify (\_SB.NVDR.N098, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000008), 0))
+            if (LNotEqual( And(Local3, 0x00000008), 0))
             {
                 Notify (\_SB.NVDR.N099, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000010), 0))
+            if (LNotEqual( And(Local3, 0x00000010), 0))
             {
                 Notify (\_SB.NVDR.N100, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000020), 0))
+            if (LNotEqual( And(Local3, 0x00000020), 0))
             {
                 Notify (\_SB.NVDR.N101, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000040), 0))
+            if (LNotEqual( And(Local3, 0x00000040), 0))
             {
                 Notify (\_SB.NVDR.N102, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000080), 0))
+            if (LNotEqual( And(Local3, 0x00000080), 0))
             {
                 Notify (\_SB.NVDR.N103, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000100), 0))
+            if (LNotEqual( And(Local3, 0x00000100), 0))
             {
                 Notify (\_SB.NVDR.N104, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000200), 0))
+            if (LNotEqual( And(Local3, 0x00000200), 0))
             {
                 Notify (\_SB.NVDR.N105, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000400), 0))
+            if (LNotEqual( And(Local3, 0x00000400), 0))
             {
                 Notify (\_SB.NVDR.N106, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00000800), 0))
+            if (LNotEqual( And(Local3, 0x00000800), 0))
             {
                 Notify (\_SB.NVDR.N107, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00001000), 0))
+            if (LNotEqual( And(Local3, 0x00001000), 0))
             {
                 Notify (\_SB.NVDR.N108, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00002000), 0))
+            if (LNotEqual( And(Local3, 0x00002000), 0))
             {
                 Notify (\_SB.NVDR.N109, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00004000), 0))
+            if (LNotEqual( And(Local3, 0x00004000), 0))
             {
                 Notify (\_SB.NVDR.N110, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00008000), 0))
+            if (LNotEqual( And(Local3, 0x00008000), 0))
             {
                 Notify (\_SB.NVDR.N111, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00010000), 0))
+            if (LNotEqual( And(Local3, 0x00010000), 0))
             {
                 Notify (\_SB.NVDR.N112, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00020000), 0))
+            if (LNotEqual( And(Local3, 0x00020000), 0))
             {
                 Notify (\_SB.NVDR.N113, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00040000), 0))
+            if (LNotEqual( And(Local3, 0x00040000), 0))
             {
                 Notify (\_SB.NVDR.N114, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00080000), 0))
+            if (LNotEqual( And(Local3, 0x00080000), 0))
             {
                 Notify (\_SB.NVDR.N115, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00100000), 0))
+            if (LNotEqual( And(Local3, 0x00100000), 0))
             {
                 Notify (\_SB.NVDR.N116, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00200000), 0))
+            if (LNotEqual( And(Local3, 0x00200000), 0))
             {
                 Notify (\_SB.NVDR.N117, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00400000), 0))
+            if (LNotEqual( And(Local3, 0x00400000), 0))
             {
                 Notify (\_SB.NVDR.N118, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x00800000), 0))
+            if (LNotEqual( And(Local3, 0x00800000), 0))
             {
                 Notify (\_SB.NVDR.N119, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x01000000), 0))
+            if (LNotEqual( And(Local3, 0x01000000), 0))
             {
                 Notify (\_SB.NVDR.N120, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x02000000), 0))
+            if (LNotEqual( And(Local3, 0x02000000), 0))
             {
                 Notify (\_SB.NVDR.N121, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x04000000), 0))
+            if (LNotEqual( And(Local3, 0x04000000), 0))
             {
                 Notify (\_SB.NVDR.N122, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x08000000), 0))
+            if (LNotEqual( And(Local3, 0x08000000), 0))
             {
                 Notify (\_SB.NVDR.N123, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x10000000), 0))
+            if (LNotEqual( And(Local3, 0x10000000), 0))
             {
                 Notify (\_SB.NVDR.N124, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x20000000), 0))
+            if (LNotEqual( And(Local3, 0x20000000), 0))
             {
                 Notify (\_SB.NVDR.N125, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x40000000), 0))
+            if (LNotEqual( And(Local3, 0x40000000), 0))
             {
                 Notify (\_SB.NVDR.N126, 0x81)
             }
 
-            if (LNotEqual( NAnd(Local3, 0x80000000), 0))
+            if (LNotEqual( And(Local3, 0x80000000), 0))
             {
                 Notify (\_SB.NVDR.N127, 0x81)
             }
@@ -716,12 +716,12 @@ Scope(\_GPE)
 
         if (LNotEqual(Local4, 0))
         {
-            if (LNotEqual(NAnd(Local4, 0x1), 0))
+            if (LNotEqual(And(Local4, 0x1), 0))
             {
                 Notify (\_SB.NVDR, 0x80)
             }
 
-            if (LNotEqual(NAnd(Local4, 0x2), 0))
+            if (LNotEqual(And(Local4, 0x2), 0))
             {
                 Notify (\_SB.NVDR, 0x81)
             }
@@ -773,7 +773,8 @@ Scope(\_SB)
         OperationRegion(NVDB, SystemMemory, NVDA, 4096)
         Field(NVDB, AnyAcc, NoLock, WriteAsZeros)
         {
-            MBUF,4096 // Raw buffer that can be returned to callers
+            MBUF,32736, // Raw buffer that can be returned to callers (4k bytes - 4).
+            MBFL,32,   // Size of the data that has been returned.
         }
 
         Name (_HID, "ACPI0012")
@@ -785,7 +786,7 @@ Scope(\_SB)
         // 1. Acquire NMTX
         // 2. Store method arguments in MBUF.
         // 3. Signal the vdev via the NVIO MMIO page.
-        // 4. Read the return values from MBUF into scratch space.
+        // 4. Read the return values from MBUF into scratch space (of length MBFL).
         // 5. Release NMTX.
         //
         Mutex(NMTX, 0)
@@ -842,8 +843,10 @@ Scope(\_SB)
                                     //
                                     // Copy the contents of the method I/O Buffer.
                                     //
-                                    Name (RBUF, Buffer(4096) {})
-                                    CopyObject (MBUF, RBUF)
+                                    Name (RBUF, Buffer(MBFL) {})
+                                    Multiply (MBFL, 8, Local0)
+                                    CreateField (RBUF, 0, Local0, RBFF)     
+                                    Store (MBUF, RBFF)
 
                                     Release (NMTX)
                                     Return (RBUF)
@@ -928,8 +931,10 @@ Scope(\_SB)
                                     //
                                     // Copy the contents of the method I/O Buffer.
                                     //
-                                    Name (RBUF, Buffer(4096) {})
-                                    CopyObject (MBUF, RBUF)
+                                    Name (RBUF, Buffer(MBFL) {})
+                                    Multiply (MBFL, 8, Local0)
+                                    CreateField (RBUF, 0, Local0, RBFF)                             
+                                    Store (MBUF, RBFF)
 
                                     Release (NMTX)
                                     Return (RBUF)
@@ -971,8 +976,10 @@ Scope(\_SB)
             //
             // Copy the contents of the method I/O Buffer.
             //
-            Name (RBUF, Buffer(4096) {})
-            CopyObject (MBUF, RBUF)
+            Name (RBUF, Buffer(MBFL) {})
+            Multiply (MBFL, 8, Local0)
+            CreateField (RBUF, 0, Local0, RBFF)                                       
+            Store (MBUF, RBFF)
 
             Release (NMTX)
             Return (RBUF)
@@ -1010,8 +1017,10 @@ Scope(\_SB)
             //
             // Copy the contents of the method I/O Buffer.
             //
-            Name (RBUF, Buffer(4096) {})
-            CopyObject (MBUF, RBUF)
+            Name (RBUF, Buffer(MBFL) {})
+            Multiply (MBFL, 8, Local0)
+            CreateField (RBUF, 0, Local0, RBFF)                                   
+            Store (MBUF, RBFF)
 
             Release (NMTX)
             Return (RBUF)
