@@ -845,11 +845,11 @@ Scope(\_SB)
                                     //
                                     Name (RBUF, Buffer(MBFL) {})
                                     Multiply (MBFL, 8, Local0)
-                                    CreateField (RBUF, 0, Local0, RBFF)     
-                                    Store (MBUF, RBFF)
+                                    Store (MBUF, RBUF)
+                                    CreateField (RBUF, 0, Local0, RBFF)
 
                                     Release (NMTX)
-                                    Return (RBUF)
+                                    Return (RBFF)
                                 }
                             }
                         }
@@ -933,11 +933,11 @@ Scope(\_SB)
                                     //
                                     Name (RBUF, Buffer(MBFL) {})
                                     Multiply (MBFL, 8, Local0)
-                                    CreateField (RBUF, 0, Local0, RBFF)                             
-                                    Store (MBUF, RBFF)
+                                    Store (MBUF, RBUF)
+                                    CreateField (RBUF, 0, Local0, RBFF)
 
                                     Release (NMTX)
-                                    Return (RBUF)
+                                    Return (RBFF)
                                 }
                             }
                         }
@@ -978,11 +978,11 @@ Scope(\_SB)
             //
             Name (RBUF, Buffer(MBFL) {})
             Multiply (MBFL, 8, Local0)
-            CreateField (RBUF, 0, Local0, RBFF)                                       
-            Store (MBUF, RBFF)
+            Store (MBUF, RBUF)
+            CreateField (RBUF, 0, Local0, RBFF)
 
             Release (NMTX)
-            Return (RBUF)
+            Return (RBFF)
         }
 
         // LSRM - Generic Method for Child _LSRs.
@@ -1019,11 +1019,11 @@ Scope(\_SB)
             //
             Name (RBUF, Buffer(MBFL) {})
             Multiply (MBFL, 8, Local0)
-            CreateField (RBUF, 0, Local0, RBFF)                                   
-            Store (MBUF, RBFF)
+            Store (MBUF, RBUF)
+            CreateField (RBUF, 0, Local0, RBFF)
 
             Release (NMTX)
-            Return (RBUF)
+            Return (RBFF)
         }
 
         //
