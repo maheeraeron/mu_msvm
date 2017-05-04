@@ -20,11 +20,11 @@ Author:
 #include <AcpiTables.h>
 #include <PowerManagementInterface.h>
 
-EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE FACP =
+EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE FACP =
 {
-    STANDARD_HEADER(EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
-                    sizeof(EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE),
-                    EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION)
+    STANDARD_HEADER(EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
+                    sizeof(EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE),
+                    EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_REVISION)
     0,                                      // 32 Bit Physical Ptr to FACS Table
     0,                                      // 32 Bit Physical Ptr to DSDT
     1,                                      // set to 1 for compatibility with ACPI 1.0
@@ -35,17 +35,13 @@ EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE FACP =
     0,                                      //  "    "  "    "       "    "     "        "     "   " disable acpi
     0,                                      //  "    "  "    "       "    " enter the S4BIOS state
     0,                                      // SW SMI value to assume processor control responsibility
-    PowerMgmtDefaultBaseRegister +          // power mgt 1a event reg blk port
-        PowerMgmtStatusRegOffset,
+    0,                                      // power mgt 1a event reg blk port
     0,                                      // power mgt 1b event reg blk port
-    PowerMgmtDefaultBaseRegister +          // power mgt 1a ctrl reg blk port
-        PowerMgmtControlRegOffset,
+    0,                                      // power mgt 1a ctrl reg blk port
     0,                                      // power mgt 1b ctrl reg blk port
     0,                                      // power mgt 2 ctrl reg blk port
-    PowerMgmtDefaultBaseRegister +          // power mgt timer ctrl reg blk port
-        PowerMgmtTimerRegOffset,
-    PowerMgmtDefaultBaseRegister +          // general purpose event 0 reg blk port
-        PowerMgmtGenPurposeStatusRegOffset,
+    0,                                      // power mgt timer ctrl reg blk port
+    0,                                      // general purpose event 0 reg blk port
     0,                                      // general purpose event 1 reg blk port
     4,                                      // pm1 evt length
     2,                                      // pm1 cnt length
@@ -73,7 +69,7 @@ EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE FACP =
      EFI_ACPI_3_0_RTC_S4 |
      EFI_ACPI_3_0_TMR_VAL_EXT |
      EFI_ACPI_3_0_RESET_REG_SUP |
-     EFI_ACPI_3_0_USE_PLATFORM_CLOCK),
+     EFI_ACPI_3_0_USE_PLATFORM_CLOCK ),
     {                                       // Reset register
         EFI_ACPI_3_0_SYSTEM_IO,
         8,
@@ -82,6 +78,81 @@ EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE FACP =
         PowerMgmtDefaultBaseRegister + PowerMgmtResetRegister
     },
     PowerMgmtResetValue,                        // Value to write to reset register
+    0, // ArmBootArch
+    EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_MINOR_REVISION, // Minor version
+    0, // XFirmwareCtrl
+    0, // XDsdt
+    {
+        EFI_ACPI_6_1_SYSTEM_IO, // X_PM1a_EVT_BLK - Windows if it detects FADT ACPI 5.0 or greater always uses the extended fields, ignoring address in legacy fields...
+        EFI_ACPI_6_1_QWORD * 8, // However, windows still requires the size fields to be present, even though the GAS structure has the size information as well
+        0,
+        EFI_ACPI_6_1_QWORD,
+        PowerMgmtDefaultBaseRegister + PowerMgmtStatusRegOffset
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // X_PM1b_EVT_BLK
+        0,
+        0,
+        EFI_ACPI_6_1_UNDEFINED,
+        0
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_IO, // X_PM1a_CNT_BLK
+        EFI_ACPI_6_1_WORD * 8,
+        0,
+        EFI_ACPI_6_1_WORD,
+        PowerMgmtDefaultBaseRegister + PowerMgmtControlRegOffset
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // X_PM1b_CNT_BLK
+        0,
+        0,
+        EFI_ACPI_6_1_UNDEFINED,
+        0
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // X_PM2_CNT_BLK
+        0,
+        0,
+        EFI_ACPI_6_1_UNDEFINED,
+        0
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_IO, // X_PM_TMR_BLK
+        EFI_ACPI_6_1_QWORD * 8,
+        0,
+        EFI_ACPI_6_1_QWORD,
+        PowerMgmtDefaultBaseRegister + PowerMgmtTimerRegOffset
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_IO, // X_GPE0_BLK
+        EFI_ACPI_6_1_QWORD * 8,
+        0,
+        EFI_ACPI_6_1_QWORD,
+        PowerMgmtDefaultBaseRegister + PowerMgmtGenPurposeStatusRegOffset
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // X_GPE1_BLK
+        0,
+        0,
+        EFI_ACPI_6_1_UNDEFINED,
+        0
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // SLEEP_CONTROL_REG
+        0,
+        0,
+        EFI_ACPI_6_1_UNDEFINED,
+        0
+    },
+    {
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // SLEEP_STATUS_REG
+        0,
+        0,
+        EFI_ACPI_6_1_UNDEFINED,
+        0
+    },
+    0 // Hypervisor Vendor Identity - Set via Facp.c
 };
 
 
@@ -90,7 +161,7 @@ ReferenceAcpiTable()
 {
     //
     // Reference the table being generated to prevent the optimizer from removing the
-    // data structure from the exeutable
+    // data structure from the executable
     //
     return (VOID*) &FACP;
 }

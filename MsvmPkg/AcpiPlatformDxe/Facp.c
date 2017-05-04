@@ -39,7 +39,7 @@ Return Value:
 
 --*/
 {
-    EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE *facp;
+    EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *facp = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)Facp;
 
     //
     // Get configuration to determine if headless.
@@ -51,10 +51,21 @@ Return Value:
     //
     if (consoleMode != ConfigLibConsoleModeDefault)
     {
-        facp = (EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE *)Facp;
-
         facp->Flags |= EFI_ACPI_3_0_HEADLESS;
+    }
 
+    //
+    // Set the hypervisor vendor identity to MsHyperV
+    //
+    memcpy(&facp->HypervisorVendorIdentity, "MsHyperV", 8);
+
+    //
+    // Set S0 Power savings bit and power profile if battery are enabled
+    //
+    if (GetVirtualBatteryEnabled())
+    {
+        facp->Flags |= EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE;
+        facp->PreferredPmProfile = EFI_ACPI_6_1_PM_PROFILE_MOBILE;
     }
 
     return EFI_SUCCESS;
