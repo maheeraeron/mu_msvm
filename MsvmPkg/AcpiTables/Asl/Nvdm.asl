@@ -994,8 +994,11 @@ Scope(\_SB)
         {
             //
             // Pack up the arguments.
+            // Make INPT the same size as MBUF, so ASL does not do source
+            // and destination type conversion, to guarantee that the resulting
+            // store copies INPT byte for byte into MBUF.
             //
-            Name (INPT, Buffer(4) {})
+            Name (INPT, Buffer(0xffc) {})
             CreateField (INPT, 0, 32, BTOF) // Space for Byte Offset
             CreateField (INPT, 32, 32, TFLT) // Space for Transfer Length
             Store (Arg0, BTOF)
@@ -1006,7 +1009,7 @@ Scope(\_SB)
             //
             // Copy the arguments.
             //
-            CopyObject (INPT, MBUF)
+            Store (INPT, MBUF)
 
             //
             // Write the device index
