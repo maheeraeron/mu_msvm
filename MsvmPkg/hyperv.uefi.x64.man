@@ -1,0 +1,4 @@
+# StartMeta
+# Manifest_Format_Version=2
+# EndMeta
+hyperv.uefi.x64,[0.0.3],Drop,CollectionOfFiles,https://microsoft.artifacts.visualstudio.com/DefaultCollection/,,$(Destination)
