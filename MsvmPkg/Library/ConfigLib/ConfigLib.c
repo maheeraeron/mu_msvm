@@ -754,7 +754,7 @@ Return Value:
     }
     else
     {
-        ptr = (EFI_GUID*)gConfigPageV3->BiosGuid;
+        ptr = (EFI_GUID*)gConfigPageV2->BiosGuid;
     }
     return ptr;
 }
