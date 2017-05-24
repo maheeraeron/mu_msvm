@@ -70,19 +70,30 @@ Returns:
 --*/
 {
     //
-    // Send the request to the BIOS VDev.
-    // Cast of descriptor GPA is safe as it allocated below 4GB.
+    // Worker process can fail guest state related requests due to
+    // storage being temporarily "not ready". Retry until success or
+    // fatal error.
     //
-    IoWrite32(BiosAddressPort, BiosConfigNvramCommand);
-    IoWrite32(BiosDataPort, (UINT32)mNvramCommandDescriptorGpa);
+    for (;;)
+    {
+        //
+        // Send the request to the BIOS VDev.
+        // Cast of descriptor GPA is safe as it allocated below 4GB.
+        //
+        IoWrite32(BiosAddressPort, BiosConfigNvramCommand);
+        IoWrite32(BiosDataPort, (UINT32)mNvramCommandDescriptorGpa);
 
-    if (mNvramCommandDescriptor->Status == 0)
-    {
-        return EFI_SUCCESS;
-    }
-    else
-    {
-        return ENCODE_ERROR(mNvramCommandDescriptor->Status);
+        if (mNvramCommandDescriptor->Status == EFI_SUCCESS)
+        {
+            return EFI_SUCCESS;
+        }
+        //
+        // Worker process returns unencoded error values.
+        //
+        if (ENCODE_ERROR(mNvramCommandDescriptor->Status) != EFI_NOT_READY)
+        {
+            return ENCODE_ERROR(mNvramCommandDescriptor->Status);
+        }
     }
 }
 
