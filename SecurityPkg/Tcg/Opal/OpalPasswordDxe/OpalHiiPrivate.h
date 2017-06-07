@@ -211,26 +211,28 @@ HiiPasswordEntered(
 /**
   Update block sid info.
 
-  @param      Enable         Enable/disable BlockSid.
+  @param      PpRequest      Input the Pp Request.
 
   @retval  EFI_SUCCESS       Do the required action success.
   @retval  Others            Other error occur.
 
 **/
 EFI_STATUS
-HiiSetBlockSid (
-  BOOLEAN          Enable
+HiiSetBlockSidAction (
+  UINT32          PpRequest
   );
 
 /**
   Reverts the Opal disk to factory default.
+
+  @param   PsidStringId      The string id for the PSID info.
 
   @retval  EFI_SUCCESS       Do the required action success.
 
 **/
 EFI_STATUS
 HiiPsidRevert(
-  VOID
+  EFI_STRING_ID         PsidStringId
   );
 
 /**

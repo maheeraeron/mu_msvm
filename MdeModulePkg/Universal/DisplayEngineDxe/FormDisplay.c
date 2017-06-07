@@ -153,6 +153,7 @@ CHAR16            *gConfirmOptYes;
 CHAR16            *gConfirmOptNo;
 CHAR16            *gConfirmMsgConnect;
 CHAR16            *gConfirmMsgEnd;
+CHAR16            *gPasswordUnsupported;
 CHAR16            gModalSkipColumn;
 CHAR16            gPromptBlockWidth;
 CHAR16            gOptionBlockWidth;
@@ -248,6 +249,7 @@ InitializeDisplayStrings (
   gConfirmOptNo         = GetToken (STRING_TOKEN (CONFIRM_OPTION_NO), gHiiHandle);
   gConfirmMsgConnect    = GetToken (STRING_TOKEN (CONFIRM_OPTION_CONNECT), gHiiHandle);
   gConfirmMsgEnd        = GetToken (STRING_TOKEN (CONFIRM_OPTION_END), gHiiHandle);
+  gPasswordUnsupported  = GetToken (STRING_TOKEN (PASSWORD_NOT_SUPPORTED ), gHiiHandle);
 }
 
 /**
@@ -301,6 +303,7 @@ FreeDisplayStrings (
   FreePool (gConfirmOptNo);
   FreePool (gConfirmMsgConnect);
   FreePool (gConfirmMsgEnd);
+  FreePool (gPasswordUnsupported);
 }
 
 /**
@@ -1054,18 +1057,21 @@ MoveToNextStatement (
       UpdateOptionSkipLines (NextMenuOption);
     }
 
-    if (IsSelectable (NextMenuOption)) {
-      break;
-    }
-
     //
-    // In this case, still can't find the selectable menu,
+    // Check whether the menu is beyond current showing form,
     // return the first one beyond the showing form.
     //
     if ((UINTN) Distance + NextMenuOption->Skip > GapToTop) {
       if (FindInForm) {
         NextMenuOption = PreMenuOption;
       }
+      break;
+    }
+
+    //
+    // return the selectable menu in the showing form.
+    //
+    if (IsSelectable (NextMenuOption)) {
       break;
     }
 

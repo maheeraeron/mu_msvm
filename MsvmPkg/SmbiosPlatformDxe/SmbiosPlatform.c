@@ -46,8 +46,8 @@ Author:
 //
 #define MAJOR_RELEASE_VERSION 2
 #define MINOR_RELEASE_VERSION 0
-static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v2.0";
-static CHAR8 RELEASE_DATE_STRING[] = "08/26/2016";
+static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v2.5";
+static CHAR8 RELEASE_DATE_STRING[] = __DATE__;
 
 //
 // Complying with SMBIOS v2.4 specification.
@@ -261,7 +261,7 @@ Return Value:
     //
     static struct
     {
-        SMBIOS_TABLE_TYPE0 Formatted;
+        SMBIOS24_TABLE_TYPE0 Formatted;
         CHAR8 Unformed[sizeof(MANUFACTURER_STRING) +
                        sizeof(RELEASE_VERSION_STRING) +
                        sizeof(RELEASE_DATE_STRING) +
@@ -270,7 +270,7 @@ Return Value:
 
     {
         {
-            STANDARD_HEADER(SMBIOS_TABLE_TYPE0, EFI_SMBIOS_TYPE_BIOS_INFORMATION),
+            STANDARD_HEADER(SMBIOS24_TABLE_TYPE0, EFI_SMBIOS_TYPE_BIOS_INFORMATION),
             1,  // Vendor string index
             2,  // BIOS Version string index
             0,  // BIOS Starting Address Segment (meaningless for UEFI)
@@ -731,13 +731,13 @@ Return Value:
     //
     static struct
     {
-        SMBIOS_TABLE_TYPE16 Formatted;
+        SMBIOS24_TABLE_TYPE16 Formatted;
         CHAR8 Unformed[2];
     } physicalMemoryArray =
 
     {
         {
-            STANDARD_HEADER(SMBIOS_TABLE_TYPE16, EFI_SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY),
+            STANDARD_HEADER(SMBIOS24_TABLE_TYPE16, EFI_SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY),
             MemoryArrayLocationSystemBoard, // Location
             MemoryArrayUseSystemMemory, // Use
             MemoryErrorCorrectionNone, // Memory Error Correction
@@ -802,13 +802,13 @@ Return Value:
     //
     static struct
     {
-        SMBIOS_TABLE_TYPE19 Formatted;
+        SMBIOS24_TABLE_TYPE19 Formatted;
         CHAR8 Unformed[2];
     } memoryArrayMappedAddress =
 
     {
         {
-            STANDARD_HEADER(SMBIOS_TABLE_TYPE19, EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS),
+            STANDARD_HEADER(SMBIOS24_TABLE_TYPE19, EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS),
             0, // Starting Address
             0, // Ending Address
             SMBIOS_HANDLE_PI_RESERVED, // Memory Array Handle
@@ -875,7 +875,7 @@ Arguments:
     Smbios - The smbios dxe protocol.
 
     Size - The amount of memory in the device (in bytes).
-    
+
     MemoryFlags - Flags indicating special properties of the memory region.
 
     PhysicalMemoryArrayHandle - The handle of the PhysicalMemoryArray structure
@@ -914,7 +914,7 @@ Return Value:
     //
     static struct
     {
-        SMBIOS_TABLE_TYPE17 Formatted;
+        SMBIOS24_TABLE_TYPE17 Formatted;
         CHAR8 Unformed[LOCATION_STRING_SIZE +
                        sizeof(NONE_STRING) +
                        sizeof(MANUFACTURER_STRING) +
@@ -926,7 +926,7 @@ Return Value:
 
     {
         {
-            STANDARD_HEADER(SMBIOS_TABLE_TYPE17, EFI_SMBIOS_TYPE_MEMORY_DEVICE),
+            STANDARD_HEADER(SMBIOS24_TABLE_TYPE17, EFI_SMBIOS_TYPE_MEMORY_DEVICE),
             SMBIOS_HANDLE_PI_RESERVED, // Physical Memory Array Handle
             SMBIOS_HANDLE_PI_RESERVED, // Memory Error Information Handle
             0xffff, // Total Width - unknown
@@ -1038,13 +1038,13 @@ Return Value:
     //
     static struct
     {
-        SMBIOS_TABLE_TYPE20 Formatted;
+        SMBIOS24_TABLE_TYPE20 Formatted;
         CHAR8 Unformed[2];
     } memoryDeviceMappedAddress =
 
     {
         {
-            STANDARD_HEADER(SMBIOS_TABLE_TYPE20, EFI_SMBIOS_TYPE_MEMORY_DEVICE_MAPPED_ADDRESS),
+            STANDARD_HEADER(SMBIOS24_TABLE_TYPE20, EFI_SMBIOS_TYPE_MEMORY_DEVICE_MAPPED_ADDRESS),
             0, // Starting Address
             0, // Ending Address
             SMBIOS_HANDLE_PI_RESERVED, // Memory Device Handle

@@ -174,6 +174,9 @@
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 
 [PcdsFixedAtBuild.common]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|0x00100032
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Microsoft"
+
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
   # modifyting EfiKdDebugPrintGlobalMask and EfiKdDebugPrintComponentMask.

@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define PXEBC_DHCP4_MAX_OPTION_NUM         16
 #define PXEBC_DHCP4_MAX_OPTION_SIZE        312
-#define PXEBC_DHCP4_MAX_PACKET_SIZE        1472
+#define PXEBC_DHCP4_MAX_PACKET_SIZE        (sizeof (EFI_PXE_BASE_CODE_PACKET))
 
 #define PXEBC_DHCP4_S_PORT                 67
 #define PXEBC_DHCP4_C_PORT                 68
@@ -330,8 +330,9 @@ PxeBcParseCachedDhcpPacket (
 
   @param  Private          Pointer to PxeBc private data.
 
-  @retval EFI_SUCCESS      Operational successful.
-  @retval EFI_NO_RESPONSE  Offer dhcp service failed.
+  @retval EFI_SUCCESS                Operational successful.
+  @retval EFI_NO_RESPONSE            Offer dhcp service failed.
+  @retval EFI_BUFFER_TOO_SMALL       Failed to copy the packet to Pxe base code mode.
 
 **/
 EFI_STATUS

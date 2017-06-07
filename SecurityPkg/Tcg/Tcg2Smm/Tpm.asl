@@ -2,7 +2,7 @@
   The TPM2 definition block in ACPI table for TCG2 physical presence  
   and MemoryClear.
 
-Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials 
 are licensed and made available under the terms and conditions of the BSD License 
 which accompanies this distribution.  The full text of the license may be found at 
@@ -29,8 +29,14 @@ DefinitionBlock (
       //
       // TCG2
       //
-      Name (_HID, "MSFT0101")
-      
+
+      //
+      //  TAG for patching TPM2.0 _HID
+      //
+      Name (_HID, "NNNN0000")
+
+      Name (_CID, "MSFT0101")
+
       //
       // Readable name of this device, don't know if this way is correct yet
       //

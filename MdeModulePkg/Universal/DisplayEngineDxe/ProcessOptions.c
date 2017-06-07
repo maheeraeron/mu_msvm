@@ -815,6 +815,11 @@ PasswordProcess (
     //
     // Password can't be set now. 
     //
+    if (Status == EFI_UNSUPPORTED) {
+      do {
+        CreateDialog (&Key, gEmptyString, gPasswordUnsupported, gPressEnter, gEmptyString, NULL);
+      } while (Key.UnicodeChar != CHAR_CARRIAGE_RETURN);
+    }
     FreePool (StringPtr);
     return EFI_SUCCESS;
   }
@@ -913,7 +918,8 @@ PasswordProcess (
 
     Status = EFI_INVALID_PARAMETER;
   }
-  
+  ZeroMem (TempString, (Maximum + 1) * sizeof (CHAR16));
+  ZeroMem (StringPtr, (Maximum + 1) * sizeof (CHAR16));
   FreePool (TempString);
   FreePool (StringPtr);
 

@@ -30,6 +30,8 @@ extern UINT8  OpalPasswordFormBin[];
 //
 extern UINT8  OpalPasswordDxeStrings[];
 
+CHAR16  OpalPasswordStorageName[] = L"OpalHiiConfig";
+
 EFI_HII_CONFIG_ACCESS_PROTOCOL gHiiConfigAccessProtocol;
 
 //
@@ -88,23 +90,63 @@ HiiSetCurrentConfiguration(
   VOID
   )
 {
-  EFI_STATUS                            Status;
-  OPAL_EXTRA_INFO_VAR                   OpalExtraInfo;
-  UINTN                                 DataSize;
+  UINT32                                       PpStorageFlag;
+  EFI_STRING                                   NewString;
 
   gHiiConfiguration.NumDisks = GetDeviceCount();
 
-  DataSize = sizeof (OPAL_EXTRA_INFO_VAR);
-  Status = gRT->GetVariable (
-                  OPAL_EXTRA_INFO_VAR_NAME,
-                  &gOpalExtraInfoVariableGuid,
-                  NULL,
-                  &DataSize,
-                  &OpalExtraInfo
-                  );
-  if (!EFI_ERROR (Status)) {
-    gHiiConfiguration.EnableBlockSid = OpalExtraInfo.EnableBlockSid;
+  //
+  // Update the BlockSID status string.
+  //
+  PpStorageFlag = Tcg2PhysicalPresenceLibGetManagementFlags ();
+
+  if ((PpStorageFlag & TCG2_BIOS_STORAGE_MANAGEMENT_FLAG_ENABLE_BLOCK_SID) != 0) {
+    NewString = HiiGetString (gHiiPackageListHandle, STRING_TOKEN(STR_ENABLED), NULL);
+    if (NewString == NULL) {
+      DEBUG ((DEBUG_INFO,  "HiiSetCurrentConfiguration: HiiGetString( ) failed\n"));
+      return;
+    }
+  } else {
+    NewString = HiiGetString (gHiiPackageListHandle, STRING_TOKEN(STR_DISABLED), NULL);
+    if (NewString == NULL) {
+      DEBUG ((DEBUG_INFO,  "HiiSetCurrentConfiguration: HiiGetString( ) failed\n"));
+      return;
+    }
   }
+  HiiSetString(gHiiPackageListHandle, STRING_TOKEN(STR_BLOCKSID_STATUS1), NewString, NULL);
+  FreePool (NewString);
+
+  if ((PpStorageFlag & TCG2_BIOS_STORAGE_MANAGEMENT_FLAG_PP_REQUIRED_FOR_ENABLE_BLOCK_SID) != 0) {
+    NewString = HiiGetString (gHiiPackageListHandle, STRING_TOKEN(STR_DISK_INFO_ENABLE_BLOCKSID_TRUE), NULL);
+    if (NewString == NULL) {
+      DEBUG ((DEBUG_INFO,  "HiiSetCurrentConfiguration: HiiGetString( ) failed\n"));
+      return;
+    }
+  } else {
+    NewString = HiiGetString (gHiiPackageListHandle, STRING_TOKEN(STR_DISK_INFO_ENABLE_BLOCKSID_FALSE), NULL);
+    if (NewString == NULL) {
+      DEBUG ((DEBUG_INFO,  "HiiSetCurrentConfiguration: HiiGetString( ) failed\n"));
+      return;
+    }
+  }
+  HiiSetString(gHiiPackageListHandle, STRING_TOKEN(STR_BLOCKSID_STATUS2), NewString, NULL);
+  FreePool (NewString);
+
+  if ((PpStorageFlag & TCG2_BIOS_STORAGE_MANAGEMENT_FLAG_PP_REQUIRED_FOR_DISABLE_BLOCK_SID) != 0) {
+    NewString = HiiGetString (gHiiPackageListHandle, STRING_TOKEN(STR_DISK_INFO_DISABLE_BLOCKSID_TRUE), NULL);
+    if (NewString == NULL) {
+      DEBUG ((DEBUG_INFO,  "HiiSetCurrentConfiguration: HiiGetString( ) failed\n"));
+      return;
+    }
+  } else {
+    NewString = HiiGetString (gHiiPackageListHandle, STRING_TOKEN(STR_DISK_INFO_DISABLE_BLOCKSID_FALSE), NULL);
+    if (NewString == NULL) {
+      DEBUG ((DEBUG_INFO,  "HiiSetCurrentConfiguration: HiiGetString( ) failed\n"));
+      return;
+    }
+  }
+  HiiSetString(gHiiPackageListHandle, STRING_TOKEN(STR_BLOCKSID_STATUS3), NewString, NULL);
+  FreePool (NewString);
 }
 
 /**
@@ -398,6 +440,7 @@ DriverCallback(
 {
   HII_KEY    HiiKey;
   UINT8      HiiKeyId;
+  UINT32     PpRequest;
 
   if (ActionRequest != NULL) {
     *ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
@@ -458,18 +501,55 @@ DriverCallback(
 
       case HII_KEY_ID_ENTER_PASSWORD:
         return HiiPasswordEntered(Value->string);
+
+      case HII_KEY_ID_ENTER_PSID:
+        return HiiPsidRevert(Value->string);
+
     }
   } else if (Action == EFI_BROWSER_ACTION_CHANGED) {
     switch (HiiKeyId) {
-      case HII_KEY_ID_ENTER_PSID:
-        HiiPsidRevert();
+      case HII_KEY_ID_BLOCKSID:
+        switch (Value->u8) {
+          case 0:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_NO_ACTION;
+            break;
+
+          case 1:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_ENABLE_BLOCK_SID;
+            break;
+
+          case 2:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_DISABLE_BLOCK_SID;
+            break;
+
+          case 3:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_SET_PP_REQUIRED_FOR_ENABLE_BLOCK_SID_FUNC_TRUE;
+            break;
+
+          case 4:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_SET_PP_REQUIRED_FOR_ENABLE_BLOCK_SID_FUNC_FALSE;
+            break;
+
+          case 5:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_SET_PP_REQUIRED_FOR_DISABLE_BLOCK_SID_FUNC_TRUE;
+            break;
+
+          case 6:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_SET_PP_REQUIRED_FOR_DISABLE_BLOCK_SID_FUNC_FALSE;
+            break;
+
+          default:
+            PpRequest = TCG2_PHYSICAL_PRESENCE_NO_ACTION;
+            DEBUG ((DEBUG_ERROR, "Invalid value input!\n"));
+            break;
+        }
+        HiiSetBlockSidAction(PpRequest);
+
         *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
         return EFI_SUCCESS;
 
-      case HII_KEY_ID_BLOCKSID:
-        HiiSetBlockSid(Value->b);
-        *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
-        return EFI_SUCCESS;
+      default:
+        break;
     }
   }
 
@@ -580,12 +660,14 @@ HiiPopulateDiskInfoForm(
 /**
   Reverts the Opal disk to factory default.
 
+  @param   PsidStringId      The string id for the PSID info.
+
   @retval  EFI_SUCCESS       Do the required action success.
 
 **/
 EFI_STATUS
 HiiPsidRevert(
-  VOID
+  EFI_STRING_ID         PsidStringId
   )
 {
   CHAR8                         Response[DEFAULT_RESPONSE_SIZE];
@@ -593,15 +675,19 @@ HiiPsidRevert(
   OPAL_DISK                     *OpalDisk;
   TCG_RESULT                    Ret;
   OPAL_SESSION                  Session;
+  CHAR16                        *UnicodeStr;
   UINT8                         TmpBuf[PSID_CHARACTER_STRING_END_LENGTH];
 
   Ret = TcgResultFailure;
 
-  OpalHiiGetBrowserData();
-
+  UnicodeStr = HiiGetString (gHiiPackageListHandle, PsidStringId, NULL);
   ZeroMem (TmpBuf, sizeof (TmpBuf));
-  UnicodeStrToAsciiStrS (gHiiConfiguration.Psid, (CHAR8*)TmpBuf, PSID_CHARACTER_STRING_END_LENGTH);
+  UnicodeStrToAsciiStrS (UnicodeStr, (CHAR8*)TmpBuf, PSID_CHARACTER_STRING_END_LENGTH);
   CopyMem (Psid.Psid, TmpBuf, PSID_CHARACTER_LENGTH);
+  HiiSetString (gHiiPackageListHandle, PsidStringId, L"", NULL);
+  ZeroMem (TmpBuf, sizeof (TmpBuf));
+  ZeroMem (UnicodeStr, StrSize (UnicodeStr));
+  FreePool (UnicodeStr);
 
   OpalDisk = HiiGetOpalDiskCB (gHiiConfiguration.SelectedDiskIndex);
   if (OpalDisk != NULL) {
@@ -612,6 +698,8 @@ HiiPsidRevert(
 
     Ret = OpalSupportPsidRevert(&Session, Psid.Psid, (UINT32)sizeof(Psid.Psid), OpalDisk->OpalDevicePath);
   }
+
+  ZeroMem (Psid.Psid, PSID_CHARACTER_LENGTH);
 
   if (Ret == TcgResultSuccess) {
     AsciiSPrint( Response, DEFAULT_RESPONSE_SIZE, "%a", "PSID Revert: Success" );
@@ -1018,8 +1106,8 @@ HiiPasswordEntered(
   EFI_STRING_ID            Str
   )
 {
-  OPAL_DISK*                    OpalDisk;
-  CHAR8                         Password[MAX_PASSWORD_CHARACTER_LENGTH + 1];
+  OPAL_DISK*                   OpalDisk;
+  CHAR8                        Password[MAX_PASSWORD_CHARACTER_LENGTH + 1];
   CHAR16*                      UniStr;
   UINT32                       PassLength;
   EFI_STATUS                   Status;
@@ -1043,15 +1131,20 @@ HiiPasswordEntered(
   if (UniStr == NULL) {
     return EFI_NOT_FOUND;
   }
+
+  HiiSetString(gHiiPackageListHandle, Str, L"", NULL);
+
   PassLength = (UINT32) StrLen (UniStr);
   if (PassLength >= sizeof(Password)) {
     HiiSetFormString(STRING_TOKEN(STR_ACTION_STATUS), "Password too long");
-    gBS->FreePool(UniStr);
+    ZeroMem (UniStr, StrSize (UniStr));
+    FreePool(UniStr);
     return EFI_BUFFER_TOO_SMALL;
   }
 
   UnicodeStrToAsciiStrS (UniStr, Password, sizeof (Password));
-  gBS->FreePool(UniStr);
+  ZeroMem (UniStr, StrSize (UniStr));
+  FreePool(UniStr);
 
   if (gHiiConfiguration.SelectedAction == HII_KEY_ID_GOTO_UNLOCK) {
     Status = HiiUnlock (OpalDisk, Password, PassLength);
@@ -1073,40 +1166,40 @@ HiiPasswordEntered(
     Status = HiiSetPassword(OpalDisk, Password, PassLength);
   }
 
+  ZeroMem (Password, sizeof (Password));
+
   OpalHiiSetBrowserData ();
 
   return Status;
 }
 
 /**
-  Update block sid info.
+  Send BlockSid request through TPM physical presence module.
 
-  @param      Enable         Enable/disable BlockSid.
+  @param   PpRequest         TPM physical presence operation request.
 
   @retval  EFI_SUCCESS       Do the required action success.
   @retval  Others            Other error occur.
 
 **/
 EFI_STATUS
-HiiSetBlockSid (
-  BOOLEAN          Enable
+HiiSetBlockSidAction (
+  IN UINT32          PpRequest
   )
 {
-  EFI_STATUS                            Status;
-  OPAL_EXTRA_INFO_VAR                   OpalExtraInfo;
-  UINTN                                 DataSize;
+  UINT32                           ReturnCode;
+  EFI_STATUS                       Status;
 
-  Status = EFI_SUCCESS;
-
-  OpalExtraInfo.EnableBlockSid = Enable;
-  DataSize = sizeof (OPAL_EXTRA_INFO_VAR);
-  Status = gRT->SetVariable (
-                 OPAL_EXTRA_INFO_VAR_NAME,
-                 &gOpalExtraInfoVariableGuid,
-                 EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-                 DataSize,
-                 &OpalExtraInfo
-                 );
+  ReturnCode = Tcg2PhysicalPresenceLibSubmitRequestToPreOSFunction (PpRequest, 0);
+  if (ReturnCode == TCG_PP_SUBMIT_REQUEST_TO_PREOS_SUCCESS) {
+    Status = EFI_SUCCESS;
+  } else if (ReturnCode == TCG_PP_SUBMIT_REQUEST_TO_PREOS_GENERAL_FAILURE) {
+    Status = EFI_OUT_OF_RESOURCES;
+  } else if (ReturnCode == TCG_PP_SUBMIT_REQUEST_TO_PREOS_NOT_IMPLEMENTED) {
+    Status = EFI_UNSUPPORTED;
+  } else {
+    Status = EFI_DEVICE_ERROR;
+  }
 
   return Status;
 }
@@ -1140,6 +1233,13 @@ RouteConfig(
   if (Configuration == NULL || Progress == NULL) {
     return (EFI_INVALID_PARAMETER);
   }
+
+  *Progress = Configuration;
+  if (!HiiIsConfigHdrMatch (Configuration, &gHiiSetupVariableGuid, OpalPasswordStorageName)) {
+    return EFI_NOT_FOUND;
+  }
+
+  *Progress = Configuration + StrLen (Configuration);
 
   return EFI_SUCCESS;
 }
@@ -1186,6 +1286,12 @@ ExtractConfig(
   //
   if (Progress == NULL || Results == NULL) {
     return (EFI_INVALID_PARAMETER);
+  }
+
+  *Progress = Request;
+  if ((Request != NULL) &&
+    !HiiIsConfigHdrMatch (Request, &gHiiSetupVariableGuid, OpalPasswordStorageName)) {
+    return EFI_NOT_FOUND;
   }
 
   //

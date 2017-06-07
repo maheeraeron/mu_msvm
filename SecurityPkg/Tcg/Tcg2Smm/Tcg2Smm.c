@@ -9,7 +9,7 @@
 
   PhysicalPresenceCallback() and MemoryClearCallback() will receive untrusted input and do some check.
 
-Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials 
 are licensed and made available under the terms and conditions of the BSD License 
 which accompanies this distribution.  The full text of the license may be found at 
@@ -83,7 +83,8 @@ EFI_TPM2_ACPI_TABLE  mTpm2AcpiTemplate = {
     // These fields should be filled in in production
     //
   },
-  0, // Flags
+  0, // BIT0~15:  PlatformClass
+     // BIT16~31: Reserved
   0, // Control Area
   EFI_TPM2_ACPI_TABLE_START_METHOD_TIS, // StartMethod
 };
@@ -295,6 +296,110 @@ UpdatePPVersion (
 }
 
 /**
+  Patch TPM2 device HID string.  The initial string tag in TPM2 ACPI table is "NNN0000".
+
+  @param[in, out] Table          The TPM2 SSDT ACPI table.
+
+  @return                               HID Update status.
+
+**/
+EFI_STATUS
+UpdateHID (
+  EFI_ACPI_DESCRIPTION_HEADER    *Table
+  )
+{
+  EFI_STATUS  Status;
+  UINT8       *DataPtr;
+  CHAR8       Hid[TPM_HID_ACPI_SIZE];
+  UINT32      ManufacturerID;
+  UINT32      FirmwareVersion1;
+  UINT32      FirmwareVersion2;
+  BOOLEAN     PnpHID;
+
+  PnpHID = TRUE;
+
+  //
+  // Initialize HID with Default PNP string
+  //
+  ZeroMem(Hid, TPM_HID_ACPI_SIZE);
+
+  //
+  // Get Manufacturer ID
+  //
+  Status = Tpm2GetCapabilityManufactureID(&ManufacturerID);
+  if (!EFI_ERROR(Status)) {
+    DEBUG((EFI_D_INFO, "TPM_PT_MANUFACTURER 0x%08x\n", ManufacturerID));
+    //
+    // ManufacturerID defined in TCG Vendor ID Registry 
+    // may tailed with 0x00 or 0x20
+    //
+    if ((ManufacturerID >> 24) == 0x00 || ((ManufacturerID >> 24) == 0x20)) {
+      //
+      //  HID containing PNP ID "NNN####"
+      //   NNN is uppercase letter for Vendor ID specified by manufacturer
+      //
+      CopyMem(Hid, &ManufacturerID, 3);
+    } else {
+      //
+      //  HID containing ACP ID "NNNN####"
+      //   NNNN is uppercase letter for Vendor ID specified by manufacturer
+      //
+      CopyMem(Hid, &ManufacturerID, 4);
+      PnpHID = FALSE;
+    }
+  } else {
+    DEBUG ((EFI_D_ERROR, "Get TPM_PT_MANUFACTURER failed %x!\n", Status));
+    ASSERT(FALSE);
+    return Status;
+  }
+
+  Status = Tpm2GetCapabilityFirmwareVersion(&FirmwareVersion1, &FirmwareVersion2);
+  if (!EFI_ERROR(Status)) {
+    DEBUG((EFI_D_INFO, "TPM_PT_FIRMWARE_VERSION_1 0x%x\n", FirmwareVersion1));
+    DEBUG((EFI_D_INFO, "TPM_PT_FIRMWARE_VERSION_2 0x%x\n", FirmwareVersion2));
+    //
+    //   #### is Firmware Version 1
+    //
+    if (PnpHID) {
+      AsciiSPrint(Hid + 3, TPM_HID_PNP_SIZE - 3, "%02d%02d", ((FirmwareVersion1 & 0xFFFF0000) >> 16), (FirmwareVersion1 & 0x0000FFFF));
+    } else {
+      AsciiSPrint(Hid + 4, TPM_HID_ACPI_SIZE - 4, "%02d%02d", ((FirmwareVersion1 & 0xFFFF0000) >> 16), (FirmwareVersion1 & 0x0000FFFF));
+    }
+    
+  } else {
+    DEBUG ((EFI_D_ERROR, "Get TPM_PT_FIRMWARE_VERSION_X failed %x!\n", Status));
+    ASSERT(FALSE);
+    return Status;
+  }
+
+  //
+  // Patch HID in ASL code before loading the SSDT.
+  //
+  for (DataPtr  = (UINT8 *)(Table + 1);
+       DataPtr <= (UINT8 *) ((UINT8 *) Table + Table->Length - TPM_HID_PNP_SIZE);
+       DataPtr += 1) {
+    if (AsciiStrCmp((CHAR8 *)DataPtr,  TPM_HID_TAG) == 0) {
+      if (PnpHID) {
+        CopyMem(DataPtr, Hid, TPM_HID_PNP_SIZE);
+        //
+        // if HID is PNP ID, patch the last byte in HID TAG to Noop
+        //
+        *(DataPtr + TPM_HID_PNP_SIZE) = AML_NOOP_OP;
+      } else {
+
+        CopyMem(DataPtr, Hid, TPM_HID_ACPI_SIZE);
+      }
+      DEBUG((DEBUG_INFO, "TPM2 ACPI _HID is patched to %a\n", DataPtr));
+
+      return Status;
+    }
+  }
+
+  DEBUG((EFI_D_ERROR, "TPM2 ACPI HID TAG for patch not found!\n"));
+  return EFI_NOT_FOUND;
+}
+
+/**
   Initialize and publish TPM items in ACPI table.
 
   @retval   EFI_SUCCESS     The TCG ACPI table is published successfully.
@@ -326,6 +431,14 @@ PublishAcpiTable (
   //
   Status = UpdatePPVersion(Table, (CHAR8 *)PcdGetPtr(PcdTcgPhysicalPresenceInterfaceVer));
   ASSERT_EFI_ERROR (Status);
+
+  //
+  // Update TPM2 HID before measuring it to PCR
+  //
+  Status = UpdateHID(Table);
+  if (EFI_ERROR(Status)) {
+    return Status;
+  }
 
   //
   // Measure to PCR[0] with event EV_POST_CODE ACPI DATA
@@ -381,6 +494,19 @@ PublishTpm2 (
   UINT64                         OemTableId;
   EFI_TPM2_ACPI_CONTROL_AREA     *ControlArea;
   PTP_INTERFACE_TYPE             InterfaceType;
+
+  mTpm2AcpiTemplate.Header.Revision = PcdGet8(PcdTpm2AcpiTableRev);
+  DEBUG((DEBUG_INFO, "Tpm2 ACPI table revision is %d\n", mTpm2AcpiTemplate.Header.Revision));
+
+  //
+  // PlatformClass is only valid for version 4 and above
+  //    BIT0~15:  PlatformClass 
+  //    BIT16~31: Reserved
+  //
+  if (mTpm2AcpiTemplate.Header.Revision >= EFI_TPM2_ACPI_TABLE_REVISION_4) {
+    mTpm2AcpiTemplate.Flags = (mTpm2AcpiTemplate.Flags & 0xFFFF0000) | PcdGet8(PcdTpmPlatformClass);
+    DEBUG((DEBUG_INFO, "Tpm2 ACPI table PlatformClass is %d\n", (mTpm2AcpiTemplate.Flags & 0x0000FFFF)));
+  }
 
   //
   // Measure to PCR[0] with event EV_POST_CODE ACPI DATA

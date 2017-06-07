@@ -1,7 +1,7 @@
 /** @file
   The implementation of EFI IPv4 Configuration II Protocol.
 
-  Copyright (c) 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
   (C) Copyright 2015 Hewlett Packard Enterprise Development LP<BR>
 
   This program and the accompanying materials
@@ -610,6 +610,13 @@ Ip4Config2SetDefaultIf (
 
   IpSb = IP4_SERVICE_FROM_IP4_CONFIG2_INSTANCE (Instance);
 
+  //
+  // Check whether the StationAddress/SubnetMask pair is valid.
+  //
+  if (!Ip4StationAddressValid (StationAddress, SubnetMask)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   Status = Ip4Config2SetDefaultAddr (IpSb, StationAddress, SubnetMask);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -738,8 +745,7 @@ Ip4Config2SetDnsServerWorker (
 
   for (NewIndex = 0; NewIndex < NewDnsCount; NewIndex++) {
     CopyMem (&DnsAddress, NewDns + NewIndex, sizeof (IP4_ADDR));
-
-    if (!NetIp4IsUnicast (NTOHL (DnsAddress), 0)) {
+    if (IP4_IS_UNSPECIFIED (NTOHL (DnsAddress)) || IP4_IS_LOCAL_BROADCAST (NTOHL (DnsAddress))) {
       //
       // The dns server address must be unicast.
       //
@@ -1144,7 +1150,9 @@ Ip4Config2SetPolicy (
   }
 
   if (NewPolicy == Instance->Policy) {
-     return EFI_ABORTED;
+    if (NewPolicy != Ip4Config2PolicyDhcp || Instance->DhcpSuccess) {
+      return EFI_ABORTED;
+    }
   } else {
     if (NewPolicy == Ip4Config2PolicyDhcp) {
       //
@@ -1254,6 +1262,15 @@ Ip4Config2SetMaunualAddress (
 
   NewAddress = *((EFI_IP4_CONFIG2_MANUAL_ADDRESS *) Data);
 
+  StationAddress = EFI_NTOHL (NewAddress.Address);
+  SubnetMask = EFI_NTOHL (NewAddress.SubnetMask);
+
+  //
+  // Check whether the StationAddress/SubnetMask pair is valid.
+  //
+  if (!Ip4StationAddressValid (StationAddress, SubnetMask)) {
+    return EFI_INVALID_PARAMETER;
+  }
   //
   // Store the new data, and init the DataItem status to EFI_NOT_READY because
   // we may have an asynchronous configuration process.
@@ -1345,14 +1362,15 @@ Ip4Config2SetGateway (
     return EFI_WRITE_PROTECTED;
   }
 
+  IpSb = IP4_SERVICE_FROM_IP4_CONFIG2_INSTANCE (Instance);
 
   NewGateway      = (EFI_IPv4_ADDRESS *) Data;
   NewGatewayCount = DataSize / sizeof (EFI_IPv4_ADDRESS);
   for (Index1 = 0; Index1 < NewGatewayCount; Index1++) {
     CopyMem (&Gateway, NewGateway + Index1, sizeof (IP4_ADDR));
-    
-    if (!NetIp4IsUnicast (NTOHL (Gateway), 0)) {
 
+    if ((IpSb->DefaultInterface->SubnetMask != 0) && 
+        !NetIp4IsUnicast (NTOHL (Gateway), IpSb->DefaultInterface->SubnetMask)) {
       return EFI_INVALID_PARAMETER;
     }
 
@@ -1363,7 +1381,6 @@ Ip4Config2SetGateway (
     }
   }
  
-  IpSb = IP4_SERVICE_FROM_IP4_CONFIG2_INSTANCE (Instance);
   DataItem = &Instance->DataItem[Ip4Config2DataTypeGateway];
   OldGateway      = DataItem->Data.Gateway;
   OldGatewayCount = DataItem->DataSize / sizeof (EFI_IPv4_ADDRESS);
@@ -1908,7 +1925,7 @@ Ip4Config2InitInstance (
   DataItem->SetData  = Ip4Config2SetPolicy;
   DataItem->Data.Ptr = &Instance->Policy;
   DataItem->DataSize = sizeof (Instance->Policy);
-  Instance->Policy   = Ip4Config2PolicyDhcp;
+  Instance->Policy   = Ip4Config2PolicyStatic;
   SET_DATA_ATTRIB (DataItem->Attribute, DATA_ATTRIB_SIZE_FIXED);
 
   DataItem           = &Instance->DataItem[Ip4Config2DataTypeManualAddress];
@@ -1939,6 +1956,8 @@ Ip4Config2InitInstance (
 
   //
   // Try to read the config data from NV variable.
+  // If not found, write initialized config data into NV variable 
+  // as a default config data.
   //
   Status = Ip4Config2ReadConfigData (IpSb->MacString, Instance);
   if (Status == EFI_NOT_FOUND) {
@@ -1948,21 +1967,7 @@ Ip4Config2InitInstance (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
-  //
-  // Try to set the configured parameter.
-  //
-  for (Index = Ip4Config2DataTypePolicy; Index < Ip4Config2DataTypeMaximum; Index++) {
-    DataItem = &IpSb->Ip4Config2Instance.DataItem[Index];
-    if (DataItem->Data.Ptr != NULL) {
-      DataItem->SetData (
-                  &IpSb->Ip4Config2Instance,
-                  DataItem->DataSize,
-                  DataItem->Data.Ptr
-                  );
-    }
-  }
-
+  
   Instance->Ip4Config2.SetData              = EfiIp4Config2SetData;
   Instance->Ip4Config2.GetData              = EfiIp4Config2GetData;
   Instance->Ip4Config2.RegisterDataNotify   = EfiIp4Config2RegisterDataNotify;
@@ -2027,5 +2032,55 @@ Ip4Config2CleanInstance (
   Ip4Config2FormUnload (Instance);
 
   RemoveEntryList (&Instance->Link);
+}
+
+/**
+  The event handle for IP4 auto reconfiguration. The original default
+  interface and route table will be removed as the default.
+
+  @param[in]  Context                The IP4 service binding instance.
+
+**/
+VOID
+EFIAPI
+Ip4AutoReconfigCallBackDpc (
+  IN VOID                   *Context
+  )
+{
+  IP4_SERVICE               *IpSb;
+
+  IpSb      = (IP4_SERVICE *) Context;
+  NET_CHECK_SIGNATURE (IpSb, IP4_SERVICE_SIGNATURE);
+
+  if (IpSb->State > IP4_SERVICE_UNSTARTED) {
+    IpSb->State = IP4_SERVICE_UNSTARTED;
+  }
+  
+  IpSb->Reconfig = TRUE;
+
+  Ip4StartAutoConfig (&IpSb->Ip4Config2Instance);
+
+  return ;
+}
+
+
+/**
+  Request Ip4AutoReconfigCallBackDpc as a DPC at TPL_CALLBACK.
+
+  @param Event     The event that is signalled.
+  @param Context   The IP4 service binding instance.
+
+**/
+VOID
+EFIAPI
+Ip4AutoReconfigCallBack (
+  IN EFI_EVENT              Event,
+  IN VOID                   *Context
+  )
+{
+  //
+  // Request Ip4AutoReconfigCallBackDpc as a DPC at TPL_CALLBACK
+  //
+  QueueDpc (TPL_CALLBACK, Ip4AutoReconfigCallBackDpc, Context);
 }
 

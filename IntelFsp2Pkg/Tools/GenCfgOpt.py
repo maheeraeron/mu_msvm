@@ -523,9 +523,16 @@ EndList
                                     if Match:
                                         IncludeFilePath = Match.group(1)
                                         IncludeFilePath = self.ExpandMacros(IncludeFilePath)
-                                        try:
-                                            IncludeDsc  = open(IncludeFilePath, "r")
-                                        except:
+                                        PackagesPath = os.getenv("PACKAGES_PATH")
+                                        if PackagesPath:
+                                          for PackagePath in PackagesPath.split(os.pathsep):
+                                              IncludeFilePathAbs = os.path.join(os.path.normpath(PackagePath), os.path.normpath(IncludeFilePath))
+                                              if os.path.exists(IncludeFilePathAbs):
+                                                  IncludeDsc  = open(IncludeFilePathAbs, "r")
+                                                  break
+                                        else:
+                                          IncludeDsc  = open(IncludeFilePath, "r")
+                                        if IncludeDsc == None:
                                             print("ERROR: Cannot open file '%s'" % IncludeFilePath)
                                             raise SystemExit
                                         NewDscLines = IncludeDsc.readlines()
@@ -875,6 +882,9 @@ EndList
         IsArray = False
         if Length in [1,2,4,8]:
             Type = "UINT%d" % (Length * 8)
+            if Name.startswith("UnusedUpdSpace") and Length != 1:
+                IsArray = True
+                Type = "UINT8"
         else:
             IsArray = True
             Type = "UINT8"
@@ -1129,7 +1139,7 @@ EndList
             HeaderFd.write("#ifndef __%s__\n"   % FileName)
             HeaderFd.write("#define __%s__\n\n" % FileName)
             HeaderFd.write("#include <%s>\n\n" % HeaderFileName)
-            HeaderFd.write("#pragma pack(push, 1)\n\n")
+            HeaderFd.write("#pragma pack(1)\n\n")
 
             Export = False
             for Line in IncLines:
@@ -1177,7 +1187,7 @@ EndList
                 for Item in range(len(StructStart)):
                     if Index >= StructStartWithComment[Item] and Index <= StructEnd[Item]:
                         HeaderFd.write (Line)
-            HeaderFd.write("#pragma pack(pop)\n\n")
+            HeaderFd.write("#pragma pack()\n\n")
             HeaderFd.write("#endif\n")
             HeaderFd.close()
 
@@ -1188,7 +1198,7 @@ EndList
         HeaderFd.write("#ifndef __%s__\n"   % FileName)
         HeaderFd.write("#define __%s__\n\n" % FileName)
         HeaderFd.write("#include <FspEas.h>\n\n")
-        HeaderFd.write("#pragma pack(push, 1)\n\n")
+        HeaderFd.write("#pragma pack(1)\n\n")
 
         for item in range(len(UpdRegionCheck)):
             Index = 0
@@ -1222,7 +1232,7 @@ EndList
                 for Item in range(len(StructStart)):
                     if Index >= StructStartWithComment[Item] and Index <= StructEnd[Item]:
                         HeaderFd.write (Line)
-        HeaderFd.write("#pragma pack(pop)\n\n")
+        HeaderFd.write("#pragma pack()\n\n")
         HeaderFd.write("#endif\n")
         HeaderFd.close()
 
