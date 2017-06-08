@@ -41,13 +41,12 @@ Author:
 #include <EfiNt.h>
 
 //
-// TODO: The release version values and release date should be automated
-//       to reflect the current version and date.
+// TODO: Could we automate the release version from current UEFI version?
 //
 #define MAJOR_RELEASE_VERSION 2
-#define MINOR_RELEASE_VERSION 0
+#define MINOR_RELEASE_VERSION 5
 static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v2.5";
-static CHAR8 RELEASE_DATE_STRING[] = __DATE__;
+static CHAR8 RELEASE_DATE_STRING[] = "mm/dd/yyyy";
 
 //
 // Complying with SMBIOS v2.4 specification.
@@ -225,6 +224,130 @@ Return Value:
 }
 
 
+void
+DateToSmbiosDate(
+    char *Source,
+    size_t SourceSizeInBytes,
+    char *Dest,
+    size_t DestSizeInBytes
+    )
+/*++
+
+Routine Description:
+
+    Converts the compiler __DATE__ macro date format string to an SMBIOS date format string.
+
+Arguments:
+
+    Source - Pointer to the source date string.
+
+    SourceSizeInBytes - Size of the source string buffer.
+
+    Dest - Pointer to the destination date string.
+
+    DestSizeInBytes - Size of the destination string buffer.
+
+Return Value:
+
+    none
+
+Notes:
+
+    If either pointer is null or sizes are not big enough no modification to the
+    Dest buffer will be made.
+
+--*/
+{
+    // Source format: "Mmm dd yyyy" e.g. "Jun  8 2017" or "Feb 23 1956"
+    // Output format: "mm/dd/yyyy"  e.g. "06/08/2017"  or "05/17/1956"
+
+    char smbiosDate[sizeof("mm/dd/yyyy")];
+
+    if (SourceSizeInBytes < sizeof("Mmm dd yyyy") ||
+        DestSizeInBytes < ARRAY_SIZE(smbiosDate))
+    {
+        return;
+    }
+
+    // Month
+    smbiosDate[0] = '0';
+    switch (Source[2])
+    {
+    case 'n':    // Jan Jun
+        if (Source[1] == 'a')
+        {
+            smbiosDate[1] = '1';
+        }
+        else
+        {
+            smbiosDate[1] = '6';
+        }
+        break;
+    case 'b':    // Feb
+        smbiosDate[1] = '2';
+        break;
+    case 'r':    // Mar Apr
+        if (Source[1] == 'a')
+        {
+            smbiosDate[1] = '3';
+        }
+        else
+        {
+            smbiosDate[1] = '4';
+        }
+        break;
+    case 'y':    // May
+        smbiosDate[1] = '5';
+        break;
+    case 'l':    // Jul
+        smbiosDate[1] = '7';
+        break;
+    case 'g':    // Aug
+        smbiosDate[1] = '8';
+        break;
+    case 'p':    // Sep
+        smbiosDate[1] = '9';
+        break;
+    case 't':    // Oct
+        smbiosDate[0] = '1';
+        smbiosDate[1] = '0';
+        break;
+    case 'v':    // Nov
+        smbiosDate[0] = '1';
+        smbiosDate[1] = '1';
+        break;
+    default:    // Dec
+        smbiosDate[0] = '1';
+        smbiosDate[1] = '2';
+        break;
+    }
+
+    // day
+    smbiosDate[2] = '/';
+    if (Source[4] == ' ')
+    {
+        smbiosDate[3] = '0';
+    }
+    else
+    {
+        smbiosDate[3] = Source[4];
+    }
+    smbiosDate[4] = Source[5];
+
+
+    // year
+    smbiosDate[5] = '/';
+    smbiosDate[6] = Source[7];
+    smbiosDate[7] = Source[8];
+    smbiosDate[8] = Source[9];
+    smbiosDate[9] = Source[10];
+
+    smbiosDate[10] = 0;
+
+    (void)AsciiStrCpyS(Dest, DestSizeInBytes, smbiosDate);
+}
+
+
 VOID
 AddBiosInformation(
     _In_ EFI_SMBIOS_PROTOCOL* Smbios
@@ -329,6 +452,10 @@ Return Value:
             0xFF, // no field upgradeable embedded controller firmware
         }
     };
+
+
+    // Fill in build date as release date.
+    DateToSmbiosDate(__DATE__, sizeof(__DATE__), strings[2], sizeof(RELEASE_DATE_STRING));
 
     //
     // Add the structure to the SMBIOS table. Error is not fatal and ignored.
