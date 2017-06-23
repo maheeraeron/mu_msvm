@@ -60,11 +60,14 @@ Return Value:
     memcpy(&facp->HypervisorVendorIdentity, "MsHyperV", 8);
 
     //
-    // Set S0 Power savings bit and power profile if battery are enabled
+    // Special case if battery is enabled
     //
     if (GetVirtualBatteryEnabled())
     {
-        facp->Flags |= EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE;
+        //
+        // Set the profile to Mobile but don't set EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE flag.
+        // EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE causes negative side-effects in a VM.
+        //
         facp->PreferredPmProfile = EFI_ACPI_6_1_PM_PROFILE_MOBILE;
     }
 
