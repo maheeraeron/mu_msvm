@@ -963,7 +963,7 @@ Scope(\_SB)
         // LSIM - Generic Method for Child _LSIs.
         //
         // Arg0: Integer Device Index
-        Method (LSIM, 1, Serialized, 0, {BuffObj})
+        Method (LSIM, 1, Serialized, 0, {PkgObj})
         {
             Acquire (NMTX, 0xFFFF)
 
@@ -977,12 +977,18 @@ Scope(\_SB)
             // Copy the contents of the method I/O Buffer.
             //
             Name (RBUF, Buffer(MBFL) {})
-            Multiply (MBFL, 8, Local0)
             Store (MBUF, RBUF)
-            CreateField (RBUF, 0, Local0, RBFF)
 
             Release (NMTX)
-            Return (RBFF)
+
+            CreateDWordField (RBUF, 0, DWD0)
+            CreateDWordField (RBUF, 4, DWD1)
+            CreateDWordField (RBUF, 8, DWD2)
+            Name (PKGI, Package(3) {0, 0, 0})
+            Store (DWD0, Index(PKGI, 0))
+            Store (DWD1, Index(PKGI, 1))
+            Store (DWD2, Index(PKGI, 2))
+            Return (PKGI)
         }
 
         // LSRM - Generic Method for Child _LSRs.
@@ -990,7 +996,7 @@ Scope(\_SB)
         // Arg0: Integer(DWORD) Byte Offset.
         // Arg1: Integer(DWORD) Tranfer Byte Length.
         // Arg2: Integer Device Index.
-        Method (LSRM, 3, Serialized, 0, {BuffObj})
+        Method (LSRM, 3, Serialized, 0, {PkgObj})
         {
             //
             // Pack up the arguments.
@@ -1023,10 +1029,16 @@ Scope(\_SB)
             Name (RBUF, Buffer(MBFL) {})
             Multiply (MBFL, 8, Local0)
             Store (MBUF, RBUF)
-            CreateField (RBUF, 0, Local0, RBFF)
 
             Release (NMTX)
-            Return (RBFF)
+
+            CreateDWordField (RBUF, 0, DWD0) 
+            Store (Subtract(Local0, 32), Local1) // size of the data buffer in bits
+            CreateField (RBUF, 32, Local1, LBLD) // label data buffer
+            Name (PKGR, Package(2) {0, Buffer(){0}})
+            Store (DWD0, Index (PKGR, 0))
+            Store (LBLD, Index (PKGR, 1))
+            Return (PKGR)
         }
 
         //
@@ -1043,12 +1055,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1062,12 +1074,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1081,12 +1093,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1100,12 +1112,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1119,12 +1131,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1138,12 +1150,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1157,12 +1169,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1176,12 +1188,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1195,12 +1207,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1214,12 +1226,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1233,12 +1245,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1252,12 +1264,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1271,12 +1283,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1290,12 +1302,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1309,12 +1321,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1328,12 +1340,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1347,12 +1359,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1366,12 +1378,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1385,12 +1397,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1404,12 +1416,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1423,12 +1435,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1442,12 +1454,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1461,12 +1473,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1480,12 +1492,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1499,12 +1511,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1518,12 +1530,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1537,12 +1549,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1556,12 +1568,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1575,12 +1587,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1594,12 +1606,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1613,12 +1625,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1632,12 +1644,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1651,12 +1663,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1670,12 +1682,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1689,12 +1701,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1708,12 +1720,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1727,12 +1739,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1746,12 +1758,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1765,12 +1777,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1784,12 +1796,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1803,12 +1815,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1822,12 +1834,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1841,12 +1853,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1860,12 +1872,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1879,12 +1891,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1898,12 +1910,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1917,12 +1929,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1936,12 +1948,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1955,12 +1967,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1974,12 +1986,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -1993,12 +2005,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2012,12 +2024,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2031,12 +2043,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2050,12 +2062,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2069,12 +2081,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2088,12 +2100,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2107,12 +2119,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2126,12 +2138,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2145,12 +2157,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2164,12 +2176,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2183,12 +2195,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2202,12 +2214,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2221,12 +2233,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2240,12 +2252,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2259,12 +2271,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2278,12 +2290,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2297,12 +2309,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2316,12 +2328,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2335,12 +2347,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2354,12 +2366,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2373,12 +2385,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2392,12 +2404,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2411,12 +2423,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2430,12 +2442,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2449,12 +2461,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2468,12 +2480,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2487,12 +2499,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2506,12 +2518,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2525,12 +2537,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2544,12 +2556,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2563,12 +2575,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2582,12 +2594,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2601,12 +2613,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2620,12 +2632,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2639,12 +2651,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2658,12 +2670,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2677,12 +2689,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2696,12 +2708,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2715,12 +2727,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2734,12 +2746,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2753,12 +2765,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2772,12 +2784,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2791,12 +2803,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2810,12 +2822,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2829,12 +2841,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2848,12 +2860,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2867,12 +2879,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2886,12 +2898,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2905,12 +2917,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2924,12 +2936,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2943,12 +2955,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2962,12 +2974,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -2981,12 +2993,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3000,12 +3012,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3019,12 +3031,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3038,12 +3050,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3057,12 +3069,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3076,12 +3088,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3095,12 +3107,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3114,12 +3126,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3133,12 +3145,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3152,12 +3164,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3171,12 +3183,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3190,12 +3202,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3209,12 +3221,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3228,12 +3240,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3247,12 +3259,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3266,12 +3278,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3285,12 +3297,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3304,12 +3316,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3323,12 +3335,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3342,12 +3354,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3361,12 +3373,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3380,12 +3392,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3399,12 +3411,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3418,12 +3430,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3437,12 +3449,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
@@ -3456,12 +3468,12 @@ Scope(\_SB)
                 Return (CDSF(Arg0, Arg1, Arg2, Arg3, _ADR))
             }
 
-            Function (_LSI, {BuffObj})
+            Function (_LSI, {PkgObj})
             {
                 Return (LSIM(_ADR))
             }
 
-            Function (_LSR, {BuffObj}, {IntObj, IntObj})
+            Function (_LSR, {PkgObj}, {IntObj, IntObj})
             {
                 Return (LSRM(Arg0, Arg1, _ADR))
             }
