@@ -79,6 +79,7 @@ typedef struct _EMCL_CONTEXT
     LIST_ENTRY OutgoingQueue;
 
     BOOLEAN IsRunning;
+    BOOLEAN InterruptDeferred;
 
 } EMCL_CONTEXT;
 
@@ -239,7 +240,7 @@ Cleanup:
 
 
 UINT32
-EmclGpaDirectHeaderSize(
+EmclGpaRangesSize(
     __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
     __in_range(>, 0) UINT32 ExternalBufferCount
     )
@@ -247,25 +248,24 @@ EmclGpaDirectHeaderSize(
 
 Routine Description:
 
-    This routine calculates the header size of a GPA Direct packet.
+    This routine calculates the size of a series of GPA_RANGE structures.
 
 Arguments:
 
-    ExternalBuffers - Array of buffers to be sent as part of a GPA direct
-        packet.
+    ExternalBuffers - Array of buffers to be sent.
 
     ExternalBufferCount - Number of buffers in ExternalBuffers.
 
 Return Value:
 
-    Size of packet header.
+    Size of the GPA_RANGE structures.
 
 --*/
 {
     UINT32 headerSize;
     UINT32 index;
 
-    headerSize = OFFSET_OF(VMDATA_GPA_DIRECT, Range);
+    headerSize = 0;
     for (index = 0; index < ExternalBufferCount; ++index)
     {
         headerSize += VARIABLE_STRUCT_SIZE(GPA_RANGE,
@@ -275,6 +275,57 @@ Return Value:
     }
 
     return headerSize;
+}
+
+
+VOID
+EmclpInitializeGpaRanges(
+    __inout GPA_RANGE* Range,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in_range(>, 0) UINT32 ExternalBufferCount
+    )
+/*++
+
+Routine Description:
+
+    Initializes a set of GPA ranges from a set of buffers.
+
+Description:
+
+    Range - A pointer to the first range. This buffer must be at least
+        EmclGpaRangesSize() bytes in size.
+
+    ExternalBuffers - A pointer to an array of external buffers.
+
+    ExternalBufferCount - The number of external buffers.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    UINT32 index;
+    UINT32 pfnCount;
+    UINT32 pfnIndex;
+
+    for (index = 0; index < ExternalBufferCount; ++index)
+    {
+        Range->ByteCount = ExternalBuffers[index].BufferSize;
+        Range->ByteOffset = (UINT32)((UINT_PTR)ExternalBuffers[index].Buffer & EFI_PAGE_MASK);
+        pfnCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(
+            ExternalBuffers[index].Buffer,
+            ExternalBuffers[index].BufferSize);
+
+        for (pfnIndex = 0; pfnIndex < pfnCount; ++pfnIndex)
+        {
+            Range->PfnArray[pfnIndex] =
+                ((UINT_PTR)ExternalBuffers[index].Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
+        }
+
+        Range = (GPA_RANGE*)((UINT_PTR)Range +
+            VARIABLE_STRUCT_SIZE(GPA_RANGE, PfnArray, pfnCount));
+    }
 }
 
 
@@ -320,13 +371,10 @@ Return Value:
 --*/
 {
     VMDATA_GPA_DIRECT *header;
-    UINT32 index;
     UINT32 headerSize;
-    GPA_RANGE *currentRange;
-    UINT32 pfnCount;
-    UINT32 pfnIndex;
 
-    headerSize = EmclGpaDirectHeaderSize(ExternalBuffers, ExternalBufferCount);
+    headerSize = OFFSET_OF(VMDATA_GPA_DIRECT, Range) +
+                 EmclGpaRangesSize(ExternalBuffers, ExternalBufferCount);
 
     header = (VMDATA_GPA_DIRECT*)OutputBuffer;
     header->Descriptor.Type = VmbusPacketTypeDataUsingGpaDirect;
@@ -342,30 +390,7 @@ Return Value:
 
     header->Descriptor.TransactionId = TransactionId;
     header->RangeCount = ExternalBufferCount;
-    currentRange = header->Range;
-
-    //
-    // Fill in PFNs for each external range.
-    //
-
-    for (index = 0; index < ExternalBufferCount; ++index)
-    {
-        currentRange->ByteCount = ExternalBuffers[index].BufferSize;
-        currentRange->ByteOffset = (UINT32)((UINT_PTR)ExternalBuffers[index].Buffer & EFI_PAGE_MASK);
-        pfnCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(
-            ExternalBuffers[index].Buffer,
-            ExternalBuffers[index].BufferSize);
-
-        for (pfnIndex = 0; pfnIndex < pfnCount; ++pfnIndex)
-        {
-            currentRange->PfnArray[pfnIndex] =
-                ((UINT_PTR)ExternalBuffers[index].Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
-        }
-
-        currentRange = (GPA_RANGE*)((UINT_PTR)currentRange +
-            VARIABLE_STRUCT_SIZE(GPA_RANGE, PfnArray, pfnCount));
-    }
-
+    EmclpInitializeGpaRanges(header->Range, ExternalBuffers, ExternalBufferCount);
     CopyMem((UINT8*)OutputBuffer + headerSize, InlineBuffer, InlineBufferLength);
 }
 
@@ -406,8 +431,10 @@ EmclpSendPacket(
     __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
     __in UINT32 ExternalBufferCount,
     __in VMBUS_PACKET_TYPE PacketType,
+    __in VMPIPE_PROTOCOL_MESSAGE_TYPE PipePacketType,
     __in UINT64 TransactionId,
-    __in BOOLEAN RequestCompletion
+    __in BOOLEAN RequestCompletion,
+    __in BOOLEAN DeferInterrupt
     )
 /*++
 
@@ -432,10 +459,16 @@ Arguments:
 
     PacketType - Type of packet to be sent.
 
+    PipePacketType - Type of pipe packet to be sent, if this is a pipe.
+
     TransactionId - Transaction ID of packet to be sent.
 
     RequestCompletion - Whether to request a completion packet from the opposite
         endpoint.
+
+    DeferInterrupt - If TRUE, don't send an interrupt with this packet even
+        if one is necessary to notify the host. Instead, defer it to the
+        next packet that is sent.
 
 Return Value:
 
@@ -457,8 +490,8 @@ Return Value:
     queuePacket = FALSE;
 
     packetSize = (ExternalBufferCount == 0 ?
-                 sizeof(VMPACKET_DESCRIPTOR) :
-                 EmclGpaDirectHeaderSize(ExternalBuffers, ExternalBufferCount)) +
+                  sizeof(VMPACKET_DESCRIPTOR) :
+                  OFFSET_OF(VMDATA_GPA_DIRECT, Range) + EmclGpaRangesSize(ExternalBuffers, ExternalBufferCount)) +
                  InlineBufferLength;
 
     if (Context->IsPipe)
@@ -525,7 +558,7 @@ Return Value:
         {
             pipeHeader = (VMPIPE_PROTOCOL_HEADER*)(header + 1);
             pipeHeader->DataSize = InlineBufferLength;
-            pipeHeader->PacketType = VmPipeMessageData;
+            pipeHeader->PacketType = PipePacketType;
             CopyMem(pipeHeader + 1, InlineBuffer, InlineBufferLength);
         }
         else
@@ -555,17 +588,28 @@ Return Value:
                                         packetBuffer,
                                         packetSize);
 
-    if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+    if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT || Context->InterruptDeferred)
     {
-        Context->VmbusProtocol->SendInterrupt(Context->VmbusProtocol);
+        if (!DeferInterrupt)
+        {
+            Context->VmbusProtocol->SendInterrupt(Context->VmbusProtocol);
+        }
+
+        Context->InterruptDeferred = DeferInterrupt;
     }
-    else if (ntStatus == STATUS_BUFFER_OVERFLOW)
+
+    if (ntStatus == STATUS_BUFFER_OVERFLOW)
     {
         //
         // The packet should be queued to send later.
         //
         queuePacket = TRUE;
         InsertTailList(&Context->OutgoingQueue, &outgoingPacket->QueueLink);
+        if (Context->InterruptDeferred)
+        {
+            Context->VmbusProtocol->SendInterrupt(Context->VmbusProtocol);
+            Context->InterruptDeferred = FALSE;
+        }
     }
     else if (!NT_SUCCESS(ntStatus))
     {
@@ -811,6 +855,8 @@ Return Value:
     tpl = gBS->RaiseTPL(TPL_EMCL);
     while (!IsListEmpty(&context->OutgoingQueue))
     {
+        ASSERT(!context->InterruptDeferred);
+
         entry = GetFirstNode(&context->OutgoingQueue);
         outgoingPacket = BASE_CR(entry, EMCL_OUTGOING_PACKET, QueueLink);
 
@@ -822,7 +868,8 @@ Return Value:
         {
             context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
         }
-        else if (!NT_SUCCESS(status))
+
+        if (!NT_SUCCESS(status))
         {
             break;
         }
@@ -1070,6 +1117,135 @@ Return Value:
 
 EFI_STATUS
 EFIAPI
+EmclCreateGpaRange(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in UINT32 Handle,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount,
+    __in BOOLEAN Writable
+    )
+/*++
+
+Routine Description:
+
+    Create a pipe GPA range for use with vRDMA.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    Handle - The handle value to use for this GPA range.
+
+    ExternalBuffers - Pointer to a list of external buffers.
+
+    ExternalBufferCount - The number of external buffers.
+
+    Writable - If TRUE, the host should be allowed to write to
+        this range.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+    VMPIPE_SETUP_GPA_DIRECT_BODY* setupMessage;
+    UINT32 setupMessageSize;
+    EFI_STATUS status;
+
+    setupMessage = NULL;
+    context = CR(This,
+                EMCL_CONTEXT,
+                EmclProtocol,
+                EMCL_CONTEXT_SIGNATURE);
+
+    setupMessageSize = OFFSET_OF(VMPIPE_SETUP_GPA_DIRECT_BODY, Range) +
+                       EmclGpaRangesSize(ExternalBuffers, ExternalBufferCount);
+
+    setupMessage = AllocateZeroPool(setupMessageSize);
+    if (setupMessage == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    setupMessage->Handle = Handle;
+    setupMessage->IsWritable = Writable;
+    setupMessage->RangeCount = ExternalBufferCount;
+    EmclpInitializeGpaRanges(setupMessage->Range, ExternalBuffers, ExternalBufferCount);
+
+    status = EmclpSendPacket(context,
+                             setupMessage,
+                             setupMessageSize,
+                             NULL,
+                             0,
+                             VmbusPacketTypeDataInBand,
+                             VmPipeMessageSetupGpaDirect,
+                             0,
+                             FALSE,
+                             TRUE);
+
+Cleanup:
+    if (setupMessage != NULL)
+    {
+        FreePool(setupMessage);
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclDestroyGpaRange(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in UINT32 Handle
+    )
+/*++
+
+Routine Description:
+
+    Destroys a pipe GPA range created with EmclCreateGpaRange.
+
+Arguments:
+
+    This - Pointer to EMCL protocol.
+
+    Handle - The handle value that was used when establishing the
+        GPA range.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+    VMPIPE_TEARDOWN_GPA_DIRECT_BODY teardownMessage;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    ZeroMem(&teardownMessage, sizeof(teardownMessage));
+    teardownMessage.Handle = Handle;
+    return EmclpSendPacket(context,
+                           &teardownMessage,
+                           sizeof(teardownMessage),
+                           NULL,
+                           0,
+                           VmbusPacketTypeDataInBand,
+                           VmPipeMessageTeardownGpaDirect,
+                           0,
+                           FALSE,
+                           TRUE);
+}
+
+
+EFI_STATUS
+EFIAPI
 EmclSendPacket(
     __in EFI_EMCL_PROTOCOL *This,
     __in_bcount(InlineBufferLength) VOID *InlineBuffer,
@@ -1174,8 +1350,10 @@ Return Value:
                              ExternalBufferCount,
                              (ExternalBuffers == 0 ? VmbusPacketTypeDataInBand :
                              VmbusPacketTypeDataUsingGpaDirect),
+                             VmPipeMessageData,
                              (UINT64)completionEntry,
-                             completionEntry != NULL);
+                             completionEntry != NULL,
+                             FALSE);
 
 Cleanup:
     if (EFI_ERROR(status))
@@ -1245,7 +1423,9 @@ Return Value:
                                  NULL,
                                  0,
                                  VmbusPacketTypeCompletion,
+                                 0,
                                  incomingPacket->Descriptor.TransactionId,
+                                 FALSE,
                                  FALSE);
     }
     else
@@ -1451,6 +1631,8 @@ Return Value:
     Context->EmclProtocol.SetReceiveCallback = EmclSetReceiveCallback;
     Context->EmclProtocol.CreateGpadl = EmclCreateGpadl;
     Context->EmclProtocol.DestroyGpadl = EmclDestroyGpadl;
+    Context->EmclProtocol.CreateGpaRange = EmclCreateGpaRange;
+    Context->EmclProtocol.DestroyGpaRange = EmclDestroyGpaRange;
     InitializeListHead(&Context->CompletionEntries);
     InitializeListHead(&Context->OutgoingQueue);
 }

@@ -52,6 +52,9 @@ Environment:
 #define GetThisFileInformation(EfiFileProtocol) (&(((PVMBFS_FILE)(EfiFileProtocol))->FileInformation))
 #define GetThisEfiFileInfo(EfiFileProtocol) (&(((PVMBFS_FILE)(EfiFileProtocol))->EfiFileInfo))
 
+// Choose a maximum size that is known to fit in a VMBus pipe message.
+#define VMBFS_MAXIMUM_RDMA_SIZE (7 * 1024 * 1024)
+
 typedef struct _FILESYSTEM_INFORMATION {
     EFI_DEVICE_PATH_PROTOCOL *DevicePathProtocol;
     EFI_EMCL_PROTOCOL *EmclProtocol;
@@ -70,8 +73,10 @@ typedef struct _VMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL {
 
 typedef struct _FILE_INFORMATION {
     BOOLEAN IsDirectory;
+    BOOLEAN RdmaCapable;
     PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL FileSystem;
     UINT64 FileOffset;
+    SIZE_T FilePathLength;
 } FILE_INFORMATION, *PFILE_INFORMATION;
 
 typedef struct _VMBFS_FILE {
@@ -135,7 +140,11 @@ EFI_STATUS
 VmbfsSendReceivePacket (
     __in PFILESYSTEM_INFORMATION FileSystemInformation,
     __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINTN BufferLength
+    __in UINTN BufferLength,
+    __in UINT32 GpaRangeHandle,
+    __in_bcount(ExternalBufferLength) VOID *ExternalBuffer,
+    __in UINTN ExternalBufferLength,
+    __in BOOLEAN IsWritable
     );
 
 EFI_STATUS

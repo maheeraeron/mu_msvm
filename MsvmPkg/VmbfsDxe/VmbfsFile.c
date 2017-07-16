@@ -117,8 +117,12 @@ Return Value:
 EFI_STATUS
 VmbfsSendReceivePacket (
     __in PFILESYSTEM_INFORMATION FileSystemInformation,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINTN BufferLength
+    __in_bcount(BufferLength) VOID *Buffer,
+    __in UINTN BufferLength,
+    __in UINT32 GpaRangeHandle,
+    __in_bcount(ExternalBufferLength) VOID *ExternalBuffer,
+    __in UINTN ExternalBufferLength,
+    __in BOOLEAN IsWritable
     )
 
 /*++
@@ -136,6 +140,16 @@ Arguments:
 
     BufferLength - Length of the packet to send.
 
+    GpaRangeHandle - If there is an external buffer, use this handle
+        value to establish a GPA range while the transaction is in
+        progress.
+
+    ExternalBuffer - A pointer to the external data for this transaction.
+
+    ExternalBufferLength - The length of the external buffer in bytes.
+
+    IsWritable - If TRUE, the external buffer may be written by the host.
+
 Return Value:
 
     EFI_SUCCESS on success.
@@ -145,10 +159,33 @@ Return Value:
 --*/
 
 {
+    EFI_EXTERNAL_BUFFER externalBuffers[1];
+    BOOLEAN createdGpaRange;
     EFI_STATUS status;
     UINTN eventIndex;
 
+    createdGpaRange = FALSE;
+
     AcquireSpinLock(&FileSystemInformation->VmbusIoLock);
+
+    if (ExternalBufferLength > 0)
+    {
+        externalBuffers[0].Buffer = ExternalBuffer;
+        externalBuffers[0].BufferSize = (UINT32)ExternalBufferLength;
+        status = FileSystemInformation->EmclProtocol->CreateGpaRange(
+                            FileSystemInformation->EmclProtocol,
+                            GpaRangeHandle,
+                            externalBuffers,
+                            1,
+                            IsWritable);
+
+        if (EFI_ERROR(status))
+        {
+            goto Cleanup;
+        }
+
+        createdGpaRange = TRUE;
+    }
 
     status = FileSystemInformation->EmclProtocol->SendPacket(
                             FileSystemInformation->EmclProtocol,
@@ -171,10 +208,17 @@ Return Value:
         goto Cleanup;
     }
 
-    ReleaseSpinLock(&FileSystemInformation->VmbusIoLock);
-
     status = EFI_SUCCESS;
+
 Cleanup:
+    if (createdGpaRange)
+    {
+        FileSystemInformation->EmclProtocol->DestroyGpaRange(
+                FileSystemInformation->EmclProtocol,
+                GpaRangeHandle);
+    }
+
+    ReleaseSpinLock(&FileSystemInformation->VmbusIoLock);
     return status;
 }
 
@@ -206,7 +250,7 @@ Arguments:
     NewHandle - A pointer to the location to return the opened handle for the new file.
 
     FileNameThe - Null-terminated string of the name of the file to be opened.
-        The file name may contain the following path modifiers: “\”, “.”, and “..”.
+        The file name may contain the following path modifiers: "\", ".", and "..".
 
     OpenMode - The mode to open the file. The only valid combinations that the file
         may be opened with are: Read, Read/Write, or Create/Read/Write.
@@ -344,7 +388,11 @@ Return Value:
 
     status = VmbfsSendReceivePacket(GetFileSystemInformation(parentFileInformation),
                                     getFileInfoMessage,
-                                    getFileInfoMessageSize);
+                                    getFileInfoMessageSize,
+                                    0,
+                                    NULL,
+                                    0,
+                                    FALSE);
 
     if (EFI_ERROR(status))
     {
@@ -385,13 +433,18 @@ Return Value:
         efiFileInfo->Attribute |= EFI_FILE_DIRECTORY;
     }
 
+    fileInformation->RdmaCapable = ((getFileInfoResponseMessage->Flags & VMBFS_GET_FILE_INFO_FLAG_RDMA_CAPABLE) != 0);
+
     fileInformation->FileSystem = parentFileInformation->FileSystem;
+
+    fileInformation->FilePathLength = filePathLengthInBytes / sizeof(WCHAR);
 
     CopyMem(&allocatedFileProtocol->EfiFileProtocol, This, sizeof(allocatedFileProtocol->EfiFileProtocol));
 
     fileInformation->FileSystem->FileSystemInformation.ReferenceCount++;
 
     *NewHandle = &allocatedFileProtocol->EfiFileProtocol;
+    status = EFI_SUCCESS;
 
 Cleanup:
     if (EFI_ERROR(status))
@@ -448,6 +501,260 @@ Return Value:
 
 
 EFI_STATUS
+VmbfsErrorToEfiError(
+    UINT32 Error
+    )
+/*++
+
+Routine Description:
+
+    Converts a Vmbfs error to an EFI error.
+
+Arguments:
+
+    Error - A Vmbfs error returned by the host.
+
+Return Value:
+
+    The corresponding EFI error code.
+
+--*/
+{
+    switch (Error)
+    {
+    case VmbfsFileSuccess:
+        return EFI_SUCCESS;
+
+    case VmbfsFileNotFound:
+        return EFI_NOT_FOUND;
+
+    case VmbfsFileEndOfFile:
+        return EFI_END_OF_FILE;
+
+    default:
+        return EFI_DEVICE_ERROR;
+    }
+}
+
+
+EFI_STATUS
+VmbfsReadPayload(
+    _In_ VMBFS_FILE *File,
+    _In_ UINT64 FileOffset,
+    _Out_writes_bytes_to_(BufferSize, *BytesRead) VOID *Buffer,
+    UINTN BufferSize,
+    _Out_ UINTN *BytesRead
+    )
+/*++
+
+Routine Description:
+
+    Issues a single file read request to the host and copies the results
+    into the provided buffer.
+
+Arguments:
+
+    File - A pointer to the file.
+
+    FileOffset - The offset within the file at which to read.
+
+    Buffer - A pointer to the buffer to read into.
+
+    BufferSize - The size of the buffer in bytes.
+
+    BytesRead - On return, the number of bytes of the file that were
+        successfully read into the buffer.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    UINTN bytesReceived;
+    UINTN bytesRequested;
+    PVMBFS_MESSAGE_READ_FILE readFileMessage;
+    PVMBFS_MESSAGE_READ_FILE_RESPONSE readFileResponseMessage;
+    EFI_STATUS status;
+
+    //
+    // Ensure the path will fit in the request message.
+    //
+
+    if (File->FileInformation.FilePathLength * sizeof(WCHAR) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
+    {
+        status = EFI_BUFFER_TOO_SMALL;
+        goto Cleanup;
+    }
+
+    bytesRequested = MIN(BufferSize, VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileResponseMessage));
+    readFileMessage = GetPacketBuffer(&File->FileInformation, VMBFS_MESSAGE_READ_FILE);
+    ZeroMem(readFileMessage, sizeof(*readFileMessage));
+    readFileMessage->Header.Type = VmbfsMessageTypeReadFile;
+    readFileMessage->Offset = FileOffset;
+    readFileMessage->ByteCount = (UINT32)bytesRequested;
+    CopyMem(readFileMessage->FilePath,
+            File->EfiFileInfo.FileName,
+            File->FileInformation.FilePathLength * sizeof(WCHAR));
+
+    status = VmbfsSendReceivePacket(GetFileSystemInformation(&File->FileInformation),
+                                    readFileMessage,
+                                    sizeof(*readFileMessage) + File->FileInformation.FilePathLength * sizeof(WCHAR),
+                                    0,
+                                    NULL,
+                                    0,
+                                    FALSE);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    readFileResponseMessage = GetPacketBuffer(&File->FileInformation, VMBFS_MESSAGE_READ_FILE_RESPONSE);
+    bytesReceived = GetPacketSize(&File->FileInformation);
+
+    if (bytesReceived < sizeof(*readFileResponseMessage) ||
+        readFileResponseMessage->Header.Type != VmbfsMessageTypeReadFileResponse)
+    {
+        VMBFS_BAD_HOST;
+        status = EFI_DEVICE_ERROR;
+        goto Cleanup;
+    }
+
+    status = VmbfsErrorToEfiError(readFileResponseMessage->Status);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    bytesReceived -= sizeof(VMBFS_MESSAGE_READ_FILE_RESPONSE);
+    if (bytesReceived > bytesRequested)
+    {
+        VMBFS_BAD_HOST;
+        status = EFI_DEVICE_ERROR;
+        goto Cleanup;
+    }
+
+    CopyMem((PUINT8)Buffer,
+            readFileResponseMessage->Payload,
+            bytesReceived);
+
+    *BytesRead = bytesReceived;
+    status = EFI_SUCCESS;
+
+Cleanup:
+    return status;
+}
+
+
+EFI_STATUS
+VmbfsReadRdma(
+    _In_ VMBFS_FILE *File,
+    _In_ UINT64 FileOffset,
+    _Out_writes_bytes_to_(BufferSize, *BytesRead) VOID *Buffer,
+    UINTN BufferSize,
+    _Out_ UINTN *BytesRead
+    )
+/*++
+
+Routine Description:
+
+    Issues a single file read request to the host, using vRDMA to
+    allow the host to directly write the result to guest memory
+    without copying through the ring.
+
+Arguments:
+
+    File - A pointer to the file.
+
+    FileOffset - The offset within the file at which to read.
+
+    Buffer - A pointer to the buffer to read into.
+
+    BufferSize - The size of the buffer in bytes.
+
+    BytesRead - On return, the number of bytes of the file that were
+        successfully read into the buffer.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    UINTN bytesReceived;
+    UINTN bytesRequested;
+    PVMBFS_MESSAGE_READ_FILE_RDMA readFileMessage;
+    PVMBFS_MESSAGE_READ_FILE_RDMA_RESPONSE readFileResponseMessage;
+    EFI_STATUS status;
+
+    //
+    // Ensure the path will fit in the request message.
+    //
+
+    if (File->FileInformation.FilePathLength * sizeof(WCHAR) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
+    {
+        status = EFI_BUFFER_TOO_SMALL;
+        goto Cleanup;
+    }
+
+    bytesRequested = MIN(BufferSize, VMBFS_MAXIMUM_RDMA_SIZE);
+    readFileMessage = GetPacketBuffer(&File->FileInformation, VMBFS_MESSAGE_READ_FILE_RDMA);
+    ZeroMem(readFileMessage, sizeof(*readFileMessage));
+    readFileMessage->Header.Type = VmbfsMessageTypeReadFileRdma;
+    readFileMessage->Handle = 1;
+    readFileMessage->FileOffset = FileOffset;
+    readFileMessage->ByteCount = (UINT32)bytesRequested;
+    CopyMem(readFileMessage->FilePath,
+            File->EfiFileInfo.FileName,
+            File->FileInformation.FilePathLength * sizeof(WCHAR));
+
+    status = VmbfsSendReceivePacket(GetFileSystemInformation(&File->FileInformation),
+                                    readFileMessage,
+                                    sizeof(*readFileMessage) + File->FileInformation.FilePathLength * sizeof(WCHAR),
+                                    readFileMessage->Handle,
+                                    Buffer,
+                                    bytesRequested,
+                                    TRUE);
+
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    readFileResponseMessage = GetPacketBuffer(&File->FileInformation, VMBFS_MESSAGE_READ_FILE_RDMA_RESPONSE);
+    bytesReceived = GetPacketSize(&File->FileInformation);
+
+    if (bytesReceived < sizeof(*readFileResponseMessage) ||
+        readFileResponseMessage->Header.Type != VmbfsMessageTypeReadFileRdmaResponse)
+    {
+        VMBFS_BAD_HOST;
+        status = EFI_DEVICE_ERROR;
+        goto Cleanup;
+    }
+
+    status = VmbfsErrorToEfiError(readFileResponseMessage->Status);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    if (readFileResponseMessage->ByteCount > bytesRequested)
+    {
+        VMBFS_BAD_HOST;
+        status = EFI_DEVICE_ERROR;
+        goto Cleanup;
+    }
+
+    *BytesRead = readFileResponseMessage->ByteCount;
+    status = EFI_SUCCESS;
+
+Cleanup:
+    return status;
+}
+
+
+EFI_STATUS
 EFIAPI
 VmbfsRead (
     _In_ EFI_FILE_PROTOCOL *This,
@@ -482,104 +789,49 @@ Return Value:
 
 {
     UINTN bytesRead;
-    UINTN bytesReceived;
-    UINTN bytesRequested;
-    PFILE_INFORMATION fileInformation;
-    EFI_FILE_INFO* efiFileInfo;
-    SIZE_T filePathLengthInBytes;
-    PVMBFS_MESSAGE_READ_FILE readFileMessage;
-    PVMBFS_MESSAGE_READ_FILE_RESPONSE readFileResponseMessage;
+    UINTN bytesReadThisTime;
+    VMBFS_FILE *file;
     EFI_STATUS status;
 
     bytesRead = 0;
-    fileInformation = GetThisFileInformation(This);
-    efiFileInfo = GetThisEfiFileInfo(This);
+    file = (VMBFS_FILE *)This;
 
-    if (fileInformation->IsDirectory)
+    if (file->FileInformation.IsDirectory)
     {
         status = EFI_INVALID_PARAMETER;
         goto Cleanup;
     }
 
-    filePathLengthInBytes = wcslen(efiFileInfo->FileName) * sizeof(WCHAR);
-
-    //
-    // Ensure the path will fit in the request message.
-    //
-
-    if (filePathLengthInBytes > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
-    {
-        status = EFI_BUFFER_TOO_SMALL;
-        goto Cleanup;
-    }
-
     while (bytesRead < *BufferSize &&
-           (fileInformation->FileOffset + bytesRead) < efiFileInfo->FileSize)
-       {
-
-        bytesRequested = MIN(*BufferSize - bytesRead, VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileResponseMessage));
-        readFileMessage = GetPacketBuffer(fileInformation, VMBFS_MESSAGE_READ_FILE);
-        ZeroMem(readFileMessage, sizeof(*readFileMessage));
-        readFileMessage->Header.Type = VmbfsMessageTypeReadFile;
-        readFileMessage->Offset = fileInformation->FileOffset + bytesRead;
-        readFileMessage->ByteCount = (UINT32)bytesRequested;
-        CopyMem(readFileMessage->FilePath,
-                efiFileInfo->FileName,
-                filePathLengthInBytes);
-
-        status = VmbfsSendReceivePacket(GetFileSystemInformation(fileInformation),
-                                        readFileMessage,
-                                        (sizeof(*readFileMessage) + filePathLengthInBytes));
-
-        readFileResponseMessage = GetPacketBuffer(fileInformation, VMBFS_MESSAGE_READ_FILE_RESPONSE);
-        bytesReceived = GetPacketSize(fileInformation);
-
-        if (bytesReceived < sizeof(*readFileResponseMessage) ||
-            readFileResponseMessage->Header.Type != VmbfsMessageTypeReadFileResponse)
+           (file->FileInformation.FileOffset + bytesRead) < file->EfiFileInfo.FileSize)
+    {
+        if (file->FileInformation.RdmaCapable)
         {
+            status = VmbfsReadRdma(file,
+                                   file->FileInformation.FileOffset + bytesRead,
+                                   (PUINT8)Buffer + bytesRead,
+                                   *BufferSize - bytesRead,
+                                   &bytesReadThisTime);
+        }
+        else
+        {
+            status = VmbfsReadPayload(file,
+                                      file->FileInformation.FileOffset + bytesRead,
+                                      (PUINT8)Buffer + bytesRead,
+                                      *BufferSize - bytesRead,
+                                      &bytesReadThisTime);
+        }
 
-            VMBFS_BAD_HOST;
-            status = EFI_DEVICE_ERROR;
+        if (EFI_ERROR(status))
+        {
             goto Cleanup;
         }
 
-        if (readFileResponseMessage->Status == VmbfsFileNotFound)
-        {
-            status = EFI_NOT_FOUND;
-            goto Cleanup;
-        }
-
-        if (readFileResponseMessage->Status == VmbfsFileEndOfFile)
-        {
-            status = EFI_END_OF_FILE;
-            goto Cleanup;
-        }
-
-        if (readFileResponseMessage->Status != VmbfsFileSuccess)
-        {
-            status = EFI_DEVICE_ERROR;
-            goto Cleanup;
-        }
-
-        bytesReceived -= sizeof(VMBFS_MESSAGE_READ_FILE_RESPONSE);
-        if (bytesReceived > bytesRequested)
-        {
-            VMBFS_BAD_HOST;
-            status = EFI_DEVICE_ERROR;
-            goto Cleanup;
-        }
-
-        CopyMem((PUINT8)Buffer + bytesRead,
-                readFileResponseMessage->Payload,
-                bytesReceived);
-
-        bytesRead += bytesReceived;
+        bytesRead += bytesReadThisTime;
     }
 
-    fileInformation->FileOffset += bytesRead;
-
+    file->FileInformation.FileOffset += bytesRead;
     *BufferSize = bytesRead;
-
     status = EFI_SUCCESS;
 
 Cleanup:
@@ -760,7 +1012,7 @@ Arguments:
     BufferSize - On input, the size of Buffer. On output, the amount of data returned
         in Buffer. In both cases, the size is measured in bytes.
 
-    Buffer - A pointer to the data buffer to return. The buffer’s type is indicated
+    Buffer - A pointer to the data buffer to return. The buffer's type is indicated
         by InformationType.
 
 Return Value:
@@ -848,7 +1100,7 @@ Arguments:
     BufferSize - On input, the size of Buffer. On output, the amount of data returned
         in Buffer. In both cases, the size is measured in bytes.
 
-    Buffer - A pointer to the data buffer to write. The buffer’s type is indicated
+    Buffer - A pointer to the data buffer to write. The buffer's type is indicated
         by InformationType.
 
 Return Value:

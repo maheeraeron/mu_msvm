@@ -100,7 +100,7 @@ VmbfsOpenVolume (
 Routine Description:
 
     The OpenVolume() function opens a volume, and returns a file handle
-    to the volume’s root directory. This handle is used to perform all
+    to the volume's root directory. This handle is used to perform all
     other file I/O operations. The volume remains open until all the
     file handles to it are closed.
 
@@ -221,7 +221,11 @@ Return Value:
 
     status = VmbfsSendReceivePacket(fileSystemInformation,
                                     &VersionRequestMessage,
-                                    sizeof(VersionRequestMessage));
+                                    sizeof(VersionRequestMessage),
+                                    0,
+                                    NULL,
+                                    0,
+                                    FALSE);
 
     VersionResponseMessage = (PVMBFS_MESSAGE_VERSION_RESPONSE)fileSystemInformation->PacketBuffer;
     bytesRead = fileSystemInformation->PacketSize;

@@ -120,6 +120,22 @@ EFI_STATUS
     __in UINT32 GpadlHandle
     );
 
+typedef
+EFI_STATUS
+(EFIAPI *EFI_EMCL_CREATE_GPA_RANGE)(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in UINT32 Handle,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount,
+    __in BOOLEAN Writable
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_EMCL_DESTROY_GPA_RANGE)(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in UINT32 Handle
+    );
 
 struct _EFI_EMCL_PROTOCOL
 {
@@ -133,6 +149,8 @@ struct _EFI_EMCL_PROTOCOL
     EFI_EMCL_CREATE_GPADL CreateGpadl;
     EFI_EMCL_DESTROY_GPADL DestroyGpadl;
 
+    EFI_EMCL_CREATE_GPA_RANGE CreateGpaRange;
+    EFI_EMCL_DESTROY_GPA_RANGE DestroyGpaRange;
 };
 
 extern EFI_GUID gEfiEmclProtocolGuid;
