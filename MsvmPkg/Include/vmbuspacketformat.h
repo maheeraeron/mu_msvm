@@ -2,7 +2,7 @@
   $Microsoft Confidential$
   $Copyright (C) 2004 Microsoft Corporation.  All Rights Reserved.$
 
-  File: VmbusPacketFormat.w
+  File: VmbusPacketFormat.h
 
   Abstract:
 
@@ -135,6 +135,9 @@ typedef enum _VMPIPE_PROTOCOL_MESSAGE_TYPE
     VmPipeMessageInvalid = 0,
     VmPipeMessageData = 1,
     VmPipeMessagePartial = 2,
+    VmPipeMessageSetupGpaDirect = 3,
+    VmPipeMessageTeardownGpaDirect = 4,
+    VmPipeMessageIndicationComplete = 5,
 } VMPIPE_PROTOCOL_MESSAGE_TYPE, *PVMPIPE_PROTOCOL_MESSAGE_TYPE;
 
 typedef struct _VMPIPE_PROTOCOL_HEADER
@@ -151,6 +154,24 @@ typedef struct _VMPIPE_PROTOCOL_HEADER
         } Partial;
     };
 } VMPIPE_PROTOCOL_HEADER, *PVMPIPE_PROTOCOL_HEADER;
+
+typedef struct _VMPIPE_SETUP_GPA_DIRECT_BODY
+{
+    UINT32 Handle;
+
+    BOOLEAN IsWritable;
+
+    UINT32              RangeCount;
+    GPA_RANGE           Range[1];
+
+} VMPIPE_SETUP_GPA_DIRECT_BODY, *PVMPIPE_SETUP_GPA_DIRECT_BODY;
+
+typedef struct _VMPIPE_TEARDOWN_GPA_DIRECT_BODY
+{
+    UINT32 Handle;
+
+} VMPIPE_TEARDOWN_GPA_DIRECT_BODY, *PVMPIPE_TEARDOWN_GPA_DIRECT_BODY;
+
 
 typedef enum _VMBUS_PACKET_TYPE
 {

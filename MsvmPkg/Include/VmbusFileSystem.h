@@ -1,21 +1,12 @@
-/*++
+/**
+\copyright Copyright (c) Microsoft Corporation
 
-Copyright (c) Microsoft Corporation
+\file VmbusFileSystem.h
 
-Module Name:
+\brief Implements the VMBus file system protocol.
 
-    VmbusFileSystem.h
-
-Abstract:
-
-    Implements the VMBus file system protocol.
-
-Author:
-
-    Arseney Romanenko (arseneyr) 2014-10-10
-
---*/
-
+\author Arseney Romanenko (arseneyr) 2014-10-10
+*/
 #pragma once
 #pragma warning(push)
 #pragma warning(disable:4200)
@@ -32,11 +23,18 @@ Author:
 #define GUID_VMBFS_IMC_INSTANCE_DEFINE {0xc4e5e7d1, 0xd748, 0x4afc, \
     {0x97, 0x9d, 0x68, 0x31, 0x67, 0x91, 0x0a, 0x55}}
 
+#define GUID_VMBFS_BOOT_INSTANCE_DEFINE {0xc63c9bdf, 0x5fa5, 0x4208, \
+    {0xb0, 0x3f, 0x6b, 0x45, 0x8b, 0x36, 0x55, 0x92}}
+
+/* c376c1c3-d276-48d2-90a9-c04748072c60 */
 DEFINE_GUID(GUID_VMBFS_INTERFACE_TYPE, 0xc376c1c3, 0xd276, 0x48d2, 0x90, 0xa9, 0xc0, 0x47, 0x48, 0x07, 0x2c, 0x60);
+
+/* c4e5e7d1-d748-4afc-979d-683167910a55 */
 DEFINE_GUID(GUID_VMBFS_IMC_INSTANCE, 0xc4e5e7d1, 0xd748, 0x4afc, 0x97, 0x9d, 0x68, 0x31, 0x67, 0x91, 0x0a, 0x55);
 
 /* c63c9bdf-5fa5-4208-b03f-6b458b365592 */
 DEFINE_GUID(GUID_VMBFS_BOOT_INSTANCE, 0xc63c9bdf, 0x5fa5, 0x4208, 0xb0, 0x3f, 0x6b, 0x45, 0x8b, 0x36, 0x55, 0x92);
+
 
 #define VMBFS_MAXIMUM_MESSAGE_SIZE 12288
 #define VMBFS_MAXIMUM_PAYLOAD_SIZE(_Header_) (VMBFS_MAXIMUM_MESSAGE_SIZE - sizeof(_Header_))
@@ -55,15 +53,21 @@ typedef enum _VMBFS_MESSAGE_TYPE
     VmbfsMessageTypeGetFileInfoResponse,
     VmbfsMessageTypeReadFile,
     VmbfsMessageTypeReadFileResponse,
+    VmbfsMessageTypeReadFileRdma,
+    VmbfsMessageTypeReadFileRdmaResponse,
 
     VmbfsMessageTypeMax
 
 } VMBFS_MESSAGE_TYPE, *PVMBFS_MESSAGE_TYPE;
 
 
-#define VMBFS_GET_FILE_INFO_FLAG_DIRECTORY  0x1
+#define VMBFS_GET_FILE_INFO_FLAG_DIRECTORY    0x1
+#define VMBFS_GET_FILE_INFO_FLAG_RDMA_CAPABLE 0x2
 
-#define VMBFS_GET_FILE_INFO_FLAGS (VMBFS_GET_FILE_INFO_FLAG_DIRECTORY)
+#define VMBFS_GET_FILE_INFO_FLAGS (VMBFS_GET_FILE_INFO_FLAG_DIRECTORY | VMBFS_GET_FILE_INFO_FLAG_RDMA_CAPABLE)
+
+#pragma pack(push)
+#pragma pack(1)
 
 typedef struct _VMBFS_MESSAGE_HEADER
 {
@@ -126,7 +130,6 @@ typedef struct _VMBFS_MESSAGE_GET_FILE_INFO_RESPONSE
 } VMBFS_MESSAGE_GET_FILE_INFO_RESPONSE, *PVMBFS_MESSAGE_GET_FILE_INFO_RESPONSE;
 
 
-#pragma pack(push,1)
 typedef struct _VMBFS_MESSAGE_READ_FILE
 {
     VMBFS_MESSAGE_HEADER Header;
@@ -135,7 +138,7 @@ typedef struct _VMBFS_MESSAGE_READ_FILE
     WCHAR FilePath[];
 
 } VMBFS_MESSAGE_READ_FILE, *PVMBFS_MESSAGE_READ_FILE;
-#pragma pack(pop)
+
 
 typedef struct _VMBFS_MESSAGE_READ_FILE_RESPONSE
 {
@@ -146,6 +149,25 @@ typedef struct _VMBFS_MESSAGE_READ_FILE_RESPONSE
 
 } VMBFS_MESSAGE_READ_FILE_RESPONSE, *PVMBFS_MESSAGE_READ_FILE_RESPONSE;
 
-#pragma warning(pop)
+typedef struct _VMBFS_MESSAGE_READ_FILE_RDMA
+{
+    VMBFS_MESSAGE_HEADER Header;
+    UINT32 Handle;
+    UINT32 ByteCount;
+    UINT64 FileOffset;
+    UINT64 TokenOffset;
+    WCHAR FilePath[];
 
+} VMBFS_MESSAGE_READ_FILE_RDMA, *PVMBFS_MESSAGE_READ_FILE_RDMA;
+
+typedef struct _VMBFS_MESSAGE_READ_FILE_RDMA_RESPONSE
+{
+    VMBFS_MESSAGE_HEADER Header;
+    UINT32 Status;
+    UINT32 ByteCount;
+
+} VMBFS_MESSAGE_READ_FILE_RDMA_RESPONSE, *PVMBFS_MESSAGE_READ_FILE_RDMA_RESPONSE;
+
+#pragma pack(pop)
+#pragma warning(pop)
 
