@@ -214,12 +214,25 @@ Return Value:
     EFI_STATUS status;
     EFI_ACPI_DESCRIPTION_HEADER *table;
     UINTN tableHandle;
+    UINT32 sratSize;
+    EFI_PHYSICAL_ADDRESS address;
+
+    //
+    // Get SRAT from BIOS VDev which requires buffer address below 4GB.
+    //
+    sratSize = GetSratSize();
+    address = (BASE_4GB - 1ULL);
+    gBS->AllocatePages(AllocateMaxAddress,
+                       EfiBootServicesData,
+                       EFI_SIZE_TO_PAGES(sratSize),
+                       (EFI_PHYSICAL_ADDRESS*) &address);
+    GetSrat(address);
 
     //
     // Get pointer to the SRAT.
     //
-    table = (EFI_ACPI_DESCRIPTION_HEADER *)GetSrat();
-    ASSERT(table->Length == GetSratSize());
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)address;
+    ASSERT(table->Length == sratSize);
 
     //
     // Install it into the published tables.
@@ -228,6 +241,12 @@ Return Value:
                                          table,
                                          table->Length,
                                          &tableHandle);
+
+
+    if (table != NULL)
+    {
+        gBS->FreePages(address, EFI_SIZE_TO_PAGES(sratSize));
+    }
 
     return status;
 }
@@ -250,7 +269,7 @@ AcpiInstallNfitTable(
 
     //
     // Size of 0 means no NFIT
-    // We dynamically determine the NFIT size since we need to support 
+    // We dynamically determine the NFIT size since we need to support
     // hot-add of devices.
     //
     if (nfitSize == 0)

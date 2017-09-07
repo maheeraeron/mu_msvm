@@ -26,8 +26,6 @@ Abstract:
 #include <IndustryStandard/Acpi.h>
 #include <Ppi/ConfigPpi.h>
 #include <BiosConfigPageGuid.h>
-#include <SratGuid.h>
-#include <MemmapGuid.h>
 #include <BiosInterface.h>
 #include <BiosDeviceAccess.h>
 #include <Hob.h>
@@ -1194,16 +1192,6 @@ Return Value:
                 sizeof(BIOS_CONFIG_PAGE_V3));
             break;
     }
-
-    //
-    // Publish the SRAT HOB.
-    //
-    HobAddGuidData(&gSratGuid, srat, sratSize);
-
-    //
-    // Publish the Memmap HOB.
-    //
-    HobAddGuidData(&gMemmapGuid, memMap, memMapSize);
 
     //
     // Set the boot mode and installs the boot mode tag PPI.

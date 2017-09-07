@@ -96,6 +96,10 @@ enum
     BiosConfigWatchdogResolution        = 0x28,
     BiosConfigWatchdogCount             = 0x29,
     //
+    // Memory Map Size
+    //
+    BiosConfigMemoryMapSize             = 0x2A,
+    //
     // Event Logging (Windows 8.1 MQ/M0)
     //
     BiosConfigEventLogFlush             = 0x30,

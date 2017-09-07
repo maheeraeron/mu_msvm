@@ -24,8 +24,6 @@ Author:
 #include <BiosInterface.h>
 #include <BiosConfigPageGuid.h>
 #include <BiosDeviceAccess.h>
-#include <SratGuid.h>
-#include <MemmapGuid.h>
 
 //
 // Private global to indicate that library initialization was performed.
@@ -46,17 +44,6 @@ static BIOS_CONFIG_PAGE_V2 *gConfigPageV2 = NULL;
 // Private global pointer to the V3 config page.
 //
 static BIOS_CONFIG_PAGE_V3 *gConfigPageV3 = NULL;
-
-//
-// Private global pointer to the SRAT.
-//
-static void *gSrat = NULL;
-
-//
-// Private Memmap data.
-//
-static UINT32 gMemmapSize = 0;
-static void *gMemmap = NULL;
 
 //
 // Private global that indicates the Vdev Version.
@@ -280,25 +267,6 @@ Return Value:
     }
 
     //
-    // Get a pointer to the SRAT.
-    //
-    hob = GetFirstGuidHob(&gSratGuid);
-    if (hob != NULL)
-    {
-        gSrat = GET_GUID_HOB_DATA(hob);
-    }
-
-    //
-    // Get the Memmap.
-    //
-    hob = GetFirstGuidHob(&gMemmapGuid);
-    if (hob != NULL)
-    {
-        gMemmap = GET_GUID_HOB_DATA(hob);
-        gMemmapSize = GET_GUID_HOB_DATA_SIZE(hob);
-    }
-
-    //
     // Get the vdev version.
     //
     InitializeVdevVersion();
@@ -347,27 +315,28 @@ Return Value:
 }
 
 
-void*
+void
 GetSrat(
+    UINT64 Address
     )
 /*++
 
 Routine Description:
 
-    Returns a pointer to the SRAT ACPI table.
+    Puts the SRAT ACPI table at the address specified.
 
 Arguments:
 
-    None
+    Address - the GPA at which to write the SRAT table
 
 Return Value:
 
-    The address of SRAT ACPI table.
+    None
 
 --*/
 {
-    ConfigLibInitialize();
-    return gSrat;
+    ASSERT(Address < 0xFFFFFFFFULL);
+    WriteBiosDevice(BiosConfigSratData, (UINT32) Address);
 }
 
 UINT32
@@ -404,7 +373,7 @@ Routine Description:
 
 Arguments:
 
-    None
+    Address - the GPA at which to write the NFIT table
 
 Return Value:
 
@@ -436,7 +405,7 @@ Return Value:
 
 --*/
 {
-    ASSERT((UINT64) Address < 0xFFFFFFFFULL);
+    ASSERT(Address < 0xFFFFFFFFULL);
     WriteBiosDevice(BiosConfigVpmemSetACPIBuffer, (UINT32) Address);
 }
 
@@ -460,32 +429,42 @@ Return Value:
 
 --*/
 {
+    UINT32 value;
     ConfigLibInitialize();
-    return gMemmapSize;
+    if (gConfigVersion == ConfigPageV3)
+    {
+        value = gConfigPageV3->MemoryMapSize;
+    }
+    else
+    {
+        value = ReadBiosDevice(BiosConfigMemoryMapSize);
+    }
+    return value;
 }
 
 
-void*
+void
 GetMemmap(
+    UINT64 Address
     )
 /*++
 
 Routine Description:
 
-    Returns a pointer to the memorymap table.
+    Puts the memory map table at the address specified.
 
 Arguments:
 
-    None
+    Address - the GPA at which to write the Memory Map table
 
 Return Value:
 
-    The address of SRAT ACPI table.
+    None
 
 --*/
 {
-    ConfigLibInitialize();
-    return gMemmap;
+    ASSERT((UINT64) Address < 0xFFFFFFFFULL);
+    WriteBiosDevice(BiosConfigMemoryMap, (UINT32) Address);
 }
 
 

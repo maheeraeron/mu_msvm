@@ -1538,16 +1538,30 @@ Return Value:
 --*/
 {
     ADD_MEMORY_REGIONS_CONTEXT context;
+    UINT32 memmapSize;
     PVOID memmap;
     UINT32 memmapLength;
     UINT32 vdevVersion;
     UINT32 memRangeSize;
     UINT64 regions;
+    EFI_PHYSICAL_ADDRESS address;
 
     vdevVersion = GetVDevVersion();
-    memmap = GetMemmap();
+
+    //
+    // Get memmap from BIOS VDev which requires buffer address below 4GB.
+    //
+    memmapSize = GetMemmapSize();
+    address = (BASE_4GB - 1ULL);
+    gBS->AllocatePages(AllocateMaxAddress,
+                       EfiBootServicesData,
+                       EFI_SIZE_TO_PAGES(memmapSize),
+                       (EFI_PHYSICAL_ADDRESS*) &address);
+    GetMemmap(address);
+
+    memmap = (PVOID)(UINTN)address;
     memRangeSize = (vdevVersion < VDevVersion5) ? sizeof(VM_MEMORY_RANGE) : sizeof(VM_MEMORY_RANGE_V5);
-    memmapLength = GetMemmapSize() / memRangeSize;
+    memmapLength = memmapSize / memRangeSize;
 
     //
     // Calculate the number of SMBIOS memory regions required to represent
@@ -1592,6 +1606,11 @@ Return Value:
             memmapLength,
             AddMemoryRegionsFromMemoryRange,
             &context);
+    }
+
+    if (memmap != NULL)
+    {
+        gBS->FreePages(address, EFI_SIZE_TO_PAGES(memmapSize));
     }
 }
 
