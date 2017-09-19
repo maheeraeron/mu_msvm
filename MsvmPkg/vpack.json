@@ -1,0 +1,19 @@
+{
+    "vpack":
+    {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 0,
+        "Prerelease": "",
+        "VersionIncrementType": "Patch",
+        "BaseName": "hyperv.uefi",
+        "AppendArchToName": true,
+        "ExpirationTimeInHours": 0
+    },
+    "meta":
+    {
+        "GitBranchName": "official/rs4",
+        "AppendLatestCommitHash": true
+    }
+}
+

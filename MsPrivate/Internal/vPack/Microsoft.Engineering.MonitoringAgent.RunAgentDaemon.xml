@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Engineering.MonitoringAgent.RunAgentDaemon</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent">
+            <summary>
+            Command-line wrapper for running Geneva Monitoring agent
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent.DaemonProcessName">
+            <summary>The daemon process name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent.DaemonProcessExecutableName">
+            <summary>The daemon process executable name.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent.Main(System.String[])">
+            <summary>
+            Main entry point for daemon
+            </summary>
+            <param name="args">command line arguments</param>
+            <returns>0 for success, otherwise non-zero.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent.SetEnvironmentVariable(System.Collections.Specialized.StringDictionary,System.String,System.String)">
+            <summary>
+            Sets the environment variable.
+            </summary>
+            <param name="environmentVariables">The environment variables dictionary.</param>
+            <param name="variable">The variable.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="T:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent.CommandLineArguments">
+            <summary>
+            Holds the parsed command line arguments for the application.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.Telemetry.MonitoringAgent.RunAgent.CommandLineArguments.RunAsApp">
+            <summary>
+            Attach the daemon to a console window instead of running UI-less.
+            </summary>
+        </member>
+    </members>
+</doc>

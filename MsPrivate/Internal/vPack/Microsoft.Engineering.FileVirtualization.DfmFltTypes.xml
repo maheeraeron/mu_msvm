@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Engineering.FileVirtualization.DfmFltTypes</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation">
+            <summary>
+            Managed equivalent to FILE_BASIC_INFORMATION
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.#ctor(System.DateTime,System.DateTime,System.DateTime,System.DateTime,System.IO.FileAttributes)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation"/> class.
+            </summary>
+            <param name="creationTime">The creation time.</param>
+            <param name="lastAccessTime">The last access time.</param>
+            <param name="lastWriteTime">The last write time.</param>
+            <param name="changeTime">The change time.</param>
+            <param name="attributes">The attributes.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.#ctor(System.DateTime,System.IO.FileAttributes)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation"/> class.
+            </summary>
+            <param name="allTimeFields">All time fields.</param>
+            <param name="attributes">The attributes.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation"/> class.
+            </summary>
+            <param name="localPath">The local path.</param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.Attributes">
+            <summary>
+            Gets the attributes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.ChangeTime">
+            <summary>
+            Gets the change time.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.CreationTime">
+            <summary>
+            Gets the creation time.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.LastAccessTime">
+            <summary>
+            Gets the last access time.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.DfmFltTypes.FileBasicInformation.LastWriteTime">
+            <summary>
+            Gets the last write time.
+            </summary>
+        </member>
+    </members>
+</doc>

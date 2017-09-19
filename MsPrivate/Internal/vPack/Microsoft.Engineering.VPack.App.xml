@@ -1,0 +1,504 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VPack</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment">
+            <summary>Installs VPack virtualization service and drivers.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.VPackVirtualizationSupportServiceName">
+            <summary>The VPack virtualization support service name.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.ShutdownDaemon">
+            <summary>
+            Gets or sets a value indicating whether to initiate a shutdown the virtualization daemon.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.EnableFileVirtualizationVerification">
+            <summary>
+            Gets or sets a value indicating whether to enable verification mode.
+            </summary>
+            <value>
+              <c>true</c> if [enable verification]; otherwise, <c>false</c>.
+            </value>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.ForceDaemonShutdown">
+            <summary>
+            Gets or sets a value indicating whether to force a shutdown the virtualization daemon (only to use with ShutdownDaemon).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.InstallVirtualizationDependenciesRequestingElevationIfNecessary(System.Guid)">
+            <summary>Installs virtualization dependencies, elevating if necessary.</summary>
+            <param name="activityId">The activity Id.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.Run">
+            <summary>
+            Actual code running after command line arguments are parsed
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.CheckVirtualizationServiceHealthy(System.Guid,System.Boolean)">
+            <summary>Validate if virtualization service is healthy.</summary>
+            <param name="activityId">The activity id.</param>
+            <param name="throwOnCheckFailure">Whether to throw on check failure (by default, we just return false).</param>
+            <returns><c>true</c> if the daemon is running and can be communicated with.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.CheckSentinelFileExists(System.Boolean)">
+            <summary>
+            Checks the sentinel file exists.
+            </summary>
+            <param name="throwOnCheckFailure">if set to <c>true</c> to throw on check failure (instead of returning <c>false</c>.)</param>
+            <returns><c>true</c> if sentinel file exists, otherwise <c>false</c></returns>
+            <exception cref="T:System.InvalidOperationException">The expected sentinel file is missing AND throwOnCheckFailure was passed in as <c>true</c>.</exception>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.DisplayExceptionWithDelay(System.Exception)">
+            <summary>Display exception (via Log Error) for a few seconds before continuing.</summary>
+            <param name="exception">The exception.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.InstallDriver">
+            <summary>
+            Installs the driver.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.InstallService">
+            <summary>
+            Installs the service to automatically start a user logon.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.TelemetryAgentExists">
+            <summary>Checks if the telemetry agent exists on the machine.</summary>
+            <returns>The check result.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.InstallTelemetryAgent">
+            <summary>Install the telemetry agent.</summary>
+            <remarks>
+            Only attempts to install the scheduled task if the correct metrics configuration xml file is present, i.e. 
+            assumes that the Install-GenevaAndConfig PowerShell script has already been run, but Monitoring Agent is not
+            running (i.e. NSSM.exe can't start/keep the monitoring agent alive).
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.InstallVirtualizationDependenciesAlreadyElevated(System.Boolean,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            Installs virtualization dependencies.
+            </summary>
+            <param name="installDriver">if set to <c>true</c> install the file system driver.</param>
+            <param name="registerEventsource">if set to <c>true</c> register the event source.</param>
+            <param name="installService">if set to <c>true</c> install the virtualization service to start at user logon.</param>
+            <param name="installTelemetryAgent">if set to <c>true</c> install telemetry agent to start at user logon.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.IsDaemonRunning">
+            <summary>Checks if the file virtualization daemon is running.</summary>
+            <returns><c>true</c> if the daemon is running.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.IsMonitoringAgentRunning">
+            <summary>The check monitoring agent healthy.</summary>
+            <returns>The <see cref="T:System.Boolean"/> indicating whether monitoring agent is running.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.DoesSentinelFileExist">
+            <summary>
+            Checks if the expected files exist at the daemon's location. This is meant to prevent issues when the files
+            are removed from a disk (like through a reformat) but the daemon is not shut down beforehand.
+            </summary>
+            <returns><c>True</c> if the expected files exist.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.KillProcess(System.String)">
+            <summary>
+            Kills a named process.
+            </summary>
+            <param name="processName">Name of the process.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.RegisterEventsource">
+            <summary>
+            Registers the event source.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.SetVerificationMode">
+            <summary>
+            Sets the persistent flag used to determine whether Daemon runs under verification mode.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.ForceStopDaemon">
+            <summary>
+            Attempts to forces the stop daemon by killing the process.
+            </summary>
+            <returns>0 on success, non-0 otherwise.</returns>
+            <notes>We should make these return values more meaningful.  bool, perhaps, here or void and allow
+            exceptions to indicate failure?</notes>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ConfigureVirtualizationEnvironment.StopDaemon">
+            <summary>
+            Stops the daemon.
+            </summary>
+            <returns>0 on success, non-0 otherwise.</returns>
+            <notes>We should make these return values more meaningful.  bool, perhaps, here or void and allow
+            exceptions to indicate failure?</notes>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.ListVPacksCommand">
+            <summary>List vPack entries on the specified vPack service.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ListVPacksCommand.ExactName">
+            <summary>
+            Gets or sets a value indicating whether to only list packages that match the given name exactly.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ListVPacksCommand.OnlyLatest">
+            <summary>
+            Gets or sets a value indicating whether to only list the latest matching package.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ListVPacksCommand.OutputFormat">
+            <summary>
+            Gets or sets the format of the outputted package name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ListVPacksCommand.VersionRange">
+            <summary>
+            Gets or sets the package version range.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ListVPacksCommand.RunCommand">
+            <summary>
+            Actual code running after command line arguments are parsed
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger">
+            <summary>The options parser with OSG Tools Logger.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.toolsLogger">
+            <summary>Gets the backing field for the Logger property.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.disposed">
+            <summary>
+            Whether class is disposed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.Quiet">
+            <summary>
+            Gets or sets a value indicating whether to silence non-error and non-warning messages.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.Sync">
+            <summary>Gets the object Used to provide synchronization of field instantiation.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.ToolsLogger">
+            <summary>Gets the Logger for this instance.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.InitializeToolsLogger">
+            <summary>Explicitly initializes the tools logger if it is not initialized.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.OptionsParserWithToolsLogger.Dispose(System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.DeleteCommand">
+            <summary>Delete a package.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.DeleteCommand.Version">
+            <summary>
+            Gets or sets the package version.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.DeleteCommand.RunCommand">
+            <summary>
+            Actual code running after command line arguments are parsed
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException">
+            <summary>
+            Exception to be thrown when installation of file virtualization infrastructure fails.
+            </summary>
+            <seealso cref="T:System.Exception" />
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException"/> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException"/> class.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException"/> class.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception, or a null reference (Nothing in Visual Basic) if no inner exception is specified.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.VPack.VirtualizationInfrastructureInstallationFailedException"/> class.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> that holds the serialized object data about the exception being thrown.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> that contains contextual information about the source or destination.</param>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.PullCommand">
+            <summary>Pull packages.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.Define">
+            <summary>
+            Gets or sets any defines to use in conditional processing in the manifest(s).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.DestinationDirectory">
+            <summary>
+            Gets or sets the destination directory.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.DownloadMode">
+            <summary>
+            Gets or sets the Download Mode (Any, HardLink, Writable)
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.Manifest">
+            <summary>
+            Gets or sets the base build manifest used as the basis for the merge.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.Prerelease">
+            <summary>
+            Gets or sets the prerelease tag to apply to the vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.SourceSubdirectory">
+            <summary>
+            Gets or sets the subdirectory within the source to pull from.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.VersionRange">
+            <summary>
+            Gets or sets the package version range.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PullCommand.Virtualize">
+            <summary>
+            Gets or sets a value indicating whether to virtualize package deployment.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.PullCommand.RunCommand">
+            <summary>
+            Actual code running after command line arguments are parsed
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.PushCommand">
+            <summary>Push package to managed repositories.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.VersionIncrementType">
+            <summary>
+            Gets or sets which version number to increment.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.Major">
+            <summary>
+            Gets or sets the major version to apply to the new vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.Minor">
+            <summary>
+            Gets or sets the minor version to apply to the new vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.Metadata">
+            <summary>
+            Gets or sets the metadata tag to apply to the vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.NugetFeeds">
+            <summary>
+            Gets or sets the nuget feed names.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.Patch">
+            <summary>
+            Gets or sets the patch version to apply to the new vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.Prerelease">
+            <summary>
+            Gets or sets the prerelease tag to apply to the vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.SourceDirectory">
+            <summary>
+            Gets or sets the source directory.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.SuppressManifest">
+            <summary>
+            Gets or sets a value indicating whether to suppress vPack content manifest creation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.ExcludeFiles">
+            <summary>Gets or sets a list of files to exclude from the publish.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.PushCommand.ExpirationTime">
+            <summary>
+            Gets or sets package expiration time.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.PushCommand.CreateVersionIncrementRule">
+            <summary>
+            Create the proper VersionIncrementRule based on the command line.
+            </summary>
+            <returns>A VersionIncrementRule that properly describes how to set package version</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.PushCommand.RunCommand">
+            <summary>
+            Actual code running after command line arguments are parsed
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.ValidateCommand">
+            <summary>Validate packages.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.Define">
+            <summary>
+            Gets or sets any defines to use in conditional processing in the manifest(s).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.InstallationDirectory">
+            <summary>
+            Gets or sets the installation directory.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.Manifest">
+            <summary>
+            Gets or sets the base build manifest used as the basis for the merge.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.Prerelease">
+            <summary>
+            Gets or sets the prerelease tag to apply to the vPack.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.SourceSubdirectory">
+            <summary>
+            Gets or sets the subdirectory within the source to validate.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.Version">
+            <summary>
+            Gets or sets the package version.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.ValidateCommand.Virtualize">
+            <summary>
+            Gets or sets a value indicating whether to virtualize data deployment.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.ValidateCommand.RunCommand">
+            <summary>
+            Actual code running after command line arguments are parsed
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.App.VPackApplication">
+            <summary>
+            vPack console application
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.App.VPackApplication.Main(System.String[])">
+            <summary>
+            Main entry point for vPack console application
+            </summary>
+            <param name="args">command line arguments</param>
+            <returns>0 for success, otherwise non-zero.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.VPack.VPacksCommandBase">
+            <summary>List vPack entries on the specified vPack service.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.VPacksCommandBase.VPackSelfAssistanceLocation">
+            <summary>
+            String that should be appended to any failure exit.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.VPacksCommandBase.ExitCodeInstalledPackageIsInvalid">
+            <summary>
+            An installed package does not match what is expected.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.VPacksCommandBase.ExitCodeVirtualizationInstallationFailed">
+            <summary>
+            Installing virtualization infrastructure failed.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.VPacksCommandBase.model">
+            <summary>Gets the backing field for the PackageModel property.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.VPacksCommandBase.logger">
+            <summary>Gets the backing field for the Logger property.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.VPack.VPacksCommandBase.disposed">
+            <summary>
+            Whether class is disposed.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.Name">
+            <summary>
+            Gets or sets the name of package to lookup. If not present, everything that matches our vPack pattern is returned.
+            </summary>\
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.PackageType">
+            <summary>
+            Gets or sets the package type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.ServiceName">
+            <summary>
+            Gets or sets the service name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.WaitTimeout">
+            <summary>
+            Gets or sets the semaphore wait timeout value, in minutes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.ServiceType">
+            <summary>
+            Gets or sets the service type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.PackageModel">
+            <summary>Gets the PackageModel for this instance.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.Logger">
+            <summary>Gets the Logger for this instance.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.VPack.VPacksCommandBase.Service">
+            <summary>Gets the Service for this instance.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VPacksCommandBase.GetManifestCache(Microsoft.Internal.Windows.Tools.Build.Utilities.LongDirectoryInfo)">
+            <summary>
+            Gets the directory hosting the manifest cache
+            </summary>
+            <param name="installationDirectory">The installation directory.</param>
+            <returns>The directory hosting the manifest cache.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VPacksCommandBase.Run">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VPacksCommandBase.RunCommand">
+            <summary>
+            The wrapper over OptionsParser.Run method to accommodate the code common to the classes inheriting from <see cref="T:Microsoft.Engineering.VPack.VPacksCommandBase"/> in the same location.
+            This method that gets called from the Run method by the classes inheriting from <see cref="T:Microsoft.Engineering.VPack.VPacksCommandBase"/>once arguments are fully parsed.
+            </summary>
+            <returns>The value to be set as the application's exit code for the operation.</returns>
+            <remarks>
+            Return values should be from the OptionsParser.ExitCode_* values. Unfortunately, these are not in an enumeration so we can't capture that expectation here.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VPacksCommandBase.Dispose(System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.Engineering.VPack.VPacksCommandBase.LogToMiniLog(System.Exception)">
+            <summary>Log exception to a mini log.</summary>
+            <param name="e">The exception to log.</param>
+            <returns>The log path on success or empty string on failure.</returns>
+        </member>
+    </members>
+</doc>

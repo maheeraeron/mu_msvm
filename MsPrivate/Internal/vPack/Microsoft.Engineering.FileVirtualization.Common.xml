@@ -1,0 +1,2233 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.Engineering.FileVirtualization.Common</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.CdInvalidOperationException">
+            <summary>
+            This is an unexpected condition in the code similar to an Assert.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CdInvalidOperationException.#ctor(Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the CdInvalidOperationException class.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CdInvalidOperationException.#ctor(System.String,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CdInvalidOperationException.#ctor(System.String,System.Exception,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message and a reference to the inner exception
+            that is the cause of this exception.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CdInvalidOperationException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the exception class with serialized data.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase">
+            <summary>
+            Represents the base class for CloudDev exceptions that captures the base functionality
+            Cannot be instantiated directly as all of its constructors are not public
+            You should catch derived types of this exception and not this exception directly to handle failures
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.m_detail">
+            <summary>
+            Alternative exception details
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.m_originalType">
+            <summary>
+            Original type of the exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.#ctor(Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the CloudDevException class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.#ctor(Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Constructor
+            </summary>
+            <remarks>
+            Inner exceptions are generated from the inner exception detail of <paramref name="detail" />.
+            </remarks>
+            <param name="detail">Exception details</param>
+            <param name="cloudDevContext">CloudDevContext</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.#ctor(System.String,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.#ctor(System.String,System.Exception,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message and a reference to the inner exception
+            that is the cause of this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the exception class with serialized data.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.Context">
+            <summary>
+            The CloudDevContext that at the time the exception was created
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.OriginalType">
+            <summary>
+            Original type of the wrapped exception
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.OriginalTypeName">
+            <summary>
+            Full name of the original type of the wrapped exception
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.StackTrace">
+            <summary>
+            Gets a string representation of the immediate frames on the call stack.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Sets the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> with information about the exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionBase.ToString">
+            <summary>
+            Creates and returns a string representation of the current exception.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail">
+            <summary>
+            Exception details to aid in serialization exceptions over the wire
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.#ctor(System.Exception)">
+            <summary>
+            Constructor
+            </summary>
+            <remarks> AggregateExceptions are unwound to a non-AggregateException before details are extracted</remarks>
+            <param name="ex">Exception to extract details from</param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.HResult">
+            <summary>
+            Exception HResult
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.Source">
+            <summary>
+            Exception source
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.HelpLink">
+            <summary>
+            Gets or sets the help link from the exception passed to the constructor
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.InnerExceptionDetail">
+            <summary>
+            Gets or sets the <see cref="T:Microsoft.CloudDev.Messaging.Core.CloudDevExceptionDetail" /> object that represents the
+            inner exception
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.Message">
+            <summary>
+            Gets or sets the message from the exception passed to the constructor
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.StackTrace">
+            <summary>
+            Gets or sets the stack trace information from the exception passed to the constructor
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.Type">
+            <summary>
+            Gets or sets the type string for the exception passed to the constructor
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail.ToString">
+            <summary>
+            Emulate Exception.ToString()
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ConcurrencyUtils.ScalableSpinLock">
+            <summary>
+            A lightweight spin lock which can be used on a large scale.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ConcurrencyUtils.ScalableSpinLock.#ctor">
+            <summary>
+            Create a new ScalableSpinLock instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ConcurrencyUtils.ScalableSpinLock.EnterLock">
+            <summary>
+            Enters the lock, upon exit caller owns the lock
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ConcurrencyUtils.ScalableSpinLock.ExitLock">
+            <summary>
+            Exits the lock, upon exit caller does not own the lock
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration">
+            <summary>
+            CloudDev deployment configuration
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.ConfigurationFilePath">
+            <summary>
+            Current configuration file path
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.s_current">
+            <summary>
+            Current static singleton
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.s_currentLock">
+            <summary>
+            Lock object for setting s_current
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.AllowCurrentUpdateInsideUnitTests">
+            <summary>
+            Hack to allow unittest to update the current configuration.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.DefaultConfigurationFilePath">
+            <summary>
+            Default blob store configuration file path
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.Current">
+            <summary>
+            Thread-safe accessor to the current cloud dev configuration
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.Logger">
+            <summary>
+            Logger configuration
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.WaitForDebugger">
+            <summary>
+            Wait for a debugger to attach before proceeding
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.LoadConfiguration(System.String)">
+            <summary>
+            Load a configuration
+            </summary>
+            <param name="configurationFilePath">Path to the configuration file</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.SaveConfiguration(System.String)">
+            <summary>
+            Load a configuration
+            </summary>
+            <param name="configurationFilePath">Path to the configuration file</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration.Validate(Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfiguration)">
+            <summary>
+            Validate a configuration
+            </summary>
+            <param name="configuration">configuration to validate</param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfigurationException">
+            <summary>
+            CloudDev deployment configuration
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfigurationException.#ctor">
+            <summary>
+            Initializes a new instance of the CloudDevException class.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfigurationException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfigurationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message and a reference to the inner exception
+            that is the cause of this exception.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.CloudDevConfigurationException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the exception class with serialized data.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration">
+            <summary>
+            Configuration for the logger
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration.Areas">
+            <summary>
+            Enabled logging areas
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration.MessageFormat">
+            <summary>
+            Message format for log events (see LogEvent)
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration.MessageType">
+            <summary>
+            Type of messages to log
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration.LogFirstChanceExceptions">
+            <summary>
+            Determines whether CloudDevProgram should hookup First Change Exception Notifications per
+            http://msdn.microsoft.com/en-us/library/dd997368.aspx to aid in diagnosing problems.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration.LoadConfiguration(System.String)">
+            <summary>
+            Load a configuration
+            </summary>
+            <param name="xml">Configuration xml string</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Configuration.LoggerConfiguration.Validate">
+            <summary>
+            Validate this configuration
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Configuration.LogMessageType">
+            <summary>
+            Types of log messages
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.LogMessageType.None">
+            <summary>
+            No messages
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.LogMessageType.Diagnostic">
+            <summary>
+            Messages w/o performance instance IDs
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.LogMessageType.Performance">
+            <summary>
+            Messages w/ performance instance IDs
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Configuration.LogMessageType.All">
+            <summary>
+            All types of messages
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ContractHelpers">
+            <summary>
+            Contract Helper method
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ContractHelpers.AssumeInvariant``1(``0)">
+            <summary>
+            There's a limitation in the Code Contract analyzer, it only applies object invariants to the 'this' variable.
+            To trigger the invariants for other variables, you need to add a call to AssumeInvariant.
+            </summary>
+            <typeparam name="T">The type of the object to analyze.</typeparam>
+            <param name="o">The object for which to assume invariants.</param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ICheckedException">
+            <summary>
+            This is a marker interface that is used by the CheckedExceptionChecker.
+            It should be implemented by all of the exceptions that we define in our code so that we can benefit from
+            the checking of checked exceptions
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException">
+            <summary>Exception when trying to create a virtualized file.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException"/> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException"/> class.
+            </summary>
+            <param name="message">The exception message.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException"/> class.
+            </summary>
+            <param name="message">The exception message.</param>
+            <param name="innerException">The inner exception.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.#ctor(System.Exception,System.String)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException"/> class.</summary>
+            <param name="exception">The exception.</param>
+            <param name="filePath">The file path.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.#ctor(Microsoft.Engineering.FileVirtualization.Common.CreateVirtualFileErrorType,System.Int32,System.String)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException"/> class.</summary>
+            <param name="errorType">The error type.</param>
+            <param name="errorCode">The error code.</param>
+            <param name="filePath">The file path.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException"/> class.
+            </summary>
+            <param name="info">The serialization info.</param>
+            <param name="context">The streaming context.</param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.ErrorType">
+            <summary>Gets the error type.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.FilePath">
+            <summary>Gets the file path that caused the exception.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.ErrorCode">
+            <summary>Gets the error code. Use ErrorType property to interpret it.</summary>
+            <remarks>The error code here is not always HResult but we use the base class HResult field to store it as its type allows it.</remarks>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.Message">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualizedFileException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualFileErrorType">
+            <summary>The enum describes what caused an error when creating a virtualized file.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualFileErrorType.Exception">
+            <summary>Error received as exception.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualFileErrorType.CreateFileWin32ErrorCode">
+            <summary>Error returned by CreateFile API (win 32 error code returned by GetLastError).</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualFileErrorType.FilterSendMessageHResult">
+            <summary>Error returned by FilterSendMessage (HRESULT error).</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.CreateVirtualFileErrorType.DriverNTStatusCode">
+            <summary>Error returned by DmfFlt driver (NTSTATUS code).</summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.EnumerableExtensionsMethods">
+            <summary>The IEnumerable extensions.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.EnumerableExtensionsMethods.Batch``1(System.Collections.Generic.IEnumerable{``0},System.Int32)">
+            <summary>
+            Splits a source<see cref="T:System.Collections.Generic.IEnumerable`1"/>into several<see cref="T:System.Collections.Generic.IList`1"/>s
+            with a max size of batch Size.
+            </summary>
+            <param name="source">A sequence of values to split into smaller batches.</param>
+            <param name="batchSize">The number of elements to place in each batch.</param>
+            <returns>The original collection,split into batches.</returns>
+            <remarks>Note that batch Size must be one or larger.</remarks>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods">
+            <summary>
+            Additional methods for core types.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.random">
+            <summary>
+            Shared random number generator. lock() while in use.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.Do``1(System.Collections.Generic.IEnumerable{``0},System.Action{``0})">
+            <summary>
+            Iterates the input enumeration in a blocking fashion and applies action to each item.
+            </summary>
+            <typeparam name="TSource"> </typeparam>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.Retry(System.Int32,System.TimeSpan,System.TimeSpan,System.Func{System.Int32,System.Boolean},Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext)">
+            <summary>
+            Generic retry mechanism
+            </summary>
+            <param name="attempts">Number of attempts to make</param>
+            <param name="minRetryDelay">Minimum delay between retries</param>
+            <param name="maxRetryDelay">Maximum delay between retries</param>
+            <param name="action">
+            A function that receives the current attempt number [1..attempts] and returns whether the attempt
+            was successful
+            </param>
+            <param name="logContext">The log context.</param>
+            <returns>Whether any of the attempts were successful</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.Retry(System.Int32,System.TimeSpan,System.TimeSpan,Microsoft.Engineering.FileVirtualization.Common.Logging.Logger,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,System.Func{System.Int32,System.String})">
+            <summary>Generic retry mechanism</summary>
+            <param name="attempts">Number of attempts to make</param>
+            <param name="minRetryDelay">Minimum delay between retries</param>
+            <param name="maxRetryDelay">Maximum delay between retries</param>
+            <param name="logger">Logger to log to</param>
+            <param name="context">Context for logging</param>
+            <param name="logContext">The log context.</param>
+            <param name="retryLogLevel">Level to log when further attempts are to be made</param>
+            <param name="failingLogLevel">Level to log when no further attempts are to be made</param>
+            <param name="action">A function that receives the current attempt number [1..attempts] and the error message (null on
+            success)</param>
+            <returns>Whether any of the attempts were successful</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.Retry(System.Int32,System.TimeSpan,System.TimeSpan,Microsoft.Engineering.FileVirtualization.Common.Logging.Logger,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,System.Func{System.Int32,System.Threading.Tasks.Task{System.String}})">
+            <summary>Generic retry mechanism</summary>
+            <param name="attempts">Number of attempts to make</param>
+            <param name="minRetryDelay">Minimum delay between retries</param>
+            <param name="maxRetryDelay">Maximum delay between retries</param>
+            <param name="logger">Logger to log to</param>
+            <param name="context">Context for logging</param>
+            <param name="logContext">The log context.</param>
+            <param name="retryLogLevel">Level to log when further attempts are to be made</param>
+            <param name="failingLogLevel">Level to log when no further attempts are to be made</param>
+            <param name="action">A function that receives the current attempt number [1..attempts] and the error message (null on
+            success)</param>
+            <returns>Whether any of the attempts were successful</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.RetryAsync(System.Int32,System.TimeSpan,System.TimeSpan,System.Func{System.Int32,System.Threading.Tasks.Task{System.Boolean}},Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext)">
+            <summary>Generic retry mechanism</summary>
+            <param name="attempts">Number of attempts to make</param>
+            <param name="minRetryDelay">Minimum delay between retries</param>
+            <param name="maxRetryDelay">Maximum delay between retries</param>
+            <param name="action">A function that receives the current attempt number [1..attempts] and returns whether the attempt
+            was successful</param>
+            <param name="logContext">The log context.</param>
+            <returns>Whether any of the attempts were successful</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ExtensionMethods.UnwindSingle(System.AggregateException)">
+            <summary>
+            Unwind an aggregate exception into the first non-aggregate InnerException
+            </summary>
+            <param name="aex"> Aggregegate exception to unwind </param>
+            <returns> Non-aggregate exception </returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.FileVirtualizationConstants">
+            <summary>The file virtualization constants.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.FileVirtualizationConstants.DaemonProcessName">
+            <summary>The daemon process name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.FileVirtualizationConstants.DaemonProcessExecutableName">
+            <summary>The daemon process executable name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.FileVirtualizationConstants.SentinelFileName">
+            <summary>
+            File written by the GfsService at startup. Can be checked to see if the disk holding the service has been changed drastically.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.FileVirtualizationConstants.VerifierModeValueName">
+            <summary> The verifier mode registry value name </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.FileVirtualizationConstants.FileVirtualizationRegKeyName">
+            <summary> The file virtualization registry key name (in HKCU) </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.InfrastructureException">
+            <summary>
+            This is a general infrastructure exception that cannot be recovered locally.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.InfrastructureException.#ctor(Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the InfrastructureException class.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.InfrastructureException.#ctor(System.String,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.InfrastructureException.#ctor(Microsoft.Engineering.FileVirtualization.Common.CloudDevExceptionDetail,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Inner exceptions are generated from the inner exception detail of <paramref name="detail" />.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.InfrastructureException.#ctor(System.String,System.Exception,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Initializes a new instance of the exception class with a specified error message and a reference to the inner exception
+            that is the cause of this exception.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.InfrastructureException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the exception class with serialized data.
+            </summary>
+            <remarks>
+                <see cref="T:System.Exception" />
+            </remarks>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext">
+            <summary>
+            Context for an client's call into the CloudDev infrastructure
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.NoContext">
+            <summary>
+            Constant for no context
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.ContextId">
+            <summary>
+            Unique identifier for this operation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.Username">
+            <summary>
+            Initiating user's name
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.CaptureTrace">
+            <summary>
+            Whether to capture and return trace information during execution
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.AllowReentrancyOnActorCall">
+            <summary>
+            Whether the current call dis-respects the Actor models non-reentrancy property
+            </summary>
+            <remarks>
+            This property should not be used, and when used should have a very specific pattern (dannyvv,adribona)
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.Equals(Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext)">
+            <summary>
+            Indicates whether the current object is equal to another object of the same type.
+            </summary>
+            <param name="other"> An object to compare with this object. </param>
+            <returns>
+            true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.Equals(System.Object)">
+            <summary>
+            Determines whether two CloudDevContext instances are equal
+            </summary>
+            <param name="otherContext"> An object to compare with this object. </param>
+            <returns>
+            true if the current object is equal to the <paramref name="otherContext" /> parameter; otherwise, false.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.GetHashCode">
+            <summary>
+            Hash function for the class
+            </summary>
+            <returns>Hash code of CloudDev context object</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.ToString">
+            <summary>
+            String representation of a CloudDevContext
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.MarshalToString">
+            <summary>
+            Returns a string that represents the context for marshalling
+            </summary>
+            <remarks>
+            This method is used in marshalling data context into ETW
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.MarshalFromString(System.String)">
+            <summary>
+            Returns a CloudDevContext from the marshaled string representation
+            </summary>
+            <remarks>
+            This method is used in marshalling data context from ETW
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext.TryMarshalFromString(System.String,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext@)">
+            <summary>
+            Attempts to parse a CloudDevContext from the marshaled string representation
+            </summary>
+            <param name="str">Marshaled string to parse</param>
+            <param name="context">Resulting context</param>
+            <returns>True is the context string is valid; false otherwise</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.MessagingCodeMarker">
+            <summary>
+            Messaging area code markers
+            </summary>
+            <remarks>
+            APPEND ONLY, otherwise you must rev the ETW version (EtwAppender.EtwAppenderVersion) to disable support with previously
+            captured logs.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.MarkerOperation">
+            <summary>
+            Code marker operations
+            </summary>
+            <remarks>
+            APPEND ONLY, otherwise you must rev the ETW version (EtwAppender.EtwAppenderVersion) to disable support with previously
+            captured logs.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.MarkerOperation.Begin">
+            <summary>
+            The operation is about to begin
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.MarkerOperation.End">
+            <summary>
+            The operation has ended
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.MarkerOperation.Point">
+            <summary>
+            Marker is a single point (no begin or end)
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.EventLogWrapper">
+            <summary>The event log wrapper.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.EventLogWrapper.EventLogSourceName">
+            <summary>The event log source name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.EventLogWrapper.ApplicationLogName">
+            <summary>The application log name.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.EventLogWrapper.IsEventSourceRegistrationNeeded">
+            <summary>Check if event source registration needed.</summary>
+            <returns><c>true</c> if event source registration is needed. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.EventLogWrapper.RegisterEventSource">
+            <summary>Registers event source (admin privileges and elevation required).</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.EventLogWrapper.LogToEventLogger(System.String,System.Diagnostics.EventLogEntryType,System.Guid)">
+            <summary>Logs to event logger.</summary>
+            <param name="jsonConvertedLoggingData">The JSON converted logging data.</param>
+            <param name="eventLogEntryType">The event log entry type.</param>
+            <param name="activityId">The activity ID</param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger">
+            <summary>
+            This is a logger to capture global events (e.g. unhandled exceptions)
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.s_programName">
+            <summary>
+            Description of this program
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.m_context">
+            <summary>
+            Logger to use
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.m_logger">
+            <summary>
+            Context to log with
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.m_disposed">
+            <summary>
+            Whether this has been disposed yet
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.#ctor(System.Guid,System.Boolean,System.Boolean,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger"/> class.</summary>
+            <param name="activityId">The activity id.</param>
+            <param name="logFirstChanceExceptions">Log AppDomain.CurrentDomain.FirstChanceException</param>
+            <param name="logUnobservedTasks">Log TaskScheduler.UnobservedTaskException</param>
+            <param name="logUnhandledExceptions">Log AppDomain.CurrentDomain.UnhandledException</param>
+            <param name="logProcessExit">Log AppDomain.CurrentDomain.ProcessExit</param>
+            <param name="logDomainUnload">Log AppDomain.CurrentDomain.DomainUnload</param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.ActivityId">
+            <summary>Gets the activity id.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.Dispose">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.Dispose(System.Boolean)">
+            <summary>
+            Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+            </summary>
+            <param name="disposing"> True to dispose managed and unmanaged resources, otherwise only unmanaged will be disposed. </param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.CurrentDomain_DomainUnload(System.Object,System.EventArgs)">
+            <summary>
+            Logs AppDomain.CurrentDomain.DomainUnload
+            </summary>
+            <param name="sender">Ignored</param>
+            <param name="args">Event info</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.CurrentDomain_ProcessExit(System.Object,System.EventArgs)">
+            <summary>
+            Logs AppDomain.CurrentDomain.ProcessExit
+            </summary>
+            <param name="sender">Ignored</param>
+            <param name="args">Event info</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.CurrentDomain_FirstChanceException(System.Object,System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs)">
+            <summary>
+            Logs AppDomain.CurrentDomain.FirstChanceException
+            </summary>
+            <param name="sender">Ignored</param>
+            <param name="args">Event info</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.CurrentDomain_UnhandledException(System.Object,System.UnhandledExceptionEventArgs)">
+            <summary>
+            Logs AppDomain.CurrentDomain.UnhandledException
+            </summary>
+            <param name="sender">Ignored</param>
+            <param name="args">Event info</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.GlobalEventsLogger.TaskScheduler_UnobservedTaskException(System.Object,System.Threading.Tasks.UnobservedTaskExceptionEventArgs)">
+            <summary>
+            Logs TaskScheduler.UnobservedTaskException
+            </summary>
+            <param name="sender">Ignored</param>
+            <param name="args">Event info</param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.ITelemetrySummaryDataCollectorContext">
+            <summary>The TelemetrySummaryDataCollectorContext interface for collecting the summary data to be included into level 'Stop' ETW event.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.ITelemetrySummaryDataCollectorContext.AddPropertyValue(System.String,System.String)">
+            <summary>Adds a property value. If one already exists, the old value is replaced with the new value. </summary>
+            <param name="name">The name.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.ITelemetrySummaryDataCollectorContext.AddCounterValue(System.String,System.Int64)">
+            <summary>Adds a counter value. If one already exists, the old value is added to the new value.</summary>
+            <param name="name">The name.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea">
+            <summary>
+            Architecture area
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.Messaging">
+            <summary>
+            Underlying messaging infrastructure
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.Tool">
+            <summary>
+            Infrastructure tooling
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.General">
+            <summary>
+            General area, is always be enabled
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.Test">
+            <summary>
+            Test code area
+            </summary>
+            <remarks>This is intended for Integration Tests, not for our unit tests. Please use UnitTest area for that.</remarks>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.Transport">
+            <summary>
+            Transport-level communication (e.g. TCP, named pipes)
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.UnitTest">
+            <summary>
+            Used by unit test dummy logger.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.Client">
+            <summary>The daemon client.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea.Daemon">
+            <summary>The daemon.</summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext">
+            <summary>The log context that encapsulates useful logging metadata.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext.#ctor(System.Guid)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext"/> class and auto generates the transaction id.</summary>
+            <param name="activityId">The activity id.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext.#ctor(System.Guid,System.Guid)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext"/> class.</summary>
+            <param name="activityId">The activity id.</param>
+            <param name="transactionId">The transaction id.</param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext.ActivityId">
+            <summary>Gets activity id</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext.TransactionId">
+            <summary>Gets transaction id</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogFormatUtils">
+            <summary>
+            Contains utility functions to simplify formatting of various data structures for the purpose of logging
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.LogFormatUtils.ByteArrayToString(System.Byte[])">
+            <summary>
+            Byte array to string
+            </summary>
+            <param name="bytes">Bytes to format</param>
+            <returns>Formatted string</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.LogFormatUtils.ItemsToString``1(System.Collections.Generic.IEnumerable{``0},System.String,System.String,System.String)">
+            <summary>
+            Formats a collection of items for formatting
+            </summary>
+            <typeparam name="T">Type of the item to format</typeparam>
+            <param name="items">Items to format</param>
+            <param name="delimiter">Delimiter to place between items</param>
+            <param name="prefix">Prefix to add before the formatted list if it isn't empty</param>
+            <param name="suffix">Prefix to add after the formatted list if it isn't empty</param>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel">
+            <summary>
+            Log message severity
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel.Debug">
+            <summary>
+            Normally disabled, used for debugging issues/failures
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel.Info">
+            <summary>
+            Normally enabled, used for occasional operational updates
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel.Warn">
+            <summary>
+            Normally enabled, used for transient issues
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel.Error">
+            <summary>
+            Normally enabled, used for recoverable failures
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel.Fatal">
+            <summary>
+            Normally enabled, used for non-recoverable failures
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.LogToStringHelper">
+            <summary>
+            Helper class to efficiently convert log-related enums to strings
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.LogToStringHelper.CodeMarkerToString(Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea,System.Int32)">
+            <summary>
+            *NOT* performant, Code marker -> string
+            </summary>
+            <remarks>
+            (uses Enum.ToString)
+            </remarks>
+            <param name="area"> Area of the code marker</param>
+            <param name="codeMarker"> Value of the code marker </param>
+            <returns> String representation of the code marker </returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger">
+            <summary>
+            File Virtualization framework logging abstraction
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.DiagnosticMarker">
+            <summary>
+            Default code marker for a diagnostic log event
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.DefaultOperationMarkerInstance">
+            <summary>
+            Default operation marker instance id
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.FileVirtualizationTraceStartEtwEventName">
+            <summary>The file virtualization trace start ETW event name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.FileVirtualizationSystemName">
+            <summary>The file virtualization system name.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.#cctor">
+            <summary>Initializes static members of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger"/> class.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.#ctor(System.Type,Microsoft.Engineering.FileVirtualization.Common.Logging.LogArea)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger"/> class.</summary>
+            <param name="loggingType">
+             Type (e.g. class) where the logger is going to be used from. We already create a logger per type, so passing type to the logger constructor
+             enforces this logger per type pattern.
+            </param>
+            <param name="area">Architecture area for this logger</param>
+            <remarks>
+            By default, exclude Debug level logging from Messaging and Transport layers.  To enable, set 
+            environment variables _VPackFileVirtualizationLogMessagingLayer or _VPackFileVirtualizationLogTransportLayer 
+            to any value (i.e. make them defined)
+            </remarks>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.FullTypeName">
+            <summary>
+            Gets the fully-qualified name for this log (e.g. "Parent.Bar.Foo")
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.Area">
+            <summary>
+            Gets the architecture area for this logger
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.ExcludedAreas">
+            <summary>
+            Gets the excluded areas.
+            </summary>
+            <value>
+            The excluded areas.
+            </value>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.Log(Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,System.String,System.Object[])">
+            <summary>
+            Log a code marker
+            </summary>
+            <param name="level">Log level severity</param>
+            <param name="context"> Current execution context </param>
+            <param name="logContext">The log context.</param>
+            <param name="format"> Diagnostic message format </param>
+            <param name="formatArguments"> Diagnostic message format arguments </param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.Log(Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,System.Int32,System.String,System.Object[])">
+            <summary>
+            Log a code marker
+            </summary>
+            <param name="level">Log level severity</param>
+            <param name="context"> Current execution context </param>
+            <param name="logContext">The log context.</param>
+            <param name="marker">Log marker (must be an enumeration)</param>
+            <param name="format"> Diagnostic message format </param>
+            <param name="formatArguments"> Diagnostic message format arguments </param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.Log(Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,System.Int32,Microsoft.Engineering.FileVirtualization.Common.Logging.MarkerOperation,System.Int64,System.String)">
+            <summary>Log a code marker</summary>
+            <param name="level">Log level severity</param>
+            <param name="context">Current execution context</param>
+            <param name="logContext">The log context.</param>
+            <param name="marker">Log marker (must be enum)</param>
+            <param name="operation">Marker operation</param>
+            <param name="markerOperationInstance">Unique ID to tie marker operations (e.g. Begin and End) together</param>
+            <param name="message">Diagnostic message</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.Logger.Log(Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,System.String,System.Exception)">
+            <summary>Log exception details</summary>
+            <param name="level">Log level severity</param>
+            <param name="context">Current execution context</param>
+            <param name="logContext">The log context.</param>
+            <param name="message">Diagnostic message to clarify log along with exception details</param>
+            <param name="e">Exception to log</param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger">
+            <summary>The operation time logger.</summary>
+            <remarks>
+            Logging to Verbose channel is turned off by default, 
+            to enable define environment variable _VPackFileVirtualizationLogOperationDuration
+            </remarks>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.operationName">
+            <summary>The operation name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.sourceFilePath">
+            <summary>The source file path.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.sourceLineNumber">
+            <summary>The source line number.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.operationTimer">
+            <summary>The operation duration.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.#ctor(Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,System.String,System.String,System.String,System.Int32)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger"/> class. </summary>
+            <param name="logContext">The log context (optional, could be null).</param>
+            <param name="operationDetails">Optional operation details (could be null).</param>
+            <param name="operationName">The operation name (to be filled by compiler services, CallerMemberNameAttribute).</param>
+            <param name="sourceFilePath">The source file path (to be filled by compiler services, CallerFilePathAttribute).</param>
+            <param name="sourceLineNumber">The source line number (to be filled by compiler services, CallerLineNumberAttribute).</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.#ctor(System.String,System.String,System.String,System.Int32)">
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger"/> class. </summary>
+            <param name="operationDetails">Optional operation details (could be null).</param>
+            <param name="operationName">The operation name (to be filled by compiler services, CallerMemberNameAttribute).</param>
+            <param name="sourceFilePath">The source file path (to be filled by compiler services, CallerFilePathAttribute).</param>
+            <param name="sourceLineNumber">The source line number (to be filled by compiler services, CallerLineNumberAttribute).</param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.LogContext">
+            <summary>Gets or sets (and overwrites existing constructor provided data!) optional log context (could be null).</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.OperationDetails">
+            <summary>Gets or sets (and overwrites existing constructor provided data!) optional operation details (could be null).</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.StopTimer">
+            <summary>Stop the timer.</summary>
+            <returns>The elapsed time.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.OperationTimeLogger.LogOperationTime">
+            <summary>Logs operation time.</summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector">
+            <summary>The mini ETW logger to log stop/start around the external method of a top level execution flow.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.GenericRelatedActivityIdEnvironmentVariableName">
+            <summary>
+            The general-purpose version of <see cref="P:Microsoft.Internal.Windows.Tools.Build.Utilities.EventSourceRootedActivity.ActivityIdEnvironmentVariableName"/>.
+            </summary>
+            <remarks>
+            This ID is not the one used by Timebuild, Build.exe, or BuildCensus reporting.
+            Please use <see cref="P:Microsoft.Internal.Windows.Tools.Build.Utilities.EventSourceRootedActivity.ActivityIdEnvironmentVariableName"/> instead.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.SystemEngineeringToolsTelemetryNamespacePrefix">
+            <summary>The system engineering tools telemetry namespace prefix.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.ActivityIdEnvironmentVariableName">
+            <summary>The system engineering tools telemetry relative ID name.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.SuffixFailed">
+            <summary>
+            Event Suffix "Failed"
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.SuffixStart">
+            <summary>
+            Event Suffix "Start"
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.SuffixStop">
+            <summary>
+            Event Suffix "Stop"
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.EngineeringSystemsProviderGroup">
+            <summary>The engineering systems provider group id that marks the events as WSG Engineering Systems events.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.LogExecutionTelemetry``1(System.Func{Microsoft.Engineering.FileVirtualization.Common.Logging.TelemetryErrorCollectorContext,Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext,``0},System.Guid,``0)">
+            <summary>Captures the critical telemetry of top level code flow passed into the method as C# lambda 'body'.
+            When executing 'body', sends up to three ETW messages
+            1. Start message that contains info about the code's assembly (name, version, build date) and the process command line.
+            2. Failed message (only if needed) that contains the exception detail
+            3. Stop message that contains the execution result value and the execution duration.</summary>
+            <typeparam name="T">lambda 'body' return type</typeparam>
+            <param name="body">The body of the lambda.</param>
+            <param name="activityId">The activity id.</param>
+            <param name="defaultResult">The default result.</param>
+            <returns>The 'body' lambda return value.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.CreateSystemEngineeringToolsTelemetryEventSource(System.String)">
+            <summary>Creates system engineering tools telemetry event source that is capable of sending ETW events to Asimov.</summary>
+            <param name="etwProviderSuffix">
+            The ETW provider suffix. The provider name is created by appending etwProviderSuffix to <see cref="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.SystemEngineeringToolsTelemetryNamespacePrefix" />
+            </param>
+            <returns>The created <see cref="T:Microsoft.Diagnostics.Tracing.EventSource"/>.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.GetRelatedActivityId">
+            <summary>
+            Checks the environment for an activity Id to use as the source Id.
+            If the official (EngSys) Activity Id is not available, it will return
+            back to the general-purpose Activity Id. If neither ID is available,
+            it will return an Empty Guid.
+            </summary>
+            <returns>The best available Activity Id (can be Guid.Empty)</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.GetCommandLineDisplay(System.Int32)">
+            <summary>Gets the command line, truncated to maxCommandLineLength characters </summary>
+            <param name="maxCommandLineLength">The max command line length to display.</param>
+            <returns>The truncated command line.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext">
+            <summary>
+            The top level execution flow telemetry collector context to communicate with the executing lambda.
+            in <see cref="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.LogExecutionTelemetry``1(System.Func{Microsoft.Engineering.FileVirtualization.Common.Logging.TelemetryErrorCollectorContext,Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext,``0},System.Guid,``0)"/> method and
+            collect the summary data to be included into level 'Stop' ETW event from the underlying classes.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext.customValues">
+            <summary>The custom ETW property name / value pairs.</summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext.customCounterValues">
+            <summary>The custom ETW property name / value pairs.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext.CustomProperties">
+            <summary>Gets the custom properties.</summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext.CustomCounters">
+            <summary>Gets the custom counters.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext.AddPropertyValue(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext.AddCounterValue(System.String,System.Int64)">
+            <inheritdoc />
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.TelemetryErrorCollectorContext">
+            <summary>
+            The top level execution flow telemetry collector context to communicate with the executing lambda.
+            in <see cref="M:Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.LogExecutionTelemetry``1(System.Func{Microsoft.Engineering.FileVirtualization.Common.Logging.TelemetryErrorCollectorContext,Microsoft.Engineering.FileVirtualization.Common.Logging.TopLevelExecutionFlowTelemetryCollector.TelemetrySummaryDataCollectorContext,``0},System.Guid,``0)"/> method.
+            Currently, we only use it to report exceptions handled inside the 'body' lambda back to us.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.Logging.TelemetryErrorCollectorContext.LastException">
+            <summary>Gets or sets the exception object.</summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.Logging.VersionLogger">
+            <summary>The version logger.</summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.VersionLogger.LogAssemblyVersion(System.Reflection.Assembly,System.Boolean)">
+            <summary>Log the version of the current executable.</summary>
+            <param name="assembly">The assembly to log version for.</param>
+            <param name="logAlways">Flag indicating whether or not to always log this message. If false, will log it as verbose output.</param>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.VersionLogger.GetAssemblyBuildTime(System.String)">
+            <summary>
+            Retrieves the linker timestamp.
+            </summary>
+            <param name="filePath">The file path.</param>
+            <returns>Build time of the assembly specified by the file path.</returns>
+            <remarks>Based on reading PE header as explained in http://www.codinghorror.com/blog/2005/04/determining-build-date-the-hard-way.html</remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.VersionLogger.GetFullAssemblyName(System.Reflection.Assembly)">
+            <summary>Returns the full assembly name.</summary>
+            <param name="assembly">The assembly to get the name for.</param>
+            <returns>The <see cref="T:System.String"/>representation of assembly name.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.Logging.VersionLogger.GetAssemblyFileVersion(System.String)">
+            <summary>Returns the assembly file version.</summary>
+            <param name="filePath">The assembly path to get the file version for.</param>
+            <returns>The <see cref="T:System.String"/>representation of assembly file version.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods">
+            <summary>
+            Common native methods used in CloudDev.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.EFileDevice">
+            <summary>
+            http://msdn.microsoft.com/en-us/library/windows/hardware/ff563821(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.EIOControlCode">
+            <summary>
+            IO Control Codes
+            Useful links:
+            http://www.ioctls.net/
+            http://msdn.microsoft.com/en-us/library/windows/hardware/ff543023(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GET_FILEEX_INFO_LEVELS">
+            <summary>
+            Defines values that are used with the GetFileAttributesEx and GetFileAttributesTransacted functions to specify the
+            information level of the returned data.
+            http://msdn.microsoft.com/en-us/library/windows/desktop/bb736257(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.HANDLE_FLAGS">
+            <summary>
+            Flags for SetHandleInformation
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECTINFOCLASS">
+            <summary>
+            The information class for the limits to be set.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECT_LIMIT_FLAGS">
+            <summary>
+            See http://msdn.microsoft.com/en-us/library/windows/desktop/ms684147(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.ReparseTagType">
+            <summary>
+            Describes the reparse point type
+            http://msdn.microsoft.com/en-us/library/windows/desktop/aa365511(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SYMBOLIC_LINK_FLAG">
+            <summary>
+            Where the target is a file or directory
+            http://msdn.microsoft.com/en-us/library/windows/desktop/aa363866(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SymbolicLinkFlags">
+            <summary>
+            Describes the symbolic link
+            From ntifs.h
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.MAX_PATH">
+            <summary>
+            Maximum path length for Path.* methods.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.MaxCommandLineLength">
+            <summary>
+            Return value for a failed GetFileAttributes call.
+            On computers running Microsoft Windows XP or later, the maximum length of the string that you can use at the command
+            prompt
+            is 8191 characters
+            http://support.microsoft.com/kb/830473
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.InvalidFileAttributes">
+            <summary>
+            Return value for a failed GetFileAttributes call.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.ERROR_FILE_NOT_FOUND">
+            <summary>
+            http://support.microsoft.com/kb/155011
+            Scoped to errors returned by GetFileAttributesEx
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.ERROR_NOT_A_REPARSE_POINT">
+            <summary>
+            DeviceIoControl will set this error if it is called with FsctlGetReparsePoint on a file that is not a symbolic link
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.ACCESS_METADATA">
+            <summary>
+            Create file flags
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GetFinalPathNameByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle,System.Text.StringBuilder,System.Int32,System.Int32)">
+            <summary>
+            Retrieves the final path for the specified file.
+            https://msdn.microsoft.com/en-us/library/windows/desktop/aa364962(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.CreateEvent(System.IntPtr,System.Boolean,System.Boolean,System.String)">
+            <summary>
+            Creates or opens a named or unnamed event object.
+            </summary>
+            <remarks>
+            see http://msdn.microsoft.com/en-us/library/windows/desktop/ms682396(v=vs.85).aspx 
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SetEvent(System.IntPtr)">
+            <summary>
+            Sets the specified event object to the signaled state.
+            </summary>
+            <remarks>
+            see http://msdn.microsoft.com/en-us/library/windows/desktop/ms686211(v=vs.85).aspx
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GetExitCodeProcess(System.IntPtr,System.UInt32@)">
+            <summary>
+            Retrieves the termination status of the specified process.
+            </summary>
+            <remarks>
+            see http://msdn.microsoft.com/en-us/library/windows/desktop/ms683189(v=vs.85).aspx
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.WaitForSingleObject(System.IntPtr,System.UInt32)">
+            <summary>
+            Waits until the specified object is in the signaled state or the time-out interval elapses.
+            </summary>
+            <remarks>
+                see http://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SearchPath(System.String,System.String,System.String,System.UInt32,System.Text.StringBuilder,System.IntPtr@)">
+            <summary>
+            Searches for a specified file in a specified path.
+            </summary>
+            <remarks>
+                see http://msdn.microsoft.com/en-us/library/windows/desktop/aa365527(v=vs.85).aspx" />
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.CloseHandle(System.IntPtr)">
+            <summary>
+            Closes an open object handle.
+            </summary>
+            <param name="hObject"> A valid handle to an open object. </param>
+            <returns> If the function succeeds, the return value is nonzero. If the function fails, the return value is zero. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.RegisterSdApi">
+            <summary>
+            Register Source Depot API COM class
+            </summary>
+            <returns> 0 if successful </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.UnregisterSdApi">
+            <summary>
+            Unregister Source Depot API COM class
+            </summary>
+            <returns> 0 if successful </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.CommandLineToArgvW(System.String,System.Int32@)">
+            <summary>
+            Parses a command line
+            </summary>
+            <param name="lpCmdLine"> Command line string to parse </param>
+            <param name="pNumArgs"> Receives the number of elements on the returned array. </param>
+            <returns> Returns an array of pointers to null terminated Unicode strings. </returns>
+            <remarks>
+                see http://msdn.microsoft.com/en-us/library/windows/desktop/bb776391(v=vs.85).aspx
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.LocalFree(System.IntPtr)">
+            <summary>
+            Frees the specified local memory object and invalidates its handle
+            </summary>
+            <remarks>
+                see http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.PathRelativePathTo(System.Text.StringBuilder,System.String,System.IO.FileAttributes,System.String,System.IO.FileAttributes)">
+            <summary>
+            Creates a relative path from one file or folder to another.
+            </summary>
+            <remarks>
+                see http://msdn.microsoft.com/en-us/library/windows/desktop/bb773740(v=vs.85).aspx
+            </remarks>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.ParseCommandLineArguments(System.String)">
+            <summary>
+            Splits command line arguments into separate strings
+            </summary>
+            <param name="commandLineArguments"> Command line arguments as a single string </param>
+            <returns> Command line arguments as an array of strings </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.ProcessTrace(System.UInt64[],System.UInt32,System.IntPtr,System.IntPtr)">
+            <summary>
+            Processes the trace and invokes the EventRecordCallback for each entry within the trace
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.CloseTrace(System.UInt64)">
+            <summary>
+            Closes the trace instance
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GetTickCount64">
+            <summary>
+            Get the current tick count (64-bit)
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.StrFormatByteSize(System.Int64,System.Text.StringBuilder,System.Int32)">
+            <summary>
+            Converts a numeric value into a string that represents the number expressed as a size value in bytes, kilobytes,
+            megabytes, or gigabytes, depending on the size.
+            </summary>
+            <param name="numberOfBytes">The numeric value to be converted</param>
+            <param name="buffer">a buffer that receives the converted string.</param>
+            <param name="bufferSize">The size of the buffer pointed to by pszBuf, in characters</param>
+            <returns>Returns a pointer to the converted string, or NULL if the conversion fails.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.StrFormatByteSize(System.Int64)">
+            <summary>
+            Converts a numeric value into a string that represents the number expressed as a size value in bytes, kilobytes,
+            megabytes, or gigabytes, depending on the size.
+            </summary>
+            <param name="numberOfBytes">The number of bytes to be converted.</param>
+            <returns>The resulting string</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GetFileAttributesEx(System.String,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GET_FILEEX_INFO_LEVELS,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.WIN32_FILE_ATTRIBUTE_DATA@)">
+            <summary>
+            Gets the FileAttributes
+            http://msdn.microsoft.com/en-us/library/windows/desktop/aa364946(v=vs.85).aspx
+            </summary>
+            <param name="name">
+            The name of the file or directory. In the ANSI version of this function, the name is limited to
+            MAX_PATH characters. To extend this limit to 32,767 wide characters, call the Unicode version of the function and
+            prepend &quot;\\?\&quot; to the path. For more information, see Naming a File.
+            </param>
+            <param name="fileInfoLevel">
+            A class of attribute information to retrieve. This parameter can be the following value
+            from the GET_FILEEX_INFO_LEVELS enumeration
+            </param>
+            <param name="lpFileInformation">
+            A pointer to a buffer that receives the attribute information. The type of attribute
+            information that is stored into this buffer is determined by the value of fInfoLevelId.
+            </param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.DeviceIoControl(System.IntPtr,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.EIOControlCode,System.IntPtr,System.Int32,System.IntPtr,System.Int32,System.Int32@,System.IntPtr)">
+            <summary>
+            Sends a control code directly to a specified device driver, causing the corresponding device to perform the
+            corresponding operation.
+            </summary>
+            <param name="hDevice">
+            A handle to the device on which the operation is to be performed. The device is typically a
+            volume, directory, file, or stream.
+            </param>
+            <param name="dwIoControlCode">
+            The control code for the operation. This value identifies the specific operation to be
+            performed and the type of device on which to perform it.
+            </param>
+            <param name="inBuffer">A pointer to the input buffer that contains the data required to perform the operation.</param>
+            <param name="nInBufferSize">The size of the input buffer, in bytes.</param>
+            <param name="outBuffer">A pointer to the output buffer that is to receive the data returned by the operation</param>
+            <param name="nOutBufferSize">The size of the output buffer, in bytes.</param>
+            <param name="pBytesReturned">
+            A pointer to a variable that receives the size of the data stored in the output buffer, in
+            bytes.
+            </param>
+            <param name="lpOverlapped">A pointer to an OVERLAPPED structure</param>
+            <returns>If the operation completes successfully, the return value is nonzero.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SetHandleInformation(System.IntPtr,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.HANDLE_FLAGS,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.HANDLE_FLAGS)">
+            <summary>
+            Modify handle settings (e.g.
+            </summary>
+            <param name="hObject">Handle to modify</param>
+            <param name="dwMask">HANDLE_FLAGS to affect</param>
+            <param name="dwFlags">The new values for the masked flags</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.CreateSymbolicLink(System.String,System.String,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SYMBOLIC_LINK_FLAG)">
+            <summary>
+            Creates a symbolic link.
+            </summary>
+            <param name="lpSymlinkFileName">The symbolic link to be created.</param>
+            <param name="lpTargetFileName">
+            The name of the target for the symbolic link to be created.
+            If lpTargetFileName has a device name associated with it, the link is treated as an absolute link; otherwise, the link
+            is treated as a relative link.
+            </param>
+            <param name="dwFlags">Indicates whether the link target, lpTargetFileName, is a directory.</param>
+            <returns>If the function succeeds, the return value is nonzero.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.CreateJobObject(System.IntPtr,System.String)">
+            <summary>
+            Creates or opens a job object.
+            </summary>
+            <param name="lpJobAttributes">
+            A pointer to a SECURITY_ATTRIBUTES structure that specifies the security descriptor for
+            the job object and determines whether child processes can inherit the returned handle
+            </param>
+            <param name="lpName">The name of the job</param>
+            <returns>If the function succeeds, the return value is a handle to the job object</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.SetInformationJobObject(System.IntPtr,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECTINFOCLASS,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECT_EXTENDED_LIMIT_INFORMATION,System.UInt32)">
+            <summary>
+            Sets limits for a job object.
+            </summary>
+            <param name="hJob">A handle to the job whose limits are being set. </param>
+            <param name="JobObjectInfoClass">The information class for the limits to be set. </param>
+            <param name="lpJobObjectInfo">The limits or job state to be set for the job</param>
+            <param name="cbJobObjectInfoLength">The size of the job information being set, in bytes.</param>
+            <returns>If the function succeeds, the return value is nonzero</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.QueryInformationJobObject(System.IntPtr,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECTINFOCLASS,Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECT_EXTENDED_LIMIT_INFORMATION,System.UInt32,System.UInt32@)">
+            <summary>
+            Retrieves limit and job state information from the job object.
+            </summary>
+            <param name="hJob">A handle to the job whose information is being queried</param>
+            <param name="JobObjectInformationClass">The information class for the limits to be queried</param>
+            <param name="lpJobObjectInfo">The limit or job state information</param>
+            <param name="cbJobObjectInfoLength">The count of the job information being queried, in bytes</param>
+            <param name="lpReturnLength">
+            A pointer to a variable that receives the length of data written to the structure pointed
+            to by the lpJobObjectInfo parameter
+            </param>
+            <returns>If the function succeeds, the return value is nonzero.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.AssignProcessToJobObject(System.IntPtr,System.IntPtr)">
+            <summary>
+            Assigns a process to an existing job object.
+            </summary>
+            <param name="hJob">A handle to the job object to which the process will be associated. </param>
+            <param name="hProcess">A handle to the process to associate with the job object</param>
+            <returns>If the function succeeds, the return value is nonzero.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.IsProcessInJob(System.IntPtr,System.IntPtr,System.Boolean@)">
+            <summary>
+            Determines whether the process is running in the specified job.
+            </summary>
+            <param name="hProcess">A handle to the process to be tested</param>
+            <param name="hJob">
+            A handle to the job. If this parameter is NULL, the function tests if the process is running under
+            any job.
+            </param>
+            <param name="result">A pointer to a value that receives TRUE if the process is running in the job, and FALSE otherwise.</param>
+            <returns>If the function succeeds, the return value is nonzero.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.IO_COUNTERS">
+            <summary>
+            Contains I/O accounting information for a process or a job object. For a job object, the counters include all
+            operations performed by all processes that have ever been associated with the job, in addition to all processes
+            currently associated with the job.
+            http://msdn.microsoft.com/en-us/library/windows/desktop/ms684125(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.JOBOBJECT_EXTENDED_LIMIT_INFORMATION">
+            <summary>
+            Contains basic and extended limit information for a job object.
+            http://msdn.microsoft.com/en-us/library/windows/desktop/ms684156(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.REPARSE_DATA_BUFFER">
+            <summary>
+            The REPARSE_DATA_BUFFER structure contains reparse point data for a Microsoft reparse point.
+            (Third-party reparse point owners must use the REPARSE_GUID_DATA_BUFFER structure instead.)
+            http://msdn.microsoft.com/en-us/library/ff552012.aspx
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.WIN32_FILE_ATTRIBUTE_DATA">
+            <summary>
+            Contains attribute information for a file or directory. The GetFileAttributesEx function uses this structure.
+            http://msdn.microsoft.com/en-us/library/windows/desktop/aa365739(v=vs.85).aspx
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.NativeMethods.GetConsoleWindow">
+            <summary>Gets the process console window pointer.</summary>
+            <returns>The console window pointer.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.PathUtilities">
+            <summary>
+            General helper utilities for dealing with paths
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.TryFindFileInParentRecurse(System.String,System.String@)">
+            <summary>
+            Find a file in the current directory or an ancestor of the current directory, recursively (excluding the root path).
+            </summary>
+            <param name="fileName"> File name to find. </param>
+            <param name="filePath"> Full path to the file or null if not found. </param>
+            <returns> True if the file was found, otherwise false. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.ReRootPath(System.String,System.String,System.String)">
+            <summary>
+            Remaps file path to a different root folder
+            </summary>
+            <param name="currentRoot"> Current root folder of the path to reroot </param>
+            <param name="newRoot"> New root folder </param>
+            <param name="pathToReRoot"> The path to re-root </param>
+            <returns> Path under the new root </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.IsVirtualPath(System.String)">
+            <summary>
+            Tests whether the given path is a Virtual Path or not.
+            Virtual paths MUST be absolute and refer to a drive letter
+            </summary>
+            <param name="path"> a path </param>
+            <returns> whether the path is a virtual path </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.IsNormalizedPath(System.String)">
+            <summary>
+            Tests weither the given path is a normalized path.
+            Normalized paths MUST be absolute to '\' and not be a drive or UNC share.
+            </summary>
+            <param name="path"> a path </param>
+            <returns> weither the path is a normalized path </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.VirtualPathToNormalizedPath(System.String,System.String)">
+            <summary>
+            Converts an absolute path to a relative path by removing the folder.
+            </summary>
+            <param name="virtualRootFolder"> Virtual root folder </param>
+            <param name="virtualPath"> virtual Path </param>
+            <returns> normalized path </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.NormalizedPathToVirtualPath(System.String,System.String)">
+            <summary>
+            Converts normalized Path to a Virtual Path
+            </summary>
+            <param name="virtualRootFolder"> Virtual root folder </param>
+            <param name="normalizedPath"> normalized Path </param>
+            <returns> virtual path </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.GetDirectoryTrimSlash(System.String)">
+            <summary>
+            Get directory for a path and trim any trailing slashes
+            </summary>
+            <param name="path">File or folder path</param>
+            <returns>Parent directory path without any training slashes</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.DoubleQuoteIfNeeded(System.String)">
+            <summary>
+            Puts string in double quotes if it contains spaces.
+            </summary>
+            <param name="s">string</param>
+            <returns>String in double quotes or original string.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.EnsureTrailingPathSeparator(System.String)">
+            <summary>
+            Ensures the given path has a trailing path separator.
+            </summary>
+            <param name="path">Path to ensure trailing path separator on.</param>
+            <returns>Path with guaranteed trailing path separator</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.RemoveTrailingPathSeparator(System.String)">
+            <summary>
+            Ensures the given path does not have a trailing path separator.
+            </summary>
+            <param name="path">Path to ensure trailing path separator is not present.</param>
+            <returns>Path without guaranteed trailing path separator</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.ReplaceVirtualPathSeparatorWithNormalizedPathSeparator(System.String)">
+            <summary>
+            Extension method that replaces back-slash with forward-slash
+            </summary>
+            <param name="path">Path to replace</param>
+            <returns>Path with replaced slashes.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.TryFindOnPath(System.String,System.String@)">
+            <summary>
+            Looks for the given file in the system path i.e. all locations in
+            the %PATH% environment variable.
+            </summary>
+            <param name="filename">Name of the file to look up</param>
+            <param name="fullFilePath">The location of the file, or null if file not found.</param>
+            <returns>True if the file was found.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.TryGetFullPath(System.String,System.String@,System.Exception@)">
+            <summary>
+            Wraps Path.GetFullPath and returns the exception thrown (if any)
+            </summary>
+            <remarks>
+            The only known use for this method is to gracefully handle malformed paths in user data, e.g. build definitions.
+            Therefore the majority of CloudDev logic should continue using Path.GetFullPath directly.
+            </remarks>
+            <param name="path">Path to make absolute</param>
+            <param name="fullPath">Resulting full path</param>
+            <param name="ex">Exception thrown or null</param>
+            <returns>True if the operation was successful; otherwise 'ex' will contain the exception thrown</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.GetFullPathWithOriginalCase(System.String)">
+            <summary>
+            Obtains a long file name from a file system, restoring casing as recorded in directory entry.
+            </summary>
+            <param name="path">Path to resolve.</param>
+            <returns>Absolute file name as recorded in directory entry for the file.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.IsPathInsideDirectory(System.String,System.String)">
+            <summary>
+            Determines whether a given path is under a given directory
+            </summary>
+            <param name="path">The path to check</param>
+            <param name="directory">The directory to check if it contains the path</param>
+            <returns>True if the path is inside the given directory.</returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.GetLastWriteUtcAndFileAttributes(System.String,System.Int64@,System.IO.FileAttributes@)">
+            <summary>
+            Gets the lastWriteUtc and FileAttributes in one go (to optimize to single win32 call, calling .Net api's multiple times
+            yields multiple calls to this same native method).
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.PathUtilities.GetFinalPathName(System.String)">
+            <summary>
+            Converts from any filePath (including mapped paths) to absolute path
+            The path could be a file or a directory path.
+            </summary>
+            <param name="path">The provided path.</param>
+            <returns>Absolute path.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellExecuteLogged">
+            <summary>
+            Wrapper for ShellExecute.Execute that provides logging
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellExecuteLogged.s_executInstance">
+            <summary>
+            Machine global instance ID to match up log start/stop entries
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellExecuteLogged.Execute(System.String,System.String,System.String,System.Boolean,Microsoft.Engineering.FileVirtualization.Common.Logging.Logger,Microsoft.Engineering.FileVirtualization.Common.Logging.LogLevel,Microsoft.Engineering.FileVirtualization.Common.Logging.CloudDevContext,Microsoft.Engineering.FileVirtualization.Common.Logging.LogContext,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>Wrapper for ShellExecute.Execute that provides logging</summary>
+            <param name="workingDirectory">Working directory</param>
+            <param name="fileName">Command to execute</param>
+            <param name="arguments">Arguments to pass to application to execute</param>
+            <param name="waitForExit">If the returning function should wait until the process is completed</param>
+            <param name="logger">Logger to use</param>
+            <param name="logLevel">Level at which to log</param>
+            <param name="context">Context to use for logging</param>
+            <param name="logContext">The log context.</param>
+            <param name="envVars">Environment variable overrides</param>
+            <returns>The exit code of the process or -1 if there was an error starting the process or 0 if waitForExit is false.</returns>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType">
+            <summary>
+            Used to control parsing of command line arguments.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.Required">
+            <summary>
+            Indicates that this field is required. An error will be displayed
+            if it is not present when parsing arguments.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.Unique">
+            <summary>
+            Only valid in conjunction with Multiple.
+            Duplicate values will result in an error.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.Multiple">
+            <summary>
+            Indicates that the argument may be specified more than once.
+            Only valid if the argument is a collection
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.AtMostOnce">
+            <summary>
+            The argument is not required, but an error will be reported if it is specified more than once.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.RestOfLine">
+            <summary>
+            The argument is not required, but if it is encountered, then the rest of the
+            commandline will be consumed and used as its value (whether or not the arguments
+            start with a -, / or @.  Only valid for string collections.  It is different
+            from a default argument which just consumes parts of the commandline that don't
+            start with those characters and aren't used as values for other arguments.  If
+            a "RestOfLine" argument is encountered on the commandline, parsing stops and
+            the rest of the line is passed as is.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.LastOccurenceWins">
+            <summary>
+            For non-collection arguments, when the argument is specified more than
+            once no error is reported and the value of the argument is the last
+            value which occurs in the argument list.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.MultipleUnique">
+            <summary>
+            The argument is permitted to occur multiple times, but duplicate
+            values will cause an error to be reported.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType.AtLeastOnce">
+            <summary>
+            The argument is required and may be specified more than once.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute">
+            <summary>
+            Allows control of command line parsing.
+            Attach this attribute to instance fields of types used
+            as the destination of command line argument parsing.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.#ctor(Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType)">
+            <summary>
+            Allows control of command line parsing.
+            </summary>
+            <param name="type"> Specifies the error checking to be done on the argument. </param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.Type">
+            <summary>
+            The error checking to be done on the argument.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.DefaultShortName">
+            <summary>
+            Returns true if the argument did not have an explicit short name specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.ShortName">
+            <summary>
+            The short name of the argument.
+            Set to null means use the default short name if it does not
+            conflict with any other parameter name.
+            Set to String.Empty for no short name.
+            This property should not be set for DefaultArgumentAttributes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.DefaultLongName">
+            <summary>
+            Returns true if the argument did not have an explicit long name specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.LongName">
+            <summary>
+            The long name of the argument.
+            Set to null means use the default long name.
+            The long name for every argument must be unique.
+            It is an error to specify a long name of String.Empty.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.DefaultValue">
+            <summary>
+            The default value of the argument.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.HasDefaultValue">
+            <summary>
+            Returns true if the argument has a default value.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.HasDynamicDefaultValue">
+            <summary>
+            Returns true if the argument has a dynamic default value.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.HasHelpText">
+            <summary>
+            Returns true if the argument has help text specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.HelpText">
+            <summary>
+            The help text for the argument.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.HideHelp">
+            <summary>
+            Hide help text for this argument.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.NullAllowed">
+            <summary>
+            Null string should be treated as an empty string rather than an error.  Only valid for string types.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.Address">
+            <summary>
+            If true, treat parameters as an address. Defaults to hex.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentAttribute.Hex">
+            <summary>
+            If true, default to hex with 0x.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.DefaultArgumentAttribute">
+            <summary>
+            Indicates that this argument is the default argument.
+            '/' or '-' prefix only the argument value is specified.
+            The ShortName property should not be set for DefaultArgumentAttribute
+            instances. The LongName property is used for usage text only and
+            does not affect the usage of the argument.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.DefaultArgumentAttribute.#ctor(Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ArgumentType)">
+            <summary>
+            Indicates that this argument is the default argument.
+            </summary>
+            <param name="type"> Specifies the error checking to be done on the argument. </param>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ErrorReporter">
+            <summary>
+            A delegate used in error reporting.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine">
+            <summary>
+            Parser for command line arguments.
+            The parser specification is infered from the instance fields of the object
+            specified as the destination of the parse.
+            Valid argument types are: int, uint, string, bool, enums
+            Also argument types of Array of the above types are also valid.
+            Error checking options can be controlled by adding a ArgumentAttribute
+            to the instance fields of the destination object.
+            At most one field may be marked with the DefaultArgumentAttribute
+            indicating that arguments without a '-' or '/' prefix will be parsed as that argument.
+            If not specified then the parser will infer default options for parsing each
+            instance field. The default long name of the argument is the field name. The
+            default short name is the first character of the long name. Long names and explicitly
+            specified short names must be unique. Default short names will be used provided that
+            the default short name does not conflict with a long name or an explicitly
+            specified short name.
+            Arguments which are array types are collection arguments. Collection
+            arguments can be specified multiple times.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.NewLine">
+            <summary>
+            The System Defined new line string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.#ctor(System.Type,Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ErrorReporter,System.Object)">
+            <summary>
+            Creates a new command line argument parser.
+            </summary>
+            <param name="argumentSpecification"> The type of object to parse. </param>
+            <param name="reporter"> The destination for parse errors. </param>
+            <param name="destination"> The destination object </param>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.UseAlternateResponseFileFormat">
+            <summary>
+            Force parser to use an alternate format for response files that handles
+            nested single and double quotes and does not use \ escapes so that Windows
+            directory paths can be used without mangling them first.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.AdditionalHelp">
+            <summary>
+            If this is non-null, it is added to the end of the help/usage message when
+            that is generated.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.HasDefaultArgument">
+            <summary>
+            Does this parser have a default argument.
+            </summary>
+            <value> Does this parser have a default argument. </value>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ParseArgumentsWithUsage(System.String[],System.Object)">
+            <summary>
+            Parses Command Line Arguments. Displays usage message to Console.Out
+            if /?, /help or invalid arguments are encountered.
+            Errors are output on Console.Error.
+            Use ArgumentAttributes to control parsing behavior.
+            </summary>
+            <param name="arguments"> The actual arguments. </param>
+            <param name="destination"> The resulting parsed arguments. </param>
+            <returns> true if no errors were detected. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ParseArgumentsWithUsage(System.String[],System.Object,Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ErrorReporter)">
+            <summary>
+            Parses Command Line Arguments. Displays usage message to Console.Out
+            if /?, /help or invalid arguments are encounterd.
+            Errors are output on Console.Error.
+            Use ArgumentAttributes to control parsing behaviour.
+            </summary>
+            <param name="arguments"> The actual arguments. </param>
+            <param name="destination"> The resulting parsed arguments. </param>
+            <param name="reporter"> The destination for parse errors. </param>
+            <returns> true if no errors were detected. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ParseArguments(System.String[],System.Object)">
+            <summary>
+            Parses Command Line Arguments.
+            Errors are output on Console.Error.
+            Use ArgumentAttributes to control parsing behaviour.
+            </summary>
+            <param name="arguments"> The actual arguments. </param>
+            <param name="destination"> The resulting parsed arguments. </param>
+            <returns> true if no errors were detected. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ParseArguments(System.String[],System.Object,Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ErrorReporter)">
+            <summary>
+            Parses Command Line Arguments.
+            Use ArgumentAttributes to control parsing behaviour.
+            </summary>
+            <param name="arguments"> The actual arguments. </param>
+            <param name="destination"> The resulting parsed arguments. </param>
+            <param name="reporter"> The destination for parse errors. </param>
+            <returns> true if no errors were detected. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ParseHelp(System.String[],System.Object)">
+            <summary>
+            Checks if a set of arguments asks for help.
+            </summary>
+            <param name="args"> Args to check for help. </param>
+            <param name="destination"> The destination object </param>
+            <returns> Returns true if args contains /? or /help. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ArgumentsUsage(System.Type,System.Object)">
+            <summary>
+            Returns a Usage string for command line argument parsing.
+            Use ArgumentAttributes to control parsing behaviour.
+            Formats the output to the width of the current console window.
+            </summary>
+            <param name="argumentType"> The type of the arguments to display usage for. </param>
+            <param name="destination"> The destination object </param>
+            <returns> Printable string containing a user friendly description of command line arguments. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ArgumentsUsage(System.Type,System.Int32,System.Object)">
+            <summary>
+            Returns a Usage string for command line argument parsing.
+            Use ArgumentAttributes to control parsing behaviour.
+            </summary>
+            <param name="argumentType"> The type of the arguments to display usage for. </param>
+            <param name="columns"> The number of columns to format the output to. </param>
+            <param name="destination"> The destination object </param>
+            <returns> Printable string containing a user friendly description of command line arguments. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ArgumentsUsage(System.Type,System.Int32,System.Object,System.Boolean)">
+            <summary>
+            Returns a Usage string for command line argument parsing.
+            Use ArgumentAttributes to control parsing behaviour.
+            </summary>
+            <param name="argumentType"> The type of the arguments to display usage for. </param>
+            <param name="columns"> The number of columns to format the output to. </param>
+            <param name="destination"> The destination object </param>
+            <param name="includeAssembly"> If false, only the help strings are returned. </param>
+            <returns> Printable string containing a user friendly description of command line arguments. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.IndexOf(System.Text.StringBuilder,System.Char,System.Int32)">
+            <summary>
+            Searches a StringBuilder for a character
+            </summary>
+            <param name="text"> The text to search. </param>
+            <param name="value"> The character value to search for. </param>
+            <param name="startIndex"> The index to stat searching at. </param>
+            <returns> The index of the first occurence of value or -1 if it is not found. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.LastIndexOf(System.Text.StringBuilder,System.Char,System.Int32)">
+            <summary>
+            Searches a StringBuilder for a character in reverse
+            </summary>
+            <param name="text"> The text to search. </param>
+            <param name="value"> The character to search for. </param>
+            <param name="startIndex"> The index to start the search at. </param>
+            <returns> The index of the last occurence of value in text or -1 if it is not found. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.ParseArgumentList(System.String[],System.Object)">
+            <summary>
+            Parses an argument list into an object
+            </summary>
+            <param name="args"> </param>
+            <param name="destination"> </param>
+            <returns> true if an error occurred </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.Parse(System.String[],System.Object)">
+            <summary>
+            Parses an argument list.
+            </summary>
+            <param name="args"> The arguments to parse. </param>
+            <param name="destination"> The destination of the parsed arguments. </param>
+            <returns> true if no parse errors were encountered. </returns>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.CommandLine.GetUsageString(System.Int32,System.Boolean)">
+            <summary>
+            A user friendly usage string describing the command line argument syntax.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.InvalidCommandLineException">
+            <summary>
+            Trigger this exception when command line of the application cannot be successfully processed.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecute">
+            <summary>
+            Helper to perform shell executes
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecute.Execute(System.String,System.String,System.String,System.Boolean,System.IO.TextWriter,System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Starts a process, waits for completion, collects output and returns if execution was successful.
+            </summary>
+            <param name="workingDirectory">Working directory</param>
+            <param name="fileName">Command to execute</param>
+            <param name="arguments">Arguments to pass to application to execute</param>
+            <param name="waitForExit">If the returning function should wait until the process is completed</param>
+            <param name="outputWriter">Writer to write all output to</param>
+            <param name="envVars">Environment variables to run with</param>
+            <returns>The exit code of the process or 0 if waitForExit is false.</returns>
+            <exception cref="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException">Thrown if there was an error starting the process.</exception>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecute.Execute(System.String,System.String,System.String,System.Boolean,System.Action{System.String},System.Action{System.String},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String})">
+            <summary>
+            Starts a process, waits for completion, collects output and returns if execution was successful.
+            </summary>
+            <param name="workingDirectory">Working directory</param>
+            <param name="fileName">Command to execute</param>
+            <param name="arguments">Arguments to pass to application to execute</param>
+            <param name="waitForExit">If the returning function should wait until the process is completed</param>
+            <param name="stdOutCallback">Callback for each stdout</param>
+            <param name="stdErrCallback">Callback for each stderr</param>
+            <param name="envVars">Environment variables to run with</param>
+            <returns>The exit code of the process or 0 if waitForExit is false.</returns>
+            <exception cref="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException">Thrown if there was an error starting the process.</exception>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException">
+            <summary>
+            Indicates a failure related to starting a process with <see cref="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecute" />.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException.#ctor">
+            <summary>
+            Creates an exception representing a ShellExecute failure with no additional description provided.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException.#ctor(System.String)">
+            <summary>
+            Creates an exception representing a ShellExecute failure with the given description.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException.#ctor(System.String,System.Exception)">
+            <summary>
+            Creates an exception representing the given description and reference to the inner exception that is the cause of this
+            one.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Custom deserialization callback (required since <see cref="T:System.Exception" /> implements <see cref="T:System.Runtime.Serialization.ISerializable" />).
+            </summary>
+        </member>
+        <member name="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException">
+            <summary>
+            Indicates that a process started with <see cref="T:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecute" /> returned an error-level exit code.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException.#ctor(System.Int32)">
+            <summary>
+            Creates an exception representing the given error-level exit code.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException.#ctor(System.String,System.Int32)">
+            <summary>
+            Creates an exception representing the given error-level exit code and description.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException.#ctor(System.String,System.Int32,System.Exception)">
+            <summary>
+            Creates an exception representing the given error-level exit code, description, and a reference to the inner exception
+            that is the cause of this one.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Custom deserialization callback (required since <see cref="T:System.Exception" /> implements <see cref="T:System.Runtime.Serialization.ISerializable" />).
+            </summary>
+        </member>
+        <member name="P:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException.ExitCode">
+            <summary>
+            Error-level exit code returned by the process. The meaning of the exit code is program dependent.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Engineering.FileVirtualization.Common.ShellUtils.ShellExecuteExitCodeException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Custom serialization callback (required since <see cref="T:System.Exception" /> implements <see cref="T:System.Runtime.Serialization.ISerializable" />).
+            </summary>
+        </member>
+    </members>
+</doc>
