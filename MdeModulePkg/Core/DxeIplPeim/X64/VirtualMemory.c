@@ -227,6 +227,9 @@ CreateIdentityMappingPageTables (
     } else {
       TotalPagesNum = NumberOfPml4EntriesNeeded + 1;
     }
+    DEBUG((DEBUG_VERBOSE,
+          "--- CreateIdentityMappingPageTables - Attempting to allocate %lu pages (%lu bytes)\n",
+          TotalPagesNum, (UINTN)EFI_PAGES_TO_SIZE(TotalPagesNum)));
     BigPageAddress = (UINTN) AllocatePages (TotalPagesNum);
 
     if (BigPageAddress == 0)

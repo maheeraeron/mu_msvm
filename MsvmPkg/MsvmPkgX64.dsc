@@ -243,6 +243,9 @@
   gUefiMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xFED3F000
   gUefiMsvmPkgTokenSpaceGuid.PcdPmemBase|0xFED3D000
 
+  # Use 1GB page table entries in DXE page table when possible
+  gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable|TRUE
+
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE

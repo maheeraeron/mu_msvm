@@ -606,7 +606,7 @@ Return Value:
                                (pdpEntries + 1) * pml4Entries + 1;
     ASSERT(totalPages <= 0x40201);
 
-    DEBUG((DEBUG_VERBOSE, "<<< GetPageTableSize returning %ull\n",
+    DEBUG((DEBUG_VERBOSE, "<<< GetPageTableSize returning %lu\n",
         (UINTN)EFI_PAGES_TO_SIZE(totalPages)));
 
     return (UINTN)(EFI_PAGES_TO_SIZE(totalPages));

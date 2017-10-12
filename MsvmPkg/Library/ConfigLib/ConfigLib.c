@@ -209,7 +209,7 @@ Return Value:
         gVDevVersion = VDevVersion2;
         DEBUG((DEBUG_VERBOSE, "*** VDev version returned as 0. Defaulting to V2 (512).\n"));
     }
-    DEBUG((DEBUG_VERBOSE, "--- VDev version is %d.%d\n", vDevVersion >> 8, vDevVersion & 0xFF));
+    DEBUG((DEBUG_VERBOSE, "--- VDev version is %d.%d\n", gVDevVersion >> 8, gVDevVersion & 0xFF));
 
 }
 
