@@ -17,9 +17,9 @@
 #include "PlatformConsole.h"
 #include <Library/BootEventLogLib.h>
 #include <Guid/EventGroup.h>
-#include <Library/ConfigLib.h>
 #include <Library/GenericBdsLib.h>
 #include <Library/DevicePathLib.h>
+#include <UefiConstants.h>
 #include <VmbusFileSystem.h>
 
 //
@@ -710,7 +710,7 @@ Returns:
     //
     // Get the configured console mode.
     //
-    consoleMode = GetConsoleMode();
+    consoleMode = PcdGet8(PcdConsoleMode);
 
     //
     // Detect VMBUS based devices.
@@ -1002,7 +1002,7 @@ Status Codes:
 {
     DEBUG((EFI_D_INFO, "PlatformBdsBootFail\n"));
 
-    if (GetPauseAfterBootFailure() && !LastBootOption)
+    if (PcdGetBool(PcdPauseAfterBootFailure) && !LastBootOption)
     {
         PlatformConsoleShow();
         PlatformConsoleBootSummary(STRING_TOKEN(STR_BOOT_NEXT_ENTRY));

@@ -199,8 +199,8 @@
   # FUTURE: figure out what this is all about -- jostarks
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
 
-  # We are only supporting SMBIOS v2.4
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0204
+  # We are only supporting SMBIOS v3.1
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0301
 
   # Default OEM ID for ACPI table creation, its length must be 0x6 bytes to follow ACPI specification.
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId|"VRTUAL"
@@ -254,6 +254,111 @@
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0xFFFF
+
+  # UEFI Config information from the Bios VDEV
+  # UEFI_CONFIG_STRUCTURE_COUNT
+  gUefiMsvmPkgTokenSpaceGuid.PcdConfigBlobSize|0x0
+  # UEFI_CONFIG_BIOS_INFORMATION
+  gUefiMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0
+
+  # UEFI_CONFIG_SRAT
+  gUefiMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSratSize|0x0
+
+  # UEFI_CONFIG_MEMORY_MAP
+  gUefiMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0
+
+  # UEFI_CONFIG_ENTROPY
+  # Points to the actual entropy array, not the containing config structure
+  gUefiMsvmPkgTokenSpaceGuid.PcdEntropyPtr|0x0
+
+  # UEFI_CONFIG_BIOS_GUID
+  # Points to the actual GUID, not the containing config structure
+  gUefiMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr|0x0
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER
+  # Points to a null terminated string of the specified size
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION
+  # Defaults are set to Unknown unless otherwise noted
+  # Processor Type defaults to Central Processor type (CPU)
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorType|0x3
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorID|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVoltage|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorExternalClock|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorMaxSpeed|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCurrentSpeed|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorStatus|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorUpgrade|0x1
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCharacteristics|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorFamily2|0x2
+
+  # UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberStr|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberSize|0x0
+
+  # UEFI_CONFIG_FLAGS
+  gUefiMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdPauseAfterBootFailure|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdPxeIpV6|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdLoadOempTable|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdHibernateEnabled|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
+
+  # UEFI_CONFIG_PROCESSOR_INFORMATION
+  gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket|0x0
+
+  # UEFI_CONFIG_MMIO_DESCRIPTION
+  # Currently only two mmio holes, low gap and high gap but we could
+  # do more in the future.
+  gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0
+  gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0
 
 ################################################################################
 #

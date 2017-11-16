@@ -1,6 +1,6 @@
 ## @file
 #  Access PXE-compatible devices for network access and network booting.
-#  
+#
 #  This driver provides PXE Base Code Protocol which is used to accessing
 #  PXE-compatible device for network access or booting. It could work together
 #  with an IPv4 stack, an IPv6 stack or both.
@@ -71,12 +71,11 @@
   DevicePathLib
   PcdLib
   BootEventLogLib
-  ConfigLib
 
 [Protocols]
   ## TO_START
   ## SOMETIMES_CONSUMES
-  gEfiDevicePathProtocolGuid                           
+  gEfiDevicePathProtocolGuid
   gEfiNetworkInterfaceIdentifierProtocolGuid_31        ## SOMETIMES_CONSUMES
   gEfiArpServiceBindingProtocolGuid                    ## TO_START
   gEfiArpProtocolGuid                                  ## TO_START
@@ -108,5 +107,7 @@
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTftpBlockSize      ## SOMETIMES_CONSUMES
+  gUefiMsvmPkgTokenSpaceGuid.PcdPxeIpV6
+
 [UserExtensions.TianoCore."ExtraFiles"]
   UefiPxeBcDxeExtra.uni

@@ -23,7 +23,7 @@
     LocalApicLib
     ResetSystemLib
     WatchdogTimerLib
-    ConfigLib
+    HobLib
 
 [Sources]
     DxeKdLib.c
@@ -62,6 +62,7 @@
 [Guids]
     gEfiEventExitBootServicesGuid
     gEfiHobMemoryAllocStackGuid     ## CONSUMES ## HOB
+    gMsvmDebuggerEnabledGuid
 
 [Protocols]
     gEfiCpuArchProtocolGuid

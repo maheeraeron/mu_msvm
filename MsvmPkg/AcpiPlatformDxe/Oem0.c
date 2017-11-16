@@ -52,8 +52,8 @@ Return Value:
     //
     table = (VM_ACPI_ENTROPY_TABLE *)Table;
 
-    CopyMem(table->Data, GetEntropyData(), ConfigLibEntropyDataSize);
-    
+    CopyMem(table->Data, (VOID*)(UINTN) PcdGet64(PcdEntropyPtr), ConfigLibEntropyDataSize);
+
     return EFI_SUCCESS;
 }
 

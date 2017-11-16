@@ -44,7 +44,7 @@ Return Value:
     //
     // Get configuration to determine if headless.
     //
-    UINT32 consoleMode = GetConsoleMode();
+    UINT32 consoleMode = PcdGet8(PcdConsoleMode);
 
     //
     // Set headless bit if console mode is not default (no video/kbd present)
@@ -62,7 +62,7 @@ Return Value:
     //
     // Special case if battery is enabled
     //
-    if (GetVirtualBatteryEnabled())
+    if (PcdGetBool(PcdVirtualBatteryEnabled))
     {
         //
         // Set the profile to Mobile but don't set EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE flag.

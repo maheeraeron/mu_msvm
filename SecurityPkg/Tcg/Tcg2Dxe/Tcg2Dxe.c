@@ -46,10 +46,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/Tpm2DeviceLib.h>
 #include <Library/HashLib.h>
 #include <Library/PerformanceLib.h>
-#include <Library/ConfigLib.h>
 #include <Tpminterface.h>
-
-extern GUID gVmBiosConfigPageGuid;
 
 #define PERF_ID_TCG2_DXE  0x3120
 
@@ -2527,7 +2524,7 @@ DriverEntry (
 
   mImageHandle = ImageHandle;
 
-  if (GetTpmEnabled())
+  if (PcdGetBool(PcdTpmEnabled))
   {
     Status = InitializeTcg2(SystemTable);
     if (EFI_ERROR (Status))

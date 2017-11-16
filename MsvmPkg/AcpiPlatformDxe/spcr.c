@@ -21,7 +21,6 @@ Author:
 #include <Library/IoLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/Configlib.h>
 #include <Protocol/SerialIo.h>
 #include "AcpiPlatform.h"
 
@@ -51,9 +50,9 @@ Return Value:
     //
     // Get configuration to determine if this table is needed.
     //
-    UINT32 consoleMode = GetConsoleMode();
-    BOOLEAN serialEnabled = GetSerialControllersEnabled();
-    BOOLEAN debuggerEnabled = GetDebuggerEnabled();
+    UINT32 consoleMode = PcdGet8(PcdConsoleMode);
+    BOOLEAN serialEnabled = PcdGetBool(PcdSerialControllersEnabled);
+    BOOLEAN debuggerEnabled = PcdGetBool(PcdDebuggerEnabled);
 
 
     //

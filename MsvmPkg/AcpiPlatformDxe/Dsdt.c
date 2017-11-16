@@ -109,10 +109,10 @@ Return Value:
     data = (DSDT_AML_DATA *)(UINTN)dataPages;
     ZeroMem(data, sizeof(*data));
 
-    data->Mmio1Start = (UINT32)(GetLowMmioGapBasePages() * SIZE_4KB);
-    data->Mmio1Length = (UINT32)(GetLowMmioGapLengthPages() * SIZE_4KB);
-    data->Mmio2StartMb = (UINT32)(GetHighMmioGapBasePages() * SIZE_4KB / SIZE_1MB);
-    data->Mmio2LengthMb = (UINT32)(GetHighMmioGapLengthPages() * SIZE_4KB / SIZE_1MB);
+    data->Mmio1Start = (UINT32)(PcdGet64(PcdLowMmioGapBasePageNumber) * SIZE_4KB);
+    data->Mmio1Length = (UINT32)(PcdGet64(PcdLowMmioGapSizeInPages) * SIZE_4KB);
+    data->Mmio2StartMb = (UINT32)(PcdGet64(PcdHighMmioGapBasePageNumber) * SIZE_4KB / SIZE_1MB);
+    data->Mmio2LengthMb = (UINT32)(PcdGet64(PcdHighMmioGapSizeInPages) * SIZE_4KB / SIZE_1MB);
 
     //
     // Allocate space for the generation ID and inform both
@@ -133,13 +133,13 @@ Return Value:
     //
     // Inform DSDT of other dynamic configuration.
     //
-    data->ProcessorCount = GetProcessorCount();
-    data->SerialControllerEnabled = GetSerialControllersEnabled();
-    data->TpmEnabled = GetTpmEnabled();
-    data->OempEnabled = GetOempEnabled();
-    data->HibernateEnabled = GetHibernateEnabled();
+    data->ProcessorCount = PcdGet32(PcdProcessorCount);
+    data->SerialControllerEnabled = PcdGetBool(PcdSerialControllersEnabled);
+    data->TpmEnabled = PcdGetBool(PcdTpmEnabled);
+    data->OempEnabled = PcdGetBool(PcdLoadOempTable);
+    data->HibernateEnabled = PcdGetBool(PcdHibernateEnabled);
     data->PmemEnabled = (GetNfitSize() > 0);
-    data->VirtualBatteryEnabled = GetVirtualBatteryEnabled();
+    data->VirtualBatteryEnabled = PcdGetBool(PcdVirtualBatteryEnabled);
 
     //
     // Allocate space for the NVDIMM IO Buffer if VPMEM is enabled.

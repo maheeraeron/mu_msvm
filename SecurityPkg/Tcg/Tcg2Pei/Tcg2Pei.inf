@@ -47,14 +47,13 @@
   HashLibTpm2
   PerformanceLib
   IoLib
+  PcdLib
 
 [Guids]
   gTcgEventEntryHobGuid                                                ## PRODUCES               ## HOB
   gTpmErrorHobGuid                                                     ## SOMETIMES_PRODUCES     ## HOB
   gMeasuredFvHobGuid                                                   ## PRODUCES               ## HOB
   gTcgEvent2EntryHobGuid                                               ## PRODUCES               ## HOB
-  gMsvmConfigPageV2Guid
-  gMsvmConfigPageV3Guid
 
 [Ppis]
   gEfiPeiFirmwareVolumeInfoPpiGuid                                     ## SOMETIMES_CONSUMES     ## NOTIFY
@@ -68,6 +67,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported             ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                       ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress                     ## CONSUMES
+  gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
 
 [Depex]
   gEfiPeiMasterBootModePpiGuid

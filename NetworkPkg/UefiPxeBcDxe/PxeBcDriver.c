@@ -674,7 +674,7 @@ PxeBcCreateIp6Children (
   if (Private->Snp != NULL) {
     for (Index = 0; Index < Private->Snp->Mode->HwAddressSize; Index++) {
       Private->IaId |= (Private->Snp->Mode->CurrentAddress.Addr[Index] << ((Index << 3) & 31));
-    }  
+    }
   }
 
   //
@@ -885,7 +885,7 @@ PxeBcDriverBindingSupported (
   EFI_STATUS                      Ip6Status;
   EFI_PXE_BASE_CODE_PROTOCOL      *PxeBc;
   EFI_STATUS                      Status;
-  
+
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiPxeBaseCodeProtocolGuid,
@@ -898,7 +898,7 @@ PxeBcDriverBindingSupported (
   if (!EFI_ERROR (Status)) {
     return EFI_ALREADY_STARTED;
   }
-  
+
   //
   // Try to open the Mtftp4 and Dhcp4 protocol to test whether IPv4 stack is ready.
   //
@@ -989,14 +989,14 @@ PxeBcDriverBindingStart (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Private->IsIpV6 = GetPxeIpV6Enabled();
+  Private->IsIpV6 = PcdGetBool(PcdPxeIpV6);
 
   CopyMem (
     &Private->PxeBc,
     &gPxeBcProtocolTemplate,
     sizeof (EFI_PXE_BASE_CODE_PROTOCOL)
     );
-  
+
   Private->Signature          = PXEBC_PRIVATE_DATA_SIGNATURE;
   Private->Controller         = ControllerHandle;
   Private->Image              = This->ImageHandle;
@@ -1024,7 +1024,7 @@ PxeBcDriverBindingStart (
   //
   // Try to locate SNP protocol.
   //
-  NetLibGetSnpHandle(ControllerHandle, &Private->Snp);    
+  NetLibGetSnpHandle(ControllerHandle, &Private->Snp);
 
   //
   // Setup IPv4.
@@ -1065,7 +1065,7 @@ PxeBcDriverBindingStart (
   return EFI_SUCCESS;
 
 ON_ERROR:
-    
+
   gBS->UninstallMultipleProtocolInterfaces (
          ControllerHandle,
          &gEfiPxeBaseCodeProtocolGuid,
@@ -1119,13 +1119,13 @@ PxeBcDriverBindingStop (
   Private    = NULL;
   PxeBc      = NULL;
   NicHandle  = NULL;
-  
+
   NicHandle = PxeBcGetNicByIp4Children (ControllerHandle);
   if (NicHandle == NULL) {
     NicHandle = PxeBcGetNicByIp6Children (ControllerHandle);
     if (NicHandle == NULL) {
       return EFI_DEVICE_ERROR;
-    } 
+    }
   }
 
   Status = gBS->OpenProtocol (

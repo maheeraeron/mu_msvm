@@ -53,7 +53,6 @@
 #include <Library/DevicePathLib.h>
 #include <Library/PcdLib.h>
 #include <PiDxe.h>
-#include <Library/ConfigLib.h>
 
 typedef struct _PXEBC_PRIVATE_DATA  PXEBC_PRIVATE_DATA;
 typedef struct _PXEBC_PRIVATE_PROTOCOL PXEBC_PRIVATE_PROTOCOL;
@@ -108,7 +107,7 @@ struct _PXEBC_PRIVATE_DATA {
   EFI_LOAD_FILE_PROTOCOL                    LoadFile;
 
   PXEBC_PRIVATE_PROTOCOL                    Id;
-  EFI_SIMPLE_NETWORK_PROTOCOL               *Snp; 
+  EFI_SIMPLE_NETWORK_PROTOCOL               *Snp;
 
   PXEBC_VIRTUAL_NIC                         *Ip4Nic;
   PXEBC_VIRTUAL_NIC                         *Ip6Nic;
@@ -168,7 +167,7 @@ struct _PXEBC_PRIVATE_DATA {
   BOOLEAN                                   IsProxyRecved;
   BOOLEAN                                   IsDoDiscover;
   BOOLEAN                                   IsIpV6;
-  
+
   EFI_IP_ADDRESS                            TmpStationIp;
   EFI_IP_ADDRESS                            StationIp;
   EFI_IP_ADDRESS                            SubnetMask;

@@ -215,23 +215,13 @@ Return Value:
     EFI_ACPI_DESCRIPTION_HEADER *table;
     UINTN tableHandle;
     UINT32 sratSize;
-    EFI_PHYSICAL_ADDRESS address;
 
     //
-    // Get SRAT from BIOS VDev which requires buffer address below 4GB.
+    // Get the SRAT from the config blob parsed in PEI.
     //
-    sratSize = GetSratSize();
-    address = (BASE_4GB - 1ULL);
-    gBS->AllocatePages(AllocateMaxAddress,
-                       EfiBootServicesData,
-                       EFI_SIZE_TO_PAGES(sratSize),
-                       (EFI_PHYSICAL_ADDRESS*) &address);
-    GetSrat(address);
+    sratSize = PcdGet32(PcdSratSize);
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdSratPtr);
 
-    //
-    // Get pointer to the SRAT.
-    //
-    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)address;
     ASSERT(table->Length == sratSize);
 
     //
@@ -241,12 +231,6 @@ Return Value:
                                          table,
                                          table->Length,
                                          &tableHandle);
-
-
-    if (table != NULL)
-    {
-        gBS->FreePages(address, EFI_SIZE_TO_PAGES(sratSize));
-    }
 
     return status;
 }

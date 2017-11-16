@@ -27,9 +27,3 @@
 [Packages]
   MdePkg/MdePkg.dec
   MsvmPkg/MsvmPkg.dec
-
-[Guids]
-  gMsvmConfigPageV2Guid         ## CONSUMES ## GUID
-  gMsvmConfigPageV3Guid         ## CONSUMES ## GUID
-  gSratGuid                     ## CONSUMES ## GUID
-  gMemmapGuid                   ## CONSUMES ## GUID

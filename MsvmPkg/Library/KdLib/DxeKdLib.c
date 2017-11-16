@@ -29,7 +29,7 @@ Author:
 #include <Library/PrintLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/KdDebugLib.h>
-#include <Library/ConfigLib.h>
+#include <Library/HobLib.h>
 #include "EfiKd.h"
 
 
@@ -105,7 +105,24 @@ Return value:
 {
     if (InitFlag == DEBUG_AGENT_INIT_DXE_CORE)
     {
-        EfiKdSubsystemEnabled = GetDebuggerEnabled();
+        //
+        // InitializeDebugAgent is called very early on in DXE Core, before any
+        // drivers are dispatched. Thus, we can't use the PcdDebuggerEnabled to
+        // determine if debuggers are enabled, rather we search for the special
+        // HOB containing just this flag to determine if the debug system should
+        // be enabled or not.
+        //
+        void* hob = GetFirstGuidHob(&gMsvmDebuggerEnabledGuid);
+        if (hob != NULL)
+        {
+            EfiKdSubsystemEnabled = *((BOOLEAN *)GET_GUID_HOB_DATA(hob));
+        }
+        else
+        {
+            // We should always be passing this HOB.
+            // fixme: just assert? or should we just fail
+            ASSERT(FALSE);
+        }
     }
 
     EfiKdInitialize();

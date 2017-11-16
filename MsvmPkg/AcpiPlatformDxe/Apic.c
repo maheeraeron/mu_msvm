@@ -50,7 +50,7 @@ Return Value:
     VM_APIC_TABLE* table;
 
     table = (VM_APIC_TABLE *)Table;
-    processorCount = GetProcessorCount();
+    processorCount = PcdGet32(PcdProcessorCount);
 
     ASSERT(processorCount > 0);
 

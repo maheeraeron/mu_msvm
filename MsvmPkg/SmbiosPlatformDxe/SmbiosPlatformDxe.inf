@@ -1,16 +1,16 @@
 #
 # Copyright (c) Microsoft Corporation
-# 
+#
 # Module Name:
-# 
+#
 #     SmbiosPlatformDxe.inf
-# 
+#
 # Abstract:
-# 
+#
 #     This is the inf file for the SmbiosPlatformDxe driver.
-# 
+#
 # Author:
-# 
+#
 #     Larry Cleeton (lcleeton) 26-Nov-2012
 #
 
@@ -50,6 +50,46 @@
     gEfiSmbiosProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
 
 [Guids]
+
+[Pcd]
+    gUefiMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion
+    gUefiMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr
+    gUefiMsvmPkgTokenSpaceGuid.PcdMemoryMapSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorType
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorID
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVoltage
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorExternalClock
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorMaxSpeed
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCurrentSpeed
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorStatus
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorUpgrade
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCharacteristics
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorFamily2
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagStr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount
+    gUefiMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
 
 [Depex]
     gEfiSmbiosProtocolGuid

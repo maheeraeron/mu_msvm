@@ -45,10 +45,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/Tpm2DeviceLib.h>
 #include <Library/HashLib.h>
 #include <Library/PerformanceLib.h>
-#include <Library/ConfigLib.h>
 #include <Tpminterface.h>
-
-extern GUID gVmBiosConfigPageGuid;
 
 #define PERF_ID_TREE_DXE  0x3120
 
@@ -1706,10 +1703,10 @@ DriverEntry (
     mImageHandle = ImageHandle;
 
     DEBUG ((DEBUG_VERBOSE, ">>> TrEEDxe:DriverEntry\n"));
-    DEBUG ((DEBUG_VERBOSE, "    GetTpmEnabled %x\n", GetTpmEnabled));
-    if (GetTpmEnabled())
+    DEBUG ((DEBUG_VERBOSE, "    Get PcdTpmEnabled %x\n", PcdGet8(PcdTpmEnabled)));
+    if (PcdGet8(PcdTpmEnabled))
     {
-        DEBUG ((DEBUG_VERBOSE, "GetTpmEnabled returned TRUE\n"));
+        DEBUG ((DEBUG_VERBOSE, "PcdTpmEnabled returned TRUE\n"));
         status = InitializeTrEE(SystemTable);
         if (EFI_ERROR (status))
         {

@@ -56,6 +56,21 @@
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
     gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
+    gUefiMsvmPkgTokenSpaceGuid.PcdSratPtr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSratSize
+    gUefiMsvmPkgTokenSpaceGuid.PcdEntropyPtr
+    gUefiMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdLoadOempTable
+    gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
+    gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount
+    gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
+    gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages
+    gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
+    gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
 
 [Depex]
     gEfiAcpiTableProtocolGuid

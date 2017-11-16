@@ -463,9 +463,9 @@ Return Value:
     //
     // Get the serial port and UEFI debugger configuration.
     //
-    gSerialEnabled = GetSerialControllersEnabled();
-    gDebuggerEnabled = GetDebuggerEnabled();
-    gConsoleMode = GetConsoleMode();
+    gSerialEnabled = PcdGetBool(PcdSerialControllersEnabled);
+    gDebuggerEnabled = PcdGetBool(PcdDebuggerEnabled);
+    gConsoleMode = PcdGet8(PcdConsoleMode);
 
     //
     // Do nothing and return success if the serial ports are not configured.

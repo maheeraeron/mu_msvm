@@ -19,7 +19,7 @@ Abstract:
 
 #include <EfiNt.h>
 #include <AcpiTables.h>
-#include <Library\ConfigLib.h>
+#include <Library/ConfigLib.h>
 
 EFI_STATUS
 Oem0InitializeTable(

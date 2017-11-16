@@ -27,7 +27,6 @@ Author:
 #include <Library/UefiRuntimeLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/PrintLib.h>
-#include <BiosConfigPageGuid.h>
 #include <BiosInterface.h>
 #include <NvramVariableDxe.h>
 
@@ -135,7 +134,8 @@ Return Value:
                                 EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)),
                                 &mNvramCommandDescriptorGpa);
     if (EFI_ERROR(status))
-    {
+    {
+
         mNvramCommandDescriptorGpa = 0;
         goto Cleanup;
     }
@@ -149,7 +149,8 @@ Return Value:
                                 EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE),
                                 &mNvramCommandDataBufferGpa);
     if (EFI_ERROR(status))
-    {
+    {
+
         mNvramCommandDataBufferGpa = 0;
         goto Cleanup;
     }
@@ -165,14 +166,16 @@ Cleanup:
     if (EFI_ERROR(status))
     {
         if (mNvramCommandDataBufferGpa != 0)
-        {
+        {
+
             gBS->FreePages(
                 mNvramCommandDataBufferGpa,
                 EFI_SIZE_TO_PAGES(EFI_MAX_VARIABLE_NAME_SIZE + EFI_MAX_VARIABLE_DATA_SIZE));
             mNvramCommandDataBufferGpa = 0;
         }
         if (mNvramCommandDescriptorGpa != 0)
-        {
+        {
+
             gBS->FreePages(
                 mNvramCommandDescriptorGpa,
                 EFI_SIZE_TO_PAGES(sizeof(NVRAM_COMMAND_DESCRIPTOR)));
@@ -670,7 +673,8 @@ Returns:
     // Do nothing if no format string.
     //
     if (Format == NULL)
-    {
+    {
+
         return;
     }
 

@@ -59,7 +59,7 @@
   HashLibTpm2
   PerformanceLib
   IoLib
-  ConfigLib
+  PcdLib
 
 [Guids]
   gEfiSmbiosTableGuid                           # ALWAYS_CONSUMED
@@ -84,6 +84,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                       ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
+  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
 
 [Depex]
   TRUE

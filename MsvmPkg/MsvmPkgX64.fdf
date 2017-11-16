@@ -3,7 +3,7 @@
 #
 #  Copyright (C) Microsoft. All rights reserved.
 #
-#  This file decribes the layout and contents of the BIOS image that would
+#  This file describes the layout and contents of the BIOS image that would
 #  normally get burned to flash on a physical machine.   In a Hyper-V VM
 #  this image gets put in VM memory by the host VM worker process.  The
 #  net effect is the same.
@@ -41,14 +41,14 @@
 #
 #  In order to make more room for more PEI and/or DXE modules you should:
 #  - increase the Size variable
-#  - lower the BaseAddress variable to accomodate the Size increase
+#  - lower the BaseAddress variable to accommodate the Size increase
 #  - increase the size of the MAIN volume
 #  - use the size of the MAIN volume as the new offset for the start of
 #    the SECFV volume
 #
 
 [FD.MSVM]
-BaseAddress   = 0xFFD00000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvBase
+BaseAddress   = 0x00200000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvBase
 Size          = 0x00300000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvSize
 
 ErasePolarity = 1

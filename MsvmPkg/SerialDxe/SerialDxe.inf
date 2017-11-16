@@ -47,7 +47,6 @@
   UefiDriverEntryPoint
   DebugLib
   IoLib
-  ConfigLib
 
 [Guids]
   gEfiUartDevicePathGuid
@@ -64,3 +63,8 @@
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
+
+[Pcd]
+  gUefiMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
+  gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+  gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode

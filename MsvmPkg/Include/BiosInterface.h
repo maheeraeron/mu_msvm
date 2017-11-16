@@ -136,7 +136,7 @@ enum
     BiosConfigNfitPopulate              = 0x38,
     BiosConfigVpmemSetACPIBuffer        = 0x39,
     //
-    // This value should be the maximum posible value for the
+    // This value should be the maximum possible value for the
     // address register with the exception of BiosConfigDebug.
     //
     BiosConfigMaxValue                  = BiosConfigVpmemSetACPIBuffer,
@@ -285,92 +285,6 @@ typedef struct _VM_MEMORY_RANGE_V5
     UINT32  Reserved;
 } VM_MEMORY_RANGE_V5, *PVM_MEMORY_RANGE_V5;
 
-
-// Configuration "page" that is requested by the UEFI firmware.
-// This is the struct used by Windows Blue and subsequent versions
-// of the firmware when the VM configuration is Windows Blue (5)
-// and the BIOS VDev version is therefore 2.
-//
-typedef struct _BIOS_CONFIG_PAGE_V2
-{
-    UINT32 Size;
-    UINT32 SratSize;
-    UINT32 BiosSizePages;
-    UINT32 ProcessorCount;
-    UINT64 LowMemoryBasePages;
-    UINT64 LowMemoryLengthPages;
-    UINT64 MiddleMemoryBasePages;
-    UINT64 MiddleMemoryLengthPages;
-    UINT64 HighMemoryBasePages;
-    UINT64 HighMemoryLengthPages;
-    UINT64 LowMmioGapBasePages;
-    UINT64 LowMmioGapLengthPages;
-    UINT64 HighMmioGapBasePages;
-    UINT64 HighMmioGapLengthPages;
-    UINT8 Entropy[BiosInterfaceEntropyTableSize];
-    UINT8 BiosGuid[sizeof(GUID)];
-    UINT8 SystemSerialNumber[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 BaseSerialNumber[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 ChassisSerialNumber[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 ChassisAssetTag[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 BiosLockString[BiosInterfaceSmbiosStringMax + 1];
-    SMBIOS_CPU_INFORMATION ProcessorInformation;
-    struct {
-        // Enables the UEFI debugger.  COM1 must also be configured.
-        UINT32 DebuggerEnabled:1;
-        // Triggers ACPI to load a table called "OEMP" which will is used by
-        // the KPG test team to get a virtual PCIe root complex instantiated.
-        UINT32 LoadOempTable:1;
-        UINT32 HibernateEnabled:1;
-        UINT32 Reserved:29;
-    } Flags;
-    struct {
-        UINT32 SerialControllersEnabled:1;
-        UINT32 PauseAfterBootFailure:1;
-        UINT32 PxeIpV6:1;
-        UINT32 Reserved:29;
-    } Flags2;
-} BIOS_CONFIG_PAGE_V2;
-
-//
-// Configuration "page" that is requested by the UEFI firmware.
-// This is the struct used by Windows Threshold version of the
-// firmware when the VM configuration is Windows Threshold (6).
-// and the BIOS VDev version is therefore 3.
-//
-typedef struct _BIOS_CONFIG_PAGE_V3
-{
-    UINT32 Size;
-    UINT32 SratSize;
-    UINT32 MemoryMapSize;
-    UINT32 BiosSizePages;
-    UINT32 ProcessorCount;
-    UINT64 LowMmioGapBasePages;
-    UINT64 LowMmioGapLengthPages;
-    UINT64 HighMmioGapBasePages;
-    UINT64 HighMmioGapLengthPages;
-    UINT8 Entropy[BiosInterfaceEntropyTableSize];
-    UINT8 BiosGuid[sizeof(GUID)];
-    UINT8 SystemSerialNumber[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 BaseSerialNumber[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 ChassisSerialNumber[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 ChassisAssetTag[BiosInterfaceSmbiosStringMax + 1];
-    UINT8 BiosLockString[BiosInterfaceSmbiosStringMax + 1];
-    SMBIOS_CPU_INFORMATION ProcessorInformation;
-    struct {
-        UINT32 SerialControllersEnabled:1;
-        UINT32 PauseAfterBootFailure:1;
-        UINT32 PxeIpV6:1;
-        UINT32 DebuggerEnabled:1;
-        UINT32 LoadOempTable:1;
-        UINT32 TpmEnabled:1;
-        UINT32 HibernateEnabled:1;
-        UINT32 ConsoleMode:2;
-        UINT32 MemoryAttributesTableEnabled:1;
-        UINT32 VirutalBatteryEnabled:1;
-        UINT32 Reserved:21;
-    } Flags;
-} BIOS_CONFIG_PAGE_V3;
 
 //
 // Command types for NVRAM_COMMAND_DESCRIPTOR.
@@ -601,3 +515,232 @@ typedef struct _CRYPTO_COMMAND_DESCRIPTOR
 #define BIOS_WATCHDOG_ONE_SHOT      0x00000010
 
 #define BIOS_WATCHDOG_RUNNING       (BIOS_WATCHDOG_CONFIGURED | BIOS_WATCHDOG_ENABLED)
+
+#pragma pack(push, 1)
+#pragma warning(push)
+//
+// Disable warning for: nonstandard extension used: zero-sized array in struct/union
+//
+#pragma warning(disable : 4200)
+
+//
+// Common config header.
+//
+// NOTE: Length is the length of the overall structure in bytes, including the
+// header.
+//
+typedef struct _UEFI_CONFIG_HEADER
+{
+    UINT32  Type;
+    UINT32  Length;
+} UEFI_CONFIG_HEADER;
+
+//
+// Config structure types.
+//
+enum UefiStructureType
+{
+    UefiConfigStructureCount               = 0x00,
+    UefiConfigBiosInformation              = 0x01,
+    UefiConfigSrat                         = 0x02,
+    UefiConfigMemoryMap                    = 0x03,
+    UefiConfigEntropy                      = 0x04,
+    UefiConfigBiosGuid                     = 0x05,
+    UefiConfigSmbiosSystemSerialNumber     = 0x06,
+    UefiConfigSmbiosBaseSerialNumber       = 0x07,
+    UefiConfigSmbiosChassisSerialNumber    = 0x08,
+    UefiConfigSmbiosChassisAssetTag        = 0x09,
+    UefiConfigSmbiosBiosLockString         = 0x0A,
+    UefiConfigSmbios31ProcessorInformation = 0x0B,
+    UefiConfigSmbiosSocketDesignation      = 0x0C,
+    UefiConfigSmbiosProcessorManufacturer  = 0x0D,
+    UefiConfigSmbiosProcessorVersion       = 0x0E,
+    UefiConfigSmbiosProcessorSerialNumber  = 0x0F,
+    UefiConfigSmbiosProcessorAssetTag      = 0x10,
+    UefiConfigSmbiosProcessorPartNumber    = 0x11,
+    UefiConfigFlags                        = 0x12,
+    UefiConfigProcessorInformation         = 0x13,
+    UefiConfigMmioRanges                   = 0x14,
+    UefiConfigAARCH64MPIDR                 = 0x15
+};
+
+//
+// Config Structures.
+//
+// NOTE: All config structures _must_ be aligned to 8 bytes, as AARCH64 does not
+// support unaligned accesses. For variable length structures, they must be
+// padded appropriately to 8 byte boundaries.
+//
+
+//
+// NOTE: TotalStructureCount is the count of all structures in the config blob,
+// including this structure.
+//
+// NOTE: TotalConfigBlobSize is in bytes.
+//
+typedef struct _UEFI_CONFIG_STRUCTURE_COUNT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT32 TotalStructureCount;
+    UINT32 TotalConfigBlobSize;
+} UEFI_CONFIG_STRUCTURE_COUNT;
+
+typedef struct _UEFI_CONFIG_BIOS_INFORMATION
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT32 BiosSizePages;
+    UINT32 BiosVDevVersion;
+} UEFI_CONFIG_BIOS_INFORMATION;
+
+typedef struct _UEFI_CONFIG_SRAT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Srat[];
+} UEFI_CONFIG_SRAT;
+
+typedef struct _UEFI_CONFIG_MEMORY_MAP
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 MemoryMap[];
+} UEFI_CONFIG_MEMORY_MAP;
+
+typedef struct _UEFI_CONFIG_ENTROPY
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Entropy[BiosInterfaceEntropyTableSize];
+} UEFI_CONFIG_ENTROPY;
+
+typedef struct _UEFI_CONFIG_BIOS_GUID
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 BiosGuid[sizeof(GUID)];
+} UEFI_CONFIG_BIOS_GUID;
+
+typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SystemSerialNumber[];
+} UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 BaseSerialNumber[];
+} UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ChassisSerialNumber[];
+} UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ChassisAssetTag[];
+} UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG;
+
+typedef struct _UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 BiosLockString[];
+} UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING;
+
+typedef struct _UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT64 ProcessorID;
+    UINT16 ExternalClock;
+    UINT16 MaxSpeed;
+    UINT16 CurrentSpeed;
+    UINT16 ProcessorCharacteristics;
+    UINT16 ProcessorFamily2;
+    UINT8 ProcessorType;
+    UINT8 Voltage;
+    UINT8 Status;
+    UINT8 ProcessorUpgrade;
+    UINT16 Reserved;
+} UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION;
+
+typedef struct _UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SocketDesignation[];
+} UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION;
+
+typedef struct _UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ProcessorManufacturer[];
+} UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ProcessorVersion[];
+} UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION;
+
+typedef struct _UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ProcessorSerialNumber[];
+} UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ProcessorAssetTag[];
+} UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG;
+
+typedef struct _UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 ProcessorPartNumber[];
+} UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER;
+
+typedef struct _UEFI_CONFIG_FLAGS
+{
+    UEFI_CONFIG_HEADER Header;
+    struct {
+        UINT64 SerialControllersEnabled:1;
+        UINT64 PauseAfterBootFailure:1;
+        UINT64 PxeIpV6:1;
+        UINT64 DebuggerEnabled:1;
+        UINT64 LoadOempTable:1;
+        UINT64 TpmEnabled:1;
+        UINT64 HibernateEnabled:1;
+        UINT64 ConsoleMode:2;
+        UINT64 MemoryAttributesTableEnabled:1;
+        UINT64 VirtualBatteryEnabled:1;
+        UINT64 Reserved:53;
+    } Flags;
+} UEFI_CONFIG_FLAGS;
+
+typedef struct _UEFI_CONFIG_PROCESSOR_INFORMATION
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT32 ProcessorCount;
+    UINT32 ProcessorsPerVirtualSocket;
+} UEFI_CONFIG_PROCESSOR_INFORMATION;
+
+typedef struct _UEFI_CONFIG_MMIO
+{
+    UINT64 MmioPageNumberStart;
+    UINT64 MmioSizeInPages;
+} UEFI_CONFIG_MMIO;
+
+typedef struct _UEFI_CONFIG_MMIO_RANGES
+{
+    UEFI_CONFIG_HEADER Header;
+    UEFI_CONFIG_MMIO Ranges[];
+} UEFI_CONFIG_MMIO_RANGES;
+
+// Dynamically sized structure for MPIDR values for AARCH64
+typedef struct _UEFI_CONFIG_AARCH64_MPIDR
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT64 ProcessorMPIDRValues[];
+} UEFI_CONFIG_AARCH64_MPIDR;
+
+#pragma warning(pop)
+#pragma pack(pop)

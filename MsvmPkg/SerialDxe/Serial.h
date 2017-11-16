@@ -37,7 +37,7 @@ Author:
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/PcdLib.h>
 #include <Library/IoLib.h>
-#include <Library/ConfigLib.h>
+#include <UefiConstants.h>
 #include "MsvmSerial.h"
 
 //

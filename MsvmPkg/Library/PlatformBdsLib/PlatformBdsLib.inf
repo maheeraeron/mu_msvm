@@ -52,7 +52,6 @@
   PciLib
   EmclLib
   BootEventLogLib
-  ConfigLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
@@ -60,6 +59,8 @@
   gUefiMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode
   gUefiMsvmPkgTokenSpaceGuid.PcdPlatformBootConsoleMode
   gUefiMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
+  gUefiMsvmPkgTokenSpaceGuid.PcdPauseAfterBootFailure
+  gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
 
 [Protocols]
   gEfiDecompressProtocolGuid

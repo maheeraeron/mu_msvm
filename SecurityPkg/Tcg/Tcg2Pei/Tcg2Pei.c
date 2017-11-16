@@ -45,7 +45,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Ppi/ConfigPpi.h>
 #include <tpminterface.h>
 #include <BiosInterface.h>
-#include <BiosConfigPageGuid.h>
 
 #define PERF_ID_TCG2_PEI  0x3080
 
@@ -966,37 +965,14 @@ PeimEntryMA (
     )
 {
     EFI_STATUS              status = EFI_SUCCESS;
-    void *                  hob;
-    BIOS_CONFIG_PAGE_V2 *   configPageV2 = NULL;
-    BIOS_CONFIG_PAGE_V3 *   configPageV3 = NULL;
     EFI_BOOT_MODE           bootMode;
     BOOLEAN                 tpmEnabled = FALSE;
 
     //
     // Get the two relevant configuration settings.
     //
-    hob = GetFirstGuidHob(&gMsvmConfigPageV2Guid);
-    if (hob != NULL)
-    {
-        configPageV2 = (BIOS_CONFIG_PAGE_V2 *)GET_GUID_HOB_DATA(hob);
-        mFirmwareDebuggerEnabled = configPageV2->Flags.DebuggerEnabled == 1 ? TRUE : FALSE;
-        tpmEnabled = FALSE;
-    }
-    else
-    {
-        hob = GetFirstGuidHob(&gMsvmConfigPageV3Guid);
-        if (hob != NULL)
-        {
-            configPageV3 = (BIOS_CONFIG_PAGE_V3 *)GET_GUID_HOB_DATA(hob);
-            mFirmwareDebuggerEnabled = configPageV3->Flags.DebuggerEnabled == 1 ? TRUE : FALSE;
-            tpmEnabled = configPageV3->Flags.TpmEnabled == 1 ? TRUE : FALSE;
-        }
-        else
-        {
-            ASSERT(FALSE);
-            mFirmwareDebuggerEnabled = tpmEnabled = FALSE;
-        }
-    }
+    mFirmwareDebuggerEnabled = PcdGetBool(PcdDebuggerEnabled);
+    tpmEnabled = PcdGetBool(PcdTpmEnabled);
 
     //
     // Fail if TPM not enabled.

@@ -10,8 +10,7 @@ Abstract:
 
     This is the Hyper-V specific platform code that creates the SMBIOS table.
 
-
-    This driver will make a best effort to add all the SMBIOS v2.4 required
+    This driver will make a best effort to add all the SMBIOS v3.1 required
     structures. Failure is not fatal and may result in some of the required
     structures to not be installed.  Most operating systems can operate
     without the table or an incomplete table.
@@ -35,7 +34,7 @@ Author:
 #include <Library/HobLib.h>
 #include <Library/ConfigLib.h>
 #include <Protocol/Smbios.h>
-#include <IndustryStandard/SmBios24.h>
+#include <IndustryStandard/SmBios.h>
 #include <IndustryStandard/Acpi.h>
 
 #include <EfiNt.h>
@@ -43,16 +42,16 @@ Author:
 //
 // TODO: Could we automate the release version from current UEFI version?
 //
-#define MAJOR_RELEASE_VERSION 2
-#define MINOR_RELEASE_VERSION 5
-static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v2.5";
+#define MAJOR_RELEASE_VERSION 3
+#define MINOR_RELEASE_VERSION 0
+static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v3.0";
 static CHAR8 RELEASE_DATE_STRING[] = "mm/dd/yyyy";
 
 //
-// Complying with SMBIOS v2.4 specification.
+// Complying with SMBIOS v3.1 specification.
 //
-#define TARGETTED_SMBIOS_MAJOR_VERSION 2
-#define TARGETTED_SMBIOS_MINOR_VERSION 4
+#define TARGETTED_SMBIOS_MAJOR_VERSION 3
+#define TARGETTED_SMBIOS_MINOR_VERSION 1
 
 //
 // Implementation specific constant strings.
@@ -75,10 +74,10 @@ static CHAR8 NONE_STRING[]            = "None";
 static const UINT64 gMaxMemoryRegions = 0xFFFFULL;
 
 //
-// Maximum memory size per SMBIOS v2.4 memory device.
-// 15 bits in megabyte units, so max 31 gigabytes per device.
+// Maximum memory size per SMBIOS v3.1 memory device.
+// 30 bits in megabyte units, so max 2147 terabytes per device.
 //
-static const UINT64 gMaxSizePerMemoryDevice = (0x7FFFULL * SIZE_1MB);
+static const UINT64 gMaxSizePerMemoryDevice = (0x7FFFFFFFULL * SIZE_1MB);
 
 //
 // Helper macro to init SMBIOS structure header.
@@ -105,6 +104,54 @@ VOID
     VOID *Context
 );
 
+CHAR8*
+LoadPcdSmbiosString(
+    UINT64 StringAddress,
+    UINT32 StringLength,
+    UINT32 MaxLength
+    )
+/*++
+
+Routine Description:
+
+    Utility function to get and truncate a string from a PCD value.
+
+Arguments:
+
+    StringAddress - A pointer to the start of the string.
+
+    StringLength - The length of the string.
+
+    MaxLength - The maximum allowed length of the string, which will truncate
+    the given string.
+
+Return Value:
+
+    Truncated string, or default None string if no string exists.
+
+--*/
+{
+    CHAR8* String = (CHAR8*)(UINTN) StringAddress;
+
+    if (StringLength == 0)
+    {
+        //
+        // TLV struct for this string was not found, return the default None
+        // string instead.
+        //
+        return NONE_STRING;
+    }
+
+    //
+    // Truncate string by adding a null at the maximum allowed length.
+    //
+    if (MaxLength < StringLength)
+    {
+        String[MaxLength - 1] = 0;
+    }
+
+    return String;
+}
 
 VOID
 NumberToMemoryLocationString(
@@ -384,7 +431,7 @@ Return Value:
     //
     static struct
     {
-        SMBIOS24_TABLE_TYPE0 Formatted;
+        SMBIOS_TABLE_TYPE0 Formatted;
         CHAR8 Unformed[sizeof(MANUFACTURER_STRING) +
                        sizeof(RELEASE_VERSION_STRING) +
                        sizeof(RELEASE_DATE_STRING) +
@@ -393,7 +440,7 @@ Return Value:
 
     {
         {
-            STANDARD_HEADER(SMBIOS24_TABLE_TYPE0, EFI_SMBIOS_TYPE_BIOS_INFORMATION),
+            STANDARD_HEADER(SMBIOS_TABLE_TYPE0, EFI_SMBIOS_TYPE_BIOS_INFORMATION),
             1,  // Vendor string index
             2,  // BIOS Version string index
             0,  // BIOS Starting Address Segment (meaningless for UEFI)
@@ -443,13 +490,14 @@ Return Value:
             //
             {
                 1, // AcpiIsSupported
-                4, // TargetContentDistributionEnabled
+                0x1C // TargetContentDistributionEnabled, UefiSpecificationSupported, VirtualMachineSupported
             },
 
             MAJOR_RELEASE_VERSION,
             MINOR_RELEASE_VERSION,
             0xFF, // no field upgradeable embedded controller firmware
             0xFF, // no field upgradeable embedded controller firmware
+            0, // Extended Bios ROM Size
         }
     };
 
@@ -507,7 +555,7 @@ Return Value:
         CHAR8 Unformed[sizeof(MANUFACTURER_STRING) +
                        sizeof(VIRTUAL_MACHINE_STRING) +
                        sizeof(RELEASE_VERSION_STRING) +
-                       ConfigLibSmbiosStringMax + 1 +
+                       BiosInterfaceSmbiosStringMax + 1 +
                        sizeof(NONE_STRING) +
                        sizeof(VIRTUAL_MACHINE_STRING) +
                        1];
@@ -530,8 +578,12 @@ Return Value:
     //
     // Add the dynamic information to the structure.
     //
-    strings[3] = GetSmbiosSystemSerialNumberString();
-    CopyMem(&systemInformation.Formatted.Uuid, GetBiosGuid(), sizeof(EFI_GUID));
+    strings[3] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemSerialNumberStr),
+                            PcdGet32(PcdSmbiosSystemSerialNumberSize),
+                            BiosInterfaceSmbiosStringMax + 1);
+
+    CopyMem(&systemInformation.Formatted.Uuid, (VOID*)(UINTN) PcdGet64(PcdBiosGuidPtr), sizeof(EFI_GUID));
 
     //
     // Add the structure to the SMBIOS table. Error is not fatal and ignored.
@@ -572,7 +624,7 @@ Return Value:
         RELEASE_VERSION_STRING,
         "",
         "",
-        NONE_STRING,
+        VIRTUAL_MACHINE_STRING,
         NULL
     };
 
@@ -584,9 +636,9 @@ Return Value:
         SMBIOS_TABLE_TYPE3 Formatted;
         CHAR8 Unformed[sizeof(MANUFACTURER_STRING) +
                        sizeof(RELEASE_VERSION_STRING) +
-                       ConfigLibSmbiosStringMax + 1 +
-                       ConfigLibSmbiosStringMax + 1 +
-                       sizeof(NONE_STRING) +
+                       BiosInterfaceSmbiosStringMax + 1 +
+                       BiosInterfaceSmbiosStringMax + 1 +
+                       sizeof(VIRTUAL_MACHINE_STRING) +
                        2];
     } systemEnclosure =
 
@@ -607,15 +659,26 @@ Return Value:
             0, // Number of Power Cords
             0, // Contained Element Count
             0, // Contained Element Record Count
-            { 5 } // Contained Element dummy string index
+            // NOTE: Our System Enclosure structure has no contained elements,
+            // so the contained elements value in this structure is actually the
+            // SKU Number string index, as access to the SKU Number string
+            // index is based on the above two values.
+            { 5 }, // SKU Number string index
         }
     };
 
     //
     // Add the dynamic information to the structure.
     //
-    strings[2] = GetSmbiosChassisSerialNumberString();
-    strings[3] = GetSmbiosChassisAssetTagString();
+    strings[2] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosChassisSerialNumberStr),
+                            PcdGet32(PcdSmbiosChassisSerialNumberSize),
+                            BiosInterfaceSmbiosStringMax + 1);
+
+    strings[3] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosChassisAssetTagStr),
+                            PcdGet32(PcdSmbiosChassisAssetTagSize),
+                            BiosInterfaceSmbiosStringMax + 1);
 
     //
     // Add the structure to the SMBIOS table.
@@ -673,7 +736,7 @@ Return Value:
         CHAR8 Unformed[sizeof(MANUFACTURER_STRING) +
                        sizeof(VIRTUAL_MACHINE_STRING) +
                        sizeof(RELEASE_VERSION_STRING) +
-                       ConfigLibSmbiosStringMax + 1 +
+                       BiosInterfaceSmbiosStringMax + 1 +
                        sizeof(NONE_STRING) +
                        sizeof(VIRTUAL_MACHINE_STRING) +
                        2];
@@ -703,14 +766,16 @@ Return Value:
     //
     baseboardInformation.Formatted.ChassisHandle = ChassisHandle;
 
-    strings[3] = GetSmbiosBaseSerialNumberString();
+    strings[3] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosBaseSerialNumberStr),
+                            PcdGet32(PcdSmbiosBaseSerialNumberSize),
+                            BiosInterfaceSmbiosStringMax + 1);
 
     //
     // Add the structure to the SMBIOS table. Error is not fatal and ignored.
     //
     (VOID)AddStructure(Smbios, &baseboardInformation, strings, NULL);
 }
-
 
 VOID
 AddProcessorInformation(
@@ -735,20 +800,140 @@ Return Value:
 
 --*/
 {
-    UINT32 i;
-    UINT32 procCount = GetProcessorCount();
-    VOID *cpuInfo = GetSmbiosV24CpuInfo();
+    UINT32 procCount = PcdGet32(PcdProcessorCount);
+    UINT32 processorsAdded = 0;
+    UINT32 processorsPerVirtualSocket = PcdGet32(PcdProcessorsPerVirtualSocket);
+    BOOLEAN isFirstSocket = TRUE;
 
     //
-    // This particular structure is constructed by the BIOS VDev and
-    // provided in the config page.  Simply add 1 per configured processor.
+    // Initialized array of pointers to the strings for this structure.
     //
-    for (i = 0; i < procCount; i++)
+    static CHAR8* strings[] =
     {
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        NULL
+    };
+
+    static struct
+    {
+        SMBIOS_TABLE_TYPE4 Formatted;
+        CHAR8 Unformed[((MAX_SMBIOS_STRING_LENGTH + 1) * 6) + 1];
+    } cpuInfo =
+    {
+        {
+            STANDARD_HEADER(SMBIOS_TABLE_TYPE4, EFI_SMBIOS_TYPE_PROCESSOR_INFORMATION),
+            1, // SocketDesignation string index
+            0, // ProcessorType
+            0, // ProcessorFamily
+            2, // ProcessorManufacturer string index
+            {0, 0, 0, 0, 0, 0, 0, 0}, // ProcessorId
+            3, // ProcessorVersion string index
+            {0}, // Voltage
+            0, // ExternalClock
+            0, // MaxSpeed
+            0, // CurrentSpeed
+            0, // Status
+            0, // Upgrade
+            0xFFFF, // L1 Cache Handle - Unknown
+            0xFFFF, // L2 Cache Handle - Unknown
+            0xFFFF, // L3 Cache Handle - Unknown
+            4, // SerialNumber string index
+            5, // AssetTag string index
+            6, // PartNumber string index
+            0, // CoreCount
+            0, // CoreEnabled
+            0, // ThreadCount
+            0, // ProcessorCharacteristics
+            0, // ProcessorFamily2
+            0, // CoreCount2
+            0, // CoreEnabled2
+            0, // ThreadCount2
+        }
+    };
+
+    // Set values and strings read in PEI via PCDs from Bios VDEV.
+    cpuInfo.Formatted.ProcessorType            = PcdGet8(PcdSmbiosProcessorType);
+    cpuInfo.Formatted.ExternalClock            = PcdGet16(PcdSmbiosProcessorExternalClock);
+    cpuInfo.Formatted.MaxSpeed                 = PcdGet16(PcdSmbiosProcessorMaxSpeed);
+    cpuInfo.Formatted.CurrentSpeed             = PcdGet16(PcdSmbiosProcessorCurrentSpeed);
+    cpuInfo.Formatted.Status                   = PcdGet8(PcdSmbiosProcessorStatus);
+    cpuInfo.Formatted.ProcessorUpgrade         = PcdGet8(PcdSmbiosProcessorUpgrade);
+    cpuInfo.Formatted.ProcessorCharacteristics = PcdGet16(PcdSmbiosProcessorCharacteristics);
+    cpuInfo.Formatted.ProcessorFamily2         = PcdGet16(PcdSmbiosProcessorFamily2);
+
+    // Copy ProcessorId and Voltage using casts because they have explicit
+    // structure types with no unions to access all the data.
+    *((UINT64*)(&cpuInfo.Formatted.ProcessorId)) = PcdGet64(PcdSmbiosProcessorID);
+    *((UINT8*)(&cpuInfo.Formatted.Voltage))      = PcdGet8(PcdSmbiosProcessorVoltage);
+
+    // Set processor family, anything greater than 0xFE means to check ProcessorFamily2
+    if (cpuInfo.Formatted.ProcessorFamily2 > 0xFE)
+    {
+        cpuInfo.Formatted.ProcessorFamily = 0xFE;
+    }
+    else
+    {
+        cpuInfo.Formatted.ProcessorFamily = (UINT8) cpuInfo.Formatted.ProcessorFamily2;
+    }
+
+    strings[0] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosProcessorSocketDesignationStr),
+                            PcdGet32(PcdSmbiosProcessorSocketDesignationSize),
+                            MAX_SMBIOS_STRING_LENGTH + 1);
+
+    strings[1] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosProcessorManufacturerStr),
+                            PcdGet32(PcdSmbiosProcessorManufacturerSize),
+                            MAX_SMBIOS_STRING_LENGTH + 1);
+
+    strings[2] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosProcessorVersionStr),
+                            PcdGet32(PcdSmbiosProcessorVersionSize),
+                            MAX_SMBIOS_STRING_LENGTH + 1);
+
+    strings[3] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosProcessorSerialNumberStr),
+                            PcdGet32(PcdSmbiosProcessorSerialNumberSize),
+                            MAX_SMBIOS_STRING_LENGTH + 1);
+
+    strings[4] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosProcessorAssetTagStr),
+                            PcdGet32(PcdSmbiosProcessorAssetTagSize),
+                            MAX_SMBIOS_STRING_LENGTH + 1);
+
+    strings[5] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosProcessorPartNumberStr),
+                            PcdGet32(PcdSmbiosProcessorPartNumberSize),
+                            MAX_SMBIOS_STRING_LENGTH + 1);
+
+    //
+    // Add one CPU structure per socket, and set the number of cores to the
+    // number of VPs per socket.
+    //
+    isFirstSocket = TRUE;
+    while (processorsAdded != procCount)
+    {
+        UINT32 procCountInThisSocket = MIN(procCount - processorsAdded, processorsPerVirtualSocket);
+        cpuInfo.Formatted.CoreCount  = (UINT8) processorsPerVirtualSocket; // fixme: should this be max possible or just what's enabled?
+        cpuInfo.Formatted.CoreCount2 = (UINT16) processorsPerVirtualSocket;
+        cpuInfo.Formatted.EnabledCoreCount  = (UINT8) procCountInThisSocket;
+        cpuInfo.Formatted.EnabledCoreCount2 = (UINT16) procCountInThisSocket;
+        cpuInfo.Formatted.ThreadCount  = 1;
+        cpuInfo.Formatted.ThreadCount2 = 1;
+
+        processorsAdded += procCountInThisSocket;
+
         //
         // Add the structure to the SMBIOS table. Error is not fatal and ignored.
+        // Only copy the string table on adding the first structure.
         //
-        (VOID)AddStructure(Smbios, cpuInfo, NULL, NULL);
+        (VOID)AddStructure(Smbios, &cpuInfo, isFirstSocket ? strings : NULL, NULL);
+        isFirstSocket = FALSE;
     }
 }
 
@@ -799,7 +984,7 @@ Return Value:
     {
         SMBIOS_TABLE_TYPE11 Formatted;
         CHAR8 Unformed[sizeof(OEM_STRING_1) +
-                       ConfigLibSmbiosStringMax + 1 +
+                       BiosInterfaceSmbiosStringMax + 1 +
                        sizeof(OEM_STRING_3) +
                        1];
     } oemStrings =
@@ -814,7 +999,10 @@ Return Value:
     //
     // Add the dynamic information to the structure.
     //
-    strings[1] = GetSmbiosOemBiosLockString();
+    strings[1] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosBiosLockStringStr),
+                            PcdGet32(PcdSmbiosBiosLockStringSize),
+                            BiosInterfaceSmbiosStringMax + 1);
 
     //
     // Add the structure to the SMBIOS table. Error is not fatal and ignored.
@@ -858,19 +1046,20 @@ Return Value:
     //
     static struct
     {
-        SMBIOS24_TABLE_TYPE16 Formatted;
+        SMBIOS_TABLE_TYPE16 Formatted;
         CHAR8 Unformed[2];
     } physicalMemoryArray =
 
     {
         {
-            STANDARD_HEADER(SMBIOS24_TABLE_TYPE16, EFI_SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY),
+            STANDARD_HEADER(SMBIOS_TABLE_TYPE16, EFI_SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY),
             MemoryArrayLocationSystemBoard, // Location
             MemoryArrayUseSystemMemory, // Use
             MemoryErrorCorrectionNone, // Memory Error Correction
             0x80000000, // Maximum Capacity - unknown
             SMBIOS_HANDLE_PI_RESERVED, // Memory Error Information Handle
             0, // Number of Memory Devices
+            0  // Extended Maximum Capacity
         },
         {
             0, // terminator bytes
@@ -929,17 +1118,19 @@ Return Value:
     //
     static struct
     {
-        SMBIOS24_TABLE_TYPE19 Formatted;
+        SMBIOS_TABLE_TYPE19 Formatted;
         CHAR8 Unformed[2];
     } memoryArrayMappedAddress =
 
     {
         {
-            STANDARD_HEADER(SMBIOS24_TABLE_TYPE19, EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS),
+            STANDARD_HEADER(SMBIOS_TABLE_TYPE19, EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS),
             0, // Starting Address
             0, // Ending Address
             SMBIOS_HANDLE_PI_RESERVED, // Memory Array Handle
-            0  // Partition Width
+            0, // Partition Width
+            0, // Extended Starting Address
+            0  // Extended Ending Address
         },
         {
             0, // terminator bytes
@@ -953,29 +1144,39 @@ Return Value:
     BOOLEAN result = FALSE;
 
     //
-    // The v2.4 type 19 structure only supports 32 bit addresses specified
-    // in kilobyte units.  This means we can only declare memory up to
-    // 1K below 4 terabytes. Return a failure if the addresses are too big.
+    // The non-extended addresses for the type 19 structure only support 32 bit
+    // addresses specified in kilobyte units.  This means we can declare memory up to
+    // 1K below 4 terabytes using the non-extended, and for anything larger we
+    // need to use the extended fields.
+    //
+    // Extended Addresses were added in SMBIOS v2.7
     //
     if ((BaseAddress > (BASE_4TB - SIZE_1KB)) || endAddress > (BASE_4TB - SIZE_1KB))
     {
-        result = FALSE;
-        goto Exit;
+        //
+        // Use the extended addresses, which are in byte units, not kilobyte like
+        // the non-extended.
+        //
+        memoryArrayMappedAddress.Formatted.StartingAddress         = 0xFFFFFFFF;
+        memoryArrayMappedAddress.Formatted.EndingAddress           = 0xFFFFFFFF;
+        memoryArrayMappedAddress.Formatted.ExtendedStartingAddress = BaseAddress;
+        memoryArrayMappedAddress.Formatted.ExtendedEndingAddress   = endAddress;
+    }
+    else
+    {
+        //
+        // Size is small enough to be represented in the non-extended addresses.
+        //
+        memoryArrayMappedAddress.Formatted.StartingAddress = (UINT32) baseAddressInKb;
+        memoryArrayMappedAddress.Formatted.EndingAddress   = (UINT32) endAddressInKb;
     }
 
-    //
-    // Add the dynamic information to the structure.
-    //
-    memoryArrayMappedAddress.Formatted.StartingAddress = (UINT32) baseAddressInKb;
-    memoryArrayMappedAddress.Formatted.EndingAddress = (UINT32) endAddressInKb;
     memoryArrayMappedAddress.Formatted.MemoryArrayHandle = PhysicalMemoryArrayHandle;
 
     //
     // Add the structure to the SMBIOS table.
     //
     result = AddStructure(Smbios, &memoryArrayMappedAddress, NULL, MemoryArrayMappedAddressHandle);
-
-Exit:
 
     return result;
 }
@@ -1041,7 +1242,7 @@ Return Value:
     //
     static struct
     {
-        SMBIOS24_TABLE_TYPE17 Formatted;
+        SMBIOS_TABLE_TYPE17 Formatted;
         CHAR8 Unformed[LOCATION_STRING_SIZE +
                        sizeof(NONE_STRING) +
                        sizeof(MANUFACTURER_STRING) +
@@ -1053,7 +1254,7 @@ Return Value:
 
     {
         {
-            STANDARD_HEADER(SMBIOS24_TABLE_TYPE17, EFI_SMBIOS_TYPE_MEMORY_DEVICE),
+            STANDARD_HEADER(SMBIOS_TABLE_TYPE17, EFI_SMBIOS_TYPE_MEMORY_DEVICE),
             SMBIOS_HANDLE_PI_RESERVED, // Physical Memory Array Handle
             SMBIOS_HANDLE_PI_RESERVED, // Memory Error Information Handle
             0xffff, // Total Width - unknown
@@ -1073,7 +1274,13 @@ Return Value:
             3, // Manufacturer string index
             4, // Serial Number string index
             5, // Asset Tag string index
-            6  // Part Number string index
+            6, // Part Number string index
+            0, // Attributes - Unknown
+            0, // Extended Size
+            0, // Configured Memory Clock Speed - Unknown
+            0, // Minimum Voltage - Unknown
+            0, // Maximum Voltage - Unknown
+            0, // Configured Voltage - Unknown
         }
     };
 
@@ -1089,16 +1296,26 @@ Return Value:
     {
         UINT64 sizeInMB = (sizeInKB / 1024) + ((sizeInKB % 1024) > 0);
 
-        if (sizeInMB <= 0x7fff)
+        if (sizeInMB < 0x7fff)
         {
             memoryDevice.Formatted.Size = (UINT16) sizeInMB;
+        }
+        else if (sizeInMB < 0x7fffffff)
+        {
+            //
+            // Use the extended size field to store the size.
+            // A Size of 0x7fff means look at the Extended Size field for
+            // SMBIOS v2.7+.
+            //
+            memoryDevice.Formatted.Size         = (UINT16) 0x7fff;
+            memoryDevice.Formatted.ExtendedSize = (UINT32) sizeInMB;
         }
         else
         {
             //
-            // Set size to unknown if too big for field.
+            // Size is too big to be represented, report as unknown
             //
-            memoryDevice.Formatted.Size = (UINT16) 0xffff;
+            memoryDevice.Formatted.Size = 0xffff;
         }
     }
 
@@ -1165,13 +1382,13 @@ Return Value:
     //
     static struct
     {
-        SMBIOS24_TABLE_TYPE20 Formatted;
+        SMBIOS_TABLE_TYPE20 Formatted;
         CHAR8 Unformed[2];
     } memoryDeviceMappedAddress =
 
     {
         {
-            STANDARD_HEADER(SMBIOS24_TABLE_TYPE20, EFI_SMBIOS_TYPE_MEMORY_DEVICE_MAPPED_ADDRESS),
+            STANDARD_HEADER(SMBIOS_TABLE_TYPE20, EFI_SMBIOS_TYPE_MEMORY_DEVICE_MAPPED_ADDRESS),
             0, // Starting Address
             0, // Ending Address
             SMBIOS_HANDLE_PI_RESERVED, // Memory Device Handle
@@ -1179,6 +1396,8 @@ Return Value:
             0xff, // Partition Row Position - unknown
             0, // Interleave Position - not interleaved
             0, // Interleaved Data Depth - not part of interleave
+            0, // Extended Starting Address
+            0  // Extended Ending Address
         },
         {
             0, // terminator bytes
@@ -1191,26 +1410,41 @@ Return Value:
     UINT64 baseAddressInKb = BaseAddress / 1024;
 
     //
-    // The v2.4 type 20 structure only supports 32 bit addresses specified
-    // in kilobyte units.  This means we can only declare memory up to
-    // 1K below 4 terabytes. Just don't add structure if memory is too big.
+    // The non-extended addresses for the type 20 structure only support 32 bit
+    // addresses specified in kilobyte units.  This means we can declare memory up to
+    // 1K below 4 terabytes using the non-extended, and for anything larger we
+    // need to use the extended fields.
     //
-    if ((BaseAddress < (BASE_4TB - SIZE_1KB)) || endAddress < (BASE_4TB - SIZE_1KB))
+    // Extended Addresses were added in SMBIOS v2.7
+    //
+    if ((BaseAddress > (BASE_4TB - SIZE_1KB)) || endAddress > (BASE_4TB - SIZE_1KB))
     {
         //
-        // Add the dynamic information to the structure.
+        // Use the extended addresses, which are in byte units, not kilobyte like
+        // the non-extended.
+        //
+        memoryDeviceMappedAddress.Formatted.StartingAddress         = 0xFFFFFFFF;
+        memoryDeviceMappedAddress.Formatted.EndingAddress           = 0xFFFFFFFF;
+        memoryDeviceMappedAddress.Formatted.ExtendedStartingAddress = BaseAddress;
+        memoryDeviceMappedAddress.Formatted.ExtendedEndingAddress   = endAddress;
+    }
+    else
+    {
+        //
+        // Size is small enough to use the non-extended addresses.
         //
         memoryDeviceMappedAddress.Formatted.StartingAddress = (UINT32) baseAddressInKb;
-        memoryDeviceMappedAddress.Formatted.EndingAddress = (UINT32) endAddressInKb;
-        memoryDeviceMappedAddress.Formatted.MemoryDeviceHandle = MemoryDeviceHandle;
-        memoryDeviceMappedAddress.Formatted.MemoryArrayMappedAddressHandle =
-            MemoryArrayMappedAddressHandle;
-
-        //
-        // Add the structure to the SMBIOS table. Error not fatal and ignored.
-        //
-        (VOID)AddStructure(Smbios, &memoryDeviceMappedAddress, NULL, NULL);
+        memoryDeviceMappedAddress.Formatted.EndingAddress   = (UINT32) endAddressInKb;
     }
+
+    memoryDeviceMappedAddress.Formatted.MemoryDeviceHandle = MemoryDeviceHandle;
+    memoryDeviceMappedAddress.Formatted.MemoryArrayMappedAddressHandle =
+        MemoryArrayMappedAddressHandle;
+
+    //
+    // Add the structure to the SMBIOS table. Error not fatal and ignored.
+    //
+    (VOID)AddStructure(Smbios, &memoryDeviceMappedAddress, NULL, NULL);
 }
 
 
@@ -1544,22 +1778,14 @@ Return Value:
     UINT32 vdevVersion;
     UINT32 memRangeSize;
     UINT64 regions;
-    EFI_PHYSICAL_ADDRESS address;
 
-    vdevVersion = GetVDevVersion();
+    vdevVersion = PcdGet32(PcdBiosVDevVersion);
 
     //
-    // Get memmap from BIOS VDev which requires buffer address below 4GB.
+    // Get Memory Map from Config blob via PCDs.
     //
-    memmapSize = GetMemmapSize();
-    address = (BASE_4GB - 1ULL);
-    gBS->AllocatePages(AllocateMaxAddress,
-                       EfiBootServicesData,
-                       EFI_SIZE_TO_PAGES(memmapSize),
-                       (EFI_PHYSICAL_ADDRESS*) &address);
-    GetMemmap(address);
-
-    memmap = (PVOID)(UINTN)address;
+    memmapSize = PcdGet32(PcdMemoryMapSize);
+    memmap = (PVOID)(UINTN) PcdGet64(PcdMemoryMapPtr);
     memRangeSize = (vdevVersion < VDevVersion5) ? sizeof(VM_MEMORY_RANGE) : sizeof(VM_MEMORY_RANGE_V5);
     memmapLength = memmapSize / memRangeSize;
 
@@ -1606,11 +1832,6 @@ Return Value:
             memmapLength,
             AddMemoryRegionsFromMemoryRange,
             &context);
-    }
-
-    if (memmap != NULL)
-    {
-        gBS->FreePages(address, EFI_SIZE_TO_PAGES(memmapSize));
     }
 }
 
