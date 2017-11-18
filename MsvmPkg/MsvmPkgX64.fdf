@@ -48,7 +48,7 @@
 #
 
 [FD.MSVM]
-BaseAddress   = 0x00200000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvBase
+BaseAddress   = 0x00100000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvBase
 Size          = 0x00300000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvSize
 
 ErasePolarity = 1
