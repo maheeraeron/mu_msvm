@@ -66,6 +66,7 @@
     gUefiMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
     gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
     gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
     gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
     gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages

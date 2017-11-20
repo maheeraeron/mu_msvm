@@ -68,6 +68,35 @@ DefinitionBlock (
     }
 
     Include("Asl/AmlUpd.asl")
+
+    // The Enclave Page Cache aka SGX memory device. This device is conditionally 
+    // created if SGX memory is present. This is not Intel spec compliant in that
+    // it doesn't have any memory regions described in the _CRS. Existence of this
+    // device will trigger a guest kernel to load a device driver. That device 
+    // driver will use other mechanisms to discover the SGX memory regions.
+    
+    If(LGreater(SGXE, 0))
+    {
+        Scope(_SB)
+        {
+            Device(EPC)
+            {
+                Name(_HID, EISAID("INT0E0C"))
+                Name(_STR, Unicode ("Enclave Page Cache 1.0"))           
+                Name(_CRS, ResourceTemplate()
+                {
+                    // This is dummy data to make the _CRS not empty.
+                    VendorShort() { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+                })
+                Method(_STA, 0x0)
+                {
+                    Return(0xF)
+                }
+            }
+        }
+    }
+
+    
     Include("Asl/Processor.asl")
     Include("Asl/Synthetic.asl")
     Include("Asl/Lpc.asl")

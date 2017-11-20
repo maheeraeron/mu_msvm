@@ -108,6 +108,7 @@
     gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
     gUefiMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled
     gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
+    gUefiMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
     gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gUefiMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
     gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber

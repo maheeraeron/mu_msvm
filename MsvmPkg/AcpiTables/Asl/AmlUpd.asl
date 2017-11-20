@@ -48,5 +48,6 @@ Field(BIOS, ByteAcc, NoLock, Preserve)
     HCFG,8,         // Hibernation enabled/disabled
     NCFG,8,         // PMEM (NVDIMMs) enabled/disabled
     BCFG,8,         // Virtual Battery enabled/disabled
+    SGXE,8,         // SGX Memory enabled/disabled
 }
 

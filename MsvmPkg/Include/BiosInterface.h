@@ -712,7 +712,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 ConsoleMode:2;
         UINT64 MemoryAttributesTableEnabled:1;
         UINT64 VirtualBatteryEnabled:1;
-        UINT64 Reserved:53;
+        UINT64 SgxMemoryEnabled:1;
+        UINT64 Reserved:52;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

@@ -786,6 +786,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tConsoleMode: %u\n", flags->Flags.ConsoleMode));
             DEBUG((DEBUG_VERBOSE, "\tMemoryAttributesTableEnabled: %u\n", flags->Flags.MemoryAttributesTableEnabled));
             DEBUG((DEBUG_VERBOSE, "\tVirtualBatteryEnabled: %u\n", flags->Flags.VirtualBatteryEnabled));
+            DEBUG((DEBUG_VERBOSE, "\tSgxMemoryEnabled: %u\n", flags->Flags.SgxMemoryEnabled));
             break;
 
         case UefiConfigProcessorInformation:
@@ -1268,6 +1269,7 @@ Return Value:
                 PcdSet8(PcdConsoleMode, (UINT8) flags->Flags.ConsoleMode);
                 PcdSetBool(PcdMemoryAttributesTableEnabled, (UINT8) flags->Flags.MemoryAttributesTableEnabled);
                 PcdSetBool(PcdVirtualBatteryEnabled, (UINT8) flags->Flags.VirtualBatteryEnabled);
+                PcdSetBool(PcdSgxMemoryEnabled, (UINT8) flags->Flags.SgxMemoryEnabled);
                 requiredStructures.UefiConfigFlags = 1;
                 break;
 

@@ -347,6 +347,7 @@
   gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode|0x0
   gUefiMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
   gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
+  gUefiMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0

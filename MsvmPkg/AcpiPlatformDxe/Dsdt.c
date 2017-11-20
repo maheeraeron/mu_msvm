@@ -40,6 +40,7 @@ typedef struct _DSDT_AML_DATA
     UINT8  HibernateEnabled;
     UINT8  PmemEnabled;
     UINT8  VirtualBatteryEnabled;
+    UINT8  SgxMemoryEnabled;
 } DSDT_AML_DATA;
 
 typedef struct _DSDT_AML_DESCRIPTOR
@@ -140,6 +141,7 @@ Return Value:
     data->HibernateEnabled = PcdGetBool(PcdHibernateEnabled);
     data->PmemEnabled = (GetNfitSize() > 0);
     data->VirtualBatteryEnabled = PcdGetBool(PcdVirtualBatteryEnabled);
+    data->SgxMemoryEnabled = PcdGetBool(PcdSgxMemoryEnabled);
 
     //
     // Allocate space for the NVDIMM IO Buffer if VPMEM is enabled.
