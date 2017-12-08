@@ -413,7 +413,7 @@ function Get-CurrentCommitHash
 function Get-CurrentBranch
 {
     $branch = Run-Command -Executable "git" -Arguments ( "rev-parse", "--abbrev-ref", "HEAD" )
-    Write-Verbose ("Current branch is: " + $LocalCommit)
+    Write-Verbose ("Current branch is: " + $branch)
     return $branch
 }
 
@@ -432,6 +432,49 @@ function Get-UTCTimeString
 
     $utcTime = (Get-Date).ToUniversalTime().AddHours($HoursToOffset).ToString("u")
     return $utcTime
+}
+
+###################################################################################################
+
+function Check-Duplicate-Commit-Hash
+{
+    Param(
+        [Parameter(Mandatory=$true)]
+        [hashtable]
+        $Edk2Config,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [PsCustomObject]
+        $VpackConfig,
+
+        [string]
+        $CommitHash = ""
+    )
+
+    Write-Verbose "Checking for duplicate commit in existing VPacks..."
+
+    $vpackExePath = $Edk2Config.WORKSPACE + "\msprivate\internal\vpack\vpack.exe"
+
+    $vpackCmdArgs = @("List")
+    $vpackBaseName = $VpackConfig.vpack.BaseName
+    if ($VpackConfig.vpack.AppendArchToName)
+    {
+        $vpackBaseName += ("." + $Edk2Config.TARGET_ARCH.ToLower())
+    }
+    $vpackCmdArgs += ("/BaseName:" + $vpackBaseName)
+    $packList = Run-Command $vpackExePath $vpackCmdArgs
+    $found = $false
+    foreach ($pack in $packList)
+    {
+        if ($pack -Match $CommitHash)
+        {
+            Write-Verbose ($pack + " matches current commit")
+            $found = $true
+        }
+    }
+
+    return $found
 }
 
 ###################################################################################################
@@ -540,6 +583,20 @@ try
         return
     }
 
+    # If appending commit hash check to ensure current commit is not already pushed.
+
+    if ($vpackConfig.meta.AppendLatestCommitHash)
+    {
+        $currentCommit = Get-CurrentCommitHash
+        if (Check-Duplicate-Commit-Hash -Edk2Config $edk2Config -VpackConfig $vpackConfig -CommitHash $currentCommit)
+        {
+            Write-Error -Message ( `
+            "The current commit already exists with a pushed VPack." `
+            ) -Category InvalidResult
+            return
+        }
+    }
+    
     # Create a temp directory
 
     $tempFileDir = New-TemporaryDirectory
