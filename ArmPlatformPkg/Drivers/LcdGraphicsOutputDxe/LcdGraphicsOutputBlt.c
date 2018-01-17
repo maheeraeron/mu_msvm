@@ -164,7 +164,7 @@ VideoCopyHorizontalOverlap (
     SizeIn32Bits = Width * 4;
 
     // Copy from the video ram (source region) to a temp buffer
-    for (SourcePixelY = SourceY, DestinationPixel32bit = PixelBuffer32bit;
+    for (SourcePixelY = (UINT32)SourceY, DestinationPixel32bit = PixelBuffer32bit;
          SourcePixelY < SourceY + Height;
          SourcePixelY++, DestinationPixel32bit += Width)
     {
@@ -176,7 +176,7 @@ VideoCopyHorizontalOverlap (
     }
 
     // Copy from the temp buffer to the video ram (destination region)
-    for (DestinationPixelY = DestinationY, SourcePixel32bit = PixelBuffer32bit;
+    for (DestinationPixelY = (UINT32)DestinationY, SourcePixel32bit = PixelBuffer32bit;
          DestinationPixelY < DestinationY + Height;
          DestinationPixelY++, SourcePixel32bit += Width)
     {
@@ -208,7 +208,7 @@ VideoCopyHorizontalOverlap (
 
     SizeIn16Bits = Width * 2;
 
-    for (SourcePixelY = SourceY, DestinationPixel16bit = PixelBuffer16bit;
+    for (SourcePixelY = (UINT32)SourceY, DestinationPixel16bit = PixelBuffer16bit;
          SourcePixelY < SourceY + Height;
          SourcePixelY++, DestinationPixel16bit += Width)
     {
@@ -221,7 +221,7 @@ VideoCopyHorizontalOverlap (
 
     // Copy from the temp buffer into the destination area of the Video Memory
 
-    for (DestinationPixelY = DestinationY, SourcePixel16bit = PixelBuffer16bit;
+    for (DestinationPixelY = (UINT32)DestinationY, SourcePixel16bit = PixelBuffer16bit;
          DestinationPixelY < DestinationY + Height;
          DestinationPixelY++, SourcePixel16bit += Width)
     {
@@ -293,7 +293,7 @@ BltVideoFill (
     WidthInBytes = Width * 4;
 
     // Copy the SourcePixel into every pixel inside the target rectangle
-    for (DestinationLine = DestinationY;
+    for (DestinationLine = (UINT32)DestinationY;
          DestinationLine < DestinationY + Height;
          DestinationLine++)
     {
@@ -315,11 +315,11 @@ BltVideoFill (
      );
 
     // Copy the SourcePixel into every pixel inside the target rectangle
-    for (DestinationLine = DestinationY;
+    for (DestinationLine = (UINT32)DestinationY;
          DestinationLine < DestinationY + Height;
          DestinationLine++)
     {
-      for (DestinationPixelX = DestinationX;
+      for (DestinationPixelX = (UINT32)DestinationX;
            DestinationPixelX < DestinationX + Width;
            DestinationPixelX++)
       {
@@ -341,12 +341,12 @@ BltVideoFill (
      );
 
     // Copy the SourcePixel into every pixel inside the target rectangle
-    for (DestinationLine = DestinationY;
-         DestinationLine < DestinationY + Height;
+    for (DestinationLine = (UINT32)DestinationY;
+         DestinationLine < (UINT32)(DestinationY + Height);
          DestinationLine++)
     {
-      for (DestinationPixelX = DestinationX;
-           DestinationPixelX < DestinationX + Width;
+      for (DestinationPixelX = (UINT32)DestinationX;
+           DestinationPixelX < (UINT32)(DestinationX + Width);
            DestinationPixelX++)
       {
         // Calculate the target address:
@@ -367,11 +367,11 @@ BltVideoFill (
      );
 
     // Copy the SourcePixel into every pixel inside the target rectangle
-    for (DestinationLine = DestinationY;
+    for (DestinationLine = (UINT32)DestinationY;
          DestinationLine < DestinationY + Height;
          DestinationLine++)
     {
-      for (DestinationPixelX = DestinationX;
+      for (DestinationPixelX = (UINT32)DestinationX;
            DestinationPixelX < DestinationX + Width;
            DestinationPixelX++)
       {
@@ -439,7 +439,7 @@ BltVideoToBltBuffer (
     // Divide it by the size of a pixel to find out the buffer's horizontal resolution.
     BltBufferHorizontalResolution = (UINT32) (Delta / sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   } else {
-    BltBufferHorizontalResolution = Width;
+    BltBufferHorizontalResolution = (UINT32)Width;
   }
 
   LcdPlatformGetBpp (This->Mode->Mode,&BitsPerPixel);
@@ -449,8 +449,8 @@ BltVideoToBltBuffer (
     WidthInBytes = Width * 4;
 
     // Access each line inside the Video Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-         SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+         SourceLine < (UINT32)(SourceY + Height);
          SourceLine++, DestinationLine++)
     {
       // Calculate the source and target addresses using 32bit pointer arithmetic:
@@ -464,11 +464,11 @@ BltVideoToBltBuffer (
 
   case LCD_BITS_PER_PIXEL_16_555:
     // Access each pixel inside the Video Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
          SourceLine < SourceY + Height;
          SourceLine++, DestinationLine++)
     {
-      for (SourcePixelX = SourceX, DestinationPixelX = DestinationX;
+      for (SourcePixelX = (UINT32)SourceX, DestinationPixelX = (UINT32)DestinationX;
            SourcePixelX < SourceX + Width;
            SourcePixelX++, DestinationPixelX++)
       {
@@ -491,12 +491,12 @@ BltVideoToBltBuffer (
 
   case LCD_BITS_PER_PIXEL_16_565:
     // Access each pixel inside the Video Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-         SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+         SourceLine < (UINT32)(SourceY + Height);
          SourceLine++, DestinationLine++)
     {
-      for (SourcePixelX = SourceX, DestinationPixelX = DestinationX;
-           SourcePixelX < SourceX + Width;
+      for (SourcePixelX = (UINT32)SourceX, DestinationPixelX = (UINT32)DestinationX;
+           SourcePixelX < (UINT32)(SourceX + Width);
            SourcePixelX++, DestinationPixelX++)
       {
         // Calculate the source and target addresses:
@@ -519,12 +519,12 @@ BltVideoToBltBuffer (
 
   case LCD_BITS_PER_PIXEL_12_444:
     // Access each pixel inside the Video Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-         SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+         SourceLine < (UINT32)(SourceY + Height);
          SourceLine++, DestinationLine++)
     {
-      for (SourcePixelX = SourceX, DestinationPixelX = DestinationX;
-           SourcePixelX < SourceX + Width;
+      for (SourcePixelX = (UINT32)SourceX, DestinationPixelX = (UINT32)DestinationX;
+           SourcePixelX < (UINT32)(SourceX + Width);
            SourcePixelX++, DestinationPixelX++)
       {
         // Calculate the source and target addresses:
@@ -597,7 +597,7 @@ BltBufferToVideo (
     // Divide it by the size of a pixel to find out the buffer's horizontal resolution.
     BltBufferHorizontalResolution = (UINT32) (Delta / sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   } else {
-    BltBufferHorizontalResolution = Width;
+    BltBufferHorizontalResolution = (UINT32)Width;
   }
 
   LcdPlatformGetBpp (This->Mode->Mode,&BitsPerPixel);
@@ -607,8 +607,8 @@ BltBufferToVideo (
     WidthInBytes = Width * 4;
 
     // Access each pixel inside the BltBuffer Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-       SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+       SourceLine < (UINT32)(SourceY + Height);
        SourceLine++, DestinationLine++)
     {
       // Calculate the source and target addresses using 32bit pointer arithmetic:
@@ -622,12 +622,12 @@ BltBufferToVideo (
 
   case LCD_BITS_PER_PIXEL_16_555:
     // Access each pixel inside the BltBuffer Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-       SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+       SourceLine < (UINT32)(SourceY + Height);
        SourceLine++, DestinationLine++) {
 
-      for (SourcePixelX = SourceX, DestinationPixelX = DestinationX;
-           SourcePixelX < SourceX + Width;
+      for (SourcePixelX = (UINT32)SourceX, DestinationPixelX = (UINT32)DestinationX;
+           SourcePixelX < (UINT32)(SourceX + Width);
            SourcePixelX++, DestinationPixelX++)
       {
         // Calculate the source and target addresses:
@@ -649,12 +649,12 @@ BltBufferToVideo (
 
   case LCD_BITS_PER_PIXEL_16_565:
     // Access each pixel inside the BltBuffer Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-         SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+         SourceLine < (UINT32)(SourceY + Height);
          SourceLine++, DestinationLine++) {
 
-      for (SourcePixelX = SourceX, DestinationPixelX = DestinationX;
-           SourcePixelX < SourceX + Width;
+      for (SourcePixelX = (UINT32)SourceX, DestinationPixelX = (UINT32)DestinationX;
+           SourcePixelX < (UINT32)(SourceX + Width);
            SourcePixelX++, DestinationPixelX++)
       {
         // Calculate the source and target addresses:
@@ -676,12 +676,12 @@ BltBufferToVideo (
 
   case LCD_BITS_PER_PIXEL_12_444:
     // Access each pixel inside the BltBuffer Memory
-    for (SourceLine = SourceY, DestinationLine = DestinationY;
-         SourceLine < SourceY + Height;
+    for (SourceLine = (UINT32)SourceY, DestinationLine = (UINT32)DestinationY;
+         SourceLine < (UINT32)(SourceY + Height);
          SourceLine++, DestinationLine++) {
 
-      for (SourcePixelX = SourceX, DestinationPixelX = DestinationX;
-           SourcePixelX < SourceX + Width;
+      for (SourcePixelX = (UINT32)SourceX, DestinationPixelX = (UINT32)DestinationX;
+           SourcePixelX < (UINT32)(SourceX + Width);
            SourcePixelX++, DestinationPixelX++)
       {
         // Calculate the source and target addresses:

@@ -1,0 +1,99 @@
+//------------------------------------------------------------------------------
+//
+// Copyright (c) 2011 - 2013, ARM Ltd. All rights reserved.<BR>
+//
+// This program and the accompanying materials
+// are licensed and made available under the terms and conditions of the BSD License
+// which accompanies this distribution.  The full text of the license may be found at
+// http://opensource.org/licenses/bsd-license.php
+//
+// THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+// WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+//
+//------------------------------------------------------------------------------
+
+#include <Chipset/AArch64.h>
+
+    AREA    |.text|,ALIGN=7,CODE,READONLY
+
+    IMPORT DefaultExceptionHandler
+
+    VECTOR_BASE(DebugAgentVectorTable)
+
+//
+// Current EL with SP0 : 0x0 - 0x180
+//
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SP0_SYNC)
+SynchronousExceptionSP0 //PROC
+  b   SynchronousExceptionSP0
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SP0_IRQ)
+IrqSP0 //PROC
+  b   IrqSP0
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SP0_FIQ)
+FiqSP0 //PROC
+  b   FiqSP0
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SP0_SERR)
+SErrorSP0 //PROC
+  b   SErrorSP0
+
+//
+// Current EL with SPx: 0x200 - 0x380
+//
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SPx_SYNC)
+SynchronousExceptionSPx //PROC
+  b   SynchronousExceptionSPx
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SPx_IRQ)
+IrqSPx //PROC
+  b   IrqSPx
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SPx_FIQ)
+FiqSPx //PROC
+  b   FiqSPx
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_CUR_SPx_SERR)
+SErrorSPx //PROC
+  b   SErrorSPx
+
+/* Lower EL using AArch64 : 0x400 - 0x580 */
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A64_SYNC)
+SynchronousExceptionA64 //PROC
+  b   SynchronousExceptionA64
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A64_IRQ)
+IrqA64 //PROC
+  b   IrqA64
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A64_FIQ)
+FiqA64 //PROC
+  b   FiqA64
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A64_SERR)
+SErrorA64 //PROC
+  b   SErrorA64
+
+//
+// Lower EL using AArch32 : 0x600 - 0x780
+//
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A32_SYNC)
+SynchronousExceptionA32 //PROC
+  b   SynchronousExceptionA32
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A32_IRQ)
+IrqA32 //PROC
+  b   IrqA32
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A32_FIQ)
+FiqA32 //PROC
+  b   FiqA32
+
+    VECTOR_ENTRY(DebugAgentVectorTable, ARM_VECTOR_LOW_A32_SERR)
+SErrorA32 //PROC
+  b   SErrorA32
+
+VECTOR_END(DebugAgentVectorTable)
+
+    END

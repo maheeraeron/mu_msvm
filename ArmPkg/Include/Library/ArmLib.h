@@ -1,7 +1,7 @@
 /** @file
 
   Copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
-  Copyright (c) 2011 - 2015, ARM Ltd. All rights reserved.<BR>
+  Copyright (c) 2011 - 2016, ARM Ltd. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -25,30 +25,6 @@
 #else
  #error "Unknown chipset."
 #endif
-
-typedef enum {
-  ARM_CACHE_TYPE_WRITE_BACK,
-  ARM_CACHE_TYPE_UNKNOWN
-} ARM_CACHE_TYPE;
-
-typedef enum {
-  ARM_CACHE_ARCHITECTURE_UNIFIED,
-  ARM_CACHE_ARCHITECTURE_SEPARATE,
-  ARM_CACHE_ARCHITECTURE_UNKNOWN
-} ARM_CACHE_ARCHITECTURE;
-
-typedef struct {
-  ARM_CACHE_TYPE          Type;
-  ARM_CACHE_ARCHITECTURE  Architecture;
-  BOOLEAN                 DataCachePresent;
-  UINTN                   DataCacheSize;
-  UINTN                   DataCacheAssociativity;
-  UINTN                   DataCacheLineLength;
-  BOOLEAN                 InstructionCachePresent;
-  UINTN                   InstructionCacheSize;
-  UINTN                   InstructionCacheAssociativity;
-  UINTN                   InstructionCacheLineLength;
-} ARM_CACHE_INFO;
 
 /**
  * The UEFI firmware must not use the ARM_MEMORY_REGION_ATTRIBUTE_NONSECURE_* attributes.
@@ -126,69 +102,21 @@ typedef enum {
 #define GET_MPID(ClusterId, CoreId)   (((ClusterId) << 8) | (CoreId))
 #define PRIMARY_CORE_ID       (PcdGet32(PcdArmPrimaryCore) & ARM_CORE_MASK)
 
-ARM_CACHE_TYPE
-EFIAPI
-ArmCacheType (
-  VOID
-  );
-
-ARM_CACHE_ARCHITECTURE
-EFIAPI
-ArmCacheArchitecture (
-  VOID
-  );
-
-VOID
-EFIAPI
-ArmCacheInformation (
-  OUT ARM_CACHE_INFO  *CacheInfo
-  );
-
-BOOLEAN
-EFIAPI
-ArmDataCachePresent (
-  VOID
-  );
-
-UINTN
-EFIAPI
-ArmDataCacheSize (
-  VOID
-  );
-
-UINTN
-EFIAPI
-ArmDataCacheAssociativity (
-  VOID
-  );
-
 UINTN
 EFIAPI
 ArmDataCacheLineLength (
   VOID
   );
 
-BOOLEAN
-EFIAPI
-ArmInstructionCachePresent (
-  VOID
-  );
-
-UINTN
-EFIAPI
-ArmInstructionCacheSize (
-  VOID
-  );
-
-UINTN
-EFIAPI
-ArmInstructionCacheAssociativity (
-  VOID
-  );
-
 UINTN
 EFIAPI
 ArmInstructionCacheLineLength (
+  VOID
+  );
+
+UINTN
+EFIAPI
+ArmCacheWritebackGranule (
   VOID
   );
 
@@ -243,12 +171,6 @@ ArmCleanDataCache (
 
 VOID
 EFIAPI
-ArmCleanDataCacheToPoU (
-  VOID
-  );
-
-VOID
-EFIAPI
 ArmInvalidateInstructionCache (
   VOID
   );
@@ -261,9 +183,21 @@ ArmInvalidateDataCacheEntryByMVA (
 
 VOID
 EFIAPI
-ArmCleanDataCacheEntryByMVA (
+ArmCleanDataCacheEntryToPoUByMVA (
   IN  UINTN   Address
   );
+
+VOID
+EFIAPI
+ArmInvalidateInstructionCacheEntryToPoUByMVA (
+  IN  UINTN   Address
+  );
+
+VOID
+EFIAPI
+ArmCleanDataCacheEntryByMVA (
+IN  UINTN   Address
+);
 
 VOID
 EFIAPI
@@ -425,18 +359,16 @@ ArmSetTTBR0 (
   IN  VOID  *TranslationTableBase
   );
 
+VOID
+EFIAPI
+ArmSetTTBCR (
+  IN  UINT32 Bits
+  );
+
 VOID *
 EFIAPI
 ArmGetTTBR0BaseAddress (
   VOID
-  );
-
-RETURN_STATUS
-EFIAPI
-ArmConfigureMmu (
-  IN  ARM_MEMORY_REGION_DESCRIPTOR  *MemoryTable,
-  OUT VOID                         **TranslationTableBase OPTIONAL,
-  OUT UINTN                         *TranslationTableSize  OPTIONAL
   );
 
 BOOLEAN
@@ -483,7 +415,7 @@ ArmDataMemoryBarrier (
 
 VOID
 EFIAPI
-ArmDataSyncronizationBarrier (
+ArmDataSynchronizationBarrier (
   VOID
   );
 
@@ -659,6 +591,16 @@ VOID
 EFIAPI
 ArmUnsetCpuActlrBit (
   IN  UINTN    Bits
+  );
+
+//
+// Memory Model
+//
+
+UINTN
+EFIAPI
+ArmReadIdMmfr0(
+  VOID
   );
 
 #endif // __ARM_LIB__

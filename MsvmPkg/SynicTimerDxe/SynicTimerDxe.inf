@@ -28,8 +28,8 @@
     gEfiHvProtocolGuid
 
 [Pcd]
-    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex
-    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex
-    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerDefaultPeriod
-    gUefiMsvmPkgTokenSpaceGuid.PcdSynicTimerVector
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerDefaultPeriod
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerVector
 

@@ -1,0 +1,4051 @@
+//
+// The following is a merged adaptation of the following original files:
+//
+//  public/shared/inc/ksarm64.h
+//  public/shared/inc/kxarm64.h
+//  public/shared/inc/kxarm64unw.h
+//  minkernel/boot/environ/lib/bd/arm64/vector.asm
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Contents of ksarm64.h converted to assembly
+//  #defines -> equ
+//  dupes removed
+//
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// Pointer size in bytes
+//
+
+SizeofPointer equ 0x8
+
+//
+// Process State Enumerated Type Values
+//
+
+ProcessInMemory equ 0x0
+ProcessOutOfMemory equ 0x1
+ProcessInTransition equ 0x2
+
+//
+// Thread State Enumerated Type Values
+//
+
+Initialized equ 0x0
+Ready equ 0x1
+Running equ 0x2
+Standby equ 0x3
+Terminated equ 0x4
+Waiting equ 0x5
+
+//
+// Processor Mode Definitions
+//
+
+KernelMode equ 0x0
+UserMode equ 0x1
+
+//
+// Wait Reason and Wait Type Enumerated Type Values
+//
+
+WrExecutive equ 0x0
+WrDispatchInt equ 0x1f
+WaitAny equ 0x1
+WaitAll equ 0x0
+
+//
+// Apc State Structure Offset Definitions
+//
+
+AsApcListHead equ 0x0
+AsProcess equ 0x20
+AsKernelApcPending equ 0x29
+AsUserApcPending equ 0x2a
+
+//
+// Bug Check Code Definitions
+//
+
+APC_INDEX_MISMATCH equ 0x1
+KERNEL_APC_PENDING_DURING_EXIT equ 0x20
+ATTEMPTED_SWITCH_FROM_DPC equ 0xb8
+DATA_BUS_ERROR equ 0x2e
+DATA_COHERENCY_EXCEPTION equ 0x55
+HAL1_INITIALIZATION_FAILED equ 0x61
+INSTRUCTION_BUS_ERROR equ 0x2f
+INSTRUCTION_COHERENCY_EXCEPTION equ 0x56
+INTERRUPT_EXCEPTION_NOT_HANDLED equ 0x3d
+INTERRUPT_UNWIND_ATTEMPTED equ 0x3c
+INVALID_AFFINITY_SET equ 0x3
+INVALID_DATA_ACCESS_TRAP equ 0x4
+IRQL_GT_ZERO_AT_SYSTEM_SERVICE equ 0x4a
+IRQL_NOT_LESS_OR_EQUAL equ 0xa
+KMODE_EXCEPTION_NOT_HANDLED equ 0x1e
+NMI_HARDWARE_FAILURE equ 0x80
+NO_USER_MODE_CONTEXT equ 0xe
+PAGE_FAULT_WITH_INTERRUPTS_OFF equ 0x49
+PANIC_STACK_SWITCH equ 0x2b
+SPIN_LOCK_INIT_FAILURE equ 0x81
+SYSTEM_EXIT_OWNED_MUTEX equ 0x39
+SYSTEM_SERVICE_EXCEPTION equ 0x3b
+SYSTEM_UNWIND_PREVIOUS_USER equ 0x3a
+TRAP_CAUSE_UNKNOWN equ 0x12
+UNEXPECTED_KERNEL_MODE_TRAP equ 0x7f
+HARDWARE_INTERRUPT_STORM equ 0xf2
+RECURSIVE_MACHINE_CHECK equ 0xfb
+RECURSIVE_NMI equ 0x111
+KERNEL_SECURITY_CHECK_FAILURE equ 0x139
+UNSUPPORTED_INSTRUCTION_MODE equ 0x151
+BUGCHECK_CONTEXT_MODIFIER equ 0x80000000
+
+//
+// Breakpoint type definitions
+//
+
+DBG_STATUS_CONTROL_C equ 0x1
+STATUS_ASSERTION_FAILURE equ 0xc0000420
+
+//
+// Client Id Structure Offset Definitions
+//
+
+CidUniqueProcess equ 0x0
+CidUniqueThread equ 0x8
+
+//
+// Critical Section Structure Offset Definitions
+//
+
+CsDebugInfo equ 0x0
+CsLockCount equ 0x8
+CsRecursionCount equ 0xc
+CsOwningThread equ 0x10
+CsLockSemaphore equ 0x18
+CsSpinCount equ 0x20
+
+//
+// Critical Section Debug Information Structure Offset Definitions
+//
+
+CsType equ 0x0
+CsCreatorBackTraceIndex equ 0x2
+CsCriticalSection equ 0x8
+CsProcessLocksList equ 0x10
+CsEntryCount equ 0x20
+CsContentionCount equ 0x24
+
+//
+// Exception Record Offset, Flag, and Enumerated Type Definitions
+//
+
+EXCEPTION_NONCONTINUABLE equ 0x1
+EXCEPTION_UNWINDING equ 0x2
+EXCEPTION_EXIT_UNWIND equ 0x4
+EXCEPTION_STACK_INVALID equ 0x8
+EXCEPTION_NESTED_CALL equ 0x10
+EXCEPTION_TARGET_UNWIND equ 0x20
+EXCEPTION_COLLIDED_UNWIND equ 0x40
+EXCEPTION_UNWIND equ 0x66
+EXCEPTION_EXECUTE_HANDLER equ 0x1
+EXCEPTION_CONTINUE_SEARCH equ 0x0
+EXCEPTION_CONTINUE_EXECUTION equ 0xffffffff
+
+ExceptionContinueExecution equ 0x0
+ExceptionContinueSearch equ 0x1
+ExceptionNestedException equ 0x2
+ExceptionCollidedUnwind equ 0x3
+
+ErExceptionCode equ 0x0
+ErExceptionFlags equ 0x4
+ErExceptionRecord equ 0x8
+ErExceptionAddress equ 0x10
+ErNumberParameters equ 0x18
+ErExceptionInformation equ 0x20
+ExceptionRecordLength equ 0xa0
+
+//
+// Fast Mutex Structure Offset Definitions
+//
+
+FmCount equ 0x0
+FmOwner equ 0x8
+FmContention equ 0x10
+FmOldIrql equ 0x30
+
+//
+// Interrupt Priority Request Level Definitions
+//
+
+PASSIVE_LEVEL equ 0x0
+APC_LEVEL equ 0x1
+DISPATCH_LEVEL equ 0x2
+IPI_LEVEL equ 0xe
+POWER_LEVEL equ 0xe
+PROFILE_LEVEL equ 0xf
+HIGH_LEVEL equ 0xf
+#ifdef NT_UP
+SYNCH_LEVEL equ 0x2
+#else
+SYNCH_LEVEL equ 0xc
+#endif
+
+//
+// Large Integer Structure Offset Definitions
+//
+
+LiLowPart equ 0x0
+LiHighPart equ 0x4
+
+//
+// List Entry Structure Offset Definitions
+//
+
+LsFlink equ 0x0
+LsBlink equ 0x8
+
+//
+// String Structure Offset Definitions
+//
+
+StrLength equ 0x0
+StrMaximumLength equ 0x2
+StrBuffer equ 0x8
+
+//
+// System DLL Init Block Structure Offset Definitions
+//
+
+IbCfgBitMap equ 0xb0
+IbMitigationOptionsMap equ 0xa0
+PS_MITIGATION_OPTION_BITS_PER_OPTION equ 0x4
+PS_MITIGATION_OPTION_ALWAYS_ON equ 0x1
+PS_MITIGATION_OPTION_ALWAYS_OFF equ 0x2
+PS_MITIGATION_OPTION_MASK equ 0x3
+PS_MITIGATION_OPTION_RETURN_FLOW_GUARD equ 0x10
+PS_MITIGATION_OPTION_RESTRICT_SET_THREAD_CONTEXT equ 0x13
+
+//
+// User Shared Data Structure Offset Definitions
+//
+
+UsTickCountMultiplier equ 0x4
+UsInterruptTime equ 0x8
+UsSystemTime equ 0x14
+UsTimeZoneBias equ 0x20
+UsImageNumberLow equ 0x2c
+UsImageNumberHigh equ 0x2e
+UsNtSystemRoot equ 0x30
+UsMaxStackTraceDepth equ 0x238
+UsCryptoExponent equ 0x23c
+UsTimeZoneId equ 0x240
+UsLargePageMinimum equ 0x244
+UsNtBuildNumber equ 0x260
+UsNtProductType equ 0x264
+UsProductTypeIsValid equ 0x268
+UsNtMajorVersion equ 0x26c
+UsNtMinorVersion equ 0x270
+UsProcessorFeatures equ 0x274
+UsReserved1 equ 0x2b4
+UsReserved3 equ 0x2b8
+UsTimeSlip equ 0x2bc
+UsAlternativeArchitecture equ 0x2c0
+UsSystemExpirationDate equ 0x2c8
+UsSuiteMask equ 0x2d0
+UsKdDebuggerEnabled equ 0x2d4
+UsActiveConsoleId equ 0x2d8
+UsDismountCount equ 0x2dc
+UsComPlusPackage equ 0x2e0
+UsLastSystemRITEventTickCount equ 0x2e4
+UsNumberOfPhysicalPages equ 0x2e8
+UsSafeBootMode equ 0x2ec
+UsTestRetInstruction equ 0x2f8
+UsSystemCallPad equ 0x310
+UsTickCount equ 0x320
+UsTickCountQuad equ 0x320
+UsXState equ 0x3d8
+
+//
+// Time Structure Offset Definitions
+//
+
+TmLowTime equ 0x0
+TmHighTime equ 0x4
+
+//
+// Thread Switch Counter Offset Definitions
+//
+
+TwFindAny equ 0x0
+TwFindIdeal equ 0x4
+TwFindLast equ 0x8
+TwIdleAny equ 0xc
+TwIdleCurrent equ 0x10
+TwIdleIdeal equ 0x14
+TwIdleLast equ 0x18
+TwPreemptAny equ 0x1c
+TwPreemptCurrent equ 0x20
+TwPreemptLast equ 0x24
+TwSwitchToIdle equ 0x28
+
+//
+// Status Code Definitions
+//
+
+STATUS_ACCESS_VIOLATION equ 0xc0000005
+STATUS_ARRAY_BOUNDS_EXCEEDED equ 0xc000008c
+STATUS_BAD_COMPRESSION_BUFFER equ 0xc0000242
+STATUS_BREAKPOINT equ 0x80000003
+STATUS_CALLBACK_POP_STACK equ 0xc0000423
+STATUS_DATATYPE_MISALIGNMENT equ 0x80000002
+STATUS_FLOAT_DENORMAL_OPERAND equ 0xc000008d
+STATUS_FLOAT_DIVIDE_BY_ZERO equ 0xc000008e
+STATUS_FLOAT_INEXACT_RESULT equ 0xc000008f
+STATUS_FLOAT_INVALID_OPERATION equ 0xc0000090
+STATUS_FLOAT_OVERFLOW equ 0xc0000091
+STATUS_FLOAT_STACK_CHECK equ 0xc0000092
+STATUS_FLOAT_UNDERFLOW equ 0xc0000093
+STATUS_FLOAT_MULTIPLE_FAULTS equ 0xc00002b4
+STATUS_FLOAT_MULTIPLE_TRAPS equ 0xc00002b5
+STATUS_GUARD_PAGE_VIOLATION equ 0x80000001
+STATUS_ILLEGAL_FLOAT_CONTEXT equ 0xc000014a
+STATUS_ILLEGAL_INSTRUCTION equ 0xc000001d
+STATUS_INSTRUCTION_MISALIGNMENT equ 0xc00000aa
+STATUS_INVALID_HANDLE equ 0xc0000008
+STATUS_INVALID_LOCK_SEQUENCE equ 0xc000001e
+STATUS_INVALID_OWNER equ 0xc000005a
+STATUS_INVALID_PARAMETER equ 0xc000000d
+STATUS_INVALID_PARAMETER_1 equ 0xc00000ef
+STATUS_INVALID_SYSTEM_SERVICE equ 0xc000001c
+STATUS_INVALID_THREAD equ 0xc000071c
+STATUS_INTEGER_DIVIDE_BY_ZERO equ 0xc0000094
+STATUS_INTEGER_OVERFLOW equ 0xc0000095
+STATUS_IN_PAGE_ERROR equ 0xc0000006
+STATUS_KERNEL_APC equ 0x100
+STATUS_LONGJUMP equ 0x80000026
+STATUS_NO_CALLBACK_ACTIVE equ 0xc0000258
+STATUS_PRIVILEGED_INSTRUCTION equ 0xc0000096
+STATUS_SINGLE_STEP equ 0x80000004
+STATUS_STACK_BUFFER_OVERRUN equ 0xc0000409
+STATUS_STACK_OVERFLOW equ 0xc00000fd
+STATUS_SUCCESS equ 0x0
+STATUS_THREAD_IS_TERMINATING equ 0xc000004b
+STATUS_TIMEOUT equ 0x102
+STATUS_UNWIND equ 0xc0000027
+STATUS_UNWIND_CONSOLIDATE equ 0x80000029
+STATUS_USER_APC equ 0xc0
+STATUS_WAKE_SYSTEM equ 0x40000294
+STATUS_WAKE_SYSTEM_DEBUGGER equ 0x80000007
+STATUS_SET_CONTEXT_DENIED equ 0xc000060a
+
+//
+// Fast Fail Code Definitions
+//
+
+FAST_FAIL_INVALID_BUFFER_ACCESS equ 0x1c
+FAST_FAIL_INVALID_NEXT_THREAD equ 0x1e
+FAST_FAIL_INVALID_CONTROL_STACK equ 0x2f
+FAST_FAIL_SET_CONTEXT_DENIED equ 0x30
+
+//
+// APC Object Structure Offset Definitions
+//
+
+ApType equ 0x0
+ApSize equ 0x2
+ApThread equ 0x8
+ApApcListEntry equ 0x10
+ApKernelRoutine equ 0x20
+ApRundownRoutine equ 0x28
+ApNormalRoutine equ 0x30
+ApNormalContext equ 0x38
+ApSystemArgument1 equ 0x40
+ApSystemArgument2 equ 0x48
+ApApcStateIndex equ 0x50
+ApApcMode equ 0x51
+ApInserted equ 0x52
+ApcObjectLength equ 0x58
+
+//
+// DPC object Structure Offset Definitions
+//
+
+DpType equ 0x0
+DpNumber equ 0x2
+DpImportance equ 0x1
+DpDpcListEntry equ 0x8
+DpDeferredRoutine equ 0x18
+DpDeferredContext equ 0x20
+DpSystemArgument1 equ 0x28
+DpSystemArgument2 equ 0x30
+DpDpcData equ 0x38
+DpcObjectLength equ 0x40
+
+KI_DPC_ALL_FLAGS equ 0x3f
+KI_DPC_ANY_DPC_ACTIVE equ 0x10001
+
+//
+// Device Queue Object Structure Offset Definitions
+//
+
+DvType equ 0x0
+DvSize equ 0x2
+DvDeviceListHead equ 0x8
+DvSpinLock equ 0x18
+DvBusy equ 0x20
+DeviceQueueObjectLength equ 0x28
+
+//
+// Device Queue Entry Structure Offset Definitions
+//
+
+DeDeviceListEntry equ 0x0
+DeSortKey equ 0x10
+DeInserted equ 0x14
+DeviceQueueEntryLength equ 0x18
+
+//
+// Event Object Structure Offset Definitions
+//
+
+EvType equ 0x0
+EvSize equ 0x2
+EvSignalState equ 0x4
+EvWaitListHead equ 0x8
+EventObjectLength equ 0x18
+
+//
+// Interrupt Object Structure Offset Definitions
+//
+
+KINTERRUPT_STATE_DISABLED_BIT equ 0x0
+KINTERRUPT_STATE_DISABLED equ 0x1
+InLevelSensitive equ 0x0
+InLatched equ 0x1
+
+InType equ 0x0
+InSize equ 0x2
+InInterruptListEntry equ 0x8
+InServiceRoutine equ 0x18
+InServiceContext equ 0x30
+InSpinLock equ 0x38
+InTickCount equ 0x40
+InActualLock equ 0x48
+InDispatchAddress equ 0x50
+InVector equ 0x58
+InIrql equ 0x5c
+InSynchronizeIrql equ 0x5d
+InFloatingSave equ 0x5e
+InConnected equ 0x5f
+InNumber equ 0x60
+InShareVector equ 0x64
+InInternalState equ 0x68
+InMode equ 0x6c
+InServiceCount equ 0x74
+InDispatchCount equ 0x78
+InterruptObjectLength equ 0xf8
+
+//
+// Process Object Structure Offset Definitions
+//
+
+PrType equ 0x0
+PrSize equ 0x2
+PrSignalState equ 0x4
+PrProfileListHead equ 0x18
+PrDirectoryTableBase equ 0x28
+PrThreadListHead equ 0x38
+PrAffinity equ 0x58
+PrReadyListHead equ 0x100
+PrSwapListEntry equ 0x110
+PrActiveProcessors equ 0x118
+PrProcessFlags equ 0x1c0
+PrBasePriority equ 0x1c4
+PrQuantumReset equ 0x1c5
+PrCycleTime equ 0x258
+PrKernelTime equ 0x274
+PrUserTime equ 0x278
+PrInstrumentationCallback equ 0x280
+KernelProcessObjectLength equ 0x290
+ExecutiveProcessObjectLength equ 0x7c0
+Win32BatchFlushCallout equ 0x7
+
+//
+// Profile Object Structure Offset Definitions
+//
+
+PfType equ 0x0
+PfSize equ 0x2
+PfProfileListEntry equ 0x8
+PfProcess equ 0x18
+PfRangeBase equ 0x20
+PfRangeLimit equ 0x28
+PfBucketShift equ 0x30
+PfBuffer equ 0x38
+PfSegment equ 0x40
+PfAffinity equ 0x48
+PfSource equ 0xf0
+PfStarted equ 0xf2
+ProfileObjectLength equ 0xf8
+
+//
+// Queue Object Structure Offset Definitions
+//
+
+QuSignalState equ 0x4
+QuEntryListHead equ 0x18
+QuCurrentCount equ 0x28
+QuMaximumCount equ 0x2c
+QuThreadListHead equ 0x30
+QueueObjectLength equ 0x40
+
+//
+// Thread Object Structure Offset Definitions
+//
+
+EtCid equ 0x658
+
+ThType equ 0x0
+ThSize equ 0x2
+ThLock equ 0x0
+THREAD_FLAGS_CYCLE_PROFILING equ 0x1
+THREAD_FLAGS_CYCLE_PROFILING_LOCK_BIT equ 0x10
+THREAD_FLAGS_CYCLE_PROFILING_LOCK equ 0x10000
+THREAD_FLAGS_COUNTER_PROFILING equ 0x2
+THREAD_FLAGS_COUNTER_PROFILING_LOCK_BIT equ 0x11
+THREAD_FLAGS_COUNTER_PROFILING_LOCK equ 0x20000
+THREAD_FLAGS_GROUP_SCHEDULING equ 0x4
+THREAD_FLAGS_AFFINITY_SET equ 0x8
+THREAD_FLAGS_ACCOUNTING_CSWITCH equ 0x36
+THREAD_FLAGS_ACCOUNTING_INTERRUPT equ 0x32
+THREAD_FLAGS_ACCOUNTING_ANY equ 0x3e
+ThDebugActive equ 0x3
+ThThreadControlFlags equ 0x2
+ThSignalState equ 0x4
+ThCycleTime equ 0x48
+ThCurrentRunTime equ 0x50
+ThVfpState equ 0x230
+ThInitialStack equ 0x28
+ThStackLimit equ 0x30
+ThKernelStack equ 0x58
+ThThreadLock equ 0x40
+ThApcState equ 0x90
+ThNextProcessor equ 0x238
+ThAdjustReason equ 0x256
+ThAdjustIncrement equ 0x257
+ThWaitReason equ 0x2a3
+ThRunning equ 0x69
+ThAlerted equ 0x6a
+ThWaitTime equ 0x1ac
+ThCombinedApcDisable equ 0x1dc
+ThKernelApcDisable equ 0x1dc
+ThSpecialApcDisable equ 0x1de
+ThTeb equ 0xe8
+ThTimer equ 0xf8
+thProcess equ 0x240
+
+KTHREAD_AUTO_ALIGNMENT_BIT equ 0x0
+KTHREAD_GUI_THREAD_MASK equ 0x40
+KTHREAD_RESTRICTED_GUI_THREAD_MASK equ 0x100000
+KTHREAD_SYSTEM_THREAD_BIT equ 0xa
+KTHREAD_QUEUE_DEFER_PREEMPTION_BIT equ 0xa
+
+ThMiscFlags equ 0x6c
+ThThreadFlags equ 0x70
+ThPreviousMode equ 0x252
+ThContextSwitches equ 0x14c
+ThState equ 0x17c
+ThWaitIrql equ 0x17e
+ThTrapFrame equ 0x88
+ThFirstArgument equ 0x80
+ThApcStateIndex equ 0x26a
+ThSystemCallNumber equ 0x78
+ThProcess equ 0x240
+ThWin32Thread equ 0x1c0
+ThStackBase equ 0x38
+ThLegoData equ 0x2f0
+KernelThreadObjectLength equ 0x608
+ExecutiveThreadObjectLength equ 0x810
+
+
+//
+// Timer object Structure Offset Definitions
+//
+
+TiType equ 0x0
+TiSize equ 0x2
+TiSignalState equ 0x4
+TiDueTime equ 0x18
+TiTimerListEntry equ 0x20
+TiDpc equ 0x30
+TiPeriod equ 0x3c
+TimerObjectLength equ 0x40
+
+
+//
+// Wait Block Structure Offset Definitions
+//
+
+WbWaitListEntry equ 0x0
+WbThread equ 0x18
+WbObject equ 0x20
+WbWaitKey equ 0x12
+WbWaitType equ 0x10
+
+//
+// Fiber Structure Offset Definitions
+//
+
+FbFiberData equ 0x0
+FbExceptionList equ 0x8
+FbStackBase equ 0x10
+FbStackLimit equ 0x18
+FbDeallocationStack equ 0x20
+FbFiberContext equ 0x30
+FbWx86Tib equ 0x3c0
+FbActivationContextStackPointer equ 0x3c8
+FbFlsData equ 0x3d0
+FbGuaranteedStackBytes equ 0x3d8
+FbTebFlags equ 0x3dc
+
+//
+// Process Environment Block Structure Offset Definitions
+//
+
+PeBeingDebugged equ 0x2
+PeProcessParameters equ 0x20
+PeKernelCallbackTable equ 0x58
+ProcessEnvironmentBlockLength equ 0x7a0
+
+//
+// Process Parameters Block Structure Offset Definitions
+//
+
+PpFlags equ 0x8
+USER_CALLBACK_FILTER equ 0x80000
+
+//
+// System Service Descriptor Table Structure Definitions
+//
+
+NUMBER_SERVICE_TABLES equ 0x2
+SERVICE_NUMBER_MASK equ 0xfff
+SERVICE_TABLE_SHIFT equ 0x7
+SERVICE_TABLE_MASK equ 0x20
+SERVICE_TABLE_TEST equ 0x20
+
+SdBase equ 0x0
+SdLimit equ 0x10
+SdNumber equ 0x18
+SdLength equ 0x20
+
+//
+// Thread Environment Block Structure Offset Definitions
+//
+
+TeCmTeb equ 0x0
+TeStackBase equ 0x8
+TeStackLimit equ 0x10
+TeFiberData equ 0x20
+TeSelf equ 0x30
+TeEnvironmentPointer equ 0x38
+TeClientId equ 0x40
+TeActiveRpcHandle equ 0x50
+TeThreadLocalStoragePointer equ 0x58
+TeCountOfOwnedCriticalSections equ 0x6c
+TePeb equ 0x60
+TeCsrClientThread equ 0x70
+TeWOW32Reserved equ 0x100
+TeSoftFpcr equ 0x10c
+TeExceptionCode equ 0x2c0
+TeActivationContextStackPointer equ 0x2c8
+TeInstrumentationCallbackSp equ 0x2d0
+TeInstrumentationCallbackPreviousPc equ 0x2d8
+TeInstrumentationCallbackPreviousSp equ 0x2e0
+TeGdiClientPID equ 0x7f0
+TeGdiClientTID equ 0x7f4
+TeGdiThreadLocalInfo equ 0x7f8
+TeglDispatchTable equ 0x9f0
+TeglReserved1 equ 0x1138
+TeglReserved2 equ 0x1220
+TeglSectionInfo equ 0x1228
+TeglSection equ 0x1230
+TeglTable equ 0x1238
+TeglCurrentRC equ 0x1240
+TeglContext equ 0x1248
+TeDeallocationStack equ 0x1478
+TeTlsSlots equ 0x1480
+TeTlsExpansionSlots equ 0x1780
+TeLastErrorValue equ 0x68
+TeVdm equ 0x1690
+TeInstrumentation equ 0x16b8
+TeGdiBatchCount equ 0x1740
+TeGuaranteedStackBytes equ 0x1748
+TeFlsData equ 0x17c8
+ThreadEnvironmentBlockLength equ 0x1838
+CmThreadEnvironmentBlockOffset equ 0x2000
+TLS_MINIMUM_AVAILABLE equ 0x40
+TLS_EXPANSION_SLOTS equ 0x400
+
+//
+// Lock Queue Structure Offset Definitions
+//
+
+LOCK_QUEUE_WAIT equ 0x1
+LOCK_QUEUE_OWNER equ 0x2
+LOCK_QUEUE_HEADER_SIZE equ 0x10
+
+
+LqNext equ 0x0
+LqLock equ 0x8
+
+LqhLockQueue equ 0x0
+LqhOldIrql equ 0x10
+LqhNext equ 0x0
+LqhLock equ 0x8
+
+//
+// Kernel Stack Control Structure Offset (relative to initial stack pointer) Definitions
+//
+
+KSTACK_CONTROL_LENGTH equ 0x40
+KcPreviousBase equ 0x20
+KcPreviousLimit equ 0x28
+KcPreviousKernel equ 0x30
+KcPreviousInitial equ 0x38
+KcCurrentBase equ 0x0
+KcActualLimit equ 0x8
+KSTACK_ACTUAL_LIMIT_EXPANDED equ 0x1
+
+
+//
+// ETW Definitions
+//
+
+PERF_CONTEXTSWAP_OFFSET equ 0x4
+PERF_CONTEXTSWAP_FLAG equ 0x4
+PERF_INTERRUPT equ 0x20004000
+PERF_INTERRUPT_OFFSET equ 0x4
+PERF_INTERRUPT_FLAG equ 0x4000
+PERF_SYSCALL_OFFSET equ 0x8
+PERF_SYSCALL_FLAG equ 0x40
+NTOS_YIELD_MACRO equ 0x1
+EtwTSLength equ 0x18
+
+//
+// Extended context structure offset definitions
+//
+
+CxxLegacyOffset equ 0x8
+CxxLegacyLength equ 0xc
+CxxXStateOffset equ 0x10
+CxxXStateLength equ 0x14
+
+//
+// KAFFINITY_EX offsets
+//
+
+AfCount equ 0x0
+AfBitmap equ 0x8
+PbEntropyCount equ 0xf70
+PbEntropyBuffer equ 0xf74
+KENTROPY_TIMING_INTERRUPTS_PER_BUFFER equ 0x400
+KENTROPY_TIMING_BUFFER_MASK equ 0x7ff
+KENTROPY_TIMING_ANALYSIS equ 0x0
+PERF_SYSCALL_FLAG_BIT equ 0x6
+
+//
+// Apc Record Structure Offset Definitions
+//
+
+ArNormalRoutine equ 0x0
+ArNormalContext equ 0x8
+ArSystemArgument1 equ 0x10
+ArSystemArgument2 equ 0x18
+ApcRecordLength equ 0x20
+
+
+//
+// Special Register Structure Offset Definition
+//
+
+KsElr_El1 equ 0x0
+KsSpsr_El1 equ 0x8
+KsTpidr_El0 equ 0x10
+KsTpidrro_El0 equ 0x18
+KsTpidr_El1 equ 0x20
+KsKernelBcr equ 0x68
+KsKernelBvr equ 0x28
+KsKernelWcr equ 0x98
+
+//
+// ARM Architectural State Structure Offset Definitions
+//
+
+AaMidr_El1 equ 0x0
+AaSctlr_El1 equ 0x8
+AaActlr_El1 equ 0x10
+AaCpacr_El1 equ 0x18
+AaTcr_El1 equ 0x20
+AaTtbr0_El1 equ 0x28
+AaTtbr1_El1 equ 0x30
+AaEsr_El1 equ 0x38
+AaFar_El1 equ 0x40
+AaPmcr_El0 equ 0x48
+AaPmcntenset_El0 equ 0x50
+AaPmccntr_El0 equ 0x58
+AaPmxevcntr_El0 equ 0x60
+AaPmxevtyper_El0 equ 0x158
+AaPmovsclr_El0 equ 0x250
+AaPmselr_El0 equ 0x258
+AaPmuserenr_El0 equ 0x260
+AaMair_El1 equ 0x268
+AaVbar_El1 equ 0x270
+
+//
+// Processor Control Region Structure Offset Definitions
+//
+
+PcSelf equ 0x18
+PcLockArray equ 0x28
+PcCurrentIrql equ 0x38
+PcTeb equ 0x30
+PcStallScaleFactor equ 0x40
+PcPanicStorage equ 0x50
+PcHalReserved equ 0x88
+PcPrcb equ 0x980
+PcIdleHalt equ 0x982
+PcCurrentThread equ 0x988
+PcNextThread equ 0x990
+PcIdleThread equ 0x998
+PcNestingLevel equ 0x9a0
+PcNumber equ 0x9a4
+PcPrcbLock equ 0x9a8
+PcGroupSetMember equ 0x10e0
+PcFeatureBits equ 0x1214
+PcVirtualApicAssist equ 0x1fe8
+TlThread equ 0x0
+TlCpuNumber equ 0x8
+TlTrapType equ 0x9
+TlPadding equ 0xa
+TlCpsr equ 0xc
+TlX0 equ 0x10
+TlX1 equ 0x18
+TlX2 equ 0x20
+TlX3 equ 0x28
+TlX4 equ 0x30
+TlX5 equ 0x38
+TlX6 equ 0x40
+TlX7 equ 0x48
+TlFp equ 0x50
+TlLr equ 0x58
+TlSp equ 0x60
+TlPc equ 0x68
+TRAP_TYPE_INTERRUPT equ 0x1
+TRAP_TYPE_SYSCALL equ 0x2
+TRAP_TYPE_UNDEFINED equ 0x3
+TRAP_TYPE_DATA_ABORT equ 0x4
+TRAP_TYPE_PREFETCH_ABORT equ 0x5
+TRAP_TYPE_RESET equ 0x6
+TRAP_TYPE_FIQ equ 0x7
+PcInterruptCount equ 0x1880
+PcDebuggerSavedIRQL equ 0x1899
+PcDeferredReadyListHead equ 0x1388
+PcSystemCalls equ 0x13b8
+PcDpcRoutineActive equ 0x148a
+PcSkipTick equ 0x1898
+PcStartCycles equ 0x18c8
+PcSpBase equ 0x1470
+ProcessorControlRegisterLength equ 0x10c40
+
+//
+// Defines for user shared data
+//
+
+ARM64_CPACR_VFP_MASK equ 0x300000
+ARM64_CPACR_VFP_MASK_BIT equ 0x14
+
+//
+// Processor Block Structure Offset Definitions
+//
+
+PbNestingLevel equ 0x20
+PbIdleHalt equ 0x2
+PbCurrentThread equ 0x8
+PbNextThread equ 0x10
+PbIdleThread equ 0x18
+PbNumber equ 0x24
+PbPrcbLock equ 0x28
+PbKeSpinLockOrdering equ 0xbf0
+KI_SPINLOCK_ORDER_PRCB_LOCK equ 0x40
+PbProcessorState equ 0x40
+PbHalReserved equ 0x700
+PbMinorVersion equ 0x750
+PbMajorVersion equ 0x752
+PbBuildType equ 0x754
+PbCoresPerPhysicalProcessor equ 0x756
+PbLogicalProcessorsPerCore equ 0x757
+PbPriorityState equ 0x30
+PbLockQueue equ 0x780
+PbPPLookasideList equ 0x900
+PbPPNPagedLookasideList equ 0x4580
+PbPPPagedLookasideList equ 0x5180
+PbPacketBarrier equ 0xa00
+PbDeferredReadyListHead equ 0xa08
+PbLookasideIrpFloat equ 0xa58
+PbRequestMailbox equ 0x6280
+PbMailbox equ 0xa80
+PbDpcGate equ 0xb80
+PbWaitListHead equ 0xc00
+PbCcFastMdlReadNoWait equ 0x1180
+PbPowerState equ 0x1200
+PbSpinLockAcquireCount equ 0x1680
+PbSystemCalls equ 0xa38
+PbReadOperationCount equ 0xa5c
+PbWriteOperationCount equ 0xa60
+PbOtherOperationCount equ 0xa64
+PbReadTransferCount equ 0xa68
+PbWriteTransferCount equ 0xa70
+PbOtherTransferCount equ 0xa78
+PbContextSwitches equ 0xa3c
+PbIpiFrozen equ 0xa8c
+PbDpcList equ 0xa98
+PbDpcLock equ 0xaa8
+PbDpcCount equ 0xab4
+PbDpcStack equ 0xae8
+PbSpBase equ 0xaf0
+PbMaximumDpcQueueDepth equ 0xaf8
+PbDpcRequestRate equ 0xafc
+PbMinimumDpcRate equ 0xb00
+PbDpcRoutineActive equ 0xb0a
+PbDpcRequestSummary equ 0xb0c
+PbNormalDpcState equ 0xb0c
+PbDpcLastCount equ 0xb04
+PbQuantumEnd equ 0xb09
+PbIdleSchedule equ 0xb0b
+PbDispatcherReadyListHead equ 0xd00
+PbInterruptCount equ 0xf00
+PbKernelTime equ 0xf04
+PbUserTime equ 0xf08
+PbDpcTime equ 0xf0c
+PbInterruptTime equ 0xf10
+PbAdjustDpcThreshold equ 0xf14
+PbParentNode equ 0xf38
+PbStartCycles equ 0xf48
+PbPageColor equ 0x10c4
+PbNodeColor equ 0x10c8
+PbNodeShiftedColor equ 0x10cc
+PbSecondaryColorMask equ 0x10d0
+PbCycleTime equ 0x10d8
+PbFastReadNoWait equ 0xa40
+PbFastReadWait equ 0xa44
+PbFastReadNotPossible equ 0xa48
+PbCopyReadNoWait equ 0xa4c
+PbCopyReadWait equ 0xa50
+PbCopyReadNoWaitMiss equ 0xa54
+PbAlignmentFixupCount equ 0x1408
+PbExceptionDispatchCount equ 0xf34
+PbProcessorVendorString equ 0x890
+PbFeatureBits equ 0x894
+PbPanicStackBase equ 0x1758
+
+//
+// KTHREAD state
+//
+
+Transition equ 0x6
+DeferredReady equ 0x7
+GateWaitObsolete equ 0x8
+THREAD_FLAGS_CYCLE_PROFILING_BIT equ 0x0
+
+//
+// Immediate Interprocessor Command Definitions
+//
+
+IPI_APC equ 0x1
+IPI_DPC equ 0x2
+IPI_FREEZE equ 0x4
+IPI_PACKET_READY equ 0x6
+
+//
+// Processor Idle Times Offset Definitions
+//
+
+PiStartTime equ 0x0
+PiEndTime equ 0x8
+
+//
+// Time Fields (TIME_FIELDS) Structure Offset Definitions
+//
+
+TfSecond equ 0xa
+TfMinute equ 0x8
+TfHour equ 0x6
+TfWeekday equ 0xe
+TfDay equ 0x4
+TfMonth equ 0x2
+TfYear equ 0x0
+TfMilliseconds equ 0xc
+
+
+//
+// CPSR mode constants
+//
+
+CPSRM_EL3h equ 0xd
+CPSRM_EL3t equ 0xc
+CPSRM_EL2h equ 0x9
+CPSRM_EL2t equ 0x8
+CPSRM_EL1h equ 0x5
+CPSRM_EL1t equ 0x4
+CPSRM_EL0t equ 0x0
+CPSRM_MASK equ 0xf
+SYSCALL_PSR equ 0x0
+CPSREL_3 equ 0xc
+CPSREL_2 equ 0x8
+CPSREL_1 equ 0x4
+CPSREL_0 equ 0x0
+CPSREL_MASK equ 0xc
+CPSREL_1_BIT equ 0x2
+
+//
+// DAIF enable/disables
+//
+
+DAIF_DEBUG equ 0x200
+DAIF_ABORT equ 0x100
+DAIF_INT equ 0x80
+DAIF_FIQ equ 0x40
+DAIF_DEBUG_BIT equ 0x9
+DAIF_ABORT_BIT equ 0x8
+DAIF_INT_BIT equ 0x7
+DAIF_FIQ_BIT equ 0x6
+
+//
+// NZCV flags
+//
+
+NZCV_N equ 0x80000000
+NZCV_Z equ 0x40000000
+NZCV_C equ 0x20000000
+NZCV_V equ 0x10000000
+NZCV_N_BIT equ 0x1f
+NZCV_Z_BIT equ 0x1e
+NZCV_C_BIT equ 0x1d
+NZCV_V_BIT equ 0x1c
+
+//
+// New ARM64 CSPR flags
+//
+
+CPSRM_T equ 0x20
+CPSRM_AA32 equ 0x10
+CPSR_IL equ 0x100000
+CPSR_SS equ 0x200000
+CPSR_IL_BIT equ 0x14
+CPSR_SS_BIT equ 0x15
+
+//
+// FPCR modes
+//
+
+FPCRM_AHP equ 0x4000000
+FPCRM_DN equ 0x2000000
+FPCRM_FZ equ 0x1000000
+FPCRM_AHP_BIT equ 0x1a
+FPCRM_DN_BIT equ 0x19
+FPCRM_FZ_BIT equ 0x18
+FPCRM_RMODE_MASK equ 0xc00000
+FPCRM_RMODE_RN equ 0x0
+FPCRM_RMODE_RP equ 0x400000
+FPCRM_RMODE_RM equ 0x800000
+FPCRM_RMODE_RZ equ 0xc00000
+
+//
+// FPCR exception controls
+//
+
+FPCR_IDE equ 0x8000
+FPCR_IXE equ 0x1000
+FPCR_UFE equ 0x800
+FPCR_OFE equ 0x400
+FPCR_DZE equ 0x200
+FPCR_IOE equ 0x100
+
+//
+// FPSR exception states
+//
+
+FPSR_IDC equ 0x80
+FPSR_IXC equ 0x10
+FPSR_UFC equ 0x8
+FPSR_OFC equ 0x4
+FPSR_DZC equ 0x2
+FPSR_IOC equ 0x1
+
+//
+// ARMv8 Status Registers
+//
+
+ARM64_SPSR_EL1 equ 0x4200
+ARM64_SPSR_EL2 equ 0x6200
+ARM64_ELR_EL1 equ 0x4201
+ARM64_ELR_EL2 equ 0x6201
+ARM64_SP_EL0 equ 0x4208
+ARM64_SP_EL1 equ 0x6208
+ARM64_SP_EL2 equ 0x7208
+ARM64_SPSel equ 0x4210
+ARM64_DAIF equ 0x5a11
+ARM64_CurrentEL equ 0x4212
+ARM64_NZCV equ 0x5a10
+ARM64_FPCR equ 0x5a20
+ARM64_FPSR equ 0x5a21
+ARM64_DSPSR equ 0x5a28
+ARM64_DLR equ 0x5a29
+
+//
+// ID and feature registers
+//
+
+ARM64_MIDR_EL1 equ 0x4000
+ARM64_VPIDR_EL2 equ 0x6000
+ARM64_CTR_EL0 equ 0x5801
+ARM64_MPIDR_EL1 equ 0x4005
+ARM64_VMPIDR_EL2 equ 0x6005
+
+//
+// System control registers
+//
+
+ARM64_SCTLR_EL1 equ 0x4080
+ARM64_SCTLR_EL2 equ 0x6080
+ARM64_HCR_EL2 equ 0x6088
+ARM64_HCR_EL2_VM equ 0x0000000000000001
+ARM64_HCR_EL2_FMO equ 0x0000000000000008
+ARM64_HCR_EL2_IMO equ 0x0000000000000010
+ARM64_HCR_EL2_AMO equ 0x0000000000000020
+ARM64_HCR_EL2_RW equ 0x0000000080000000
+ARM64_HCR_EL2_TGE equ 0x0000000008000000
+ARM64_HCR_EL2_TID3 equ 0x0000000000040000
+ARM64_ACTLR_EL1 equ 0x4081
+ARM64_ACTLR_EL2 equ 0x6081
+ARM64_CPACR_EL1 equ 0x4082
+ARM64_SCR_EL3 equ 0x7088
+ARM64_CPTR_EL3 equ 0x708a
+
+//
+// Memory protection and control registers
+//
+
+ARM64_TTBR0_EL1 equ 0x4100
+ARM64_TTBR0_EL2 equ 0x6100
+ARM64_TTBR1_EL1 equ 0x4101
+ARM64_TCR_EL1 equ 0x4102
+ARM64_TCR_EL2 equ 0x6102
+ARM64_TCR_EL2_TBI equ 0x100000
+ARM64_TCR_EL2_PASize_SHIFT equ 0x10
+ARM64_TCR_IPASize_SHIFT equ 0x20
+//ARM64_TCR_IPASize_MASK equ 0x0000000700000000
+//ARM64_TCR_PASize_MASK equ 0x0000000000070000
+//ARM64_TCR_TBI0 equ 0x0000002000000000
+ARM64_ESR_EL1 equ 0x4290
+ARM64_ESR_EL2 equ 0x6290
+ARM64_FAR_EL1 equ 0x4300
+ARM64_FAR_EL2 equ 0x6300
+ARM64_HPFAR_EL2 equ 0x6304
+ARM64_AFSR0_EL2 equ 0x6288
+ARM64_AFSR1_EL2 equ 0x6289
+ARM64_TCR_T0SZ_MASK equ 0x3f
+ARM64_TCR_IRGN0_MASK equ 0x300
+ARM64_TCR_ORGN0_MASK equ 0xc00
+ARM64_TCR_SH0_MASK equ 0x3000
+ARM64_TCR_TG0_MASK equ 0xc000
+
+//
+// ARM Cache Operations
+//
+
+ARM64_DCZID_EL0 equ 0x5807
+ARM64_IC_IALLUIS equ 0x388
+ARM64_IC_IALLU equ 0x3a8
+ARM64_IC_IVAU equ 0x1ba9
+ARM64_DC_ZVA equ 0x1ba1
+ARM64_DC_IVAC equ 0x3b1
+ARM64_DC_ISW equ 0x3b2
+ARM64_DC_CVAC equ 0x1bd1
+ARM64_DC_CSW equ 0x3d2
+ARM64_DC_CVAU equ 0x1bd9
+ARM64_DC_CIVAC equ 0x1bf1
+ARM64_DC_CISW equ 0x3f2
+
+//
+// ARM Translation Operations
+//
+
+ARM64_PAR_EL1 equ 0x43a0
+ARM64_AT_S1E1R equ 0x3c0
+ARM64_AT_S1E1W equ 0x3c1
+ARM64_AT_S1E0R equ 0x3c2
+ARM64_AT_S1E0W equ 0x3c3
+
+//
+// TLB maintenance operations
+//
+
+ARM64_TLBI_VMALLE1 equ 0x438
+ARM64_TLBI_ALLE2 equ 0x2438
+ARM64_TLBI_VAE1 equ 0x439
+ARM64_TLBI_ASIDE1 equ 0x43a
+ARM64_TLBI_VAAE1 equ 0x43b
+ARM64_TLBI_VALE1 equ 0x43d
+ARM64_TLBI_VAALE1 equ 0x43f
+ARM64_TLBI_VMALLE1IS equ 0x418
+ARM64_TLBI_VAE1IS equ 0x419
+ARM64_TLBI_ASIDE1IS equ 0x41a
+ARM64_TLBI_VAAE1IS equ 0x41b
+ARM64_TLBI_VALE1IS equ 0x41d
+ARM64_TLBI_VAALE1IS equ 0x41f
+
+//
+// Performance counter registers
+//
+
+ARM64_PMCCFILTR_EL0 equ 0x5f7f
+ARM64_PMCCFILTR_NSH equ 0x8000000
+ARM64_MDCR_EL2 equ 0x6089
+ARM64_MDCR_HPME equ 0x80
+ARM64_PMCR_EL0 equ 0x5ce0
+ARM64_PMCNTENSET_EL0 equ 0x5ce1
+ARM64_PMCNTENCLR_EL0 equ 0x5ce2
+ARM64_PMOVSCLR_EL0 equ 0x5ce3
+ARM64_PMSWINC_EL0 equ 0x5ce4
+ARM64_PMSELR_EL0 equ 0x5ce5
+ARM64_PMCCNTR_EL0 equ 0x5ce8
+ARM64_PMXEVTYPER_EL0 equ 0x5ce9
+ARM64_PMXEVCNTR_EL0 equ 0x5cea
+ARM64_PMUSERENR_EL0 equ 0x5cf0
+ARM64_PMINTENSET_EL1 equ 0x44f1
+ARM64_PMINTENCLR_EL1 equ 0x44f2
+
+//
+// Memory remap registers
+//
+
+ARM64_MAIR_EL1 equ 0x4510
+ARM64_MAIR_EL2 equ 0x6510
+ARM64_AMAIR_EL2 equ 0x6518
+
+//
+// Security extensions registers
+//
+
+ARM64_VBAR_EL1 equ 0x4600
+ARM64_VBAR_EL2 equ 0x6600
+ARM64_ISR_EL1 equ 0x4608
+
+//
+// Process, context and thread ID registers
+//
+
+ARM64_TPIDR_EL0 equ 0x5e82
+ARM64_TPIDRRO_EL0 equ 0x5e83
+ARM64_TPIDR_EL1 equ 0x4684
+ARM64_TPIDR_EL2 equ 0x6682
+
+//
+// Cache information registers
+//
+
+ARM64_CCSIDR_EL1 equ 0x4800
+ARM64_CLIDR_EL1 equ 0x4801
+ARM64_AIDR_EL1 equ 0x4807
+ARM64_CSSELR_EL1 equ 0x5000
+
+//
+// CP14 debugging registers
+//
+
+ARM64_MDCCSR_EL0 equ 0x1808
+ARM64_DBGDTRRX_EL0 equ 0x1828
+ARM64_DBGDTRTX_EL0 equ 0x1828
+ARM64_OSDTRRX_EL1 equ 0x2
+ARM64_MDSCR_EL1 equ 0x12
+ARM64_OSDTRTX_EL1 equ 0x1a
+ARM64_DBGBVR0_EL1 equ 0x4
+ARM64_DBGBVR1_EL1 equ 0xc
+ARM64_DBGBVR2_EL1 equ 0x14
+ARM64_DBGBVR3_EL1 equ 0x1c
+ARM64_DBGBVR4_EL1 equ 0x24
+ARM64_DBGBVR5_EL1 equ 0x2c
+ARM64_DBGBVR6_EL1 equ 0x34
+ARM64_DBGBVR7_EL1 equ 0x3c
+ARM64_DBGBVR8_EL1 equ 0x44
+ARM64_DBGBVR9_EL1 equ 0x4c
+ARM64_DBGBVR10_EL1 equ 0x54
+ARM64_DBGBVR11_EL1 equ 0x5c
+ARM64_DBGBVR12_EL1 equ 0x64
+ARM64_DBGBVR13_EL1 equ 0x6c
+ARM64_DBGBVR14_EL1 equ 0x74
+ARM64_DBGBVR15_EL1 equ 0x7c
+ARM64_DBGBCR0_EL1 equ 0x5
+ARM64_DBGBCR1_EL1 equ 0xd
+ARM64_DBGBCR2_EL1 equ 0x15
+ARM64_DBGBCR3_EL1 equ 0x1d
+ARM64_DBGBCR4_EL1 equ 0x25
+ARM64_DBGBCR5_EL1 equ 0x2d
+ARM64_DBGBCR6_EL1 equ 0x35
+ARM64_DBGBCR7_EL1 equ 0x3d
+ARM64_DBGBCR8_EL1 equ 0x45
+ARM64_DBGBCR9_EL1 equ 0x4d
+ARM64_DBGBCR10_EL1 equ 0x55
+ARM64_DBGBCR11_EL1 equ 0x5d
+ARM64_DBGBCR12_EL1 equ 0x65
+ARM64_DBGBCR13_EL1 equ 0x6d
+ARM64_DBGBCR14_EL1 equ 0x75
+ARM64_DBGBCR15_EL1 equ 0x7d
+ARM64_DBGWVR0_EL1 equ 0x6
+ARM64_DBGWVR1_EL1 equ 0xe
+ARM64_DBGWVR2_EL1 equ 0x16
+ARM64_DBGWVR3_EL1 equ 0x1e
+ARM64_DBGWVR4_EL1 equ 0x26
+ARM64_DBGWVR5_EL1 equ 0x2e
+ARM64_DBGWVR6_EL1 equ 0x36
+ARM64_DBGWVR7_EL1 equ 0x3e
+ARM64_DBGWVR8_EL1 equ 0x46
+ARM64_DBGWVR9_EL1 equ 0x4e
+ARM64_DBGWVR10_EL1 equ 0x56
+ARM64_DBGWVR11_EL1 equ 0x5e
+ARM64_DBGWVR12_EL1 equ 0x66
+ARM64_DBGWVR13_EL1 equ 0x6e
+ARM64_DBGWVR14_EL1 equ 0x76
+ARM64_DBGWVR15_EL1 equ 0x7e
+ARM64_DBGWCR0_EL1 equ 0x7
+ARM64_DBGWCR1_EL1 equ 0xf
+ARM64_DBGWCR2_EL1 equ 0x17
+ARM64_DBGWCR3_EL1 equ 0x1f
+ARM64_DBGWCR4_EL1 equ 0x27
+ARM64_DBGWCR5_EL1 equ 0x2f
+ARM64_DBGWCR6_EL1 equ 0x37
+ARM64_DBGWCR7_EL1 equ 0x3f
+ARM64_DBGWCR8_EL1 equ 0x47
+ARM64_DBGWCR9_EL1 equ 0x4f
+ARM64_DBGWCR10_EL1 equ 0x57
+ARM64_DBGWCR11_EL1 equ 0x5f
+ARM64_DBGWCR12_EL1 equ 0x67
+ARM64_DBGWCR13_EL1 equ 0x6f
+ARM64_DBGWCR14_EL1 equ 0x77
+ARM64_DBGWCR15_EL1 equ 0x7f
+ARM64_OSLAR_EL1 equ 0x84
+ARM64_OSLSR_EL1 equ 0x8c
+ARM64_OSDLR_EL1 equ 0x9c
+ARM64_DBGPRCR_EL1 equ 0xa4
+
+//
+// Interrupt Controller Registers
+//
+
+ARM64_ICC_SRE_EL2 equ 0x664d
+
+//
+// SCTLR bits
+//
+
+ARM64_SCTLR_M equ 0x1
+ARM64_SCTLR_A equ 0x2
+ARM64_SCTLR_C equ 0x4
+ARM64_SCTLR_SA equ 0x8
+ARM64_SCTLR_SA0 equ 0x10
+ARM64_SCTLR_CP15BEN equ 0x20
+ARM64_SCTLR_THEE equ 0x40
+ARM64_SCTLR_ITD equ 0x80
+ARM64_SCTLR_SED equ 0x100
+ARM64_SCTLR_UMA equ 0x200
+ARM64_SCTLR_I equ 0x1000
+ARM64_SCTLR_DZE equ 0x4000
+ARM64_SCTLR_UCT equ 0x8000
+ARM64_SCTLR_nTWI equ 0x10000
+ARM64_SCTLR_nTWE equ 0x40000
+ARM64_SCTLR_WXN equ 0x80000
+ARM64_SCTLR_E0E equ 0x1000000
+ARM64_SCTLR_EE equ 0x2000000
+ARM64_SCTLR_UCI equ 0x4000000
+
+//
+// MDSCR bits
+//
+
+ARM64_MDSCR_SS equ 0x1
+ARM64_MDSCR_MDE equ 0x8000
+ARM64_MDSCR_KDE equ 0x2000
+
+//
+// BRK opcodes
+//
+
+ARM64_BREAKPOINT equ 0xf000
+ARM64_ASSERT equ 0xf001
+ARM64_DEBUG_SERVICE equ 0xf002
+ARM64_FASTFAIL equ 0xf003
+ARM64_DIVIDE_BY_0 equ 0xf004
+
+//
+// Miscellaneous Definitions
+//
+
+MAXIMUM_PROCESSORS equ 0x40
+INITIAL_STALL_COUNT equ 0x64
+IRQL_NOT_GREATER_OR_EQUAL equ 0x9
+MUTEX_ALREADY_OWNED equ 0xbf
+THREAD_NOT_MUTEX_OWNER equ 0x11
+SPIN_LOCK_ALREADY_OWNED equ 0xf
+SPIN_LOCK_NOT_OWNED equ 0x10
+Executive equ 0x0
+#ifndef FALSE
+FALSE equ 0x0
+#endif
+#ifndef TRUE
+TRUE equ 0x1
+#endif
+
+//
+// Fast Fail Definitions
+//
+
+FAST_FAIL_GUARD_ICALL_CHECK_FAILURE equ 0xa
+BASE_PRIORITY_THRESHOLD equ 0x8
+LOW_REALTIME_PRIORITY equ 0x10
+KERNEL_LARGE_STACK_COMMIT equ 0x8000
+KERNEL_LARGE_STACK_SIZE equ 0x12000
+DOUBLE_FAULT_STACK_SIZE equ 0x8000
+BREAKPOINT_BREAK equ 0x0
+BREAKPOINT_PRINT equ 0x1
+BREAKPOINT_PROMPT equ 0x2
+BREAKPOINT_LOAD_SYMBOLS equ 0x3
+BREAKPOINT_UNLOAD_SYMBOLS equ 0x4
+BREAKPOINT_COMMAND_STRING equ 0x5
+BREAKPOINT_HW_WATCH equ 0x6
+BREAKPOINT_HW_BREAK equ 0x7
+BREAKPOINT_GET_TABLE equ 0x8
+CLOCK_QUANTUM_DECREMENT equ 0x3
+READY_SKIP_QUANTUM equ 0x2
+THREAD_QUANTUM equ 0x6
+WAIT_QUANTUM_DECREMENT equ 0x1
+ROUND_TRIP_DECREMENT_COUNT equ 0x10
+KI_EXCEPTION_INTERNAL equ 0x10000000
+KI_EXCEPTION_GP_FAULT equ 0x10000001
+KI_EXCEPTION_INVALID_OP equ 0x10000002
+KI_EXCEPTION_ACCESS_VIOLATION equ 0x10000004
+KI_EXCEPTION_HARDWARE_ERROR equ 0x10000005
+KI_DPC_INTERRUPT_FLAGS equ 0x2f
+STATUS_UNSUCCESSFUL equ 0xc0000001
+SKCALL_MAXPARAMETERS equ 0xc
+
+//
+// Exception Frame Offset Definitions and Length
+//
+
+ExX19 equ 0x0
+ExX20 equ 0x8
+ExX21 equ 0x10
+ExX22 equ 0x18
+ExX23 equ 0x20
+ExX24 equ 0x28
+ExX25 equ 0x30
+ExX26 equ 0x38
+ExX27 equ 0x40
+ExX28 equ 0x48
+ExFp equ 0x50
+ExReturn equ 0x58
+
+KEXCEPTION_FRAME_LENGTH equ 0x60
+EXCEPTION_RECORD_LENGTH equ 0xa0
+
+
+//
+// Jump Offset Definitions and Length
+//
+
+JbFrame equ 0x0
+JbX19 equ 0x10
+JbX20 equ 0x18
+JbX21 equ 0x20
+JbX22 equ 0x28
+JbX23 equ 0x30
+JbX24 equ 0x38
+JbX25 equ 0x40
+JbX26 equ 0x48
+JbX27 equ 0x50
+JbX28 equ 0x58
+JbFp equ 0x60
+JbLr equ 0x68
+JbSp equ 0x70
+JbFpcr equ 0x78
+JbFpsr equ 0x7c
+JbD equ 0x80
+
+//
+// Switch Frame Offset Definitions and Length
+//
+
+SwApcBypass equ 0x0
+SwFp equ 0x10
+SwReturn equ 0x18
+
+KSWITCH_FRAME_LENGTH equ 0x20
+
+//
+// Start System Thread Frame Offset Definitions and Length
+//
+
+SfX0 equ 0x0
+SfX1 equ 0x8
+SfX2 equ 0x10
+SfReturn equ 0x18
+
+KSTART_FRAME_LENGTH equ 0x20
+
+
+//
+// Trap Frame Definitions
+//
+
+KEXCEPTION_ACTIVE_INTERRUPT_FRAME equ 0x0
+KEXCEPTION_ACTIVE_EXCEPTION_FRAME equ 0x1
+KEXCEPTION_ACTIVE_SERVICE_FRAME equ 0x2
+KTRAP_FRAME_SIGNATURE equ 0x7072544b
+
+TrReserved equ 0x4
+TrFaultAddress equ 0x8
+TrTrapFrame equ 0x8
+TrExceptionActive equ 0x0
+TrContextFromKFramesUnwound equ 0x1
+TrDebugRegistersValid equ 0x2
+TrPreviousMode equ 0x3
+TrPreviousIrql equ 0x3
+TrVfpState equ 0x10
+TrBvr equ 0x38
+TrBcr equ 0x18
+TrWvr equ 0x80
+TrWcr equ 0x78
+TrX equ 0xa0
+TrFp equ 0x140
+TrLr equ 0x138
+TrSp equ 0x98
+TrPc equ 0x148
+TrSpsr equ 0x90
+TrEsr equ 0x94
+
+KTRAP_FRAME_LENGTH equ 0x150
+KTRAP_FRAME_ARGUMENTS equ 0x50
+ARM64_RED_ZONE_BYTES equ 0x10
+
+//
+// Usermode Callout User Frame Definitions
+//
+
+CkBuffer equ 0x0
+CkLength equ 0x8
+CkApiNumber equ 0xc
+CkOriginalLr equ 0x18
+CkPc equ 0x28
+CkSp equ 0x20
+CalloutFrameLength equ 0x30
+
+//
+// Machine Frame Offset Definitions
+//
+
+MfPc equ 0x8
+MfSp equ 0x0
+MachineFrameLength equ 0x10
+
+//
+// DPC Stack Frame Defintions
+//
+
+DpSp equ 0x0
+DpPc equ 0x8
+
+//
+// Context Frame Offset and Flag Definitions
+//
+
+CONTEXT_FULL equ 0x400007
+CONTEXT_CONTROL equ 0x400001
+CONTEXT_INTEGER equ 0x400002
+CONTEXT_FLOATING_POINT equ 0x400004
+CONTEXT_DEBUG_REGISTERS equ 0x400008
+
+CxContextFlags equ 0x0
+CxCpsr equ 0x4
+CxX equ 0x8
+CxFp equ 0xf0
+CxLr equ 0xf8
+CxSp equ 0x100
+CxPc equ 0x108
+CxFpsr equ 0x314
+CxFpcr equ 0x310
+CxV equ 0x110
+CxBvr equ 0x338
+CxBcr equ 0x318
+CxWvr equ 0x380
+CxWcr equ 0x378
+CONTEXT_FRAME_LENGTH equ 0x390
+CONTEXT_ALIGN equ 0x10
+DEBUG_ACTIVE_DBG equ 0x1
+DEBUG_ACTIVE_DBG_BIT equ 0x0
+DEBUG_ACTIVE_DBG_INSTRUMENTED equ 0x3
+DEBUG_ACTIVE_INSTRUMENTED equ 0x2
+
+//
+// Dispatcher Context Structure Offset Definitions
+//
+
+DcControlPc equ 0x0
+DcImageBase equ 0x8
+DcFunctionEntry equ 0x10
+DcEstablisherFrame equ 0x18
+DcTargetPc equ 0x20
+DcContextRecord equ 0x28
+DcLanguageHandler equ 0x30
+DcHandlerData equ 0x38
+DcHistoryTable equ 0x40
+DcScopeIndex equ 0x48
+DcControlPcIsUnwound equ 0x4c
+DcNonVolatileRegisters equ 0x50
+VsLink equ 0x0
+VsFpcr equ 0x8
+VsFpsr equ 0xc
+VsV equ 0x10
+VFP_STATE_LENGTH equ 0x210
+
+
+ARM64_ID_AA64MMFR0_EL1 equ 0x4038
+ARM64_ID_AA64PFR0_EL1 equ 0x4020
+
+//
+// Processor State Frame Offset Definitions
+//
+
+PsCpuid equ 0xa0
+PsControl equ 0xa8
+PsAuxControl equ 0xb0
+PsCpacr equ 0xb8
+PsTtbControl equ 0xc0
+PsTtbr0 equ 0xc8
+PsTtbr1 equ 0xd0
+PsVBARns equ 0x310
+PsMemoryRemap equ 0x308
+PsUsrRW equ 0x10
+PsUsrRO equ 0x18
+PsSvcRW equ 0x20
+PsSpecialRegisters equ 0x0
+PsArchState equ 0xa0
+PsContextFrame equ 0x320
+ProcessorStateLength equ 0x6b0
+
+//
+// Processor Parked Page Offset Definitions
+//
+
+PppArchitecturalStateVirtualAddress equ 0x10
+PppArchitecturalState equ 0x20
+ProcessorParkedPageLength equ 0x1000
+
+//
+// Processor Start Block Offset Definitions
+//
+
+PsbSelfMap equ 0x0
+PsbTiledTtb0 equ 0x8
+ProcessorStartBlockLength equ 0x10
+
+//
+// EPROCESS
+//
+
+EpDebugPort equ 0x3c8
+
+//
+// KeFeatureBits defines
+//
+
+
+//
+// LoaderParameterBlock offsets relative to base
+//
+
+LpbKernelStack equ 0x80
+LpbPrcb equ 0x88
+LpbProcess equ 0x90
+LpbThread equ 0x98
+PAGE_SIZE equ 0x1000
+PAGE_SHIFT equ 0xc
+TRANSITION_ASID equ 0x0
+ARM64_TTBRx_ASID_SHIFT equ 0x30
+
+//
+// KAFFINITY_EX size
+//
+
+AffinityExLength equ 0xa8
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Contents of kxarm64unw.h
+//
+///////////////////////////////////////////////////////////////////////////////
+
+;++
+;
+; Copyright (c) Microsoft Corporation.  All rights reserved.
+;
+;
+; Module:
+;
+;   kxarm64unw.w
+;
+; Abstract:
+;
+;   Contains ARM64 unwind code helper macros
+;
+;   This file is not really useful on its own without the support from
+;   kxarm64.h.
+;
+;--
+
+;
+; The following macros are defined here:
+;
+;   PROLOG_STACK_ALLOC <amount>
+;   PROLOG_SAVE_REG
+;   PROLOG_SAVE_REG_PAIR
+;   PROLOG_NOP <operation>
+;   PROLOG_PUSH_TRAP_FRAME
+;   PROLOG_PUSH_MACHINE_FRAME
+;   PROLOG_PUSH_CONTEXT
+;
+;   EPILOG_STACK_FREE <amount>
+;   EPILOG_RECOVER_SP <offset>
+;   EPILOG_RESTORE_REG
+;   EPILOG_RESTORE_REG_PAIR
+;   EPILOG_NOP <operation>
+;   EPILOG_RETURN
+;
+
+        ;
+        ; Global variables
+        ;
+
+        ; result from __ParseRegisterNumber
+        GBLA __ParsedRegNumber
+
+        ; result from __ParseOffset
+        GBLA __ParsedOffsetAbs
+        GBLA __ParsedOffsetShifted
+        GBLA __ParsedOffsetPreinc
+        GBLS __ParsedOffsetRawString
+        GBLS __ParsedOffsetString
+
+        ; results from __ComputeCodes[...]
+        GBLS __ComputedCodes
+        GBLL __RegPairWasFpLr
+
+        ; global state and accumulators
+        GBLS __PrologUnwindString
+        GBLS __PrologLastLabel
+        GBLA __EpilogUnwindCount
+        GBLS __Epilog1UnwindString
+        GBLS __Epilog2UnwindString
+        GBLS __Epilog3UnwindString
+        GBLS __Epilog4UnwindString
+        GBLL __EpilogStartNotDefined
+        GBLA __RunningIndex
+        GBLS __RunningLabel
+
+
+        ;
+        ; Helper macro: emit an opcode with a generated label
+        ;
+        ; Output: Name of label is in $__RunningLabel
+        ;
+
+        MACRO
+        __EmitRunningLabelAndOpcode $O1,$O2,$O3,$O4,$O5,$O6
+
+__RunningLabel SETS "|Temp.$__RunningIndex|"
+__RunningIndex SETA __RunningIndex + 1
+
+        IF "$O6" != ""
+$__RunningLabel $O1,$O2,$O3,$O4,$O5,$O6
+        ELIF "$O5" != ""
+$__RunningLabel $O1,$O2,$O3,$O4,$O5
+        ELIF "$O4" != ""
+$__RunningLabel $O1,$O2,$O3,$O4
+        ELIF "$O3" != ""
+$__RunningLabel $O1,$O2,$O3
+        ELIF "$O2" != ""
+$__RunningLabel $O1,$O2
+        ELIF "$O1" != ""
+$__RunningLabel $O1
+        ELSE
+$__RunningLabel
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Helper macro: append unwind codes to the prolog string
+        ;
+        ; Input is in __ComputedCodes
+        ;
+
+        MACRO
+        __AppendPrologCodes
+
+__PrologUnwindString SETS "$__ComputedCodes,$__PrologUnwindString"
+
+        MEND
+
+
+        ;
+        ; Helper macro: append unwind codes to the epilog string
+        ;
+        ; Input is in __ComputedCodes
+        ;
+
+        MACRO
+        __AppendEpilogCodes
+
+        IF __EpilogUnwindCount == 1
+__Epilog1UnwindString SETS "$__Epilog1UnwindString,$__ComputedCodes"
+        ELIF __EpilogUnwindCount == 2
+__Epilog2UnwindString SETS "$__Epilog2UnwindString,$__ComputedCodes"
+        ELIF __EpilogUnwindCount == 3
+__Epilog3UnwindString SETS "$__Epilog3UnwindString,$__ComputedCodes"
+        ELIF __EpilogUnwindCount == 4
+__Epilog4UnwindString SETS "$__Epilog4UnwindString,$__ComputedCodes"
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Helper macro: detect prolog end
+        ;
+
+        MACRO
+        __DeclarePrologEnd
+
+__PrologLastLabel SETS "$__RunningLabel"
+
+        MEND
+
+
+        ;
+        ; Helper macro: detect epilog start
+        ;
+
+        MACRO
+        __DeclareEpilogStart
+
+        IF __EpilogStartNotDefined
+__EpilogStartNotDefined SETL {false}
+__EpilogUnwindCount SETA __EpilogUnwindCount + 1
+        IF __EpilogUnwindCount == 1
+$__FuncEpilog1StartLabel
+        ELIF __EpilogUnwindCount == 2
+$__FuncEpilog2StartLabel
+        ELIF __EpilogUnwindCount == 3
+$__FuncEpilog3StartLabel
+        ELIF __EpilogUnwindCount == 4
+$__FuncEpilog4StartLabel
+        ELSE
+        INFO    1, "Too many epilogues!"
+        ENDIF
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Helper macro: specify epilog end
+        ;
+
+        MACRO
+        __DeclareEpilogEnd
+
+__EpilogStartNotDefined SETL {true}
+
+        MEND
+
+
+        ;
+        ; Parse a register number
+        ;
+        ; Calling macro name is in $Name
+        ; Input is in $Reg
+        ; Output is placed in __ParsedRegNumber
+        ;
+
+        MACRO
+        __ParseRegisterNumber $Name, $Reg
+
+        LCLS    RString
+
+RString SETS    "$Reg"
+
+        IF RString:LEFT:1 == "d"
+
+RString  SETS    RString:RIGHT:(:LEN:RString - 1)
+__ParsedRegNumber SETA  32 + $RString
+        IF (__ParsedRegNumber < (32 + 8) || (__ParsedRegNumber >= 32 + 16))
+        INFO    1, "$Name: Invalid floating-point register ($Reg)"
+        ENDIF
+
+        ELSE
+
+__ParsedRegNumber SETA  :RCONST:$RString
+        IF (__ParsedRegNumber < 19 || __ParsedRegNumber >= 31)
+        INFO    1, "$Name: Invalid integer register ($Reg)"
+        ENDIF
+
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Parse a stack offset
+        ;
+        ; Calling macro name is in $Name
+        ; Input is in $Offset
+        ; Which is "Prolog" or "Epilog"
+        ; Output is placed in __ParsedOffsetAbs, __ParsedOffsetPreinc, __ParsedOffsetString
+        ;
+
+        MACRO
+        __ParseOffset $Name, $Offset, $Which
+
+        ; copy to local string
+        LCLS    OffsStr
+OffsStr SETS    "$Offset"
+
+        ; strip opening # if present
+        IF OffsStr:LEFT:1 == "#"
+OffsStr SETS    OffsStr:RIGHT:(:LEN:OffsStr - 1)
+        ENDIF
+
+        ; look for pre/postincrement forms
+        IF OffsStr:RIGHT:1 == "!"
+
+        ; prolog must be preincrement with a negative offset
+        IF "$Which" == "Prolog"
+
+        IF OffsStr:LEFT:1 != "-"
+        INFO    1, "$Name: Preincrement offsets must be negative"
+        MEXIT
+        ENDIF
+
+OffsStr SETS    OffsStr:LEFT:(:LEN:OffsStr - 1)
+__ParsedOffsetAbs SETA $OffsStr
+__ParsedOffsetAbs SETA -__ParsedOffsetAbs
+__ParsedOffsetPreinc SETA 1
+__ParsedOffsetRawString SETS "#":CC:OffsStr
+__ParsedOffsetString SETS "[sp, #":CC:OffsStr:CC:"]!"
+
+        ; epilog must be postincrement with a positive offset
+        ELSE
+
+        IF OffsStr:LEFT:1 == "-"
+        INFO    1, "$Name: Postincrement offsets must not be negative"
+        MEXIT
+        ENDIF
+
+OffsStr SETS    OffsStr:LEFT:(:LEN:OffsStr - 1)
+__ParsedOffsetAbs SETA $OffsStr
+__ParsedOffsetPreinc SETA 1
+__ParsedOffsetRawString SETS "#":CC:OffsStr
+__ParsedOffsetString SETS "[sp], #":CC:OffsStr
+
+        ENDIF
+
+        ; standard form
+        ELSE
+
+        IF OffsStr:LEFT:1 == "-"
+        INFO    1, "$Name: Stack offsets must not be negative"
+        MEXIT
+        ENDIF
+
+__ParsedOffsetAbs SETA $OffsStr
+__ParsedOffsetPreinc SETA 0
+__ParsedOffsetRawString SETS "#":CC:OffsStr
+__ParsedOffsetString SETS "[sp, #":CC:OffsStr:CC:"]"
+
+        ENDIF
+
+__ParsedOffsetShifted SETA __ParsedOffsetAbs:SHR:3 - __ParsedOffsetPreinc
+
+        IF __ParsedOffsetAbs != ((__ParsedOffsetShifted + __ParsedOffsetPreinc):SHL:3) || __ParsedOffsetShifted >= 0x40
+        INFO    1, "$Name: invalid offset $Offset"
+        MEXIT
+        ENDIF
+
+
+        MEND
+
+
+        ;
+        ; Compute unwind codes for a register save operation
+        ;
+        ; Calling macro name is in $Name
+        ; Input is in $Reg1, $Offset
+        ; Which specifies "Prolog" or "Epilog"
+        ; Output is placed in __ComputedCodes
+        ;
+
+        MACRO
+        __ComputeSaveRegCodes $Name, $Reg1, $Offset, $Which
+
+        LCLA    ByteVal
+        LCLA    ByteVal2
+        LCLA    RegNum
+
+        __ParseRegisterNumber $Name, $Reg1
+RegNum  SETA    __ParsedRegNumber
+
+        __ParseOffset $Name, $Offset, $Which
+
+        IF (RegNum >= 19) && (RegNum <= 30)
+ByteVal SETA 0xd0:OR:(__ParsedOffsetPreinc:SHL:2):OR:((RegNum - 19):SHR:2)
+ByteVal2 SETA (((RegNum - 19):AND:3):SHL:6):OR:__ParsedOffsetShifted
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2):CC:",0x":CC:((:STR:ByteVal2):RIGHT:2)
+
+        ELIF (RegNum >= 40) && (RegNum <= 47)
+ByteVal SETA 0xdc:OR:(__ParsedOffsetPreinc:SHL:1):OR:((RegNum - 40):SHR:2)
+ByteVal2 SETA (((RegNum - 40):AND:3):SHL:6):OR:__ParsedOffsetShifted
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2):CC:",0x":CC:((:STR:ByteVal2):RIGHT:2)
+
+        ELSE
+        INFO    1, "$Name: Unsupported register: $Reg1"
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Compute unwind codes for a register pair save operation
+        ;
+        ; Calling macro name is in $Name
+        ; Input is in $Reg1, $Reg2, $Offset
+        ; Which specifies "Prolog" or "Epilog"
+        ; Output is placed in __ComputedCodes
+        ;
+
+        MACRO
+        __ComputeSaveRegPairCodes $Name, $Reg1, $Reg2, $Offset, $Which
+
+        LCLA    ByteVal
+        LCLA    ByteVal2
+        LCLA    RegNum1
+        LCLA    RegNum2
+
+        __ParseRegisterNumber $Name, $Reg1
+RegNum1 SETA    __ParsedRegNumber
+
+        __ParseRegisterNumber $Name, $Reg2
+RegNum2 SETA    __ParsedRegNumber
+
+        __ParseOffset $Name, $Offset, $Which
+
+__RegPairWasFpLr SETL {false}
+
+        IF (RegNum1 == 29) && (RegNum2 == 30)
+ByteVal SETA    (0x40+(__ParsedOffsetPreinc*0x40)):OR:__ParsedOffsetShifted
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2)
+__RegPairWasFpLr SETL {true}
+
+        ELIF (RegNum1 == 19) && (RegNum2 == 20) && (__ParsedOffsetPreinc != 0)
+ByteVal SETA    0x20:OR:(__ParsedOffsetShifted + 1)
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2)
+
+        ELIF (RegNum1 >= 19) && (RegNum1 <= 30) && (((RegNum1 - 19):AND:1) == 0) && (RegNum2 == 30) && (__ParsedOffsetPreinc == 0)
+ByteVal SETA 0xd6:OR:((RegNum1 - 19):SHR:3)
+ByteVal2 SETA ((((RegNum1 - 19):SHR:1):AND:3):SHL:6):OR:__ParsedOffsetShifted
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2):CC:",0x":CC:((:STR:ByteVal2):RIGHT:2)
+
+        ELIF (RegNum1 >= 19) && (RegNum1 <= 30) && (RegNum2 == (RegNum1 + 1))
+ByteVal SETA 0xc8:OR:(__ParsedOffsetPreinc:SHL:2):OR:((RegNum1 - 19):SHR:2)
+ByteVal2 SETA (((RegNum1 - 19):AND:3):SHL:6):OR:__ParsedOffsetShifted
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2):CC:",0x":CC:((:STR:ByteVal2):RIGHT:2)
+
+        ELIF (RegNum1 >= 40) && (RegNum1 <= 47) && (RegNum2 == (RegNum1 + 1))
+ByteVal SETA 0xd8:OR:(__ParsedOffsetPreinc:SHL:1):OR:((RegNum1 - 40):SHR:2)
+ByteVal2 SETA (((RegNum1 - 40):AND:3):SHL:6):OR:__ParsedOffsetShifted
+__ComputedCodes SETS "0x":CC:((:STR:ByteVal):RIGHT:2):CC:",0x":CC:((:STR:ByteVal2):RIGHT:2)
+
+        ELSE
+        INFO    1, "$Name: Unsupported register pair: $Reg1, $Reg2"
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Compute unwind codes for a stack alloc/dealloc operation
+        ;
+        ; Output is placed in __ComputedCodes
+        ;
+
+        MACRO
+        __ComputeStackAllocCodes $Name, $Amount
+
+        LCLA    Shifted
+        LCLA    Byte1
+        LCLA    Byte2
+        LCLA    Byte3
+
+Shifted SETA  ($Amount):SHR:4
+
+        IF Shifted < 0x20
+__ComputedCodes SETS "0x":CC:((:STR:Shifted):RIGHT:2)
+
+        ELIF Shifted < 0x800
+Byte1   SETA  0xC0:OR:((Shifted:SHR:8):AND:0x7)
+Byte2   SETA  Shifted:AND:0xFF
+__ComputedCodes SETS "0x":CC:((:STR:Byte1):RIGHT:2):CC:",0x":CC:((:STR:Byte2):RIGHT:2)
+
+        ELIF Shifted < 0x1000000
+Byte1   SETA  ((Shifted:SHR:16):AND:0xFF)
+Byte2   SETA  ((Shifted:SHR:8):AND:0xFF)
+Byte3   SETA  (Shifted:AND:0xFF)
+__ComputedCodes SETS "0xE0,0x":CC:((:STR:Byte1):RIGHT:2):CC:",0x":CC:((:STR:Byte2):RIGHT:2):CC:",0x":CC:((:STR:Byte3):RIGHT:2)
+
+        ELSE
+        INFO    1, "$Name too large for unwind code encoding"
+        ENDIF
+
+        MEND
+
+
+        ;
+        ; Macro for allocating space on the stack in the prolog
+        ;
+
+        MACRO
+        PROLOG_STACK_ALLOC $Amount
+
+        __ComputeStackAllocCodes "PROLOG_STACK_ALLOC", $Amount
+
+        __EmitRunningLabelAndOpcode sub sp, sp, #$Amount
+        __DeclarePrologEnd
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for a single register save operation in a prologue
+        ;
+
+        MACRO
+        PROLOG_SAVE_REG $Reg1, $Offset
+
+        IF "$Offset" == ""
+        INFO    1, "Must specify offset in PROLOG_SAVE_REG"
+        MEXIT
+        ENDIF
+
+        __ComputeSaveRegCodes "PROLOG_SAVE_REG", $Reg1, $Offset, "Prolog"
+
+        __EmitRunningLabelAndOpcode str $Reg1, $__ParsedOffsetString
+        __DeclarePrologEnd
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for an register pair save operation in a prologue
+        ;
+
+        MACRO
+        PROLOG_SAVE_REG_PAIR $Reg1, $Reg2, $Offset
+
+        IF "$Offset" == ""
+        INFO    1, "Must specify offset in PROLOG_SAVE_REG_PAIR"
+        MEXIT
+        ENDIF
+
+        __ComputeSaveRegPairCodes "PROLOG_SAVE_REG_PAIR", $Reg1, $Reg2, $Offset, "Prolog"
+
+        __EmitRunningLabelAndOpcode stp $Reg1, $Reg2, $__ParsedOffsetString
+
+        IF __RegPairWasFpLr
+
+        IF (__ParsedOffsetAbs != 0) && (__ParsedOffsetPreinc == 0)
+        __EmitRunningLabelAndOpcode add fp, sp, $__ParsedOffsetRawString
+__ComputedCodes SETS "0xe2,0x":CC:((:STR:__ParsedOffsetShifted):RIGHT:2):CC:",":CC:__ComputedCodes
+        ELSE
+        __EmitRunningLabelAndOpcode mov fp, sp
+__ComputedCodes SETS "0xe1,":CC:__ComputedCodes
+        ENDIF
+
+        ENDIF
+
+        __DeclarePrologEnd
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Same as above but don't treat FP specially
+        ;
+
+        MACRO
+        PROLOG_SAVE_REG_PAIR_NO_FP $Reg1, $Reg2, $Offset
+
+        IF "$Offset" == ""
+        INFO    1, "Must specify offset in PROLOG_SAVE_REG_PAIR"
+        MEXIT
+        ENDIF
+
+        __ComputeSaveRegPairCodes "PROLOG_SAVE_REG_PAIR", $Reg1, $Reg2, $Offset, "Prolog"
+
+        __EmitRunningLabelAndOpcode stp $Reg1, $Reg2, $__ParsedOffsetString
+
+        __DeclarePrologEnd
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for including an arbitrary operation in the prolog
+        ;
+
+        MACRO
+        PROLOG_NOP $O1,$O2,$O3,$O4
+
+__ComputedCodes SETS "0xE3"
+
+        __EmitRunningLabelAndOpcode $O1,$O2,$O3,$O4
+        __DeclarePrologEnd
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for indicating a trap frame lives above us
+        ;
+
+        MACRO
+        PROLOG_PUSH_TRAP_FRAME
+        __DeclarePrologEnd
+
+__ComputedCodes SETS "0xE8"
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for indicating a machine frame lives above us
+        ;
+
+        MACRO
+        PROLOG_PUSH_MACHINE_FRAME
+        __DeclarePrologEnd
+
+__ComputedCodes SETS "0xE9"
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for indicating a context lives above us
+        ;
+
+        MACRO
+        PROLOG_PUSH_CONTEXT
+        __DeclarePrologEnd
+
+__ComputedCodes SETS "0xEA"
+        __AppendPrologCodes
+
+        MEND
+
+
+        ;
+        ; Macro for restoring the stack pointer.
+        ;
+
+        MACRO
+        EPILOG_STACK_RESTORE
+
+__ComputedCodes SETS "0xE1"
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode mov sp, fp
+        __AppendEpilogCodes
+
+        MEND
+
+
+        ;
+        ; Macro for deallocating space on the stack in the prolog
+        ;
+
+        MACRO
+        EPILOG_STACK_FREE $Amount
+
+        __ComputeStackAllocCodes "EPILOG_STACK_FREE", $Amount
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode add sp, sp, #$Amount
+        __AppendEpilogCodes
+
+        MEND
+
+
+        ;
+        ; Macro for a single integer register restore operation in an epilogue
+        ;
+
+        MACRO
+        EPILOG_RESTORE_REG $Reg1, $Offset
+
+        IF "$Offset" == ""
+        INFO    1, "Must specify offset in EPILOG_RESTORE_REG"
+        MEXIT
+        ENDIF
+
+        __ComputeSaveRegCodes "EPILOG_RESTORE_REG", $Reg1, $Offset, "Epilog"
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode ldr $Reg1, $__ParsedOffsetString
+        __AppendEpilogCodes
+
+        MEND
+
+
+        ;
+        ; Macro for an integer register pair restore operation in an epilogue
+        ;
+
+        MACRO
+        EPILOG_RESTORE_REG_PAIR $Reg1, $Reg2, $Offset
+
+        IF "$Offset" == ""
+        INFO    1, "Must specify offset in EPILOG_RESTORE_REG_PAIR"
+        MEXIT
+        ENDIF
+
+        __ComputeSaveRegPairCodes "EPILOG_RESTORE_REG_PAIR", $Reg1, $Reg2, $Offset, "Epilog"
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode ldp $Reg1, $Reg2, $__ParsedOffsetString
+        __AppendEpilogCodes
+
+        MEND
+
+
+        ;
+        ; Macro for including an arbitrary operation in the epilog
+        ;
+
+        MACRO
+        EPILOG_NOP $O1,$O2,$O3,$O4
+
+__ComputedCodes SETS "0xE3"
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode $O1,$O2,$O3,$O4
+        __AppendEpilogCodes
+
+        MEND
+
+
+        ;
+        ; Macro for a bx lr-style return in the epilog
+        ;
+
+        MACRO
+        EPILOG_RETURN
+
+__ComputedCodes SETS "0xE4"
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode ret x30
+        __AppendEpilogCodes
+        __DeclareEpilogEnd
+
+        MEND
+
+        ;
+        ; Emit an opcode indicating that the unwind address of this function
+        ; will be at the next instruction after a call rather than the call
+        ; instruction. An example where this is necessary is the security cookie
+        ; pop code, which modifies the caller's frame.
+        ;
+
+        MACRO
+        EPILOG_RETURN_CLEAR_UNWIND_TO_CALLER
+
+__ComputedCodes SETS "0xEC, 0XE4"
+
+        __DeclareEpilogStart
+        __EmitRunningLabelAndOpcode ret x30
+        __EmitRunningLabelAndOpcode nop
+        __AppendEpilogCodes
+        __DeclareEpilogEnd
+
+        MEND
+
+        ;
+        ; Macro to reset the internal uwninding states
+        ;
+
+        MACRO
+        __ResetUnwindState
+__PrologUnwindString SETS ""
+__EpilogUnwindCount SETA 0
+__Epilog1UnwindString SETS ""
+__Epilog2UnwindString SETS ""
+__Epilog3UnwindString SETS ""
+__Epilog4UnwindString SETS ""
+__EpilogStartNotDefined SETL {true}
+        MEND
+
+
+        ;
+        ; Macro to emit the xdata for unwinding
+        ;
+
+        MACRO
+        __EmitUnwindXData
+
+        LCLA    XBit
+
+XBit    SETA    0
+        IF "$__FuncExceptionHandler" != ""
+XBit    SETA    1:SHL:20
+        ENDIF
+
+        ;
+        ; Append terminators where necessary
+        ;
+        IF __EpilogUnwindCount >= 1
+__Epilog1UnwindString SETS __Epilog1UnwindString:RIGHT:(:LEN:__Epilog1UnwindString - 1)
+        IF (:LEN:__Epilog1UnwindString) >= 5
+        IF __Epilog1UnwindString:RIGHT:4 < "0xE4"
+__Epilog1UnwindString SETS __Epilog1UnwindString:CC:",0xE4"
+        ENDIF
+        ENDIF
+        ENDIF
+
+        IF __EpilogUnwindCount >= 2
+__Epilog2UnwindString SETS __Epilog2UnwindString:RIGHT:(:LEN:__Epilog2UnwindString - 1)
+        IF (:LEN:__Epilog2UnwindString) >= 5
+        IF __Epilog2UnwindString:RIGHT:4 < "0xE4"
+__Epilog2UnwindString SETS __Epilog2UnwindString:CC:",0xE4"
+        ENDIF
+        ENDIF
+        ENDIF
+
+        IF __EpilogUnwindCount >= 3
+__Epilog3UnwindString SETS __Epilog3UnwindString:RIGHT:(:LEN:__Epilog3UnwindString - 1)
+        IF (:LEN:__Epilog3UnwindString) >= 5
+        IF __Epilog3UnwindString:RIGHT:4 < "0xE4"
+__Epilog3UnwindString SETS __Epilog3UnwindString:CC:",0xE4"
+        ENDIF
+        ENDIF
+        ENDIF
+
+        IF __EpilogUnwindCount >= 4
+__Epilog4UnwindString SETS __Epilog4UnwindString:RIGHT:(:LEN:__Epilog4UnwindString - 1)
+        IF (:LEN:__Epilog4UnwindString) >= 5
+        IF __Epilog4UnwindString:RIGHT:4 < "0xE4"
+__Epilog4UnwindString SETS __Epilog4UnwindString:CC:",0xE4"
+        ENDIF
+        ENDIF
+        ENDIF
+
+        IF "$__PrologUnwindString" != ""
+__PrologUnwindString SETS __PrologUnwindString:CC:"0xE4"
+        ELSE
+__PrologUnwindString SETS "0xE4"
+        ENDIF
+
+        ; optimize out the prolog string if it matches
+;        IF (:LEN:__Epilog1UnwindString) >= 6
+;        IF __Epilog1UnwindString:LEFT:(:LEN:__Epilog1UnwindString - 4) == __PrologUnwindString:LEFT:(:LEN:__PrologUnwindString - 4)
+;__PrologUnwindString SETS ""
+;        ENDIF
+;        ENDIF
+
+        ;
+        ; Switch to the .xdata section, aligned to a DWORD
+        ;
+
+#if defined(_CHPE_X86_ARM64_)
+
+        LCLS    __FuncXDataArea
+
+__FuncXDataArea SETS "|.xdata|{$__FuncXDataLabel}"
+
+        AREA    $__FuncXDataArea,ALIGN=2,READONLY,ASSOC=$__FuncArea
+
+#else
+
+        AREA    |.xdata|,ALIGN=2,READONLY
+
+#endif
+
+        ALIGN   4
+
+        ; declare the xdata header with unwind code size, epilog count,
+        ; exception bit, and function length
+$__FuncXDataLabel
+        DCD     ((($__FuncXDataEndLabel - $__FuncXDataPrologLabel)/4):SHL:27) :OR: (__EpilogUnwindCount:SHL:22) :OR: XBit :OR: (($__FuncEndLabel - $__FuncStartLabel)/4)
+
+        ; if we have an epilogue, output a single scope record
+        IF __EpilogUnwindCount >= 1
+        DCD     (($__FuncXDataEpilog1Label - $__FuncXDataPrologLabel):SHL:22) :OR: (($__FuncEpilog1StartLabel - $__FuncStartLabel)/4)
+        ENDIF
+        IF __EpilogUnwindCount >= 2
+        DCD     (($__FuncXDataEpilog2Label - $__FuncXDataPrologLabel):SHL:22) :OR: (($__FuncEpilog2StartLabel - $__FuncStartLabel)/4)
+        ENDIF
+        IF __EpilogUnwindCount >= 3
+        DCD     (($__FuncXDataEpilog3Label - $__FuncXDataPrologLabel):SHL:22) :OR: (($__FuncEpilog3StartLabel - $__FuncStartLabel)/4)
+        ENDIF
+        IF __EpilogUnwindCount >= 4
+        DCD     (($__FuncXDataEpilog4Label - $__FuncXDataPrologLabel):SHL:22) :OR: (($__FuncEpilog4StartLabel - $__FuncStartLabel)/4)
+        ENDIF
+
+        ; output the prolog unwind string
+$__FuncXDataPrologLabel
+        DCB     $__PrologUnwindString
+
+        ; if we have an epilogue, output the epilog unwind codes
+        IF __EpilogUnwindCount >= 1
+$__FuncXDataEpilog1Label
+        DCB     $__Epilog1UnwindString
+        ENDIF
+        IF __EpilogUnwindCount >= 2
+$__FuncXDataEpilog2Label
+        DCB     $__Epilog2UnwindString
+        ENDIF
+        IF __EpilogUnwindCount >= 3
+$__FuncXDataEpilog3Label
+        DCB     $__Epilog3UnwindString
+        ENDIF
+        IF __EpilogUnwindCount >= 4
+$__FuncXDataEpilog4Label
+        DCB     $__Epilog4UnwindString
+        ENDIF
+
+        ALIGN   4
+$__FuncXDataEndLabel
+
+        ; output the exception handler information
+        IF "$__FuncExceptionHandler" != ""
+        DCD     $__FuncExceptionHandler
+        RELOC   2                                       ; make this relative to image base
+        DCD     0                                       ; append a 0 for the data (keeps Vulcan happy)
+        ENDIF
+
+        ; switch back to the original area
+        AREA    $__FuncArea,CODE,READONLY
+
+        MEND
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Contents of kxarm64.w
+//
+///////////////////////////////////////////////////////////////////////////////
+
+;++
+;
+; Copyright (c) Microsoft Corporation.  All rights reserved.
+;
+;
+; Module:
+;
+;   kxarm64.w
+;
+; Abstract:
+;
+;   Contains ARM architecture constants and assembly macros.
+;
+;--
+
+;
+; The ARM assembler uses a baroque syntax that is documented as part
+; of the online Windows CE documentation.  The syntax derives from
+; ARM's own assembler and was chosen to allow the migration of
+; specific assembly code bases, namely ARM's floating point runtime.
+; While this compatibility is no longer strictly necessary, the
+; syntax lives on....
+;
+; Highlights:
+;      * Assembler is white space sensitive.  Symbols are defined by putting
+;        them in the first column
+;      * The macro definition mechanism is very primitive
+;
+; To augment the assembler, assembly files are run through CPP (as they are
+; on IA64).  This works well for constants but not structural components due
+; to the white space sensitivity.
+;
+; For now, we use a mix of native assembler and CPP macros.
+;
+
+//#undef TRUE
+//#undef FALSE
+
+//#define TRUE 1
+//#define FALSE 0
+
+//#include "kxarm64unw.h"
+
+        ;
+        ; Global variables
+        ;
+
+        ; Current function names and labels
+        GBLS    __FuncNameNoBars
+        GBLS    __FuncStartLabel
+        GBLS    __FuncEpilog1StartLabel
+        GBLS    __FuncEpilog2StartLabel
+        GBLS    __FuncEpilog3StartLabel
+        GBLS    __FuncEpilog4StartLabel
+        GBLS    __FuncPDataLabel
+        GBLS    __FuncXDataLabel
+        GBLS    __FuncXDataPrologLabel
+        GBLS    __FuncXDataEpilog1Label
+        GBLS    __FuncXDataEpilog2Label
+        GBLS    __FuncXDataEpilog3Label
+        GBLS    __FuncXDataEpilog4Label
+        GBLS    __FuncXDataEndLabel
+        GBLS    __FuncEndLabel
+
+        ; other globals relating to the current function
+        GBLS    __FuncArea
+        GBLS    __FuncExceptionHandler
+        GBLS    __SectAlign
+        GBLS    __AlignStmt
+
+
+        ;
+        ; Helper macro: generate the various labels we will use internally
+        ; for a function
+        ;
+        ; Output is placed in the various __Func*Label globals
+        ;
+
+        MACRO
+        __DeriveFunctionLabels $FuncName
+
+__FuncNameNoBars        SETS "$FuncName"
+        IF ("$FuncName":LEFT:1 == "|") && ("$FuncName":RIGHT:1 == "|")
+__FuncNameNoBars        SETS ("$FuncName":LEFT:(:LEN:"$FuncName" - 1):RIGHT:(:LEN:"$FuncName" - 2))
+        ENDIF
+__FuncStartLabel        SETS "|$__FuncNameNoBars|"
+__FuncEndLabel          SETS "|$__FuncNameNoBars._end|"
+__FuncEpilog1StartLabel SETS "|$__FuncNameNoBars._epilog1_start|"
+__FuncEpilog2StartLabel SETS "|$__FuncNameNoBars._epilog2_start|"
+__FuncEpilog3StartLabel SETS "|$__FuncNameNoBars._epilog3_start|"
+__FuncEpilog4StartLabel SETS "|$__FuncNameNoBars._epilog4_start|"
+__FuncPDataLabel        SETS "|$__FuncNameNoBars._pdata|"
+__FuncXDataLabel        SETS "|$__FuncNameNoBars._xdata|"
+__FuncXDataPrologLabel  SETS "|$__FuncNameNoBars._xdata_prolog|"
+__FuncXDataEpilog1Label SETS "|$__FuncNameNoBars._xdata_epilog1|"
+__FuncXDataEpilog2Label SETS "|$__FuncNameNoBars._xdata_epilog2|"
+__FuncXDataEpilog3Label SETS "|$__FuncNameNoBars._xdata_epilog3|"
+__FuncXDataEpilog4Label SETS "|$__FuncNameNoBars._xdata_epilog4|"
+__FuncXDataEndLabel     SETS "|$__FuncNameNoBars._xdata_end|"
+
+        MEND
+
+
+        ;
+        ; Helper macro: create a global label for the given name,
+        ; decorate it, and export it for external consumption.
+        ;
+
+        MACRO
+        __ExportName $FuncName
+
+        LCLS    Name
+
+        IF ("$FuncName":LEFT:1 == "|") && ("$FuncName":RIGHT:1 == "|")
+Name    SETS    "$FuncName"
+        ELSE
+Name    SETS    "|$FuncName|"
+        ENDIF
+
+        ALIGN   4
+        EXPORT  $Name
+$Name
+        MEND
+
+        MACRO
+        __ExportProc $FuncName
+
+        LCLS    Name
+Name    SETS    "|$FuncName|"
+        ALIGN   4
+        EXPORT  $Name
+$Name   PROC
+        MEND
+
+
+        ;
+        ; Declare that all following code/data is to be put in the .text segment
+        ;
+
+        MACRO
+        TEXTAREA
+#if defined(_CONTROL_FLOW_GUARD)
+        AREA    |.text|,ALIGN=4,CODE,READONLY
+#else
+        AREA    |.text|,ALIGN=2,CODE,READONLY
+#endif
+
+        MEND
+
+
+        ;
+        ; Declare that all following code/data is to be put in the .data segment
+        ;
+
+        MACRO
+        DATAAREA
+        AREA    |.data|,DATA
+        MEND
+
+
+        ;
+        ; Declare that all following code/data is to be put in the .rdata segment
+        ;
+
+        MACRO
+        RODATAAREA
+        AREA    |.rdata|,DATA,READONLY
+        MEND
+
+
+        ;
+        ; Macro for indicating the start of a nested function. Nested functions
+        ; imply a prolog, epilog, and unwind codes.
+        ;
+
+        MACRO
+        NESTED_ENTRY $FuncName, $AreaName, $ExceptHandler, $Alignment
+
+        ; compute the function's labels
+        __DeriveFunctionLabels $FuncName
+
+        ; determine the area we will put the function into
+__FuncArea   SETS    "|.text|"
+        IF "$AreaName" != ""
+__FuncArea   SETS    "$AreaName"
+        ENDIF
+
+
+        ; set up the exception handler itself
+__FuncExceptionHandler SETS ""
+        IF "$ExceptHandler" != ""
+__FuncExceptionHandler SETS    "|$ExceptHandler|"
+        ENDIF
+
+__AlignStmt   SETS  ""
+__SectAlign   SETS  ""
+
+#ifdef _CHPE_X86_ARM64_
+
+        ; For chpe targets, append a comdat name to the area name
+__FuncArea   SETS   __FuncArea:CC:"{|$__FuncNameNoBars|}"
+        ; Use the section alignment directive to achive alignment
+__SectAlign  SETS  ",ALIGN=4"
+
+        IF "$Alignment" != ""
+        IF $Alignment > 4
+__SectAlign   SETS   ",ALIGN=$Alignment"
+        ENDIF
+        ENDIF
+
+#else
+
+        ; for non-chpe targets, use a separate alignment directive
+        IF "$Alignment" != ""
+__AlignStmt  SETS "ALIGN 0x":CC: :STR:(1 << $Alignment)
+        ENDIF
+
+#endif
+
+#ifdef _CHPE_X86_ARM64_
+
+        AREA    $__FuncArea,CODE,READONLY$__SectAlign
+
+#else
+
+        ; switch to the specified area
+        AREA    $__FuncArea,CODE,READONLY
+
+#endif
+
+        $__AlignStmt
+
+        ; export the function name
+        __ExportProc $__FuncNameNoBars
+
+        ; flush any pending literal pool stuff
+        ROUT
+
+        ; reset the state of the unwind code tracking
+        __ResetUnwindState
+
+        MEND
+
+
+        ;
+        ; Macro for indicating the end of a nested function. We generate the
+        ; .pdata and .xdata records here as necessary.
+        ;
+
+        MACRO
+        NESTED_END $FuncName
+
+        ; mark the end of the function
+$__FuncEndLabel
+        LTORG
+        ENDP
+
+        ; generate .pdata
+
+#if defined(_CHPE_X86_ARM64_)
+
+        LCLS __FuncPDataArea
+
+__FuncPDataArea  SETS "|.pdata|{$__FuncPDataLabel}"
+
+        AREA    $__FuncPDataArea,ALIGN=2,READONLY,ASSOC=$__FuncArea
+
+$__FuncPDataLabel
+
+#else
+
+        AREA    |.pdata|,ALIGN=2,READONLY
+
+#endif
+
+        DCD     $__FuncStartLabel
+        RELOC   2                                       ; make this relative to image base
+
+        DCD     $__FuncXDataLabel
+        RELOC   2                                       ; make this relative to image base
+
+        ; generate .xdata
+        __EmitUnwindXData
+
+        ; back to the original area
+        AREA    $__FuncArea,CODE,READONLY
+
+        ; reset the labels
+__FuncStartLabel SETS    ""
+__FuncEndLabel  SETS    ""
+
+        MEND
+
+
+        ;
+        ; Macro for indicating the start of a leaf function.
+        ;
+
+        MACRO
+        LEAF_ENTRY $FuncName, $AreaName, $Alignment
+
+        NESTED_ENTRY $FuncName, $AreaName, "", $Alignment
+
+        MEND
+
+
+        ;
+        ; Macro for indicating the end of a leaf function.
+        ;
+
+        MACRO
+        LEAF_END $FuncName
+
+        NESTED_END $FuncName
+
+        MEND
+
+
+#if !defined(_CHPE_X86_ARM64_)
+
+        ;
+        ; Macro for indicating the start of a leaf function.
+        ;
+
+        MACRO
+        LEAF_ENTRY_NO_PDATA $FuncName, $AreaName
+
+        ; compute the function's labels
+        __DeriveFunctionLabels $FuncName
+
+        ; determine the area we will put the function into
+__FuncArea   SETS    "|.text|"
+        IF "$AreaName" != ""
+__FuncArea   SETS    "$AreaName"
+        ENDIF
+
+        ; switch to the specified area
+        AREA    $__FuncArea,CODE,READONLY
+
+        ; export the function name
+        __ExportProc $__FuncNameNoBars
+
+        ; flush any pending literal pool stuff
+        ROUT
+
+        MEND
+
+
+        ;
+        ; Macro for indicating the end of a leaf function.
+        ;
+
+        MACRO
+        LEAF_END_NO_PDATA $FuncName
+
+        ; mark the end of the function
+$__FuncEndLabel
+        LTORG
+        ENDP
+
+        ; reset the labels
+__FuncStartLabel SETS    ""
+__FuncEndLabel  SETS    ""
+
+        MEND
+
+#endif
+
+
+        ;
+        ; Macro for indicating an alternate entry point into a function.
+        ;
+
+        MACRO
+        ALTERNATE_ENTRY $FuncName
+
+        ; export the entry point's name
+        __ExportName $FuncName
+
+        ; flush any pending literal pool stuff
+        ROUT
+
+        MEND
+
+
+        ;
+        ; Macro for getting the address of a data item.
+        ;
+
+        MACRO
+        ADDROF $Reg, $Variable
+
+        adrp    $Reg, $Variable                 ; get the page address first
+        add     $Reg, $Reg, $Variable           ; add in the low bits
+
+        MEND
+
+
+        ;
+        ; Macro for loading a 32-bit constant.
+        ;
+
+        MACRO
+        MOVL32 $Reg, $Variable
+
+        IF ((($Variable):SHR:16):AND:0xffff) == 0
+        movz    $Reg, #$Variable
+        ELIF ((($Variable):SHR:0):AND:0xffff) == 0
+        movz    $Reg, #((($Variable):SHR:16):AND:0xffff), lsl #16
+        ELSE
+        movz    $Reg, #(($Variable):AND:0xffff)
+        movk    $Reg, #((($Variable):SHR:16):AND:0xffff), lsl #16
+        ENDIF
+
+        MEND
+
+
+#if defined(_CAPKERN)
+
+        ;
+        ; Icecap entrypoints
+        ;
+
+        IMPORT _CAP_Start_Profiling
+        IMPORT _CAP_End_Profiling
+
+
+        ;
+        ; Macro to record a call record
+        ;
+
+        MACRO
+        CAPSTART $arg1, $arg2
+
+        stp x0, x1, [sp, #-16]!
+
+        ldr x0, =$arg1
+        ldr x1, =$arg2
+        bl _CAP_Start_Profiling
+
+        ldp x0, x1, [sp], #16
+
+        MEND
+
+
+        ;
+        ; Macro to record a return record
+        ;
+
+        MACRO
+        CAPEND $arg1
+
+        sub sp, sp, #16
+        str x0, [sp, #0]
+
+        ldr x0, =$arg1
+        bl _CAP_End_Profiling
+
+        ldr x0, [sp, #0]
+        add sp, sp, #16
+
+        MEND
+
+#else
+
+        MACRO
+        CAPSTART $arg1, $arg2
+        MEND
+
+        MACRO
+        CAPEND $arg1
+        MEND
+
+#endif
+
+
+        ;
+        ; Macro to align a Control Flow Guard valid call target.
+        ;
+
+        MACRO
+        CFG_ALIGN
+#if defined(_CONTROL_FLOW_GUARD)
+        ALIGN 16
+#endif
+        MEND
+
+
+        ;
+        ; Macro to perform a Control Flow Guard check on a live call target.
+        ;
+        ; $TargetReg - Target address register
+        ; x16 - Bitmap address
+        ; $FailLabel - Label to jump to in the event of a failure
+        ;
+        ; N.B. x16-x17 are free, other registers should be treated as live.
+        ;
+        ; N.B. This macro expects the $FailLabel to be right after this macro.
+        ;
+
+        MACRO
+        CFG_ICALL_CHECK_BITMAP $TargetReg, $ValidTarget, $FailLabel
+
+;
+; Bitmap is an array of 2-bit values. Each 2-bit value represents 16 bytes, with the low
+; bit set if jumps are permitted, and the upper bit set if misaligned jumps are permitted.
+;
+; The bit index is (address >> 4).
+; Each byte holds 4 entries, so the byte index is (address >> 6).
+; The shift amount is computed as 2*((address >> 4) & 3), or (address >> 3) & 6
+; If address is aligned, (address >> 3) & 7 is equivalent, and ubfx can be used to extract.
+;
+
+        lsr     x17, $TargetReg, #6             ; compute bitmap byte index
+        tst     $TargetReg, #15                 ; misaligned address?
+        ldrb    w17, [x16, x17]                 ; load byte from bitmap
+        ubfx    x16, $TargetReg, #3, #3         ; compute bit index*2
+        bne     %F2                             ; if misaligned, account for extra bits
+        lsr     x17, x17, x16                   ; shift bitmap chunk over to valid align bit
+        tbz     x17, #0, %F3                    ; if low bit not set, verify the upper bit to
+                                                ; allow an export suppressed target
+1 ; Valid
+
+;
+; "ret lr" and "br lr" have differnt encoding and use of "ret lr" is preferred to hint
+; that it's returning to caller.
+;
+
+        IF "$ValidTarget" != "lr"
+            br      $ValidTarget                ; jump to valid target
+        ELSE
+            ret     lr                          ; return
+        ENDIF
+
+2 ; Misaligned
+        ;
+        ; Code on ARM64 should always be 16 byte aligned if address taken.
+        ;
+        ; TODO:  Compress bitmap format to 1 bit per address on ARM64?
+        ; TODO:  We are seeing 8-byte aligned code now. (1/22/14)
+        ;
+        and     x16, x16, #0xfffffffffffffffe   ; force low bit of shift to 0
+        lsr     x17, x17, x16                   ; shift bitmap chunk down
+        tbz     x17, #0, $FailLabel             ; invalid if the low bit was clear
+3 ; FailOpen
+        tbnz    x17, #1, %B1                    ; valid if upper bit was set as well
+
+        MEND
+
+
+        ;
+        ; Macro to perform a Control Flow Guard check on a live call target with export suppression.
+        ;
+        ; $TargetReg - Target address register
+        ; x16 - Bitmap address
+        ; $FailLabel - Label to jump to in the event of a failure
+        ;
+        ; N.B. x16-x17 are free, other registers should be treated as live.
+        ;
+
+        MACRO
+        CFG_ICALL_CHECK_BITMAP_ES $TargetReg, $FailLabel
+
+;
+; Bitmap is an array of 2-bit values. Each 2-bit value represents 16 bytes, with the low
+; bit set if jumps are permitted, and the upper bit set if misaligned jumps are permitted.
+;
+; The bit index is (address >> 4).
+; Each byte holds 4 entries, so the byte index is (address >> 6).
+; The shift amount is computed as 2*((address >> 4) & 3), or (address >> 3) & 6
+; If address is aligned, (address >> 3) & 7 is equivalent, and ubfx can be used to extract.
+;
+
+        lsr     x17, $TargetReg, #6             ; compute bitmap byte index
+        tst     $TargetReg, #15                 ; misaligned address?
+        ldrb    w17, [x16, x17]                 ; load byte from bitmap
+        ubfx    x16, $TargetReg, #3, #3         ; compute bit index*2
+        bne     %F2                             ; if misaligned, account for extra bits
+        lsr     x17, x17, x16                   ; shift bitmap chunk over to valid align bit
+        tbz     x17, #0, $FailLabel             ; if low bit not set, either invalid or export
+                                                ; suppressed target
+1 ; Valid
+        ret     lr                              ; return to target
+
+2 ; Misaligned
+        ;
+        ; Code on ARM64 should always be 16 byte aligned if address taken.
+        ;
+        ; TODO:  Compress bitmap format to 1 bit per address on ARM64?
+        ; TODO:  We are seeing 8-byte aligned code now. (1/22/14)
+        ;
+        and     x16, x16, #0xfffffffffffffffe   ; force low bit of shift to 0
+        lsr     x17, x17, x16                   ; shift bitmap chunk down
+        tbz     x17, #0, $FailLabel             ; invalid if the low bit was clear
+        tbnz    x17, #1, %B1                    ; valid if upper bit was set as well
+        MEND
+
+
+        ;
+        ; Macro to acquire a spin lock at address $Reg + $Offset. Clobbers {r0-r2}
+        ;
+
+; ARM64_WORKITEM : should we use acquire/release semantics instead of DMB?
+
+        MACRO
+        ACQUIRE_SPIN_LOCK $Reg, $Offset
+
+        mov     x0, #1                                  ; we want to exchange with a 1
+        dmb                                             ; memory barrier ahead of the loop
+1
+        ldxr    x1, [$Reg, $Offset]                     ; load the new value
+        stxr    x2, x0, [$Reg, $Offset]                 ; attempt to store the 1
+        cbnz    x2, %B1                                 ; did we succeed before someone else did?
+        cbz     x1, %F3                                 ; was the lock previously owned? if not, we're done
+        yield                                           ; yield execution
+        b       %B1                                     ; and try again
+3
+        dmb
+
+        MEND
+
+
+        ;
+        ; Macro to release a spin lock at address $Reg + $Offset.
+        ;
+
+; ARM64_WORKITEM : should we use acquire/release semantics instead of DMB?
+
+        MACRO
+        RELEASE_SPIN_LOCK $Reg, $Offset
+
+        dmb
+        str     xzr, [$Reg, $Offset]                    ; store 0
+
+        MEND
+
+
+        ;
+        ; Macro to increment a 64-bit statistic.
+        ;
+
+        MACRO
+        INCREMENT_STAT $AddrReg, $Temp1, $Temp2
+
+1       ldxr    $Temp1, [$AddrReg]                      ; load current value
+        add     $Temp1, $Temp1, #1                      ; increment
+        stxr    $Temp2, $Temp1, [$AddrReg]              ; attempt to store
+        cbnz    $Temp2, %B1                             ; loop until it works?
+
+        MEND
+
+
+        ;
+        ; Macros to enable/disable interrupts.
+        ;
+
+        MACRO
+        ENABLE_INTERRUPTS
+        msr     DAIFClr, #2                             ; enable interrupts
+        MEND
+
+        MACRO
+        DISABLE_INTERRUPTS
+        msr     DAIFSet, #2                             ; disable interrupts
+        MEND
+
+
+        ;
+        ; Macros to read/write the current IRQL
+        ;
+        ; N.B. These macros do not do hardware and software IRQL processing.
+        ;
+
+        MACRO
+        GET_IRQL $Irql
+        ldrb    $Irql, [x18, #PcCurrentIrql]            ; read IRQL
+        MEND
+
+        MACRO
+        RAISE_IRQL $Reg, $NewIrql
+
+#if DBG
+
+        GET_IRQL $Reg                                   ; get old IRQL
+        cmp      $Reg, #$NewIrql                        ; check if old IRQL is lower or same
+        bls      %F1                                    ; if LS, valid transition
+
+        EMIT_BREAKPOINT                                 ; break
+1
+#endif
+
+        mov     $Reg, #$NewIrql                         ; get new IRQL
+        strb    $Reg, [x18, #PcCurrentIrql]             ; update IRQL
+        MEND
+
+
+        ;
+        ; Macros to output special undefined opcodes that indicate breakpoints
+        ; and debug services.
+        ;
+
+        MACRO
+        EMIT_BREAKPOINT
+        brk     #ARM64_BREAKPOINT
+        MEND
+
+
+        MACRO
+        EMIT_DEBUG_SERVICE
+        brk     #ARM64_DEBUG_SERVICE
+        MEND
+
+        MACRO
+        FASTFAIL $FastFailCode
+        mov     x0, $FastFailCode
+        brk     #ARM64_FASTFAIL
+        MEND
+
+
+        ;
+        ; Macro to generate an exception frame; this is intended to
+        ; be used within the prolog of a function.
+        ;
+
+        MACRO
+        GENERATE_EXCEPTION_FRAME
+        PROLOG_SAVE_REG_PAIR x19, x20, #-96!
+        PROLOG_SAVE_REG_PAIR x21, x22, #16
+        PROLOG_SAVE_REG_PAIR x23, x24, #32
+        PROLOG_SAVE_REG_PAIR x25, x26, #48
+        PROLOG_SAVE_REG_PAIR x27, x28, #64
+        PROLOG_SAVE_REG_PAIR fp, lr, #80
+        MEND
+
+
+        ;
+        ; Macro to restore from an exception frame; this is intended to
+        ; be used within the epilog of a function.
+        ;
+
+        MACRO
+        RESTORE_EXCEPTION_STATE
+        EPILOG_RESTORE_REG_PAIR fp, lr, #80
+        EPILOG_RESTORE_REG_PAIR x27, x28, #64
+        EPILOG_RESTORE_REG_PAIR x25, x26, #48
+        EPILOG_RESTORE_REG_PAIR x23, x24, #32
+        EPILOG_RESTORE_REG_PAIR x21, x22, #16
+        EPILOG_RESTORE_REG_PAIR x19, x20, #96!
+        MEND
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Contents of minkernel/boot/environ/lib/bd/arm64/vector.asm
+//
+///////////////////////////////////////////////////////////////////////////////
+
+;++
+;
+; Copyright (c) 2003  Microsoft Corporation
+;
+; Module Name:
+;
+;    vector.asm
+;
+; Abstract:
+;
+;    This module implements the ARM64 exception vector table which can
+;    be located at any half-page-aligned address.
+;
+;    The vector table itself is a 4x4 array of 128-byte (32 instruction)
+;    slots. On one axis are four exception entry types: synchronous,
+;    IRQ, FIQ, and system error. On the other axis are four exception
+;    entry modes: current EL with SP0 active, current EL with SPx active,
+;    lower EL from 64-bit mode, and lower EL from 32-bit mode.
+;
+; Author:
+;
+;    Aaron Giles 15-January-2013
+;
+; Environment:
+;
+;    Kernel mode only.
+;
+;--
+
+// #include "ksarm64.h"
+#define STACK_ALLOCATION    (KTRAP_FRAME_LENGTH + VFP_STATE_LENGTH + ARM64_RED_ZONE_BYTES)
+
+        AREA    |.text|,ALIGN=11,CODE,READONLY
+
+        IMPORT BdSynchronousException
+
+        EXPORT BdExceptionVectors
+        EXPORT BdBreakPointWithStatus
+
+;       IMPORT BlpArchSwitchContext
+
+        GBLS TrapEntryStartLabel
+        GBLS TrapEntryEndLabel
+
+
+;++
+;
+; Macro Description:
+;
+;   This macro forwards an interrupt to the firmware.
+;
+; Arguments:
+;
+;   None
+;
+; Disposition:
+;
+;   All volatile registers x0-x17 are saved on the stack and
+;   restored. A helper function BlpForwardInterrupt is
+;   responsible for saving and restoring the ELR and SPSR.
+;
+;--
+
+        MACRO
+        STANDARD_INTERRUPT_FORWARDER
+
+        stp     fp, lr, [sp, #-160]!                ; Allocate space for 18 regs plus FP/LR
+        mov     fp, sp                              ; Set frame pointer
+        stp     x0, x1, [sp, #16]                   ; Save all volatile registers
+        stp     x2, x3, [sp, #32]                   ;
+        stp     x4, x5, [sp, #48]                   ;
+        stp     x6, x7, [sp, #64]                   ;
+        stp     x8, x9, [sp, #80]                   ;
+        stp     x10, x11, [sp, #96]                 ;
+        stp     x12, x13, [sp, #112]                ;
+        stp     x14, x15, [sp, #128]                ;
+        stp     x16, x17, [sp, #144]                ;
+        bl      BdForwardInterrupt                  ; Forward the interrupt
+        ldp     x16, x17, [sp, #144]                ; Restore all volatile registers
+        ldp     x14, x15, [sp, #128]                ;
+        ldp     x12, x13, [sp, #112]                ;
+        ldp     x10, x11, [sp, #96]                 ;
+        ldp     x8, x9, [sp, #80]                   ;
+        ldp     x6, x7, [sp, #64]                   ;
+        ldp     x4, x5, [sp, #48]                   ;
+        ldp     x2, x3, [sp, #32]                   ;
+        ldp     x0, x1, [sp, #16]                   ;
+        ldp     fp, lr, [sp], #160                  ; Recover space and FP/LR
+        eret                                        ; Return
+
+        MEND
+
+;++
+;
+; Macro Description:
+;
+;   This macro defines the entry label of an exception vector.
+;
+; Arguments:
+;
+;   $Name - Supplies the exception vector handler name.
+;
+;   $Handler - Supplies the exception handler name (if any).
+;
+;--
+
+        MACRO
+        TRAP_ENTRY $Name, $Handler
+
+        ALIGN 128
+
+        NESTED_ENTRY $Name,,$Handler
+
+TrapEntryStartLabel SETS "|$Name._trap_start|"
+$TrapEntryStartLabel
+
+        MEND
+
+;++
+;
+; Macro Description:
+;
+;   This macro defines the end of an exception vector.
+;
+; Arguments:
+;
+;   $Name - Supplies the exception vector handler name.
+;
+;--
+
+        MACRO
+        TRAP_END $Name
+
+TrapEntryEndLabel SETS "|$Name._trap_end|"
+$TrapEntryEndLabel
+
+        NESTED_END $Name
+
+        ;
+        ; Ensure that trap entries are no longer than 128 bytes.
+        ;
+
+        //ASSERT ($TrapEntryEndLabel - $TrapEntryStartLabel <= 128)
+
+TrapEntryStartLabel SETS ""
+TrapEntryEndLabel SETS ""
+
+        MEND
+
+
+
+BdBreakPointWithStatus PROC
+
+        brk #ARM64_BREAKPOINT
+        ret
+
+BdBreakPointWithStatus ENDP
+
+;++
+;
+; Here begins the 4x4 array of exception vectors, spaced 128 bytes apart.
+;
+;--
+
+        ALIGN 2048
+
+
+BdExceptionVectors
+
+        ;
+        ; Current EL with SP_EL0, Synchronous
+        ;
+
+        TRAP_ENTRY BdKernelSp0ExceptionHandler
+
+        PROLOG_PUSH_TRAP_FRAME
+        stp     x23, lr, [x18, #PcPanicStorage + 32]    ; save x23/lr in known-safe territory
+        mrs     x23, #ARM64_CurrentEL                   ; get CurrentEL
+        cmp     x23, #0x4                               ; is EL1?
+        beq     %F10                                    ; if so, read from EL1
+        mrs     x23, #ARM64_ELR_EL2                     ; get the exception address
+        b       %F20
+10
+        mrs     x23, #ARM64_ELR_EL1                     ; get the exception address
+20
+        adr     lr, BdTrapFramePanicFault               ; get the address of the dangerous touch
+        cmp     x23, lr                                 ; equal?
+        ldp     x23, lr, [x18, #PcPanicStorage + 32]    ; restore x23/lr
+        beq     %F30                                    ; if so, handle a panic
+        b       BdKernelExceptionHandlerContinue        ; standard handling
+30
+        bl      BdKernelStackException                  ; handle as a kernel stack exception
+        bl      BdRestoreFromTrapFrame                  ; restore from the trap frame on exit
+        TRAP_END BdKernelSp0ExceptionHandler
+
+        ;
+        ; Current EL with SP_EL0, IRQ/vIRQ
+        ;
+
+        TRAP_ENTRY BdKernelSp0InterruptHandler
+        b       BdKernelSp0InterruptHandler
+        TRAP_END BdKernelSp0InterruptHandler
+
+        ;
+        ; Current EL with SP_EL0, FIQ/vFIQ
+        ;
+
+        TRAP_ENTRY BdKernelSp0FiqHandler
+        b       BdKernelSp0FiqHandler
+        TRAP_END BdKernelSp0FiqHandler
+
+        ;
+        ; Current EL with SP_EL0, SError/VSError
+        ;
+
+        TRAP_ENTRY BdKernelSp0SystemErrorHandler
+        b       BdKernelSp0SystemErrorHandler
+        TRAP_END BdKernelSp0SystemErrorHandler
+
+
+
+        ;
+        ; Current EL with SP_ELx, Synchronous
+        ;
+
+        TRAP_ENTRY BdKernelExceptionHandler
+
+        PROLOG_PUSH_TRAP_FRAME
+        stp     x23, lr, [x18, #PcPanicStorage + 32]    ; save x23/lr in known-safe territory
+        mrs     x23, #ARM64_CurrentEL                   ; get CurrentEL
+        cmp     x23, #0x4                               ; is EL1?
+        beq     %F10                                    ; if so, read from EL1
+        mrs     x23, #ARM64_ELR_EL2                     ; get the exception address
+        b       %F20
+10
+        mrs     x23, #ARM64_ELR_EL1                     ; get the exception address
+20
+        adr     lr, BdTrapFramePanicFault               ; get the address of the dangerous touch
+        cmp     x23, lr                                 ; equal?
+        ldp     x23, lr, [x18, #PcPanicStorage + 32]    ; restore x23/lr
+        beq     %F30                                    ; if so, handle a panic
+        b       BdKernelExceptionHandlerContinue        ; standard handling
+30
+        bl      BdKernelStackException                  ; handle as a kernel stack exception
+        bl      BdRestoreFromTrapFrame                  ; restore from the trap frame on exit
+        TRAP_END BdKernelExceptionHandler
+
+        ;
+        ; Current EL with SP_ELx, IRQ/vIRQ
+        ;
+
+        TRAP_ENTRY BdKernelInterruptHandler
+        b       BdKernelInterruptHandler
+        TRAP_END BdKernelInterruptHandler
+
+        ;
+        ; Current EL with SP_ELx, FIQ/vFIQ
+        ;
+
+        TRAP_ENTRY BdKernelFiqHandler
+        b       BdKernelFiqHandler
+        TRAP_END BdKernelFiqHandler
+
+        ;
+        ; Current EL with SP_ELx, SError/VSError
+        ;
+
+        TRAP_ENTRY BdKernelSystemErrorHandler
+        b       BdKernelSystemErrorHandler
+        TRAP_END BdKernelSystemErrorHandler
+
+        ;
+        ; Lower EL using AArch64, Synchronous
+        ;
+
+        TRAP_ENTRY BdUserExceptionHandler
+        b       BdUserExceptionHandler
+        TRAP_END BdUserExceptionHandler
+
+        ;
+        ; Lower EL using AArch64, IRQ/vIRQ
+        ;
+
+        TRAP_ENTRY BdUserInterruptHandler
+        b       BdUserInterruptHandler
+        TRAP_END BdUserInterruptHandler
+
+        ;
+        ; Lower EL using AArch64, FIQ/vFIQ
+        ;
+
+        TRAP_ENTRY BdUserFiqHandler
+        b       BdUserFiqHandler
+        TRAP_END BdUserFiqHandler
+
+        ;
+        ; Lower EL using AArch64, SError/VSError
+        ;
+
+        TRAP_ENTRY BdUserSystemErrorHandler
+        b       BdUserSystemErrorHandler
+        TRAP_END BdUserSystemErrorHandler
+
+        ;
+        ; Lower EL using AArch32, Synchronous
+        ;
+
+        TRAP_ENTRY BdUser32ExceptionHandler
+        b       BdUser32ExceptionHandler
+        TRAP_END BdUser32ExceptionHandler
+
+        ;
+        ; Lower EL using AArch32, IRQ/vIRQ
+        ;
+
+        TRAP_ENTRY BdUser32InterruptHandler
+        b       BdUser32InterruptHandler
+        TRAP_END BdUser32InterruptHandler
+
+        ;
+        ; Lower EL using AArch32, FIQ/vFIQ
+        ;
+
+        TRAP_ENTRY BdUser32FiqHandler
+        b       BdUser32FiqHandler
+        TRAP_END BdUser32FiqHandler
+
+        ;
+        ; Lower EL using AArch32, SError/VSError
+        ;
+
+        TRAP_ENTRY BdUser32SystemErrorHandler
+        b       BdUser32SystemErrorHandler
+        TRAP_END BdUser32SystemErrorHandler
+
+        ;
+        ; Trailing alignment to ensure vector code array is fully populated.
+        ;
+        ; This is required.  Do not remove.
+        ;
+
+        ALIGN   128
+
+;++
+;
+; Routine Description:
+;
+;   This function allocates and fills out a KTRAP_FRAME structure
+;   on the kernel stack.
+;
+; Arguments:
+;
+;   sp (implicit) - points to the location below which the trap frame
+;       will be allocated; it is expected to be 16-byte aligned, so if
+;       there is any chance of a misaligned stack, it must be corrected
+;       prior to calling this function
+;
+;   x19 - supplies the ELR value from the current exception
+;
+;   x20 - supplies the SPSR value from the current exception, ORed with
+;           the ESR value from the current exception shifted left 32 bits
+;
+;   x21 - supplies a copy of the SP at the time of the exception
+;
+;   x22 - supplies a copy of the LR at the time of the exception
+;       (since LR is overwritten when this function is called)
+;
+; Disposition:
+;
+;   Upon completion, the SP will point to a filled-out trap frame.
+;
+;   Unlike a regular function, the SP is decremented and left that
+;   way after execution.
+;
+;--
+
+        NESTED_ENTRY BdBuildTrapFrame
+        PROLOG_PUSH_TRAP_FRAME
+
+        sub     sp, sp, #STACK_ALLOCATION               ; allocate stack space
+BdTrapFramePanicFault
+        str     xzr, [sp, #0]                           ; touch the top of the stack to fault at a known location
+        stp     x20, x21, [sp, #TrSpsr]                 ; save SPSR/ESR and original SP
+        stp     x0, x1, [sp, #TrX + 0*8]                ; save volatiles in the allocated space
+        stp     x2, x3, [sp, #TrX + 2*8]                ;
+        stp     x4, x5, [sp, #TrX + 4*8]                ;
+        stp     x6, x7, [sp, #TrX + 6*8]                ;
+        stp     x8, x9, [sp, #TrX + 8*8]                ;
+        stp     x10, x11, [sp, #TrX + 10*8]             ;
+        stp     x12, x13, [sp, #TrX + 12*8]             ;
+        stp     x14, x15, [sp, #TrX + 14*8]             ;
+        stp     x16, x17, [sp, #TrX + 16*8]             ;
+        stp     x18, x22, [sp, #TrX + 18*8]             ; save x18 as well as original LR
+        stp     fp, x19, [sp, #TrFp]                    ; save original FP and PC
+        add     fp, sp, #TrFp                           ; point FP to the live FP/LR pair
+
+        mrs     x0, #ARM64_CPACR_EL1                    ; get current CPACR value
+        and     x0, x0, #ARM64_CPACR_VFP_MASK           ; enabled?
+        cbz     x0, %F1                                 ; skip if not
+
+        add     x0, sp, #KTRAP_FRAME_LENGTH             ; point to FP state
+        mrs     x1, #ARM64_FPCR                         ; get control register
+        mrs     x2, #ARM64_FPSR                         ; get status register
+        stp     w1, w2, [x0, #VsFpcr]                   ; save control and status registers
+        stp     q0, q1, [x0, #VsV + 0*16]               ; save FP state in allocated space
+        stp     q2, q3, [x0, #VsV + 2*16]               ;
+        stp     q4, q5, [x0, #VsV + 4*16]               ;
+        stp     q6, q7, [x0, #VsV + 6*16]               ;
+        stp     q8, q9, [x0, #VsV + 8*16]               ;
+        stp     q10, q11, [x0, #VsV + 10*16]            ;
+        stp     q12, q13, [x0, #VsV + 12*16]            ;
+        stp     q14, q15, [x0, #VsV + 14*16]            ;
+        stp     q16, q17, [x0, #VsV + 16*16]            ;
+        stp     q18, q19, [x0, #VsV + 18*16]            ;
+        stp     q20, q21, [x0, #VsV + 20*16]            ;
+        stp     q22, q23, [x0, #VsV + 22*16]            ;
+        stp     q24, q25, [x0, #VsV + 24*16]            ;
+        stp     q26, q27, [x0, #VsV + 26*16]            ;
+        stp     q28, q29, [x0, #VsV + 28*16]            ;
+        stp     q30, q31, [x0, #VsV + 30*16]            ;
+1
+        str     x0, [sp, #TrVfpState]                   ; save VFP state pointer
+
+        ret
+
+        NESTED_END
+
+
+;++
+;
+; Routine Description:
+;
+;   This function restores the register state from the trap frame on
+;   the stack, and returns from an exception.
+;
+; Arguments:
+;
+;   sp (implicit) - points to the trap frame to restore from
+;
+; Disposition:
+;
+;   Upon completion, the system will be restored to the state
+;   described in the trap frame.
+;
+;--
+
+        NESTED_ENTRY BdRestoreFromTrapFrame
+
+        msr     DAIFSet, #0xa                           ; disable interrupts and debug exceptions
+        ldr     w3, [sp, #TrSpsr]                       ; fetch SPSR from stack
+        ldr     x0, [sp, #TrVfpState]                   ; get pointer to FP state
+        cbz     x0, %F1                                 ; skip if no FP state to restore
+        ldp     w1, w2, [x0, #VsFpcr]                   ; load control and status registers
+        msr     #ARM64_FPCR, x1                         ; restore control register
+        msr     #ARM64_FPSR, x2                         ; restore status register
+        ldp     q0, q1, [x0, #VsV + 0*16]               ; restore FP state from allocated space
+        ldp     q2, q3, [x0, #VsV + 2*16]               ;
+        ldp     q4, q5, [x0, #VsV + 4*16]               ;
+        ldp     q6, q7, [x0, #VsV + 6*16]               ;
+        ldp     q8, q9, [x0, #VsV + 8*16]               ;
+        ldp     q10, q11, [x0, #VsV + 10*16]            ;
+        ldp     q12, q13, [x0, #VsV + 12*16]            ;
+        ldp     q14, q15, [x0, #VsV + 14*16]            ;
+        ldp     q16, q17, [x0, #VsV + 16*16]            ;
+        ldp     q18, q19, [x0, #VsV + 18*16]            ;
+        ldp     q20, q21, [x0, #VsV + 20*16]            ;
+        ldp     q22, q23, [x0, #VsV + 22*16]            ;
+        ldp     q24, q25, [x0, #VsV + 24*16]            ;
+        ldp     q26, q27, [x0, #VsV + 26*16]            ;
+        ldp     q28, q29, [x0, #VsV + 28*16]            ;
+        ldp     q30, q31, [x0, #VsV + 30*16]            ;
+1
+        tbnz    x3, #CPSR_SS_BIT, %F3                   ; if single-stepping, do some work
+4
+        ldr     x4, [sp, #TrPc]                         ; fetch return PC
+        mrs     x0, #ARM64_CurrentEL                    ; get CurrentEL
+        cmp     x0, #0x4                                ; is EL1?
+        beq     %F10                                    ; if so, read from EL1
+        msr     #ARM64_SPSR_EL2, x3                     ; update SPSR register
+        msr     #ARM64_ELR_EL2, x4                      ; update ELR register
+        b       %F20
+10
+        msr     #ARM64_SPSR_EL1, x3                     ; update SPSR register
+        msr     #ARM64_ELR_EL1, x4                      ; update ELR register
+20
+        ldp     x0, x1, [sp, #TrX + 0*8]                ; restore volatiles from the allocated space
+        ldp     x2, x3, [sp, #TrX + 2*8]                ;
+        ldp     x4, x5, [sp, #TrX + 4*8]                ;
+        ldp     x6, x7, [sp, #TrX + 6*8]                ;
+        ldp     x8, x9, [sp, #TrX + 8*8]                ;
+        ldp     x10, x11, [sp, #TrX + 10*8]             ;
+        ldp     x12, x13, [sp, #TrX + 12*8]             ;
+        ldp     x14, x15, [sp, #TrX + 14*8]             ;
+        ldp     x16, x17, [sp, #TrX + 16*8]             ;
+        ldr     fp, [sp, #TrSp]                         ; get target SP
+        mov     lr, sp                                  ; copy current SP to LR
+        mov     sp, fp                                  ; set target SP
+        ldp     lr, fp, [lr, #TrLr]                     ; restore LR/FP from original SP
+        eret                                            ; return
+3
+        mrs     x0, #ARM64_MDSCR_EL1                    ; get current MDSCR value
+        mov     x1, #0xa001 ; (ARM64_MDSCR_SS | ARM64_MDSCR_KDE | ARM64_MDSCR_MDE) ; set all the flags
+        orr     x0, x0, x1                              ;
+        msr     #ARM64_MDSCR_EL1, x0                    ; update it
+        isb     sy                                      ; synchronize
+        b       %B4                                     ; go back
+
+        NESTED_END
+
+
+;++
+;
+; Routine Description:
+;
+;   This function is called whenever a synchronous exception is caught
+;   at the instruction in BdBuildTrapFrame that touches the top of the
+;   stack.
+;
+; Arguments:
+;
+;   sp (implicit) - points to where the fault occurred
+;
+;   x19 - supplies the ELR value from the original exception
+;
+;   x20 - supplies the SPSR value from the original exception
+;
+;   x21 - supplies the ESR value from the original exception
+;
+;   x22 - supplies a copy of the LR at the time of the original exception
+;
+; Disposition:
+;
+;   In this event, a switch is made to a special system panic stack,
+;   and two trap frames are created. The first trap frame describes the
+;   original exception, and the second describes the fault in
+;   BdBuildTrapFrame.
+;
+;--
+
+        NESTED_ENTRY BdKernelStackException
+        PROLOG_PUSH_TRAP_FRAME
+
+        ldr     x18, [x18, #PcPrcb + PbPanicStackBase]  ; compute the base of the panic stack
+        mov     sp, x18                                 ; set that as our new stack pointer
+        mrs     x18, #ARM64_CurrentEL                   ; get CurrentEL
+        cmp     x18, #0x4                               ; is EL1?
+        beq     %F10                                    ; if so, read from EL1
+        mrs     x18, #ARM64_TPIDR_EL2                   ; recover PCR in x18
+        b       %F20
+10
+        mrs     x18, #ARM64_TPIDR_EL1                   ; recover PCR in x18
+20
+        and     x18, x18, #0xfffffffffffff000           ; clear low bits
+
+        bl      BdBuildTrapFrame                        ; build the trap frame for the original exception
+
+        mrs     x19, #ARM64_CurrentEL                   ; get CurrentEL
+        cmp     x19, #0x4                               ; is EL1?
+        beq     %F30                                    ; if so, read from EL1
+        mrs     x19, #ARM64_ELR_EL2                     ; return address in x19
+        mrs     x20, #ARM64_SPSR_EL2                    ; SPSR in x20
+        mrs     x21, #ARM64_ESR_EL2                     ; syndrome in x21
+        b       %F40
+30
+        mrs     x19, #ARM64_ELR_EL1                     ; return address in x19
+        mrs     x20, #ARM64_SPSR_EL1                    ; SPSR in x20
+        mrs     x21, #ARM64_ESR_EL1                     ; syndrome in x21
+40
+        orr     x20, x20, x21, lsl #32                  ; move syndrome to upper bits of x20
+        mov     x21, sp                                 ; original SP in x21
+        ldr     x22, [x18, #PcPanicStorage + 40]        ; original LR in x22
+        bl      BdBuildTrapFrame                        ; build standard trap frame
+1
+        b       %B1
+
+        NESTED_END
+
+;++
+;
+; Routine Description:
+;
+;   This function is called to forward an interrupt on to the firmware's
+;   original VBAR, swapping out our context and swapping it back in
+;   upon return.
+;
+; Arguments:
+;
+;   lr (implicit) - implies which vector we need to forward to.
+;
+; Disposition:
+;
+;   The firmware context is swapped in, and the SPSR and ELR are modified
+;   to point back to this function. Upon return, our execution context
+;   is swapped in and the SPSR/ELR are restored so that the originally
+;   interrupted code can be returned to.
+;
+;--
+
+        NESTED_ENTRY BdForwardInterrupt
+
+        stp     fp, lr, [sp, #-32]!                 ; Save FP/LR and allocate stack
+        mov     fp, sp                              ; Set frame pointer
+        mrs     x0, #ARM64_CurrentEL                ; get CurrentEL
+        cmp     x0, #0x4                            ; is EL1?
+        beq     %F10                                ;
+        mrs     x8, #ARM64_ELR_EL2                  ; Get original ELR
+        mrs     x9, #ARM64_SPSR_EL2                 ;   and original SPSR
+        b       %F20
+10
+        mrs     x8, #ARM64_ELR_EL1                  ; Get original ELR
+        mrs     x9, #ARM64_SPSR_EL1                 ;   and original SPSR
+20
+        stp     x8, x9, [sp, #16]                   ; Save them on the stack
+
+        mov     x0, #1                              ; 1 = ExecutionContextFirmware
+;        bl      BlpArchSwitchContext                ; Switch to the firmware context
+
+        mrs     x1, #ARM64_DAIF                     ; Get pieces of the live
+        mrs     x2, #ARM64_NZCV                     ;   processor state: DAIF, NZCV,
+        mrs     x3, #ARM64_CurrentEL                ; CurrentEL,
+        mrs     x4, #ARM64_SPSel                    ; SPSel
+        orr     x1, x1, x2                          ; OR them all together
+        orr     x1, x1, x3                          ;   to create a fake SPSR
+        orr     x1, x1, x4                          ;
+        cmp     x3, #0x4                            ; is EL1?
+        beq     %F30                                ;
+        adr     x0, Return_EL2                      ; Get return address
+        msr     #ARM64_ELR_EL2, x0                  ; Replace ELR with our return address
+        msr     #ARM64_SPSR_EL2, x1                 ; Replace SPSR with our current state
+        mrs     x1, #ARM64_VBAR_EL2                 ; Get current VBAR
+        b       %F40
+30
+        adr     x0, Return_EL1                      ; Get return address
+        msr     #ARM64_ELR_EL1, x0                  ; Replace ELR with our return address
+        msr     #ARM64_SPSR_EL1, x1                 ; Replace SPSR with our current state
+        mrs     x1, #ARM64_VBAR_EL1                 ; Get current VBAR
+40
+        ldr     x0, [sp, #8]                        ; Get return address
+        and     x0, x0, #0x780                      ; Determine offset of vector entry that called us
+        add     x0, x0, x1                          ; Add them together
+        br      x0                                  ; Branch there
+
+Return_EL1
+        mov     x0, #0                              ; 0 = ExecutionContextApplication
+;        bl      BlpArchSwitchContext                ; Switch back to our context
+
+        ldp     x8, x9, [sp, #16]                   ; Recover original ELR/SPSR
+        msr     #ARM64_ELR_EL1, x8                  ; Restore ELR
+        msr     #ARM64_SPSR_EL1, x9                 ; Restore SPSR
+        ldp     fp, lr, [sp], #32                   ; Recover saved FP/LR and stack
+        ret     lr                                  ; Outta here
+
+Return_EL2
+        mov     x0, #0                              ; 0 = ExecutionContextApplication
+;       bl      BlpArchSwitchContext                ; Switch back to our context
+
+        ldp     x8, x9, [sp, #16]                   ; Recover original ELR/SPSR
+        msr     #ARM64_ELR_EL2, x8                  ; Restore ELR
+        msr     #ARM64_SPSR_EL2, x9                 ; Restore SPSR
+        ldp     fp, lr, [sp], #32                   ; Recover saved FP/LR and stack
+        ret     lr                                  ; Outta here
+
+        NESTED_END
+
+;++
+;
+; Routine Description:
+;
+;   This function is the continue part of BdKernelExceptionHandler and build
+;   a trap frame on the stack.
+;
+; Arguments:
+;
+;   x18 - supplies a pointer to the current processor's PCR
+;
+; Disposition:
+;
+;   Registers x19-x22 are saved in the PCR temporarily while the
+;   trap frame is constructed, and then restored upon exit. A copy
+;   of the ESR value is left in x16 for further processing.
+;
+;--
+
+        NESTED_ENTRY BdKernelExceptionHandlerContinue
+
+        stp     x19, x20, [x18, #PcPanicStorage]        ; save x19/x20
+        stp     x21, x22, [x18, #PcPanicStorage + 16]   ; save x21/x22
+        mrs     x19, #ARM64_CurrentEL                   ; get CurrentEL
+        cmp     x19, #0x4                               ; is EL1?
+        beq     %F10                                    ; if so, read from EL1
+        mrs     x19, #ARM64_ELR_EL2                     ; return address in x19
+        mrs     x20, #ARM64_SPSR_EL2                    ; SPSR in x20
+        mrs     x21, #ARM64_ESR_EL2                     ; syndrome in x21
+        b       %F20
+10
+        mrs     x19, #ARM64_ELR_EL1                     ; return address in x19
+        mrs     x20, #ARM64_SPSR_EL1                    ; SPSR in x20
+        mrs     x21, #ARM64_ESR_EL1                     ; syndrome in x21
+20
+        orr     x20, x20, x21, lsl #32                  ; move syndrome to upper bits of x20
+        mov     x21, sp                                 ; original SP in x21
+        and     x22, x21, #8                            ; get alignment adjust
+        sub     sp, sp, x22                             ; apply adjustment
+        mov     x22, lr                                 ; original LR in x22
+        bl      BdBuildTrapFrame                        ; build standard trap frame
+        mov     w17, #KEXCEPTION_ACTIVE_EXCEPTION_FRAME ; get the frame type
+        str     w17, [sp, #TrExceptionActive]           ; set the proper exception active state
+        lsr     x16, x20, #32                           ; copy ESR to x16
+        ldp     x19, x20, [x18, #PcPanicStorage]        ; recover saved x19/x20
+        ldp     x21, x22, [x18, #PcPanicStorage + 16]   ; recover saved x21/x22
+        mov     x0, sp                                  ; pass trap frame in x0
+        bl      BdSynchronousException                  ; handle the exception
+        bl      BdRestoreFromTrapFrame                  ; restore from the trap frame on exit
+
+        NESTED_END
+
+        END

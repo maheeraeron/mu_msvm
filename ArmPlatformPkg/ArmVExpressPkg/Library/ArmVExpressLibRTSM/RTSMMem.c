@@ -61,7 +61,6 @@ ArmPlatformGetVirtualMemoryMap (
     ResourceAttributes =
         EFI_RESOURCE_ATTRIBUTE_PRESENT |
         EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
-        EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE |
         EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
         EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
         EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
@@ -126,7 +125,7 @@ ArmPlatformGetVirtualMemoryMap (
   VirtualMemoryTable[++Index].PhysicalBase = ARM_VE_SMB_NOR0_BASE;
   VirtualMemoryTable[Index].VirtualBase  = ARM_VE_SMB_NOR0_BASE;
   VirtualMemoryTable[Index].Length       = ARM_VE_SMB_NOR0_SZ + ARM_VE_SMB_NOR1_SZ;
-  VirtualMemoryTable[Index].Attributes   = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+  VirtualMemoryTable[Index].Attributes   = CacheAttributes;
 
   // SMB CS2 - SRAM
   VirtualMemoryTable[++Index].PhysicalBase = ARM_VE_SMB_SRAM_BASE;

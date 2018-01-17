@@ -96,7 +96,7 @@ InitializeMemory (
 {
   EFI_STATUS                            Status;
   UINTN                                 SystemMemoryBase;
-  UINTN                                 SystemMemoryTop;
+  UINT64                                SystemMemoryTop;
   UINTN                                 FdBase;
   UINTN                                 FdTop;
   UINTN                                 UefiMemoryBase;
@@ -113,9 +113,13 @@ InitializeMemory (
 
   // Ensure PcdSystemMemorySize has been set
   ASSERT (PcdGet64 (PcdSystemMemorySize) != 0);
+  ASSERT (PcdGet64 (PcdSystemMemoryBase) < (UINT64)MAX_ADDRESS);
 
   SystemMemoryBase = (UINTN)PcdGet64 (PcdSystemMemoryBase);
-  SystemMemoryTop = SystemMemoryBase + (UINTN)PcdGet64 (PcdSystemMemorySize);
+  SystemMemoryTop = SystemMemoryBase + PcdGet64 (PcdSystemMemorySize);
+  if (SystemMemoryTop - 1 > MAX_ADDRESS) {
+    SystemMemoryTop = (UINT64)MAX_ADDRESS + 1;
+  }
   FdBase = (UINTN)PcdGet64 (PcdFdBaseAddress);
   FdTop = FdBase + (UINTN)PcdGet32 (PcdFdSize);
 
@@ -128,19 +132,19 @@ InitializeMemory (
     // Check if there is enough space between the top of the system memory and the top of the
     // firmware to place the UEFI memory (for PEI & DXE phases)
     if (SystemMemoryTop - FdTop >= FixedPcdGet32 (PcdSystemMemoryUefiRegionSize)) {
-      UefiMemoryBase = SystemMemoryTop - FixedPcdGet32 (PcdSystemMemoryUefiRegionSize);
+      UefiMemoryBase = (UINTN)(SystemMemoryTop - FixedPcdGet32 (PcdSystemMemoryUefiRegionSize));
     } else {
       // Check there is enough space for the UEFI memory
       ASSERT (SystemMemoryBase + FixedPcdGet32 (PcdSystemMemoryUefiRegionSize) <= FdBase);
 
-      UefiMemoryBase = FdBase - FixedPcdGet32 (PcdSystemMemoryUefiRegionSize);
+      UefiMemoryBase = (UINTN)(FdBase - FixedPcdGet32(PcdSystemMemoryUefiRegionSize));
     }
   } else {
     // Check the Firmware does not overlapped with the system memory
     ASSERT ((FdBase < SystemMemoryBase) || (FdBase >= SystemMemoryTop));
     ASSERT ((FdTop <= SystemMemoryBase) || (FdTop > SystemMemoryTop));
 
-    UefiMemoryBase = SystemMemoryTop - FixedPcdGet32 (PcdSystemMemoryUefiRegionSize);
+    UefiMemoryBase = (UINTN)(SystemMemoryTop - FixedPcdGet32 (PcdSystemMemoryUefiRegionSize));
   }
 
   Status = PeiServicesInstallPeiMemory (UefiMemoryBase, FixedPcdGet32 (PcdSystemMemoryUefiRegionSize));

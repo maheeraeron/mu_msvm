@@ -31,13 +31,13 @@ Author:
 #include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
 #include <Library/IoLib.h>
+#include <Library/BiosDeviceLib.h>
 
 #include "EventLogDxe.h"
 #include "EfiHandleTable.h"
 #include "EfiRing.h"
 #include "EventLogger.h"
 #include "BiosInterface.h"
-#include <BiosDeviceAccess.h>
 
 //
 // Information on a currently pending event.

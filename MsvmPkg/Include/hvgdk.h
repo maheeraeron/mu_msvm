@@ -42,24 +42,30 @@ extern "C" {
 //
 
 #include <HvGdk_mini.h>
+#include <HvGdk_ext.h>
 
 
 //
 // Memory Types
 //
+// System physical addresses (SPAs) define the physical address space of the underlying
+// hardware. There is only one system physical address space for the entire machine.
 //
 // Guest virtual addresses (GVAs) are used within the guest when it enables address
 // translation and provides a valid guest page table.
 //
 
+typedef UINT64 HV_SPA, *PHV_SPA;
 typedef UINT64 HV_GVA, *PHV_GVA;
 
 #ifndef X64_PAGE_SIZE
 #define X64_PAGE_SIZE 0x1000
 #endif
 
+typedef UINT64 HV_GPA_PAGE_NUMBER, *PHV_GPA_PAGE_NUMBER;
 typedef UINT64 HV_GVA_PAGE_NUMBER, *PHV_GVA_PAGE_NUMBER;
 
+typedef const HV_GPA_PAGE_NUMBER *PCHV_GPA_PAGE_NUMBER;
 typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 
 //
@@ -94,7 +100,7 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 //
 // MessageText:
 //
-// The hypervisor could not perform the operation beacuse a parameter has an invalid alignment.
+// The hypervisor could not perform the operation because a parameter has an invalid alignment.
 //
 #define HV_STATUS_INVALID_ALIGNMENT      ((HV_STATUS)0x0004)
 
@@ -103,7 +109,7 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 //
 // MessageText:
 //
-// The hypervisor could not perform the operation beacuse an invalid parameter was specified.
+// The hypervisor could not perform the operation because an invalid parameter was specified.
 //
 #define HV_STATUS_INVALID_PARAMETER      ((HV_STATUS)0x0005)
 
@@ -333,164 +339,13 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 #define HV_STATUS_PARTIAL_PACKET         ((HV_STATUS)0x001F)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_SSE3_NOT_SUPPORTED
+// MessageId: HV_STATUS_PROCESSOR_FEATURE_NOT_SUPPORTED
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (SSE3).
+// The supplied restore state requires an unsupported processor feature.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_SSE3_NOT_SUPPORTED ((HV_STATUS)0x0020)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_LAHFSAHF_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (LAHFSAHF).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_LAHFSAHF_NOT_SUPPORTED ((HV_STATUS)0x0021)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_SSSE3_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (SSSE3).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_SSSE3_NOT_SUPPORTED ((HV_STATUS)0x0022)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_SSE4_1_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (SSE4.1).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_SSE4_1_NOT_SUPPORTED ((HV_STATUS)0x0023)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_SSE4_2_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (SSE4.2).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_SSE4_2_NOT_SUPPORTED ((HV_STATUS)0x0024)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_SSE4A_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (SSE4a).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_SSE4A_NOT_SUPPORTED ((HV_STATUS)0x0025)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XOP_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (XOP).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_XOP_NOT_SUPPORTED ((HV_STATUS)0x0026)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_POPCNT_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (POPCNT).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_POPCNT_NOT_SUPPORTED ((HV_STATUS)0x0027)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_CMPXCHG16B_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (CMPXCHG16B).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_CMPXCHG16B_NOT_SUPPORTED ((HV_STATUS)0x0028)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_ALTMOVCR8_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (ALTMOVCR8).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_ALTMOVCR8_NOT_SUPPORTED ((HV_STATUS)0x0029)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_LZCNT_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (LZCNT).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_LZCNT_NOT_SUPPORTED ((HV_STATUS)0x002A)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_MISALIGNED_SSE_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (misaligned SSE).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_MISALIGNED_SSE_NOT_SUPPORTED ((HV_STATUS)0x002B)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_MMX_EXT_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (MMX EXT).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_MMX_EXT_NOT_SUPPORTED ((HV_STATUS)0x002C)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_3DNOW_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (3DNow!).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_3DNOW_NOT_SUPPORTED ((HV_STATUS)0x002D)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_EXTENDED_3DNOW_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (extended 3DNow!).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_EXTENDED_3DNOW_NOT_SUPPORTED ((HV_STATUS)0x002E)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_PAGE_1GB_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (1GB pages).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_PAGE_1GB_NOT_SUPPORTED ((HV_STATUS)0x002F)
+#define HV_STATUS_PROCESSOR_FEATURE_NOT_SUPPORTED ((HV_STATUS)0x0020)
 
 //
 // MessageId: HV_STATUS_PROCESSOR_CACHE_LINE_FLUSH_SIZE_INCOMPATIBLE
@@ -503,26 +358,6 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 #define HV_STATUS_PROCESSOR_CACHE_LINE_FLUSH_SIZE_INCOMPATIBLE ((HV_STATUS)0x0030)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XSAVE_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (XSAVE).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_XSAVE_NOT_SUPPORTED ((HV_STATUS)0x0031)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XSAVE_XSAVEOPT_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (XSAVEOPT).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_XSAVEOPT_NOT_SUPPORTED ((HV_STATUS)0x0032)
-
-//
 // MessageId: HV_STATUS_INSUFFICIENT_BUFFER
 //
 // MessageText:
@@ -530,36 +365,6 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 // The specified buffer was too small to contain all of the requested data.
 //
 #define HV_STATUS_INSUFFICIENT_BUFFER    ((HV_STATUS)0x0033)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XSAVE_AVX_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (AVX).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_XSAVE_AVX_NOT_SUPPORTED ((HV_STATUS)0x0034)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XSAVE_FEATURE_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported XSAVE processor
-// feature
-//
-#define HV_STATUS_PROCESSOR_FEATURE_XSAVE_FEATURE_NOT_SUPPORTED ((HV_STATUS)0x0035)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_XSAVE_SAVE_AREA_INCOMPATIBLE
-//
-// MessageText:
-//
-// The supplied restore state is incompatible with the processor's XSAVE save
-// layout.
-//
-#define HV_STATUS_PROCESSOR_XSAVE_SAVE_AREA_INCOMPATIBLE ((HV_STATUS)0x0036)
 
 //
 // MessageId: HV_STATUS_INCOMPATIBLE_PROCESSOR
@@ -583,37 +388,7 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 #define HV_STATUS_INSUFFICIENT_DEVICE_DOMAINS ((HV_STATUS)0x0038)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_AES_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (AES).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_AES_NOT_SUPPORTED ((HV_STATUS)0x0039)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_PCLMULQDQ_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (PCLMULQDQ).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_PCLMULQDQ_NOT_SUPPORTED ((HV_STATUS)0x003A)
-
-//
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_INCOMPATIBLE_XSAVE_FEATURES
-//
-// MessageText:
-//
-// The supplied restore state enables incompatible XSAVE features.
-// (Enabling AVX without XSAVE/enabling XSAVEOPT without XSAVE)
-//
-#define HV_STATUS_PROCESSOR_FEATURE_INCOMPATIBLE_XSAVE_FEATURES ((HV_STATUS)0x003B)
-
-//
-// MessageId: HV_STATUS_CPUID_PROCESSOR_PHY_ADDR_LIMIT_EXCEEDED
+// MessageId: HV_STATUS_CPUID_FEATURE_VALIDATION_ERROR
 //
 // MessageText:
 //
@@ -649,16 +424,6 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 #define HV_STATUS_SMX_ENABLED ((HV_STATUS)0x003F)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_PCID_NOT_SUPPORTED
-//
-// MessageText:
-//
-// The supplied restore state requires an unsupported processor
-// processor feature (PCID).
-//
-#define HV_STATUS_PROCESSOR_FEATURE_PCID_NOT_SUPPORTED ((HV_STATUS)0x0040)
-
-//
 // MessageId: HV_STATUS_INVALID_LP_INDEX
 //
 // MessageText:
@@ -668,144 +433,339 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 #define HV_STATUS_INVALID_LP_INDEX ((HV_STATUS)0x0041)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_FMA4_NOT_SUPPORTED
+// MessageId: HV_STATUS_INVALID_REGISTER_VALUE
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (FMA4).
+// The supplied register value is invalid.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_FMA4_NOT_SUPPORTED ((HV_STATUS)0x0042)
+#define HV_STATUS_INVALID_REGISTER_VALUE ((HV_STATUS)0x0050)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_F16C_NOT_SUPPORTED
+// MessageId: HV_STATUS_INVALID_VTL_STATE
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (F16C).
+// The supplied virtual trust level is not in the correct state to perform the requested operation.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_F16C_NOT_SUPPORTED ((HV_STATUS)0x0043)
+#define HV_STATUS_INVALID_VTL_STATE ((HV_STATUS)0x0051)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_RDRAND_NOT_SUPPORTED
+// MessageId: HV_STATUS_NX_NOT_DETECTED
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (RDRAND).
+// NX not detected on the machine.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_RDRAND_NOT_SUPPORTED ((HV_STATUS)0x0044)
+#define HV_STATUS_NX_NOT_DETECTED ((HV_STATUS)(0x0055))
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_RDWRFSGS_NOT_SUPPORTED
+// MessageId: HV_STATUS_INVALID_DEVICE_ID
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Read/Write FS/GS).
+// The supplied device ID is invalid.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_RDWRFSGS_NOT_SUPPORTED ((HV_STATUS)0x0045)
+#define HV_STATUS_INVALID_DEVICE_ID ((HV_STATUS)0x0057)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_SMEP_NOT_SUPPORTED
+// MessageId: HV_STATUS_INVALID_DEVICE_STATE
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (SMEP).
+// The operation is not allowed in the current device state.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_SMEP_NOT_SUPPORTED ((HV_STATUS)0x0046)
+#define HV_STATUS_INVALID_DEVICE_STATE ((HV_STATUS)0x0058)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_ENHANCED_FAST_STRING_NOT_SUPPORTED
+// MessageId: HV_STATUS_PENDING_PAGE_REQUESTS
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Enhanced Fast String).
+// The device had pending page requests which were discarded.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_ENHANCED_FAST_STRING_NOT_SUPPORTED ((HV_STATUS)0x0047)
+#define HV_STATUS_PENDING_PAGE_REQUESTS ((HV_STATUS)0x0059)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_MOVBE_NOT_SUPPORTED
+// MessageId: HV_STATUS_PAGE_REQUEST_INVALID
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (MovBe Instruction).
+// The supplied page request specifies a memory access that the guest does not
+// have permissions to perform.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_MOVBE_NOT_SUPPORTED ((HV_STATUS)0x0048)
+#define HV_STATUS_PAGE_REQUEST_INVALID ((HV_STATUS)0x0060)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_BMI1_NOT_SUPPORTED
+// MessageId: HV_STATUS_KEY_ALREADY_EXISTS
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Bmi1).
+// The entry cannot be added as another entry with the same key already exists.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_BMI1_NOT_SUPPORTED ((HV_STATUS)0x0049)
+#define HV_STATUS_KEY_ALREADY_EXISTS     ((HV_STATUS)0x0065)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_BMI2_NOT_SUPPORTED
+// MessageId: HV_STATUS_DEVICE_ALREADY_IN_DOMAIN
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Bmi2).
+// The device is already attached to the device domain.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_BMI2_NOT_SUPPORTED ((HV_STATUS)0x004A)
+#define HV_STATUS_DEVICE_ALREADY_IN_DOMAIN     ((HV_STATUS)0x0066)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_HLE_NOT_SUPPORTED
+// MessageId: HV_STATUS_INVALID_CPU_GROUP_ID
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Hle).
+// A CPU group with the specified CPU group Id does not exist.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_HLE_NOT_SUPPORTED ((HV_STATUS)0x004B)
+#define HV_STATUS_INVALID_CPU_GROUP_ID ((HV_STATUS)0x006F)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_RTM_NOT_SUPPORTED
+// MessageId: HV_STATUS_INVALID_CPU_GROUP_STATE
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Rtm).
+// The hypervisor could not perform the operation because the CPU group is entering or in an invalid state.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_RTM_NOT_SUPPORTED ((HV_STATUS)0x004C)
+#define HV_STATUS_INVALID_CPU_GROUP_STATE ((HV_STATUS)0x0070)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XSAVE_FMA_NOT_SUPPORTED
+// MessageId: HV_STATUS_OPERATION_FAILED
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Fma).
+// The requested operation failed.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_XSAVE_FMA_NOT_SUPPORTED ((HV_STATUS)0x004D)
+#define HV_STATUS_OPERATION_FAILED       ((HV_STATUS)0x0071)
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_XSAVE_AVX2_NOT_SUPPORTED
+// MessageId: HV_STATUS_NOT_ALLOWED_WITH_NESTED_VIRT_ACTIVE
 //
 // MessageText:
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (Avx2).
+// The requested operation is not allowed due to one or more virtual processors
+// having nested virtualization active.
 //
-#define HV_STATUS_PROCESSOR_FEATURE_XSAVE_AVX2_NOT_SUPPORTED ((HV_STATUS)0x004E)
+#define HV_STATUS_NOT_ALLOWED_WITH_NESTED_VIRT_ACTIVE  ((HV_STATUS)0x0072)
+
+typedef union _HV_PICO100_DURATION
+{
+    UINT64 AsUINT64;
+} HV_PICO100_DURATION;
 
 //
-// MessageId: HV_STATUS_PROCESSOR_FEATURE_NPIEP1_NOT_SUPPORTED
+// Definition of the VP exit reason structure
 //
-// MessageText:
+
+typedef union _HV_X64_MSR_VP_EXIT_REASON_CONTENTS
+{
+    UINT64 AsUINT64;
+    struct
+    {
+        UINT32 AdditionalReason;
+        UINT8  Reason;
+        UINT8  ReservedZ[3];
+    };
+} HV_X64_MSR_VP_EXIT_REASON_CONTENTS, *PHV_X64_MSR_VP_EXIT_REASON_CONTENTS;
+
 //
-// The supplied restore state requires an unsupported processor
-// processor feature (NPIEP1).
+// Declare structure used to control the VP exit interrupts
 //
-#define HV_STATUS_PROCESSOR_FEATURE_NPIEP1_NOT_SUPPORTED ((HV_STATUS)0x004F)
+
+typedef union _HV_X64_MSR_VP_EXIT_INTERRUPT_CONTROL_CONTENTS
+{
+    UINT64 AsUINT64;
+    struct
+    {
+        UINT8 Vector;
+        UINT8 SampleRate;
+        UINT8 ReservedZ[6];
+    };
+} HV_X64_MSR_VP_EXIT_INTERRUPT_CONTROL_CONTENTS, *PHV_X64_MSR_VP_EXIT_INTERRUPT_CONTROL_CONTENTS;
+
+//
+// VP Exit Tracing Event Types. These masks are ORed together to
+// control the set of events that is enabled.
+//
+
+#define HV_TR_VP_EXIT_NONE                        0x0000000000000000
+
+#define HV_TR_VP_EXIT_HYPERCALL                   0x0000000000000001
+#define HV_TR_VP_EXIT_GUEST_EXCEPTION             0x0000000000000002
+#define HV_TR_VP_EXIT_MSR_READ                    0x0000000000000004
+#define HV_TR_VP_EXIT_MSR_WRITE                   0x0000000000000008
+#define HV_TR_VP_EXIT_CR_READ                     0x0000000000000010
+#define HV_TR_VP_EXIT_CR_WRITE                    0x0000000000000020
+#define HV_TR_VP_EXIT_HLT_INSTRUCTION             0x0000000000000040
+#define HV_TR_VP_EXIT_MWAIT_INSTRUCTION           0x0000000000000080
+#define HV_TR_VP_EXIT_CPUID_INSTRUCTION           0x0000000000000100
+#define HV_TR_VP_EXIT_IO_PORT_READ                0x0000000000000200
+#define HV_TR_VP_EXIT_IO_PORT_WRITE               0x0000000000000400
+#define HV_TR_VP_EXIT_EMULATED_INSTRUCTION        0x0000000000000800
+#define HV_TR_VP_EXIT_INVLPG_INSTRUCTION          0x0000000000001000
+#define HV_TR_VP_EXIT_IRET_INSTRUCTION            0x0000000000002000
+#define HV_TR_VP_EXIT_TASK_SWITCH                 0x0000000000004000
+#define HV_TR_VP_EXIT_INVD_INSTRUCTION            0x0000000000008000
+#define HV_TR_VP_EXIT_DR_ACCESS                   0x0000000000010000
+#define HV_TR_VP_EXIT_FERR_FREEZE                 0x0000000000020000
+#define HV_TR_VP_EXIT_MEMORY_INTERCEPT            0x0000000000040000
+#define HV_TR_VP_EXIT_REFLECTED_EXCEPTION         0x0000000000080000
+#define HV_TR_VP_EXIT_APIC_EOI                    0x0000000000100000
+#define HV_TR_VP_EXIT_APIC_WRITE                  0x0000000000200000
+#define HV_TR_VP_EXIT_APIC_ACCESS                 0x0000000000400000
+#define HV_TR_VP_EXIT_NESTED_PAGE_FAULT           0x0000000000800000
+#define HV_TR_VP_EXIT_PAUSE_LOOP_EXIT             0x0000000001000000
+#define HV_TR_VP_EXIT_CONTEXT_SWITCH              0x0000000002000000
+
+#define HV_TR_VP_EXIT_VAILD_BITS                  0x0000000003FFFFFF
+
+#define HV_TR_VP_EXIT_ALL                         0xFFFFFFFFFFFFFFFF
+
+//
+// Declare the MSRs used to control VP exit tracing and get the
+// reasons associated with the event interrupts
+//
+
+#define HV_TR_VP_EXIT_INTERRUPTS_DISABLED_VECTOR 0
+
+#define HV_X64_MSR_VP_EXIT_REASON (0x40000074)
+#define HV_X64_MSR_VP_EXIT_INTERRUPT_CONTROL (0x40000075)
+#define HV_X64_MSR_VP_EXIT_TRACE_EVENTS_CONTROL (0x40000076)
+
+
+
+#if defined(_ARM64_)
+
+#define HV_INTERRUPT_STATE_REGISTER HV_ARM64_INTERRUPT_STATE_REGISTER
+#define PHV_INTERRUPT_STATE_REGISTER PHV_ARM64_INTERRUPT_STATE_REGISTER
+
+#define HV_PENDING_INTERRUPTION_TYPE HV_ARM64_PENDING_INTERRUPTION_TYPE
+#define PHV_PENDING_INTERRUPTION_TYPE PHV_ARM64_PENDING_INTERRUPTION_TYPE
+
+#define HV_PENDING_INTERRUPTION_REGISTER HV_ARM64_PENDING_INTERRUPTION_REGISTER
+#define PHV_PENDING_INTERRUPTION_REGISTER PHV_ARM64_PENDING_INTERRUPTION_REGISTER
+
+#define HV_PENDING_EVENT  HV_ARM64_PENDING_EVENT
+#define PHV_PENDING_EVENT  PHV_ARM64_PENDING_EVENT
+
+#define HV_PENDING_EVENT_TYPE HV_ARM64_PENDING_EVENT_TYPE
+
+#define HvPendingEventException HvArm64PendingEventException
+
+#else
+
+#define HV_INTERRUPT_STATE_REGISTER HV_X64_INTERRUPT_STATE_REGISTER
+#define PHV_INTERRUPT_STATE_REGISTER PHV_X64_INTERRUPT_STATE_REGISTER
+
+#define HV_PENDING_INTERRUPTION_TYPE HV_X64_PENDING_INTERRUPTION_TYPE
+#define PHV_PENDING_INTERRUPTION_TYPE PHV_X64_PENDING_INTERRUPTION_TYPE
+
+#define HV_PENDING_INTERRUPTION_REGISTER HV_X64_PENDING_INTERRUPTION_REGISTER
+#define PHV_PENDING_INTERRUPTION_REGISTER PHV_X64_PENDING_INTERRUPTION_REGISTER
+
+#define HV_PENDING_EVENT  HV_X64_PENDING_EVENT
+#define PHV_PENDING_EVENT  PHV_X64_PENDING_EVENT
+
+#define HV_PENDING_EVENT_TYPE HV_X64_PENDING_EVENT_TYPE
+
+#define HvPendingEventException HvX64PendingEventException
+
+#endif
+
+
+typedef const HV_REGISTER_VALUE *PCHV_REGISTER_VALUE;
+
+//
+// Define intercept types.
+//
+typedef enum _HV_INTERCEPT_TYPE
+{
+
+#if defined(_AMD64_) || defined(_X86_)
+
+    //
+    // Platform-specific intercept types.
+    //
+    HvInterceptTypeX64IoPort = 0x00000000,
+    HvInterceptTypeX64Msr = 0x00000001,
+    HvInterceptTypeX64Cpuid = 0x00000002,
+
+#endif
+
+    HvInterceptTypeException = 0x00000003,
+    HvInterceptTypeRegister = 0x00000004,
+    HvInterceptTypeMmio = 0x00000005,
+
+#if defined (_AMD64_)
+
+    HvInterceptTypeX64GlobalCpuid = 0x00000006,
+
+#endif
+
+    HvInterceptTypeMax,
+    HvInterceptTypeInvalid = 0xFFFFFFFF,
+
+} HV_INTERCEPT_TYPE, *PHV_INTERCEPT_TYPE;
+
+
+#if !defined(_ARM64_)
+
+//
+// Define IO port type.
+//
+typedef UINT16 HV_X64_IO_PORT, *PHV_X64_IO_PORT;
+
+#endif
+
+//
+// Define intercept parameters.
+//
+typedef union _HV_INTERCEPT_PARAMETERS
+{
+    //
+    // HV_INTERCEPT_PARAMETERS is defined to be an 8-byte field.
+    //
+    UINT64 AsUINT64;
+
+
+#if !defined(_ARM64_)
+
+    //
+    // HvInterceptTypeX64IoPort.
+    //
+    HV_X64_IO_PORT IoPort;
+
+#endif
+
+    //
+    // HvInterceptTypeX64Cpuid.
+    //
+    UINT32 CpuidIndex;
+
+    //
+    // HvInterceptTypeException.
+    //
+    UINT16 ExceptionVector;
+
+    //
+    // N.B. Other intercept types do not have any paramaters.
+    //
+
+} HV_INTERCEPT_PARAMETERS, *PHV_INTERCEPT_PARAMETERS;
+
+
+//
+// Define intercept descriptor structure.
+//
+typedef struct  _HV_INTERCEPT_DESCRIPTOR
+{
+    HV_INTERCEPT_TYPE Type;
+    HV_INTERCEPT_PARAMETERS Parameters;
+} HV_INTERCEPT_DESCRIPTOR, *PHV_INTERCEPT_DESCRIPTOR;
+typedef const HV_INTERCEPT_DESCRIPTOR *PCHV_INTERCEPT_DESCRIPTOR;
 
 //
 // Define connection identifier type.
@@ -822,6 +782,55 @@ typedef union _HV_CONNECTION_ID
     };
 
 } HV_CONNECTION_ID, *PHV_CONNECTION_ID;
+
+//
+// Emulated timer period
+//
+typedef union _HV_EMULATED_TIMER_PERIOD
+{
+    UINT64              AsUINT64;
+    HV_PICO100_DURATION Period;
+
+} HV_EMULATED_TIMER_PERIOD, *PHV_EMULATED_TIMER_PERIOD;
+
+//
+// Periodic Timer route
+//
+typedef union _HV_EMULATED_TIMER_CONTROL
+{
+    UINT64  AsUINT64;
+
+    struct
+    {
+        UINT32  Vector                  :  8;
+        UINT32  DeliveryMode            :  3;
+        UINT32  LogicalDestinationMode  :  1;
+        UINT32  Enabled                 :  1;
+        UINT32  TargetVtl               :  4;
+        UINT32  Reserved1               : 15;
+        UINT32  Reserved2               : 24;
+        UINT32  Mda                     :  8;
+    };
+
+} HV_EMULATED_TIMER_CONTROL, *PHV_EMULATED_TIMER_CONTROL;
+
+//
+// ACPI PM timer
+//
+typedef union _HV_PM_TIMER_INFO
+{
+    UINT64  AsUINT64;
+
+    struct
+    {
+        UINT32  Port                : 16;
+        UINT32  Width24             :  1;
+        UINT32  Enabled             :  1;
+        UINT32  Reserved1           : 14;
+        UINT32  Reserved2           : 32;
+    };
+
+} HV_PM_TIMER_INFO, *PHV_PM_TIMER_INFO;
 
 //
 // Debug channel identifier
@@ -1195,273 +1204,8 @@ typedef struct _HV_CRASHDUMP_AREA_V3
 
 } HV_CRASHDUMP_AREA_V3, *PHV_CRASHDUMP_AREA_V3;
 
-//
-// External names used to manupulate registers
-//
 
-typedef enum _HV_REGISTER_NAME
-{
-    // Suspend Registers
-    HvRegisterExplicitSuspend   = 0x00000000,
-    HvRegisterInterceptSuspend  = 0x00000001,
-
-    // Pending Interruption Register
-    HvX64RegisterPendingInterruption    = 0x00010002,
-
-    // Interrupt State register
-    HvX64RegisterInterruptState         = 0x00010003,
-
-    // User-Mode Registers
-    HvX64RegisterRax                = 0x00020000,
-    HvX64RegisterRcx                = 0x00020001,
-    HvX64RegisterRdx                = 0x00020002,
-    HvX64RegisterRbx                = 0x00020003,
-    HvX64RegisterRsp                = 0x00020004,
-    HvX64RegisterRbp                = 0x00020005,
-    HvX64RegisterRsi                = 0x00020006,
-    HvX64RegisterRdi                = 0x00020007,
-    HvX64RegisterR8                 = 0x00020008,
-    HvX64RegisterR9                 = 0x00020009,
-    HvX64RegisterR10                = 0x0002000A,
-    HvX64RegisterR11                = 0x0002000B,
-    HvX64RegisterR12                = 0x0002000C,
-    HvX64RegisterR13                = 0x0002000D,
-    HvX64RegisterR14                = 0x0002000E,
-    HvX64RegisterR15                = 0x0002000F,
-    HvX64RegisterRip                = 0x00020010,
-    HvX64RegisterRflags             = 0x00020011,
-
-    // Floating Point and Vector Registers
-    HvX64RegisterXmm0               = 0x00030000,
-    HvX64RegisterXmm1               = 0x00030001,
-    HvX64RegisterXmm2               = 0x00030002,
-    HvX64RegisterXmm3               = 0x00030003,
-    HvX64RegisterXmm4               = 0x00030004,
-    HvX64RegisterXmm5               = 0x00030005,
-    HvX64RegisterXmm6               = 0x00030006,
-    HvX64RegisterXmm7               = 0x00030007,
-    HvX64RegisterXmm8               = 0x00030008,
-    HvX64RegisterXmm9               = 0x00030009,
-    HvX64RegisterXmm10              = 0x0003000A,
-    HvX64RegisterXmm11              = 0x0003000B,
-    HvX64RegisterXmm12              = 0x0003000C,
-    HvX64RegisterXmm13              = 0x0003000D,
-    HvX64RegisterXmm14              = 0x0003000E,
-    HvX64RegisterXmm15              = 0x0003000F,
-    HvX64RegisterFpMmx0             = 0x00030010,
-    HvX64RegisterFpMmx1             = 0x00030011,
-    HvX64RegisterFpMmx2             = 0x00030012,
-    HvX64RegisterFpMmx3             = 0x00030013,
-    HvX64RegisterFpMmx4             = 0x00030014,
-    HvX64RegisterFpMmx5             = 0x00030015,
-    HvX64RegisterFpMmx6             = 0x00030016,
-    HvX64RegisterFpMmx7             = 0x00030017,
-    HvX64RegisterFpControlStatus    = 0x00030018,
-    HvX64RegisterXmmControlStatus   = 0x00030019,
-
-    // Control Registers
-    HvX64RegisterCr0                = 0x00040000,
-    HvX64RegisterCr2                = 0x00040001,
-    HvX64RegisterCr3                = 0x00040002,
-    HvX64RegisterCr4                = 0x00040003,
-    HvX64RegisterCr8                = 0x00040004,
-    HvX64RegisterXfem               = 0x00040005,
-
-    // Debug Registers
-    HvX64RegisterDr0                = 0x00050000,
-    HvX64RegisterDr1                = 0x00050001,
-    HvX64RegisterDr2                = 0x00050002,
-    HvX64RegisterDr3                = 0x00050003,
-    HvX64RegisterDr6                = 0x00050004,
-    HvX64RegisterDr7                = 0x00050005,
-
-    // Segment Registers
-    HvX64RegisterEs                 = 0x00060000,
-    HvX64RegisterCs                 = 0x00060001,
-    HvX64RegisterSs                 = 0x00060002,
-    HvX64RegisterDs                 = 0x00060003,
-    HvX64RegisterFs                 = 0x00060004,
-    HvX64RegisterGs                 = 0x00060005,
-    HvX64RegisterLdtr               = 0x00060006,
-    HvX64RegisterTr                 = 0x00060007,
-
-    // Table Registers
-    HvX64RegisterIdtr               = 0x00070000,
-    HvX64RegisterGdtr               = 0x00070001,
-
-    // Virtualized MSRs
-    HvX64RegisterTsc                = 0x00080000,
-    HvX64RegisterEfer               = 0x00080001,
-    HvX64RegisterKernelGsBase       = 0x00080002,
-    HvX64RegisterApicBase           = 0x00080003,
-    HvX64RegisterPat                = 0x00080004,
-    HvX64RegisterSysenterCs         = 0x00080005,
-    HvX64RegisterSysenterEip        = 0x00080006,
-    HvX64RegisterSysenterEsp        = 0x00080007,
-    HvX64RegisterStar               = 0x00080008,
-    HvX64RegisterLstar              = 0x00080009,
-    HvX64RegisterCstar              = 0x0008000A,
-    HvX64RegisterSfmask             = 0x0008000B,
-    HvX64RegisterInitialApicId      = 0x0008000C,
-
-    //
-    // Cache control MSRs
-    //
-    HvX64RegisterMsrMtrrCap         = 0x0008000D,
-    HvX64RegisterMsrMtrrDefType     = 0x0008000E,
-    HvX64RegisterMsrMtrrPhysBase0   = 0x00080010,
-    HvX64RegisterMsrMtrrPhysBase1   = 0x00080011,
-    HvX64RegisterMsrMtrrPhysBase2   = 0x00080012,
-    HvX64RegisterMsrMtrrPhysBase3   = 0x00080013,
-    HvX64RegisterMsrMtrrPhysBase4   = 0x00080014,
-    HvX64RegisterMsrMtrrPhysBase5   = 0x00080015,
-    HvX64RegisterMsrMtrrPhysBase6   = 0x00080016,
-    HvX64RegisterMsrMtrrPhysBase7   = 0x00080017,
-    HvX64RegisterMsrMtrrPhysBase8   = 0x00080018,
-    HvX64RegisterMsrMtrrPhysBase9   = 0x00080019,
-    HvX64RegisterMsrMtrrPhysBaseA   = 0x0008001A,
-    HvX64RegisterMsrMtrrPhysBaseB   = 0x0008001B,
-    HvX64RegisterMsrMtrrPhysBaseC   = 0x0008001C,
-    HvX64RegisterMsrMtrrPhysBaseD   = 0x0008001D,
-    HvX64RegisterMsrMtrrPhysBaseE   = 0x0008001E,
-    HvX64RegisterMsrMtrrPhysBaseF   = 0x0008001F,
-    HvX64RegisterMsrMtrrPhysMask0   = 0x00080040,
-    HvX64RegisterMsrMtrrPhysMask1   = 0x00080041,
-    HvX64RegisterMsrMtrrPhysMask2   = 0x00080042,
-    HvX64RegisterMsrMtrrPhysMask3   = 0x00080043,
-    HvX64RegisterMsrMtrrPhysMask4   = 0x00080044,
-    HvX64RegisterMsrMtrrPhysMask5   = 0x00080045,
-    HvX64RegisterMsrMtrrPhysMask6   = 0x00080046,
-    HvX64RegisterMsrMtrrPhysMask7   = 0x00080047,
-    HvX64RegisterMsrMtrrPhysMask8   = 0x00080048,
-    HvX64RegisterMsrMtrrPhysMask9   = 0x00080049,
-    HvX64RegisterMsrMtrrPhysMaskA   = 0x0008004A,
-    HvX64RegisterMsrMtrrPhysMaskB   = 0x0008004B,
-    HvX64RegisterMsrMtrrPhysMaskC   = 0x0008004C,
-    HvX64RegisterMsrMtrrPhysMaskD   = 0x0008004D,
-    HvX64RegisterMsrMtrrPhysMaskE   = 0x0008004E,
-    HvX64RegisterMsrMtrrPhysMaskF   = 0x0008004F,
-    HvX64RegisterMsrMtrrFix64k00000 = 0x00080070,
-    HvX64RegisterMsrMtrrFix16k80000 = 0x00080071,
-    HvX64RegisterMsrMtrrFix16kA0000 = 0x00080072,
-    HvX64RegisterMsrMtrrFix4kC0000  = 0x00080073,
-    HvX64RegisterMsrMtrrFix4kC8000  = 0x00080074,
-    HvX64RegisterMsrMtrrFix4kD0000  = 0x00080075,
-    HvX64RegisterMsrMtrrFix4kD8000  = 0x00080076,
-    HvX64RegisterMsrMtrrFix4kE0000  = 0x00080077,
-    HvX64RegisterMsrMtrrFix4kE8000  = 0x00080078,
-    HvX64RegisterMsrMtrrFix4kF0000  = 0x00080079,
-    HvX64RegisterMsrMtrrFix4kF8000  = 0x0008007A,
-
-    // Hypervisor-defined MSRs (Misc)
-    HvX64RegisterVpRuntime           = 0x00090000,
-    HvX64RegisterHypercall           = 0x00090001,
-    HvX64RegisterGuestOsId           = 0x00090002,
-    HvX64RegisterVpIndex             = 0x00090003,
-    HvX64RegisterTimeRefCount        = 0x00090004,
-
-    // Virtual APIC registers MSRs
-    HvX64RegisterEoi                = 0x00090010,
-    HvX64RegisterIcr                = 0x00090011,
-    HvX64RegisterTpr                = 0x00090012,
-    HvX64RegisterApicAssistPage     = 0x00090013,
-
-    // Performance statistics MSRs
-    HvX64RegisterStatsPartitionRetail  = 0x00090020,
-    HvX64RegisterStatsPartitionInternal= 0x00090021,
-    HvX64RegisterStatsVpRetail         = 0x00090022,
-    HvX64RegisterStatsVpInternal       = 0x00090023,
-
-    // Hypervisor-defined MSRs (Synic)
-    HvX64RegisterSint0              = 0x000A0000,
-    HvX64RegisterSint1              = 0x000A0001,
-    HvX64RegisterSint2              = 0x000A0002,
-    HvX64RegisterSint3              = 0x000A0003,
-    HvX64RegisterSint4              = 0x000A0004,
-    HvX64RegisterSint5              = 0x000A0005,
-    HvX64RegisterSint6              = 0x000A0006,
-    HvX64RegisterSint7              = 0x000A0007,
-    HvX64RegisterSint8              = 0x000A0008,
-    HvX64RegisterSint9              = 0x000A0009,
-    HvX64RegisterSint10             = 0x000A000A,
-    HvX64RegisterSint11             = 0x000A000B,
-    HvX64RegisterSint12             = 0x000A000C,
-    HvX64RegisterSint13             = 0x000A000D,
-    HvX64RegisterSint14             = 0x000A000E,
-    HvX64RegisterSint15             = 0x000A000F,
-    HvX64RegisterScontrol           = 0x000A0010,
-    HvX64RegisterSversion           = 0x000A0011,
-    HvX64RegisterSifp               = 0x000A0012,
-    HvX64RegisterSipp               = 0x000A0013,
-    HvX64RegisterEom                = 0x000A0014,
-    HvX64RegisterSirbp              = 0x000A0015,
-
-    // Hypervisor-defined MSRs (Synthetic Timers)
-    HvX64RegisterStimer0Config      = 0x000B0000,
-    HvX64RegisterStimer0Count       = 0x000B0001,
-    HvX64RegisterStimer1Config      = 0x000B0002,
-    HvX64RegisterStimer1Count       = 0x000B0003,
-    HvX64RegisterStimer2Config      = 0x000B0004,
-    HvX64RegisterStimer2Count       = 0x000B0005,
-    HvX64RegisterStimer3Config      = 0x000B0006,
-    HvX64RegisterStimer3Count       = 0x000B0007,
-
-    //
-    // XSAVE/XRSTOR register names.
-    //
-
-    // XSAVE AFX extended state registers. YMM registers are 256-bit.
-    // However, only 128-bit access is currently supported.
-    // N.B. The lower 128-bits of YMM registers are overlyaid with
-    // the cooresponding XMM register.
-    HvX64RegisterYmm0Low             = 0x000C0000,
-    HvX64RegisterYmm1Low             = 0x000C0001,
-    HvX64RegisterYmm2Low             = 0x000C0002,
-    HvX64RegisterYmm3Low             = 0x000C0003,
-    HvX64RegisterYmm4Low             = 0x000C0004,
-    HvX64RegisterYmm5Low             = 0x000C0005,
-    HvX64RegisterYmm6Low             = 0x000C0006,
-    HvX64RegisterYmm7Low             = 0x000C0007,
-    HvX64RegisterYmm8Low             = 0x000C0008,
-    HvX64RegisterYmm9Low             = 0x000C0009,
-    HvX64RegisterYmm10Low            = 0x000C000A,
-    HvX64RegisterYmm11Low            = 0x000C000B,
-    HvX64RegisterYmm12Low            = 0x000C000C,
-    HvX64RegisterYmm13Low            = 0x000C000D,
-    HvX64RegisterYmm14Low            = 0x000C000E,
-    HvX64RegisterYmm15Low            = 0x000C000F,
-    HvX64RegisterYmm0High            = 0x000C0010,
-    HvX64RegisterYmm1High            = 0x000C0011,
-    HvX64RegisterYmm2High            = 0x000C0012,
-    HvX64RegisterYmm3High            = 0x000C0013,
-    HvX64RegisterYmm4High            = 0x000C0014,
-    HvX64RegisterYmm5High            = 0x000C0015,
-    HvX64RegisterYmm6High            = 0x000C0016,
-    HvX64RegisterYmm7High            = 0x000C0017,
-    HvX64RegisterYmm8High            = 0x000C0018,
-    HvX64RegisterYmm9High            = 0x000C0019,
-    HvX64RegisterYmm10High           = 0x000C001A,
-    HvX64RegisterYmm11High           = 0x000C001B,
-    HvX64RegisterYmm12High           = 0x000C001C,
-    HvX64RegisterYmm13High           = 0x000C001D,
-    HvX64RegisterYmm14High           = 0x000C001E,
-    HvX64RegisterYmm15High           = 0x000C001F
-
-} HV_REGISTER_NAME, *PHV_REGISTER_NAME;
 typedef const HV_REGISTER_NAME *PCHV_REGISTER_NAME;
-
-//
-// Definiton of the HvCallGetVpRegister hypercall input structure.
-// This call retrieves a Vp's register state.
-//
-
-typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_GET_VP_REGISTERS
-{
-    HV_PARTITION_ID     PartitionId;
-    HV_VP_INDEX         VpIndex;
-    HV_CALL_ATTRIBUTES
-    HV_REGISTER_NAME    Names[];
-} HV_INPUT_GET_VP_REGISTERS, *PHV_INPUT_GET_VP_REGISTERS;
 
 //
 // Definition of the HvCallSwitchVirtualAddressSpace hypercall input
@@ -1508,6 +1252,81 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_NOTIFY_LONG_SPINWAIT
 {
     UINT64 InitialLongSpinWait;
 } HV_INPUT_NOTIFY_LONG_SPINWAIT, *PHV_INPUT_NOTIFY_LONG_SPINWAIT;
+
+//
+// Definition of the HvCallUnmapGpaPages hypercall input structure.
+// This call unmaps a range of GPA.
+//
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UNMAP_GPA_PAGES
+{
+
+    //
+    // Supplies the partition ID of the partition that this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Supplies the base guest physical page number where the GPA
+    // space will be removed.
+    //
+
+    HV_GPA_PAGE_NUMBER TargetGpaBase;
+
+    //
+    // Supplies the flags to use for the unmapping.
+    //
+
+    HV_UNMAP_GPA_FLAGS UnmapFlags;
+
+} HV_INPUT_UNMAP_GPA_PAGES, *PHV_INPUT_UNMAP_GPA_PAGES;
+
+//
+// Definition of the HvCallModifySparseGpaPages hypercall input structure. This
+// call modifies the access mask of an existing set of GPA pages.
+//
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MODIFY_SPARSE_GPA_PAGES
+{
+    //
+    // Supplies the partition ID of the partition this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Supplies the new mapping flags to apply.
+    //
+
+    HV_MAP_GPA_FLAGS MapFlags;
+
+    //
+    // Reserved for future use - potentially for a address space ID.
+    //
+
+    UINT32 Rsvdz;
+
+    //
+    // Supplies an array of GPA page numbers to modify.
+    //
+
+    HV_CALL_ATTRIBUTES HV_GPA_PAGE_NUMBER GpaPageList[];
+
+} HV_INPUT_MODIFY_SPARSE_GPA_PAGES, *PHV_INPUT_MODIFY_SPARSE_GPA_PAGES;
+
+//
+// Definition of the HvCallInstallIntercept hypercall input
+// structure.  This call sets an intercept.
+//
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_INSTALL_INTERCEPT
+{
+    HV_PARTITION_ID PartitionId;
+    HV_INTERCEPT_ACCESS_TYPE_MASK AccessType;
+    HV_INTERCEPT_TYPE InterceptType;
+    HV_INTERCEPT_PARAMETERS InterceptParameter;
+} HV_INPUT_INSTALL_INTERCEPT, *PHV_INPUT_INSTALL_INTERCEPT;
 
 
 #ifdef __cplusplus

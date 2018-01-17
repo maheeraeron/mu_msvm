@@ -3,6 +3,7 @@
 
   Copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
   Portions copyright (c) 2011 - 2014, ARM Ltd. All rights reserved.<BR>
+  Copyright (c) 2016, Linaro Ltd. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -18,65 +19,68 @@
 #ifndef __MACRO_IO_LIBV8_H__
 #define __MACRO_IO_LIBV8_H__
 
-#define SetPrimaryStack(StackTop, GlobalSize, Tmp, Tmp1)  \
-  ands    Tmp, GlobalSize, #15        ;                   \
-  mov     Tmp1, #16                   ;                   \
-  sub     Tmp1, Tmp1, Tmp             ;                   \
-  csel    Tmp, Tmp1, Tmp, ne          ;                   \
-  add     GlobalSize, GlobalSize, Tmp ;                   \
-  sub     sp, StackTop, GlobalSize    ;                   \
-                                      ;                   \
-  mov     Tmp, sp                     ;                   \
-  mov     GlobalSize, #0x0            ;                   \
-_SetPrimaryStackInitGlobals:          ;                   \
-  cmp     Tmp, StackTop               ;                   \
-  b.eq    _SetPrimaryStackEnd         ;                   \
-  str     GlobalSize, [Tmp], #8       ;                   \
-  b       _SetPrimaryStackInitGlobals ;                   \
-_SetPrimaryStackEnd:
-
-// Initialize the Global Variable with '0'
-#define InitializePrimaryStack(GlobalSize, Tmp1, Tmp2) \
-  and     Tmp1, GlobalSize, #15       ;             \
-  mov     Tmp2, #16                   ;             \
-  sub     Tmp2, Tmp2, Tmp1            ;             \
-  add     GlobalSize, GlobalSize, Tmp2 ;            \
-                                      ;             \
-  mov     Tmp1, sp                    ;             \
-  sub     sp, sp, GlobalSize          ;             \
-  mov     GlobalSize, #0x0            ;             \
-_InitializePrimaryStackLoop:          ;             \
-  mov     Tmp2, sp                    ;             \
-  cmp     Tmp1, Tmp2                  ;             \
-  bls     _InitializePrimaryStackEnd  ;             \
-  str     GlobalSize, [Tmp1, #-8]!    ;             \
-  b       _InitializePrimaryStackLoop ;             \
-_InitializePrimaryStackEnd:
+// This is gross but GCC doesn't follow the C++ spec and is using a '#' in macro definitions.
+//
+#define CATSTR2(x,y) x##y
+#define CATSTR(x,y) CATSTR2(x,y)
+#define NUM(x) CATSTR(HASH,x)
+#define HASH #
 
 // CurrentEL : 0xC = EL3; 8 = EL2; 4 = EL1
 // This only selects between EL1 and EL2, else we die.
 // Provide the Macro with a safe temp xreg to use.
+#if !defined(_MSC_VER)
 #define EL1_OR_EL2(SAFE_XREG)        \
         mrs    SAFE_XREG, CurrentEL ;\
         cmp    SAFE_XREG, #0x8      ;\
+        b.gt   .                    ;\
         b.eq   2f                   ;\
-        cmp    SAFE_XREG, #0x4      ;\
-        b.ne   .                    ;// We should never get here
+        cbnz   SAFE_XREG, 1f        ;\
+        b      .                    ;// We should never get here
+#else
+#define EL1_OR_EL2(SAFE_XREG)        \
+        mrs    SAFE_XREG, currentel __CR__\
+        cmp    SAFE_XREG, NUM(0x8)  __CR__\
+6                                   __CR__\
+        bgt    %b6                  __CR__\
+        beq    %f2                  __CR__\
+        cbnz   SAFE_XREG, %f1       __CR__\
+5                                   __CR__\
+        bne    %b5                 // We should never get here
+#endif
 // EL1 code starts here
 
 // CurrentEL : 0xC = EL3; 8 = EL2; 4 = EL1
 // This only selects between EL1 and EL2 and EL3, else we die.
 // Provide the Macro with a safe temp xreg to use.
+#if !defined(_MSC_VER)
 #define EL1_OR_EL2_OR_EL3(SAFE_XREG) \
         mrs    SAFE_XREG, CurrentEL ;\
-        cmp    SAFE_XREG, #0xC      ;\
-        b.eq   3f                   ;\
         cmp    SAFE_XREG, #0x8      ;\
+        b.gt   3f                   ;\
         b.eq   2f                   ;\
-        cmp    SAFE_XREG, #0x4      ;\
-        b.ne   .                    ;// We should never get here
+        cbnz   SAFE_XREG, 1f        ;\
+        b      .                    ;// We should never get here
+#else
+#define EL1_OR_EL2_OR_EL3(SAFE_XREG) \
+        mrs    SAFE_XREG, currentel  __CR__\
+        cmp    SAFE_XREG, NUM(0x8)   __CR__\
+        bgt    %f3                   __CR__\
+        beq    %f2                   __CR__\
+        cbnz   SAFE_XREG, %f1        __CR__\
+5                                    __CR__\
+        bne    %b5                // We should never get here
+#endif
 // EL1 code starts here
-#if defined(__clang__)
+
+
+#if defined(_MSC_VER)
+
+// MSchange - add
+#define LoadConstantToReg(Data, Reg) \
+  ldr Reg, =Data
+
+#elif defined(__clang__)
 
 // load x0 with _Data
 #define LoadConstant(_Data)              \
@@ -106,5 +110,38 @@ _InitializePrimaryStackEnd:
 
 #endif // __GNUC__
 
-#endif // __MACRO_IO_LIBV8_H__
+#if !defined(_MSC_VER)
 
+#define _ASM_FUNC(Name, Section)    \
+  .global   Name                  ; \
+  .section  #Section, "ax"        ; \
+  .type     Name, %function       ; \
+  Name:
+
+#define ASM_FUNC(Name)            _ASM_FUNC(ASM_PFX(Name), .text. ## Name)
+
+#define MOV32(Reg, Val)                   \
+  movz      Reg, (Val) >> 16, lsl #16   ; \
+  movk      Reg, (Val) & 0xffff
+
+#define MOV64(Reg, Val)                             \
+  movz      Reg, (Val) >> 48, lsl #48             ; \
+  movk      Reg, ((Val) >> 32) & 0xffff, lsl #32  ; \
+  movk      Reg, ((Val) >> 16) & 0xffff, lsl #16  ; \
+  movk      Reg, (Val) & 0xffff
+
+#else
+
+#define MOV32(Reg, Val)                           \
+  movz      Reg, (Val) >> 16, lsl NUM(16)  __CR__ \
+  movk      Reg, (Val) & 0xffff
+
+#define MOV64(Reg, Val)                                     \
+  movz      Reg, (Val) >> 48, lsl NUM(48)            __CR__ \
+  movk      Reg, ((Val) >> 32) & 0xffff, lsl NUM(32) __CR__ \
+  movk      Reg, ((Val) >> 16) & 0xffff, lsl NUM(16) __CR__ \
+  movk      Reg, (Val) & 0xffff
+
+#endif
+
+#endif // __MACRO_IO_LIBV8_H__

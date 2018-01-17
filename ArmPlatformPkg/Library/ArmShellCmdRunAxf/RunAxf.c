@@ -110,6 +110,7 @@ ShellDynCmdRunAxfHandler (
   ShellStatus = SHELL_SUCCESS;
   FileHandle = NULL;
   FileData = NULL;
+  Entrypoint = NULL;
   InitializeListHead (&LoadList);
 
   // Only install if they are not there yet? First time or every time?
@@ -271,7 +272,7 @@ ShellDynCmdRunAxfHandler (
       Status = PreparePlatformHardware ();
       ASSERT_EFI_ERROR (Status);
 
-      StartElf = (ELF_ENTRYPOINT)Entrypoint;
+      StartElf = (ELF_ENTRYPOINT)((UINTN)Entrypoint);
       StartElf (0,0,0,0);
 
       // We should never get here.. But if we do, spin..

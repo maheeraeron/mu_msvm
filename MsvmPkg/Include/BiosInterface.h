@@ -15,7 +15,6 @@ Abstract:
 
 #pragma once
 
-
 //
 // BIOS Interface constants
 //
@@ -30,13 +29,9 @@ enum
 
 //
 // BIOS configuration ports.
+// 
+// See PCD MsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
 //
-enum
-{
-    BiosAddressPort     = 0x28,
-    BiosDataPort        = 0x2C
-};
-
 
 //
 // Values/Selectors for the BIOS configuration ports.
@@ -275,7 +270,6 @@ typedef struct _VM_MEMORY_RANGE
 //
 #define VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED  0x1
 #define VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY  0x2
-
 
 typedef struct _VM_MEMORY_RANGE_V5
 {

@@ -1,0 +1,49 @@
+#
+# Copyright (c) Microsoft Corporation
+#
+# Module Name:
+#
+#   TimeRuntimeDxe.inf
+#
+# Abstract
+#
+#   Component description file for Time runtime services module
+#
+
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = TimeRuntimeDxe
+    FILE_GUID                      = 6B4B149C-DFDB-4CB8-8C4C-63776068A0F6
+    MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+    VERSION_STRING                 = 1.0
+    ENTRY_POINT                    = InitializeTimeDxe
+
+[Sources]
+    TimeRuntimeDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    BaseMemoryLib
+    BaseLib
+    BiosDeviceLib
+    DebugLib
+    UefiBootServicesTableLib
+    UefiRuntimeLib
+    UefiDriverEntryPoint
+    IoLib #need this?
+    PrintLib #need this?
+    MemoryAllocationLib
+
+[Protocols]
+    gEfiRealTimeClockArchProtocolGuid
+[Guids]
+    gEfiEventVirtualAddressChangeGuid
+    gEfiEventExitBootServicesGuid
+    gEfiGlobalVariableGuid
+
+[Depex]
+    TRUE

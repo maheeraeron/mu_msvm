@@ -139,7 +139,7 @@ InitializeDisplay (
   goto EXIT;
 
 EXIT_ERROR_LCD_SHUTDOWN:
-  DEBUG((DEBUG_ERROR, "InitializeDisplay: ERROR - Can not initialise the display. Exit Status=%r\n", Status));
+  DEBUG((DEBUG_ERROR, "InitializeDisplay: ERROR - Can not initialize the display. Exit Status=%r\n", Status));
   LcdShutdown ();
 
 EXIT:

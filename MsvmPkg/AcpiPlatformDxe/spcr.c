@@ -24,6 +24,17 @@ Author:
 #include <Protocol/SerialIo.h>
 #include "AcpiPlatform.h"
 
+// Establish local define for architecture
+
+#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define _SPCR_INTEL_
+#elif defined(MDE_CPU_AARCH64)
+#define _SPCR_ARM_
+#else
+#error Unsupported Architecture!
+#endif
+
+
 EFI_STATUS
 SpcrInitializeTable(
     __inout EFI_ACPI_DESCRIPTION_HEADER* Table
@@ -86,8 +97,16 @@ Return Value:
     //
     spcr = (EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE *)Table;
 
-    spcr->BaseAddress.Address = (consoleMode == ConfigLibConsoleModeCOM1) ? 0x3F8 : 0x2F8;
-    spcr->Irq = (consoleMode == ConfigLibConsoleModeCOM1) ? 4 : 3;
+    spcr->BaseAddress.Address = (consoleMode == ConfigLibConsoleModeCOM1) ? 
+        FixedPcdGet32(PcdCom1RegisterBase) : FixedPcdGet32(PcdCom2RegisterBase);
+
+#if defined(_SPCR_INTEL_)
+    spcr->Irq = (consoleMode == ConfigLibConsoleModeCOM1) ? 
+        FixedPcdGet8(PcdCom1Vector) : FixedPcdGet8(PcdCom2Vector);
+#elif defined(_SPCR_ARM_)
+    spcr->GlobalSystemInterrupt = (consoleMode == ConfigLibConsoleModeCOM1) ? 
+        FixedPcdGet8(PcdCom1Vector) : FixedPcdGet8(PcdCom2Vector);
+#endif
 
     switch (FixedPcdGet64(PcdUartDefaultBaudRate))
     {

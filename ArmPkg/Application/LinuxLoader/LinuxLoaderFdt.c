@@ -21,14 +21,35 @@
 #include "LinuxLoader.h"
 
 #define ALIGN(x, a)     (((x) + ((a) - 1)) & ~((a) - 1))
+
+#ifdef _MSC_VER
+#if (_INTEGRAL_MAX_BITS==64)
+#define USE_64 1
+#else
+#define USE_64 0
+#endif
+#else
+// assume GCC or workalike
+#if (__SIZEOF_POINTER__==8)
+#define USE_64 1
+#else
+#define USE_64 0
+#endif
+#endif
+
+#if USE_64
+#define PALIGN(p, a)	((void *)(ALIGN ((unsigned long long)(p), (a))))
+#define GET_CELL(p)     (p += 4, (uint32_t)(*((const uint64_t *)(p-4))))
+#else
 #define PALIGN(p, a)    ((void *)(ALIGN ((unsigned long)(p), (a))))
-#define GET_CELL(p)     (p += 4, *((const UINT32 *)(p-4)))
+#define GET_CELL(p)     (p += 4, *((const uint32_t *)(p-4)))
+#endif
 
 STATIC
 UINTN
 cpu_to_fdtn (UINTN x) {
   if (sizeof (UINTN) == sizeof (UINT32)) {
-    return cpu_to_fdt32 (x);
+    return cpu_to_fdt32 ((fdt32_t)x);
   } else {
     return cpu_to_fdt64 (x);
   }
@@ -118,9 +139,9 @@ RelocateFdt (
 
   // Load the Original FDT tree into the new region
   Error = fdt_open_into ((VOID*)(UINTN) OriginalFdt,
-            (VOID*)(UINTN)(*RelocatedFdt), *RelocatedFdtSize);
+            (VOID*)(UINTN)(*RelocatedFdt), (int)*RelocatedFdtSize);
   if (Error) {
-    DEBUG ((EFI_D_ERROR, "fdt_open_into(): %a\n", fdt_strerror (Error)));
+    DEBUG ((EFI_D_ERROR, "fdt_open_into(): %a\n", fdt_strerror ((int)Error)));
     gBS->FreePages (*RelocatedFdtAlloc, EFI_SIZE_TO_PAGES (*RelocatedFdtSize));
     return EFI_INVALID_PARAMETER;
   }
@@ -216,7 +237,7 @@ PrepareFdt (
   }
 
   DEBUG_CODE_BEGIN ();
-    BootArg = fdt_getprop (fdt, node, "bootargs", &lenp);
+    BootArg = fdt_getprop (fdt, (int)node, "bootargs", &lenp);
     if (BootArg != NULL) {
       DEBUG ((EFI_D_ERROR, "BootArg: %a\n", BootArg));
     }
@@ -226,7 +247,7 @@ PrepareFdt (
   // Set Linux CmdLine
   //
   if ((CommandLineArguments != NULL) && (AsciiStrLen (CommandLineArguments) > 0)) {
-    err = fdt_setprop (fdt, node, "bootargs", CommandLineArguments, AsciiStrSize (CommandLineArguments));
+    err = fdt_setprop (fdt, (int)node, "bootargs", CommandLineArguments, (int)AsciiStrSize (CommandLineArguments));
     if (err) {
       DEBUG ((EFI_D_ERROR, "Fail to set new 'bootarg' (err:%d)\n", err));
     }
@@ -237,12 +258,12 @@ PrepareFdt (
   //
   if (InitrdImageSize != 0) {
     InitrdImageStart = cpu_to_fdt64 (InitrdImage);
-    err = fdt_setprop (fdt, node, "linux,initrd-start", &InitrdImageStart, sizeof (EFI_PHYSICAL_ADDRESS));
+    err = fdt_setprop (fdt, (int)node, "linux,initrd-start", &InitrdImageStart, sizeof (EFI_PHYSICAL_ADDRESS));
     if (err) {
       DEBUG ((EFI_D_ERROR, "Fail to set new 'linux,initrd-start' (err:%d)\n", err));
     }
     InitrdImageEnd = cpu_to_fdt64 (InitrdImage + InitrdImageSize);
-    err = fdt_setprop (fdt, node, "linux,initrd-end", &InitrdImageEnd, sizeof (EFI_PHYSICAL_ADDRESS));
+    err = fdt_setprop (fdt, (int)node, "linux,initrd-end", &InitrdImageEnd, sizeof (EFI_PHYSICAL_ADDRESS));
     if (err) {
       DEBUG ((EFI_D_ERROR, "Fail to set new 'linux,initrd-start' (err:%d)\n", err));
     }
@@ -256,8 +277,8 @@ PrepareFdt (
     // The 'memory' node does not exist, create it
     node = fdt_add_subnode (fdt, 0, "memory");
     if (node >= 0) {
-      fdt_setprop_string (fdt, node, "name", "memory");
-      fdt_setprop_string (fdt, node, "device_type", "memory");
+      fdt_setprop_string (fdt, (int)node, "name", "memory");
+      fdt_setprop_string (fdt, (int)node, "device_type", "memory");
 
       GetSystemMemoryResources (&ResourceList);
       Resource = (SYSTEM_MEMORY_RESOURCE*)ResourceList.ForwardLink;
@@ -265,7 +286,7 @@ PrepareFdt (
       Region.Base = cpu_to_fdtn ((UINTN)Resource->PhysicalStart);
       Region.Size = cpu_to_fdtn ((UINTN)Resource->ResourceLength);
 
-      err = fdt_setprop (fdt, node, "reg", &Region, sizeof (Region));
+      err = fdt_setprop (fdt, (int)node, "reg", &Region, sizeof (Region));
       if (err) {
         DEBUG ((EFI_D_ERROR, "Fail to set new 'memory region' (err:%d)\n", err));
       }
@@ -320,7 +341,7 @@ PrepareFdt (
   for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
     // Check for correct GUID type
     if (CompareGuid (&gArmMpCoreInfoGuid, &(gST->ConfigurationTable[Index].VendorGuid))) {
-      MpId = ArmReadMpidr ();
+      MpId = (UINT32)ArmReadMpidr ();
       ClusterId = GET_CLUSTER_ID (MpId);
       CoreId    = GET_CORE_ID (MpId);
 
@@ -328,9 +349,9 @@ PrepareFdt (
       if (node < 0) {
         // Create the /cpus node
         node = fdt_add_subnode (fdt, 0, "cpus");
-        fdt_setprop_string (fdt, node, "name", "cpus");
-        fdt_setprop_cell (fdt, node, "#address-cells", sizeof (UINTN) / 4);
-        fdt_setprop_cell (fdt, node, "#size-cells", 0);
+        fdt_setprop_string (fdt, (int)node, "name", "cpus");
+        fdt_setprop_cell (fdt, (int)node, "#address-cells", sizeof (UINTN) / 4);
+        fdt_setprop_cell (fdt, (int)node, "#size-cells", 0);
         CpusNodeExist = FALSE;
       } else {
         CpusNodeExist = TRUE;
@@ -349,23 +370,23 @@ PrepareFdt (
         // In case 'cpus' node is provided in the original FDT then we do not add
         // any 'cpu' node.
         if (!CpusNodeExist) {
-          cpu_node = fdt_add_subnode (fdt, node, Name);
+          cpu_node = fdt_add_subnode (fdt, (int)node, Name);
           if (cpu_node < 0) {
             DEBUG ((EFI_D_ERROR, "Error on creating '%s' node\n", Name));
             Status = EFI_INVALID_PARAMETER;
             goto FAIL_COMPLETE_FDT;
           }
 
-          fdt_setprop_string (fdt, cpu_node, "device_type", "cpu");
+          fdt_setprop_string (fdt, (int)cpu_node, "device_type", "cpu");
 
           CoreMpId = cpu_to_fdtn (CoreMpId);
-          fdt_setprop (fdt, cpu_node, "reg", &CoreMpId, sizeof (CoreMpId));
+          fdt_setprop (fdt, (int)cpu_node, "reg", &CoreMpId, sizeof (CoreMpId));
         } else {
-          cpu_node = fdt_subnode_offset (fdt, node, Name);
+          cpu_node = fdt_subnode_offset (fdt, (int)node, Name);
         }
 
         if (cpu_node >= 0) {
-          Method = fdt_getprop (fdt, cpu_node, "enable-method", &lenp);
+          Method = fdt_getprop (fdt, (int)cpu_node, "enable-method", &lenp);
           // We only care when 'enable-method' == 'spin-table'. If the enable-method is not defined
           // or defined as 'psci' then we ignore its properties.
           if ((Method != NULL) && (AsciiStrCmp ((CHAR8 *)Method, "spin-table") == 0)) {
@@ -376,11 +397,11 @@ PrepareFdt (
             //    does not anything about the CPU release addresses - in this case we do nothing
             if (FeaturePcdGet (PcdArmLinuxSpinTable)) {
               CpuReleaseAddr = cpu_to_fdt64 (ArmCoreInfoTable[Index].MailboxSetAddress);
-              fdt_setprop (fdt, cpu_node, "cpu-release-addr", &CpuReleaseAddr, sizeof (CpuReleaseAddr));
+              fdt_setprop (fdt, (int)cpu_node, "cpu-release-addr", &CpuReleaseAddr, sizeof (CpuReleaseAddr));
 
               // If it is not the primary core than the cpu should be disabled
               if (((ArmCoreInfoTable[Index].ClusterId != ClusterId) || (ArmCoreInfoTable[Index].CoreId != CoreId))) {
-                fdt_setprop_string (fdt, cpu_node, "status", "disabled");
+                fdt_setprop_string (fdt, (int)cpu_node, "status", "disabled");
               }
             }
           }

@@ -2,7 +2,7 @@
 
 Copyright (c) 2009, Hewlett-Packard Company. All rights reserved.<BR>
 Portions copyright (c) 2010, Apple Inc. All rights reserved.<BR>
-Portions copyright (c) 2011-2015, ARM Ltd. All rights reserved.<BR>
+Portions copyright (c) 2011-2016, ARM Ltd. All rights reserved.<BR>
 
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
@@ -50,7 +50,7 @@ GicV2EnableInterruptSource (
   IN HARDWARE_INTERRUPT_SOURCE          Source
   )
 {
-  if (Source > mGicNumInterrupts) {
+  if (Source >= mGicNumInterrupts) {
     ASSERT(FALSE);
     return EFI_UNSUPPORTED;
   }
@@ -77,7 +77,7 @@ GicV2DisableInterruptSource (
   IN HARDWARE_INTERRUPT_SOURCE          Source
   )
 {
-  if (Source > mGicNumInterrupts) {
+  if (Source >= mGicNumInterrupts) {
     ASSERT(FALSE);
     return EFI_UNSUPPORTED;
   }
@@ -106,7 +106,7 @@ GicV2GetInterruptSourceState (
   IN BOOLEAN                            *InterruptState
   )
 {
-  if (Source > mGicNumInterrupts) {
+  if (Source >= mGicNumInterrupts) {
     ASSERT(FALSE);
     return EFI_UNSUPPORTED;
   }
@@ -134,7 +134,7 @@ GicV2EndOfInterrupt (
   IN HARDWARE_INTERRUPT_SOURCE          Source
   )
 {
-  if (Source > mGicNumInterrupts) {
+  if (Source >= mGicNumInterrupts) {
     ASSERT(FALSE);
     return EFI_UNSUPPORTED;
   }
@@ -164,7 +164,7 @@ GicV2IrqInterruptHandler (
   UINT32                      GicInterrupt;
   HARDWARE_INTERRUPT_HANDLER  InterruptHandler;
 
-  GicInterrupt = ArmGicV2AcknowledgeInterrupt (mGicInterruptInterfaceBase);
+  GicInterrupt = (UINT32)ArmGicV2AcknowledgeInterrupt (mGicInterruptInterfaceBase);
 
   // Special Interrupts (ID1020-ID1023) have an Interrupt ID greater than the number of interrupt (ie: Spurious interrupt).
   if ((GicInterrupt & ARM_GIC_ICCIAR_ACKINTID) >= mGicNumInterrupts) {
@@ -178,9 +178,8 @@ GicV2IrqInterruptHandler (
     InterruptHandler (GicInterrupt, SystemContext);
   } else {
     DEBUG ((EFI_D_ERROR, "Spurious GIC interrupt: 0x%x\n", GicInterrupt));
+    GicV2EndOfInterrupt (&gHardwareInterruptV2Protocol, GicInterrupt);
   }
-
-  GicV2EndOfInterrupt (&gHardwareInterruptV2Protocol, GicInterrupt);
 }
 
 //
@@ -220,7 +219,7 @@ GicV2ExitBootServicesEvent (
 
   // Acknowledge all pending interrupts
   do {
-    GicInterrupt = ArmGicV2AcknowledgeInterrupt (mGicInterruptInterfaceBase);
+    GicInterrupt = (UINT32)ArmGicV2AcknowledgeInterrupt (mGicInterruptInterfaceBase);
 
     if ((GicInterrupt & ARM_GIC_ICCIAR_ACKINTID) < mGicNumInterrupts) {
       GicV2EndOfInterrupt (&gHardwareInterruptV2Protocol, GicInterrupt);
@@ -260,15 +259,15 @@ GicV2DxeInitialize (
   // Make sure the Interrupt Controller Protocol is not already installed in the system.
   ASSERT_PROTOCOL_ALREADY_INSTALLED (NULL, &gHardwareInterruptProtocolGuid);
 
-  mGicInterruptInterfaceBase = PcdGet32 (PcdGicInterruptInterfaceBase);
-  mGicDistributorBase = PcdGet32 (PcdGicDistributorBase);
+  mGicInterruptInterfaceBase = (UINT32)PcdGet64 (PcdGicInterruptInterfaceBase);
+  mGicDistributorBase = (UINT32)PcdGet64 (PcdGicDistributorBase);
   mGicNumInterrupts = ArmGicGetMaxNumInterrupts (mGicDistributorBase);
 
   for (Index = 0; Index < mGicNumInterrupts; Index++) {
     GicV2DisableInterruptSource (&gHardwareInterruptV2Protocol, Index);
 
     // Set Priority
-    RegOffset = Index / 4;
+    RegOffset = (UINT32)(Index / 4);
     RegShift = (Index % 4) * 8;
     MmioAndThenOr32 (
       mGicDistributorBase + ARM_GIC_ICDIPR + (4 * RegOffset),

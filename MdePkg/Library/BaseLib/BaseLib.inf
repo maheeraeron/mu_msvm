@@ -488,18 +488,34 @@
   Arm/CpuBreakpoint.S           | GCC
   Arm/MemoryFence.S             | GCC
 
+  Math64.c                      | MSFT
+  Arm/SwitchStack.masm          | MSFT
+  Arm/EnableInterrupts.masm     | MSFT
+  Arm/DisableInterrupts.masm    | MSFT
+  Arm/GetInterruptsState.masm   | MSFT
+  Arm/SetJumpLongJump.masm      | MSFT
+  Arm/CpuBreakpoint.masm        | MSFT
+  Arm/MemoryFence.masm          | MSFT
+
 [Sources.AARCH64]
   Arm/InternalSwitchStack.c
   Arm/Unaligned.c
   Math64.c
 
-  AArch64/MemoryFence.S             | GCC
-  AArch64/SwitchStack.S             | GCC
-  AArch64/EnableInterrupts.S        | GCC
-  AArch64/DisableInterrupts.S       | GCC
-  AArch64/GetInterruptsState.S      | GCC
-  AArch64/SetJumpLongJump.S         | GCC
-  AArch64/CpuBreakpoint.S           | GCC
+  AArch64/MemoryFence.S            | GCC
+  AArch64/MemoryFence.masm         | MSFT
+  AArch64/SwitchStack.S            | GCC
+  AArch64/SwitchStack.masm         | MSFT
+  AArch64/EnableInterrupts.S       | GCC
+  AArch64/EnableInterrupts.masm    | MSFT
+  AArch64/DisableInterrupts.S      | GCC
+  AArch64/DisableInterrupts.masm   | MSFT
+  AArch64/GetInterruptsState.S     | GCC
+  AArch64/GetInterruptsState.masm  | MSFT
+  AArch64/SetJumpLongJump.S        | GCC
+  AArch64/SetJumpLongJump.masm     | MSFT
+  AArch64/CpuBreakpoint.S          | GCC
+  AArch64/CpuBreakpoint.masm       | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec

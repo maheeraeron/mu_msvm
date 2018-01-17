@@ -159,6 +159,7 @@ VmbusRootDestroyChannel(
 VOID
 VmbusRootWaitForMessage(
     __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in BOOLEAN PollForMessage,
     __out VMBUS_MESSAGE *Message
     );
 
@@ -220,7 +221,6 @@ VMBUS_ROOT_CONTEXT mRootContext;
 
 EFI_HANDLE mRootDevice;
 EFI_HANDLE mVmbusImageHandle;
-
 HV_CONNECTION_ID gVmbusConnectionId = {VMBUS_MESSAGE_CONNECTION_ID};
 
 VMBUS_ROOT_DEVICE_PATH gVmbusRootDevicePath;
@@ -424,7 +424,7 @@ Return Value:
 
     if (RootContext->SintConnected)
     {
-        mHv->DisconnectSint(mHv, VMBUS_MESSAGE_SINT);
+        mHv->DisconnectSint(mHv, FixedPcdGet8(PcdVmbusSintIndex));
         RootContext->SintConnected = FALSE;
     }
 
@@ -492,6 +492,7 @@ Return Value:
 VOID
 VmbusRootWaitForMessage(
     __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in BOOLEAN PollForMessage,
     __out VMBUS_MESSAGE *Message
     )
 /*++
@@ -506,6 +507,8 @@ Arguments:
 
     RootContext - Pointer to the root context.
 
+    PollForMessage - poll for a message instead of waiting for event
+
     Message - Returns the message received.
 
 Return Value:
@@ -515,6 +518,7 @@ Return Value:
 --*/
 {   UINTN index;
     HV_MESSAGE *hvMessage;
+    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     //
     // TPL must be less than TPL_NOTIFY, since hot add/remove messages are
@@ -525,14 +529,24 @@ Return Value:
 
     ASSERT(RootContext->SintConnected);
 
-    gBS->WaitForEvent(1, &RootContext->WaitForMessage, &index);
-    hvMessage = mHv->GetSintMessage(mHv, VMBUS_MESSAGE_SINT);
+    if (!PollForMessage)
+    {
+        gBS->WaitForEvent(1, &RootContext->WaitForMessage, &index);
+    }
+
+    hvMessage = NULL;
+    while (hvMessage == NULL)
+    {
+        hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+    }
 
     ASSERT(hvMessage != NULL);
 
     Message->Size = hvMessage->Header.PayloadSize;
     CopyMem(Message->Data, hvMessage->Payload, Message->Size);
-    mHv->CompleteSintMessage(mHv, VMBUS_MESSAGE_SINT);
+    mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+
+    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -683,6 +697,7 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
+    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     do
     {
@@ -698,6 +713,7 @@ Return Value:
     {
         DEBUG((EFI_D_ERROR, "Vmbus failed to send message\n"));
     }
+    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -726,21 +742,24 @@ Return Value:
 {
     VMBUS_ROOT_CONTEXT *rootContext;
     HV_MESSAGE *hvMessage;
+    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     rootContext = (VMBUS_ROOT_CONTEXT*)Context;
 
     VmbusRootScanEventFlags(rootContext,
-                            mHv->GetSintEventFlags(mHv, VMBUS_MESSAGE_SINT));
+                            mHv->GetSintEventFlags(mHv, FixedPcdGet8(PcdVmbusSintIndex)));
 
-    hvMessage = mHv->GetSintMessage(mHv, VMBUS_MESSAGE_SINT);
+    hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
 
     if (hvMessage != NULL)
     {
+        //DEBUG((DEBUG_VERBOSE, "--- %a dispatching message\n", __FUNCTION__));
         if (VmbusRootDispatchMessage(rootContext, hvMessage))
         {
-            mHv->CompleteSintMessage(mHv, VMBUS_MESSAGE_SINT);
+            mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
         }
     }
+    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -790,6 +809,7 @@ Return Value:
         while(_BitScanForward64(&bitIndex, currentWord) != 0)
         {
             currentWord &= ~((UINT64)1 << bitIndex);
+            //DEBUG((DEBUG_VERBOSE, "--- %a channel [%lu]\n", __FUNCTION__, wordIndex * 64 + bitIndex));
             gBS->SignalEvent(
                     RootContext->Channels[wordIndex * 64 + bitIndex]->Interrupt);
         }
@@ -837,6 +857,7 @@ Return Value:
     switch (message->Header.MessageType)
     {
     case ChannelMessageOfferChannel:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "OfferChannel"));
 
         //
         // Hot add events need to drop TPL to allocate memory and should queue
@@ -853,8 +874,13 @@ Return Value:
         __fallthrough;
 
     case ChannelMessageVersionResponse:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "VersionResponse"));
+        __fallthrough;
     case ChannelMessageAllOffersDelivered:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "AllOffersDelivered"));
+        __fallthrough;
     case ChannelMessageUnloadComplete:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "UnloadComplete"));
 
         //
         // These messages are dealt with differently, since they arrive
@@ -867,6 +893,7 @@ Return Value:
         break;
 
     case ChannelMessageOpenChannelResult:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "OpenChannelResult"));
 
         ASSERT(message->OpenResult.ChildRelId < VMBUS_MAX_CHANNELS);
 
@@ -875,6 +902,7 @@ Return Value:
         break;
 
     case ChannelMessageGpadlTorndown:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "GpadlTorndown"));
 
         ASSERT(message->GpadlTorndown.Gpadl < VMBUS_MAX_GPADLS);
 
@@ -885,6 +913,7 @@ Return Value:
         break;
 
     case ChannelMessageGpadlCreated:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "GpadlCreated"));
 
         ASSERT(message->GpadlCreated.Gpadl < VMBUS_MAX_GPADLS);
 
@@ -895,6 +924,7 @@ Return Value:
         break;
 
     case ChannelMessageRescindChannelOffer:
+        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "RescindChannelOffer"));
 
         //
         // Hot remove is not supported because UEFI makes it difficult to
@@ -918,6 +948,7 @@ Return Value:
 
         gBS->SignalEvent(response->Event);
     }
+    //DEBUG((DEBUG_VERBOSE, "<<< %a %a\n", __FUNCTION__, completeMessage ? "TRUE" : "FALSE"));
 
     return completeMessage;
 }
@@ -955,7 +986,7 @@ Return Value:
     ASSERT(EfiGetCurrentTpl() == TPL_NOTIFY);
 
     context = (VMBUS_ROOT_CONTEXT*)Context;
-    hvMessage = mHv->GetSintMessage(mHv, VMBUS_MESSAGE_SINT);
+    hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
 
     ASSERT(hvMessage != NULL);
 
@@ -974,7 +1005,7 @@ Return Value:
     gBS->SignalEvent(context->HotEvent);
 
 Cleanup:
-    mHv->CompleteSintMessage(mHv, VMBUS_MESSAGE_SINT);
+    mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
 }
 
 
@@ -1365,37 +1396,48 @@ Return Value:
 --*/
 {
     VMBUS_MESSAGE message;
+    EFI_STATUS status;
+    
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     ASSERT(RootContext->SintConnected);
 
     VmbusRootInitializeMessage(&message,
                            ChannelMessageInitiateContact,
                            sizeof(message.InitiateContact));
+    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitializeMessage\n", __FUNCTION__));
 
     message.InitiateContact.VMBusVersionRequested = VMBUS_VERSION_LATEST;
     message.InitiateContact.TargetMessageVp = mHv->GetCurrentVpIndex(mHv);
     VmbusRootSendMessage(&message);
+    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootSendMessage\n", __FUNCTION__));
 
     //
     // We may have leftover messages if this driver was stopped previously.
     //
-
     do
     {
-        VmbusRootWaitForMessage(RootContext, &message);
+        VmbusRootWaitForMessage(RootContext, FALSE, &message);
 
     } while (message.Size != sizeof(message.VersionResponse) ||
              message.Header.MessageType != ChannelMessageVersionResponse);
+    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootWaitForMessage loop\n", __FUNCTION__));
 
     if (!message.VersionResponse.VersionSupported ||
         message.VersionResponse.ConnectionState
             != VmbusChannelConnectionSuccessful)
     {
-        return EFI_PROTOCOL_ERROR;
+        DEBUG((DEBUG_VERBOSE, "<<< %a EFI_PROTOCOL_ERROR\n", __FUNCTION__));
+        status = EFI_PROTOCOL_ERROR;
+        
     }
-
-    RootContext->ContactInitiated = TRUE;
-    return EFI_SUCCESS;
+    else
+    {
+        RootContext->ContactInitiated = TRUE;
+        status = EFI_SUCCESS;
+    }
+    DEBUG((DEBUG_VERBOSE, "<<< %a Status %r\n", __FUNCTION__, status));
+    return status;
 }
 
 
@@ -1436,8 +1478,7 @@ Return Value:
 
     do
     {
-        VmbusRootWaitForMessage(RootContext, &message);
-
+        VmbusRootWaitForMessage(RootContext, TRUE, &message);
     } while (message.Size != sizeof(message.Header) ||
              message.Header.MessageType != ChannelMessageUnloadComplete);
 }
@@ -1577,7 +1618,7 @@ Return Value:
     VmbusRootSendMessage(&message);
     for (;;)
     {
-        VmbusRootWaitForMessage(RootContext, &message);
+        VmbusRootWaitForMessage(RootContext, FALSE, &message);
         if (message.Size == sizeof(message.Header) &&
             message.Header.MessageType == ChannelMessageAllOffersDelivered)
         {
@@ -1691,6 +1732,7 @@ Return Value:
 {
     EFI_STATUS status;
     VOID *protocol;
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     ASSERT(ControllerHandle == mRootDevice);
 
@@ -1706,13 +1748,14 @@ Return Value:
     {
         return status;
     }
+    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitializeContext\n", __FUNCTION__));
 
     status = mHv->ConnectSint(mHv,
-                              VMBUS_MESSAGE_SINT,
-                              PcdGet8(PcdVmbusSintVector),
+                              FixedPcdGet8(PcdVmbusSintIndex),
+                              FixedPcdGet8(PcdVmbusSintVector),
                               VmbusRootSintNotify,
                               &mRootContext);
-
+    DEBUG((DEBUG_VERBOSE, "--- %a after ConnectSint status %r\n", __FUNCTION__, status));
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -1725,12 +1768,14 @@ Return Value:
     {
         goto Cleanup;
     }
+    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitiateContact status %r\n", __FUNCTION__, status));
 
-    status = gBS->CreateEvent(EVT_SIGNAL_EXIT_BOOT_SERVICES,
-                              TPL_CALLBACK,
-                              VmbusRootExitBootServices,
-                              &mRootContext,
-                              &mRootContext.ExitBootEvent);
+    status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
+                                TPL_CALLBACK,
+                                VmbusRootExitBootServices,
+                                &mRootContext,
+                                &gEfiEventExitBootServicesGuid,
+                                &mRootContext.ExitBootEvent);
 
     if (EFI_ERROR(status))
     {
@@ -1742,7 +1787,7 @@ Return Value:
     {
         goto Cleanup;
     }
-
+    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootEnumerateChildren status %r\n", __FUNCTION__, status));
     status = gBS->OpenProtocol(ControllerHandle,
                                &gEfiVmbusRootProtocolGuid,
                                &protocol,
@@ -1763,6 +1808,7 @@ Cleanup:
         VmbusRootDestroyContext(&mRootContext);
     }
 
+    DEBUG((DEBUG_VERBOSE, "<<< %a status %r\n", __FUNCTION__, status));
     return status;
 }
 
@@ -2061,6 +2107,8 @@ Return Value:
 {
     EFI_STATUS status;
 
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+
     mVmbusImageHandle = ImageHandle;
 
     //
@@ -2096,6 +2144,7 @@ Return Value:
         return status;
     }
 
+    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
     return EFI_SUCCESS;
 }
 

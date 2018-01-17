@@ -26,12 +26,15 @@
 
 [Sources.ARM]
   Arm/ArchPrePeiCore.c
-  Arm/PrePeiCoreEntryPoint.asm | RVCT
-  Arm/PrePeiCoreEntryPoint.S   | GCC
+  Arm/PrePeiCoreEntryPoint.asm  | RVCT
+  Arm/PrePeiCoreEntryPoint.S    | GCC
+  Arm/PrePeiCoreEntryPoint.masm | MSFT
   Arm/SwitchStack.asm      | RVCT
   Arm/SwitchStack.S        | GCC
+  Arm/SwitchStack.masm     | MSFT
   Arm/Exception.asm        | RVCT
   Arm/Exception.S          | GCC
+  Arm/Exception.masm       | MSFT
 
 [Sources.AARCH64]
   AArch64/ArchPrePeiCore.c
@@ -59,7 +62,6 @@
 
 [Ppis]
   gEfiTemporaryRamSupportPpiGuid
-  gArmGlobalVariablePpiGuid
   gArmMpCoreInfoPpiGuid
 
 [FeaturePcd]
@@ -72,8 +74,6 @@
   gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase
   gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize
   gArmPlatformTokenSpaceGuid.PcdCPUCoreSecondaryStackSize
-
-  gArmPlatformTokenSpaceGuid.PcdPeiGlobalVariableSize
 
   gArmTokenSpaceGuid.PcdGicDistributorBase
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase

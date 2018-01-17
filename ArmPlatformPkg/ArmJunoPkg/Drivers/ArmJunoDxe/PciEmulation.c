@@ -197,9 +197,9 @@ PciIoPciRead (
              (EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH)Width,
              Count,
              TRUE,
-             (PTR)(UINTN)Buffer,
+             Buffer,
              TRUE,
-             (PTR)(UINTN)(((UINT8 *)Private->ConfigSpace) + Offset)  //Fix me ConfigSpace
+             (((UINT8 *)Private->ConfigSpace) + Offset)  //Fix me ConfigSpace
              );
 
   return Status;
@@ -241,9 +241,9 @@ PciIoPciWrite (
   return PciRootBridgeIoMemRW ((EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH) Width,
                                Count,
                                TRUE,
-                               (PTR)(UINTN)(((UINT8 *)Private->ConfigSpace) + Offset),  //Fix me ConfigSpace
+                               (((UINT8 *)Private->ConfigSpace) + Offset),  //Fix me ConfigSpace
                                TRUE,
-                               (PTR)(UINTN)Buffer
+                               Buffer
                                );
 }
 
@@ -530,11 +530,11 @@ PciInstallDevice (
 
   Private->Signature              = EFI_PCI_IO_PRIVATE_DATA_SIGNATURE;  // Fill in signature
   Private->RootBridge.Signature   = PCI_ROOT_BRIDGE_SIGNATURE;          // Fake Root Bridge structure needs a signature too
-  Private->RootBridge.MemoryStart = MemoryStart; // Get the USB capability register base
+  Private->RootBridge.MemoryStart = (UINT32)MemoryStart; // Get the USB capability register base
   Private->Segment                = 0;                                  // Default to segment zero
 
   // Calculate the total size of the USB controller (OHCI + EHCI).
-  Private->RootBridge.MemorySize = MemorySize; //CapabilityLength + (HOST_CONTROLLER_OPERATION_REG_SIZE + ((4 * PhysicalPorts) - 1));
+  Private->RootBridge.MemorySize = (UINT32)MemorySize; //CapabilityLength + (HOST_CONTROLLER_OPERATION_REG_SIZE + ((4 * PhysicalPorts) - 1));
 
   // Create fake PCI config space: OHCI + EHCI
   Private->ConfigSpace = AllocateZeroPool (sizeof (PCI_TYPE00));
@@ -549,17 +549,17 @@ PciInstallDevice (
   //
   Private->ConfigSpace->Hdr.VendorId = 0xFFFF; // Invalid vendor Id as it is not an actual device.
   Private->ConfigSpace->Hdr.DeviceId = 0x0000; // Not relevant as the vendor id is not valid.
-  Private->ConfigSpace->Hdr.ClassCode[0] = ClassCode1;
-  Private->ConfigSpace->Hdr.ClassCode[1] = ClassCode2;
-  Private->ConfigSpace->Hdr.ClassCode[2] = ClassCode3;
-  Private->ConfigSpace->Device.Bar[0] = MemoryStart;
+  Private->ConfigSpace->Hdr.ClassCode[0] = (UINT8)ClassCode1;
+  Private->ConfigSpace->Hdr.ClassCode[1] = (UINT8)ClassCode2;
+  Private->ConfigSpace->Hdr.ClassCode[2] = (UINT8)ClassCode3;
+  Private->ConfigSpace->Device.Bar[0] = (UINT32)MemoryStart;
 
   Handle = NULL;
 
   // Unique device path.
   CopyMem (&Private->DevicePath, &PciIoDevicePathTemplate, sizeof (PciIoDevicePathTemplate));
   Private->DevicePath.AcpiDevicePath.UID = 1; // Use '1' to differentiate from PLDA root complex
-  Private->DevicePath.PciDevicePath.Device = DeviceId;
+  Private->DevicePath.PciDevicePath.Device = (UINT8)DeviceId;
 
   // Copy protocol structure
   CopyMem (&Private->PciIoProtocol, &PciIoTemplate, sizeof (PciIoTemplate));

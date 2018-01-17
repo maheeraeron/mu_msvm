@@ -22,16 +22,19 @@
 
 [Sources]
     AcpiPlatform.c
-    Oem0.c
-    Apic.c
     Dsdt.c
-    spcr.c
     Facp.c
+    Madt.c
+    Oem0.c
+    spcr.c
 
 [Packages]
     MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
     MsvmPkg/MsvmPkg.dec
+
+[Packages.AARCH64]
+    ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
     UefiLib
@@ -44,11 +47,18 @@
     IoLib
     ConfigLib
 
+[LibraryClasses.AARCH64]
+    ArmGicLib
+
 [Protocols]
     gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
 
 [Guids]
     gEfiAcpi20TableGuid
+
+[Pcd.AARCH64]
+    gArmTokenSpaceGuid.PcdGicRedistributorsBase
+    gMsvmPkgTokenSpaceGuid.PcdProcessorMPIDRValuesPtr
 
 [Pcd]
     gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiTableStorageFile
@@ -56,23 +66,27 @@
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
     gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
-    gUefiMsvmPkgTokenSpaceGuid.PcdSratPtr
-    gUefiMsvmPkgTokenSpaceGuid.PcdSratSize
-    gUefiMsvmPkgTokenSpaceGuid.PcdEntropyPtr
-    gUefiMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
-    gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
-    gUefiMsvmPkgTokenSpaceGuid.PcdLoadOempTable
-    gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
-    gUefiMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
-    gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
-    gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
-    gUefiMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
-    gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount
-    gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
-    gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages
-    gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
-    gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
-
+    gMsvmPkgTokenSpaceGuid.PcdSratPtr
+    gMsvmPkgTokenSpaceGuid.PcdSratSize
+    gMsvmPkgTokenSpaceGuid.PcdEntropyPtr
+    gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
+    gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+    gMsvmPkgTokenSpaceGuid.PcdLoadOempTable
+    gMsvmPkgTokenSpaceGuid.PcdTpmEnabled
+    gMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
+    gMsvmPkgTokenSpaceGuid.PcdConsoleMode
+    gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
+    gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
+    gMsvmPkgTokenSpaceGuid.PcdProcessorCount
+    gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
+    gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages
+    gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
+    gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
+    gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
+    gMsvmPkgTokenSpaceGuid.PcdCom1Vector
+    gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
+    gMsvmPkgTokenSpaceGuid.PcdCom2Vector
+    
 [Depex]
     gEfiAcpiTableProtocolGuid
 

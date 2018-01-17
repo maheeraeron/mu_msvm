@@ -43,7 +43,6 @@ STATIC CONST CHAR16           mDaylightVariableName[] = L"PL031RtcDaylight";
 STATIC BOOLEAN                mPL031Initialized = FALSE;
 STATIC EFI_EVENT              mRtcVirtualAddrChangeEvent;
 STATIC UINTN                  mPL031RtcBase;
-STATIC EFI_RUNTIME_SERVICES   *mRT;
 
 EFI_STATUS
 IdentifyPL031 (
@@ -150,9 +149,9 @@ EpochToEfiTime (
   m  = (((da * 5) + 308) / 153) - 2;
   d  = da - (((m + 4) * 153) / 5) + 122;
 
-  Time->Year  = y - 4800 + ((m + 2) / 12);
+  Time->Year  = (UINT16)(y - 4800 + ((m + 2) / 12));
   Time->Month = ((m + 2) % 12) + 1;
-  Time->Day   = d + 1;
+  Time->Day   = (UINT8)(d + 1);
 
   ss = EpochSeconds % 60;
   a  = (EpochSeconds - ss) / 60;
@@ -160,9 +159,9 @@ EpochToEfiTime (
   b = (a - mm) / 60;
   hh = b % 24;
 
-  Time->Hour        = hh;
-  Time->Minute      = mm;
-  Time->Second      = ss;
+  Time->Hour        = (UINT8)hh;
+  Time->Minute      = (UINT8)mm;
+  Time->Second      = (UINT8)ss;
   Time->Nanosecond  = 0;
 
 }
@@ -271,7 +270,7 @@ LibGetTime (
   // Snapshot the time as early in the function call as possible
   // On some platforms we may have access to a battery backed up hardware clock.
   // If such RTC exists try to use it first.
-  Status = ArmPlatformSysConfigGet (SYS_CFG_RTC, &EpochSeconds);
+  Status = ArmPlatformSysConfigGet ((SYS_CONFIG_FUNCTION)SYS_CFG_RTC, &EpochSeconds);
   if (Status == EFI_UNSUPPORTED) {
     // Battery backed up hardware RTC does not exist, revert to PL031
     EpochSeconds = MmioRead32 (mPL031RtcBase + PL031_RTC_DR_DATA_REGISTER);
@@ -293,7 +292,7 @@ LibGetTime (
 
   // Get the current time zone information from non-volatile storage
   Size = sizeof (TimeZone);
-  Status = mRT->GetVariable (
+  Status = EfiGetVariable (
                   (CHAR16 *)mTimeZoneVariableName,
                   &gEfiCallerIdGuid,
                   NULL,
@@ -311,7 +310,7 @@ LibGetTime (
     // The time zone variable does not exist in non-volatile storage, so create it.
     Time->TimeZone = EFI_UNSPECIFIED_TIMEZONE;
     // Store it
-    Status = mRT->SetVariable (
+    Status = EfiSetVariable (
                     (CHAR16 *)mTimeZoneVariableName,
                     &gEfiCallerIdGuid,
                     EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -345,7 +344,7 @@ LibGetTime (
 
   // Get the current daylight information from non-volatile storage
   Size = sizeof (Daylight);
-  Status = mRT->GetVariable (
+  Status = EfiGetVariable (
                   (CHAR16 *)mDaylightVariableName,
                   &gEfiCallerIdGuid,
                   NULL,
@@ -363,7 +362,7 @@ LibGetTime (
     // The daylight variable does not exist in non-volatile storage, so create it.
     Time->Daylight = 0;
     // Store it
-    Status = mRT->SetVariable (
+    Status = EfiSetVariable (
                     (CHAR16 *)mDaylightVariableName,
                     &gEfiCallerIdGuid,
                     EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -483,7 +482,7 @@ LibSetTime (
   // RTC maintains the master time for the platform across reboots.
   //
   // If such RTC does not exist then the following function returns UNSUPPORTED.
-  Status = ArmPlatformSysConfigSet (SYS_CFG_RTC, EpochSeconds);
+  Status = ArmPlatformSysConfigSet ((SYS_CONFIG_FUNCTION)SYS_CFG_RTC, (UINT32)EpochSeconds);
   if ((EFI_ERROR (Status)) && (Status != EFI_UNSUPPORTED)){
     // Any status message except SUCCESS and UNSUPPORTED indicates a hardware failure.
     goto EXIT;
@@ -491,13 +490,13 @@ LibSetTime (
 
 
   // Set the PL031
-  MmioWrite32 (mPL031RtcBase + PL031_RTC_LR_LOAD_REGISTER, EpochSeconds);
+  MmioWrite32 (mPL031RtcBase + PL031_RTC_LR_LOAD_REGISTER, (UINT32)EpochSeconds);
 
   // The accesses to Variable Services can be very slow, because we may be writing to Flash.
   // Do this after having set the RTC.
 
   // Save the current time zone information into non-volatile storage
-  Status = mRT->SetVariable (
+  Status = EfiSetVariable (
                   (CHAR16 *)mTimeZoneVariableName,
                   &gEfiCallerIdGuid,
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -515,7 +514,7 @@ LibSetTime (
   }
 
   // Save the current daylight information into non-volatile storage
-  Status = mRT->SetVariable (
+  Status = EfiSetVariable (
                   (CHAR16 *)mDaylightVariableName,
                   &gEfiCallerIdGuid,
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -608,7 +607,6 @@ LibRtcVirtualNotifyEvent (
   // runtime calls will be made in virtual mode.
   //
   EfiConvertPointer (0x0, (VOID**)&mPL031RtcBase);
-  EfiConvertPointer (0x0, (VOID**)&mRT);
   return;
 }
 
@@ -649,14 +647,6 @@ LibRtcInitialize (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
-  // Setup the setters and getters
-  gRT->GetTime       = LibGetTime;
-  gRT->SetTime       = LibSetTime;
-  gRT->GetWakeupTime = LibGetWakeupTime;
-  gRT->SetWakeupTime = LibSetWakeupTime;
-
-  mRT = gRT;
 
   // Install the protocol
   Handle = NULL;

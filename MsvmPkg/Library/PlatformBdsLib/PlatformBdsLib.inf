@@ -56,11 +56,11 @@
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile
-  gUefiMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode
-  gUefiMsvmPkgTokenSpaceGuid.PcdPlatformBootConsoleMode
-  gUefiMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
-  gUefiMsvmPkgTokenSpaceGuid.PcdPauseAfterBootFailure
-  gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
+  gMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode
+  gMsvmPkgTokenSpaceGuid.PcdPlatformBootConsoleMode
+  gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
+  gMsvmPkgTokenSpaceGuid.PcdPauseAfterBootFailure
+  gMsvmPkgTokenSpaceGuid.PcdConsoleMode
 
 [Protocols]
   gEfiDecompressProtocolGuid

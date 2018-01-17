@@ -84,7 +84,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                       ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
-  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
+  gMsvmPkgTokenSpaceGuid.PcdTpmEnabled
 
 [Depex]
   TRUE

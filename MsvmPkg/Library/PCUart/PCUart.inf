@@ -1,0 +1,37 @@
+#/** @file
+#
+#  Component description file for PCUart module
+#
+#  Copyright (c) 2017 Microsoft Corporation.
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#**/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PCUart
+  FILE_GUID                      = 10cc790a-3c40-49e6-aea2-d7c0728de9b9
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PCUartLib
+
+[Sources.common]
+  PCUart.c
+
+[LibraryClasses]
+  DebugLib
+  IoLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+#  MdeModulePkg/MdeModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[FixedPcd]

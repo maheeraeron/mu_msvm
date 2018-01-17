@@ -26,19 +26,26 @@
 
 [Sources.ARM]
   Arm/ArchPrePeiCore.c
-  Arm/PrePeiCoreEntryPoint.asm | RVCT
-  Arm/PrePeiCoreEntryPoint.S   | GCC
+  Arm/PrePeiCoreEntryPoint.asm  | RVCT
+  Arm/PrePeiCoreEntryPoint.S    | GCC
+  Arm/PrePeiCoreEntryPoint.masm | MSFT
   Arm/SwitchStack.asm      | RVCT
   Arm/SwitchStack.S        | GCC
+  Arm/SwitchStack.masm     | MSFT
   Arm/Exception.asm        | RVCT
   Arm/Exception.S          | GCC
+  Arm/Exception.masm       | MSFT
 
 [Sources.AARCH64]
   AArch64/ArchPrePeiCore.c
-  AArch64/PrePeiCoreEntryPoint.S
-  AArch64/SwitchStack.S
-  AArch64/Exception.S
-  AArch64/Helper.S
+  AArch64/PrePeiCoreEntryPoint.S        | GCC
+  AArch64/PrePeiCoreEntryPoint.masm     | MSFT
+  AArch64/SwitchStack.S                 | GCC
+  AArch64/SwitchStack.masm              | MSFT
+  AArch64/Exception.S                   | GCC
+  AArch64/Exception.masm                | MSFT
+  AArch64/Helper.S                      | GCC
+  AArch64/Helper.masm                   | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -58,7 +65,6 @@
 
 [Ppis]
   gEfiTemporaryRamSupportPpiGuid
-  gArmGlobalVariablePpiGuid
 
 [FeaturePcd]
   gArmPlatformTokenSpaceGuid.PcdSendSgiToBringUpSecondaryCores
@@ -70,5 +76,3 @@
   gArmPlatformTokenSpaceGuid.PcdCPUCoresStackBase
   gArmPlatformTokenSpaceGuid.PcdCPUCorePrimaryStackSize
   gArmPlatformTokenSpaceGuid.PcdCPUCoreSecondaryStackSize
-
-  gArmPlatformTokenSpaceGuid.PcdPeiGlobalVariableSize

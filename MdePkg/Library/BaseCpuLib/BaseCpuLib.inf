@@ -57,14 +57,18 @@
   Ebc/CpuSleepFlushTlb.c
 
 [Sources.ARM]
-  Arm/CpuFlushTlb.asm | RVCT
-  Arm/CpuSleep.asm    | RVCT  
-  Arm/CpuFlushTlb.S   | GCC
-  Arm/CpuSleep.S      | GCC  
+  Arm/CpuFlushTlb.asm   | RVCT
+  Arm/CpuSleep.asm      | RVCT  
+  Arm/CpuFlushTlb.S     | GCC
+  Arm/CpuSleep.S        | GCC  
+  Arm/CpuFlushTlb.masm  | MSFT
+  Arm/CpuSleep.masm     | MSFT 
 
 [Sources.AARCH64]
-  AArch64/CpuFlushTlb.S | GCC
-  AArch64/CpuSleep.S    | GCC
+  AArch64/CpuFlushTlb.S     | GCC
+  AArch64/CpuSleep.S        | GCC
+  AArch64/CpuFlushTlb.masm  | MSFT
+  AArch64/CpuSleep.masm     | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec

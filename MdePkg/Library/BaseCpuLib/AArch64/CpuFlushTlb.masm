@@ -1,0 +1,19 @@
+
+    AREA    |.text|,ALIGN=8,CODE,READONLY
+
+    EXPORT CpuFlushTlb
+
+
+// VOID
+// EFIAPI
+// CpuFlushTlb (
+//   VOID
+//   )
+CpuFlushTlb PROC
+  tlbi  vmalle1                 // Invalidate Inst TLB and Data TLB
+  dsb   sy
+  isb
+  ret
+CpuFlushTlb ENDP
+
+	END

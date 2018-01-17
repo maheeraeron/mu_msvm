@@ -32,9 +32,13 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
   MsvmPkg/MsvmPkg.dec
+
+[Packages.AARCH64]
+  ArmPlatformPkg/ArmPlatformPkg.dec
 
 [LibraryClasses]
   PcdLib
@@ -46,7 +50,13 @@
   UefiLib
   UefiDriverEntryPoint
   DebugLib
-  IoLib
+  ConfigLib
+
+[LibraryClasses.X64]
+  PCUartLib
+
+[LibraryClasses.AARCH64]
+  PL011UartLib
 
 [Guids]
   gEfiUartDevicePathGuid
@@ -56,7 +66,13 @@
   gEfiDevicePathProtocolGuid                    ## CONSUMES
 
 [FeaturePcd]
-  gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdIsaBusSerialUseHalfHandshake|FALSE
+
+
+[FixedPcd.X64]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate
+  
+[FixedPcd.AARCH64]
+  gArmPlatformTokenSpaceGuid.PL011UartClkInHz
 
 [FixedPcd]
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate
@@ -65,6 +81,6 @@
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
 
 [Pcd]
-  gUefiMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
-  gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
-  gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode
+  gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
+  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+  gMsvmPkgTokenSpaceGuid.PcdConsoleMode

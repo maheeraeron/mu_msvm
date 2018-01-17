@@ -95,7 +95,8 @@
 
 [Sources.AARCH64]
   Synchronization.c
-  AArch64/Synchronization.S
+  AArch64/Synchronization.S     | GCC
+  AArch64/Synchronization.masm   | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec

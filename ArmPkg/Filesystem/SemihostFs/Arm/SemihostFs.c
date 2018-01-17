@@ -207,11 +207,12 @@ FileOpen (
     return EFI_WRITE_PROTECTED;
   }
 
-  AsciiFileName = AllocatePool (StrLen (FileName) + 1);
+  Length = StrLen (FileName) + 1;
+  AsciiFileName = AllocatePool (Length);
   if (AsciiFileName == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  UnicodeStrToAsciiStr (FileName, AsciiFileName);
+  UnicodeStrToAsciiStrS (FileName, AsciiFileName, Length);
 
   // Opening '/', '\', '.', or the NULL pathname is trying to open the root directory
   if ((AsciiStrCmp (AsciiFileName, "\\") == 0) ||
@@ -421,7 +422,7 @@ FileClose (
     // that case, the file has to be truncated.
     //
     if (Fcb->Info.FileSize < Fcb->Info.PhysicalSize) {
-      TruncateFile (Fcb->FileName, Fcb->Info.FileSize);
+      TruncateFile (Fcb->FileName, (UINTN)Fcb->Info.FileSize);
     }
     FreePool (Fcb->FileName);
   }
@@ -463,7 +464,7 @@ FileDelete (
     NameSize = AsciiStrLen (Fcb->FileName);
     FileName = AllocatePool (NameSize + 1);
 
-    AsciiStrCpy (FileName, Fcb->FileName);
+    AsciiStrCpyS (FileName, NameSize + 1, Fcb->FileName);
 
     // Close the file if it's open.  Disregard return status,
     // since it might give an error if the file isn't open.
@@ -530,7 +531,7 @@ FileRead (
       if (RETURN_ERROR (Return)) {
         Status = EFI_DEVICE_ERROR;
       } else {
-        Fcb->Position += *BufferSize;
+        Fcb->Position += (UINT32)(*BufferSize);
       }
     }
   }
@@ -563,7 +564,7 @@ ExtendFile (
   UINTN          WriteNb;
   UINTN          WriteSize;
 
-  Return = SemihostFileSeek (Fcb->SemihostHandle, Fcb->Info.FileSize);
+  Return = SemihostFileSeek (Fcb->SemihostHandle, (UINTN)Fcb->Info.FileSize);
   if (RETURN_ERROR (Return)) {
     return EFI_DEVICE_ERROR;
   }
@@ -631,7 +632,7 @@ FileWrite (
   // size, filling the gap with zeros.
   //
   if (Fcb->Position > Fcb->Info.FileSize) {
-    Status = ExtendFile (Fcb, Fcb->Position - Fcb->Info.FileSize);
+    Status = ExtendFile (Fcb, (UINTN)(Fcb->Position - Fcb->Info.FileSize));
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -644,7 +645,7 @@ FileWrite (
     return EFI_DEVICE_ERROR;
   }
 
-  Fcb->Position += *BufferSize;
+  Fcb->Position += (UINT32)(*BufferSize);
   if (Fcb->Position > Fcb->Info.FileSize) {
     Fcb->Info.FileSize = Fcb->Position;
   }
@@ -731,13 +732,13 @@ FileSetPosition (
     if (Position == 0xFFFFFFFFFFFFFFFF) {
       Position = Fcb->Info.FileSize;
     }
-    Return = SemihostFileSeek (Fcb->SemihostHandle, MIN (Position, Fcb->Info.FileSize));
+    Return = SemihostFileSeek (Fcb->SemihostHandle, (UINTN)(MIN (Position, Fcb->Info.FileSize)));
     if (RETURN_ERROR (Return)) {
       return EFI_DEVICE_ERROR;
     }
   }
 
-  Fcb->Position = Position;
+  Fcb->Position = (UINT32)Position;
 
   return EFI_SUCCESS;
 }
@@ -828,8 +829,10 @@ GetFilesystemInfo (
   EFI_FILE_SYSTEM_INFO  *Info;
   EFI_STATUS            Status;
   UINTN                 ResultSize;
+  UINTN                 StringSize;
 
-  ResultSize = SIZE_OF_EFI_FILE_SYSTEM_INFO + StrSize (mSemihostFsLabel);
+  StringSize = StrSize (mSemihostFsLabel);
+  ResultSize = SIZE_OF_EFI_FILE_SYSTEM_INFO + StringSize;
 
   if (*BufferSize >= ResultSize) {
     ZeroMem (Buffer, ResultSize);
@@ -843,7 +846,7 @@ GetFilesystemInfo (
     Info->FreeSpace  = 0;
     Info->BlockSize  = 0;
 
-    StrCpy (Info->VolumeLabel, mSemihostFsLabel);
+    CopyMem (Info->VolumeLabel, mSemihostFsLabel, StringSize);
   } else {
     Status = EFI_BUFFER_TOO_SMALL;
   }
@@ -903,7 +906,7 @@ FileGetInfo (
     ResultSize = StrSize (mSemihostFsLabel);
 
     if (*BufferSize >= ResultSize) {
-      StrCpy (Buffer, mSemihostFsLabel);
+      CopyMem (Buffer, mSemihostFsLabel, ResultSize);
       Status = EFI_SUCCESS;
     } else {
       Status = EFI_BUFFER_TOO_SMALL;
@@ -963,11 +966,12 @@ SetFileInfo (
     return EFI_ACCESS_DENIED;
   }
 
-  AsciiFileName = AllocatePool (StrLen (Info->FileName) + 1);
+  Length = StrLen (Info->FileName) + 1;
+  AsciiFileName = AllocatePool (Length);
   if (AsciiFileName == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  UnicodeStrToAsciiStr (Info->FileName, AsciiFileName);
+  UnicodeStrToAsciiStrS (Info->FileName, AsciiFileName, Length);
 
   FileSizeIsDifferent = (Info->FileSize != Fcb->Info.FileSize);
   FileNameIsDifferent = (AsciiStrCmp (AsciiFileName, Fcb->FileName) != 0);
@@ -999,9 +1003,9 @@ SetFileInfo (
   Status = EFI_DEVICE_ERROR;
 
   if (FileSizeIsDifferent) {
-    FileSize = Info->FileSize;
+    FileSize = (UINTN)Info->FileSize;
     if (Fcb->Info.FileSize < FileSize) {
-      Status = ExtendFile (Fcb, FileSize - Fcb->Info.FileSize);
+      Status = ExtendFile (Fcb, (UINTN)(FileSize - Fcb->Info.FileSize));
       if (EFI_ERROR (Status)) {
         goto Error;
       }

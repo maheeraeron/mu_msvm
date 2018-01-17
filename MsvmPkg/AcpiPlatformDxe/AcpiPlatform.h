@@ -26,10 +26,17 @@ Oem0InitializeTable(
     __inout EFI_ACPI_DESCRIPTION_HEADER* Table
     );
 
+#if defined (MDE_CPU_AARCH64)
+EFI_STATUS
+GicInitializeTable(
+    __inout EFI_ACPI_DESCRIPTION_HEADER* Table
+    );
+#else
 EFI_STATUS
 ApicInitializeTable(
     __inout EFI_ACPI_DESCRIPTION_HEADER* Table
     );
+#endif
 
 EFI_STATUS
 DsdtInitializeTable(

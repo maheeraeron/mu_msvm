@@ -49,20 +49,29 @@ enter_monitor_mode FUNCTION
 // When we will jump into this function, we will set the CPSR flag to ARM assembler. By copying directly 'lr' into
 // 'pc'; we will not change the CPSR flag and it will crash.
 // The way to fix this limitation is to do the movs into the ARM assmbler code and then do a 'bx'.
-return_from_exception
-    adr     lr, returned_exception
-    movs    pc, lr
-returned_exception                           // We are now in non-secure state
+return_from_exception FUNCTION
+    ldr     lr, returned_exception
+
+    //The following instruction breaks the code.
+    //movs    pc, lr
+    mrs     r2, cpsr
+    bic     r2, r2, #0x1f
+    orr     r2, r2, #0x13
+    msr     cpsr_c, r2
+
+returned_exception  FUCNTION                  // We are now in non-secure state
     bx      r0
+    ENDFUNC
 
 // Save the current Program Status Register (PSR) into the Saved PSR
-copy_cpsr_into_spsr
+copy_cpsr_into_spsr FUNCTION
     mrs     r0, cpsr
     msr     spsr_cxsf, r0
     bx      lr
+    ENDFUNC
 
 // Set the Non Secure Mode
-set_non_secure_mode
+set_non_secure_mode FUNCTION
     push    { r1 }
     and     r0, r0, #0x1f     // Keep only the mode bits
     mrs     r1, spsr          // Read the spsr
@@ -72,8 +81,6 @@ set_non_secure_mode
     isb
     pop     { r1 }
     bx      lr                // return (hopefully thumb-safe!)
-
-dead
-    B       dead
+    ENDFUNC
 
     END

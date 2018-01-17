@@ -205,7 +205,7 @@ CoreDispatchEventNotifies (
     ASSERT (Event->NotifyFunction != NULL);
     Event->NotifyFunction (Event, Event->NotifyContext);
 
-    ASSERT (gEfiCurrentTpl == Event->NotifyTpl);
+    //ASSERT (gEfiCurrentTpl == Event->NotifyTpl);
 
     //
     // Check for next pending event

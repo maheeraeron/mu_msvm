@@ -14,17 +14,19 @@
 **/
 #include <Base.h>
 #include <Library/ArmLib.h>
+#include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
 
+STATIC
 VOID
 CacheRangeOperation (
   IN  VOID            *Start,
   IN  UINTN           Length,
-  IN  LINE_OPERATION  LineOperation
+  IN  LINE_OPERATION  LineOperation,
+  IN  UINTN           LineLength
   )
 {
-  UINTN ArmCacheLineLength         = ArmDataCacheLineLength();
-  UINTN ArmCacheLineAlignmentMask  = ArmCacheLineLength - 1;
+  UINTN ArmCacheLineAlignmentMask  = LineLength - 1;
 
   // Align address (rounding down)
   UINTN AlignedAddress = (UINTN)Start - ((UINTN)Start & ArmCacheLineAlignmentMask);
@@ -33,8 +35,9 @@ CacheRangeOperation (
   // Perform the line operation on an address in each cache line
   while (AlignedAddress < EndAddress) {
     LineOperation(AlignedAddress);
-    AlignedAddress += ArmCacheLineLength;
+    AlignedAddress += LineLength;
   }
+  ArmDataSynchronizationBarrier ();
 }
 
 VOID
@@ -43,8 +46,7 @@ InvalidateInstructionCache (
   VOID
   )
 {
-  ArmCleanDataCache();
-  ArmInvalidateInstructionCache();
+  ASSERT (FALSE);
 }
 
 VOID
@@ -53,7 +55,7 @@ InvalidateDataCache (
   VOID
   )
 {
-  ArmInvalidateDataCache();
+  ASSERT (FALSE);
 }
 
 VOID *
@@ -63,8 +65,14 @@ InvalidateInstructionCacheRange (
   IN      UINTN                     Length
   )
 {
-  CacheRangeOperation (Address, Length, ArmCleanDataCacheEntryByMVA);
-  ArmInvalidateInstructionCache ();
+  CacheRangeOperation (Address, Length, ArmCleanDataCacheEntryToPoUByMVA,
+    ArmDataCacheLineLength ());
+  CacheRangeOperation (Address, Length,
+    ArmInvalidateInstructionCacheEntryToPoUByMVA,
+    ArmInstructionCacheLineLength ());
+
+  ArmInstructionSynchronizationBarrier ();
+
   return Address;
 }
 
@@ -74,7 +82,7 @@ WriteBackInvalidateDataCache (
   VOID
   )
 {
-  ArmCleanInvalidateDataCache();
+  ASSERT (FALSE);
 }
 
 VOID *
@@ -84,7 +92,8 @@ WriteBackInvalidateDataCacheRange (
   IN      UINTN                     Length
   )
 {
-  CacheRangeOperation(Address, Length, ArmCleanInvalidateDataCacheEntryByMVA);
+  CacheRangeOperation(Address, Length, ArmCleanInvalidateDataCacheEntryByMVA,
+    ArmDataCacheLineLength ());
   return Address;
 }
 
@@ -94,7 +103,7 @@ WriteBackDataCache (
   VOID
   )
 {
-  ArmCleanDataCache();
+  ASSERT (FALSE);
 }
 
 VOID *
@@ -104,7 +113,8 @@ WriteBackDataCacheRange (
   IN      UINTN                     Length
   )
 {
-  CacheRangeOperation(Address, Length, ArmCleanDataCacheEntryByMVA);
+  CacheRangeOperation(Address, Length, ArmCleanDataCacheEntryByMVA,
+    ArmDataCacheLineLength ());
   return Address;
 }
 
@@ -115,6 +125,7 @@ InvalidateDataCacheRange (
   IN      UINTN                     Length
   )
 {
-  CacheRangeOperation(Address, Length, ArmInvalidateDataCacheEntryByMVA);
+  CacheRangeOperation(Address, Length, ArmInvalidateDataCacheEntryByMVA,
+    ArmDataCacheLineLength ());
   return Address;
 }

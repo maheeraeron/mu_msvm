@@ -23,6 +23,7 @@
   Arm/ArmTrustedMonitorLibNull.c
   Arm/MonitorTable.asm     | RVCT
   Arm/MonitorTable.S       | GCC
+  Arm/MonitorTable.masm    | MSFT
 
 [Sources.AARCH64]
   AArch64/ArmTrustedMonitorLibNull.c

@@ -84,17 +84,6 @@ typedef struct {
 #define INSTANCE_FROM_PCI_ROOT_BRIDGE_IO_THIS(a) CR (a, PCI_ROOT_BRIDGE, Io, PCI_ROOT_BRIDGE_SIGNATURE)
 
 
-typedef union {
-  UINT8   volatile  *Buffer;
-  UINT8   volatile  *Ui8;
-  UINT16  volatile  *Ui16;
-  UINT32  volatile  *Ui32;
-  UINT64  volatile  *Ui64;
-  UINTN   volatile  Ui;
-} PTR;
-
-
-
 EFI_STATUS
 EFIAPI
 PciRootBridgeIoPollMem (
@@ -265,9 +254,9 @@ PciRootBridgeIoMemRW (
   IN  EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH  Width,
   IN  UINTN                                  Count,
   IN  BOOLEAN                                InStrideFlag,
-  IN  PTR                                    In,
+  IN  void volatile *                        In,
   IN  BOOLEAN                                OutStrideFlag,
-  OUT PTR                                    Out
+  OUT void volatile *                        Out
   );
 
 BOOLEAN

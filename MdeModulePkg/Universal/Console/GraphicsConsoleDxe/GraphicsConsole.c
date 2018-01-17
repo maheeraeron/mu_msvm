@@ -82,7 +82,7 @@ GRAPHICS_CONSOLE_MODE_DATA mGraphicsConsoleModeData[] = {
   // header size changes or the resolution changes (currently only 1024x768)
   // Dependencies:
   //  MsvmPkg\library\PlatformBdsLib\PlatformConsole.c  - Header drawing.
-  //  gUefiMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode - Mode number.
+  //  gMsvmPkgTokenSpaceGuid.PcdPlatformConsoleMode - Mode number.
   {125, 36, ConsolePositionCenterBottom, MODE_FLAG_REQUIRED},
   //
   // New modes can be added here.

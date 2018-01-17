@@ -101,7 +101,7 @@ InitializeFvAndVariableStoreHeaders (
                                       );
   FirmwareVolumeHeader->HeaderLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY);
   FirmwareVolumeHeader->Revision = EFI_FVH_REVISION;
-  FirmwareVolumeHeader->BlockMap[0].NumBlocks = Instance->Media.LastBlock + 1;
+  FirmwareVolumeHeader->BlockMap[0].NumBlocks = (UINT32)(Instance->Media.LastBlock + 1);
   FirmwareVolumeHeader->BlockMap[0].Length      = Instance->Media.BlockSize;
   FirmwareVolumeHeader->BlockMap[1].NumBlocks = 0;
   FirmwareVolumeHeader->BlockMap[1].Length      = 0;
@@ -111,7 +111,7 @@ InitializeFvAndVariableStoreHeaders (
   // VARIABLE_STORE_HEADER
   //
   VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)Headers + FirmwareVolumeHeader->HeaderLength);
-  CopyGuid (&VariableStoreHeader->Signature, mNorFlashVariableGuid);
+  CopyGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid);
   VariableStoreHeader->Size = PcdGet32(PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
   VariableStoreHeader->Format            = VARIABLE_STORE_FORMATTED;
   VariableStoreHeader->State             = VARIABLE_STORE_HEALTHY;
@@ -158,34 +158,40 @@ ValidateFvHeader (
       || (FwVolHeader->FvLength  != FvLength)
       )
   {
-    DEBUG ((EFI_D_ERROR, "ValidateFvHeader: No Firmware Volume header present\n"));
+    DEBUG ((EFI_D_INFO, "%a: No Firmware Volume header present\n",
+      __FUNCTION__));
     return EFI_NOT_FOUND;
   }
 
   // Check the Firmware Volume Guid
   if( CompareGuid (&FwVolHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid) == FALSE ) {
-    DEBUG ((EFI_D_ERROR, "ValidateFvHeader: Firmware Volume Guid non-compatible\n"));
+    DEBUG ((EFI_D_INFO, "%a: Firmware Volume Guid non-compatible\n",
+      __FUNCTION__));
     return EFI_NOT_FOUND;
   }
 
   // Verify the header checksum
   Checksum = CalculateSum16((UINT16*)FwVolHeader, FwVolHeader->HeaderLength);
   if (Checksum != 0) {
-    DEBUG ((EFI_D_ERROR, "ValidateFvHeader: FV checksum is invalid (Checksum:0x%X)\n",Checksum));
+    DEBUG ((EFI_D_INFO, "%a: FV checksum is invalid (Checksum:0x%X)\n",
+      __FUNCTION__, Checksum));
     return EFI_NOT_FOUND;
   }
 
   VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)FwVolHeader + FwVolHeader->HeaderLength);
 
   // Check the Variable Store Guid
-  if (!CompareGuid (&VariableStoreHeader->Signature, mNorFlashVariableGuid)) {
-    DEBUG ((EFI_D_ERROR, "ValidateFvHeader: Variable Store Guid non-compatible\n"));
+  if (!CompareGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid) &&
+      !CompareGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid)) {
+    DEBUG ((EFI_D_INFO, "%a: Variable Store Guid non-compatible\n",
+      __FUNCTION__));
     return EFI_NOT_FOUND;
   }
 
   VariableStoreLength = PcdGet32 (PcdFlashNvStorageVariableSize) - FwVolHeader->HeaderLength;
   if (VariableStoreHeader->Size != VariableStoreLength) {
-    DEBUG ((EFI_D_ERROR, "ValidateFvHeader: Variable Store Length does not match\n"));
+    DEBUG ((EFI_D_INFO, "%a: Variable Store Length does not match\n",
+      __FUNCTION__));
     return EFI_NOT_FOUND;
   }
 
@@ -731,7 +737,9 @@ NorFlashFvbInitialize (
   // Install the Default FVB header if required
   if (EFI_ERROR(Status)) {
     // There is no valid header, so time to install one.
-    DEBUG((EFI_D_ERROR,"NorFlashFvbInitialize: ERROR - The FVB Header is not valid. Installing a correct one for this volume.\n"));
+    DEBUG ((EFI_D_INFO, "%a: The FVB Header is not valid.\n", __FUNCTION__));
+    DEBUG ((EFI_D_INFO, "%a: Installing a correct one for this volume.\n",
+      __FUNCTION__));
 
     // Erase all the NorFlash that is reserved for variable storage
     FvbNumLba = (PcdGet32(PcdFlashNvStorageVariableSize) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) + PcdGet32(PcdFlashNvStorageFtwSpareSize)) / Instance->Media.BlockSize;

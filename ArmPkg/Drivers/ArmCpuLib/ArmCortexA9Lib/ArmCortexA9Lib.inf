@@ -30,8 +30,9 @@
   IoLib
   PcdLib
 
-[Sources.common]
+[Sources.ARM]
   ArmCortexA9Lib.c
   ArmCortexA9Helper.asm     | RVCT
   ArmCortexA9Helper.S       | GCC
+  ArmCortexA9Helper.masm    | MSFT
 

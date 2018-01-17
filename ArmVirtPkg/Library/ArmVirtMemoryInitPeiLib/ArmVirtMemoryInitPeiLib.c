@@ -15,6 +15,7 @@
 
 #include <PiPei.h>
 
+#include <Library/ArmMmuLib.h>
 #include <Library/ArmPlatformLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
@@ -56,6 +57,7 @@ MemoryPeim (
   )
 {
   EFI_RESOURCE_ATTRIBUTE_TYPE ResourceAttributes;
+  UINT64                      SystemMemoryTop;
 
   // Ensure PcdSystemMemorySize has been set
   ASSERT (PcdGet64 (PcdSystemMemorySize) != 0);
@@ -66,19 +68,34 @@ MemoryPeim (
   ResourceAttributes = (
       EFI_RESOURCE_ATTRIBUTE_PRESENT |
       EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
-      EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE |
-      EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
-      EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
       EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE |
       EFI_RESOURCE_ATTRIBUTE_TESTED
   );
 
-  BuildResourceDescriptorHob (
-      EFI_RESOURCE_SYSTEM_MEMORY,
-      ResourceAttributes,
-      PcdGet64 (PcdSystemMemoryBase),
-      PcdGet64 (PcdSystemMemorySize)
-  );
+  SystemMemoryTop = PcdGet64 (PcdSystemMemoryBase) +
+                    PcdGet64 (PcdSystemMemorySize);
+
+  if (SystemMemoryTop - 1 > MAX_ADDRESS) {
+    BuildResourceDescriptorHob (
+        EFI_RESOURCE_SYSTEM_MEMORY,
+        ResourceAttributes,
+        PcdGet64 (PcdSystemMemoryBase),
+        (UINT64)MAX_ADDRESS - PcdGet64 (PcdSystemMemoryBase) + 1
+        );
+    BuildResourceDescriptorHob (
+        EFI_RESOURCE_SYSTEM_MEMORY,
+        ResourceAttributes,
+        (UINT64)MAX_ADDRESS + 1,
+        SystemMemoryTop - MAX_ADDRESS - 1
+        );
+  } else {
+    BuildResourceDescriptorHob (
+        EFI_RESOURCE_SYSTEM_MEMORY,
+        ResourceAttributes,
+        PcdGet64 (PcdSystemMemoryBase),
+        PcdGet64 (PcdSystemMemorySize)
+        );
+  }
 
   //
   // When running under virtualization, the PI/UEFI memory region may be

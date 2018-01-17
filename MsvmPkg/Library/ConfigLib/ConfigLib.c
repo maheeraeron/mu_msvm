@@ -17,14 +17,15 @@ Author:
 --*/
 
 #include <EfiNt.h>
+#include <Library/BiosDeviceLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <BiosInterface.h>
-#include <BiosDeviceAccess.h>
 
 UINT32
 GetNfitSize(
+    void
     )
 /*++
 
@@ -89,7 +90,7 @@ Return Value:
 
 --*/
 {
-    ASSERT(Address < 0xFFFFFFFFULL);
+    ASSERT((UINT64) Address < 0xFFFFFFFFULL);
     WriteBiosDevice(BiosConfigVpmemSetACPIBuffer, (UINT32) Address);
 }
 
@@ -113,8 +114,6 @@ Return Value:
 
 --*/
 {
-    IoWrite32(BiosAddressPort, BiosConfigGenerationIdPtrLow);
-    IoWrite32(BiosDataPort, (UINT32)Value);
-    IoWrite32(BiosAddressPort, BiosConfigGenerationIdPtrHigh);
-    IoWrite32(BiosDataPort, (UINT32)(Value >> 32));
+    WriteBiosDevice(BiosConfigGenerationIdPtrLow, (UINT32)Value);
+    WriteBiosDevice(BiosConfigGenerationIdPtrHigh, (UINT32)(Value >> 32));
 }

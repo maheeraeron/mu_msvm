@@ -262,7 +262,7 @@ BootOptionAllocateBootIndex (
         }
       }
       if (!Found) {
-        return BootIndex;
+        return (UINT16)BootIndex;
       }
     }
     FreePool (BootOrder);

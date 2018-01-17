@@ -1,0 +1,45 @@
+;++
+;
+; Copyright (c) 2013  Microsoft Corporation
+;
+; Module Name:
+;
+;   debugstb.asm
+;
+; Abstract:
+;
+;   This module implements functions to support debugging NT.
+;
+; Author:
+;
+;   Aaron Giles (aarongi) 29-Jan-2013
+;
+; Environment:
+;
+;   Any mode.
+;
+;--
+
+        AREA    |.text|,ALIGN=2,CODE,READONLY
+
+        EXPORT DebugService2
+
+
+ARM64_BREAK_DEBUG_BASE  equ  0xf000
+ARM64_BREAKPOINT        equ  (ARM64_BREAK_DEBUG_BASE + 0)
+ARM64_ASSERT            equ  (ARM64_BREAK_DEBUG_BASE + 1)
+ARM64_DEBUG_SERVICE     equ  (ARM64_BREAK_DEBUG_BASE + 2)
+ARM64_FASTFAIL          equ  (ARM64_BREAK_DEBUG_BASE + 3)
+ARM64_DIVIDE_BY_0       equ  (ARM64_BREAK_DEBUG_BASE + 4)
+
+
+DebugService2 PROC
+
+    mov x16, x2                 ; set debug service type
+    brk #ARM64_DEBUG_SERVICE    ; call debug service
+    brk #ARM64_BREAKPOINT       ; required - do not remove
+    ret
+
+DebugService2 ENDP
+
+    END

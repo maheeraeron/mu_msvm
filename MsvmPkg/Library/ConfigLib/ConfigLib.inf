@@ -20,9 +20,9 @@
 
 [LibraryClasses]
   BaseMemoryLib
+  BiosDeviceLib
   DebugLib
   IoLib
-  HobLib
 
 [Packages]
   MdePkg/MdePkg.dec

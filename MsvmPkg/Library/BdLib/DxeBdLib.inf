@@ -1,0 +1,105 @@
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = BdLib
+    FILE_GUID                      = 2557B660-2A10-4248-B44D-257D2DBDE4D2
+    MODULE_TYPE                    = DXE_DRIVER
+    VERSION_STRING                 = 1.0
+    LIBRARY_CLASS                  = DebugAgentLib|DXE_CORE DXE_DRIVER UEFI_DRIVER
+    LIBRARY_CLASS                  = CrashDumpAgentLib|DXE_CORE
+    LIBRARY_CLASS                  = PeCoffExtraActionLib|DXE_CORE DXE_DRIVER UEFI_DRIVER
+
+#    CONSTRUCTOR                    = DxeDebugAgentLibConstructor
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[Packages.X64]
+    PcAtChipsetPkg/PcAtChipsetPkg.dec
+
+[Packages.AARCH64]
+    EmbeddedPkg/EmbeddedPkg.dec
+    ArmPkg/ArmPkg.dec
+    ArmPlatformPkg/ArmPlatformPkg.dec
+
+[LibraryClasses]
+    UefiBootServicesTableLib
+    BaseLib
+    BaseMemoryLib
+    HobLib
+    MemoryAllocationLib
+    WatchdogTimerLib
+    SerialPortLib
+    TimerLib
+
+[LibraryClasses.x64]
+    LocalApicLib
+    ResetSystemLib
+
+[LibraryClasses.AARCH64]
+    ArmLib
+    CacheMaintenanceLib
+    EfiResetSystemLib
+    PL011UartLib
+
+[Sources]
+    DxeBdLib.c
+    bdapi.c
+    data.c
+    message.c
+    break.c
+    check.c
+    data.c
+    dbgio.c
+    move.c
+    xxapi.c
+    poll.c
+    comio.c
+    image.c
+
+[Sources.Ia32]
+    cpPcUart.c          | MSFT
+    Ia32/trapa.asm      | MSFT
+    Ia32/debugstb.asm   | MSFT
+    Ia32/state.asm      | MSFT
+    Ia32/debug.c        | MSFT
+    Ia32/cpuapi.c       | MSFT
+    Ia32/trapc.c        | MSFT
+
+
+[Sources.X64]
+    cpPcUart.c          | MSFT
+    CrashDumpAgent.c    | MSFT
+    X64/trapa.asm       | MSFT
+    X64/debugstb.asm    | MSFT
+    X64/state.asm       | MSFT
+    X64/debug.c         | MSFT
+    X64/cpuapi.c        | MSFT
+    X64/trapc.c         | MSFT
+    X64/CrashDump.c     | MSFT
+
+[Sources.AARCH64]
+    cpPL011.c           | MSFT
+    AArch64/cpuapi.c    | MSFT
+    AArch64/debug.c     | MSFT
+    AArch64/state.c     | MSFT
+    AArch64/trapc.c     | MSFT
+    AArch64/vector.masm | MSFT
+    AArch64/debugstb.masm | MSFT
+    AArch64/archapi.c   | MSFT
+
+[Guids]
+    gEfiEventExitBootServicesGuid
+    gEfiHobMemoryAllocStackGuid
+    gMsvmDebuggerEnabledGuid
+
+[Protocols]
+    gEfiCpuArchProtocolGuid
+
+[Pcd]
+    gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+
+[Depex]
+    gEfiCpuArchProtocolGuid
+

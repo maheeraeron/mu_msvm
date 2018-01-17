@@ -80,7 +80,7 @@ AccessSysCfgRegister (
   }
 
   // Clear the COMPLETE bit
-  MmioAnd32(ARM_VE_SYS_CFGSTAT_REG, ~SYS_CFGSTAT_COMPLETE);
+  MmioAnd32(ARM_VE_SYS_CFGSTAT_REG, (UINT32)(~SYS_CFGSTAT_COMPLETE));
 
   // If writing, then set the data value
   if(ReadWrite == SYS_CFGCTRL_WRITE) {

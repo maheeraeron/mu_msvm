@@ -1,0 +1,15 @@
+
+    AREA    |.text|,ALIGN=2,CODE,READONLY,ARM
+
+    EXPORT  CpuFlushTlb
+
+//VOID
+//EFIAPI
+//CpuFlushTlb (
+//  VOID
+//  )
+CpuFlushTlb PROC
+    mov r0,#0
+    mcr p15,0,r0,c8,c5,0        // Invalidate all the unlocked entried in TLB
+    bx  LR
+CpuFlushTlb ENDP

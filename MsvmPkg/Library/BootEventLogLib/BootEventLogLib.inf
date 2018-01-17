@@ -34,4 +34,4 @@
   gBootEventChannelGuid         ## CONSUMES ## GUID
 
 [Pcd]
-  gUefiMsvmPkgTokenSpaceGuid.PcdBootEventLogSize
+  gMsvmPkgTokenSpaceGuid.PcdBootEventLogSize

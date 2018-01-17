@@ -37,7 +37,8 @@
   Arm/ArmPlatformHelper.asm  | RVCT
 
 [Sources.AArch64]
-  AArch64/ArmPlatformHelper.S
+  AArch64/ArmPlatformHelper.S    | GCC
+  AArch64/ArmPlatformHelper.masm | MSFT
 
 [FixedPcd]
   gArmTokenSpaceGuid.PcdSystemMemoryBase

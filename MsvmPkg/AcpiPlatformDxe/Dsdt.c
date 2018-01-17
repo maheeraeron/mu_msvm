@@ -85,6 +85,8 @@ Return Value:
     VOID *generationId;
     EFI_STATUS status;
 
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+
     generationId = NULL;
     dataPages = 0;
     nvdimmBuffer = 0;
@@ -143,6 +145,17 @@ Return Value:
     data->VirtualBatteryEnabled = PcdGetBool(PcdVirtualBatteryEnabled);
     data->SgxMemoryEnabled = PcdGetBool(PcdSgxMemoryEnabled);
 
+    DEBUG((DEBUG_VERBOSE, "--- %a: Mmio1Start               0x%lx\n", __FUNCTION__, data->Mmio1Start));
+    DEBUG((DEBUG_VERBOSE, "--- %a: Mmio1Length              0x%lx\n", __FUNCTION__, data->Mmio1Start));
+    DEBUG((DEBUG_VERBOSE, "--- %a: Mmio2StartMb             0x%lx\n", __FUNCTION__, data->Mmio2StartMb));
+    DEBUG((DEBUG_VERBOSE, "--- %a: Mmio2LengthMb            0x%lx\n", __FUNCTION__, data->Mmio2LengthMb));
+    DEBUG((DEBUG_VERBOSE, "--- %a: ProcessorCount           0x%lx\n", __FUNCTION__, data->ProcessorCount));
+    DEBUG((DEBUG_VERBOSE, "--- %a: SerialControllerEnabled  0x%x\n", __FUNCTION__, data->SerialControllerEnabled));
+    DEBUG((DEBUG_VERBOSE, "--- %a: HibernateEnabled         0x%x\n", __FUNCTION__, data->HibernateEnabled));
+    DEBUG((DEBUG_VERBOSE, "--- %a: PmemEnabled              0x%x\n", __FUNCTION__, data->PmemEnabled));
+    DEBUG((DEBUG_VERBOSE, "--- %a: VirtualBatteryEnabled    0x%x\n", __FUNCTION__, data->VirtualBatteryEnabled));
+    DEBUG((DEBUG_VERBOSE, "--- %a: SgxMemoryEnabled         0x%x\n", __FUNCTION__, data->SgxMemoryEnabled));
+
     //
     // Allocate space for the NVDIMM IO Buffer if VPMEM is enabled.
     //
@@ -185,6 +198,8 @@ Cleanup:
             gBS->FreePages(nvdimmBuffer, EFI_SIZE_TO_PAGES(NVDIMM_IO_BUFFER_SIZE));
         }
     }
+
+    DEBUG((DEBUG_VERBOSE, "<<< %a: status %r\n", __FUNCTION__, status));
 
     return status;
 }

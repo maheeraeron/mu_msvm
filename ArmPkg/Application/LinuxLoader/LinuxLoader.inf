@@ -31,7 +31,8 @@
 
 [Sources.AARCH64]
   AArch64/LinuxStarter.c
-  AArch64/LinuxStarterHelper.S
+  AArch64/LinuxStarterHelper.S     | GCC
+  AArch64/LinuxStarterHelper.masm  | MSFT
 
 [Sources.ARM]
   Arm/LinuxAtag.h

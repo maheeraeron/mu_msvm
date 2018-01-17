@@ -20,6 +20,8 @@ Author:
 #include <Base.h>
 #include <AcpiTables.h>
 
+#if defined(MDE_CPU_X64)
+
 EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
 {
     STANDARD_HEADER(EFI_ACPI_3_0_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
@@ -54,6 +56,47 @@ EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
     0,                      // PciSegment
     0                       // Reserved2
 };
+
+#elif defined(MDE_CPU_AARCH64)
+
+EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
+{
+    STANDARD_HEADER(EFI_ACPI_6_1_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
+                    sizeof(EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE),
+                    EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_REVISION)
+    EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERFACE_TYPE_ARM_PL011_UART, // InterfaceType - ARM PL011
+    {                       // Reserved1[]
+        0, 0, 0,
+    },
+    {                       // BaseAddress EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE
+        EFI_ACPI_6_1_SYSTEM_MEMORY, // AddressSpaceId
+        8,                      // RegisterBitWidth
+        0,                      // RegisterBitOffset
+        0,                      // Reserved
+        0,                      // Address - updated by AcpiPlatformDxe
+    },
+    EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERRUPT_TYPE_GIC, // InterruptType
+    0,                      // Irq
+    0,                      // GlobalSystemInterrupt - updated by AcpiPlatformDxe
+    0,                      // BaudRate - updated by AcpiPlatformDxe
+    0,                      // Parity - updated by AcpiPlatformDxe
+    1,                      // StopBits - updated by AcpiPlatformDxe
+    0,                      // FlowControl
+    0,                      // TerminalType - updated by AcpiPlatformDxe
+    0,                      // Language/Reserved
+    0xFFFF,                 // PciDeviceId - 0xFFFF means not a PCI device
+    0xFFFF,                 // PciVendorId - 0xFFFF means not a PCI device
+    0,                      // PciBusNumber
+    0,                      // PciDeviceNumber
+    0,                      // PciFunctionNumber
+    0,                      // PciFlags
+    0,                      // PciSegment
+    0                       // Reserved2
+};
+
+#else
+#error Unsupported Architecture
+#endif
 
 VOID*
 ReferenceAcpiTable()

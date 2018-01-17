@@ -26,7 +26,11 @@ Author:
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/KdDebugLib.h>
+#include <Library/BdDebugLib.h>
+
+// Turn off DEBUG output by default as it can be really noisy
+#undef DEBUG
+#define DEBUG(arg)
 
 EFI_STATUS
 EFIAPI
@@ -91,18 +95,21 @@ Return Value:
 
 --*/
 {
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     UINT64 time;
 
     time = mHv->GetReferenceTime(mHv);
 
     ASSERT(time > mLastTime);
 
+    DEBUG((DEBUG_VERBOSE, ">>> %a: calling 0x%p\n", __FUNCTION__, mTimerNotifyFunction));
     if (mTimerNotifyFunction != NULL)
     {
         mTimerNotifyFunction(time - mLastTime);
     }
 
     mLastTime = time;
+    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -265,28 +272,27 @@ Return Value:
     HV_MESSAGE *message;
     HV_MESSAGE_TYPE messageType;
 
-    //
-    // Poll the debugger.
-    //
+    DEBUG((DEBUG_VERBOSE, ">>> SynicTimerInterruptHandler\n"));
+
     DebugPollDebugger();
+
+    // A message is not expected due to timer direct mode
+    // but complete any message found.
 
     message = mHv->GetSintMessage(mHv, mSintIndex);
     if (message != NULL)
     {
         messageType = message->Header.MessageType;
-        if (messageType == HvMessageTimerExpired)
+        if (messageType != HvMessageTimerExpired)
         {
-            SynicTimerCallNotifyFunction();
+            DEBUG((EFI_D_ERROR, "%a: Unexpected message type 0xlx%", __FUNCTION__, messageType));
         }
-        else
-        {
-            DEBUG((EFI_D_ERROR, "Unexpected message type!"));
-        }
-
         mHv->CompleteSintMessage(mHv, mSintIndex);
     }
 
     SynicTimerCallNotifyFunction();
+
+    DEBUG((DEBUG_VERBOSE, "<<< SynicTimerInterruptHandler\n"));
 }
 
 EFI_STATUS
@@ -318,16 +324,12 @@ Return Value:
     mSintIndex = PcdGet8(PcdSynicTimerSintIndex);
     mTimerIndex = PcdGet8(PcdSynicTimerTimerIndex);
 
-    //
     // Make sure the Timer Architectural Protocol is not already installed in
     // the system
-    //
 
     ASSERT_PROTOCOL_ALREADY_INSTALLED(NULL, &gEfiTimerArchProtocolGuid);
 
-    //
     // Find the HV protocol.
-    //
 
     status = gBS->LocateProtocol(&gEfiHvProtocolGuid, NULL, (VOID **)&mHv);
     if (EFI_ERROR(status))
@@ -335,9 +337,7 @@ Return Value:
         goto Cleanup;
     }
 
-    //
     // Connect the SINT interrupt.
-    //
 
     status = mHv->ConnectSint(mHv,
                               mSintIndex,
@@ -352,11 +352,19 @@ Return Value:
 
     mSintConnected = TRUE;
 
-    //
     // Enable the timer.
-    //
 
-    status = mHv->ConfigureTimer(mHv, mTimerIndex, mSintIndex, TRUE);
+    status = mHv->ConfigureTimer(mHv,
+                                 mTimerIndex,
+                                 mSintIndex,
+                                 TRUE, // periodic
+#if defined(MDE_CPU_AARCH64)
+                                 TRUE,  // direct mode
+                                 PcdGet8(PcdSynicTimerVector));
+#else
+                                 FALSE, // not direct mode - will get SINT messages
+                                 0);
+#endif                                 
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -368,9 +376,7 @@ Return Value:
         goto Cleanup;
     }
 
-    //
     // Install the Timer Architectural Protocol onto a new handle.
-    //
 
     status = gBS->InstallMultipleProtocolInterfaces(
                     &mTimerHandle,

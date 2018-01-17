@@ -5,7 +5,7 @@
     MODULE_TYPE                    = BASE
     VERSION_STRING                 = 1.0
     LIBRARY_CLASS                  = TimerLib
-  
+
 [Sources]
     HvTimerLib.c
 
@@ -14,5 +14,11 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
+    DebugLib
+
+[LibraryClasses.AARCH64]
+    HvHypercallLib
+
+[LibraryClasses.X64]
     IoLib
 

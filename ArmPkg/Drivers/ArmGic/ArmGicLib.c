@@ -20,6 +20,19 @@
 #include <Library/PcdLib.h>
 
 /**
+ *
+ * Return whether the Source interrupt index refers to a shared interrupt (SPI)
+ */
+STATIC
+BOOLEAN
+SourceIsSpi (
+  IN UINTN  Source
+  )
+{
+  return Source >= 32 && Source < 1020;
+}
+
+/**
  * Return the base address of the GIC redistributor for the current CPU
  *
  * @param Revision  GIC Revision. The GIC redistributor might have a different
@@ -63,7 +76,7 @@ GicGetCpuRedistributorBase (
     }
 
     // Move to the next GIC Redistributor frame
-    GicRedistributorBase += GicRedistributorGranularity;
+    GicCpuRedistributorBase += GicRedistributorGranularity;
   }
 
   // The Redistributor has not been found for the current CPU
@@ -99,7 +112,7 @@ ArmGicSendSgiTo (
   IN  INTN          SgiId
   )
 {
-  MmioWrite32 (GicDistributorBase + ARM_GIC_ICDSGIR, ((TargetListFilter & 0x3) << 24) | ((CPUTargetList & 0xFF) << 16) | SgiId);
+  MmioWrite32 (GicDistributorBase + ARM_GIC_ICDSGIR, (UINT32)(((TargetListFilter & 0x3) << 24) | ((CPUTargetList & 0xFF) << 16) | SgiId));
 }
 
 /*
@@ -179,11 +192,13 @@ ArmGicEnableInterrupt (
   UINTN                 GicCpuRedistributorBase;
 
   // Calculate enable register offset and bit position
-  RegOffset = Source / 32;
+  RegOffset = (UINT32)(Source / 32);
   RegShift = Source % 32;
 
   Revision = ArmGicGetSupportedArchRevision ();
-  if ((Revision == ARM_GIC_ARCH_REVISION_2) || FeaturePcdGet (PcdArmGicV3WithV2Legacy)) {
+  if ((Revision == ARM_GIC_ARCH_REVISION_2) ||
+      FeaturePcdGet (PcdArmGicV3WithV2Legacy) ||
+      SourceIsSpi (Source)) {
     // Write set-enable register
     MmioWrite32 (GicDistributorBase + ARM_GIC_ICDISER + (4 * RegOffset), 1 << RegShift);
   } else {
@@ -212,11 +227,13 @@ ArmGicDisableInterrupt (
   UINTN                 GicCpuRedistributorBase;
 
   // Calculate enable register offset and bit position
-  RegOffset = Source / 32;
+  RegOffset = (UINT32)(Source / 32);
   RegShift = Source % 32;
 
   Revision = ArmGicGetSupportedArchRevision ();
-  if ((Revision == ARM_GIC_ARCH_REVISION_2) || FeaturePcdGet (PcdArmGicV3WithV2Legacy)) {
+  if ((Revision == ARM_GIC_ARCH_REVISION_2) ||
+      FeaturePcdGet (PcdArmGicV3WithV2Legacy) ||
+      SourceIsSpi (Source)) {
     // Write clear-enable register
     MmioWrite32 (GicDistributorBase + ARM_GIC_ICDICER + (4 * RegOffset), 1 << RegShift);
   } else {
@@ -245,11 +262,13 @@ ArmGicIsInterruptEnabled (
   UINT32                Interrupts;
 
   // Calculate enable register offset and bit position
-  RegOffset = Source / 32;
+  RegOffset = (UINT32)(Source / 32);
   RegShift = Source % 32;
 
   Revision = ArmGicGetSupportedArchRevision ();
-  if ((Revision == ARM_GIC_ARCH_REVISION_2) || FeaturePcdGet (PcdArmGicV3WithV2Legacy)) {
+  if ((Revision == ARM_GIC_ARCH_REVISION_2) ||
+      FeaturePcdGet (PcdArmGicV3WithV2Legacy) ||
+      SourceIsSpi (Source)) {
     Interrupts = ((MmioRead32 (GicDistributorBase + ARM_GIC_ICDISER + (4 * RegOffset)) & (1 << RegShift)) != 0);
   } else {
     GicCpuRedistributorBase = GicGetCpuRedistributorBase (GicRedistributorBase, Revision);

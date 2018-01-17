@@ -44,9 +44,12 @@
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
+  DebugLib
   IoLib
-  PcdLib
+  UefiBootServicesTableLib
 
-[Pcd]
-  gArmVirtTokenSpaceGuid.PcdFwCfgSelectorAddress
-  gArmVirtTokenSpaceGuid.PcdFwCfgDataAddress
+[Protocols]
+  gFdtClientProtocolGuid                                ## CONSUMES
+
+[Depex]
+  gFdtClientProtocolGuid

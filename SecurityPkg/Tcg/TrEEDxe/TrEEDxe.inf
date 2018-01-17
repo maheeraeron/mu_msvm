@@ -80,7 +80,7 @@
 [Pcd]
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmPlatformClass
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId
-  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
+  gMsvmPkgTokenSpaceGuid.PcdTpmEnabled
 
 [Depex]
   TRUE

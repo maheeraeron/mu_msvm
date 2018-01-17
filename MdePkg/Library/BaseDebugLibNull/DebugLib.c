@@ -196,3 +196,15 @@ DebugPrintLevelEnabled (
   return FALSE;
 }
 
+/**
+  Polls the debugger transport for a packet.
+  No-op in the case of NULL debug lib.
+**/
+VOID
+EFIAPI
+DebugPollDebugger(
+    VOID
+    )
+{
+}
+

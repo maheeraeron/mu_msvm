@@ -30,13 +30,14 @@
 [LibraryClasses]
     BaseMemoryLib
     BaseLib
+    BiosDeviceLib
     DebugLib
+    IoLib
+    MemoryAllocationLib
+    PrintLib
     UefiBootServicesTableLib
     UefiRuntimeLib
     UefiDriverEntryPoint
-    IoLib
-    PrintLib
-    MemoryAllocationLib
 
 [Protocols]
     gEfiVariableWriteArchProtocolGuid             ## ALWAYS_PRODUCES

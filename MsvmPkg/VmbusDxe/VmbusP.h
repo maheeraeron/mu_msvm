@@ -46,7 +46,6 @@ typedef struct _GPA_RANGE
 
 #include <ChannelMessages.h>
 
-#define VMBUS_MESSAGE_SINT 2
 #define VMBUS_MESSAGE_CONNECTION_ID 1
 #define VMBUS_MESSAGE_TYPE 1
 

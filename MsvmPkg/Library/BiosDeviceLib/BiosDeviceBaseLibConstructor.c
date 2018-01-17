@@ -1,0 +1,89 @@
+/*++
+
+    Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    BiosDeviceBaseLibConstructor.c
+    
+Abstract:
+
+    Library constructor for Base (Boot & Runtime) version of BiosDeviceLib
+--*/
+
+#include <PiDxe.h>
+#include <Library/DebugLib.h>
+#include <Library/DxeServicesTableLib.h>
+#include <Library/IoLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+
+// Use MMIO access on ARM64 otherwise use IO access
+#if defined(MDE_CPU_AARCH64)
+#define _USING_BIOS_MMIO_ 1
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define _USING_BIOS_MMIO_ 0
+#else
+#error Unsupported Architecture
+#endif
+
+extern UINTN mBiosBaseAddress;
+extern void SetupBaseAddress();
+
+#if _USING_BIOS_MMIO_
+
+// Event handle for virtual address change event
+EFI_EVENT   mVirtualAddressChangeEvent = NULL;
+
+VOID
+EFIAPI
+BiosDeviceLibAddressChangeHandler(
+    IN EFI_EVENT Event,
+    IN void*     Context
+    )
+{
+    // Convert the virtual base address
+    EFI_STATUS status = gST->RuntimeServices->ConvertPointer(0, (void**)&mBiosBaseAddress);
+    ASSERT_EFI_ERROR(status);
+}
+
+#endif
+
+EFI_STATUS
+EFIAPI
+BiosDeviceBaseLibConstructor (
+  VOID
+  )
+{
+    EFI_STATUS status = EFI_SUCCESS;
+    
+    SetupBaseAddress();
+
+#if _USING_BIOS_MMIO_
+
+    status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
+                              TPL_NOTIFY,
+                              BiosDeviceLibAddressChangeHandler,
+                              NULL,
+                              &gEfiEventVirtualAddressChangeGuid,
+                              &mVirtualAddressChangeEvent);
+    ASSERT_EFI_ERROR(status);
+
+    // The MMIO registers must be declared as runtime so they are included
+    // in the guest os call to SetVirtualAddressMap and can be converted to a GVA.
+    status = gDS->AddMemorySpace(EfiGcdMemoryTypeMemoryMappedIo,
+                                 mBiosBaseAddress,
+                                 EFI_PAGE_SIZE,
+                                 EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR(status);
+
+    status = gDS->SetMemorySpaceAttributes(mBiosBaseAddress,
+                                           EFI_PAGE_SIZE,
+                                           EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR(status);
+#endif
+
+    return status;
+}
+
+
+

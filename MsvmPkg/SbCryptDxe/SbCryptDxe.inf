@@ -22,6 +22,7 @@
  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
+  BiosDeviceLib
   UefiDriverEntryPoint
   UefiBootServicesTableLib
   DebugLib

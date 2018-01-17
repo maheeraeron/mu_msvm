@@ -101,7 +101,7 @@ SemihostFileRead (
   ReadBlock.Buffer = Buffer;
   ReadBlock.Length = *Length;
 
-  Result = Semihost_SYS_READ(&ReadBlock);
+  Result = (UINT32)Semihost_SYS_READ(&ReadBlock);
 
   if ((*Length != 0) && (Result == *Length)) {
     return RETURN_ABORTED;
@@ -228,7 +228,7 @@ SemihostFileRemove (
   RemoveBlock.FileName    = FileName;
   RemoveBlock.NameLength  = AsciiStrLen(FileName);
 
-  Result = Semihost_SYS_REMOVE(&RemoveBlock);
+  Result = (UINT32)Semihost_SYS_REMOVE(&RemoveBlock);
 
   if (Result == 0) {
     return RETURN_SUCCESS;
@@ -309,5 +309,5 @@ SemihostSystem (
   SystemBlock.CommandLine   = CommandLine;
   SystemBlock.CommandLength = AsciiStrLen(CommandLine);
 
-  return Semihost_SYS_SYSTEM(&SystemBlock);
+  return (UINT32)Semihost_SYS_SYSTEM(&SystemBlock);
 }

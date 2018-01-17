@@ -22,9 +22,11 @@ Author:
 
 #include <Library/BaseMemoryLib.h>
 #include <Library/Baselib.h>
+#include <Library/BiosDeviceLib.h>
 #include <Library/IoLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiRuntimeLib.h>
+#include <Library/DxeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/PrintLib.h>
 #include <BiosInterface.h>
@@ -34,8 +36,10 @@ Author:
 #define WITHIN_4_GB_LL (0xFFFFFFFFLL)
 
 //
-// Module variables
+// Events this driver handles
 //
+static EFI_EVENT mVirtualAddressChangeEvent          = NULL;
+
 
 //
 // Descriptor and Data buffers.
@@ -77,10 +81,9 @@ Returns:
     {
         //
         // Send the request to the BIOS VDev.
-        // Cast of descriptor GPA is safe as it allocated below 4GB.
+        // Cast of descriptor GPA is safe as it is allocated below 4GB.
         //
-        IoWrite32(BiosAddressPort, BiosConfigNvramCommand);
-        IoWrite32(BiosDataPort, (UINT32)mNvramCommandDescriptorGpa);
+        WriteBiosDevice(BiosConfigNvramCommand, (UINT32)mNvramCommandDescriptorGpa);
 
         if (mNvramCommandDescriptor->Status == EFI_SUCCESS)
         {
@@ -208,6 +211,12 @@ Return Value:
 {
     EFI_STATUS status;
 
+#if 0
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+    DEBUG((DEBUG_VERBOSE, "--- %a mNvramCommandDescriptor %p\n", __FUNCTION__, mNvramCommandDescriptor));
+    DEBUG((DEBUG_VERBOSE, "--- %a mNvramCommandDataBuffer %p\n", __FUNCTION__, mNvramCommandDataBuffer));
+#endif
+
     //
     // Physical addresses (GPA's) won't change.
     // Convert the virtual addresses of the buffers.
@@ -216,6 +225,12 @@ Return Value:
     ASSERT(!EFI_ERROR(status));
     status = EfiConvertPointer(0, (void**)&mNvramCommandDataBuffer);
     ASSERT(!EFI_ERROR(status));
+
+#if 0
+    DEBUG((DEBUG_VERBOSE, "--- %a mNvramCommandDescriptor %p\n", __FUNCTION__, mNvramCommandDescriptor));
+    DEBUG((DEBUG_VERBOSE, "--- %a mNvramCommandDataBuffer %p\n", __FUNCTION__, mNvramCommandDataBuffer));
+    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
+#endif
 }
 
 
@@ -242,10 +257,12 @@ Returns:
 
 --*/
 {
+    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Command = NvramSignalRuntimeCommand;
     mNvramCommandDescriptor->U.SignalRuntimeCommand.S.VsmAware = VsmAware;
     (void)IssueBiosDeviceNvramCommand();
+    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 

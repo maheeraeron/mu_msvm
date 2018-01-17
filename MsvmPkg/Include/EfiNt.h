@@ -26,6 +26,24 @@ Author:
 #include <specstrings.h>
 
 //
+// Establish Windows style alias for processor architecture.
+//
+
+#include <ProcessorBind.h>
+#if defined MDE_CPU_IA32
+#define _X86_
+#endif
+#if defined MDE_CPU_X64
+#define _AMD64_
+#endif
+#if defined MDE_CPU_ARM
+#define _ARM_
+#endif
+#if defined MDE_CPU_AARCH64
+#define _ARM64_
+#endif
+
+//
 // Declspec wrappers.
 //
 
@@ -53,10 +71,12 @@ typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT, *PSHORT;
 typedef unsigned short USHORT, *PUSHORT;
 typedef long LONG, *PLONG;
-typedef unsigned long ULONG, *PULONG;
+typedef unsigned long ULONG, *PULONG, ULONG32, *PULONG32;
 typedef long long LONGLONG, *PLONGLONG, LONG64, *PLONG64;
 typedef unsigned long long ULONGLONG, *PULONGLONG, ULONG64, *PULONG64;
 typedef unsigned int UINT, *PUINT;
+typedef int BOOL;
+
 
 typedef UINT8 *PUINT8;
 typedef UINT16 *PUINT16;
@@ -79,8 +99,19 @@ typedef VOID *PVOID;
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
 #if defined(MDE_CPU_X64)
+
 #define MemoryBarrier() __faststorefence()
+
+#pragma intrinsic(__cpuid)
+
+void
+__cpuid(
+    int CPUInfo[4],
+    int InfoType
+    );
+
 #elif defined(MDE_CPU_IA32)
+
 FORCEINLINE
 VOID
 MemoryBarrier (
@@ -162,7 +193,29 @@ WriteNoFence16 (
 }
 
 #elif defined(MDE_CPU_AARCH64)
-#define MemoryBarrier()             __dmb(_ARM64_BARRIER_SY)
+
+#pragma intrinsic(__dmb)
+
+typedef enum _tag_ARM64INTR_BARRIER_TYPE
+{
+    _ARM64_BARRIER_SY    = 0xF,
+    _ARM64_BARRIER_ST    = 0xE,
+    _ARM64_BARRIER_LD    = 0xD,
+    _ARM64_BARRIER_ISH   = 0xB,
+    _ARM64_BARRIER_ISHST = 0xA,
+    _ARM64_BARRIER_ISHLD = 0x9,
+    _ARM64_BARRIER_NSH   = 0x7,
+    _ARM64_BARRIER_NSHST = 0x6,
+    _ARM64_BARRIER_NSHLD = 0x5,
+    _ARM64_BARRIER_OSH   = 0x3,
+    _ARM64_BARRIER_OSHST = 0x2,
+    _ARM64_BARRIER_OSHLD = 0x1
+}
+_ARM64INTR_BARRIER_TYPE;
+
+void __dmb(unsigned int _Type);
+
+#define MemoryBarrier() __dmb(_ARM64_BARRIER_SY)
 
 FORCEINLINE
 LONG
@@ -236,15 +289,8 @@ WriteNoFence16 (
 #else
 #error Unsupported architecture
 #endif
+
 #define MemoryBarrierWithoutFence() _ReadWriteBarrier()
-
-#pragma intrinsic(__cpuid)
-
-void
-__cpuid(
-    int CPUInfo[4],
-    int InfoType
-    );
 
 #define UNREFERENCED_PARAMETER(_Parameter_) (_Parameter_)
 #define ARGUMENT_PRESENT(_ArgumentPointer_) ((_ArgumentPointer_) != NULL)

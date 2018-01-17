@@ -26,6 +26,7 @@
     VmbusChannel.c
 
 [Guids]
+    gEfiEventExitBootServicesGuid
     gEfiVmbusChannelDevicePathGuid
 
 [Protocols]
@@ -38,5 +39,6 @@
     gEfiHvProtocolGuid
 
 [Pcd]
-    gUefiMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
+    gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
+    gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex
 

@@ -97,7 +97,7 @@ StartLinux (
   LINUX_KERNEL64        LinuxKernel = (LINUX_KERNEL64)LinuxImage;
 
   // Send msg to secondary cores to go to the kernel pen.
-  ArmGicSendSgiTo (PcdGet32 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_EVERYONEELSE, 0x0E, PcdGet32 (PcdGicSgiIntId));
+  ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_EVERYONEELSE, 0x0E, PcdGet32 (PcdGicSgiIntId));
 
   // Shut down UEFI boot services. ExitBootServices() will notify every driver that created an event on
   // ExitBootServices event. Example the Interrupt DXE driver will disable the interrupts on this event.
@@ -108,7 +108,7 @@ StartLinux (
   }
 
   // Check if the Linux Image is a uImage
-  if (*(UINTN*)LinuxKernel == LINUX_UIMAGE_SIGNATURE) {
+  if (*((UINTN*)((UINTN)LinuxKernel)) == LINUX_UIMAGE_SIGNATURE) {
     // Assume the Image Entry Point is just after the uImage header (64-byte size)
     LinuxKernel = (LINUX_KERNEL64)((UINTN)LinuxKernel + 64);
     LinuxImageSize -= 64;
@@ -210,6 +210,7 @@ BootLinuxFdt (
   UINTN                    MailBoxBase;
 
   PenBaseStatus = EFI_UNSUPPORTED;
+  PenBase = 0;
   PenSize = 0;
   InitrdImage = 0;
   InitrdImageSize = 0;
@@ -238,7 +239,7 @@ BootLinuxFdt (
   // Adjust the kernel location slightly if required. The kernel needs to be placed at start
   //  of memory (2MB aligned) + 0x80000.
   if ((LinuxImage & LINUX_ALIGN_MASK) != LINUX_ALIGN_VAL) {
-    LinuxImage = (EFI_PHYSICAL_ADDRESS)CopyMem (ALIGN_2MB (LinuxImage) + 0x80000, (VOID*)(UINTN)LinuxImage, LinuxImageSize);
+    LinuxImage = (EFI_PHYSICAL_ADDRESS)CopyMem ((void *)(((UINTN)ALIGN_2MB (LinuxImage)) + 0x80000), (VOID*)(UINTN)LinuxImage, LinuxImageSize);
   }
 
   if (InitrdDevicePath) {
@@ -328,7 +329,7 @@ BootLinuxFdt (
 
         for (i = 0; i < ArmProcessorTable->NumberOfEntries; i++ ) {
           // This goes into the SYSFLAGS register for the VE platform. We only have one 32bit reg to use
-          MmioWrite32 (ArmCoreInfoTable[i].MailboxSetAddress, (UINTN)PenBase);
+          MmioWrite32 (((UINT32)ArmCoreInfoTable[i].MailboxSetAddress), (UINT32)PenBase);
 
           // So FDT can set the mailboxes correctly with the parser. These are 64bit Memory locations.
           ArmCoreInfoTable[i].MailboxSetAddress = (UINTN)MailBoxBase + i*sizeof (MailBoxBase);

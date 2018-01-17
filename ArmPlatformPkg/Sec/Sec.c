@@ -84,11 +84,11 @@ CEntryPoint (
     // Enable the GIC distributor and CPU Interface
     // - no other Interrupts are enabled,  doesn't have to worry about the priority.
     // - all the cores are in secure state, use secure SGI's
-    ArmGicEnableDistributor (PcdGet32(PcdGicDistributorBase));
-    ArmGicEnableInterruptInterface (PcdGet32(PcdGicInterruptInterfaceBase));
+    ArmGicEnableDistributor ((INTN)PcdGet64(PcdGicDistributorBase));
+    ArmGicEnableInterruptInterface ((INTN)PcdGet64(PcdGicInterruptInterfaceBase));
   } else {
     // Enable the GIC CPU Interface
-    ArmGicEnableInterruptInterface (PcdGet32(PcdGicInterruptInterfaceBase));
+    ArmGicEnableInterruptInterface ((INTN)PcdGet64(PcdGicInterruptInterfaceBase));
   }
 
   // Enable Full Access to CoProcessors
@@ -103,14 +103,16 @@ CEntryPoint (
 
     // Either we use the Secure Stacks for Secure Monitor (in this case (Base == 0) && (Size == 0))
     // Or we use separate Secure Monitor stacks (but (Base != 0) && (Size != 0))
-    ASSERT (((PcdGet32(PcdCPUCoresSecMonStackBase) == 0) && (PcdGet32(PcdCPUCoreSecMonStackSize) == 0)) ||
-            ((PcdGet32(PcdCPUCoresSecMonStackBase) != 0) && (PcdGet32(PcdCPUCoreSecMonStackSize) != 0)));
+    ASSERT (((PcdGet64(PcdCPUCoresSecMonStackBase) == 0) && (PcdGet32(PcdCPUCoreSecMonStackSize) == 0)) ||
+            ((PcdGet64(PcdCPUCoresSecMonStackBase) != 0) && (PcdGet32(PcdCPUCoreSecMonStackSize) != 0)));
 
     // Enter Monitor Mode
     enter_monitor_mode (
-      (UINTN)TrustedWorldInitialization, MpId, SecBootMode,
-      (VOID*) (PcdGet32 (PcdCPUCoresSecMonStackBase) +
-          (PcdGet32 (PcdCPUCoreSecMonStackSize) * (ArmPlatformGetCorePosition (MpId) + 1)))
+      (UINTN)TrustedWorldInitialization, 
+      MpId, 
+      SecBootMode,
+      (VOID*)((UINT32) (PcdGet64 (PcdCPUCoresSecMonStackBase) +
+               (PcdGet32 (PcdCPUCoreSecMonStackSize) * (ArmPlatformGetCorePosition (MpId) + 1))))
       );
   } else {
     if (ArmPlatformIsPrimaryCore (MpId)) {
@@ -123,7 +125,7 @@ CEntryPoint (
     copy_cpsr_into_spsr ();
 
     // Call the Platform specific function to execute additional actions if required
-    JumpAddress = PcdGet64 (PcdFvBaseAddress);
+    JumpAddress = (UINTN)PcdGet64 (PcdFvBaseAddress);
     ArmPlatformSecExtraAction (MpId, &JumpAddress);
 
     NonTrustedWorldTransition (MpId, JumpAddress);
@@ -145,7 +147,7 @@ TrustedWorldInitialization (
   ArmSecureMonitorWorldInitialize ();
 
   // Transfer the interrupt to Non-secure World
-  ArmGicSetupNonSecure (MpId, PcdGet32(PcdGicDistributorBase), PcdGet32(PcdGicInterruptInterfaceBase));
+  ArmGicSetupNonSecure (MpId, (INTN)PcdGet64(PcdGicDistributorBase), (INTN)PcdGet64(PcdGicInterruptInterfaceBase));
 
   // Initialize platform specific security policy
   ArmPlatformSecTrustzoneInit (MpId);
@@ -167,7 +169,7 @@ TrustedWorldInitialization (
   }
 
   // Call the Platform specific function to execute additional actions if required
-  JumpAddress = PcdGet64 (PcdFvBaseAddress);
+  JumpAddress = (UINTN)PcdGet64 (PcdFvBaseAddress);
   ArmPlatformSecExtraAction (MpId, &JumpAddress);
 
   // Initialize architecture specific security policy

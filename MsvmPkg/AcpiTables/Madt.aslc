@@ -1,0 +1,122 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    Madt.aslc
+
+Abstract:
+
+    Defines the Multiple APIC Description Table (MADT)
+
+--*/
+
+#include <Base.h>
+#include <AcpiTables.h>
+
+#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+
+#define DEFINE_OVERRIDE(IrqSource, Vector, Flags) \
+    { \
+        EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE, \
+        sizeof(EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE), \
+        0, \
+        IrqSource, \
+        Vector, \
+        Flags \
+    }
+
+VM_APIC_TABLE MADT =
+{
+    {
+        STANDARD_HEADER(EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+                        sizeof(VM_APIC_TABLE),
+                        EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
+        FixedPcdGet32(PcdCpuLocalApicBaseAddress),
+        0, // EFI_ACPI_3_0_PCAT_COMPAT flag is cleared; Hyper-V does not support the legacy PIC interface when running in UEFI mode.
+    },
+
+    //
+    // I/O APIC.
+    //
+
+    {
+        EFI_ACPI_3_0_IO_APIC,
+        sizeof(EFI_ACPI_3_0_IO_APIC_STRUCTURE),
+        0, // IoApicId - updated at runtime
+        0, // Reserved
+        FixedPcdGet32(PcdIoApicBaseAddress),
+        0, // GlobalSystemInterruptBase
+    },
+
+    //
+    // Local APIC NMI source.
+    //
+
+    {
+        EFI_ACPI_3_0_LOCAL_APIC_NMI,
+        sizeof(EFI_ACPI_3_0_LOCAL_APIC_NMI_STRUCTURE),
+        0xFF, // ACPI Processor ID - 0xFF indicates all processors.
+        0,    // Flags
+        1     // LINT#
+    },
+
+    //
+    // Map PIC IRQ0 to APIC IRQ2.
+    //
+
+    DEFINE_OVERRIDE(0, 2, 0),
+
+    //
+    // Mark the PM interrupt as being active high and level triggered, since
+    // the OS ordinarily expects it to be active low.
+    //
+
+    DEFINE_OVERRIDE(9, 9, 0xd),
+
+    //
+    // The remainder is runtime-initialized.
+    //
+};
+
+#elif defined(MDE_CPU_AARCH64)
+
+
+VM_MADT_TABLE MADT =
+{
+    {
+        STANDARD_HEADER(EFI_ACPI_6_1_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+                        sizeof(VM_MADT_TABLE),
+                        EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
+        FixedPcdGet64(PcdGicInterruptInterfaceBase), // Local Interrupt Controller Address - GICC which is the same for all CPUs
+        0, // Flags
+    },
+
+    {
+        EFI_ACPI_6_1_GICD, // Type
+        sizeof(EFI_ACPI_6_1_GIC_DISTRIBUTOR_STRUCTURE), // Length
+        0, // Reserved - Must be zero
+        0, // GICD Hardware ID
+        FixedPcdGet64(PcdGicDistributorBase), // Physical Base Address
+        0, // System Vector Base
+        0, // GIC Version - Initialized at runtime TODO-cho: This can be static GICv3 when we retire GICv2 systems
+        { // 3 bytes Reserved - Must be zero
+            0,
+            0,
+            0
+        }
+    }
+
+    //
+    // The rest is runtime-initialized.
+    //
+};
+
+#endif
+
+VOID*
+ReferenceAcpiTable()
+{
+    return (VOID*) &MADT;
+}

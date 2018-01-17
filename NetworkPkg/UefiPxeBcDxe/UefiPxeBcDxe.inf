@@ -107,7 +107,7 @@
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTftpBlockSize      ## SOMETIMES_CONSUMES
-  gUefiMsvmPkgTokenSpaceGuid.PcdPxeIpV6
+  gMsvmPkgTokenSpaceGuid.PcdPxeIpV6
 
 [UserExtensions.TianoCore."ExtraFiles"]
   UefiPxeBcDxeExtra.uni

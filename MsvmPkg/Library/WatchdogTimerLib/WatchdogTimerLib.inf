@@ -16,6 +16,9 @@
 [Sources]
   WatchdogTimerLib.c
 
+[LibraryClasses]
+  BiosDeviceLib
+
 [Packages]
   MdePkg/MdePkg.dec
   MsvmPkg/MsvmPkg.dec

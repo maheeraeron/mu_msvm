@@ -20,12 +20,13 @@ Author:
 
 
 #include "SbCryptDxe.h"
-#include "BiosInterface.h"
 #include <Library/BaseMemoryLib.h>
 #include <Library/Baselib.h>
+#include <Library/BiosDeviceLib.h>
 #include <Library/IoLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <BiosInterface.h>
 
 #define WITHIN_4_GB_LL (0xFFFFFFFFLL)
 
@@ -62,7 +63,7 @@ EFI_RNG_PROTOCOL  mRngProtocol = {
 //
 
 static PCRYPTO_COMMAND_DESCRIPTOR   CryptoCommandDescriptor;
-static INTN                         CryptoCommandDescriptorGpa;
+static EFI_PHYSICAL_ADDRESS         CryptoCommandDescriptorGpa;
 
 
 //
@@ -122,11 +123,10 @@ Returns:
 --*/
 {
     //
-    // Perform NVRAM command. Cast is safe, because we allocated mVariableModuleGlobal below 4GB.
+    // Perform NVRAM command.
+    // Cast of descriptor is safe because we allocated mVariableModuleGlobal below 4GB.
     //
-
-    IoWrite32(BiosAddressPort, BiosConfigCryptoCommand);
-    IoWrite32(BiosDataPort, (UINT32)(UINTN) CryptoCommandDescriptorGpa);
+    WriteBiosDevice(BiosConfigCryptoCommand, (UINT32)CryptoCommandDescriptorGpa);
 
     if (CryptoCommandDescriptor->Status == 0)
     {
@@ -524,7 +524,7 @@ Returns:
         return EFI_NOT_STARTED;
     }
 
-    CryptoCommandDescriptorGpa = (UINTN) CryptoCommandDescriptor;
+    CryptoCommandDescriptorGpa = (EFI_PHYSICAL_ADDRESS) CryptoCommandDescriptor;
 
     //
     // Install the protocols onto a new handle

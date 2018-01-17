@@ -21,8 +21,14 @@ Author:
 #include <Library/BaseLib.h>
 #include <Library/TimerLib.h>
 #include <Library/IoLib.h>
+#include <Library/DebugLib.h>
+
 #include <EfiNt.h>
 #include <hvgdk.h>
+
+#if defined(MDE_CPU_AARCH64)
+#include <Library/HvHypercallLib.h>
+#endif
 
 VOID
 EFIAPI
@@ -134,7 +140,26 @@ Return Value:
 
 --*/
 {
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+
     return AsmReadMsr64(HV_X64_MSR_TIME_REF_COUNT);
+
+#elif defined(MDE_CPU_AARCH64)
+
+    HV_STATUS status;
+    UINT64 RegisterValue;
+
+    status = AsmGetVpRegister64(HvRegisterTimeRefCount, &RegisterValue);
+    ASSERT(status == HV_STATUS_SUCCESS);
+
+    return RegisterValue;
+
+#else
+#error unsupported architecture
+#endif
+
+
+
 }
 
 

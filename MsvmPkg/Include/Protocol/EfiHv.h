@@ -21,6 +21,7 @@ Author:
 
 #include <EfiNt.h>
 #include <hvhdk.h>
+#include <hvgdk.h>
 
 #define EFI_HV_PROTOCOL_GUID { 0xa261a0f1, 0xaa53, 0x4c83, {0x94, 0xda, 0x12, 0x0c, 0xdf, 0x6d, 0x8c, 0x8d} }
 
@@ -97,7 +98,9 @@ EFI_STATUS
     __in EFI_HV_PROTOCOL *This,
     __in UINT32 TimerIndex,
     __in HV_SYNIC_SINT_INDEX SintIndex,
-    __in BOOLEAN Periodic
+    __in BOOLEAN Periodic,
+    __in BOOLEAN DirectMode,
+    __in UINT8 Vector
     );
 
 typedef

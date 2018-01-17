@@ -64,7 +64,7 @@ HWPciRbInit (
   IN  EFI_CPU_IO2_PROTOCOL *CpuIo
   )
 {
-  UINT32 Value;
+  UINT32 localValue;
   UINT32 Index;
   UINTN  TranslationTable;
 
@@ -72,7 +72,9 @@ HWPciRbInit (
 
   PCI_TRACE ("PCIe Setting up Address Translation");
 
-  PCIE_ROOTPORT_WRITE32 (PCIE_BAR_WIN, PCIE_BAR_WIN_SUPPORT_IO | PCIE_BAR_WIN_SUPPORT_MEM | PCIE_BAR_WIN_SUPPORT_MEM64);
+  // The Juno PIO window is 8M, so we need full 32-bit PIO decoding.
+  PCIE_ROOTPORT_WRITE32 (PCIE_BAR_WIN, PCIE_BAR_WIN_SUPPORT_IO | PCIE_BAR_WIN_SUPPORT_IO32 |
+                         PCIE_BAR_WIN_SUPPORT_MEM | PCIE_BAR_WIN_SUPPORT_MEM64);
 
   // Setup the PCI Configuration Registers
   // Offset 0a: SubClass       04 PCI-PCI Bridge
@@ -82,7 +84,7 @@ HWPciRbInit (
   PCIE_ROOTPORT_WRITE32 (PCIE_PCI_IDS + PCIE_PCI_IDS_CLASSCODE_OFFSET, ((PLDA_BRIDGE_CCR << 8) | PCI_BRIDGE_REVISION_ID));
 
   //
-  // PCIE Window 0 -> AXI4 Slave 0 Address Translations
+  // PCIE Window 0 -> AXI4 Master 0 Address Translations
   //
   TranslationTable = VEXPRESS_ATR_PCIE_WIN0;
 
@@ -99,7 +101,7 @@ HWPciRbInit (
       ARM_JUNO_EXTRA_SYSTEM_MEMORY_SZ, PCI_ATR_TRSLID_AXIMEMORY);
 
   //
-  // PCIE Window 0 -> AXI4 Slave 0 Address Translations
+  // AXI4 Slave 1 -> PCIE Window 0 Address Translations
   //
   TranslationTable = VEXPRESS_ATR_AXI4_SLV1;
 
@@ -107,8 +109,9 @@ HWPciRbInit (
   SetTranslationAddressEntry (CpuIo, TranslationTable, PCI_ECAM_BASE, PCI_ECAM_BASE, PCI_ECAM_SIZE, PCI_ATR_TRSLID_PCIE_CONF);
   TranslationTable += PCI_ATR_ENTRY_SIZE;
 
-  // PCI IO Support
-  SetTranslationAddressEntry (CpuIo, TranslationTable, PCI_IO_BASE, PCI_IO_BASE, PCI_IO_SIZE, PCI_ATR_TRSLID_PCIE_IO);
+  // PCI IO Support, the PIO space is translated from the arm MMIO PCI_IO_BASE address to the PIO base address of 0
+  // AKA, PIO addresses used by endpoints are generally in the range of 0-64K.
+  SetTranslationAddressEntry (CpuIo, TranslationTable, PCI_IO_BASE, 0, PCI_IO_SIZE, PCI_ATR_TRSLID_PCIE_IO);
   TranslationTable += PCI_ATR_ENTRY_SIZE;
 
   // PCI MEM32 Support
@@ -131,15 +134,15 @@ HWPciRbInit (
   // Wait for reset
   for (Index = 0; Index < 1000; Index++) {
     gBS->Stall (1000);
-    PCIE_CONTROL_READ32 (PCIE_CONTROL_RST_STS, Value);
-    if ((Value & PCIE_CONTROL_RST_STS_RCPHYPLL_OUT) == PCIE_CONTROL_RST_STS_RCPHYPLL_OUT) {
+    PCIE_CONTROL_READ32 (PCIE_CONTROL_RST_STS, localValue);
+    if ((localValue & PCIE_CONTROL_RST_STS_RCPHYPLL_OUT) == PCIE_CONTROL_RST_STS_RCPHYPLL_OUT) {
       break;
     }
   }
 
   // Check for reset
-  if (!(Value & PCIE_CONTROL_RST_STS_RCPHYPLL_OUT)) {
-    DEBUG ((EFI_D_ERROR, "PCIe failed to come out of reset: %x.\n", Value));
+  if (!(localValue & PCIE_CONTROL_RST_STS_RCPHYPLL_OUT)) {
+    DEBUG ((EFI_D_ERROR, "PCIe failed to come out of reset: %x.\n", localValue));
     return EFI_NOT_READY;
   }
 
@@ -149,15 +152,15 @@ HWPciRbInit (
   // Wait for Link Up
   for (Index = 0; Index < 1000; Index++) {
     gBS->Stall (1000);
-    PCIE_ROOTPORT_READ32 (VEXPRESS_BASIC_STATUS, Value);
-    if (Value & LINK_UP) {
+    PCIE_ROOTPORT_READ32 (VEXPRESS_BASIC_STATUS, localValue);
+    if (localValue & LINK_UP) {
       break;
     }
   }
 
   // Check for link up
-  if (!(Value & LINK_UP)) {
-    DEBUG ((EFI_D_ERROR, "PCIe link not up: %x.\n", Value));
+  if (!(localValue & LINK_UP)) {
+    DEBUG ((EFI_D_ERROR, "PCIe link not up: %x.\n", localValue));
     return EFI_NOT_READY;
   }
 

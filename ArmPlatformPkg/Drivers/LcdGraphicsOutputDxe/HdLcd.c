@@ -30,6 +30,16 @@
  **********************************************************************/
 
 EFI_STATUS
+LcdIdentify(
+    VOID
+)
+{
+    if ((MmioRead32(HDLCD_REG_VERSION) & 0xFFFF0000) != 0x1CDC0000)
+        return EFI_DEVICE_ERROR;
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS
 LcdInitialize (
   IN EFI_PHYSICAL_ADDRESS   VramBaseAddress
   )
@@ -87,7 +97,7 @@ LcdSetMode (
     return EFI_DEVICE_ERROR;
   }
 
-  BytesPerPixel = GetBytesPerPixel(LcdBpp);
+  BytesPerPixel = (UINT32)GetBytesPerPixel(LcdBpp);
 
   // Disable the controller
   MmioWrite32(HDLCD_REG_COMMAND, HDLCD_DISABLE);

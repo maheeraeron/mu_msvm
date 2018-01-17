@@ -14,6 +14,16 @@
 
 #include "PciEmulation.h"
 
+typedef union {
+  void    volatile  *Pv;
+  UINT8   volatile  *Buffer;
+  UINT8   volatile  *Ui8;
+  UINT16  volatile  *Ui16;
+  UINT32  volatile  *Ui32;
+  UINT64  volatile  *Ui64;
+  UINTN   volatile  Ui;
+} PTR;
+
 BOOLEAN
 PciRootBridgeMemAddressValid (
   IN PCI_ROOT_BRIDGE  *Private,
@@ -33,14 +43,19 @@ PciRootBridgeIoMemRW (
   IN  EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH  Width,
   IN  UINTN                                  Count,
   IN  BOOLEAN                                InStrideFlag,
-  IN  PTR                                    In,
+  IN  void volatile *                        InPtr,
   IN  BOOLEAN                                OutStrideFlag,
-  OUT PTR                                    Out
+  OUT void volatile *                        OutPtr
   )
 {
   UINTN  Stride;
   UINTN  InStride;
   UINTN  OutStride;
+  PTR In;
+  PTR Out;
+
+  In.Pv = InPtr;
+  Out.Pv = OutPtr;
 
   Width     = (EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_WIDTH) (Width & 0x03);
   Stride    = (UINTN)1 << Width;
@@ -139,19 +154,19 @@ PciRootBridgeIoMemRead (
   case EfiPciWidthUint16:
   case EfiPciWidthUint32:
   case EfiPciWidthUint64:
-    return PciRootBridgeIoMemRW (Width, Count, TRUE, In, TRUE, Out);
+    return PciRootBridgeIoMemRW (Width, Count, TRUE, In.Pv, TRUE, Out.Pv);
 
   case EfiPciWidthFifoUint8:
   case EfiPciWidthFifoUint16:
   case EfiPciWidthFifoUint32:
   case EfiPciWidthFifoUint64:
-    return PciRootBridgeIoMemRW (Width, Count, TRUE, In, FALSE, Out);
+    return PciRootBridgeIoMemRW (Width, Count, TRUE, In.Pv, FALSE, Out.Pv);
 
   case EfiPciWidthFillUint8:
   case EfiPciWidthFillUint16:
   case EfiPciWidthFillUint32:
   case EfiPciWidthFillUint64:
-    return PciRootBridgeIoMemRW (Width, Count, FALSE, In, TRUE, Out);
+    return PciRootBridgeIoMemRW (Width, Count, FALSE, In.Pv, TRUE, Out.Pv);
 
   default:
     break;
@@ -213,19 +228,19 @@ PciRootBridgeIoMemWrite (
   case EfiPciWidthUint16:
   case EfiPciWidthUint32:
   case EfiPciWidthUint64:
-    return PciRootBridgeIoMemRW (Width, Count, TRUE, In, TRUE, Out);
+    return PciRootBridgeIoMemRW (Width, Count, TRUE, In.Pv, TRUE, Out.Pv);
 
   case EfiPciWidthFifoUint8:
   case EfiPciWidthFifoUint16:
   case EfiPciWidthFifoUint32:
   case EfiPciWidthFifoUint64:
-    return PciRootBridgeIoMemRW (Width, Count, FALSE, In, TRUE, Out);
+    return PciRootBridgeIoMemRW (Width, Count, FALSE, In.Pv, TRUE, Out.Pv);
 
   case EfiPciWidthFillUint8:
   case EfiPciWidthFillUint16:
   case EfiPciWidthFillUint32:
   case EfiPciWidthFillUint64:
-    return PciRootBridgeIoMemRW (Width, Count, TRUE, In, FALSE, Out);
+    return PciRootBridgeIoMemRW (Width, Count, TRUE, In.Pv, FALSE, Out.Pv);
 
   default:
     break;

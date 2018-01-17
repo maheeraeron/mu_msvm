@@ -22,28 +22,53 @@
     VERSION_STRING                 = 1.0
 
 [Sources]
-    Battery.asl
-    Facp.aslc
-    Facs.aslc
-    Waet.aslc
-    Oem0.aslc
-    Apic.aslc
     Dsdt.asl
-    Oem1.asl
-    Tpm2.asl
+    Fadt.aslc
+    Oem0.aslc
     Spcr.aslc
 
-[Packages]
-    MdeModulePkg/MdeModulePkg.dec
-    MdePkg/MdePkg.dec
-    MsvmPkg/MsvmPkg.dec
-    PcAtChipsetPkg/PcAtChipsetPkg.dec
-    SecurityPkg/SecurityPkg.dec
-    UefiCpuPkg/UefiCpuPkg.dec
+[Sources.AARCH64]
+    Dbg2.aslc
+    Gtdt.aslc
+    Madt.aslc
+
+[Sources.X64]
+    Apic.aslc
+    Facs.aslc
+    Waet.aslc
 
 [Pcd]
-    gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
+    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
+    gMsvmPkgTokenSpaceGuid.PcdBatteryBase
+    gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
+    gMsvmPkgTokenSpaceGuid.PcdCom1Vector
+    gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
+    gMsvmPkgTokenSpaceGuid.PcdCom2Vector
+    gMsvmPkgTokenSpaceGuid.PcdVmbusVector
+    gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase
+    
+[Pcd.AARCH64]
+    gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
+    gArmTokenSpaceGuid.PcdGicDistributorBase
+    gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector
+    gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector
+    gMsvmPkgTokenSpaceGuid.PcdPmemEventVector
+
+[Pcd.X64]
+    gMsvmPkgTokenSpaceGuid.PcdRtcRegisterBase
+    gMsvmPkgTokenSpaceGuid.PcdRtcVector
     gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress
     gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress
-    gUefiMsvmPkgTokenSpaceGuid.PcdBatteryBase
-    gUefiMsvmPkgTokenSpaceGuid.PcdPmemBase
+    
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+
+[Packages.AARCH64]
+    ArmPkg/ArmPkg.dec
+
+[Packages.X64]
+    PcAtChipsetPkg/PcAtChipsetPkg.dec
+    UefiCpuPkg/UefiCpuPkg.dec
+

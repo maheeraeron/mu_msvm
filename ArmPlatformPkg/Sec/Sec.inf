@@ -27,14 +27,18 @@
 [Sources.ARM]
   Arm/Arch.c
   Arm/Helper.asm           | RVCT
+  Arm/SecEntryPoint.asm    | RVCT
   Arm/Helper.S             | GCC
   Arm/SecEntryPoint.S      | GCC
-  Arm/SecEntryPoint.asm    | RVCT
+  Arm/Helper.masm          | MSFT
+  Arm/SecEntryPoint.masm   | MSFT
 
 [Sources.AARCH64]
   AArch64/Arch.c
-  AArch64/Helper.S
-  AArch64/SecEntryPoint.S
+  AArch64/Helper.S             | GCC
+  AArch64/SecEntryPoint.S      | GCC
+  AArch64/Helper.masm          | MSFT
+  AArch64/SecEntryPoint.masm   | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -80,8 +84,6 @@
 
   gArmTokenSpaceGuid.PcdGicDistributorBase
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
-
-  gArmPlatformTokenSpaceGuid.PcdSecGlobalVariableSize
 
 [FixedPcd.ARM]
   gArmTokenSpaceGuid.PcdArmNsacr

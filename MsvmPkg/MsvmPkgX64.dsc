@@ -66,6 +66,7 @@
   LocalApicLib|UefiCpuPkg/Library/BaseXApicLib/BaseXApicLib.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+  PCUartLib|MsvmPkg/Library/PCUart/PCUart.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
@@ -86,6 +87,7 @@
 # Library instance overrides for SEC and PEI
 #
 [LibraryClasses.common.SEC, LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
+  BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDevicePeiLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/BaseExtractGuidedSectionLib/BaseExtractGuidedSectionLib.inf
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
@@ -123,10 +125,11 @@
 # Library instance overrides for DXE
 #
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
+  BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceBaseLib.inf
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
-  DebugAgentLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
-  DebugLib|MsvmPkg/Library/KdDebugLib/KdDebugLib.inf
+  DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
+  DebugLib|MsvmPkg/Library/BdDebugLib/BdDebugLib.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|MdeModulePkg/Library/DxeDpcLib/DxeDpcLib.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
@@ -157,7 +160,7 @@
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
-  PeCoffExtraActionLib|MsvmPkg/Library/KdLib/DxeKdLib.inf
+  PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
 
 #
 # Library instance overrides for all DXE Drivers
@@ -174,12 +177,42 @@
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 
 [PcdsFixedAtBuild.common]
+  # Synthetic Timer Config
+  gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1
+  gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSynicTimerVector|0x40
+  gMsvmPkgTokenSpaceGuid.PcdSynicTimerDefaultPeriod|100000
+
+  # Vmbus Config
+  gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex|0x2
+  gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector|0x41
+  gMsvmPkgTokenSpaceGuid.PcdVmbusVector|0x5
+
+  # BIOS Device
+  gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress|0x28
+
+  # Battery Device
+  gMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xFED3F000
+
+  # UART Devices
+  gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase|0x3F8
+  gMsvmPkgTokenSpaceGuid.PcdCom1Vector|4
+  gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase|0x2F8
+  gMsvmPkgTokenSpaceGuid.PcdCom2Vector|3
+
+  # RTC (clock)
+  gMsvmPkgTokenSpaceGuid.PcdRtcRegisterBase|0x70
+  gMsvmPkgTokenSpaceGuid.PcdRtcVector|8
+
+  # PMEM (NVDIMM)
+  gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xFED3D000
+
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|0x00100032
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Microsoft"
 
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
-  # modifyting EfiKdDebugPrintGlobalMask and EfiKdDebugPrintComponentMask.
+  # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
@@ -240,8 +273,6 @@
   gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress|0xFEE00000
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000
   gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress|0xFEC00000
-  gUefiMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xFED3F000
-  gUefiMsvmPkgTokenSpaceGuid.PcdPmemBase|0xFED3D000
 
   # Use 1GB page table entries in DXE page table when possible
   gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable|TRUE
@@ -257,109 +288,109 @@
 
   # UEFI Config information from the Bios VDEV
   # UEFI_CONFIG_STRUCTURE_COUNT
-  gUefiMsvmPkgTokenSpaceGuid.PcdConfigBlobSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdConfigBlobSize|0x0
   # UEFI_CONFIG_BIOS_INFORMATION
-  gUefiMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0
+  gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0
 
   # UEFI_CONFIG_SRAT
-  gUefiMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSratSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSratSize|0x0
 
   # UEFI_CONFIG_MEMORY_MAP
-  gUefiMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0
 
   # UEFI_CONFIG_ENTROPY
   # Points to the actual entropy array, not the containing config structure
-  gUefiMsvmPkgTokenSpaceGuid.PcdEntropyPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdEntropyPtr|0x0
 
   # UEFI_CONFIG_BIOS_GUID
   # Points to the actual GUID, not the containing config structure
-  gUefiMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr|0x0
 
   # UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER
   # Points to a null terminated string of the specified size
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberSize|0x0
 
   # UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberSize|0x0
 
   # UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberSize|0x0
 
   # UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagSize|0x0
 
   # UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringSize|0x0
 
   # UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION
   # Defaults are set to Unknown unless otherwise noted
   # Processor Type defaults to Central Processor type (CPU)
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorType|0x3
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorID|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVoltage|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorExternalClock|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorMaxSpeed|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCurrentSpeed|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorStatus|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorUpgrade|0x1
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCharacteristics|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorFamily2|0x2
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorType|0x3
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorID|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVoltage|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorExternalClock|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorMaxSpeed|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCurrentSpeed|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorStatus|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorUpgrade|0x1
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorCharacteristics|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorFamily2|0x2
 
   # UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSocketDesignationSize|0x0
 
   # UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorManufacturerSize|0x0
 
   # UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVersionSize|0x0
 
   # UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorSerialNumberSize|0x0
 
   # UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagSize|0x0
 
   # UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberStr|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberSize|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorPartNumberSize|0x0
 
   # UEFI_CONFIG_FLAGS
-  gUefiMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdPauseAfterBootFailure|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdPxeIpV6|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdLoadOempTable|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdHibernateEnabled|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdConsoleMode|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
-  gUefiMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdPauseAfterBootFailure|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdPxeIpV6|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdLoadOempTable|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdTpmEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdHibernateEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdConsoleMode|0x0
+  gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
-  gUefiMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket|0x0
+  gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
+  gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket|0x0
 
   # UEFI_CONFIG_MMIO_DESCRIPTION
   # Currently only two mmio holes, low gap and high gap but we could
   # do more in the future.
-  gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0
-  gUefiMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0
+  gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber|0x0
+  gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages|0x0
+  gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0
+  gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0
 
 ################################################################################
 #

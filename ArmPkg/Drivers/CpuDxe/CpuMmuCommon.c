@@ -194,10 +194,10 @@ CpuSetMemoryAttributes (
   }
 
   // Convert the 'Attribute' into ARM Attribute
-  ArmAttributes = EfiAttributeToArmAttribute (EfiAttributes);
+  ArmAttributes = (UINTN)EfiAttributeToArmAttribute (EfiAttributes);
 
   // Get the region starting from 'BaseAddress' and its 'Attribute'
-  RegionBaseAddress = BaseAddress;
+  RegionBaseAddress = (UINTN)BaseAddress;
   Status = GetMemoryRegion (&RegionBaseAddress, &RegionLength, &RegionArmAttributes);
 
   // Data & Instruction Caches are flushed when we set new memory attributes.

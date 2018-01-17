@@ -48,8 +48,8 @@
 #
 
 [FD.MSVM]
-BaseAddress   = 0x00100000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvBase
-Size          = 0x00300000|gUefiMsvmPkgTokenSpaceGuid.PcdMsvmFvSize
+BaseAddress   = 0x00100000|gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
+Size          = 0x00300000|gMsvmPkgTokenSpaceGuid.PcdFdSize
 
 ErasePolarity = 1
 BlockSize     = 0x1000
@@ -57,6 +57,7 @@ NumBlocks     = 0x300
 
 # The MAIN volume (start|size)
 0x00000000|0x002F0000
+gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdFvSize
 FV = MAINFV
 
 # The SEC volume (start|size)

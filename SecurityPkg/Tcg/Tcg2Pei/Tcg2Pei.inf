@@ -67,8 +67,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPeiCoreMaxFvSupported             ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                       ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress                     ## CONSUMES
-  gUefiMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
-  gUefiMsvmPkgTokenSpaceGuid.PcdTpmEnabled
+  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+  gMsvmPkgTokenSpaceGuid.PcdTpmEnabled
 
 [Depex]
   gEfiPeiMasterBootModePpiGuid

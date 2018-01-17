@@ -65,7 +65,7 @@ ArmGicV2SetupNonSecure (
   }
 
   // Ensure all interrupts can get through the priority mask
-  MmioWrite32 (GicInterruptInterfaceBase + ARM_GIC_ICCPMR, CachedPriorityMask);
+  MmioWrite32 (GicInterruptInterfaceBase + ARM_GIC_ICCPMR, (UINT32)CachedPriorityMask);
 }
 
 VOID

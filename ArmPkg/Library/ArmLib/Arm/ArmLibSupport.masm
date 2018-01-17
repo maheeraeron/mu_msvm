@@ -1,0 +1,223 @@
+//------------------------------------------------------------------------------
+//
+// Copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
+// Copyright (c) 2011 - 2016, ARM Limited. All rights reserved.
+// Copyright (c) 2016, Linaro Limited. All rights reserved.
+//
+// This program and the accompanying materials
+// are licensed and made available under the terms and conditions of the BSD License
+// which accompanies this distribution.  The full text of the license may be found at
+// http://opensource.org/licenses/bsd-license.php
+//
+// THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+// WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+//
+//------------------------------------------------------------------------------
+
+#include <AsmMacroIoLib.h>
+
+    EXPORT ArmReadMidr                    
+    EXPORT ArmCacheInfo                   
+    EXPORT ArmGetInterruptState           
+    EXPORT ArmGetFiqState                 
+    EXPORT ArmSetDomainAccessControl      
+    EXPORT CPSRMaskInsert                 
+    EXPORT CPSRRead                       
+    EXPORT ArmReadCpacr                   
+    EXPORT ArmWriteCpacr                  
+    EXPORT ArmWriteAuxCr                  
+    EXPORT ArmReadAuxCr                   
+    EXPORT ArmSetTTBR0                    
+    EXPORT ArmSetTTBCR                    
+    EXPORT ArmGetTTBR0BaseAddress         
+    EXPORT ArmUpdateTranslationTableEntry 
+    EXPORT ArmInvalidateTlb               
+    EXPORT ArmReadScr                     
+    EXPORT ArmWriteScr                    
+    EXPORT ArmReadHVBar                   
+    EXPORT ArmWriteHVBar                  
+    EXPORT ArmReadMVBar                   
+    EXPORT ArmWriteMVBar                  
+    EXPORT ArmCallWFE                     
+    EXPORT ArmCallSEV                     
+    EXPORT ArmReadSctlr                   
+    EXPORT ArmReadCpuActlr                
+    EXPORT ArmWriteCpuActlr               
+
+    AREA    |.text|,ALIGN=2,CODE,READONLY,ARM
+
+ArmReadMidr PROC
+  mrc     p15,0,R0,c0,c0,0
+  bx      LR
+ArmReadMidr ENDP
+
+ArmCacheInfo PROC
+  mrc     p15,0,R0,c0,c0,1
+  bx      LR
+ArmCacheInfo ENDP
+
+ArmGetInterruptState PROC
+  mrs     R0,CPSR
+  tst     R0,#0x80      //Check if IRQ is enabled.
+  moveq   R0,#1
+  movne   R0,#0
+  bx      LR
+ArmGetInterruptState ENDP
+
+ArmGetFiqState PROC
+  mrs     R0,CPSR
+  tst     R0,#0x40      //Check if FIQ is enabled.
+  moveq   R0,#1
+  movne   R0,#0
+  bx      LR
+ArmGetFiqState ENDP
+
+ArmSetDomainAccessControl PROC
+  mcr     p15,0,r0,c3,c0,0
+  bx      lr
+ArmSetDomainAccessControl ENDP
+
+CPSRMaskInsert PROC    // on entry, r0 is the mask and r1 is the field to insert
+  stmfd   sp!, {r4-r12, lr} // save all the banked registers
+  mov     r3, sp            // copy the stack pointer into a non-banked register
+  mrs     r2, cpsr          // read the cpsr
+  bic     r2, r2, r0        // clear mask in the cpsr
+  and     r1, r1, r0        // clear bits outside the mask in the input
+  orr     r2, r2, r1        // set field
+  msr     cpsr_cxsf, r2     // write back cpsr (may have caused a mode switch)
+  isb
+  mov     sp, r3            // restore stack pointer
+  ldmfd   sp!, {r4-r12, lr} // restore registers
+  bx      lr                // return (hopefully thumb-safe!)
+CPSRMaskInsert ENDP    // on entry, r0 is the mask and r1 is the field to insert
+
+CPSRRead PROC
+  mrs     r0, cpsr
+  bx      lr
+CPSRRead ENDP
+
+ArmReadCpacr PROC
+  mrc     p15, 0, r0, c1, c0, 2
+  bx      lr
+ArmReadCpacr ENDP
+
+ArmWriteCpacr PROC
+  mcr     p15, 0, r0, c1, c0, 2
+  isb
+  bx      lr
+ArmWriteCpacr ENDP
+
+ArmWriteAuxCr PROC
+  mcr     p15, 0, r0, c1, c0, 1
+  bx      lr
+ArmWriteAuxCr ENDP
+
+ArmReadAuxCr PROC
+  mrc     p15, 0, r0, c1, c0, 1
+  bx      lr
+ArmReadAuxCr ENDP
+
+ArmSetTTBR0 PROC
+  mcr     p15,0,r0,c2,c0,0
+  isb
+  bx      lr
+ArmSetTTBR0 ENDP
+
+ArmSetTTBCR PROC
+  mcr     p15, 0, r0, c2, c0, 2
+  isb
+  bx      lr
+ArmSetTTBCR ENDP
+
+ArmGetTTBR0BaseAddress PROC
+  mrc     p15,0,r0,c2,c0,0
+  LoadConstantToReg(0xFFFFC000, r1)
+  and     r0, r0, r1
+  isb
+  bx      lr
+ArmGetTTBR0BaseAddress ENDP
+
+//
+//VOID
+//ArmUpdateTranslationTableEntry (
+//  IN VOID  *TranslationTableEntry  // R0
+//  IN VOID  *MVA                    // R1
+//  );
+ArmUpdateTranslationTableEntry PROC
+  mcr     p15,0,R0,c7,c14,1     // DCCIMVAC Clean data cache by MVA
+  dsb
+  mcr     p15,0,R1,c8,c7,1      // TLBIMVA TLB Invalidate MVA
+  mcr     p15,0,R9,c7,c5,6      // BPIALL Invalidate Branch predictor array. R9 == NoOp
+  dsb
+  isb
+  bx      lr
+ArmUpdateTranslationTableEntry ENDP
+
+ArmInvalidateTlb PROC
+  mov     r0,#0
+  mcr     p15,0,r0,c8,c7,0
+  mcr     p15,0,R9,c7,c5,6      // BPIALL Invalidate Branch predictor array. R9 == NoOp
+  dsb
+  isb
+  bx      lr
+ArmInvalidateTlb ENDP
+
+ArmReadScr PROC
+  mrc     p15, 0, r0, c1, c1, 0
+  bx      lr
+ArmReadScr ENDP
+
+ArmWriteScr PROC
+  mcr     p15, 0, r0, c1, c1, 0
+  isb
+  bx      lr
+ArmWriteScr ENDP
+
+ArmReadHVBar PROC
+  mrc     p15, 4, r0, c12, c0, 0
+  bx      lr
+ArmReadHVBar ENDP
+
+ArmWriteHVBar PROC
+  mcr     p15, 4, r0, c12, c0, 0
+  bx      lr
+ArmWriteHVBar ENDP
+
+ArmReadMVBar PROC
+  mrc     p15, 0, r0, c12, c0, 1
+  bx      lr
+ArmReadMVBar ENDP
+
+ArmWriteMVBar PROC
+  mcr     p15, 0, r0, c12, c0, 1
+  bx      lr
+ArmWriteMVBar ENDP
+
+ArmCallWFE PROC
+  wfe
+  bx      lr
+ArmCallWFE ENDP
+
+ArmCallSEV PROC
+  sev
+  bx      lr
+ArmCallSEV ENDP
+
+ArmReadSctlr PROC
+  mrc     p15, 0, r0, c1, c0, 0      // Read SCTLR into R0 (Read control register configuration data)
+  bx      lr
+ArmReadSctlr ENDP
+
+ArmReadCpuActlr PROC
+  mrc     p15, 0, r0, c1, c0, 1
+  bx      lr
+ArmReadCpuActlr ENDP
+
+ArmWriteCpuActlr PROC
+  mcr     p15, 0, r0, c1, c0, 1
+  dsb
+  isb
+  bx      lr
+ArmWriteCpuActlr ENDP
+
+    END

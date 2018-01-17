@@ -42,6 +42,16 @@ typedef struct _INIT_TABLE_ENTRY
 // are installed without modification.
 //
 
+#ifdef MDE_CPU_AARCH64
+INIT_TABLE_ENTRY AcpiInitTable[] =
+{
+    { VM_ACPI_ENTROPY_TABLE_SIGNATURE, Oem0InitializeTable },
+    { EFI_ACPI_6_1_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE, GicInitializeTable },
+    { EFI_ACPI_6_1_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE, DsdtInitializeTable },
+    { EFI_ACPI_6_1_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE, SpcrInitializeTable },
+    { EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE, FacpInitializeTable },
+};
+#else
 INIT_TABLE_ENTRY AcpiInitTable[] =
 {
     { VM_ACPI_ENTROPY_TABLE_SIGNATURE, Oem0InitializeTable },
@@ -50,6 +60,7 @@ INIT_TABLE_ENTRY AcpiInitTable[] =
     { EFI_ACPI_3_0_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE, SpcrInitializeTable },
     { EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE, FacpInitializeTable },
 };
+#endif
 
 #define NUM_TABLE_ENTRIES (sizeof(AcpiInitTable) / sizeof(INIT_TABLE_ENTRY))
 

@@ -25,7 +25,7 @@
     gEfiDebugImageInfoTableGuid
 
 [Pcd]
-    gUefiMsvmPkgTokenSpaceGuid.PcdExdiSupportVersionAddress   
+    gMsvmPkgTokenSpaceGuid.PcdExdiSupportVersionAddress   
 
 [Depex]
     TRUE

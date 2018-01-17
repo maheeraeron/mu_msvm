@@ -10,7 +10,12 @@
 [Packages]
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
+
+[Packages.X64]
     UefiCpuPkg/UefiCpuPkg.dec
+
+[Packages.AARCH64]
+    EmbeddedPkg/EmbeddedPkg.dec
 
 [LibraryClasses]
     UefiBootServicesTableLib
@@ -18,7 +23,12 @@
     DebugLib
     UefiDriverEntryPoint
     MemoryAllocationLib
+
+[LibraryClasses.X64]
     LocalApicLib
+
+[LibraryClasses.AARCH64]
+    HvHypercallLib
 
 [Sources]
     EfiHv.c
@@ -27,9 +37,17 @@
     gEfiEventExitBootServicesGuid
 
 [Protocols]
-    gEfiCpuArchProtocolGuid
     gEfiHvProtocolGuid
 
-[Depex]
+[Protocols.X64]
     gEfiCpuArchProtocolGuid
+
+[Protocols.AARCH64]
+    gHardwareInterruptProtocolGuid
+
+[Depex.X64]
+    gEfiCpuArchProtocolGuid
+
+[Depex.AARCH64]
+    gHardwareInterruptProtocolGuid
 

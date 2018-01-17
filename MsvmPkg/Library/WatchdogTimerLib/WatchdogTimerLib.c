@@ -22,13 +22,12 @@ Environment:
 
 #include <Uefi.h>
 #include <EfiNt.h>
+#include <Library/BiosDeviceLib.h>
 #include <Library/IoLib.h>
 #include <Library/BaseLib.h>
 #include <Library/WatchdogTimerLib.h>
 #include <Library/DebugLib.h>
 #include <BiosInterface.h>
-#include <BiosDeviceAccess.h>
-
 
 VOID
 WatchdogConfigure(

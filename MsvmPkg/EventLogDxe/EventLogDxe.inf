@@ -35,17 +35,18 @@
   MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  BiosDeviceLib
+  DebugLib
+  HobLib
+  IoLib
   MemoryAllocationLib
-  UefiLib
+  PcdLib
+  TimerLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
-  HobLib
-  PcdLib
-  DebugLib
-  BaseMemoryLib
-  BaseLib
-  IoLib
-  TimerLib
+  UefiLib
 
 
 [Guids]
@@ -58,8 +59,8 @@
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
-  gUefiMsvmPkgTokenSpaceGuid.PcdEventLogMaxChannels
-  gUefiMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
+  gMsvmPkgTokenSpaceGuid.PcdEventLogMaxChannels
+  gMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
 
 [Depex]
   TRUE

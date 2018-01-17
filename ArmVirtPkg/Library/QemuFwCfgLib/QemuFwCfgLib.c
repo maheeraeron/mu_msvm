@@ -14,14 +14,64 @@
   WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
+#include <Uefi.h>
+
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>
 #include <Library/IoLib.h>
-#include <Library/PcdLib.h>
 #include <Library/QemuFwCfgLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+
+#include <Protocol/FdtClient.h>
 
 STATIC UINTN mFwCfgSelectorAddress;
 STATIC UINTN mFwCfgDataAddress;
+STATIC UINTN mFwCfgDmaAddress;
+
+/**
+  Reads firmware configuration bytes into a buffer
+
+  @param[in] Size    Size in bytes to read
+  @param[in] Buffer  Buffer to store data into  (OPTIONAL if Size is 0)
+
+**/
+typedef
+VOID (EFIAPI READ_BYTES_FUNCTION) (
+  IN UINTN Size,
+  IN VOID  *Buffer OPTIONAL
+  );
+
+//
+// Forward declaration of the two implementations we have.
+//
+STATIC READ_BYTES_FUNCTION MmioReadBytes;
+STATIC READ_BYTES_FUNCTION DmaReadBytes;
+
+//
+// This points to the one we detect at runtime.
+//
+STATIC READ_BYTES_FUNCTION *InternalQemuFwCfgReadBytes = MmioReadBytes;
+
+//
+// Communication structure for DmaReadBytes(). All fields are encoded in big
+// endian.
+//
+#pragma pack (1)
+typedef struct {
+  UINT32 Control;
+  UINT32 Length;
+  UINT64 Address;
+} FW_CFG_DMA_ACCESS;
+#pragma pack ()
+
+//
+// Macros for the FW_CFG_DMA_ACCESS.Control bitmap (in native encoding).
+//
+#define FW_CFG_DMA_CTL_ERROR  BIT0
+#define FW_CFG_DMA_CTL_READ   BIT1
+#define FW_CFG_DMA_CTL_SKIP   BIT2
+#define FW_CFG_DMA_CTL_SELECT BIT3
 
 
 /**
@@ -69,15 +119,95 @@ QemuFwCfgInitialize (
   VOID
   )
 {
-  mFwCfgSelectorAddress = (UINTN)PcdGet64 (PcdFwCfgSelectorAddress);
-  mFwCfgDataAddress     = (UINTN)PcdGet64 (PcdFwCfgDataAddress);
+  EFI_STATUS                    Status;
+  FDT_CLIENT_PROTOCOL           *FdtClient;
+  CONST UINT64                  *Reg;
+  UINT32                        RegSize;
+  UINTN                         AddressCells, SizeCells;
+  UINT64                        FwCfgSelectorAddress;
+  UINT64                        FwCfgSelectorSize;
+  UINT64                        FwCfgDataAddress;
+  UINT64                        FwCfgDataSize;
+  UINT64                        FwCfgDmaAddress;
+  UINT64                        FwCfgDmaSize;
+
+  Status = gBS->LocateProtocol (&gFdtClientProtocolGuid, NULL,
+                  (VOID **)&FdtClient);
+  ASSERT_EFI_ERROR (Status);
+
+  Status = FdtClient->FindCompatibleNodeReg (FdtClient, "qemu,fw-cfg-mmio",
+                         (CONST VOID **)&Reg, &AddressCells, &SizeCells,
+                         &RegSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_WARN,
+      "%a: No 'qemu,fw-cfg-mmio' compatible DT node found (Status == %r)\n",
+      __FUNCTION__, Status));
+    return EFI_SUCCESS;
+  }
+
+  ASSERT (AddressCells == 2);
+  ASSERT (SizeCells == 2);
+  ASSERT (RegSize == 2 * sizeof (UINT64));
+
+  FwCfgDataAddress     = SwapBytes64 (Reg[0]);
+  FwCfgDataSize        = 8;
+  FwCfgSelectorAddress = FwCfgDataAddress + FwCfgDataSize;
+  FwCfgSelectorSize    = 2;
+
+  //
+  // The following ASSERT()s express
+  //
+  //   Address + Size - 1 <= MAX_UINTN
+  //
+  // for both registers, that is, that the last byte in each MMIO range is
+  // expressible as a MAX_UINTN. The form below is mathematically
+  // equivalent, and it also prevents any unsigned overflow before the
+  // comparison.
+  //
+  ASSERT (FwCfgSelectorAddress <= MAX_UINTN - FwCfgSelectorSize + 1);
+  ASSERT (FwCfgDataAddress     <= MAX_UINTN - FwCfgDataSize     + 1);
+
+  mFwCfgSelectorAddress = FwCfgSelectorAddress;
+  mFwCfgDataAddress     = FwCfgDataAddress;
+
+  DEBUG ((EFI_D_INFO, "Found FwCfg @ 0x%Lx/0x%Lx\n", FwCfgSelectorAddress,
+    FwCfgDataAddress));
+
+  if (SwapBytes64 (Reg[1]) >= 0x18) {
+    FwCfgDmaAddress = FwCfgDataAddress + 0x10;
+    FwCfgDmaSize    = 0x08;
+
+    //
+    // See explanation above.
+    //
+    ASSERT (FwCfgDmaAddress <= MAX_UINTN - FwCfgDmaSize + 1);
+
+    DEBUG ((EFI_D_INFO, "Found FwCfg DMA @ 0x%Lx\n", FwCfgDmaAddress));
+  } else {
+    FwCfgDmaAddress = 0;
+  }
 
   if (InternalQemuFwCfgIsAvailable ()) {
     UINT32 Signature;
 
     QemuFwCfgSelectItem (QemuFwCfgItemSignature);
     Signature = QemuFwCfgRead32 ();
-    if (Signature != SIGNATURE_32 ('Q', 'E', 'M', 'U')) {
+    if (Signature == SIGNATURE_32 ('Q', 'E', 'M', 'U')) {
+      //
+      // For DMA support, we require the DTB to advertise the register, and the
+      // feature bitmap (which we read without DMA) to confirm the feature.
+      //
+      if (FwCfgDmaAddress != 0) {
+        UINT32 Features;
+
+        QemuFwCfgSelectItem (QemuFwCfgItemInterfaceVersion);
+        Features = QemuFwCfgRead32 ();
+        if ((Features & BIT1) != 0) {
+          mFwCfgDmaAddress = FwCfgDmaAddress;
+          InternalQemuFwCfgReadBytes = DmaReadBytes;
+        }
+      }
+    } else {
       mFwCfgSelectorAddress = 0;
       mFwCfgDataAddress     = 0;
     }
@@ -108,16 +238,12 @@ QemuFwCfgSelectItem (
 
 
 /**
-  Reads firmware configuration bytes into a buffer
-
-  @param[in] Size    Size in bytes to read
-  @param[in] Buffer  Buffer to store data into  (OPTIONAL if Size is 0)
-
+  Slow READ_BYTES_FUNCTION.
 **/
 STATIC
 VOID
 EFIAPI
-InternalQemuFwCfgReadBytes (
+MmioReadBytes (
   IN UINTN Size,
   IN VOID  *Buffer OPTIONAL
   )
@@ -159,6 +285,61 @@ InternalQemuFwCfgReadBytes (
   if (Left & 1) {
     *Ptr = MmioRead8 (mFwCfgDataAddress);
   }
+}
+
+
+/**
+  Fast READ_BYTES_FUNCTION.
+**/
+STATIC
+VOID
+EFIAPI
+DmaReadBytes (
+  IN UINTN Size,
+  IN VOID  *Buffer OPTIONAL
+  )
+{
+  volatile FW_CFG_DMA_ACCESS Access;
+  UINT32                     Status;
+
+  if (Size == 0) {
+    return;
+  }
+
+  ASSERT (Size <= MAX_UINT32);
+
+  Access.Control = SwapBytes32 (FW_CFG_DMA_CTL_READ);
+  Access.Length  = SwapBytes32 ((UINT32)Size);
+  Access.Address = SwapBytes64 ((UINT64)(UINTN)Buffer);
+
+  //
+  // We shouldn't start the transfer before setting up Access.
+  //
+  MemoryFence ();
+
+  //
+  // This will fire off the transfer.
+  //
+#ifdef MDE_CPU_AARCH64
+  MmioWrite64 (mFwCfgDmaAddress, SwapBytes64 ((UINT64)&Access));
+#else
+  MmioWrite32 ((UINT32)(mFwCfgDmaAddress + 4), SwapBytes32 ((UINT32)&Access));
+#endif
+
+  //
+  // We shouldn't look at Access.Control before starting the transfer.
+  //
+  MemoryFence ();
+
+  do {
+    Status = SwapBytes32 (Access.Control);
+    ASSERT ((Status & FW_CFG_DMA_CTL_ERROR) == 0);
+  } while (Status != 0);
+
+  //
+  // The caller will want to access the transferred data.
+  //
+  MemoryFence ();
 }
 
 

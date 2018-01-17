@@ -161,7 +161,7 @@
         "$(CC)" $(CC_FLAGS) -o ${dst} $(INC) ${src}
         "$(SYMRENAME)" $(SYMRENAME_FLAGS) ${dst}
 
-[C-Code-File.BASE.AARCH64,C-Code-File.SEC.AARCH64,C-Code-File.PEI_CORE.AARCH64,C-Code-File.PEIM.AARCH64]
+[C-Code-File.BASE.AARCH64,C-Code-File.SEC.AARCH64,C-Code-File.PEI_CORE.AARCH64,C-Code-File.PEIM.AARCH64,C-Code-File.BASE.ARM,C-Code-File.SEC.ARM,C-Code-File.PEI_CORE.ARM,C-Code-File.PEIM.ARM]
     <InputFile>
         ?.c
 
@@ -182,6 +182,21 @@
 
     <Command>
 
+[MS-ARMx-Assembly-Code-File.COMMON.COMMON]
+    <InputFile.MSFT>
+        ?.masm, ?.Masm, ?.MASM
+    <ExtraDependency>
+        $(MAKE_FILE)
+    <OutputFile>
+        $(OUTPUT_DIR)(+)${s_dir}(+)${s_base}.obj
+    <Command.MSFT>
+        "$(PP)" $(PP_FLAGS) $(INC) ${src} > ${d_path}(+)${s_base}.i
+        # The C pre-processor is used to insert code snippets in assembly from preprocessor macros.  Unfortunately
+        # the preprocessor doesn't also insert CR/LF and Microsoft's assembler expects each instruction to be on its own
+        # line.  We search and replace a special string (__CR__) with CR.
+        type ${d_path}(+)${s_base}.i | python -c "import sys; print sys.stdin.read().replace('__CR__','\n')" > ${d_path}(+)${s_base}.ii
+        Trim --trim-long --source-code -o ${d_path}(+)${s_base}.iii ${d_path}(+)${s_base}.ii
+        "$(ASM)" $(ASM_FLAGS) -o ${dst} $(INC) ${d_path}(+)${s_base}.iii
 
 [Assembly-Code-File.COMMON.COMMON]
     <InputFile.MSFT, InputFile.INTEL, InputFile.RVCT>
@@ -209,7 +224,7 @@
 
 [Nasm-Assembly-Code-File.COMMON.COMMON]
     <InputFile>
-        ?.nasm
+        ?.nasm, ?.Nasm, ?.NASM
 
     <ExtraDependency>
         $(MAKE_FILE)
@@ -306,6 +321,54 @@
 
     <Command.XCODE>
         "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) -filelist $(STATIC_LIBRARY_FILES_LIST)  $(DLINK2_FLAGS)
+
+[Static-Library-File.*.AARCH64]
+    <InputFile>
+        *.lib
+
+    <ExtraDependency>
+        $(MAKE_FILE)
+
+    <OutputFile>
+        $(DEBUG_DIR)(+)$(MODULE_NAME).dll
+
+    <Command.MSFT, Command.INTEL>
+        if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /SUBSYSTEM:EFI_RUNTIME_DRIVER > $(OUTPUT_DIR)\subsystem) else if "$(MODULE_TYPE)"=="UEFI_APPLICATION" (echo /SUBSYSTEM:EFI_APPLICATION > $(OUTPUT_DIR)\subsystem) else (echo /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER > $(OUTPUT_DIR)\subsystem)
+        if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /ALIGN:4096 /FILEALIGN:4096 > $(OUTPUT_DIR)\align) else (echo /ALIGN:4096 /FILEALIGN:4096 > $(OUTPUT_DIR)\align)
+        "$(DLINK)" /OUT:${dst} $(DLINK_FLAGS) $(DLINK_SPATH) @$(STATIC_LIBRARY_FILES_LIST) @$(OUTPUT_DIR)\subsystem @$(OUTPUT_DIR)\align
+
+    <Command.GCC>
+        "$(DLINK)" -o ${dst} $(DLINK_FLAGS) --start-group $(DLINK_SPATH) @$(STATIC_LIBRARY_FILES_LIST) --end-group $(DLINK2_FLAGS)
+        "$(OBJCOPY)" $(OBJCOPY_FLAGS) ${dst}
+
+    <Command.RVCT>
+        "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) --via $(STATIC_LIBRARY_FILES_LIST) $(DLINK2_FLAGS)
+
+    <Command.RVCTCYGWIN>
+        #$(STATIC_LIBRARY_FILES_LIST) has wrong paths for cygwin
+        "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) $(STATIC_LIBRARY_FILES) $(DLINK2_FLAGS)
+
+    <Command.XCODE>
+        "$(DLINK)" $(DLINK_FLAGS) -o ${dst} $(DLINK_SPATH) -filelist $(STATIC_LIBRARY_FILES_LIST)  $(DLINK2_FLAGS)
+
+[Static-Library-File.SEC.AARCH64, Static-Library-File.PEI_CORE.AARCH64, Static-Library-File.PEIM.AARCH64,Static-Library-File.SEC.ARM, Static-Library-File.PEI_CORE.ARM, Static-Library-File.PEIM.ARM]
+    <InputFile>
+        *.lib
+
+    <ExtraDependency>
+        $(MAKE_FILE)
+
+    <OutputFile>
+        $(DEBUG_DIR)(+)$(MODULE_NAME).dll
+
+    <Command.MSFT, Command.INTEL>
+        if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /SUBSYSTEM:EFI_RUNTIME_DRIVER > $(OUTPUT_DIR)\subsystem) else if "$(MODULE_TYPE)"=="UEFI_APPLICATION" (echo /SUBSYSTEM:EFI_APPLICATION > $(OUTPUT_DIR)\subsystem) else (echo /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER > $(OUTPUT_DIR)\subsystem)
+        if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /ALIGN:4096 /FILEALIGN:4096 > $(OUTPUT_DIR)\align) else (echo /ALIGN:4096 /FILEALIGN:4096 > $(OUTPUT_DIR)\align)
+        "$(DLINK)" /OUT:${dst} $(DLINK_FLAGS) $(DLINK_SPATH) @$(STATIC_LIBRARY_FILES_LIST) @$(OUTPUT_DIR)\subsystem @$(OUTPUT_DIR)\align
+
+    <Command.GCC>
+        "$(DLINK)" -o ${dst} $(DLINK_FLAGS) $(DLINK_XIPFLAGS) -Wl,--start-group,@$(STATIC_LIBRARY_FILES_LIST),--end-group $(CC_FLAGS) $(CC_XIPFLAGS) $(DLINK2_FLAGS)
+        "$(OBJCOPY)" $(OBJCOPY_FLAGS) ${dst}
 
 
 [Static-Library-File.USER_DEFINED]
@@ -540,6 +603,30 @@
 
     <Command>
 
+# Build Rule to support using precompiled
+# LIB files.  Just copies the LIB from src to output
+# so the rest of the build system works.
+#
+[Precompiled-Lib-File]
+    <InputFile>
+        *.slib
+    <ExtraDependency>
+    <OutputFile>
+        $(OUTPUT_DIR)(+)$(MODULE_NAME).lib
+    <Command>
+        -$(CP) ${src} ${dst}
+# Build Rule to support using precompiled
+# EFI files.  Just copies the EFI from src to output
+# so the rest of the build system works.
+#
+[Precompiled-Efi-File]
+    <InputFile>
+        ?.preefi
+    <ExtraDependency>
+    <OutputFile>
+        $(OUTPUT_DIR)(+)${s_base}.efi
+    <Command>
+        -$(CP) ${src} ${dst}
 [Unicode-Text-File]
     <InputFile>
         *.uni, *.Uni, *.UNI

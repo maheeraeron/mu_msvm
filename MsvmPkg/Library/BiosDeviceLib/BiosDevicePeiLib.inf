@@ -1,0 +1,27 @@
+## @file
+# Library functions to access the Hyper-V BIOS VDev registers
+##
+
+[Defines]
+    INF_VERSION                    = 0x00010005
+    BASE_NAME                      = BiosDevicePeiLib
+    FILE_GUID                      = edb24b48-a4d8-45d7-ac4e-dc5db363bbda
+    MODULE_TYPE                    = PEIM
+    VERSION_STRING                 = 1.0
+    LIBRARY_CLASS                  = BiosDeviceLib|PEIM
+    CONSTRUCTOR                    = BiosDevicePeiLibConstructor
+
+[Sources]
+    BiosDeviceLibCore.c
+    BiosDevicePeiLibConstructor.c
+
+[LibraryClasses]
+    IoLib
+    PcdLib
+    
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

@@ -1,5 +1,5 @@
 /** @file   
-  ACPI 6.0 definitions from the ACPI Specification Revision 6.0 April, 2015.
+  ACPI 6.0 definitions from the ACPI Specification Revision 6.0 Errata A January, 2016.
 
   Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
   (C) Copyright 2015-2016 Hewlett Packard Enterprise Development LP<BR>
@@ -290,9 +290,9 @@ typedef struct {
 } EFI_ACPI_6_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER;
 
 ///
-/// MADT Revision (as defined in ACPI 6.0 spec.)
+/// MADT Revision (as defined in ACPI 6.0 Errata A spec.)
 ///
-#define EFI_ACPI_6_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION 0x03
+#define EFI_ACPI_6_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION 0x04
 
 ///
 /// Multiple APIC Flags
@@ -533,8 +533,17 @@ typedef struct {
   UINT32  GicId;
   UINT64  PhysicalBaseAddress;
   UINT32  SystemVectorBase;
-  UINT32  Reserved2;
+  UINT8   GicVersion;
+  UINT8   Reserved2[3];
 } EFI_ACPI_6_0_GIC_DISTRIBUTOR_STRUCTURE;
+
+///
+/// GIC Version
+///
+#define EFI_ACPI_6_0_GIC_V1                                   0x01
+#define EFI_ACPI_6_0_GIC_V2                                   0x02
+#define EFI_ACPI_6_0_GIC_V3                                   0x03
+#define EFI_ACPI_6_0_GIC_V4                                   0x04
 
 ///
 /// GIC MSI Frame Structure

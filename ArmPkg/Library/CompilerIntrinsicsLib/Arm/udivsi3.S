@@ -12,11 +12,11 @@
 #
 #------------------------------------------------------------------------------
 
-  .text
-  .align 2
-  GCC_ASM_EXPORT(__udivsi3)
+#include <AsmMacroIoLib.h>
 
-ASM_PFX(__udivsi3):
+  .syntax unified
+
+ASM_FUNC(__udivsi3)
   cmp  r1, #0
   cmpne  r0, #0
   stmfd  sp!, {r4, r5, r7, lr}
@@ -27,7 +27,7 @@ ASM_PFX(__udivsi3):
   rsb  r3, r3, r2
   cmp  r3, #31
   bhi  L2
-  ldmeqfd  sp!, {r4, r5, r7, pc}
+  ldmfdeq  sp!, {r4, r5, r7, pc}
   add  r5, r3, #1
   rsb  r3, r3, #31
   mov  lr, #0
