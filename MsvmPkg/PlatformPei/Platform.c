@@ -494,7 +494,7 @@ Return Value:
     // by a driver so the range can't be declared as MMIO here.  Therefore leave that page
     // out of this early general platform declaration.
     //
-    UINT64 GapBase = BiosAddressRegister;
+    UINT64 GapBase = PcdGet32(PcdBiosBaseAddress);
     UINT64 GapSize = SIZE_4KB;
     UINT64 FirstRangeBase = PcdGet64(PcdLowMmioGapBasePageNumber) * SIZE_4KB;
     UINT64 FirstRangeSize = GapBase - FirstRangeBase;
