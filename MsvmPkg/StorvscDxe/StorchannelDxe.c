@@ -930,11 +930,11 @@ Return Value:
         goto Cleanup;
     }
     ((PUCHAR)Request->Cdb)[0] = EFI_SCSI_OP_REPORT_LUNS;
-    Request->DataDirection = EFI_SCSI_DATA_OUT;
-    Request->OutTransferLength =
+    Request->DataDirection = EFI_EXT_SCSI_DATA_DIRECTION_READ;
+    Request->InTransferLength =
         sizeof(LUN_LIST) + sizeof(UCHAR) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET;
-    Request->OutDataBuffer = AllocatePool(Request->OutTransferLength);
-    if (Request->OutDataBuffer == NULL)
+    Request->InDataBuffer = AllocatePool(Request->InTransferLength);
+    if (Request->InDataBuffer == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
         goto Cleanup;
@@ -981,10 +981,10 @@ Return Value:
         Request->Cdb = NULL;
     }
 
-    if (Request->OutDataBuffer != NULL)
+    if (Request->InDataBuffer != NULL)
     {
-        FreePool(Request->OutDataBuffer);
-        Request->OutDataBuffer = NULL;
+        FreePool(Request->InDataBuffer);
+        Request->InDataBuffer = NULL;
     }
 }
 
@@ -1029,7 +1029,7 @@ Return Value:
         goto Cleanup;
     }
 
-    rawList = Request->OutDataBuffer;
+    rawList = Request->InDataBuffer;
 
     rawListLength =
         rawList->LunListLength[0] << 24 |
