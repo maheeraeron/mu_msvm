@@ -42,9 +42,9 @@ DefinitionBlock (
     )
 {
     // The following operation region provides for a block of system memory
-    // that can be referenced by this ASL code. The memory block contains 
-    // configuration parameters that are filled in at runtime by the UEFI C code in: 
-    // MsvmPkg/AcpiPlatformDxe/Dsdt.c DsdtAllocateAmlData. This definition of the 
+    // that can be referenced by this ASL code. The memory block contains
+    // configuration parameters that are filled in at runtime by the UEFI C code in:
+    // MsvmPkg/AcpiPlatformDxe/Dsdt.c DsdtAllocateAmlData. This definition of the
     // OperationRegion must match the signature in the above C code. As well
     // the definition of the fields must match the DSDT_AML_DATA struct in the above
     // C code.
@@ -68,7 +68,7 @@ DefinitionBlock (
         BCFG,8,         // Virtual Battery enabled/disabled
         SGXE,8,         // SGX Memory enabled/disabled
     }
-    
+
     // Supported machine sleep states =========================================
 
 #if defined(_DSDT_INTEL_)
@@ -92,7 +92,7 @@ DefinitionBlock (
     {
         Name(\_S4, Package(2){0, 0})
     }
-    
+
 #endif
 
     // VMOD ==================================================================
@@ -157,18 +157,18 @@ DefinitionBlock (
     }
 
     // BIOS Registers =========================================================
-    
+
     Scope(\_SB)
     {
-    
+
 #if defined(_DSDT_INTEL_)
 
         OperationRegion(BIOB, SystemIO, FixedPcdGet32(PcdBiosBaseAddress), 0x8)
-        
+
 #elif defined(_DSDT_ARM_)
 
         OperationRegion(BIOB, SystemMemory, FixedPcdGet32(PcdBiosBaseAddress), 0x1000)
-        
+
 #endif
 
         Field (BIOB, DWordAcc, NoLock, Preserve)
@@ -181,7 +181,7 @@ DefinitionBlock (
     // APIC ===================================================================
 
 #if defined(_DSDT_INTEL_)
-    
+
     Device(\_SB.VMOD.APIC)
     {
         Name(_HID, EISAID("PNP0003"))
@@ -196,12 +196,12 @@ DefinitionBlock (
     }
 
 #endif
-    
+
     // Serial Ports =======================================================
 
     If(LGreater(SCFG, 0))
     {
-    
+
 #if defined(_DSDT_INTEL_)
 
         // COM1 (SerialControllerDevice.cpp).
@@ -213,11 +213,11 @@ DefinitionBlock (
             Name(_CRS, ResourceTemplate()
             {
                 IO(Decode16, FixedPcdGet32(PcdCom1RegisterBase), FixedPcdGet32(PcdCom1RegisterBase), 1, 8)
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom1Vector)}
             })
         }
-            
+
         // COM2 (SerialControllerDevice.cpp).
         Device(\_SB.UAR2)
         {
@@ -227,11 +227,11 @@ DefinitionBlock (
             Name(_CRS, ResourceTemplate()
             {
                 IO(Decode16, FixedPcdGet32(PcdCom2RegisterBase), FixedPcdGet32(PcdCom2RegisterBase), 1, 8)
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom2Vector)}
             })
         }
-            
+
 #elif defined(_DSDT_ARM_)
 
         // COM1 (PL011Device.cpp)
@@ -243,11 +243,11 @@ DefinitionBlock (
             Name(_CRS, ResourceTemplate()
             {
                 Memory32Fixed(ReadWrite, FixedPcdGet32(PcdCom1RegisterBase), 0x1000)
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom1Vector)}
             })
         }
-        
+
         // COM2 (PL011Device.cpp)
         Device(\_SB.VMOD.UAR2)
         {
@@ -257,17 +257,17 @@ DefinitionBlock (
             Name(_CRS, ResourceTemplate()
             {
                 Memory32Fixed(ReadWrite, FixedPcdGet32(PcdCom2RegisterBase), 0x1000)
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom2Vector)}
             })
         }
-        
+
 #endif
 
     }
-    
+
     // VMBus ==================================================================
-    
+
     Device(\_SB.VMOD.VMBS)
     {
         Name(STA, 0xF)
@@ -293,8 +293,23 @@ DefinitionBlock (
 
             ResourceTemplate()
             {
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+
+#if defined(_DSDT_INTEL_)
+
+                // Older Linux kernels like RHEL/CentOS don't seem to be able to
+                // parse the new Extended Interrupt Descriptor resource type (see ACPI Section 6.4.3.6),
+                // so we instead use the old legacy IRQ description which
+                // becomes the short form of Interrupt Descriptor (ACPI Section 5.4.2.1)
+                // which only supports legacy PIC devices to describe up to 15
+                // interrupts. VMBUS is interrupt 5 on X64, so this is okay.
+                IRQ(Edge,ActiveHigh,Exclusive)
                     {FixedPcdGet8(PcdVmbusVector)}
+
+#else
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
+                    {FixedPcdGet8(PcdVmbusVector)}
+#endif
+
             }
         )
     }
@@ -448,12 +463,12 @@ DefinitionBlock (
             }
         }
     }
-    
+
 #endif
 
     // SGX ====================================================================
 
-    // The Enclave Page Cache aka SGX memory device. This is intentionally not 
+    // The Enclave Page Cache aka SGX memory device. This is intentionally not
     // Intel spec compliant in that it doesn't have any memory regions described
     // in the _CRS. Existence of this device will trigger a guest kernel to load
     // a device driver. That device driver will use other mechanisms (cpuid) to
@@ -466,7 +481,7 @@ DefinitionBlock (
         Device(\_SB.EPC)
         {
             Name(_HID, EISAID("INT0E0C"))
-            Name(_STR, Unicode ("Enclave Page Cache 1.0"))           
+            Name(_STR, Unicode ("Enclave Page Cache 1.0"))
             Name(_CRS, ResourceTemplate()
             {
                 // This is dummy data to make the _CRS not empty.
@@ -478,7 +493,7 @@ DefinitionBlock (
             }
         }
     }
-    
+
 #endif
 
     // Generation Counter =====================================================
@@ -513,10 +528,10 @@ DefinitionBlock (
             Notify(\_SB.GENC, 0x80)
         }
     }
-    
+
 #elif defined(_DSDT_ARM_)
 
-    // Interrupt signalled event for generation counter    
+    // Interrupt signalled event for generation counter
     Device (\_SB.GED1)
     {
         Name(_HID, "ACPI0013")
@@ -691,7 +706,7 @@ DefinitionBlock (
             //           in the FADT
             Method(_E09)
             {
-            
+
 #elif defined (_DSDT_ARM_)
 
         // Interrupt signalled event device for battery
@@ -700,7 +715,7 @@ DefinitionBlock (
             Name(_HID,"ACPI0013")
             Name(_CRS, ResourceTemplate()
             {
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
                     {FixedPcdGet32(PcdBatteryEventVector)}
             })
             Method(_EVT, 1)
@@ -764,8 +779,8 @@ DefinitionBlock (
                 NEV4,32, // NVDIMM Root Device notifications.
             }
 
-            // 4K Operation Region for Method I/O buffer between the ACPI NVDIMM 
-            // devices and the vPMEM vdev on the Host. The actual address (NVDA) 
+            // 4K Operation Region for Method I/O buffer between the ACPI NVDIMM
+            // devices and the vPMEM vdev on the Host. The actual address (NVDA)
             // comes from the BIOS operation region that gets updated from by the
             // UEFI firmware during ACPI table initialization.
             OperationRegion(NVDB, SystemMemory, NVDA, 4096)
@@ -787,7 +802,7 @@ DefinitionBlock (
             // 5. Release NMTX.
             Mutex(NMTX, 0)
 
-            
+
             // _DSM Device Specific Method
             // Arg0: UUID Unique function identifier
             // Arg1: Integer Revision Level
@@ -977,7 +992,7 @@ DefinitionBlock (
 
                 Release (NMTX)
 
-                CreateDWordField (RBUF, 0, DWD0) 
+                CreateDWordField (RBUF, 0, DWD0)
                 Store (Subtract(Local0, 32), Local1) // size of the data buffer in bits
                 CreateField (RBUF, 32, Local1, LBLD) // label data buffer
                 Name (PKGR, Package(2) {0, Buffer(){0}})
@@ -2026,7 +2041,7 @@ DefinitionBlock (
             //           in the FADT
             Method(_E0A)
             {
-            
+
 #elif defined (_DSDT_ARM_)
 
         // Interrupt signalled event device for PMEM
@@ -2035,7 +2050,7 @@ DefinitionBlock (
             Name(_HID,"ACPI0013")
             Name(_CRS, ResourceTemplate()
             {
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive) 
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdPmemEventVector)}
             })
             Method(_EVT, 1)
