@@ -271,9 +271,10 @@ DefinitionBlock (
     Device(\_SB.VMOD.VMBS)
     {
         Name(STA, 0xF)
+        Name(_ADR, 0x00)
+        Name(_DDN, "VMBUS")
         Name(_HID, "VMBus")
         Name(_UID, 0)
-        Name(_DDN, "VMBUS")
         Method(_DIS, 0) { And(STA, 0xD, STA) }
         Method(_PS0, 0) { Or(STA, 0xF, STA) }
         Method(_STA, 0)
