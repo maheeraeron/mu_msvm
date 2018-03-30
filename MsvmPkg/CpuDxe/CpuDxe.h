@@ -281,16 +281,6 @@ SetDataSelectors (
   );
 
 /**
-  Halts the processor until an interrupt arrives, then enables interrupts.
-
-**/
-VOID
-EFIAPI
-SleepAndEnable (
-  VOID
-  );
-
-/**
   Restore original Interrupt Descriptor Table Handler Address.
 
   @param Index        The Index of the interrupt descriptor table handle.

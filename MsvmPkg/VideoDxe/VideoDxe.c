@@ -282,7 +282,7 @@ Return Value:
     // Create child handle and install Graphics Output Protocol
     //
     status = gBS->InstallMultipleProtocolInterfaces(&context->Handle,
-                                                    &gEfiGraphicsOutputProtocolGuid,
+                                                    &mMsGopOverrideProtocolGuid,
                                                     &context->GraphicsOutput,
                                                     NULL);
     if (EFI_ERROR(status))
@@ -354,7 +354,7 @@ Return Value:
     VIDEODXE_CONTEXT* context = NULL;
 
     status = gBS->OpenProtocol(ControllerHandle,
-                               &gEfiGraphicsOutputProtocolGuid,
+                               &mMsGopOverrideProtocolGuid,
                                (VOID **) &GraphicsOutput,
                                This->DriverBindingHandle,
                                ControllerHandle,
@@ -374,7 +374,7 @@ Return Value:
     // Uninstall protocols on child handle
     //
     status = gBS->UninstallMultipleProtocolInterfaces(context->Handle,
-                                                      &gEfiGraphicsOutputProtocolGuid,
+                                                      &mMsGopOverrideProtocolGuid,
                                                       &context->GraphicsOutput,
                                                       NULL);
     //

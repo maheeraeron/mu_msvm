@@ -20,6 +20,7 @@
     UefiDriverEntryPoint
     DevicePathLib
     MemoryAllocationLib
+    InterruptWaitLib
 
 [Sources]
     VmbusRoot.c

@@ -41,7 +41,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Protocol/StatusCode.h>
 #include <Library/HobLib.h>
 #include <Library/UefiLib.h>
-
+#include <Library/DevicePathLib.h>
 
 EFI_STATUS
 EFIAPI
@@ -134,6 +134,88 @@ Return Value:
     UINT32 size = 0;
 
     ASSERT(EfiGetCurrentTpl() <= TPL_NOTIFY);
+
+    if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_PROGRESS_CODE && Value == PcdGet32 (PcdProgressCodeOsLoaderLoad))
+    {
+        //
+        // Start a boot event for this device.
+        // Status for the boot device will be updated as needed in a distributed
+        // fashion (e.g. a PXE boot failure status will be update in the PXE code)
+        //
+        // The boot event will be completed before this function exits or 
+        // in ExitBootServices.
+        //
+        // Set the initial boot status to indicate an I/O error.
+        // If an I/O error occurs, LoadImage doesn't return a useful
+        // status code.
+        //
+        // Note:
+        //   At this point the device path may not contain the Bootx64.efi
+        //   file path which may be appended later.  This omission is OK for
+        //   boot logging.
+        //
+        UINTN DevicePathData;
+        UINTN OptionNumber;
+
+        if (Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
+        {
+           DevicePathData = *((UINTN *)(Data + 1));
+           OptionNumber = *((UINTN *)(Data + 1) + 1);
+           DEBUG((DEBUG_INFO, "[HVBE] Starting new boot event. DP Ptr: 0x%X, OptionNumber: %d\n", DevicePathData, OptionNumber));
+           DEBUG((DEBUG_INFO, "[HVBE] DP: %s\n", ConvertDeviceNodeToText((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, FALSE, FALSE)));
+           BootDeviceEventStart((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, (UINT16)OptionNumber, BootDeviceLoadError, EFI_SUCCESS);
+        }
+    }
+    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_LOAD_ERROR))
+    {
+        BootDeviceEventUpdate(BootDeviceOsNotLoaded, EFI_LOAD_ERROR);
+        DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceOsNotLoaded, EFI_LOAD_ERROR\n"));
+        BootDeviceEventComplete();
+        DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
+    }
+    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED))
+    {
+        BootDeviceEventUpdate(BootDeviceReturnedFailure, EFI_NOT_STARTED);
+        DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceReturnedFailure, EFI_NOT_STARTED\n"));
+    }
+    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_PROGRESS_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED))
+    {
+        BootDeviceEventComplete();
+        DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
+    }
+    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE &&
+        (Value & (EFI_STATUS_CODE_CLASS_MASK | EFI_STATUS_CODE_SUBCLASS_MASK)) == EFI_PERIPHERAL_NETWORK)
+    {
+        BOOT_DEVICE_STATUS DeviceStatus = NetworkBootUnexpectedFailure;
+        EFI_STATUS         Status       = ENCODE_ERROR (Value & EFI_STATUS_CODE_OPERATION_MASK);
+
+        if (Status == EFI_BUFFER_TOO_SMALL) {
+          DeviceStatus = NetworkBootBufferTooSmall;
+        } else if (Status == EFI_DEVICE_ERROR) {
+          DeviceStatus = NetworkBootDeviceError;
+        } else if (Status == EFI_OUT_OF_RESOURCES) {
+          DeviceStatus = NetworkBootNoResources;
+        } else if (Status == EFI_NO_MEDIA) {
+          DeviceStatus = NetworkBootMediaDisconnected;
+        } else if (Status == EFI_NO_RESPONSE) {
+          DeviceStatus = NetworkBootNoResponse;
+        } else if (Status == EFI_TIMEOUT) {
+          DeviceStatus = NetworkBootServerTimeout;
+        } else if (Status == EFI_ABORTED) {
+          DeviceStatus = NetworkBootCancelled;
+        } else if (Status == EFI_ICMP_ERROR) {
+          DeviceStatus = NetworkBootIcmpError;
+        } else if (Status == EFI_TFTP_ERROR) {
+          DeviceStatus = NetworkBootTftpError;
+        } else if (Status == EFI_NOT_FOUND) {
+          DeviceStatus = NetworkBootNoBootFile;
+        } else {
+          DeviceStatus = NetworkBootUnexpectedFailure;
+        }
+
+        BootDeviceEventUpdate(DeviceStatus, Status);
+        DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: %d, %d\n", DeviceStatus, Status));
+    }
 
     if ((Data != NULL) &&
         (Data->HeaderSize >= sizeof(EFI_STATUS_CODE_DATA)))

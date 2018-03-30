@@ -1248,7 +1248,9 @@ Return Value:
 {
     HV_STATUS hvStatus;
     PHV_INPUT_SIGNAL_EVENT input;
-    UINT64 registers[2] = {0};
+    UINT64 registers[2];
+
+    ZeroMem(registers, sizeof(registers));
 
     DEBUG((DEBUG_VERBOSE, ">>> %a: ConnectionId 0x%x FlagNumber 0x%x\n", __FUNCTION__,
         ConnectionId, FlagNumber));

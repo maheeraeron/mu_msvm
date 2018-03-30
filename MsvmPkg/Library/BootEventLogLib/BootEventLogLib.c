@@ -65,7 +65,36 @@ Return Value:
         status = EventLogChannelCreate(&gBootEventChannelGuid, &attributes, &mBootEvent);
     }
 
-    return status;
+    return EFI_SUCCESS;
+}
+
+
+EFI_STATUS
+EFIAPI
+BootEventLogLibInit(
+    _In_    EFI_HANDLE                          ImageHandle,
+    _In_    EFI_SYSTEM_TABLE                   *SystemTable
+    )
+/*++
+
+Routine Description:
+
+    Initializes the boot event library by calling its constructor.
+
+Arguments:
+
+    ImageHandle     Unused
+
+    SystemTable     Unused
+
+Return Value:
+
+    EFI_SUCCESS     The function completed successfully
+
+--*/
+{
+    BootEventLogConstructor(ImageHandle, SystemTable);
+    return EFI_SUCCESS;
 }
 
 
@@ -132,7 +161,7 @@ Return Value:
     bootEvent->BootVariableNumber = BootVariableNumber;
     CopyMem(bootEvent->DevicePath, DevicePath, devPathSize);
 
-    status = EventLog(mBootEvent,
+    status = EventLogLib(mBootEvent,
                 EVENT_FLAG_PENDING,
                 BOOT_DEVICE_EVENT_ID,
                 ((UINT32)devPathSize + sizeof(BOOTEVENT_DEVICE_ENTRY)),

@@ -49,19 +49,19 @@
 
 [FD.MSVM]
 BaseAddress   = 0x00100000|gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
-Size          = 0x00300000|gMsvmPkgTokenSpaceGuid.PcdFdSize
+Size          = 0x00500000|gMsvmPkgTokenSpaceGuid.PcdFdSize
 
 ErasePolarity = 1
 BlockSize     = 0x1000
-NumBlocks     = 0x300
+NumBlocks     = 0x500
 
 # The MAIN volume (start|size)
-0x00000000|0x002F0000
+0x00000000|0x004E0000
 gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdFvSize
 FV = MAINFV
 
 # The SEC volume (start|size)
-0x002F0000|0x00010000
+0x004E0000|0x00020000
 FV = SECFV
 
 
@@ -129,6 +129,14 @@ APRIORI PEI {
 }
 
 #
+# Dispatch these components first in DXE.
+#
+APRIORI DXE {
+  INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF  MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
+}
+
+#
 # PEI components
 #
 INF  MdeModulePkg/Core/Pei/PeiMain.inf
@@ -137,44 +145,7 @@ INF  IntelFrameworkModulePkg/Universal/StatusCode/Pei/StatusCodePei.inf
 INF  MsvmPkg/PlatformPei/PlatformPei.inf
 INF  MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
-
-FILE FV_IMAGE = A4EF5A93-3F1B-4232-A1C4-F0910E6D1D9C {
-  SECTION COMPRESS PI_NONE {
-    SECTION FV_IMAGE = DXEFV
-  }
-}
-
-
-################################################################################
-#
-# This FV section describes the DXE phase volume contents.
-#
-[FV.DXEFV]
-BlockSize          = 0x10000
-FvAlignment        = 16
-ERASE_POLARITY     = 1
-MEMORY_MAPPED      = TRUE
-STICKY_WRITE       = TRUE
-LOCK_CAP           = TRUE
-LOCK_STATUS        = TRUE
-WRITE_DISABLED_CAP = TRUE
-WRITE_ENABLED_CAP  = TRUE
-WRITE_STATUS       = TRUE
-WRITE_LOCK_CAP     = TRUE
-WRITE_LOCK_STATUS  = TRUE
-READ_DISABLED_CAP  = TRUE
-READ_ENABLED_CAP   = TRUE
-READ_STATUS        = TRUE
-READ_LOCK_CAP      = TRUE
-READ_LOCK_STATUS   = TRUE
-
-#
-# Dispatch these components first in DXE.
-#
-APRIORI DXE {
-  INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
-  INF  MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
-}
+INF  MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 
 #
 # DXE components.
@@ -187,7 +158,7 @@ INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF MsvmPkg/CpuDxe/CpuDxe.inf
 INF MdeModulePkg/Universal/Metronome/Metronome.inf
 INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
-INF IntelFrameworkModulePkg/Universal/BdsDxe/BdsDxe.inf
+INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
 INF MsvmPkg/VariableDxe/VariableDxe.inf
 INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
@@ -197,8 +168,11 @@ INF PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF MsvmPkg/VmbusDxe/VmbusDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
 INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF FatPkg/EnhancedFatDxe/Fat.inf
 INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
@@ -239,9 +213,40 @@ INF SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 
-FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
+# UI Theme Protocol.
+INF  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
+# Surface Rendering Engine (SRE) driver.
+INF  MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
+# Simple Window Manager (SWM) driver.
+INF  MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
+# On-Screen Keyboard (OSK) driver.
+INF  MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
+
+# Surface FrontPage application.
+INF  MsvmPkg/FrontPage/SurfaceFrontPage.inf
+
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdLogoFile) {
     SECTION RAW = MsvmPkg/bootlogo.bmp
+    SECTION UI = "Logo"
   }
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdComplianceLabelFile) {
+    SECTION RAW = MsvmPkg/ComplianceLabel.bmp
+}
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile) {
+    SECTION RAW = MsvmPkg/FrontPage/Resources/MicrosoftLogo.bmp
+}
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
+    SECTION RAW = MsvmPkg/FrontPage/Resources/NoBoot.bmp
+}
+
+#FILE APPLICATION = c57ad6b7-0515-40a8-9d21-551652854e37 {
+#     SECTION PE32 = ShellBinPkg/UefiShell/X64/Shell.efi
+#  }
+
 
 ################################################################################
 #

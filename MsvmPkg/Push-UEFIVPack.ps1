@@ -174,7 +174,39 @@ function Parse-Edk2TargetFile
     }
     return $Config
 }
+###################################################################################################
 
+function Parse-PlatformBuildFile
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]
+        [ValidateNotNullOrEmpty()]
+        $TargetFilePath,
+
+        [Parameter(Mandatory=$true)]
+        [hashtable]
+        $Config
+    )
+    Write-Verbose "MSFT UEFI Build File: $TargetFilePath"
+    foreach ($line in Get-Content $TargetFilePath)
+    {
+        if ($line.Contains('self.env.SetValue'))
+        {
+            $line = $line.trim().TrimStart('self.env.SetValue(').Replace("`"","")
+
+            # skip comments
+            if ($line.StartsWith("#"))
+            {
+                continue
+            }
+
+            $tokens = $line.split(",")
+            $Config[$tokens[0].trim()] = $tokens[1].trim()
+        }
+    }
+    return $Config
+}
 ###################################################################################################
 
 function Parse-Edk2PlatformFile
@@ -238,6 +270,18 @@ function Parse-Edk2FlashDefinitionFile
             {
                 $Config.Add("FD_FILENAME", $matches[1]+".fd")
             }
+            if ($line -imatch '^\s*PLATFORM_NAME\s*=\s*(\S+).*$')
+            {
+                $Config.Add("PLATFORM_NAME", $matches[1])
+            }
+            if ($line -imatch '^\s*OUTPUT_DIRECTORY\s*=\s*(\S+).*$')
+            {
+                $Config.Add("OUTPUT_DIRECTORY", $matches[1].Replace('/','\'))
+            }
+            if ($line -imatch '^\s*FLASH_DEFINITION\s*=\s*(\S+).*$')
+            {
+                $Config.Add("FLASH_DEFINITION", $matches[1].Replace('/','\'))
+            }
         }
     }
     return $Config
@@ -257,6 +301,9 @@ function Get-Edk2Config
     $config = @{"WORKSPACE" = $Workspace}
     $config = Parse-Edk2TargetFile `
               -TargetFilePath ("{0}\conf\target.txt" -f $Workspace) `
+              -Config $config
+    $config = Parse-PlatformBuildFile `
+              -TargetFilePath ("{0}\MsvmPkg\PlatformBuild.py" -f $Workspace) `
               -Config $config
     $config = Parse-Edk2PlatformFile `
               -TargetFilePath ("{0}\{1}" -f $config.WORKSPACE, $config.ACTIVE_PLATFORM) `
@@ -413,7 +460,7 @@ function Get-CurrentCommitHash
 function Get-CurrentBranch
 {
     $branch = Run-Command -Executable "git" -Arguments ( "rev-parse", "--abbrev-ref", "HEAD" )
-    Write-Verbose ("Current branch is: " + $branch)
+    Write-Verbose ("Current branch is: " + $LocalCommit)
     return $branch
 }
 
@@ -432,49 +479,6 @@ function Get-UTCTimeString
 
     $utcTime = (Get-Date).ToUniversalTime().AddHours($HoursToOffset).ToString("u")
     return $utcTime
-}
-
-###################################################################################################
-
-function Check-Duplicate-Commit-Hash
-{
-    Param(
-        [Parameter(Mandatory=$true)]
-        [hashtable]
-        $Edk2Config,
-
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNull()]
-        [PsCustomObject]
-        $VpackConfig,
-
-        [string]
-        $CommitHash = ""
-    )
-
-    Write-Verbose "Checking for duplicate commit in existing VPacks..."
-
-    $vpackExePath = $Edk2Config.WORKSPACE + "\msprivate\internal\vpack\vpack.exe"
-
-    $vpackCmdArgs = @("List")
-    $vpackBaseName = $VpackConfig.vpack.BaseName
-    if ($VpackConfig.vpack.AppendArchToName)
-    {
-        $vpackBaseName += ("." + $Edk2Config.TARGET_ARCH.ToLower())
-    }
-    $vpackCmdArgs += ("/BaseName:" + $vpackBaseName)
-    $packList = Run-Command $vpackExePath $vpackCmdArgs
-    $found = $false
-    foreach ($pack in $packList)
-    {
-        if ($pack -Match $CommitHash)
-        {
-            Write-Verbose ($pack + " matches current commit")
-            $found = $true
-        }
-    }
-
-    return $found
 }
 
 ###################################################################################################
@@ -545,11 +549,9 @@ try
     $workspace = (Get-ChildItem env:WORKSPACE -ErrorAction Ignore).Value
     if ($workspace -eq $null)
     {
-        Write-Error -Message ( `
-        "This script must be run from the hyperv.uefi repository " + `
-        "EDK2 build environment after running Edk2Setup." `
-        ) -Category ResourceUnavailable
-        return
+        # root/MsvmPkg
+        # workspace is one directory up
+        $workspace = (get-item $MyInvocation.MyCommand.Path).Directory.parent.FullName
     }
     Write-Verbose ("Workspace: " + $workspace)
 
@@ -583,20 +585,6 @@ try
         return
     }
 
-    # If appending commit hash check to ensure current commit is not already pushed.
-
-    if ($vpackConfig.meta.AppendLatestCommitHash)
-    {
-        $currentCommit = Get-CurrentCommitHash
-        if (Check-Duplicate-Commit-Hash -Edk2Config $edk2Config -VpackConfig $vpackConfig -CommitHash $currentCommit)
-        {
-            Write-Error -Message ( `
-            "The current commit already exists with a pushed VPack." `
-            ) -Category InvalidResult
-            return
-        }
-    }
-    
     # Create a temp directory
 
     $tempFileDir = New-TemporaryDirectory

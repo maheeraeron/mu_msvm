@@ -26,6 +26,14 @@ extern EFI_GUID gBootEventChannelGuid;
 
 EFI_STATUS
 EFIAPI
+BootEventLogLibInit(
+    _In_    EFI_HANDLE                          ImageHandle,
+    _In_    EFI_SYSTEM_TABLE                   *SystemTable
+    );
+
+
+EFI_STATUS
+EFIAPI
 BootDeviceEventStart(
     _In_    const EFI_DEVICE_PATH_PROTOCOL     *DevicePath,
     _In_    UINT16                              BootVariableNumber,

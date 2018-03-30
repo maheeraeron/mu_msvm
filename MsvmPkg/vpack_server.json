@@ -1,0 +1,18 @@
+{
+    "vpack":
+    {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 0,
+        "Prerelease": "",
+        "VersionIncrementType": "Patch",
+        "BaseName": "hyperv.uefi.test",
+        "AppendArchToName": true,
+        "ExpirationTimeInHours": 336
+    },
+    "meta":
+    {
+        "GitBranchName": "user/maknutse/coreufitest",
+        "AppendLatestCommitHash": true
+    }
+}

@@ -1165,7 +1165,7 @@ Returns:
     EFI_STATUS status;
     VARIABLE_HEADER* variable;
     UINT32 varNameSize;
-    static CHAR16 emptyName[1] = {0};
+    static CHAR16 emptyName[1];
     
     
     if (VariableNameSize == NULL || VariableName == NULL || VendorGuid == NULL) 

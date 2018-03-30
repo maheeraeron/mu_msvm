@@ -10,7 +10,7 @@
     MODULE_TYPE                    = BASE
     VERSION_STRING                 = 1.0
 # not compatible with DXE_RUNTIME_DRIVER don't add it
-    LIBRARY_CLASS                  = DebugLib|DXE_CORE DXE_DRIVER UEFI_DRIVER
+    LIBRARY_CLASS                  = DebugLib|DXE_CORE DXE_DRIVER UEFI_DRIVER UEFI_APPLICATION
     CONSTRUCTOR                    = BdDebugLibConstructor
 
 [Sources]

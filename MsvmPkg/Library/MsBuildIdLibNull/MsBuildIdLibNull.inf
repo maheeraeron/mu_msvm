@@ -1,0 +1,34 @@
+## @file
+# Library provides helper function when working with MS Build ID   
+# This version is a NULL version and doesn't do anything.  Just fills the contract
+#
+#
+# @copyright
+# Copyright (c) 2014 Microsoft Corporation. All rights reserved
+# 
+# @par Specification Reference:
+#
+##
+
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = BaseMsBuildIdLib
+FILE_GUID = 3815A6B0-7C26-4461-A9C7-1ABE479C31C1
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = MsBuildIdLib
+
+
+[LibraryClasses]
+  PrintLib
+
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+
+[Sources]
+  MsBuildIdLibNull.c

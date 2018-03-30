@@ -33,7 +33,7 @@
     gEfiVmbusProtocolGuid           #CONSUMES
     gEfiEmclProtocolGuid            #CONSUMES
     gEfiDevicePathProtocolGuid      #PRODUCES
-    gEfiGraphicsOutputProtocolGuid  #PRODUCES
+    mMsGopOverrideProtocolGuid      #PRODUCES
     gEfiDriverBindingProtocolGuid   #PRODUCES
     gEfiComponentNameProtocolGuid   #PRODUCES
     gEfiComponentName2ProtocolGuid  #PRODUCES

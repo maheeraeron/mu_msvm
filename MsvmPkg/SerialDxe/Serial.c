@@ -16,6 +16,7 @@ Author:
 
 #include "Serial.h"
 
+EFI_GUID gMsvmSerialBusProtocolGuid = MSVM_SERIAL_BUS_PROTOCOL_GUID;
 
 //
 // The instance of the Driver Binding Protocol for the image handle.

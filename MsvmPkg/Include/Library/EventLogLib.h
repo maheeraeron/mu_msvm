@@ -38,7 +38,7 @@ EventLogChannelOpen(
 
 EFI_STATUS
 EFIAPI
-EventLog(
+EventLogLib(
     _In_        const EFI_HANDLE        Channel,
     _In_        UINT32                  Flags,
     _In_        const UINT32            EventId,

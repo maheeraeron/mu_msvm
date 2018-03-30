@@ -47,7 +47,8 @@
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiLib
-
+  DevicePathLib                   # MS_CHANGE
+  BootEventLogLib                 # MS_CHANGE
 
 [Guids]
   gMemoryStatusCodeRecordGuid                   ## CONSUMES ## HOB
@@ -61,6 +62,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
   gMsvmPkgTokenSpaceGuid.PcdEventLogMaxChannels
   gMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderLoad                ## SOMETIMES_CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderStart               ## SOMETIMES_CONSUMES
 
 [Depex]
   TRUE

@@ -29,6 +29,7 @@
     UefiBootServicesTableLib
     DevicePathLib
     EmclLib
+    InterruptWaitLib
 
 [Protocols]
     gEfiVmbusProtocolGuid           #CONSUMES

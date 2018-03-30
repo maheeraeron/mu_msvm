@@ -29,3 +29,4 @@ Author:
 #include <Library/MemoryAllocationLib.h>
 
 #include <Protocol/EventLog.h>
+#include <Library/BootEventLogLib.h>

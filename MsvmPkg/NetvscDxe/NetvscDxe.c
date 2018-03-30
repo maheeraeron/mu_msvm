@@ -21,6 +21,8 @@ Author:
 #include <Library/EmclLib.h>
 #include <Library/DebugLib.h>
 
+#include <Library/InterruptWaitLib.h>
+
 //
 // This number is just a random 16 bit number which is used to
 // identify the single receive buffer.
@@ -479,7 +481,8 @@ Return Value:
         goto Cleanup;
     }
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->InitRndisEvt, &eventIndex);
+    //status = gBS->WaitForEvent(1, &AdapterInfo->InitRndisEvt, &eventIndex);
+    status = WaitForInterrupt(1, &AdapterInfo->InitRndisEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -549,7 +552,8 @@ Return Value:
         goto Cleanup;
     }
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->StnAddrEvt, &eventIndex);
+    //status = gBS->WaitForEvent(1, &AdapterInfo->StnAddrEvt, &eventIndex);
+    status = WaitForInterrupt(1, &AdapterInfo->StnAddrEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -616,7 +620,8 @@ Return Value:
         goto Cleanup;
     }
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->StnAddrEvt, &eventIndex);
+    //status = gBS->WaitForEvent(1, &AdapterInfo->StnAddrEvt, &eventIndex);
+    status = WaitForInterrupt(1, &AdapterInfo->StnAddrEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -786,7 +791,8 @@ Returns:
     }
 
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->RxFilterEvt, &eventIndex);
+    //status = gBS->WaitForEvent(1, &AdapterInfo->RxFilterEvt, &eventIndex);
+    status = WaitForInterrupt(1, &AdapterInfo->RxFilterEvt, &eventIndex);
 
     if (EFI_ERROR(status))
     {
@@ -1034,9 +1040,11 @@ Returns:
     RX_PACKET_INSTANCE currPacket;
     UINT32 bytesToBeCopied;
     INT32 index;
-    NVSP_MESSAGE message = {0};
+    NVSP_MESSAGE message;
     EFI_STATUS status = EFI_SUCCESS;
     static UINT32 counter;
+
+    ZeroMem(&message, sizeof(NVSP_MESSAGE));
 
     if (!AdapterInfo->ReceiveStarted)
     {
@@ -1178,7 +1186,7 @@ Arguments:
 {
     NIC_DATA_INSTANCE *adapterInfo;
     BOOLEAN bufferIsFull;
-    NVSP_MESSAGE outNvspMessage = {0};
+    NVSP_MESSAGE outNvspMessage;
     PRNDIS_MESSAGE pRndisMessage;
     UINT32 bufferIndex;
     PRNDIS_PACKET pRndisPacket;
@@ -1190,6 +1198,7 @@ Arguments:
     RX_PACKET_INSTANCE newPacketInfo;
 
     ASSERT(RangeCount > 0);
+    ZeroMem(&outNvspMessage, sizeof(NVSP_MESSAGE));
     bufferIndex = ((PNVSP_MESSAGE)Buffer)->Messages.Version1Messages.SendRNDISPacket.SendBufferSectionIndex;
 
     adapterInfo = (NIC_DATA_INSTANCE *) ReceiveContext;

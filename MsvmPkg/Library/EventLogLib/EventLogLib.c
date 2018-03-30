@@ -20,7 +20,6 @@ Author:
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/EventLogLib.h>
-#include <Library/BootEventLogLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
 EFI_EVENTLOG_PROTOCOL *mEventLogProtocol = NULL;
@@ -166,7 +165,7 @@ Return Value:
 
 EFI_STATUS
 EFIAPI
-EventLog(
+EventLogLib(
     _In_        const EFI_HANDLE        Channel,
     _In_        UINT32                  Flags,
     _In_        const UINT32            EventId,

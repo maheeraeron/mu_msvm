@@ -4,3 +4,4 @@ tags/
 .vscode/
 *.log
 publishuefi.cmd
+*.Conf

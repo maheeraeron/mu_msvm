@@ -16,3 +16,6 @@
 [Protocols]
     gEfiEmclProtocolGuid              #PRODUCES
     gEfiEmclTagProtocolGuid
+
+[LibraryClasses]
+    InterruptWaitLib

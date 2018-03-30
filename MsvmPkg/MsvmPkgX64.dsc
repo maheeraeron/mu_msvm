@@ -54,7 +54,6 @@
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
-  CrashDumpAgentLib|MdeModulePkg/Library/CrashDumpAgentLibNull/CrashDumpAgentLibNull.inf
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
 !else
@@ -82,6 +81,43 @@
   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
   UefiCpuLib|UefiCpuPkg/Library/BaseUefiCpuLib/BaseUefiCpuLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
+  #UefiResetSystemLib|MdeModulePkg/Library/BaseUefiResetSystemLibNull/BaseUefiResetSystemLibNull.inf ##MSChange
+  UefiResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+  UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
+  SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  TpmMeasurementLib|SecurityPkg/Library/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf
+  Tcg2PhysicalPresenceLib|SecurityPkg/Library/DxeTcg2PhysicalPresenceLib/DxeTcg2PhysicalPresenceLib.inf
+  #OemTpm2InitLib|MsCorePkg/Library/MsTpm2InitLib/MsTpm2InitLibNull.inf
+  OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
+  Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+  Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
+  Performance2Lib|MdePkg/Library/BasePerformance2LibNull/BasePerformance2LibNull.inf ## MS_CHANGE
+  SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
+  CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+
+  # MsCore BDS & FrontPage Libs
+  PlatformBootManagerLib|MsvmPkg/Library/MsPlatformBootManagerLib/MsPlatformBootManagerLib.inf
+  DeviceBootManagerLib|MsvmPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
+  MsDisplayOnScreenNotificationLib|MsvmPkg/Library/BaseDisplayOnScreenNotificationLibNull/BaseDisplayOnScreenNotificationLibNull.inf
+  MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
+  UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+  MsLogoLib|MsvmPkg/Library/MsLogoLib/MsLogoLib.inf #point to MsLogoLib
+  BmpSupportLib|MsCapsuleUpdatePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
+  IntSafeLib|MdePkg/Library/IntSafeLib/IntSafeLib.inf
+  MsPlatBdsLib|MsvmPkg/Library/MsPlatBdsLib/MsPlatBdsLib.inf
+
+  #
+  # MsGraphicsPkg Libs
+  #
+  UIToolKitLib|MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
+  MsBaseStringLib|MsGraphicsPkg/Library/MsBaseStringLib/MsBaseStringLib.inf
+  SecureMemoryLib|MsGraphicsPkg/Library/SecureMemoryLib/SecureMemoryLib.inf
+  MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
+  PlatformThemeLib|MsvmPkg/Library/PlatformThemeLib/PlatformThemeLib.inf
 
 #
 # Library instance overrides for SEC and PEI
@@ -107,6 +143,10 @@
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
   PcdLib|MdePkg/Library/PeiPcdLib/PeiPcdLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
+##MSChange Begin
+  ResetSystemCoreLib|MdeModulePkg/Library/ResetSystemCoreLib/PeiResetSystemCoreLib.inf
+  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/PeiResetHelperLib.inf
+##MSChange End
 
 #
 # Library instance overrides just for PEI CORE
@@ -120,6 +160,9 @@
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+
+  MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
 
 #
 # Library instance overrides for DXE
@@ -143,7 +186,6 @@
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   NetLib|MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
-  ResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
@@ -152,6 +194,8 @@
   UdpIoLib|MdeModulePkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
+  InterruptWaitLib|MsvmPkg/Library/InterruptWaitLib/InterruptWait.inf
+  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
 
 #
 # Library instances overrides for just DXE CORE
@@ -161,6 +205,20 @@
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
   PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
+##MSChange Begin
+!if $(TARGET) == DEBUG
+  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
+  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+!else
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
+!endif
+
+[LibraryClasses.common.DXE_DRIVER]
+  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
+  HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
+##MSChange End
+  Tcg2PhysicalPresencePromptLib|SecurityPkg/Library/Tcg2PhysicalPresencePromptLib/Tcg2PhysicalPresencePromptLibConsole.inf   ## MS_CHANGE
 
 #
 # Library instance overrides for all DXE Drivers
@@ -175,6 +233,20 @@
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/RuntimeCryptLib.inf
+  ResetSystemCoreLib|MdeModulePkg/Library/ResetSystemCoreLib/DxeRuntimeResetSystemCoreLib.inf
+  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
+
+[LibraryClasses.X64]
+!if $(TARGET) == DEBUG
+  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
+  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+!else
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
+!endif
+
+  MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
 
 [PcdsFixedAtBuild.common]
   # Synthetic Timer Config
@@ -277,6 +349,12 @@
   # Use 1GB page table entries in DXE page table when possible
   gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable|TRUE
 
+  # COM port used for pre-DXE debugging
+  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8
+
+   # Change PcdBootManagerMenuFile to point to the Surface FrontPage application
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x8A, 0x70, 0x42, 0x40, 0x2D, 0x0F, 0x23, 0x48, 0xAC, 0x60, 0x0D, 0x77, 0xB3, 0x11, 0x18, 0x89 }
+
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE
@@ -284,7 +362,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
 
 [PcdsDynamicDefault]
-  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0xFFFF
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
 
   # UEFI Config information from the Bios VDEV
   # UEFI_CONFIG_STRUCTURE_COUNT
@@ -412,6 +490,7 @@
   MdeModulePkg/Core/Pei/PeiMain.inf
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   MsvmPkg/PlatformPei/PlatformPei.inf
+  MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 
   #
   # DXE Phase modules
@@ -427,18 +506,12 @@
   MsvmPkg/CpuDxe/CpuDxe.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
-  IntelFrameworkModulePkg/Universal/BdsDxe/BdsDxe.inf {
+  MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+  #MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
+  MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
+  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
-      CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-      GenericBdsLib|IntelFrameworkModulePkg/Library/GenericBdsLib/GenericBdsLib.inf
-      HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
-      PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
-      PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
-      PlatformBdsLib|MsvmPkg/Library/PlatformBdsLib/PlatformBdsLib.inf
-      UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
-    <PcdsPatchableInModule>
-      gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|1024
-      gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|768
+      #DebugLib|MdeModulePkg/Library/PeiDxeDebugLibReportStatusCode/PeiDxeDebugLibReportStatusCode.inf
   }
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
   MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf {
@@ -451,6 +524,7 @@
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
   MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   FatPkg/EnhancedFatDxe/Fat.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
@@ -512,15 +586,25 @@
   # TPM related components
 
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
-  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
+
+  SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
     <LibraryClasses>
-      HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
+      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
   }
+
   SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
-      HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
+      # The below library was added as a WA MS_CHANGE_103691 in the security package and an inf is missing in the platformsamplepkg.
+      Tcg2PreUefiEventLogLib|SecurityPkg/Library/TempPreUefiEventLogLib/TempPreUefiEventLogLib.inf    ## MS_CHANGE_TEMP
+ !if $(SOURCE_DEBUG_ENABLE) == TRUE
+ !else
+      SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
+ !endif
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
+      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
   }
 
   !ifdef BUILD_HAVOC
@@ -534,3 +618,18 @@
   }
   !endif
 
+  # UI Theme Protocol
+  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
+
+  # Simple Window Manager (SWM) driver.
+  MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
+
+  # Surface Rendering Engine (SRE) driver.
+  MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
+
+  # On-Screen Keyboard (OSK) driver.
+  MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
+  #MsGraphicsPkg/OnScreenKeyboardDxe/UnitTests/Display/UT_OSKDisplay.inf
+
+  # Surface FrontPage application.
+  MsvmPkg/FrontPage/SurfaceFrontPage.inf

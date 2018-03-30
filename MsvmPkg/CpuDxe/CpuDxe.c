@@ -696,7 +696,7 @@ CpuWaitForAndEnableInterrupt (
   IN EFI_CPU2_PROTOCOL          *This
   )
 {
-  SleepAndEnable ();
+  EnableInterruptsAndSleep ();
 
   return EFI_SUCCESS;
 }

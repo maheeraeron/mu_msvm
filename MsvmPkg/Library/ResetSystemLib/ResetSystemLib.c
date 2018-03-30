@@ -18,6 +18,9 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <PowerManagementInterface.h>
+#include <Uefi/UefiBaseType.h>
+#include <Uefi/UefiMultiPhase.h>
+#include <Library/UefiResetSystemLib.h>
 
 VOID
 AcpiPmControl (
@@ -128,3 +131,42 @@ ResetPlatformSpecific (
   ResetCold ();
 }
 
+/**
+  This is the primary interface to this library.
+  All calls will be sorted from here.
+  The prototype is identical to EFI_RESET_SYSTEM.
+
+  @param[in]  ResetType         EFI_RESET_TYPE for the reset being requested.
+  @param[in]  ResetStatus
+  @param[in]  DataSize
+  @param[in]  ResetData
+
+**/
+VOID
+EFIAPI
+LibResetSystem (
+  IN EFI_RESET_TYPE   ResetType,
+  IN EFI_STATUS       ResetStatus,
+  IN UINTN            DataSize,
+  IN CHAR16           *ResetData OPTIONAL
+  )
+{
+  switch (ResetType) {
+  case EfiResetWarm:
+    ResetWarm ();
+    break;
+
+ case EfiResetCold:
+    ResetCold ();
+    break;
+
+  case EfiResetShutdown:
+    ResetShutdown ();
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+} // LibResetSystem()

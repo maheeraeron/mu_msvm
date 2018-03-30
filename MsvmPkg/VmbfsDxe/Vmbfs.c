@@ -129,9 +129,11 @@ Return Value:
     volatile PFILESYSTEM_INFORMATION fileSystemInformation;
     EFI_FILE_SYSTEM_INFO *efiFileSystemInfo;
     EFI_STATUS status;
-    VMBFS_MESSAGE_VERSION_REQUEST VersionRequestMessage = {0};
+    VMBFS_MESSAGE_VERSION_REQUEST VersionRequestMessage;
     PVMBFS_MESSAGE_VERSION_RESPONSE VersionResponseMessage;
     BOOLEAN ChannelOpened = FALSE;
+
+    ZeroMem(&VersionRequestMessage, sizeof(VMBFS_MESSAGE_VERSION_REQUEST));
 
     fileSystemInformation = GetThisFileSystemInformation(This);
     efiFileSystemInfo = GetThisEfiFileSystemInfo(This);

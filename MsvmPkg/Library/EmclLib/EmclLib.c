@@ -31,6 +31,8 @@ Author:
 
 #include <Library/EmclLib.h>
 
+#include <Library/InterruptWaitLib.h>
+
 typedef struct _EMCL_LIB_COMPLETION_CONTEXT
 {
     EFI_EVENT Event;
@@ -232,7 +234,9 @@ Return Value:
 {
     EFI_STATUS status;
     UINTN signaledEventIndex;
-    EMCL_LIB_COMPLETION_CONTEXT context = {0};
+    EMCL_LIB_COMPLETION_CONTEXT context;
+
+    ZeroMem(&context, sizeof(EMCL_LIB_COMPLETION_CONTEXT));
 
     status = gBS->CreateEvent(
         0,
@@ -263,7 +267,8 @@ Return Value:
         goto Cleanup;
     }
 
-    gBS->WaitForEvent(1, &context.Event, &signaledEventIndex);
+    //gBS->WaitForEvent(1, &context.Event, &signaledEventIndex);
+    WaitForInterrupt(1, &context.Event, &signaledEventIndex);
 
     if (context.Packet == NULL)
     {

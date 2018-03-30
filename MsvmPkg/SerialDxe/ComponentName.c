@@ -22,6 +22,8 @@ Author:
 
 #include "Serial.h"
 
+extern EFI_GUID gMsvmSerialBusProtocolGuid;
+
 //
 // EFI Component Name Protocol.
 //
