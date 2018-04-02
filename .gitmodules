@@ -1,4 +1,4 @@
 [submodule "SM_UDK"]
-	path = SM_UDK
-	url = https://microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE
-	branch = personal/suagga/latest
+    path = SM_UDK
+    url = https://microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE
+    branch = personal/suagga/latest
