@@ -1,165 +1,41 @@
 ﻿##
-## Script to Build nt32 emulator UEFI firmware
+## Script to Build Hyper-V UEFI firmware
 ##
 ##
-## Copyright Microsoft Corporation, 2017
+## Copyright Microsoft Corporation, 2018
 ##
 import os, sys
-import stat
-from optparse import OptionParser
-import logging
-import subprocess
-import shutil
-import struct
-from datetime import datetime
-from datetime import date
-import time
 
-#get script path
-sp = os.path.dirname(os.path.realpath(sys.argv[0]))
-
-#get workspace path
-ws = os.path.dirname(sp) #UEFI workspace will be parent
-pp = os.path.join(ws, "SM_UDK")
-pp += ";" + os.path.join(ws, "MsvmPkg")
-
-#setup python path for build modules
-sys.path.append(os.path.join(ws,  "SM_UDK", "MsBaseTools", "PythonTools", "Build"))
-
-from UefiBuild import UefiBuilder
-
-
-
-#--------------------------------------------------------------------------------------------------------
-# Subclass the UEFI builder and add platform specific functionality.
 #
-class PlatformBuilder(UefiBuilder):
-    def __init__(self, workspace, packagespath, args):
+#==========================================================================
+# PLATFORM BUILD ENVIRONMENT CONFIGURATION
+#
+SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+WORKSPACE_PATH = os.path.dirname(SCRIPT_PATH)
+REQUIRED_REPOS = ('SM_UDK', "SM_UDK_INTERNAL")
+PROJECT_SCOPE = ('hyperv',)
 
-
-        UefiBuilder.__init__(self, workspace, packagespath, args)
-
-    def SetPlatformEnv(self):
-        logging.debug("PlatformBuilder SetPlatformEnv")
-
-        self.env.SetValue("ACTIVE_PLATFORM", "MsvmPkg/MsvmPkgX64.dsc", "Platform Hardcoded")
-        self.env.SetValue("PRODUCT_NAME", "Hyper-V", "Platform Hardcoded")
-        self.env.SetValue("TARGET_ARCH", "X64", "Platform Hardcoded")
-        self.env.SetValue("ARCH", "X64", "Platform hardcoded")
-        self.env.SetValue("BLD_*_BUILD_UNIT_TESTS", "FALSE", "Unit Test build off by default")
-        self.env.SetValue("BLD_*_BUILD_APPS", "FALSE", "App Build off by default")
-        self.env.SetValue("BLD_*_SECURE_BOOT_ENABLE", "TRUE", "Support Secure Boot")
-
-        #self.env.SetValue("BLD_*_BUILDID", "72932128", "hardcoded for easy build file")
-        #self.env.SetValue("BLD_*_BUILDID_STRING", "17.1590.800", "hardcoded for easy build file")
-
-        self.env.SetValue("LaunchBuildLogProgram", "Notepad", "default - will fail if already set", True)
-        self.env.SetValue("LaunchLogOnSuccess", "True", "default - will fail if already set", True)
-        self.env.SetValue("LaunchLogOnError", "True", "default - will fail if already set", False)
-
-        return 0
-
-    def SetPlatformEnvAfterTarget(self):
-        logging.debug("PlatformBuilder SetPlatformEnvAfterTarget")
-        return 0
-
-    def PlatformPostBuild(self):
-        return 0
-
-
-    #------------------------------------------------------------------
-    #
-    # Method to do stuff pre build.  
-    # This is part of the build flow.  
-    # Currently do nothing.  
-    #
-    #------------------------------------------------------------------
-    def PlatformPreBuild(self):
-        return 0
-
-    # 
-    # Main Build class supports a few methods of flashing but leaves 
-    # one option to Platform when FLASH_METHOD = platform. 
-    #
-    # For this platform we don't need custom method
-    #
-    def PlatformFlashImage(self):
-        p = os.path.join(self.env.GetValue("DEBUG_BUILD_OUTPUT_BASE"), self.env.GetValue("ARCH"))
-        cmd = os.path.join(p,"secmain.exe")
-        ret = self.RunCmd(cmd, workingdir=p)
-        return ret
-
-
-#END OF CLASS
-
+MODULE_PKGS = ('SM_UDK', "SM_UDK_INTERNAL", "MsvmPkg")
+MODULE_PKG_PATHS = ";".join(os.path.join(WORKSPACE_PATH, pkg_name) for pkg_name in MODULE_PKGS)
+#
+#==========================================================================
+#
     
-#--------------------------------------------------------------------------------------------------------
-#
-# main script function.  Setup logging and init the platform builder and go
-#
+# Smallest 'main' possible. Please don't add unnecessary code.
 if __name__ == '__main__':
-    
-    #setup main console as logger
-    logger = logging.getLogger('')
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(levelname)s - %(message)s")
-    console = logging.StreamHandler()
+  # Do a quick check to see whether we're trying to setup.
+  if "--SETUP" in (arg.upper() for arg in sys.argv):
+    sys.path.append(WORKSPACE_PATH)
+    import bootstrap_repo
+    bootstrap_repo.bootstrap()
 
-    #Setup the main console logger differently if VSMODE is on.  
-    # This allows more debug messages out
-    # 
+  # If we're not trying to setup, we should assume that we have
+  # the correct prerequisites and are good to go.
+  try:
+    sys.path.append(os.path.join(WORKSPACE_PATH, 'SM_UDK', 'UefiBuild'))
+    import CommonBuildEntry
+  except ImportError:
+    raise RuntimeError("Environment is not in a state to build! Please run '--SETUP'.")
 
-    levelset = False
-    for a in sys.argv:
-        if (a == "--VSMODE"):
-            console.setLevel(logging.DEBUG)
-            console.setFormatter(logging.Formatter("%(message)s"))
-            levelset = True
-            sys.argv.remove(a)
-
-    if(not levelset):
-        console.setLevel(logging.CRITICAL)
-        console.setFormatter(formatter)
-    logger.addHandler(console)
-    logfile = os.path.join(ws, "Build", "BUILDLOG.TXT")
-    if(not os.path.isdir(os.path.dirname(logfile))):
-        os.makedirs(os.path.dirname(logfile))
-
-    filelogger = logging.FileHandler(filename=(logfile), mode='w')
-    filelogger.setLevel(logging.DEBUG)
-    filelogger.setFormatter(formatter)
-    logging.getLogger('').addHandler(filelogger)
-    logging.info("Log Started: " + datetime.strftime(datetime.now(), "%A, %B %d, %Y %I:%M%p" ))
-    logging.info("Running Python version: " + str(sys.version_info))
-    PB = PlatformBuilder(ws, pp, sys.argv)
-    retcode = PB.Go()
-
-    if(retcode != 0):
-        logging.critical("Error")
-        logging.critical("Log file at " + logfile)
-    else:
-        logging.critical("Success")
-
-    #get all vars needed as we can't do any logging after shutdown otherwise our log is cleared.  
-    #Log viewer
-    ep = PB.env.GetValue("LaunchBuildLogProgram")
-    LogOnSuccess = PB.env.GetValue("LaunchLogOnSuccess")
-    LogOnError = PB.env.GetValue("LaunchLogOnError")
-    
-    #end logging
-    logging.shutdown()
-    #no more logging
-
-    if(ep != None):
-        cmd = ep + " " + logfile
-
-    #
-    # Conditionally launch the shell to show build log
-    #
-    #
-    if( ((retcode != 0) and (LogOnError.upper() == "TRUE")) or (LogOnSuccess.upper() == "TRUE")):
-        subprocess.Popen(cmd, shell=True)
-        
-    sys.exit(retcode)
-
- 
+  # Now that we have access to the entry, hand off to the common code.
+  CommonBuildEntry.build_entry(SCRIPT_PATH, WORKSPACE_PATH, REQUIRED_REPOS, PROJECT_SCOPE, MODULE_PKGS, MODULE_PKG_PATHS)
