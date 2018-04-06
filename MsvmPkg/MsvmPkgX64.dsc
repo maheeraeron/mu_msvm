@@ -194,7 +194,6 @@
   UdpIoLib|MdeModulePkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
-  InterruptWaitLib|MsvmPkg/Library/InterruptWaitLib/InterruptWait.inf
   ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
 
 #

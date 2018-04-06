@@ -22,7 +22,6 @@ Author:
 #include <Industrystandard/Scsi.h>
 #include "StorportDxe.h"
 
-#include <Library/InterruptWaitLib.h>
 
 typedef struct _STOR_CHANNEL_PROTOCOL_VERSION
 {
@@ -630,8 +629,7 @@ Return Value:
         goto Cleanup;
     }
 
-    //gBS->WaitForEvent(1, &event, &signaledEventIndex);
-   WaitForInterrupt(1, &event, &signaledEventIndex);
+    gBS->WaitForEvent(1, &event, &signaledEventIndex);
 
 Cleanup:
     if (event != NULL)

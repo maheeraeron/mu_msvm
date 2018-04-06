@@ -65,7 +65,6 @@
   EmclLib
   SerialPortLib
   PrintLib
-  InterruptWaitLib
 
 [Guids]
   gEfiEventExitBootServicesGuid                 # CONSUMES

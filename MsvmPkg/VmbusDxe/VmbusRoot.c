@@ -30,8 +30,6 @@ Author:
 #include <Library/MemoryAllocationLib.h>
 #include <Library/SynchronizationLib.h>
 
-#include <Library/InterruptWaitLib.h>
-
 typedef struct _VMBUS_HOT_MESSAGE
 {
     LIST_ENTRY Link;
@@ -533,8 +531,7 @@ Return Value:
 
     if (!PollForMessage)
     {
-        //gBS->WaitForEvent(1, &RootContext->WaitForMessage, &index);
-        WaitForInterrupt(1, &RootContext->WaitForMessage, &index);
+        gBS->WaitForEvent(1, &RootContext->WaitForMessage, &index);
     }
 
     hvMessage = NULL;
@@ -585,8 +582,7 @@ Return Value:
 
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
 
-    //status = gBS->WaitForEvent(1, &ChannelContext->Response.Event, &index);
-    status = WaitForInterrupt(1, &ChannelContext->Response.Event, &index);
+    status = gBS->WaitForEvent(1, &ChannelContext->Response.Event, &index);
 
     ASSERT_EFI_ERROR(status);
 
@@ -637,10 +633,7 @@ Return Value:
         return EFI_INVALID_PARAMETER;
     }
 
-    //status = gBS->WaitForEvent(1,
-    //                           &RootContext->GpadlTable[GpadlHandle].Event,
-    //                           &index);
-    status = WaitForInterrupt(1,
+    status = gBS->WaitForEvent(1,
                                &RootContext->GpadlTable[GpadlHandle].Event,
                                &index);
 
