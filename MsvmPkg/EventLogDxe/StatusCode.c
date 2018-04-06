@@ -178,7 +178,7 @@ Return Value:
         BootDeviceEventUpdate(BootDeviceReturnedFailure, EFI_NOT_STARTED);
         DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceReturnedFailure, EFI_NOT_STARTED\n"));
     }
-    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_PROGRESS_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED))
+    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_PROGRESS_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_PC_BOOT_OPTION_COMPLETE))
     {
         BootDeviceEventComplete();
         DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
