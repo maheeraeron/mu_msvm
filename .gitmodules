@@ -1,8 +1,8 @@
 [submodule "SM_UDK"]
     path = SM_UDK
     url = https://microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE
-    branch = personal/suagga/latest
+    branch = personal/suagga/newbuildcore
 [submodule "SM_UDK_INTERNAL"]
     path = SM_UDK_INTERNAL
     url = https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal
-    branch = master
+    branch = personal/suagga/msaslpublish
