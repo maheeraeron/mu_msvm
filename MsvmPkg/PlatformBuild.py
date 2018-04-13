@@ -15,7 +15,7 @@ WORKSPACE_PATH = os.path.dirname(SCRIPT_PATH)
 REQUIRED_REPOS = ('SM_UDK', "SM_UDK_INTERNAL")
 PROJECT_SCOPE = ('hyperv',)
 
-MODULE_PKGS = ('SM_UDK', "SM_UDK_INTERNAL", "MsvmPkg")
+MODULE_PKGS = ('SM_UDK', "SM_UDK_INTERNAL")
 MODULE_PKG_PATHS = ";".join(os.path.join(WORKSPACE_PATH, pkg_name) for pkg_name in MODULE_PKGS)
 #
 #==========================================================================

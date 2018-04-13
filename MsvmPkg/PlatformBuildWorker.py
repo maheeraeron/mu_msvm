@@ -29,6 +29,7 @@ class PlatformBuilder(UefiBuilder):
     def SetPlatformEnv(self):
         logging.debug("PlatformBuilder SetPlatformEnv")
 
+        self.env.SetValue("CONF_TEMPLATE_DIR", "MsvmPkg", "Conf template directory hardcoded - temporary and would go away")
         self.env.SetValue("ACTIVE_PLATFORM", "MsvmPkg/MsvmPkgX64.dsc", "Platform Hardcoded")
         self.env.SetValue("PRODUCT_NAME", "Hyper-V", "Platform Hardcoded")
         self.env.SetValue("TARGET_ARCH", "X64", "Platform Hardcoded")
