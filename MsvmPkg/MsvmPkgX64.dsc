@@ -93,7 +93,7 @@
   #OemTpm2InitLib|MsCorePkg/Library/MsTpm2InitLib/MsTpm2InitLibNull.inf
   OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
   Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+  #RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
   Performance2Lib|MdePkg/Library/BasePerformance2LibNull/BasePerformance2LibNull.inf ## MS_CHANGE
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
@@ -205,13 +205,7 @@
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
   PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
 ##MSChange Begin
-!if $(TARGET) == DEBUG
-  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
-  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-!else
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
-!endif
 
 [LibraryClasses.common.DXE_DRIVER]
   ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
@@ -237,14 +231,7 @@
   ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
 
 [LibraryClasses.X64]
-!if $(TARGET) == DEBUG
-  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
-  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-!else
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
-!endif
-
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
 
 [PcdsFixedAtBuild.common]
