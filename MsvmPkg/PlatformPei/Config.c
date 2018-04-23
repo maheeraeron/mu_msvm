@@ -14,6 +14,7 @@ Abstract:
 
 #include <PiPei.h>
 #include <EfiNt.h>
+#include <Platform.h>
 #include <BiosInterface.h>
 #include <IndustryStandard/Acpi.h>
 #if defined(MDE_CPU_AARCH64)
@@ -265,9 +266,12 @@ Return Value:
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
     //
     // On X64, the config blob starts after the end of the firmware, and after
-    // the 6 pages for pagetables, and 1 page for GDT entries.
+    // some misc. pages (including space for the pagetables and GDT entries).
     //
-    UINT64 configBlobBase = PcdGet64(PcdFdBaseAddress) + PcdGet32(PcdFdSize) + SIZE_4KB * 7;
+    UINT64 configBlobBase =
+        PcdGet64(PcdFdBaseAddress) +
+        PcdGet32(PcdFdSize) +
+        SIZE_4KB * MISC_PAGE_COUNT_TOTAL;
 #elif defined(MDE_CPU_AARCH64)
     //
     // On AARCH64, the config blob starts after the end of the firmware, and

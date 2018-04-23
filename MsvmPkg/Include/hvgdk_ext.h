@@ -243,6 +243,9 @@ typedef enum _HV_EXT_SCHEDULER_ASSIST_ACTION
 // TargetVpIndex
 // SchedulerAssistAction
 // DoNotPreempt
+// SpinLockCount
+// HrTimerActive
+// LowPriorityOverride
 //
 // Fields written by the root and read by the guest:
 // RootPriority
@@ -260,9 +263,12 @@ typedef struct _HV_EXT_SCHEDULER_ASSIST_DATA
     UINT32 BamQosLevel;
     UINT32 TargetVpIndex;
     UINT32 SchedulerAssistAction;
+    UINT32 SpinLockCount;
     UINT8 DoNotPreempt;
     UINT8 SystemWork;
     UINT8 RootInReadyQueue;
+    UINT8 HrTimerActive;
+    UINT8 LowPriorityOverride;
 
 } HV_EXT_SCHEDULER_ASSIST_DATA, *PHV_EXT_SCHEDULER_ASSIST_DATA;
 

@@ -145,12 +145,14 @@ typedef enum _HV_CPU_COUNTER
     StLpCounterReferenceCycleCount1 = 30,
     StLpCounterActualCycleCount1 = 31,
     StLpCounterProximityDomainId = 32,
+    StLpCounterPostedInterruptNotifications = 33,
+    StLpCounterBranchPredictorFlushes = 34,
 
     StLpCounterMAXIMUM
 
 } HV_CPU_COUNTER;
 
-#define HV_STATISTICS_GROUP_LPA_LENGTH 256
+#define HV_STATISTICS_GROUP_LPA_LENGTH 272
 #define HV_STATISTICS_GROUP_LPV_LENGTH 0
 
 //
@@ -362,12 +364,14 @@ typedef enum _HV_THREAD_COUNTER
     StVpCounterNestedTlbPageTableEvictions = 141,
     StVpCounterFlushGuestPhysicalAddressSpaceHypercalls = 142,
     StVpCounterFlushGuestPhysicalAddressListHypercalls = 143,
+    StVpCounterPostedInterruptNotifications = 144,
+    StVpCounterPostedInterruptScans = 145,
     StVpCounterMAXIMUM
 
 } HV_THREAD_COUNTER;
 
 #define HV_STATISTICS_GROUP_VPA_LENGTH 32
-#define HV_STATISTICS_GROUP_VPV_LENGTH 1104
+#define HV_STATISTICS_GROUP_VPV_LENGTH 1120
 
 //
 // Hypervisor Hypercall-Based Virtual Processor counter set
@@ -515,6 +519,7 @@ typedef union _HV_ST_MAP_LOCATION
 // Declare the timestamp type.
 //
 typedef UINT64 HV_TIME_STAMP, *PHV_TIME_STAMP;
+
 
 //
 // Define profile sources.
@@ -1619,12 +1624,11 @@ typedef enum _HV_SAVE_RESTORE_STATE_RESULT
 {
     HvStateComplete                                    = 0,
     HvStateIncomplete                                  = 1,
-    HvStateInsufficientMemory                          = 2,
-    HvStateCorruptData                                 = 3,
-    HvStateUnsupportedVersion                          = 4,
-    HvStateProcessorFeatureMismatch                    = 5,
-    HvStateIncompatibleProcessor                       = 6,
-    HvStateProcessorCacheLineFlushSizeMismatch         = 7,
+    HvStateCorruptData                                 = 2,
+    HvStateUnsupportedVersion                          = 3,
+    HvStateProcessorFeatureMismatch                    = 4,
+    HvStateIncompatibleProcessor                       = 5,
+    HvStateProcessorCacheLineFlushSizeMismatch         = 6,
 
 } HV_SAVE_RESTORE_STATE_RESULT, *PHV_SAVE_RESTORE_STATE_RESULT;
 
@@ -1658,10 +1662,10 @@ typedef union _HV_PARTITION_PROCESSOR_FEATURES
 
     struct
     {
-        UINT64 Haf:1;                       // Hardware updates to Access flag.             
-        UINT64 Hdbs:1;                      // Hardware updates to Dirty state.             
+        UINT64 Haf:1;                       // Hardware updates to Access flag.
+        UINT64 Hdbs:1;                      // Hardware updates to Dirty state.
         UINT64 Pan:1;                       // Privileged access never.
-        UINT64 AtS1E1:1;                    // AT S1E1RP and AT S1E1WP supported.    
+        UINT64 AtS1E1:1;                    // AT S1E1RP and AT S1E1WP supported.
     };
 
 #else
@@ -1715,7 +1719,8 @@ typedef union _HV_PARTITION_PROCESSOR_FEATURES
         UINT64 IbrsSupport:1;
         UINT64 StibpSupport:1;
         UINT64 IbpbSupport: 1;
-        UINT64 Reserved:17;
+        UINT64 UnrestrictedGuestSupport:1;
+        UINT64 Reserved:16;
     };
 
 #endif
@@ -1777,6 +1782,7 @@ typedef union _HV_PARTITION_PROCESSOR_FEATURES
 #define HV_X64_PROCESSOR_FEATURE_IBRS                   (1UI64 << 44)
 #define HV_X64_PROCESSOR_FEATURE_STIBP                  (1UI64 << 45)
 #define HV_X64_PROCESSOR_FEATURE_IBPB                   (1UI64 << 46)
+#define HV_X64_PROCESSOR_FEATURE_UNRESTRICTED_GUEST     (1UI64 << 47)
 
 
 //
@@ -1792,7 +1798,6 @@ typedef union _HV_PARTITION_PROCESSOR_FEATURES
     | HV_X64_PROCESSOR_FEATURE_LAHF_SAHF                \
     | HV_X64_PROCESSOR_FEATURE_CMPXCHG16B               \
     | HV_X64_PROCESSOR_FEATURE_IBRS                     \
-    | HV_X64_PROCESSOR_FEATURE_STIBP                    \
     | HV_X64_PROCESSOR_FEATURE_IBPB                     \
     )
 
@@ -1804,6 +1809,7 @@ typedef union _HV_PARTITION_PROCESSOR_FEATURES
     | HV_X64_PROCESSOR_FEATURE_ALTMOVCR8                \
     | HV_X64_PROCESSOR_FEATURE_MMX_EXT                  \
     | HV_X64_PROCESSOR_FEATURE_NPIEP1                   \
+    | HV_X64_PROCESSOR_FEATURE_IBPB                     \
     )
 
 
@@ -1908,6 +1914,13 @@ typedef union _HV_PARTITION_PROCESSOR_XSAVE_FEATURES
     )
 
 //
+// Mask for processor XSAVE features supported in Redstone 5 VMs.
+//
+#define HV_PARTITION_PROCESSOR_XSAVE_FEATURES_MASK_REDSTONE_5 \
+    ( HV_PARTITION_PROCESSOR_XSAVE_FEATURES_MASK_REDSTONE_4 \
+    )
+
+//
 // Mask for processor XSAVE features supported in Prerelease VMs.
 //
 #define HV_PARTITION_PROCESSOR_XSAVE_FEATURES_MASK_PRERELEASE \
@@ -1974,10 +1987,16 @@ typedef union _HV_PARTITION_PROCESSOR_XSAVE_FEATURES
     ( HV_COMPATIBILITY_VSM_CAPABILITIES_MASK_REDSTONE_2 )
 
 //
-// Mask of VSM capabilities supported in RS3 VMs.
+// Mask of VSM capabilities supported in RS4 VMs.
 //
 #define HV_COMPATIBILITY_VSM_CAPABILITIES_MASK_REDSTONE_4   \
     ( HV_COMPATIBILITY_VSM_CAPABILITIES_MASK_REDSTONE_3 )
+
+//
+// Mask of VSM capabilities supported in RS5 VMs.
+//
+#define HV_COMPATIBILITY_VSM_CAPABILITIES_MASK_REDSTONE_5   \
+    ( HV_COMPATIBILITY_VSM_CAPABILITIES_MASK_REDSTONE_4 )
 
 //
 // Mask of VSM capabilities supported in Prerelease VMs.
@@ -2012,6 +2031,7 @@ typedef enum _HV_COMPATIBILITY_VERSION
     HvCompatibilityVersionRedstone2            = HV_MAKE_COMPATIBILITY_VERSION(0x6, 0x1),
     HvCompatibilityVersionRedstone3            = HV_MAKE_COMPATIBILITY_VERSION(0x6, 0x2),
     HvCompatibilityVersionRedstone4            = HV_MAKE_COMPATIBILITY_VERSION(0x6, 0x3),
+    HvCompatibilityVersionRedstone5            = HV_MAKE_COMPATIBILITY_VERSION(0x6, 0x4),
     HvCompatibilityVersionPrerelease           = HV_MAKE_COMPATIBILITY_VERSION(0xFE, 0x0),
     HvCompatibilityVersionExperiment           = HV_MAKE_COMPATIBILITY_VERSION(0xFF, 0x0),
 } HV_COMPATIBILITY_VERSION, *PHV_COMPATIBILITY_VERSION;
@@ -2021,7 +2041,7 @@ typedef enum _HV_COMPATIBILITY_VERSION
 // in the HV.
 //
 #define HV_COMPATIBILITY_VERSION_MIN                    HvCompatibilityVersionWinBlue
-#define HV_COMPATIBILITY_VERSION_CURRENT                HvCompatibilityVersionRedstone3
+#define HV_COMPATIBILITY_VERSION_CURRENT                HvCompatibilityVersionRedstone4
 #define HV_COMPATIBILITY_VERSION_MAX                    HvCompatibilityVersionExperiment
 
 #define HV_COMPATIBILITY_PRIVILEGE_MASK_WINBLUE \
@@ -2106,6 +2126,13 @@ typedef enum _HV_COMPATIBILITY_VERSION
     ( HV_COMPATIBILITY_PRIVILEGE_MASK_REDSTONE_3 )
 
 //
+// Redstone 5 mask.
+//
+
+#define HV_COMPATIBILITY_PRIVILEGE_MASK_REDSTONE_5 \
+    ( HV_COMPATIBILITY_PRIVILEGE_MASK_REDSTONE_4 )
+
+//
 // Prerelease mask.
 //
 
@@ -2118,7 +2145,8 @@ typedef enum _HV_COMPATIBILITY_VERSION
 //
 
 #define HV_COMPATIBILITY_PRIVILEGE_MASK_EXPERIMENT \
-    ( HV_COMPATIBILITY_PRIVILEGE_MASK_PRERELEASE )
+    ( HV_COMPATIBILITY_PRIVILEGE_MASK_PRERELEASE \
+    | HV_PARTITION_PRIVILEGE_ISOLATION)
 
 //
 // Define the nested virtualization features that may be exposed to a
@@ -2191,11 +2219,42 @@ typedef union _HV_PARTITION_PAGE_ACCESS_TRACKING_CONFIG
 
 #endif
 
+//
+// Definition of the partition isolation state. Used for
+// HvPartitionPropertyIsolationState.
+//
+
+typedef enum _HV_PARTITION_ISOLATION_STATE
+{
+    HvPartitionIsolationInvalid         = 0,
+    HvPartitionIsolationInsecureClean   = 1,
+    HvPartitionIsolationInsecureDirty   = 2,
+    HvPartitionIsolationSecure          = 3,
+} HV_PARTITION_ISOLATION_STATE, *PHV_PARTITION_ISOLATION_STATE;
+
+//
+// Definition of the partition isolation control structure. Used for
+// HvPartitionPropertyIsolationControl.
+//
+
+typedef union _HV_PARTITION_ISOLATION_CONTROL
+{
+    UINT64 AsUINT64;
+
+    struct
+    {
+        UINT64 Runnable : 1;
+
+        UINT64 ReservedZ : 63;
+    };
+
+} HV_PARTITION_ISOLATION_CONTROL, *PHV_PARTITION_ISOLATION_CONTROL;
+
 
 //
 // Declare the VP run time MSR.
 //
-#define HV_X64_MSR_VP_RUNTIME   0x40000010
+#define HV_X64_MSR_VP_RUNTIME   (HvSyntheticMsrVpRuntime)
 
 #define HV_CPUID_HV_VENDOR_MICROSOFT_EBX 'rciM'
 #define HV_CPUID_HV_VENDOR_MICROSOFT_ECX 'foso'
@@ -2222,7 +2281,7 @@ typedef union _HV_X64_MSR_SYNMC_STATUS_CONTENTS
                 UINT16 SoftwareError    : 1;
             };
         };
-    
+
         struct
         {
             UINT32 Reserved             : 23;
@@ -2231,7 +2290,7 @@ typedef union _HV_X64_MSR_SYNMC_STATUS_CONTENTS
             UINT32 ContextCorrupt       : 1;  // Hypervisor/virt stack context corrupt
             UINT32 AddressValid         : 1;
             UINT32 MiscValid            : 1;
-            UINT32 ErrorEnabled         : 1;        
+            UINT32 ErrorEnabled         : 1;
             UINT32 Uncorrected          : 1;  // Uncorrected error
             UINT32 Overflow             : 1;  // Error overflow
             UINT32 Valid                : 1;  // Register valid
@@ -2301,6 +2360,8 @@ typedef enum _HV_TRANSLATE_GVA_RESULT_CODE
     // - a nested hypervisor (due to a violation of the nested page table)
     //
     HvTranslateGvaIntercept               = 8,
+
+    HvTranslateGvaGpaUnaccepted           = 9,
 
 } HV_TRANSLATE_GVA_RESULT_CODE, *PHV_TRANSLATE_GVA_RESULT_CODE;
 
@@ -2417,6 +2478,335 @@ typedef enum _HV_CACHE_TYPE
     ((HV_PAGE_SIZE - sizeof(HV_INPUT_MODIFY_VTL_PROTECTION_MASK)) / \
      sizeof(HV_GPA_PAGE_NUMBER))
 
+//
+// Definitions for the HvCallQueryVtlProtectionMaskRange hypercall.
+//
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_QUERY_VTL_PROTECTION_MASK_RANGE
+{
+    //
+    // Supplies the partition ID of the partition this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Supplies the base guest physical page number for the query.
+    //
+
+    HV_GPA_PAGE_NUMBER TargetGpaBase;
+
+    //
+    // Supplies the target set of VTLs for the query.
+    //
+
+    UINT16 TargetVtlSet;
+
+    UINT16 Reserved0;
+    UINT32 Reserved1;
+
+} HV_INPUT_QUERY_VTL_PROTECTION_MASK_RANGE, *PHV_INPUT_QUERY_VTL_PROTECTION_MASK_RANGE;
+
+//
+// Definitions for the HvCallModifyVtlProtectionMaskRange hypercall.
+//
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MODIFY_VTL_PROTECTION_MASK_RANGE
+{
+    //
+    // Supplies the partition ID of the partition this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Supplies the base guest physical page number for the modifications.
+    //
+
+    HV_GPA_PAGE_NUMBER TargetGpaBase;
+
+    //
+    // Supplies the target set of VTLs for the modifications.
+    //
+
+    UINT16 TargetVtlSet;
+
+    UINT16 Reserved0;
+    UINT32 Reserved1;
+
+    //
+    // Supplies an array of VTL permissions to set.
+    //
+
+    HV_CALL_ATTRIBUTES HV_VTL_PERMISSION_SET VtlPermissionList[];
+
+} HV_INPUT_MODIFY_VTL_PROTECTION_MASK_RANGE, *PHV_INPUT_MODIFY_VTL_PROTECTION_MASK_RANGE;
+
+//
+// Definitions for the HvCallAcquireSparseGpaPageHostAccess and HvCallReleaseSparseGpaPageHostAccess
+// hypercalls.
+//
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_ACCESS
+{
+    //
+    // Supplies the partition ID of the partition this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Supplies the new host access mask.
+    //
+
+    UINT32 HostAccess : 2;
+
+    UINT32 Reserved0 : 30;
+    UINT32 Reserved1;
+
+    //
+    // Supplies an array of GPA page numbers to modify.
+    //
+
+    HV_CALL_ATTRIBUTES HV_GPA_PAGE_NUMBER GpaPageList[];
+
+} HV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_ACCESS, *PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_ACCESS;
+
+//
+// Definitions for the HvCallAcquireSparseSpaPageHostAccess and HvCallReleaseSparseSpaPageHostAccess
+// hypercalls.
+//
+
+typedef UINT32 HV_MODIFY_SPA_PAGE_HOST_ACCESS_FLAGS, *PHV_MODIFY_SPA_PAGE_HOST_ACCESS_FLAGS;
+
+#define HV_MODIFY_SPA_PAGE_HOST_ACCESS_MAKE_EXCLUSIVE   0x1
+#define HV_MODIFY_SPA_PAGE_HOST_ACCESS_MAKE_SHARED      0x2
+
+#define HV_MODIFY_SPA_PAGE_HOST_ACCESS_FLAGS_MASK       \
+    ( HV_MODIFY_SPA_PAGE_HOST_ACCESS_MAKE_EXCLUSIVE     \
+    | HV_MODIFY_SPA_PAGE_HOST_ACCESS_MAKE_SHARED        \
+    )
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MODIFY_SPARSE_SPA_PAGE_HOST_ACCESS
+{
+    //
+    // Supplies the new host access mask.
+    //
+
+    UINT32 HostAccess : 2;
+
+    UINT32 Reserved : 30;
+
+    //
+    // Various flags.
+    //
+
+    HV_MODIFY_SPA_PAGE_HOST_ACCESS_FLAGS Flags;
+
+    //
+    // Supplies an array of SPA page numbers to modify.
+    //
+
+    HV_CALL_ATTRIBUTES HV_SPA_PAGE_NUMBER SpaPageList[];
+
+} HV_INPUT_MODIFY_SPARSE_SPA_PAGE_HOST_ACCESS, *PHV_INPUT_MODIFY_SPARSE_SPA_PAGE_HOST_ACCESS;
+
+//
+// Maximum number of pages that can be specified in a single HvCallAcquireSparseSpaPageHostAccess or
+// HvCallReleaseSparseSpaPageHostAccess hypercall.
+//
+#define HV_MODIFY_SPARSE_SPA_PAGE_HOST_ACCESS_MAX_PAGE_COUNT \
+    ((HV_PAGE_SIZE - sizeof(HV_INPUT_MODIFY_SPARSE_SPA_PAGE_HOST_ACCESS)) / \
+     sizeof(HV_SPA_PAGE_NUMBER))
+
+//
+// Definitions for the HvCallLockSparseGpaPageMapping and HvCallUnlockSparseGpaPageMapping
+// hypercalls.
+//
+
+#define HV_GPA_PAGE_ACCEPTANCE_UNACCEPTED HV_MAP_GPA_WRITABLE
+
+typedef enum _HV_SPA_PAGE_OWNERSHIP
+{
+    HvSpaPageOwnershipShared = 0,
+    HvSpaPageOwnershipExclusive = 1,
+
+} HV_SPA_PAGE_OWNERSHIP, *PHV_SPA_PAGE_OWNERSHIP;
+
+typedef struct _HV_GPA_PAGE_MAPPING_DATA
+{
+    //
+    // Specifies the host visibility (exclusive, shared read-only, shared read-write) if the page is
+    // accepted, or HV_GPA_PAGE_ACCEPTANCE_UNACCEPTED if the page is unaccepted.
+    //
+
+    UINT64 Acceptance : 2;
+
+    //
+    // Specifies the VTL 1 permission mask.
+    //
+
+    UINT64 Vtl1Permission : 5;
+
+    //
+    // Specifies the VTL 2 permission mask.
+    //
+
+    UINT64 Vtl2Permission : 5;
+
+    //
+    // Specifies the dirty bit.
+    //
+
+    UINT64 Dirty : 1;
+
+} HV_GPA_PAGE_MAPPING_DATA, *PHV_GPA_PAGE_MAPPING_DATA;
+
+typedef union _HV_GPA_PAGE_MAPPING_LOCK_INPUT
+{
+    UINT64 AsUINT64;
+
+    struct
+    {
+        UINT64 Reserved0 : 13;
+
+        //
+        // Specifies the GPA page to lock.
+        //
+
+        UINT64 GpaPage : 40;
+
+        //
+        // If specified, the associated SPA page is made confidential (i.e. the maximum host access
+        // is set to zero). The SPA page must be exclusive and the GPA page must be currently
+        // unaccepted.
+        //
+
+        UINT64 Confidential : 1;
+
+        UINT64 Reserved1 : 10;
+    };
+
+} HV_GPA_PAGE_MAPPING_LOCK_INPUT, *PHV_GPA_PAGE_MAPPING_LOCK_INPUT;
+
+typedef union _HV_GPA_PAGE_MAPPING_LOCK_OUTPUT
+{
+    UINT64 AsUINT64;
+
+    HV_GPA_PAGE_MAPPING_DATA Data;
+
+    struct
+    {
+        UINT64 : 13;
+
+        //
+        // Specifies the SPA page that the GPA page maps to.
+        //
+
+        UINT64 SpaPage : 40;
+
+        //
+        // Specifies the ownership type of the SPA page (HV_SPA_PAGE_OWNERSHIP).
+        //
+
+        UINT64 SpaPageOwnership : 1;
+
+        //
+        // Specifies the memory type of the SPA page (HV_ACCEPT_MEMORY_TYPE).
+        //
+
+        UINT64 SpaPageMemoryType : 4;
+
+        //
+        // Specifies the read permission bit configured by the root.
+        //
+
+        UINT64 RootReadable : 1;
+
+        //
+        // Specifies the write permission bit configured by the root.
+        //
+
+        UINT64 RootWritable : 1;
+
+        //
+        // Specifies the adjust permission bit configured by the root.
+        //
+
+        UINT64 RootAdjustable : 1;
+
+        UINT64 Reserved : 3;
+    };
+
+} HV_GPA_PAGE_MAPPING_LOCK_OUTPUT, *PHV_GPA_PAGE_MAPPING_LOCK_OUTPUT;
+
+typedef union _HV_GPA_PAGE_MAPPING_UNLOCK_INPUT
+{
+    UINT64 AsUINT64;
+
+    HV_GPA_PAGE_MAPPING_DATA Data;
+
+    struct
+    {
+        UINT64 : 13;
+
+        //
+        // Specifies the GPA page to unlock.
+        //
+
+        UINT64 GpaPage : 40;
+
+        UINT64 Reserved : 11;
+    };
+
+} HV_GPA_PAGE_MAPPING_UNLOCK_INPUT, *PHV_GPA_PAGE_MAPPING_UNLOCK_INPUT;
+
+typedef UINT32 HV_LOCK_GPA_PAGE_MAPPING_FLAGS, *PHV_LOCK_GPA_PAGE_MAPPING_FLAGS;
+
+#define HV_LOCK_GPA_PAGE_MAPPING_FLAGS_MASK     \
+    ( 0                                         \
+    )
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_LOCK_SPARSE_GPA_PAGE_MAPPING
+{
+    //
+    // Supplies the partition ID of the partition this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Various flags.
+    //
+
+    HV_LOCK_GPA_PAGE_MAPPING_FLAGS Flags;
+
+    UINT32 Reserved;
+
+    //
+    // Supplies an array of GPA page numbers to modify.
+    //
+
+    HV_CALL_ATTRIBUTES HV_GPA_PAGE_MAPPING_LOCK_INPUT LockList[];
+
+} HV_INPUT_LOCK_SPARSE_GPA_PAGE_MAPPING, *PHV_INPUT_LOCK_SPARSE_GPA_PAGE_MAPPING;
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UNLOCK_SPARSE_GPA_PAGE_MAPPING
+{
+    //
+    // Supplies the partition ID of the partition this request is for.
+    //
+
+    HV_PARTITION_ID TargetPartitionId;
+
+    //
+    // Supplies an array of GPA page numbers to modify.
+    //
+
+    HV_CALL_ATTRIBUTES HV_GPA_PAGE_MAPPING_UNLOCK_INPUT UnlockList[];
+
+} HV_INPUT_UNLOCK_SPARSE_GPA_PAGE_MAPPING, *PHV_INPUT_UNLOCK_SPARSE_GPA_PAGE_MAPPING;
+
 
 //
 // Define synthetic interrupt controller flag constants.
@@ -2460,26 +2850,19 @@ typedef struct _HV_X64_APIC_EOI_MESSAGE
     UINT32 InterruptVector;
 } HV_X64_APIC_EOI_MESSAGE, *PHV_X64_APIC_EOI_MESSAGE;
 
-//
-// Define HLT message.
-//
-typedef struct _HV_X64_HALT_MESSAGE
-{
-    UINT32 VpIndex;
-    UINT32 Rsvd;
-} HV_X64_HALT_MESSAGE, *PHV_X64_HALT_MESSAGE;
-
-//
-// Define interruptibility notification message
-//
-typedef struct _HV_X64_INTERRUPTION_DELIVERABLE_MESSAGE
-{
-    UINT32 VpIndex;
-    HV_X64_PENDING_INTERRUPTION_TYPE DeliverableType;
-
-} HV_X64_INTERRUPTION_DELIVERABLE_MESSAGE, *PHV_X64_INTERRUPTION_DELIVERABLE_MESSAGE;
-
 #endif
+
+//
+// Define intercept event message.
+//
+typedef struct _HV_SYNIC_EVENT_INTERCEPT_MESSAGE
+{
+    UINT32 VpIndex;
+    UINT32 Vtl      :  4;
+    UINT32 Reserved : 28;
+    HV_CONNECTION_ID ConnectionId;
+    UINT32 FlagNumber;
+} HV_SYNIC_EVENT_INTERCEPT_MESSAGE, *PHV_SYNIC_EVENT_INTERCEPT_MESSAGE;
 
 //
 // Define partition identifier type.
@@ -2580,6 +2963,7 @@ typedef enum _HV_PORT_PROPERTY_CODE
     HvPortPropertyTargetVp = 0x00000004,
     HvPortPropertyPreferredTargetDuration = 0x00000005,
     HvPortPropertyRetryPostMessage = 0x00000006,
+    HvPortPropertyInterceptOnSignal = 0x00000007,
 } HV_PORT_PROPERTY_CODE, *PHV_PORT_PROPERTY_CODE;
 
 //
@@ -2953,6 +3337,7 @@ typedef UINT8 HV_IOMMU_STATUS_SEVERITY, *PHV_IOMMU_STATUS_SEVERITY;
 #define HV_IOMMU_INIT_FEATURE_DEVICE_ASSIGNMENT             0x00000004
 #define HV_IOMMU_INIT_FEATURE_ROOT_SVM                      0x00000008
 #define HV_IOMMU_INIT_FEATURE_CHILD_SVM                     0x00000010
+#define HV_IOMMU_INIT_FEATURE_POSTED_INTERRUPTS             0x00000020
 
 #define HV_IOMMU_INIT_STATUS_NO_SLAT                        0x00000001
 #define HV_IOMMU_INIT_STATUS_NO_INTERRUPT_REMAPPING         0x00000002
@@ -3060,7 +3445,9 @@ typedef union _HV_ARM64_MEMORY_ACCESS_INFO
     struct
     {
         UINT8 GvaValid:1;
-        UINT8 Reserved:7;
+        UINT8 GvaGpaValid:1;
+        UINT8 HypercallOutputPending:1;
+        UINT8 Reserved:5;
     };
 } HV_ARM64_MEMORY_ACCESS_INFO, *PHV_ARM64_MEMORY_ACCESS_INFO;
 
@@ -3086,18 +3473,14 @@ typedef union _HV_ARM64_EXCEPTION_INFO
 #define PHV_EXCEPTION_INFO PHV_ARM64_EXCEPTION_INFO
 
 //
-// Define memory access message structure. This message structure is used
-// for memory intercepts, GPA not present intercepts and SPA access violation
-// intercepts.
+// Define memory access message structure. This message structure is used for
+// memory intercepts, GPA not present intercepts, GPA not accepted intercepts,
+// and SPA access violation intercepts.
 //
-// N.B. Sending the registers as part of the intercept
-//      is only an optimization. Therefore, we only
-//      include some "interesting" values here, like
-//      volatiles.
-//      The worker stack can always query other registers
-//      later.
-//      This is why we define X[16] registers in this
-//      structure.
+// N.B. Sending the registers as part of the intercept is only an optimization.
+//      Therefore, we only include some "interesting" values here, like
+//      volatiles. The worker stack can always query other registers later. This
+//      is why we define X[16] registers in this structure.
 //
 typedef struct _HV_ARM64_MEMORY_INTERCEPT_MESSAGE
 {
@@ -3116,7 +3499,7 @@ typedef struct _HV_ARM64_MEMORY_INTERCEPT_MESSAGE
     UINT64 Cpsr;
 } HV_ARM64_MEMORY_INTERCEPT_MESSAGE, *PHV_ARM64_MEMORY_INTERCEPT_MESSAGE;
 
-C_ASSERT(sizeof(HV_ARM64_MEMORY_INTERCEPT_MESSAGE) < 256);
+C_ASSERT(sizeof(HV_ARM64_MEMORY_INTERCEPT_MESSAGE) <= HV_MESSAGE_PAYLOAD_BYTE_COUNT);
 
 #define _HV_MEMORY_INTERCEPT_MESSAGE _HV_ARM64_MEMORY_INTERCEPT_MESSAGE
 #define HV_MEMORY_INTERCEPT_MESSAGE HV_ARM64_MEMORY_INTERCEPT_MESSAGE
@@ -3138,7 +3521,7 @@ typedef struct _HV_ARM64_MMIO_INTERCEPT_MESSAGE
     UINT8 Data[HV_MMIO_INTERCEPT_MAX_ACCESS_SIZE];
 } HV_ARM64_MMIO_INTERCEPT_MESSAGE, *PHV_ARM64_MMIO_INTERCEPT_MESSAGE;
 
-C_ASSERT(sizeof(HV_ARM64_MMIO_INTERCEPT_MESSAGE) < 256);
+C_ASSERT(sizeof(HV_ARM64_MMIO_INTERCEPT_MESSAGE) <= HV_MESSAGE_PAYLOAD_BYTE_COUNT);
 
 #define _HV_MMIO_INTERCEPT_MESSAGE _HV_ARM64_MMIO_INTERCEPT_MESSAGE
 #define HV_MMIO_INTERCEPT_MESSAGE HV_ARM64_MMIO_INTERCEPT_MESSAGE
@@ -3189,7 +3572,7 @@ typedef struct _HV_ARM64_EXCEPTION_INTERCEPT_MESSAGE
     UINT64 Cpsr;
 } HV_ARM64_EXCEPTION_INTERCEPT_MESSAGE, *PHV_ARM64_EXCEPTION_INTERCEPT_MESSAGE;
 
-C_ASSERT(sizeof(HV_ARM64_EXCEPTION_INTERCEPT_MESSAGE) < 256);
+C_ASSERT(sizeof(HV_ARM64_EXCEPTION_INTERCEPT_MESSAGE) <= HV_MESSAGE_PAYLOAD_BYTE_COUNT);
 
 #define _HV_EXCEPTION_INTERCEPT_MESSAGE _HV_ARM64_EXCEPTION_INTERCEPT_MESSAGE
 #define HV_EXCEPTION_INTERCEPT_MESSAGE HV_ARM64_EXCEPTION_INTERCEPT_MESSAGE
@@ -3226,7 +3609,6 @@ typedef struct _HV_ARM64_UNRECOVERABLE_EXCEPTION_MESSAGE
 typedef enum _HV_ARM64_UNSUPPORTED_FEATURE_CODE
 {
     HvUnsupportedFeatureIntercept = 1,
-    HvUnsupportedFeatureTaskSwitchTss = 2
 } HV_ARM64_UNSUPPORTED_FEATURE_CODE, *PHV_ARM64_UNSUPPORTED_FEATURE_CODE;
 
 #define _HV_UNSUPPORTED_FEATURE_CODE _HV_ARM64_UNSUPPORTED_FEATURE_CODE
@@ -3261,33 +3643,6 @@ typedef struct _HV_ARM64_TLB_PAGE_SIZE_MISMATCH_MESSAGE
 #define  PHV_TLB_PAGE_SIZE_MISMATCH_MESSAGE PHV_ARM64_TLB_PAGE_SIZE_MISMATCH_MESSAGE
 
 //
-// Define mark secure message.
-//
-typedef enum _HV_ARM64_GPA_OPERATION_ACTION
-{
-    HvGpaOperationSelf = 1,
-    HvGpaOperationVtl = 2
-} HV_ARM64_GPA_OPERATION_ACTION, *PHV_ARM64_GPA_OPERATION_ACTION;
-
-#define _HV_GPA_OPERATION_ACTION _HV_ARM64_GPA_OPERATION_ACTION
-#define HV_GPA_OPERATION_ACTION HV_ARM64_GPA_OPERATION_ACTION
-#define  PHV_GPA_OPERATION_ACTION PHV_ARM64_GPA_OPERATION_ACTION
-
-typedef struct _HV_ARM64_GPA_OPERATION_MESSAGE
-{
-    HV_ARM64_INTERCEPT_MESSAGE_HEADER Header;
-    HV_PARTITION_ID PartitionId;
-    UINT32 VpIndex;
-    HV_MAP_GPA_FLAGS MapFlags;
-    HV_INPUT_VTL TargetVtl;
-    HV_ARM64_GPA_OPERATION_ACTION Action;
-} HV_ARM64_GPA_OPERATION_MESSAGE, *PHV_ARM64_GPA_OPERATION_MESSAGE;
-
-#define _HV_GPA_OPERATION_MESSAGE _HV_ARM64_GPA_OPERATION_MESSAGE
-#define HV_GPA_OPERATION_MESSAGE HV_ARM64_GPA_OPERATION_MESSAGE
-#define  PHV_GPA_OPERATION_MESSAGE PHV_ARM64_GPA_OPERATION_MESSAGE
-
-//
 // Hypercall intercept definitions.
 //
 
@@ -3298,6 +3653,11 @@ typedef struct _HV_ARM64_HYPERCALL_INTERCEPT_MESSAGE
     HV_INTERCEPT_MESSAGE_HEADER Header;
     HV_HYPERCALL_INPUT_PRIVATE InputControl;
     UINT64 X[HV_HYPERCALL_INTERCEPT_MAX_X_REGISTERS];
+    struct
+    {
+        UINT32 Isolated:1;
+        UINT32 Reserved:31;
+    };
 } HV_ARM64_HYPERCALL_INTERCEPT_MESSAGE, *PHV_ARM64_HYPERCALL_INTERCEPT_MESSAGE;
 
 #define _HV_HYPERCALL_INTERCEPT_MESSAGE _HV_ARM64_HYPERCALL_INTERCEPT_MESSAGE
@@ -3355,7 +3715,8 @@ typedef union _HV_X64_VP_EXECUTION_STATE
 typedef struct _HV_X64_INTERCEPT_MESSAGE_HEADER
 {
     HV_VP_INDEX VpIndex;
-    UINT8 InstructionLength;
+    UINT8 InstructionLength:4;
+    UINT8 Cr8:4; // only set for Exo partitions
     HV_INTERCEPT_ACCESS_TYPE InterceptAccessType;
     HV_X64_VP_EXECUTION_STATE ExecutionState;
     HV_X64_SEGMENT_REGISTER CsSegment;
@@ -3385,6 +3746,11 @@ typedef struct _HV_X64_HYPERCALL_INTERCEPT_MESSAGE
     UINT64 Rsi;
     UINT64 Rdi;
     HV_UINT128 XmmRegisters[HV_HYPERCALL_INTERCEPT_MAX_XMM_REGISTERS];
+    struct
+    {
+        UINT32 Isolated:1;
+        UINT32 Reserved:31;
+    };
 } HV_X64_HYPERCALL_INTERCEPT_MESSAGE, *PHV_X64_HYPERCALL_INTERCEPT_MESSAGE;
 
 #define _HV_HYPERCALL_INTERCEPT_MESSAGE _HV_X64_HYPERCALL_INTERCEPT_MESSAGE
@@ -3442,7 +3808,9 @@ typedef union _HV_X64_MEMORY_ACCESS_INFO
     struct
     {
         UINT8 GvaValid:1;
-        UINT8 Reserved:7;
+        UINT8 GvaGpaValid:1;
+        UINT8 HypercallOutputPending:1;
+        UINT8 Reserved:5;
     };
 } HV_X64_MEMORY_ACCESS_INFO, *PHV_X64_MEMORY_ACCESS_INFO;
 
@@ -3485,9 +3853,9 @@ typedef union _HV_X64_EXCEPTION_INFO
 #define PHV_EXCEPTION_INFO PHV_X64_EXCEPTION_INFO
 
 //
-// Define memory access message structure. This message structure is used
-// for memory intercepts, GPA not present intercepts and SPA access violation
-// intercepts.
+// Define memory access message structure. This message structure is used for
+// memory intercepts, GPA not present intercepts, GPA not accepted intercepts,
+// and SPA access violation intercepts.
 //
 typedef struct _HV_X64_MEMORY_INTERCEPT_MESSAGE
 {
@@ -3660,6 +4028,34 @@ typedef struct _HV_X64_TLB_PAGE_SIZE_MISMATCH_MESSAGE
 #define  PHV_TLB_PAGE_SIZE_MISMATCH_MESSAGE PHV_X64_TLB_PAGE_SIZE_MISMATCH_MESSAGE
 
 //
+// Define HLT message.
+//
+typedef struct _HV_X64_HALT_MESSAGE
+{
+    HV_INTERCEPT_MESSAGE_HEADER Header;
+} HV_X64_HALT_MESSAGE, *PHV_X64_HALT_MESSAGE;
+
+//
+// Define interruptibility notification message
+//
+typedef struct _HV_X64_INTERRUPTION_DELIVERABLE_MESSAGE
+{
+    HV_INTERCEPT_MESSAGE_HEADER Header;
+    HV_X64_PENDING_INTERRUPTION_TYPE DeliverableType;
+    UINT32 Rsvd;
+} HV_X64_INTERRUPTION_DELIVERABLE_MESSAGE, *PHV_X64_INTERRUPTION_DELIVERABLE_MESSAGE;
+
+//
+// Define SIPI intercept message.
+//
+typedef struct _HV_X64_SIPI_INTERCEPT_MESSAGE
+{
+    HV_INTERCEPT_MESSAGE_HEADER Header;
+    HV_VP_INDEX TargetVpIndex;
+    HV_INTERRUPT_VECTOR Vector;
+} HV_X64_SIPI_INTERCEPT_MESSAGE, *PHV_X64_SIPI_INTERCEPT_MESSAGE;
+
+//
 // Definition of the HvCallRegisterInterceptResult hypercall input structure.
 //
 
@@ -3714,6 +4110,28 @@ typedef union HV_CALL_ATTRIBUTES _HV_UNREGISTER_INTERCEPT_RESULT_PARAMETERS
 
 #endif
 
+//
+// Define GPA attribute intercept message structure.
+//
+
+#define HV_GPA_ATTRIBUTE_INTERCEPT_MAX_RANGES 29
+
+typedef struct _HV_GPA_ATTRIBUTE_INTERCEPT_MESSAGE
+{
+    HV_VP_INDEX VpIndex;
+    struct
+    {
+        UINT32 RangeCount : 5;
+        UINT32 Adjust : 1;
+        UINT32 HostVisibility : 2;
+        UINT32 MemoryType : 6;
+        UINT32 Reserved : 18;
+    };
+    HV_GPA_PAGE_RANGE Ranges[HV_GPA_ATTRIBUTE_INTERCEPT_MAX_RANGES];
+} HV_GPA_ATTRIBUTE_INTERCEPT_MESSAGE, *PHV_GPA_ATTRIBUTE_INTERCEPT_MESSAGE;
+
+C_ASSERT(sizeof(HV_GPA_ATTRIBUTE_INTERCEPT_MESSAGE) <= HV_MESSAGE_PAYLOAD_BYTE_COUNT);
+
 
 //
 // Hypercall structures, enumerations, and constants.
@@ -3734,18 +4152,18 @@ typedef union HV_CALL_ATTRIBUTES _HV_UNREGISTER_INTERCEPT_RESULT_PARAMETERS
 // Partition Creation Flags.
 //
 
-#define HV_PARTITION_CREATION_FLAG_GUEST_CONTROLLED_CACHE_TYPES     (1UI64 << 0)
-#define HV_PARTITION_CREATION_FLAG_SMT_ENABLED_GUEST                (1UI64 << 1)
-#define HV_PARTITION_CREATION_FLAG_NESTED_VIRTUALIZATION_CAPABLE    (1UI64 << 2)
-#define HV_PARTITION_CREATION_FLAG_SGX_ENABLED                      (1UI64 << 3)
-#define HV_PARTITION_CREATION_FLAG_GPA_LARGE_PAGES_DISABLED         (1UI64 << 4)
-#define HV_PARTITION_CREATION_FLAG_GPA_SUPER_PAGES_ENABLED          (1UI64 << 5)
-#define HV_PARTITION_CREATION_FLAG_HOST_SYNCED_TIME                 (1UI64 << 6)
-#define HV_PARTITION_CREATION_FLAG_VP_OVERCOMMIT_ALLOWED            (1UI64 << 7)
-#define HV_PARTITION_CREATION_FLAG_ACCESS_ROOT_SCHEDULER_ALLOWED    (1UI64 << 8)
-#define HV_PARTITION_CREATION_FLAG_EXO_PARTITION                    (1UI64 << 9)
-#define HV_PARTITION_CREATION_FLAG_VTL1_DISABLED                    (1UI64 << 10)
-#define HV_PARTITION_CREATION_FLAG_VTL2_DISABLED                    (1UI64 << 11)
+#define HV_PARTITION_CREATION_FLAG_SMT_ENABLED_GUEST                (1UI64 << 0)
+#define HV_PARTITION_CREATION_FLAG_NESTED_VIRTUALIZATION_CAPABLE    (1UI64 << 1)
+#define HV_PARTITION_CREATION_FLAG_SGX_ENABLED                      (1UI64 << 2)
+#define HV_PARTITION_CREATION_FLAG_GPA_LARGE_PAGES_DISABLED         (1UI64 << 3)
+#define HV_PARTITION_CREATION_FLAG_GPA_SUPER_PAGES_ENABLED          (1UI64 << 4)
+#define HV_PARTITION_CREATION_FLAG_HOST_SYNCED_TIME                 (1UI64 << 5)
+#define HV_PARTITION_CREATION_FLAG_VP_OVERCOMMIT_ALLOWED            (1UI64 << 6)
+#define HV_PARTITION_CREATION_FLAG_ACCESS_ROOT_SCHEDULER_ALLOWED    (1UI64 << 7)
+#define HV_PARTITION_CREATION_FLAG_EXO_PARTITION                    (1UI64 << 8)
+#define HV_PARTITION_CREATION_FLAG_VTL1_DISABLED                    (1UI64 << 9)
+#define HV_PARTITION_CREATION_FLAG_VTL2_DISABLED                    (1UI64 << 10)
+#define HV_PARTITION_CREATION_FLAG_ISOLATED                         (1UI64 << 11)
 
 
 //
@@ -4388,10 +4806,26 @@ typedef union _HV_INSTRUCTION_EMULATION_HINTS_REGISTER
 } HV_INSTRUCTION_EMULATION_HINTS_REGISTER, *PHV_INSTRUCTION_EMULATION_HINTS_REGISTER;
 
 //
-// Definition of the HvCallCompleteIntercept hypercall input structure.
+// Definitions for HvCallGetInterceptData.
 //
 
-#define HV_MAX_INTERCEPT_RESULT_SIZE 32
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_GET_INTERCEPT_DATA
+{
+    //
+    // Supplies the partition ID of the child partition.
+    //
+    HV_PARTITION_ID PartitionId;
+
+    //
+    // Supplies the index of the virtual processor that generated an intercept.
+    //
+    HV_VP_INDEX VpIndex;
+
+} HV_INPUT_GET_INTERCEPT_DATA, *PHV_INPUT_GET_INTERCEPT_DATA;
+
+//
+// Definition of the HvCallCompleteIntercept hypercall input structure.
+//
 
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_COMPLETE_INTERCEPT
 {
@@ -4401,7 +4835,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_COMPLETE_INTERCEPT
     HV_PARTITION_ID PartitionId;
 
     //
-    // Supplies the virtual processor that generated an intercept.
+    // Supplies the index of the virtual processor that generated an intercept.
     //
     HV_VP_INDEX VpIndex;
 
@@ -4409,13 +4843,85 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_COMPLETE_INTERCEPT
     // Supplies the size of the intercept result.
     //
     UINT32 DataSize;
-    
+
     //
     // Supplies the intercept result.
     //
-    UINT8 Data[HV_MAX_INTERCEPT_RESULT_SIZE];
+    UINT8 Data[];
 
 } HV_INPUT_COMPLETE_INTERCEPT, *PHV_INPUT_COMPLETE_INTERCEPT;
+
+#define HV_COMPLETE_INTERCEPT_MAX_DATA_SIZE (HV_PAGE_SIZE - sizeof(HV_INPUT_COMPLETE_INTERCEPT))
+
+//
+// Define hypercall intercept completion data.
+//
+
+typedef struct _HV_HYPERCALL_INTERCEPT_COMPLETION_DATA
+{
+    HV_STATUS Status;
+    UINT8 OutputData[];
+} HV_HYPERCALL_INTERCEPT_COMPLETION_DATA, *PHV_HYPERCALL_INTERCEPT_COMPLETION_DATA;
+
+#define HV_HYPERCALL_INTERCEPT_COMPLETION_MAX_OUTPUT_DATA_SIZE \
+    (HV_COMPLETE_INTERCEPT_MAX_DATA_SIZE - sizeof(HV_HYPERCALL_INTERCEPT_COMPLETION_DATA))
+
+//
+// Define GPA attribute intercept completion data.
+//
+
+typedef struct _HV_GPA_ATTRIBUTE_INTERCEPT_COMPLETION_DATA
+{
+    HV_STATUS Status;
+} HV_GPA_ATTRIBUTE_INTERCEPT_COMPLETION_DATA, *PHV_GPA_ATTRIBUTE_INTERCEPT_COMPLETION_DATA;
+
+//
+// Definition of the HvCallUpdateHvProcessorFeatures input structures.
+//
+
+#if defined(_AMD64_) || defined(_X86_)
+
+typedef union _HV_DETECT_X64_PROCESSOR_FEATURE_LIST
+{
+    UINT64 AsUINT64;
+
+    struct
+    {
+        UINT64 Btb      : 1;
+        UINT64 RsvdZ    : 63;
+    };
+
+} HV_DETECT_X64_PROCESSOR_FEATURE_LIST, *PHV_DETECT_X64_PROCESSOR_FEATURE_LIST;
+
+typedef enum _HV_X64_UPDATE_PROCESSOR_FEATURES_PROPERTY
+{
+    HvX64UpdateProcessorFeaturesDetect          = 0,
+    HvX64UpdateProcessorFeaturesHvIbrsValue     = 1,
+    HvX64UpdateProcessorFeaturesIbpbFlushRoot   = 2,
+    HvX64UpdateProcessorFeaturesIbpbFlushGuest  = 3,
+
+} HV_X64_UPDATE_PROCESSOR_FEATURES_PROPERTY,
+  *PHV_X64_UPDATE_PROCESSOR_FEATURES_PROPERTY;
+
+#define _HV_UPDATE_PROCESSOR_FEATURES_PROPERTY _HV_X64_UPDATE_PROCESSOR_FEATURES_PROPERTY
+#define HV_UPDATE_PROCESSOR_FEATURES_PROPERTY HV_X64_UPDATE_PROCESSOR_FEATURES_PROPERTY
+#define PHV_UPDATE_PROCESSOR_FEATURES_PROPERTY PHV_X64_UPDATE_PROCESSOR_FEATURES_PROPERTY
+
+#else
+
+#define _HV_UPDATE_PROCESSOR_FEATURES_PROPERTY UINT32
+#define HV_UPDATE_PROCESSOR_FEATURES_PROPERTY UINT32
+#define PHV_UPDATE_PROCESSOR_FEATURES_PROPERTY PUINT32
+
+#endif
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UPDATE_PROCESSOR_FEATURES
+{
+    HV_UPDATE_PROCESSOR_FEATURES_PROPERTY Property;
+    UINT32 RsvdZ;
+    UINT64 Value;
+
+} HV_INPUT_UPDATE_PROCESSOR_FEATURES, *PHV_INPUT_UPDATE_PROCESSOR_FEATURES;
 
 
 //

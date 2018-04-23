@@ -23,12 +23,10 @@
     DebugLib
     UefiDriverEntryPoint
     MemoryAllocationLib
+    HvHypercallLib
 
 [LibraryClasses.X64]
     LocalApicLib
-
-[LibraryClasses.AARCH64]
-    HvHypercallLib
 
 [Sources]
     EfiHv.c

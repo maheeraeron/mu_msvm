@@ -18,7 +18,11 @@ Author:
 
 #include <Library/HobLib.h>
 #include <Library/DebugLib.h>
+#include <BiosInterface.h>
+#include <Platform.h>
+#include <Config.h>
 #include <Hob.h>
+#include <Hv.h>
 
 
 #define BASIC_FLAGS                                     \
@@ -43,6 +47,82 @@ Author:
 const char * const gDebugMemoryFormat = "HOB Start % 17lx End %17lx %s\n";
 const char * const gDebugCpuFormat    = "HOB MemWidth %d IOWidth %d Cpu\n";
 const char * const gDebugGuidFormat   = "HOB Base % 17lx Size %17lx GUID Data\n";
+
+
+static
+VOID
+HobpAcceptRamPages(
+    _Inout_ PPLATFORM_INIT_CONTEXT Context,
+    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
+    _In_ UINT64 PageCount
+    )
+/*++
+
+Routine Description:
+
+    Accepts a range of RAM GPA pages while ignoring (excluding) pre-accepted pages.
+
+Arguments:
+
+    Context - The platform init context.
+
+    GpaPageBase - Supplies the address of the first target GPA to accept. The
+        remaining pages will be modified sequentially from this GPA.
+
+    PageCount - The number of pages to modify.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    HV_STATUS hvStatus;
+    UINT64 pageCountProcessed;
+    UINT32 configBlobSize = PcdGet32(PcdConfigBlobSize);
+    UINT64 configBlobBase = (UINT64)Context->StartOfConfigBlob;
+    HV_GPA_PAGE_NUMBER configBlobPageLimit =
+        ((configBlobBase + configBlobSize - 1) / EFI_PAGE_SIZE) + 1;
+
+    //
+    // The region from 0 to the end of the config blob is expected to be pre-accepted, so exclude
+    // that from the range.
+    //
+    if (GpaPageBase < configBlobPageLimit)
+    {
+        if (GpaPageBase + PageCount > configBlobPageLimit)
+        {
+            PageCount -= configBlobPageLimit - GpaPageBase;
+            GpaPageBase = configBlobPageLimit;
+        }
+        else
+        {
+            //
+            // The region is entirely pre-accepted - there is nothing to do.
+            //
+            return;
+        }
+    }
+
+    hvStatus = HvAcceptGpaPages(Context,
+                                HvAcceptMemoryTypeRam,
+                                HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                                GpaPageBase,
+                                PageCount,
+                                &pageCountProcessed);
+
+    if (hvStatus != HV_STATUS_SUCCESS)
+    {
+        //
+        // This is a host error, i.e. the memory map does not match the GPA mappings.
+        //
+        // TODO(wjliu): Report this error in a better way to increase debuggability.
+        //
+        CpuDeadLoop();
+    }
+
+    ASSERT(pageCountProcessed == PageCount);
+}
 
 
 void
@@ -82,8 +162,9 @@ Return Value:
 
 void
 HobAddMemoryRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    _Inout_ PPLATFORM_INIT_CONTEXT  Context,
+    _In_ EFI_PHYSICAL_ADDRESS       BaseAddress,
+    _In_ UINT64                     Size
     )
 /*++
 
@@ -92,6 +173,8 @@ Routine Description:
     Adds a memory range hob to the current hob list.
 
 Arguments:
+
+    Context - The platform init context.
 
     BaseAddress - Base address of the memory range.
 
@@ -103,6 +186,14 @@ Return Value:
 
 --*/
 {
+    ASSERT((BaseAddress % EFI_PAGE_SIZE) == 0);
+    ASSERT((Size % EFI_PAGE_SIZE) == 0);
+
+    if (PcdGetBool(PcdSystemIsolated))
+    {
+        HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
+    }
+
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY, 
                                MEMORY_FLAGS, 
                                BaseAddress, 

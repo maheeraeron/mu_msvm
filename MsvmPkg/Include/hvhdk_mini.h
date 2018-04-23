@@ -53,6 +53,12 @@ Abstract:
 #define HV_MAXIMUM_NODES            64
 
 //
+// Declare the maximum number of COS slots.
+// This was calculated using the range of reserved MSR indices.
+//
+#define HV_MAXIMUM_COS_SLOTS        128
+
+//
 //
 // Define the facility codes
 //
@@ -376,7 +382,8 @@ typedef union _HV_HYPERCALL_INPUT_PRIVATE
     //
     struct
     {
-        UINT32 CallCode        : 15; // Least significant bits
+        UINT32 CallCode        : 14; // Least significant bits
+        UINT32 IsIsolated      : 1;
         UINT32 IsExtended      : 1;
         UINT32 IsFast          : 1;  // Uses the register based form
         UINT32 VariableHeaderSize : 9; // Size in QWORDs
@@ -393,9 +400,10 @@ typedef union _HV_HYPERCALL_INPUT_PRIVATE
 } HV_HYPERCALL_INPUT_PRIVATE, *PHV_HYPERCALL_INPUT_PRIVATE;
 
 //
-// Bit shift for IsExtended field in HV_HYPERCALL_INPUT_PRIVATE.
+// Bit shifts for fields in HV_HYPERCALL_INPUT_PRIVATE.
 //
 
+#define HV_HYPERCALL_INPUT_PRIVATE_IS_ISOLATED_SHIFT 14
 #define HV_HYPERCALL_INPUT_PRIVATE_IS_EXTENDED_SHIFT 15
 
 #endif
@@ -932,8 +940,8 @@ typedef struct _HV_MCUPDATE_UPDATE_STATUS
 {
     BOOLEAN Valid;
     UINT32 UpdateLoadStatus;
-    UINT32 UpdateRevision;
-    UINT32 PreviousUpdateRevision;
+    UINT64 UpdateRevision;
+    UINT64 PreviousUpdateRevision;
     UINT32 PlatformSpecificField1;
     UINT32 PlatformSpecificField2;
 } HV_MCUPDATE_UPDATE_STATUS, *PHV_MCUPDATE_UPDATE_STATUS;
@@ -1169,8 +1177,14 @@ typedef enum
     HvPartitionPropertyDefaultSgxLaunchControl1    = 0x00050009,
     HvPartitionPropertyDefaultSgxLaunchControl2    = 0x0005000A,
     HvPartitionPropertyDefaultSgxLaunchControl3    = 0x0005000B,
+    HvPartitionPropertyIsolationState              = 0x0005000C,
+    HvPartitionPropertyIsolationControl            = 0x0005000D,
+    HvPartitionPropertyRdtL3CosIndex               = 0x0005000E,
+    HvPartitionPropertyRdtRmid                     = 0x0005000F,
 
+    //
     // Compatibility properties
+    //
     HvPartitionPropertyProcessorVendor             = 0x00060000,
     HvPartitionPropertyProcessorFeatures           = 0x00060001,
     HvPartitionPropertyProcessorXsaveFeatures      = 0x00060002,
@@ -1581,7 +1595,11 @@ typedef enum _HV_DEVICE_TYPE
 {
     HV_DEVICE_TYPE_LOGICAL = 0,
     HV_DEVICE_TYPE_PCI = 1,
+#if defined(_AMD64_)
     HV_DEVICE_TYPE_IOAPIC = 2,
+#elif defined(_ARM64_)
+    HV_DEVICE_TYPE_GIC = 2,
+#endif
     HV_DEVICE_TYPE_ACPI = 3,
 
 } HV_DEVICE_TYPE, *PHV_DEVICE_TYPE;
@@ -1626,6 +1644,8 @@ typedef union _HV_DEVICE_ID
         UINT16 DeviceType : 2;
     } Pci;
 
+#if defined(_AMD64_)
+
     // HV_DEVICE_TYPE_IOAPIC
     struct
     {
@@ -1637,6 +1657,20 @@ typedef union _HV_DEVICE_ID
         UINT16 RsvdZ3 : 14;
         UINT16 DeviceType : 2;
     } IoApic;
+
+#elif defined(_ARM64_)
+
+    // HV_DEVICE_TYPE_GIC
+    struct
+    {
+        UINT32 LineNumber;
+        UINT16 RsvdZ0;
+
+        UINT16 RsvdZ1 : 14;
+        UINT16 DeviceType : 2;
+    } Gic;
+
+#endif
 
     // HV_DEVICE_TYPE_ACPI
     struct
@@ -1795,6 +1829,12 @@ typedef enum _HV_SYSTEM_PROPERTY
     HvHostDebugTransferPages = 17,
     HvHostTimelineBiasProperty = 18,
     HvSmcDataPathProperty = 19,
+    HvDmaInitializeBlockedProperty = 20,
+    HvSpeculationControlConfigProperty = 21,
+    HvRdtCapabilitiesProperty = 22,
+    HvRdtCosBitmaskProperty = 23,
+    HvRdtCmtProperty = 24
+
 } HV_SYSTEM_PROPERTY, *PHV_SYSTEM_PROPERTY;
 
 typedef struct _HV_SLEEP_STATE_INFO
@@ -1984,6 +2024,87 @@ typedef struct _HV_SMC_DATA_PATH_PROPERTY
     UINT16 Reserved:15;
 } HV_SMC_DATA_PATH_PROPERTY, *PHV_SMC_DATA_PATH_PROPERTY;
 
+#if defined(_AMD64_)
+
+//
+// BTB MSR controls.
+//
+typedef enum _HV_X64_IBPB_FLUSH_GUEST_TYPE
+{
+    HvX64IbpbFlushGuestOff = 0,
+    HvX64IbpbFlushGuestAll = 1,
+    HvX64IbpbFlushGuestOptIn = 2,
+
+    HvX64IbpbFlushGuestTypeCount = 3
+
+} HV_X64_IBPB_FLUSH_GUEST_TYPE, *PHV_X64_IBPB_FLUSH_GUEST_TYPE;
+
+//
+// This structure returns information about the speculation control
+// configuration currently used by the hypervisor.
+//
+typedef struct _HV_SPECULATION_CONTROL_CONFIG
+{
+    UINT64 IbrsValue;
+    HV_X64_IBPB_FLUSH_GUEST_TYPE IbpbFlushGuest;
+    BOOLEAN IbpbFlushRoot;
+
+} HV_SPECULATION_CONTROL_CONFIG, *PHV_SPECULATION_CONTROL_CONFIG;
+
+#endif
+
+//
+// This structure supplies information about a single COS
+// bitmask present on the system.
+//
+typedef struct _HV_RDT_COS_BITMASK_PROPERTY
+{
+    UINT32 CosIndex;
+    UINT32 CosBitmask;
+} HV_RDT_COS_BITMASK_PROPERTY, *PHV_RDT_COS_BITMASK_PROPERTY;
+
+//
+// This structure supplies information about all COS
+// bitmasks present on the system.
+//
+typedef struct _HV_RDT_COS_BITMASKS_PROPERTY
+{
+    //
+    // The number of bitmask slots returned.
+    //
+    UINT32 NumL3CosSlots;
+    UINT32 CosSlots[HV_MAXIMUM_COS_SLOTS];
+} HV_RDT_COS_BITMASKS_PROPERTY, *PHV_RDT_COS_BITMASKS_PROPERTY;
+
+//
+// This structure supplies information about Intel RDT support.
+//
+typedef struct _HV_RDT_CAPABILITIES_PROPERTY
+{
+
+    UINT32 L3CatSupported:1;
+    UINT32 L3CmtSupported:1;
+    UINT32 L3OccupancyMonitoringSupported:1;
+    UINT32 L3TotalBwMonitoringSupported:1;
+    UINT32 L3LocalBwMonitoringSupported:1;
+    UINT32 Reserved:27;
+
+    UINT32 L3CosBitmaskWidth;
+    UINT32 L3CosBitmaskHwReserved;
+    UINT32 NumL3CosSlots;
+    UINT32 MaxL3Rmid;
+} HV_RDT_CAPABILITIES_PROPERTY, *PHV_RDT_CAPABILITIES_PROPERTY;
+
+//
+// Structure definition for Intel CMT event data
+//
+typedef struct _HV_RDT_CMT_EVENT_DATA
+{
+    UINT64 L3OccupancyBytes;
+    UINT64 L3TotalBwBytes;
+    UINT64 L3LocalBwBytes;
+} HV_RDT_CMT_EVENT_DATA, *PHV_RDT_CMT_EVENT_DATA;
+
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_SET_SYSTEM_PROPERTY
 {
     UINT32 PropertyId;
@@ -2009,6 +2130,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_SET_SYSTEM_PROPERTY
         HV_HYPERVISOR_DEBUG_PROPERTY Debug;
         HV_HOST_TIMELINE_INFO HostTimeline;
         HV_SMC_DATA_PATH_PROPERTY SmcDataPath;
+        HV_RDT_COS_BITMASK_PROPERTY CosBitmask;
     } Property;
 
 } HV_INPUT_SET_SYSTEM_PROPERTY, *PHV_INPUT_SET_SYSTEM_PROPERTY;
@@ -2020,7 +2142,8 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_GET_SYSTEM_PROPERTY
 
     union
     {
-        HV_PPM_POWER_POLICY_SETTING_ID  SettingId;
+        HV_PPM_POWER_POLICY_SETTING_ID SettingId;
+        UINT32 ResourceMonitoringId;
     } Property;
 
 } HV_INPUT_GET_SYSTEM_PROPERTY, *PHV_INPUT_GET_SYSTEM_PROPERTY;
@@ -2062,6 +2185,20 @@ typedef struct HV_CALL_ATTRIBUTES _HV_OUTPUT_GET_SYSTEM_PROPERTY
         HV_SPA_PAGE_RANGE HvHostDbgTransferPagesRange;
 
         HV_SMC_DATA_PATH_PROPERTY SmcDataPath;
+
+        BOOLEAN DmaInitializeBlocked;
+
+#if defined(_AMD64_)
+
+        HV_SPECULATION_CONTROL_CONFIG SpeculationControlConfig;
+
+#endif
+
+        HV_RDT_CAPABILITIES_PROPERTY HvRdtCapabilities;
+
+        HV_RDT_COS_BITMASKS_PROPERTY HvRdtCosBitmasks;
+
+        HV_RDT_CMT_EVENT_DATA CmtEventData;
     } Property;
 
 } HV_OUTPUT_GET_SYSTEM_PROPERTY, *PHV_OUTPUT_GET_SYSTEM_PROPERTY;
@@ -2307,12 +2444,19 @@ typedef struct _HV_DEVICE_INTERRUPT_DESCRIPTOR
 
 #define HV_INTERRUPT_REMAPPING_MASK_FAILURE     1
 #define HV_INTERRUPT_REMAPPING_NO_MEMORY        2
+#define HV_INTERRUPT_REMAPPING_LOGICAL_ENTRY    4
+
+#define HV_INTERRUPT_REMAPPING_VALID_FLAGS \
+    (HV_INTERRUPT_REMAPPING_MASK_FAILURE | \
+     HV_INTERRUPT_REMAPPING_NO_MEMORY | \
+     HV_INTERRUPT_REMAPPING_LOGICAL_ENTRY)
 
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MAP_DEVICE_INTERRUPT
 {
     HV_PARTITION_ID                 PartitionId;
     UINT64                          DeviceId;
     UINT64                          Flags;
+    HV_INTERRUPT_ENTRY              LogicalInterruptEntry;
     HV_DEVICE_INTERRUPT_DESCRIPTOR  InterruptDescriptor;
 } HV_INPUT_MAP_DEVICE_INTERRUPT, *PHV_INPUT_MAP_DEVICE_INTERRUPT;
 
@@ -2398,6 +2542,30 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_SEND_SYNTHETIC_CLUSTER_IPI_EX
 } HV_INPUT_SEND_SYNTHETIC_CLUSTER_IPI_EX,
   *PHV_INPUT_SEND_SYNTHETIC_CLUSTER_IPI_EX;
 
+typedef union _HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS
+{
+    UINT32 AsUINT32;
+    struct
+    {
+        UINT32 UseDefaultSuspend : 1;
+        UINT32 RsvdZ : 31;
+    };
+} HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS, *PHV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS;
+
+C_ASSERT(sizeof(HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS) == sizeof(UINT32));
+
+typedef union HV_CALL_ATTRIBUTES _HV_INPUT_REQUEST_PROCESSOR_HALT
+{
+    struct
+    {
+        UINT32 PowerState;
+        HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS Flags;
+    };
+    UINT64 AsUINT64;
+} HV_INPUT_REQUEST_PROCESSOR_HALT, *PHV_INPUT_REQUEST_PROCESSOR_HALT;
+
+C_ASSERT(sizeof(HV_INPUT_REQUEST_PROCESSOR_HALT) == sizeof(UINT64));
+
 typedef enum _HV_BOOT_DEBUG_PORT_TYPE
 {
     HvBootDbgPortNone,
@@ -2431,6 +2599,39 @@ typedef enum _HV_BOOT_DEBUG_COM_PORT_TYPE
 
 #define HV_BOOT_NET_BAR_COUNT           6
 
+#if !defined(KDNET_IPV6_ADDRESS)
+
+#define KDNET_IPV6_ADDRESS
+typedef struct _IPV6_ADDRESS
+{
+    union {
+        struct {
+            UINT64 QW0;
+            UINT64 QW1;
+        };
+
+        struct {
+            UINT32 DW0;
+            UINT32 DW1;
+            UINT32 DW2;
+            UINT32 DW3;
+        };
+
+        struct {
+            UINT16 W0;
+            UINT16 W1;
+            UINT16 W2;
+            UINT16 W3;
+            UINT16 W4;
+            UINT16 W5;
+            UINT16 W6;
+            UINT16 W7;
+        };
+    };
+} IPV6_ADDRESS, *PIPV6_ADDRESS;
+
+#endif
+
 typedef struct _HV_BOOT_DEBUG_PARAMETERS
 {
     HV_BOOT_DEBUG_PORT_TYPE PortType;
@@ -2455,6 +2656,7 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
                 HV_SPA RegistersSpa;
             };
             UINT32 BaudRate;
+            BOOLEAN ExclusiveMode;
         } Com;
 
         struct
@@ -2473,7 +2675,7 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
             USHORT PortSubtype;
             UINT32 Bus;
             UINT32 Slot;
-            UINT32 HostIP;
+            IPV6_ADDRESS HostIP;
             UINT32 Flags;
             UINT16 VendorID;
             UINT16 DeviceID;
@@ -2511,7 +2713,7 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
 #define HV_BOOT_DISABLE_XSAVE                   (0x00000040)
 #define HV_BOOT_USE_LEGACY_TSC_SYNC             (0x00000080)
 #define HV_BOOT_USE_ENHANCED_TSC_SYNC           (0x00000100)
-#define HV_BOOT_USE_VAPIC                       (0x00000200)
+#define HV_BOOT_ENABLE_APIC_EMULATION           (0x00000200)
 #define HV_BOOT_IOMMU_X2APIC_ONLY               (0x00000400)
 #define HV_BOOT_ENABLE_MSR_FILTERING            (0x00000800)
 #define HV_BOOT_DISABLE_MMIO_NX                 (0x00001000)
@@ -2521,6 +2723,14 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
 #define HV_BOOT_ROOT_SCHEDULER                  (0x00010000)
 #define HV_BOOT_IS_CLIENT_SKU                   (0x00020000)
 #define HV_BOOT_SECURE_LAUNCH                   (0x00040000)
+#define HV_BOOT_FORCE_DEFAULT_BLOCKED_DMA       (0x00080000)
+#define HV_BOOT_DISABLE_APIC_EMULATION          (0x00100000)
+#define HV_BOOT_CLASSIC_SCHEDULER               (0x00200000)
+#define HV_BOOT_CORE_SCHEDULER                  (0x00400000)
+
+#define HV_BOOT_ALL_SCHEDULER_TYPES (HV_BOOT_CLASSIC_SCHEDULER | \
+                                     HV_BOOT_CORE_SCHEDULER | \
+                                     HV_BOOT_ROOT_SCHEDULER)
 
 //
 // Define the configurable Hypervisor Boot Parameters.
@@ -3318,15 +3528,24 @@ C_ASSERT(HV_MAP_GPA_PERMISSIONS_MASK_WITH_ADJUST == ((1 << HV_MAP_GPA_PERMISSION
 #define HV_MAP_GPA_LARGE_PAGE           0x2000
 
 //
-// The set of all flags that may be specified.
+// Prevent guest memory accesses from allocating cache lines.
 //
-#define HV_MAP_GPA_FLAGS_MASK           0x3F1F
+#define HV_MAP_GPA_NOT_CACHED          0x4000
 
 //
-// The subset of flags that can be used with ModifyVtlProtectionMask.
+// The set of all flags that may be specified.
 //
+#define HV_MAP_GPA_FLAGS_MASK           0x7F1F
+
+//
+// The set of flags that can be used with ModifyVtlProtectionMask.
+//
+
+#define HV_MAP_GPA_VTL_ALLOW_MMIO           0x8000
+
 #define HV_MAP_GPA_VTL_FLAGS_MASK \
-    (HV_MAP_GPA_PERMISSIONS_MASK_WITH_ADJUST | HV_MAP_GPA_ADJUSTABLE_SPECIFIED)
+    (HV_MAP_GPA_PERMISSIONS_MASK_WITH_ADJUST | HV_MAP_GPA_ADJUSTABLE_SPECIFIED | \
+     HV_MAP_GPA_VTL_ALLOW_MMIO)
 
 //
 // Definition of the HvCallMapGpaPages hypercall input structure.
@@ -3645,12 +3864,13 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_SET_DEVICE_PRQ_PROPERTY_HEADER
 } HV_INPUT_SET_DEVICE_PRQ_PROPERTY_HEADER, *PHV_INPUT_SET_DEVICE_PRQ_PROPERTY_HEADER;
 
 //
-// Root-only SVM definitions.
+// Root-only definitions (mostly for SVM).
 //
 typedef enum _HV_PHYSICAL_DEVICE_PROPERTY
 {
     HvPhysicalDevicePropertyCapabilities = 0,
-    HvPhysicalDevicePropertyEnabled = 1
+    HvPhysicalDevicePropertyEnabled = 1,
+    HvPhysicalDevicePropertyFaultReporting = 2,
 
 } HV_PHYSICAL_DEVICE_PROPERTY, *PHV_PHYSICAL_DEVICE_PROPERTY;
 
@@ -3680,6 +3900,15 @@ typedef struct HV_CALL_ATTRIBUTES _HV_PHYSICAL_DEVICE_PROPERTY_ENABLED
 
 } HV_PHYSICAL_DEVICE_PROPERTY_ENABLED, *PHV_PHYSICAL_DEVICE_PROPERTY_ENABLED;
 
+typedef struct HV_CALL_ATTRIBUTES _HV_PHYSICAL_DEVICE_PROPERTY_FAULT_REPORTING
+{
+    BOOLEAN FaultReportingEnabled;
+    UINT8 Reserved0;
+    UINT16 Reserved1;
+    UINT32 Reserved2;
+
+} HV_PHYSICAL_DEVICE_PROPERTY_FAULT_REPORTING, *PHV_PHYSICAL_DEVICE_PROPERTY_FAULT_REPORTING;
+
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_GET_PHYSICAL_DEVICE_PROPERTY
 {
     HV_DEVICE_ID PhysicalDeviceId;
@@ -3692,6 +3921,7 @@ typedef union HV_CALL_ATTRIBUTES _HV_OUTPUT_GET_PHYSICAL_DEVICE_PROPERTY
 {
     HV_PHYSICAL_DEVICE_PROPERTY_CAPABILITIES Capabilities;
     HV_PHYSICAL_DEVICE_PROPERTY_ENABLED Enabled;
+    HV_PHYSICAL_DEVICE_PROPERTY_FAULT_REPORTING FaultReporting;
 
 } HV_OUTPUT_GET_PHYSICAL_DEVICE_PROPERTY, *PHV_OUTPUT_GET_PHYSICAL_DEVICE_PROPERTY;
 
@@ -3727,7 +3957,9 @@ typedef union _HV_ATTACH_DEVICE_FLAGS
         UINT32 SharedInterruptsRoot : 1;
         UINT32 VirtualFunction : 1;
         UINT32 SharedInterruptsChild : 1;
-        UINT32 Reserved : 26;
+        UINT32 VirtualDevice : 1;
+        UINT32 LogicalInterrupts : 1;
+        UINT32 Reserved : 24;
     };
 
     UINT32 AsUINT32;
@@ -3865,16 +4097,11 @@ typedef struct _HV_DEVICE_DOMAIN_SETTINGS
     struct
     {
         //
-        // Receive fault notifications.
-        //
-        UINT64 ErrorReportingEnabled : 1;
-
-        //
         // Enable translations. If not enabled, all transaction bypass S1
         // translations.
         //
         UINT64 TranslationEnabled : 1;
-        
+
         //
         // Enable coherent translation table walks.
         //
@@ -4125,99 +4352,237 @@ typedef union _HV_MSR_WATCHDOG_CONFIG_CONTENTS
 #endif
 
 //
-// Definitions for the HvCallQueryVtlProtectionMaskRange hypercall.
+// Definitions for the HvCallSwitchAliasMap hypercall.
 //
+#define HV_ALIAS_MAP_DEFAULT    0
+#define HV_ALIAS_MAP_ALIAS      1
 
-typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_QUERY_VTL_PROTECTION_MASK_RANGE
+//
+// Definitions for HvCallUpdateMicrocode.
+//
+#if defined (_AMD64_)
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UPDATE_MICROCODE
+{
+    HV_GVA MicrocodePayloadGva;
+    UINT32 MicrocodePayloadSize;
+    UINT32 RsvdZ;
+
+} HV_INPUT_UPDATE_MICROCODE, *PHV_INPUT_UPDATE_MICROCODE;
+
+#endif
+
+#if defined(_AMD64_)
+
+//
+// Type definitions for hot-patch hypercalls.
+//
+typedef enum _HV_IMAGE_QUERY_TYPE
+{
+    ImageQueryTypeModuleCount,
+    ImageQueryTypeModuleTraits,
+    ImageQueryTypeSlotVaMappings,
+    ImageQueryTypeMax
+} HV_IMAGE_QUERY_TYPE, *PHV_IMAGE_QUERY_TYPE;
+
+//
+// Define the number of hot-patchable modules. This is currently limited due to VA
+// space and to avoid over-engg.
+// Currently assumes that hv?x64.exe is the first module.
+//
+#define HV_HOTPATCH_MAXIMUM_MODULE_COUNT                (2)
+#define HV_HOTPATCH_MAXIMUM_MODULE_INDEX                (HV_HOTPATCH_MAXIMUM_MODULE_COUNT - 1)
+
+//
+// Define the number of patch slots for every hot-patchable image. 
+// Internally, Slot#0 aka primary slot refers to base image.
+//
+#define HV_HOTPATCH_MAXIMUM_SECONDARY_SLOT_COUNT        (2)
+#define HV_HOTPATCH_TOTAL_SLOT_COUNT                    (HV_HOTPATCH_MAXIMUM_SECONDARY_SLOT_COUNT + 1)
+#define HV_HOTPATCH_MAXIMUM_SLOT_INDEX                  (HV_HOTPATCH_TOTAL_SLOT_COUNT - 1)
+
+//
+// Define the number of characters in the name of a module.
+//
+#define HV_MODULE_NAME_LENGTH                           (8)
+
+typedef struct _HV_SLOT_TRAITS
 {
     //
-    // Supplies the partition ID of the partition this request is for.
+    // Base address of this region.
     //
-
-    HV_PARTITION_ID TargetPartitionId;
-
-    //
-    // Supplies the base guest physical page number for the query.
-    //
-
-    HV_GPA_PAGE_NUMBER TargetGpaBase;
+    HV_GVA StartVa;
 
     //
-    // Supplies the target set of VTLs for the query.
+    // Number of bytes.
     //
+    UINT32 Size;
 
-    UINT16 TargetVtlSet;
+    //
+    // True for an image's base image slot.
+    //
+    UINT32 IsPrimarySlot: 1;
 
-    UINT16 Reserved0;
-    UINT32 Reserved1;
+    //
+    // True if a slot is active. Primary slot is always active.
+    //
+    UINT32 IsSlotActive : 1;
 
-} HV_INPUT_QUERY_VTL_PROTECTION_MASK_RANGE, *PHV_INPUT_QUERY_VTL_PROTECTION_MASK_RANGE;
+    UINT32 ReservedZ0   : 30;
 
-//
-// Definitions for the HvCallModifyVtlProtectionMaskRange hypercall.
-//
+    //
+    // Checksum and timestamp of the image in the slot.
+    // The slot must be active, for these values to be valid.
+    //
+    UINT32 Checksum;
+    UINT32 Timestamp;
 
-typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MODIFY_VTL_PROTECTION_MASK_RANGE
+} HV_SLOT_TRAITS, *PHV_SLOT_TRAITS;
+
+typedef struct _HV_MODULE_TRAITS
 {
     //
-    // Supplies the partition ID of the partition this request is for.
+    // Null terminated name of the module.
+    // RSG_TODO: Confirm it is null terminated.
     //
+    WCHAR ModuleName[HV_MODULE_NAME_LENGTH];
 
-    HV_PARTITION_ID TargetPartitionId;
+    HV_SLOT_TRAITS SlotTraits[HV_HOTPATCH_TOTAL_SLOT_COUNT];
 
-    //
-    // Supplies the base guest physical page number for the modifications.
-    //
+} HV_MODULE_TRAITS, *PHV_MODULE_TRAITS;
 
-    HV_GPA_PAGE_NUMBER TargetGpaBase;
+typedef union _HV_GPA_PAGE_PERMISSION
+{
+    UINT64 AsUINT64;
+    
+    struct
+    {
+        UINT64 Valid        : 1;
+        UINT64 Writable     : 1;
+        UINT64 Executable   : 1;
+        UINT64 ReservedZ0   : 9;
+        UINT64 GpaPage      : 40;
+        UINT64 ReservedZ1   : 12;
+    };
+    
+} HV_GPA_PAGE_PERMISSION, *PHV_GPA_PAGE_PERMISSION;
 
-    //
-    // Supplies the target set of VTLs for the modifications.
-    //
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_QUERY_IMAGE_INFO
+{
+    HV_IMAGE_QUERY_TYPE QueryType;
 
-    UINT16 TargetVtlSet;
+    UINT32 ReservedZ0;
 
-    UINT16 Reserved0;
-    UINT32 Reserved1;
+    union
+    {
+        //
+        // Identify the specific module for ImageQueryTypeModuleInfo
+        //
+        UINT64 ModuleIndex;
 
-    //
-    // Supplies an array of VTL permissions to set.
-    //
+        //
+        // Identify the module,slot tuple and retrieve VA-PA mappings in the specified range.
+        //
+        struct
+        {
+            UINT64 ModuleIndex  : 4;
+            UINT64 SlotIndex    : 2;
+            UINT64 PageCount    : 16;
+            UINT64 ReservedZ0   : 42;
+            HV_GVA StartVa;
+        } Mapping;
+    };
 
-    HV_CALL_ATTRIBUTES HV_VTL_PERMISSION_SET VtlPermissionList[];
+} HV_INPUT_QUERY_IMAGE_INFO, *PHV_INPUT_QUERY_IMAGE_INFO;
 
-} HV_INPUT_MODIFY_VTL_PROTECTION_MASK_RANGE, *PHV_INPUT_MODIFY_VTL_PROTECTION_MASK_RANGE;
 
-//
-// Definitions for the HvCallAcquireSparseGpaPageHostAccess and HvCallReleaseSparseGpaPageHostAccess
-// hypercalls.
-//
-
-typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_ACCESS
+#define HV_MAXIMUM_SLOT_VA_MAPPING_COUNT                (512)
+typedef union HV_CALL_ATTRIBUTES _HV_OUTPUT_QUERY_IMAGE_INFO
 {
     //
-    // Supplies the partition ID of the partition this request is for.
+    // Returns the number of modules for ImageQueryTypeModuleCount
     //
-
-    HV_PARTITION_ID TargetPartitionId;
-
-    //
-    // Supplies the new host access mask.
-    //
-
-    UINT8 HostAccess;
-
-    UINT8 Reserved0;
-    UINT16 Reserved1;
-    UINT32 Reserved2;
+    UINT32 ModuleCount;
 
     //
-    // Supplies an array of GPA page numbers to modify.
+    // Returns the module layout information for ImageQueryTypeModuleInfo.
     //
+    HV_MODULE_TRAITS ModuleTraits;
 
-    HV_CALL_ATTRIBUTES HV_GPA_PAGE_NUMBER GpaPageList[];
+    //
+    // Returns the HVA-SPA translations and permissions of an image, slot tuple for
+    // ImageQueryTypeSlotVaMappings.
+    //
+    HV_GPA_PAGE_PERMISSION GpaPagePerm[HV_MAXIMUM_SLOT_VA_MAPPING_COUNT]; //PFN+Perms.
 
-} HV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_ACCESS, *PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_ACCESS;
+} HV_OUTPUT_QUERY_IMAGE_INFO, *PHV_OUTPUT_QUERY_IMAGE_INFO;
+
+typedef union _HV_VA_PERMISSION
+{
+    UINT64 AsUINT64;
+
+    struct
+    {
+        UINT64 Valid            : 1;
+        UINT64 Writable         : 1;
+        UINT64 Executable       : 1;
+        UINT64 ReservedZ0       : 9;
+        UINT64 VirtualPageFrame : 52;
+    };
+
+} HV_VA_PERMISSION, *PHV_VA_PERMISSION;
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_MAP_IMAGE_PAGES
+{
+    //
+    // Identify the module index for this operation.
+    //
+    UINT64 ModuleIndex  : 4;
+
+    //
+    // Identify a specific patch slot in this module.
+    //
+    UINT64 SlotIndex    : 2;
+
+    UINT64 ReservedZ0   : 58;
+
+    //
+    // Mappings for pages beginning at StartVa.
+    //
+    HV_VA_PERMISSION VirtualPageFramePerm[];
+} HV_INPUT_MAP_IMAGE_PAGES, *PHV_INPUT_MAP_IMAGE_PAGES;
+
+typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_COMMIT_PATCH
+{
+    //
+    // Identify the module index for this operation.
+    //
+    UINT64 ModuleIndex      : 4;
+
+    //
+    // Identify a specific patch slot in this module.
+    //
+    UINT64 SlotIndex        : 2;
+
+    //
+    // Indicates a valid argument for patch routine.
+    //
+    UINT64 UseTargetPatch   : 1;
+
+    UINT64 ReservedZ0       : 57;
+
+    //
+    // Patch routine VA, in the target slot.
+    //
+    HV_GVA PatchRoutineVa;
+
+    //
+    // Supplies the pages backing the input image.
+    //
+    HV_MEMORY_DESCRIPTOR Descriptor;
+
+} HV_INPUT_COMMIT_PATCH, *PHV_INPUT_COMMIT_PATCH;
+
+#endif
 
 #endif // _HVHDK_MINI
-

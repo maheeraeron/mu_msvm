@@ -31,6 +31,7 @@
 [Sources]
     Config.c
     Hob.c
+    Hv.c
     Platform.c
 
 [Sources.AARCH64]
@@ -49,6 +50,7 @@
     BiosDeviceLib
     DebugLib
     HobLib
+    HvHypercallLib
     IoLib
     PeimEntryPoint
     PeiResourcePublicationLib
@@ -132,6 +134,7 @@
     gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
     gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
+    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress

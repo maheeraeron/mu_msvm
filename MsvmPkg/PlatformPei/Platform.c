@@ -16,10 +16,13 @@ Abstract:
 #include <PiPei.h>
 #include <EfiNt.h>
 #include <BiosInterface.h>
+#include <Platform.h>
 #include <Config.h>
 #include <Hob.h>
+#include <Hv.h>
 #include <Guid/MemoryTypeInformation.h>
 #include <IndustryStandard/Acpi.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/BiosDeviceLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
@@ -161,6 +164,7 @@ Return Value:
 #if defined(MDE_CPU_AARCH64)
 VOID
 AddFirstMemoryRangeArm(
+    _Inout_ PPLATFORM_INIT_CONTEXT Context,
     _In_ CONST UINT64 Length
 )
 /*++
@@ -172,6 +176,8 @@ Routine Description:
     so the HOB add functions can be used.
 
 Arguments:
+
+    Context - The platform init context.
 
     Length - The size in bytes of the first memory range.
 
@@ -207,7 +213,7 @@ Return Value:
     //
     // Declare the whole range as system memory.
     //
-    HobAddMemoryRange(0, Length);
+    HobAddMemoryRange(Context, 0, Length);
 
     //
     // Mark the firmware image and config blob as allocated, allowing it to
@@ -223,6 +229,7 @@ Return Value:
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 VOID
 AddFirstMemoryRangeIntel(
+    _Inout_ PPLATFORM_INIT_CONTEXT Context,
     _In_ CONST UINT64 Length
 )
 /*++
@@ -235,6 +242,8 @@ Routine Description:
     so the HOB add functions can be used.
 
 Arguments:
+
+    Context - The platform init context.
 
     Length - The size in bytes of the first memory range.
 
@@ -312,7 +321,7 @@ Return Value:
     //
     // Declare System Memory from 0 to 640K.
     //
-    HobAddMemoryRange(0, SIZE_512KB + SIZE_128KB);
+    HobAddMemoryRange(Context, 0, SIZE_512KB + SIZE_128KB);
 
     //
     // Skip the range from 640K to 768K (legacy VGA MMIO range) by not
@@ -327,14 +336,17 @@ Return Value:
     //
     // Declare System Memory for everything else.
     //
-    HobAddMemoryRange(BASE_1MB, Length - SIZE_1MB);
+    HobAddMemoryRange(Context, BASE_1MB, Length - SIZE_1MB);
 
     //
     // Mark the region occupied by the firmware, along with the page tables, GDT
-    // entries and config blob as allocated, which should allow it to be
-    // reclaimed by the guest OS.
+    // entries, free RW pages and config blob as allocated, which should allow
+    // it to be reclaimed by the guest OS.
     //
-    UINT64 reservedBlockSize = PcdGet32(PcdFvSize) + SIZE_4KB * 7 + configBlobSize;
+    UINT64 reservedBlockSize =
+        PcdGet32(PcdFvSize) +
+        SIZE_4KB * MISC_PAGE_COUNT_TOTAL +
+        configBlobSize;
     HobAddAllocatedMemoryRange(PcdGet64(PcdFvBaseAddress), reservedBlockSize);
 
     DEBUG((DEBUG_VERBOSE, "<<< AddFirstMemoryRange\n"));
@@ -343,7 +355,7 @@ Return Value:
 
 VOID
 InitializeMemoryMap(
-    VOID
+    _Inout_ PPLATFORM_INIT_CONTEXT Context
     )
 /*++
 
@@ -354,7 +366,7 @@ Routine Description:
 
 Arguments:
 
-    None.
+    Context - The platform init context.
 
 Return Value:
 
@@ -394,11 +406,11 @@ Return Value:
                 //
                 if (range->BaseAddress == 0)
                 {
-                    ADDFIRSTMEMORYRANGE(range->Length);
+                    ADDFIRSTMEMORYRANGE(Context, range->Length);
                 }
                 else
                 {
-                    HobAddMemoryRange(range->BaseAddress, range->Length);
+                    HobAddMemoryRange(Context, range->BaseAddress, range->Length);
                 }
 
                 //
@@ -434,7 +446,7 @@ Return Value:
                 //
                 if (rangeV5->BaseAddress == 0)
                 {
-                    ADDFIRSTMEMORYRANGE(rangeV5->Length);
+                    ADDFIRSTMEMORYRANGE(Context, rangeV5->Length);
                 }
                 else
                 {
@@ -451,7 +463,7 @@ Return Value:
                     }
                     else
                     {
-                        HobAddMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
+                        HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
                     }
                 }
 
@@ -613,9 +625,13 @@ Return Value:
 
 --*/
 {
+    BOOLEAN connectedToHypervisor = FALSE;
+    PLATFORM_INIT_CONTEXT context;
     EFI_STATUS status;
 
     DEBUG((DEBUG_VERBOSE, ">>> *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));
+
+    ZeroMem(&context, sizeof(context));
 
     //
     // Get the configuration from the worker process.
@@ -626,6 +642,8 @@ Return Value:
         ASSERT(FALSE);
         return status;
     }
+
+    context.StartOfConfigBlob = GetStartOfConfigBlob();
 
     //
     // DxeBdLib.c InitializeDebugAgent is called very early on in DXE Core,
@@ -646,10 +664,27 @@ Return Value:
     status = PeiServicesInstallPpi(MsvmBootModePpiDescriptor);
     ASSERT_EFI_ERROR(status);
 
+    HvInitialize();
+
+    if (PcdGetBool(PcdSystemIsolated))
+    {
+        status = HvConnectToHypervisor(&context);
+        if (EFI_ERROR(status))
+        {
+            //
+            // TODO(wjliu): Report this error in a better way to increase debuggability.
+            //
+            ASSERT(FALSE);
+            CpuDeadLoop();
+        }
+
+        connectedToHypervisor = TRUE;
+    }
+
     //
     // Init memory map before publishing any other HOBs.
     //
-    InitializeMemoryMap();
+    InitializeMemoryMap(&context);
 
     //
     // Publish the FV HOB.
@@ -667,6 +702,11 @@ Return Value:
         // Watchdog only available starting with Threshold VDev.
         //
         InitializeWatchdog();
+    }
+
+    if (connectedToHypervisor)
+    {
+        HvDisconnectFromHypervisor(&context);
     }
 
     DEBUG((DEBUG_VERBOSE, "<<< *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));

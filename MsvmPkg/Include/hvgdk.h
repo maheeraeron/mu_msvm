@@ -551,6 +551,15 @@ typedef const HV_GVA_PAGE_NUMBER *PCHV_GVA_PAGE_NUMBER;
 //
 #define HV_STATUS_NOT_ALLOWED_WITH_NESTED_VIRT_ACTIVE  ((HV_STATUS)0x0072)
 
+//
+// MessageId: HV_STATUS_INSUFFICIENT_ROOT_MEMORY
+//
+// MessageText:
+//
+// There is not enough memory in the root partition's pool to complete the operation.
+//
+#define HV_STATUS_INSUFFICIENT_ROOT_MEMORY ((HV_STATUS)0x0073)
+
 typedef union _HV_PICO100_DURATION
 {
     UINT64 AsUINT64;
@@ -654,6 +663,7 @@ typedef union _HV_X64_MSR_VP_EXIT_INTERRUPT_CONTROL_CONTENTS
 #define HV_PENDING_EVENT_TYPE HV_ARM64_PENDING_EVENT_TYPE
 
 #define HvPendingEventException HvArm64PendingEventException
+#define HvPendingEventHypercallOutput HvArm64PendingEventHypercallOutput
 
 #else
 
@@ -672,6 +682,7 @@ typedef union _HV_X64_MSR_VP_EXIT_INTERRUPT_CONTROL_CONTENTS
 #define HV_PENDING_EVENT_TYPE HV_X64_PENDING_EVENT_TYPE
 
 #define HvPendingEventException HvX64PendingEventException
+#define HvPendingEventHypercallOutput HvX64PendingEventHypercallOutput
 
 #endif
 

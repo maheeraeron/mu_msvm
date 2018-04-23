@@ -61,6 +61,7 @@
 !endif
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
+  HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LocalApicLib|UefiCpuPkg/Library/BaseXApicLib/BaseXApicLib.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
@@ -455,6 +456,9 @@
   gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages|0x0
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0
+
+  # Isolation
+  gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE
 
 ################################################################################
 #

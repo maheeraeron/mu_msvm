@@ -29,11 +29,11 @@ Author:
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/HvHypercallLib.h>
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 #include <Library/LocalApicLib.h>
 #endif
 #if defined(MDE_CPU_AARCH64)
-#include <Library/HvHypercallLib.h>
 #include <Protocol/HardwareInterrupt.h>
 #endif
 
@@ -59,6 +59,7 @@ typedef struct _EFI_HV_PAGES
     HV_MESSAGE_PAGE MessagePage;
 } EFI_HV_PAGES, *PEFI_HV_PAGES;
 
+HV_HYPERCALL_CONTEXT mHvContext;
 PEFI_HV_PAGES mHvPages;
 EFI_HANDLE mHvHandle;
 BOOLEAN mSynicConnected;
@@ -71,7 +72,6 @@ UINT8 mVectorSint[256];
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
 EFI_CPU_ARCH_PROTOCOL *mCpu;
-BOOLEAN mHypercallPageSet;
 
 #elif defined(MDE_CPU_AARCH64)
 
@@ -80,365 +80,6 @@ EFI_HARDWARE_INTERRUPT_PROTOCOL *mHwInt;
 #endif
 
 extern EFI_HV_PROTOCOL mHv;
-
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
-
-#if !defined(MDEPKG_NDEBUG)
-PWSTR
-EfiHvpRegisterNameToString(
-    _In_ HV_REGISTER_NAME RegisterName
-    )
-{
-    switch (RegisterName)
-    {
-    case HvRegisterSint0:
-        return L"HvRegisterSint0";
-    case HvRegisterSint1:
-        return L"HvRegisterSint1";
-    case HvRegisterSint2:
-        return L"HvRegisterSint2";
-    case HvRegisterSint3:
-        return L"HvRegisterSint3";
-    case HvRegisterSint4:
-        return L"HvRegisterSint4";
-    case HvRegisterSint5:
-        return L"HvRegisterSint5";
-    case HvRegisterSint6:
-        return L"HvRegisterSint6";
-    case HvRegisterSint7:
-        return L"HvRegisterSint7";
-    case HvRegisterSint8:
-        return L"HvRegisterSint8";
-    case HvRegisterSint9:
-        return L"HvRegisterSint9";
-    case HvRegisterSint10:
-        return L"HvRegisterSint10";
-    case HvRegisterSint11:
-        return L"HvRegisterSint11";
-    case HvRegisterSint12:
-        return L"HvRegisterSint12";
-    case HvRegisterSint13:
-        return L"HvRegisterSint13";
-    case HvRegisterSint14:
-        return L"HvRegisterSint14";
-    case HvRegisterSint15:
-        return L"HvRegisterSint15";
-
-    case HvRegisterScontrol:
-        return L"HvRegisterScontrol";
-    case HvRegisterSversion:
-        return L"HvRegisterSversion";
-    case HvRegisterSifp:
-        return L"HvRegisterSifp";
-    case HvRegisterSipp:
-        return L"HvRegisterSipp";
-    case HvRegisterEom:
-        return L"HvRegisterEom";
-    case HvRegisterSirbp:
-        return L"HvRegisterSirbp";
-
-    case HvRegisterNestedSint0:
-        return L"HvRegisterNestedSint0";
-    case HvRegisterNestedSint1:
-        return L"HvRegisterNestedSint1";
-    case HvRegisterNestedSint2:
-        return L"HvRegisterNestedSint2";
-    case HvRegisterNestedSint3:
-        return L"HvRegisterNestedSint3";
-    case HvRegisterNestedSint4:
-        return L"HvRegisterNestedSint4";
-    case HvRegisterNestedSint5:
-        return L"HvRegisterNestedSint5";
-    case HvRegisterNestedSint6:
-        return L"HvRegisterNestedSint6";
-    case HvRegisterNestedSint7:
-        return L"HvRegisterNestedSint7";
-    case HvRegisterNestedSint8:
-        return L"HvRegisterNestedSint8";
-    case HvRegisterNestedSint9:
-        return L"HvRegisterNestedSint9";
-    case HvRegisterNestedSint10:
-        return L"HvRegisterNestedSint10";
-    case HvRegisterNestedSint11:
-        return L"HvRegisterNestedSint11";
-    case HvRegisterNestedSint12:
-        return L"HvRegisterNestedSint12";
-    case HvRegisterNestedSint13:
-        return L"HvRegisterNestedSint13";
-    case HvRegisterNestedSint14:
-        return L"HvRegisterNestedSint14";
-    case HvRegisterNestedSint15:
-        return L"HvRegisterNestedSint15";
-
-    case HvRegisterNestedScontrol:
-        return L"HvRegisterNestedScontrol";
-    case HvRegisterNestedSversion:
-        return L"HvRegisterNestedSversion";
-    case HvRegisterNestedSifp:
-        return L"HvRegisterNestedSifp";
-    case HvRegisterNestedSipp:
-        return L"HvRegisterNestedSipp";
-    case HvRegisterNestedEom:
-        return L"HvRegisterNestedEom";
-    case HvRegisterNestedSirbp:
-        return L"HvRegisterNestedSirbp";
-
-    case HvRegisterVpIndex:
-        return L"HvRegisterVpIndex";
-    case HvRegisterGuestOsId:
-        return L"HvRegisterGuestOsId";
-    case HvRegisterTimeRefCount:
-        return L"HvRegisterTimeRefCount";
-    case HvRegisterNestedVpIndex:
-        return L"HvRegisterNestedVpIndex";
-
-    case HvRegisterStimer0Config:
-        return L"HvRegisterStimer0Config";
-    case HvRegisterStimer0Count:
-        return L"HvRegisterStimer0Count";
-    case HvRegisterStimer1Config:
-        return L"HvRegisterStimer1Config";
-    case HvRegisterStimer1Count:
-        return L"HvRegisterStimer1Count";
-    case HvRegisterStimer2Config:
-        return L"HvRegisterStimer2Config";
-    case HvRegisterStimer2Count:
-        return L"HvRegisterStimer2Count";
-    case HvRegisterStimer3Config:
-        return L"HvRegisterStimer3Config";
-    case HvRegisterStimer3Count:
-        return L"HvRegisterStimer3Count";
-
-    case HvX64RegisterHypercall:
-        return L"HvX64RegisterHypercall";
-
-    default:
-        return L"*** Unknown Register Name ***";
-    }
-}
-#endif
-
-static
-UINT32
-EfiHvpGetMsrNameFromRegisterName(
-    _In_ HV_REGISTER_NAME RegisterName
-    )
-/*++
-
-Routine Description:
-
-    Maps a register name to an msr index.
-
-Arguments:
-
-    RegisterName - Supplies the register name to be mapped.
-
-Return Value:
-
-    Returns the msr index.
-
---*/
-{
-    UINT32 msrIndex;
-
-    switch (RegisterName)
-    {
-    case HvRegisterSint0:
-    case HvRegisterSint1:
-    case HvRegisterSint2:
-    case HvRegisterSint3:
-    case HvRegisterSint4:
-    case HvRegisterSint5:
-    case HvRegisterSint6:
-    case HvRegisterSint7:
-    case HvRegisterSint8:
-    case HvRegisterSint9:
-    case HvRegisterSint10:
-    case HvRegisterSint11:
-    case HvRegisterSint12:
-    case HvRegisterSint13:
-    case HvRegisterSint14:
-    case HvRegisterSint15:
-        msrIndex = HV_X64_MSR_SINT0 + (RegisterName - HvRegisterSint0);
-        break;
-
-    case HvRegisterScontrol:
-    case HvRegisterSversion:
-    case HvRegisterSifp:
-    case HvRegisterSipp:
-    case HvRegisterEom:
-    case HvRegisterSirbp:
-        msrIndex = HV_X64_MSR_SCONTROL + (RegisterName - HvRegisterScontrol);
-        break;
-
-    case HvRegisterNestedSint0:
-    case HvRegisterNestedSint1:
-    case HvRegisterNestedSint2:
-    case HvRegisterNestedSint3:
-    case HvRegisterNestedSint4:
-    case HvRegisterNestedSint5:
-    case HvRegisterNestedSint6:
-    case HvRegisterNestedSint7:
-    case HvRegisterNestedSint8:
-    case HvRegisterNestedSint9:
-    case HvRegisterNestedSint10:
-    case HvRegisterNestedSint11:
-    case HvRegisterNestedSint12:
-    case HvRegisterNestedSint13:
-    case HvRegisterNestedSint14:
-    case HvRegisterNestedSint15:
-        msrIndex = HV_X64_MSR_NESTED_SINT0 +
-            (RegisterName - HvRegisterNestedSint0);
-
-        break;
-
-    case HvRegisterNestedScontrol:
-    case HvRegisterNestedSversion:
-    case HvRegisterNestedSifp:
-    case HvRegisterNestedSipp:
-    case HvRegisterNestedEom:
-    case HvRegisterNestedSirbp:
-        msrIndex = HV_X64_MSR_NESTED_SCONTROL +
-            (RegisterName - HvRegisterNestedScontrol);
-
-        break;
-
-    case HvRegisterVpIndex:
-        msrIndex = HV_X64_MSR_VP_INDEX;
-        break;
-
-    case HvRegisterGuestOsId:
-        msrIndex = HV_X64_MSR_GUEST_OS_ID;
-        break;
-
-    case HvRegisterTimeRefCount:
-        msrIndex = HV_X64_MSR_TIME_REF_COUNT;
-        break;
-        
-    case HvRegisterNestedVpIndex:
-        msrIndex = HV_X64_MSR_NESTED_VP_INDEX;
-        break;
-
-    case HvRegisterStimer0Config:
-    case HvRegisterStimer0Count:
-    case HvRegisterStimer1Config:
-    case HvRegisterStimer1Count:
-    case HvRegisterStimer2Config:
-    case HvRegisterStimer2Count:
-    case HvRegisterStimer3Config:
-    case HvRegisterStimer3Count:
-        msrIndex = HV_X64_MSR_STIMER0_CONFIG +
-            (RegisterName - HvRegisterStimer0Config);
-        break;
-
-    case HvX64RegisterHypercall:
-        msrIndex = HV_X64_MSR_HYPERCALL;
-        break;
-
-    default:
-        ASSERT(FALSE);
-        __assume(0);
-    }
-
-    return msrIndex;
-}
-
-#endif
-
-
-UINT64
-EfiHvpGetVpRegister64Self(
-    _In_ const HV_REGISTER_NAME RegisterName
-)
-/*++
-
-Routine Description:
-
-    Gets a 64 bit register value on the current virtual processor.
-
-Arguments:
-
-    RegisterName - Supplies the register name to be mapped.
-
-Return Value:
-
-    The register value.
-
---*/
-{
-    UINT64 registerValue;
-
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
-
-    UINT32 msr = EfiHvpGetMsrNameFromRegisterName(RegisterName);
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__, 
-        RegisterName, EfiHvpRegisterNameToString(RegisterName), msr));
-
-    registerValue = AsmReadMsr64(msr);
-
-#elif defined(MDE_CPU_AARCH64)
-
-    HV_STATUS status;
-
-    status = AsmGetVpRegister64(RegisterName, &registerValue);
-    ASSERT(status == 0);
-
-#else
-#error unsupported architecture
-#endif
-
-    DEBUG((DEBUG_VERBOSE, "<<< %a: Value 0x%lx\n", __FUNCTION__, registerValue));
-    return registerValue;
-}
-
-void
-EfiHvpSetVpRegister64Self(
-    _In_ const HV_REGISTER_NAME  RegisterName,
-    _In_ const UINT64            RegisterValue
-    )
-/*++
-
-Routine Description:
-
-    Sets a 64 bit register on the current virtual processor.
-
-Arguments:
-
-    RegisterName - Supplies the register name to be mapped.
-
-    RegisterValue - Supplies the register value.
-
-Return Value:
-
-    n/a
-
---*/
-{
-    
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
-
-    UINT32 msr = EfiHvpGetMsrNameFromRegisterName(RegisterName);
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__, 
-        RegisterName, EfiHvpRegisterNameToString(RegisterName), msr, RegisterValue));
-
-    AsmWriteMsr64(msr, RegisterValue);
-
-#elif defined(MDE_CPU_AARCH64)
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s Value 0x%lx\n", __FUNCTION__, 
-        RegisterName, EfiHvpRegisterNameToString(RegisterName), 
-        RegisterValue));
-
-    AsmSetVpRegister64(RegisterName, RegisterValue);
-
-#else
-#error unsupported architecture
-#endif
-
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
-}
 
 
 VOID
@@ -583,7 +224,7 @@ Return Value:
     sint.Vector = Vector;
     sint.Masked = FALSE;
     sint.AutoEoi = mAutoEoi;
-    EfiHvpSetVpRegister64Self(HvRegisterSint0 + SintIndex, sint.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterSint0 + SintIndex, sint.AsUINT64);
 
     // Store the state used by the interrupt handler.
 
@@ -710,7 +351,7 @@ Return Value:
 
     sint.AsUINT64 = 0;
     sint.Masked = 1;
-    EfiHvpSetVpRegister64Self(HvRegisterSint0 + SintIndex, sint.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterSint0 + SintIndex, sint.AsUINT64);
 
     // Unregister the interrupt handler.
 
@@ -811,7 +452,7 @@ Return Value:
     MemoryBarrier();
     if (message->Header.MessageFlags.MessagePending)
     {
-        EfiHvpSetVpRegister64Self(HvRegisterEom, 0);
+        HvHypercallSetVpRegister64Self(HvRegisterEom, 0);
     }
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
@@ -874,7 +515,7 @@ Return Value:
 {
     UINT64 refTime;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    refTime = EfiHvpGetVpRegister64Self(HvRegisterTimeRefCount);
+    refTime = HvHypercallGetVpRegister64Self(HvRegisterTimeRefCount);
     DEBUG((DEBUG_VERBOSE, "<<< %a: reftime 0x%p\n", __FUNCTION__, refTime));
     return refTime;
 }
@@ -903,7 +544,7 @@ Return Value:
 {
     UINT32 vpIndex;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    vpIndex = (UINT32)EfiHvpGetVpRegister64Self(HvRegisterVpIndex);
+    vpIndex = (UINT32)HvHypercallGetVpRegister64Self(HvRegisterVpIndex);
     DEBUG((DEBUG_VERBOSE, "<<< %a: index 0x%x\n", __FUNCTION__, vpIndex));
     return vpIndex;
 }
@@ -942,7 +583,7 @@ Return Value:
 {
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x Expiration 0x%x\n", __FUNCTION__, 
         TimerIndex, Expiration));
-    EfiHvpSetVpRegister64Self(HvRegisterStimer0Count + (2 * TimerIndex), Expiration);
+    HvHypercallSetVpRegister64Self(HvRegisterStimer0Count + (2 * TimerIndex), Expiration);
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
@@ -1001,7 +642,7 @@ Return Value:
     config.ApicVector = Vector;
     config.DirectMode = (DirectMode != FALSE);
     config.SINTx = SintIndex;
-    EfiHvpSetVpRegister64Self(HvRegisterStimer0Config + (2 * TimerIndex), config.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterStimer0Config + (2 * TimerIndex), config.AsUINT64);
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
     return EFI_SUCCESS;
 }
@@ -1009,10 +650,10 @@ Return Value:
 
 HV_STATUS
 EfiHvIssueHypercall (
-    __in HV_CALL_CODE CallCode,
-    __in BOOLEAN Fast,
-    __in UINT64 FirstRegister,
-    __in UINT64 SecondRegister
+    _In_ HV_CALL_CODE CallCode,
+    _In_ BOOLEAN Fast,
+    _In_ UINT64 FirstRegister,
+    _In_ UINT64 SecondRegister
     )
 /*++
 
@@ -1036,73 +677,13 @@ Return Value:
 
 --*/
 {
-    HV_HYPERCALL_INPUT callInput;
-    HV_HYPERCALL_OUTPUT callOutput;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    
-    callInput.AsUINT64 = 0;
-    callInput.CallCode = CallCode;
-    callInput.IsFast = (Fast != FALSE);
-
-#if defined(MDE_CPU_X64)
-
-    {
-        typedef HV_X64_HYPERCALL_OUTPUT HYPERCALL_ROUTINE(
-            __in HV_X64_HYPERCALL_INPUT Control,
-            __in UINT64                 InputPhysicalAddress,
-            __in UINT64                 OutputPhysicalAddress
-            );
-
-#pragma warning(disable: 4055)
-
-        HYPERCALL_ROUTINE* hypercallRoutine =
-            (HYPERCALL_ROUTINE *)mHvPages->HypercallPage;
-
-        callOutput = hypercallRoutine(callInput,
-                                      FirstRegister,
-                                      SecondRegister);
-    }
-
-#elif defined(MDE_CPU_IA32)
-
-    {
-        ULARGE_INTEGER packed;
-        ULARGE_INTEGER first;
-        ULARGE_INTEGER second;
-
-        packed.QuadPart = callInput.AsUINT64;
-        first.QuadPart = FirstRegister;
-        second.QuadPart = SecondRegister;
-
-        __asm
-        {
-            mov edi, second.HighPart;
-            mov esi, second.LowPart;
-            mov ebx, first.HighPart;
-            mov ecx, first.LowPart;
-            mov edx, packed.HighPart;
-            mov eax, packed.LowPart;
-
-            call mHvPages->HypercallPage;
-
-            mov packed.LowPart, eax;
-            mov packed.HighPart, edx;
-        }
-
-        callOutput.AsUINT64 = packed.QuadPart;
-    }
-
-#elif defined(MDE_CPU_AARCH64)
-
-    callOutput = AsmHyperCall(callInput, FirstRegister, SecondRegister);
-
-#else
-#error Unsupported architecture
-#endif
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
-
-    return callOutput.CallStatus;
+    return HvHypercallIssue(&mHvContext,
+                            CallCode,
+                            Fast,
+                            0,
+                            FirstRegister,
+                            SecondRegister,
+                            NULL);
 }
 
 
@@ -1296,8 +877,6 @@ Return Value:
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
     HV_CPUID_RESULT cpuidResult;
-    HV_GUEST_OS_ID_CONTENTS guestOsId;
-    HV_X64_MSR_HYPERCALL_CONTENTS hypercallMsr;
 
     // Validate that the hypervisor is present, is a Microsoft hypervisor,
     // and has all the required features.
@@ -1340,20 +919,7 @@ Return Value:
     }
     DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHvPages));
 
-    // Set the guest ID.
-
-    guestOsId.AsUINT64 = 0;
-    guestOsId.OsId = 1;
-    EfiHvpSetVpRegister64Self(HvRegisterGuestOsId, guestOsId.AsUINT64);
-
-    // Enable the hypercall page.
-
-    hypercallMsr.AsUINT64 = EfiHvpGetVpRegister64Self(HvX64RegisterHypercall);
-    ASSERT(hypercallMsr.Enable == 0);
-    hypercallMsr.Enable = 1;
-    hypercallMsr.GpaPageNumber = (UINTN)mHvPages->HypercallPage / EFI_PAGE_SIZE;
-    EfiHvpSetVpRegister64Self(HvX64RegisterHypercall, hypercallMsr.AsUINT64);
-    mHypercallPageSet = TRUE;
+    HvHypercallConnect(mHvPages->HypercallPage, &mHvContext);
 
     // Cache some enlightenment information.
 
@@ -1374,18 +940,7 @@ Return Value:
         goto Exit;
     }
 
-    // Set the guest ID.
-
-    HV_GUEST_OS_ID_CONTENTS guestOsId;
-
-    guestOsId.AsUINT64 = 0;
-    guestOsId.OsId = 4;     // Windows NT
-    guestOsId.VendorId = 1; // Microsoft
-    EfiHvpSetVpRegister64Self(HvRegisterGuestOsId, guestOsId.AsUINT64);
-
-    guestOsId.AsUINT64 = 0;
-    guestOsId.AsUINT64 = EfiHvpGetVpRegister64Self(HvRegisterGuestOsId);
-    ASSERT(guestOsId.VendorId == 1 && guestOsId.OsId == 4);
+    HvHypercallConnect(&mHvContext);
 
     // AutoEoi is not possible on ARM.
 
@@ -1425,22 +980,7 @@ Return Value:
 
 --*/
 {
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
-    HV_X64_MSR_HYPERCALL_CONTENTS hypercallMsr;
-
-    // Disable the Intel specific hypercall page.
-
-    if (mHypercallPageSet)
-    {
-        hypercallMsr.AsUINT64 = AsmReadMsr64(HV_X64_MSR_HYPERCALL);
-        hypercallMsr.Enable = 0;
-        hypercallMsr.GpaPageNumber = 0;
-        AsmWriteMsr64(HV_X64_MSR_HYPERCALL, hypercallMsr.AsUINT64);
-
-        AsmWriteMsr64(HV_X64_MSR_GUEST_OS_ID, 0);
-        mHypercallPageSet = FALSE;
-    }
-#endif
+    HvHypercallDisconnect(&mHvContext);
 
     // Free the hypercall communication pages.
 
@@ -1479,21 +1019,21 @@ Return Value:
 
     // Enable the message page.
 
-    simp.AsUINT64 = EfiHvpGetVpRegister64Self(HvRegisterSipp);
+    simp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSipp);
     ASSERT(simp.SimpEnabled == 0);
 
     simp.SimpEnabled = 1;
     simp.BaseSimpGpa = (UINTN)&mHvPages->MessagePage / EFI_PAGE_SIZE;
-    EfiHvpSetVpRegister64Self(HvRegisterSipp, simp.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterSipp, simp.AsUINT64);
 
     // Enable the event page.
 
-    siefp.AsUINT64 = EfiHvpGetVpRegister64Self(HvRegisterSifp);
+    siefp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSifp);
     ASSERT(siefp.SiefpEnabled == 0);
 
     siefp.SiefpEnabled = 1;
     siefp.BaseSiefpGpa = (UINTN)&mHvPages->EventFlagsPage / EFI_PAGE_SIZE;
-    EfiHvpSetVpRegister64Self(HvRegisterSifp, siefp.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterSifp, siefp.AsUINT64);
 
     mSynicConnected = TRUE;
 
@@ -1536,8 +1076,8 @@ Return Value:
 
     for (timerIndex = 0; timerIndex < HV_SYNIC_STIMER_COUNT; timerIndex += 1)
     {
-        EfiHvpSetVpRegister64Self(HvRegisterStimer0Count + (2 * timerIndex), 0);
-        EfiHvpSetVpRegister64Self(HvRegisterStimer0Config + (2 * timerIndex), 0);
+        HvHypercallSetVpRegister64Self(HvRegisterStimer0Count + (2 * timerIndex), 0);
+        HvHypercallSetVpRegister64Self(HvRegisterStimer0Config + (2 * timerIndex), 0);
     }
 
     // Disconnect the SINTs and drain all the message queues.
@@ -1553,17 +1093,17 @@ Return Value:
 
     // Disable the message page.
 
-    simp.AsUINT64 = EfiHvpGetVpRegister64Self(HvRegisterSipp);
+    simp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSipp);
     simp.SimpEnabled = 0;
     simp.BaseSimpGpa = 0;
-    EfiHvpSetVpRegister64Self(HvRegisterSipp, simp.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterSipp, simp.AsUINT64);
 
     // Disable the event page.
 
-    siefp.AsUINT64 = EfiHvpGetVpRegister64Self(HvRegisterSifp);
+    siefp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSifp);
     siefp.SiefpEnabled = 0;
     siefp.BaseSiefpGpa = 0;
-    EfiHvpSetVpRegister64Self(HvRegisterSifp, siefp.AsUINT64);
+    HvHypercallSetVpRegister64Self(HvRegisterSifp, siefp.AsUINT64);
     mSynicConnected = FALSE;
 }
 
@@ -1611,7 +1151,7 @@ EFI_HV_PROTOCOL mHv =
     EfiHvConfigureTimer,
     EfiHvSetTimer,
     EfiHvPostMessage,
-    EfiHvSignalEvent,
+    EfiHvSignalEvent
 };
 
 

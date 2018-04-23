@@ -417,6 +417,9 @@
   # UEFI_CONFIG_AARCH64_MPIDR
   gMsvmPkgTokenSpaceGuid.PcdProcessorMPIDRValuesPtr|0x0
 
+  # Isolation
+  gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE
+
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.
