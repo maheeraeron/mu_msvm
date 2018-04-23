@@ -134,6 +134,8 @@
     gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
+    gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
+    gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress

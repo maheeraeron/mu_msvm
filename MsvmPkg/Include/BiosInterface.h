@@ -29,7 +29,7 @@ enum
 
 //
 // BIOS configuration ports.
-// 
+//
 // See PCD MsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
 //
 
@@ -555,7 +555,8 @@ enum UefiStructureType
     UefiConfigFlags                        = 0x12,
     UefiConfigProcessorInformation         = 0x13,
     UefiConfigMmioRanges                   = 0x14,
-    UefiConfigAARCH64MPIDR                 = 0x15
+    UefiConfigAARCH64MPIDR                 = 0x15,
+    UefiConfigAcpiTable                    = 0x16
 };
 
 //
@@ -736,6 +737,14 @@ typedef struct _UEFI_CONFIG_AARCH64_MPIDR
     UEFI_CONFIG_HEADER Header;
     UINT64 ProcessorMPIDRValues[];
 } UEFI_CONFIG_AARCH64_MPIDR;
+
+// Dynamically sized structure for binary blob that is an ACPI table.
+// Only used internally for testing, gated behind velocity.
+typedef struct _UEFI_CONFIG_ACPI_TABLE
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 AcpiTableData[];
+} UEFI_CONFIG_ACPI_TABLE;
 
 #pragma warning(pop)
 #pragma pack(pop)

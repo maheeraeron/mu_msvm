@@ -419,6 +419,11 @@
   # Isolation
   gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE
 
+  # UEFI_CONFIG_ACPI_TABLE
+  gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0
+
+
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.

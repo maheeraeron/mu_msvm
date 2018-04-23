@@ -314,6 +314,57 @@ Cleanup:
 
 
 EFI_STATUS
+AcpiInstallConfigStructTable(
+    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+/*++
+
+Routine Description:
+
+    Retrieves the config struct table if present and installs it.
+
+Arguments:
+
+    AcpiTable - A pointer to the ACPI table protocol.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table;
+    UINTN tableHandle;
+    UINT32 tableSize;
+
+    //
+    // Get the table from the config blob parsed in PEI. It may not be present.
+    //
+    tableSize = PcdGet32(PcdAcpiTableSize);
+
+    if (tableSize == 0)
+    {
+        return EFI_SUCCESS;
+    }
+
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdAcpiTablePtr);
+
+    ASSERT(table->Length == tableSize);
+
+    //
+    // Install it into the published tables.
+    //
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
+    return status;
+}
+
+
+EFI_STATUS
 EFIAPI
 AcpiPlatformInitializeAcpiTables(
     __in EFI_HANDLE        ImageHandle,
@@ -444,6 +495,15 @@ Return Value:
     // Add the NFIT table.
     //
     status = AcpiInstallNfitTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // Add the dynamic config struct table if present.
+    //
+    status = AcpiInstallConfigStructTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;

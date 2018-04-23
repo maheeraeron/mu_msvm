@@ -86,7 +86,9 @@
     gMsvmPkgTokenSpaceGuid.PcdCom1Vector
     gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
     gMsvmPkgTokenSpaceGuid.PcdCom2Vector
-    
+    gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
+    gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
+
 [Depex]
     gEfiAcpiTableProtocolGuid
 

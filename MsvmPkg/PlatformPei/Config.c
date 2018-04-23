@@ -426,6 +426,15 @@ DebugDumpUefiConfigStruct(
             }
             break;
 
+        case UefiConfigAcpiTable:
+            UEFI_CONFIG_ACPI_TABLE *acpi = (UEFI_CONFIG_ACPI_TABLE*) Header;
+            UINT64 acpiTableSize = acpi->Header.Length - sizeof(UEFI_CONFIG_HEADER);
+            EFI_ACPI_DESCRIPTION_HEADER* acpiHeader = (EFI_ACPI_DESCRIPTION_HEADER*) acpi->AcpiTableData;
+            DEBUG((DEBUG_VERBOSE, "\tAcpi Data Size:0x%x\n", acpiTableSize));
+            DEBUG((DEBUG_VERBOSE, "\tAcpi Header Size:0x%x\n", acpiHeader->Length));
+            DEBUG((DEBUG_VERBOSE, "\tAcpi Header Signature:0x%x\n", acpiHeader->Signature));
+            break;
+
         default:
             DEBUG((DEBUG_VERBOSE, "\t!!! Unrecognized config structure type !!!\n"));
             break;
@@ -551,7 +560,8 @@ Return Value:
         sizeof(UEFI_CONFIG_FLAGS), //UefiConfigFlags
         sizeof(UEFI_CONFIG_PROCESSOR_INFORMATION), //UefiConfigProcessorInformation
         0, //UefiConfigMmioRanges
-        0  //UefiConfigAARCH64MPIDR
+        0, //UefiConfigAARCH64MPIDR
+        0  //UefiConfigAcpiTable
     };
 
     //
@@ -986,6 +996,24 @@ Return Value:
                 requiredStructures.UefiConfigAARCH64MPIDR = 1;
                 break;
 #endif
+            case UefiConfigAcpiTable:
+                UEFI_CONFIG_ACPI_TABLE *acpiTable = (UEFI_CONFIG_ACPI_TABLE*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *acpiHeader = (EFI_ACPI_DESCRIPTION_HEADER*) acpiTable->AcpiTableData;
+
+                //
+                // Verify ACPI table header is completely within the config structure.
+                // Skip if not.
+                //
+                if (acpiTable->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    acpiHeader->Length > (acpiTable->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "***ACPI table is not contained within config structure size, skipping!\n"));
+                    break;
+                }
+
+                PcdSet64(PcdAcpiTablePtr, (UINT64) acpiTable->AcpiTableData);
+                PcdSet32(PcdAcpiTableSize, acpiHeader->Length);
+                break;
         }
 
         calculatedConfigSize += header->Length;

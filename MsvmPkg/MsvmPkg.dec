@@ -62,7 +62,7 @@
   gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector|0x41|UINT8|0x3000
   gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex|0x2|UINT8|0x3001
   gMsvmPkgTokenSpaceGuid.PcdVmbusVector|0x5|UINT8|0x3002
-  
+
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiTableStorageFile|{ 0x25, 0x4e, 0x37, 0x7e, 0x01, 0x8e, 0xee, 0x4f, 0x87, 0xf2, 0x39, 0xc, 0x23, 0xc6, 0x6, 0xcd }|VOID*|0x30000016
 
   # maximum number of event channels.
@@ -96,7 +96,7 @@
   # BIOS Device
   gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress|0xEFFED000|UINT32|0x5002
 
-  # Generation Counter 
+  # Generation Counter
   gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector|35|UINT8|0x5003
 
   # UARTs
@@ -260,6 +260,10 @@
 
   # Isolation
   gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE|BOOLEAN|0x603A
+
+  # UEFI_CONFIG_ACPI_TABLE
+  gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0|UINT64|0x603B
+  gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0|UINT32|0x603C
 
 [PcdsDynamic, PcdsDynamicEx]
   gMsvmPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
