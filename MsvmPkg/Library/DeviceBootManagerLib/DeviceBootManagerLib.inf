@@ -51,13 +51,18 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
+  DebugLib
   PcdLib
   MsLogoLib
   MsPlatBdsLib
+  UefiBootServicesTableLib
+  EmclLib
 
 [Protocols]
+  gEfiVmbusProtocolGuid
 
 [Guids]
+  gEfiVmbusChannelDevicePathGuid
 
 [FeaturePcd]
 

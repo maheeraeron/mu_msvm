@@ -273,7 +273,7 @@
   # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000042
 !else
   # This default turns on errors and warnings
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
@@ -340,6 +340,9 @@
 
    # Change PcdBootManagerMenuFile to point to the Surface FrontPage application
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x8A, 0x70, 0x42, 0x40, 0x2D, 0x0F, 0x23, 0x48, 0xAC, 0x60, 0x0D, 0x77, 0xB3, 0x11, 0x18, 0x89 }
+
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerInBootOrder|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupported|FALSE
 
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE

@@ -427,6 +427,7 @@ PlatformBootManagerBeforeConsole (
   EFI_DEVICE_PATH_PROTOCOL  *VarConOut;
   EFI_DEVICE_PATH_PROTOCOL  *VarConIn;
   EFI_DEVICE_PATH_PROTOCOL            *TempDevicePath;
+  EFI_DEVICE_PATH_PROTOCOL            *TempDevicePathCopy;
   EFI_DEVICE_PATH_PROTOCOL            *ConsoleOut;
   EFI_DEVICE_PATH_PROTOCOL            *Temp;
   EFI_DEVICE_PATH_PROTOCOL            *Instance;
@@ -509,6 +510,13 @@ PlatformBootManagerBeforeConsole (
       if (!EFI_ERROR (Status) && IsDevicePathEnd (TempDevicePath) && IsVgaHandle (Handle)) {
         break;
       }
+    case OEM_DISPLAY_PATH_ROOT:
+      TempDevicePathCopy = TempDevicePath;
+      TempDevicePath = DuplicateDevicePath (TempDevicePathCopy);
+      Status = gBS->LocateDevicePath (&gEfiDevicePathProtocolGuid, &TempDevicePathCopy, &Handle);
+      if (!EFI_ERROR (Status)) {
+        break;
+      }
     default:
       Handle = NULL;
       DEBUG ((DEBUG_ERROR, "[PlatformBds] No video controller!\n"));
@@ -522,10 +530,15 @@ PlatformBootManagerBeforeConsole (
     gBS->ConnectController (Handle, NULL, NULL, TRUE);
 
     //
-    // Get the GOP device path
-    // NOTE: We may get a device path that contains Controller node in it.
+    // In case of OEM_DISPLAY_PATH_ROOT no need to check children
     //
-    TempDevicePath = EfiBootManagerGetGopDevicePath (Handle);
+    if (PrimaryDisplay != OEM_DISPLAY_PATH_ROOT) {
+      //
+      // Get the GOP device path
+      // NOTE: We may get a device path that contains Controller node in it.
+      //
+      TempDevicePath = EfiBootManagerGetGopDevicePath (Handle);
+    }
     if (TempDevicePath != NULL) {
       Temp = ConsoleOut;
       ConsoleOut = UpdateDevicePath (ConsoleOut, TempDevicePath);

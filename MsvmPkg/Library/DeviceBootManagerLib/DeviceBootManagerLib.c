@@ -27,11 +27,37 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <Uefi.h>
+#include <EfiNt.h>
 
+#include <Protocol/Emcl.h>
 
 #include <Library/DeviceBootManagerLib.h>
 #include <Library/MsLogoLib.h>
 #include <Library/MsPlatBdsLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/DebugLib.h>
+#include <Library/EmclLib.h>
+#include <VirtualDeviceId.h>
+#include <hyperkbdprotocol.h>
+
+//
+// Predefined platform default console device path
+//
+static BDS_CONSOLE_CONNECT_ENTRY   gPlatformConsoles[] = {
+  //
+  // Place holder for serial console. Any non USB device used for
+  // CONIN must be in this table.  Any non display used for CONOUT
+  // must also be in this list.
+  //
+  {
+    NULL,
+    CONSOLE_IN
+  },
+  {
+    NULL,
+    0
+  }
+};
 
 
 /**
@@ -85,10 +111,93 @@ DeviceBootManagerBeforeConsole (
   EFI_DEVICE_PATH_PROTOCOL    **DevicePath,
   BDS_CONSOLE_CONNECT_ENTRY   **PlatformConsoles
   ) {
+    EFI_STATUS               Status;
+    EFI_HANDLE              *HandleBuffer;
+    UINTN                    HandleCount;
+    UINTN                    Index;
+    UINT16                   DisplayType = 0xFFFF;
+    EFI_HANDLE               ConsoleIn = NULL;
+    EFI_HANDLE               ConsoleOut = NULL;
 
     *DevicePath = NULL;
     *PlatformConsoles = NULL;
-    return OEM_DISPLAY_IGD;
+
+    Status = gBS->LocateHandleBuffer (
+       ByProtocol,
+       &gEfiVmbusProtocolGuid,
+       NULL,
+       &HandleCount,
+       &HandleBuffer
+       );
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "Handles with gEfiVmbusProtocolGuid not found. Status = %r\n", Status));
+        goto Exit;
+    }
+
+    DEBUG((DEBUG_INFO, "Count of handles with gEfiVmbusProtocolGuid = %d\n", HandleCount));
+
+    for (Index = 0; Index < HandleCount; Index++) {
+        if (ConsoleIn == NULL) {
+            Status = EmclChannelTypeSupported(HandleBuffer[Index],
+                                              &HK_INTERFACE_GUID,
+                                              NULL);
+            if (!EFI_ERROR(Status)) {
+                ConsoleIn = HandleBuffer[Index]; 
+            }
+        }
+
+        if (ConsoleOut == NULL) {
+            Status = EmclChannelTypeSupported(HandleBuffer[Index],
+                                              &SYNTHVID_CLASS_ID,
+                                              NULL);
+            if (!EFI_ERROR(Status)) {
+                ConsoleOut = HandleBuffer[Index]; 
+            }
+            else {
+                Status = EmclChannelTypeSupported(HandleBuffer[Index],
+                                                  &SYNTH3DVID_DEVICE_ID,
+                                                  NULL);
+                if (!EFI_ERROR(Status)) {
+                    ConsoleOut = HandleBuffer[Index]; 
+                }
+            }
+        }
+    }
+
+    if (ConsoleIn != NULL) {
+        Status = gBS->HandleProtocol (
+                        ConsoleIn,
+                        &gEfiDevicePathProtocolGuid,
+                        &(gPlatformConsoles[0].DevicePath)     // device path for ConIn
+                        );
+        if (EFI_ERROR (Status)) {
+            DEBUG((DEBUG_ERROR, "Device Path on handle of Hyper-V keyboard device not found.  Status = %r\n", Status));
+        }
+    }
+    else {
+        DEBUG((DEBUG_ERROR, "Handle for Hyper-V keyboard device not found\n"));
+    }
+
+    if (ConsoleOut != NULL) {
+        Status = gBS->HandleProtocol (
+                        HandleBuffer[Index],
+                        &gEfiDevicePathProtocolGuid,
+                        DevicePath                             // device path for ConOut
+                        );
+        if (EFI_ERROR (Status)) {
+            DEBUG((DEBUG_ERROR, "Device Path on handle of Hyper-V video device not found.  Status = %r\n", Status));
+        }
+    }
+    else {
+        DEBUG((DEBUG_ERROR, "Handle for Hyper-V video device not found\n"));
+    }
+
+    DisplayType = OEM_DISPLAY_PATH_ROOT;
+    *PlatformConsoles = (BDS_CONSOLE_CONNECT_ENTRY *)&gPlatformConsoles;
+    gBS->FreePool(HandleBuffer);
+
+Exit:
+    return DisplayType; 
 }
 
 /**
