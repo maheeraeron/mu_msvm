@@ -13,7 +13,6 @@ Abstract:
 
 #include <PiDxe.h>
 #include <Library/DebugLib.h>
-#include <Library/DxeServicesTableLib.h>
 #include <Library/IoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
@@ -67,19 +66,7 @@ BiosDeviceBaseLibConstructor (
                               &gEfiEventVirtualAddressChangeGuid,
                               &mVirtualAddressChangeEvent);
     ASSERT_EFI_ERROR(status);
-
-    // The MMIO registers must be declared as runtime so they are included
-    // in the guest os call to SetVirtualAddressMap and can be converted to a GVA.
-    status = gDS->AddMemorySpace(EfiGcdMemoryTypeMemoryMappedIo,
-                                 mBiosBaseAddress,
-                                 EFI_PAGE_SIZE,
-                                 EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
-    ASSERT_EFI_ERROR(status);
-
-    status = gDS->SetMemorySpaceAttributes(mBiosBaseAddress,
-                                           EFI_PAGE_SIZE,
-                                           EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
-    ASSERT_EFI_ERROR(status);
+    
 #endif
 
     return status;

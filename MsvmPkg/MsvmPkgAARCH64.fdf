@@ -138,8 +138,7 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
 INF MsvmPkg/ConNullDxe/ConNullDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf
-# temporarily not included
-# INF MsvmPkg/EventLogDxe/EventLogDxe.inf
+INF MsvmPkg/EventLogDxe/EventLogDxe.inf
 INF MsvmPkg/NetvscDxe/NetvscDxe.inf
 INF MsvmPkg/SbCryptDxe/SbCryptDxe.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf

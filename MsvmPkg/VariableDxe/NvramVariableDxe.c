@@ -164,6 +164,35 @@ Return Value:
     mNvramCommandDescriptor = (PNVRAM_COMMAND_DESCRIPTOR)(UINTN)mNvramCommandDescriptorGpa;
     mNvramCommandDataBuffer = (UINT8*)(UINTN)mNvramCommandDataBufferGpa;
 
+#if defined(MDE_CPU_AARCH64)
+
+    //
+    // The MMIO registers for the BIOS device must be declared as runtime so they are
+    // included in the guest os call to SetVirtualAddressMap and can be converted to a GVA.
+    // While there is a centralized BiosDeviceBaseLib, we can't do the AddMemorySpace there since
+    // only _one_ driver can add the memory space, and that constructor is called by each
+    // driver that includes that lib. This one wins and registers the memory space.
+    //
+    status = gDS->AddMemorySpace(EfiGcdMemoryTypeMemoryMappedIo,
+                                 PcdGet32(PcdBiosBaseAddress),
+                                 EFI_PAGE_SIZE,
+                                 EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR(status);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    status = gDS->SetMemorySpaceAttributes(PcdGet32(PcdBiosBaseAddress),
+                                           EFI_PAGE_SIZE,
+                                           EFI_MEMORY_UC | EFI_MEMORY_RUNTIME);
+    ASSERT_EFI_ERROR(status);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+#endif
+
 Cleanup:
 
     if (EFI_ERROR(status))

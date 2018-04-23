@@ -32,12 +32,13 @@
     BaseLib
     BiosDeviceLib
     DebugLib
+    DxeServicesTableLib
     IoLib
     MemoryAllocationLib
     PrintLib
     UefiBootServicesTableLib
-    UefiRuntimeLib
     UefiDriverEntryPoint
+    UefiRuntimeLib
 
 [Protocols]
     gEfiVariableWriteArchProtocolGuid             ## ALWAYS_PRODUCES
@@ -47,6 +48,9 @@
     gEfiEventVirtualAddressChangeGuid
     gEfiEventExitBootServicesGuid
     gEfiGlobalVariableGuid
-    
+
+[Pcd.AARCH64]
+    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
+
 [Depex]
     TRUE

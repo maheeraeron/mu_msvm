@@ -118,6 +118,10 @@ DefinitionBlock (
             ResourceTemplate()
             {
                 // MMIO space below 4GB.
+                // TODO-cho: Technically this is now a lie on AARCH64 since we have a
+                // tiny 1 page gap for the bios device. Should we be instead publishing
+                // 3 MMIO regions then? Or is it okay since we have an ACPI device that
+                // claims the bios device region?
                 DWORDMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite,
                 // Granularity Min Max Translation Range (Length = Max-Min+1)
                    0,          0,  0,  0,          0,,,
@@ -283,6 +287,20 @@ DefinitionBlock (
         }
 
         Name(_PS3, 0)
+
+        // TODO-cho: SPIs are not available to the guest on AARCH64, which is what
+        // PcdVmbusVector is currently defined as. Supposedly it should use a PPI,
+        // but those are strange because they're reserved for hypervisor devices.
+        //
+        // Windows doesn't boot when VmBus is given an SPI, since it's unable to
+        // allocate any since none exist in guests. Thus, leave it out on AARCH64
+        // for now.
+        //
+        // Linux may need this field if it's not hardcoded, unsure.
+        //
+        // Additionally, no Interrupt-Signaled event devices currently work either,
+        // due to SPIs not being available to guests.
+#if defined (_DSDT_INTEL_)
         Name(_CRS,
 
             // Include an interrupt resource so that Linux VMs can get IDT
@@ -313,6 +331,7 @@ DefinitionBlock (
 
             }
         )
+#endif
     }
 
     // TPM ====================================================================
@@ -536,6 +555,7 @@ DefinitionBlock (
     Device (\_SB.GED1)
     {
         Name(_HID, "ACPI0013")
+        Name(_UID, 1)
         Name(_CRS,
             ResourceTemplate()
             {
@@ -714,6 +734,7 @@ DefinitionBlock (
         Device(\_SB.GED2)
         {
             Name(_HID,"ACPI0013")
+            Name(_UID, 2)
             Name(_CRS, ResourceTemplate()
             {
                 Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
@@ -2049,6 +2070,7 @@ DefinitionBlock (
         Device(\_SB.GED3)
         {
             Name(_HID,"ACPI0013")
+            Name(_UID, 3)
             Name(_CRS, ResourceTemplate()
             {
                 Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
@@ -2220,7 +2242,7 @@ DefinitionBlock (
                     Store (Local4, \_SB.NVDR.NEV4)
                 }
             }
-    }
+        }
     }
 
     // Processor devices ======================================================

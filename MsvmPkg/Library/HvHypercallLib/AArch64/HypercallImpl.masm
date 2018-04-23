@@ -47,8 +47,7 @@ AsmHyperCall ENDP
 AsmGetVpRegister64 PROC
 
     mov w3, w0                      // IN  InputList[0].RegisterName0, padding, clear high bits
-
-    mov x16, x1
+    stp x0, x1, [sp, #-0x10]!       // Push RegisterIndex, RegisterBuffer onto stack
 
     ldr x0, =0x0000000100010050     // hypercall input (fast rep call 1 argument HvCallGetVpRegisters)
     ldr x1, =0xFFFFFFFFFFFFFFFF     // partition id (self)
@@ -59,7 +58,8 @@ AsmGetVpRegister64 PROC
 
     hvc #ARM64_HYPERCALL_IMM16
 
-    str x5, [x16]
+    ldp x2, x1, [sp], #0x10         // Pop RegisterBuffer into x1
+    str x15, [x1]                   // Store result in x15 into *RegisterBuffer
     and x0, x0, #0xFFFF
 
     ret
