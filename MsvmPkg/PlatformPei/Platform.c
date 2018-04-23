@@ -23,7 +23,6 @@ Abstract:
 #include <Guid/MemoryTypeInformation.h>
 #include <IndustryStandard/Acpi.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/BiosDeviceLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/IoLib.h>
@@ -76,9 +75,52 @@ static EFI_PEI_PPI_DESCRIPTOR MsvmBootModePpiDescriptor[] =
     }
 };
 
+//
+// Read/write Bios Device helper functions.
+//
+// N.B. Don't use the common library as PEI should not use mutable global
+// variables, which only work in our environment because the whole UEFI image is
+// located in read/write system memory. In the case of MMIO, the address space
+// is identity mapped throughout PEI and does not change.
+//
+static
+VOID
+WriteBiosDevice(
+    IN UINT32 AddressRegisterValue,
+    IN UINT32 DataRegisterValue
+    )
+{
+    UINTN biosBaseAddress = PcdGet32(PcdBiosBaseAddress);
+#if defined(MDE_CPU_AARCH64)
+    MmioWrite32(biosBaseAddress, AddressRegisterValue);
+    MmioWrite32(biosBaseAddress + 4, DataRegisterValue);
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+    IoWrite32(biosBaseAddress, AddressRegisterValue);
+    IoWrite32(biosBaseAddress + 4, DataRegisterValue);
+#endif
+}
+
+static
+UINT32
+ReadBiosDevice(
+    IN UINT32 AddressRegisterValue
+    )
+{
+    UINTN biosBaseAddress = PcdGet32(PcdBiosBaseAddress);
+#if defined(MDE_CPU_AARCH64)
+    MmioWrite32(biosBaseAddress, AddressRegisterValue);
+    return MmioRead32(biosBaseAddress + 4);
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+    IoWrite32(biosBaseAddress, AddressRegisterValue);
+    return IoRead32(biosBaseAddress + 4);
+#endif
+}
+
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 UINTN
-GetPageTableSize()
+GetPageTableSize(
+    _In_ CONST UINT8 PhysicalAddressWidth
+    )
 /*++
 
 Routine Description:
@@ -87,7 +129,7 @@ Routine Description:
 
 Arguments:
 
-    None
+    PhysicalAddressWidth - The number of bits in the address width.
 
 Return Value:
 
@@ -103,7 +145,7 @@ Return Value:
     UINT32  pdpEntries;
     UINTN   totalPages;
 
-    DEBUG((DEBUG_VERBOSE, ">>> GetPageTableSize(%d)\n", gPhysicalAddressWidth));
+    DEBUG((DEBUG_VERBOSE, ">>> GetPageTableSize(%d)\n", PhysicalAddressWidth));
 
     //
     // If IA32 and PcdDxeIplSwitchToLongMode is false return zero.
@@ -137,15 +179,15 @@ Return Value:
     }
     DEBUG((DEBUG_VERBOSE, "page1GSupport is %a\n", page1GSupport ? "TRUE" : "FALSE"));
 
-    if (gPhysicalAddressWidth <= 39)
+    if (PhysicalAddressWidth <= 39)
     {
         pml4Entries = 1;
-        pdpEntries = 1 << (gPhysicalAddressWidth - 30);
+        pdpEntries = 1 << (PhysicalAddressWidth - 30);
         ASSERT(pdpEntries <= 0x200);
     }
     else
     {
-        pml4Entries = 1 << (gPhysicalAddressWidth - 39);
+        pml4Entries = 1 << (PhysicalAddressWidth - 39);
         ASSERT(pml4Entries <= 0x200);
         pdpEntries = 512;
     }
@@ -283,7 +325,7 @@ Return Value:
     // Exclude the region occupied by the firmware image, along with the the
     // config blob and other data.
     //
-    pageTableSize = GetPageTableSize();
+    pageTableSize = GetPageTableSize(Context->PhysicalAddressWidth);
     peiBase = configBlobBase + configBlobSize;
     peiSize = MIN((Length - peiBase), (pageTableSize + SIZE_64MB));
     DEBUG((DEBUG_VERBOSE, "AddFirstMemoryRange: peiBase %lx peiSize %lx\n", peiBase, peiSize));
@@ -344,10 +386,10 @@ Return Value:
     // it to be reclaimed by the guest OS.
     //
     UINT64 reservedBlockSize =
-        PcdGet32(PcdFvSize) +
+        PcdGet32(PcdFdSize) +
         SIZE_4KB * MISC_PAGE_COUNT_TOTAL +
         configBlobSize;
-    HobAddAllocatedMemoryRange(PcdGet64(PcdFvBaseAddress), reservedBlockSize);
+    HobAddAllocatedMemoryRange(PcdGet64(PcdFdBaseAddress), reservedBlockSize);
 
     DEBUG((DEBUG_VERBOSE, "<<< AddFirstMemoryRange\n"));
 }
@@ -541,13 +583,13 @@ Return Value:
     //
     // Add CPU HOB with resultant address width and 16-bits of IO space.
     //
-    HobAddCpu(gPhysicalAddressWidth, 16);
+    HobAddCpu(Context->PhysicalAddressWidth, 16);
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
     //
     // Tell the BiosDevice to set up the variable MTRRs.
     //
-    WriteBiosDevice(BiosConfigBootFinalize, gPhysicalAddressWidth);
+    WriteBiosDevice(BiosConfigBootFinalize, Context->PhysicalAddressWidth);
 #endif
 
 #if defined(MDE_CPU_AARCH64)
@@ -555,7 +597,7 @@ Return Value:
     // Configure the MMU.
     //
     ConfigureMmu(
-        (1ULL << gPhysicalAddressWidth) - 1
+        (1ULL << Context->PhysicalAddressWidth) - 1
         );
 #endif
 
@@ -636,7 +678,7 @@ Return Value:
     //
     // Get the configuration from the worker process.
     //
-    status = GetConfiguration(PeiServices);
+    status = GetConfiguration(PeiServices, &context.PhysicalAddressWidth);
     if (EFI_ERROR(status))
     {
         ASSERT(FALSE);

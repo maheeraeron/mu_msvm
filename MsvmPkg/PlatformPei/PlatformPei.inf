@@ -47,7 +47,6 @@
     ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
-    BiosDeviceLib
     DebugLib
     HobLib
     HvHypercallLib
@@ -70,7 +69,7 @@
 [Guids]
     gEfiMemoryTypeInformationGuid
     gMsvmDebuggerEnabledGuid
-    
+
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdFdSize

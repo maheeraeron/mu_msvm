@@ -393,9 +393,6 @@ FillTranslationTable(
     );
 }
 
-#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS 6
-static ARM_MEMORY_REGION_DESCRIPTOR VirtualMemoryTable[MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS];
-
 EFI_STATUS
 EFIAPI
 ConfigureMmu(
@@ -413,6 +410,8 @@ ConfigureMmu(
     UINT64                        lowMmioSize = PcdGet64(PcdLowMmioGapSizeInPages) * SIZE_4KB;
     UINT64                        highMmioBaseAddress = PcdGet64(PcdHighMmioGapBasePageNumber) * SIZE_4KB;
     UINT64                        highMmioSize = PcdGet64(PcdHighMmioGapSizeInPages) * SIZE_4KB;
+#define MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS 6
+    ARM_MEMORY_REGION_DESCRIPTOR virtualMemoryTable[MAX_VIRTUAL_MEMORY_MAP_DESCRIPTORS];
 
     DEBUG((DEBUG_VERBOSE, "ConfigureMmu(0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
         MaxAddress, lowMmioBaseAddress, lowMmioSize, highMmioBaseAddress, highMmioSize));
@@ -421,39 +420,39 @@ ConfigureMmu(
     // Fill table that drives the mmu setup functions.
     //
     // From zero to beginning of low MMIO gap.
-    VirtualMemoryTable[0].PhysicalBase = 0;
-    VirtualMemoryTable[0].VirtualBase = VirtualMemoryTable[0].PhysicalBase;
-    VirtualMemoryTable[0].Length = (SIZE_4GB - lowMmioSize);
-    VirtualMemoryTable[0].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+    virtualMemoryTable[0].PhysicalBase = 0;
+    virtualMemoryTable[0].VirtualBase = virtualMemoryTable[0].PhysicalBase;
+    virtualMemoryTable[0].Length = (SIZE_4GB - lowMmioSize);
+    virtualMemoryTable[0].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
 
     // First MMIO gap.
-    VirtualMemoryTable[1].PhysicalBase = VirtualMemoryTable[0].PhysicalBase + VirtualMemoryTable[0].Length;
-    VirtualMemoryTable[1].VirtualBase = VirtualMemoryTable[1].PhysicalBase;
-    VirtualMemoryTable[1].Length = lowMmioSize;
-    VirtualMemoryTable[1].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+    virtualMemoryTable[1].PhysicalBase = virtualMemoryTable[0].PhysicalBase + virtualMemoryTable[0].Length;
+    virtualMemoryTable[1].VirtualBase = virtualMemoryTable[1].PhysicalBase;
+    virtualMemoryTable[1].Length = lowMmioSize;
+    virtualMemoryTable[1].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
     // From 4GB to beginning of high MMIO gap.
-    VirtualMemoryTable[2].PhysicalBase = VirtualMemoryTable[1].PhysicalBase + VirtualMemoryTable[1].Length;
-    VirtualMemoryTable[2].VirtualBase = VirtualMemoryTable[2].PhysicalBase;
-    VirtualMemoryTable[2].Length = highMmioBaseAddress - VirtualMemoryTable[2].PhysicalBase;
-    VirtualMemoryTable[2].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+    virtualMemoryTable[2].PhysicalBase = virtualMemoryTable[1].PhysicalBase + virtualMemoryTable[1].Length;
+    virtualMemoryTable[2].VirtualBase = virtualMemoryTable[2].PhysicalBase;
+    virtualMemoryTable[2].Length = highMmioBaseAddress - virtualMemoryTable[2].PhysicalBase;
+    virtualMemoryTable[2].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
 
     // Second MMIO gap.
-    VirtualMemoryTable[3].PhysicalBase = VirtualMemoryTable[2].PhysicalBase + VirtualMemoryTable[2].Length;
-    VirtualMemoryTable[3].VirtualBase = VirtualMemoryTable[3].PhysicalBase;
-    VirtualMemoryTable[3].Length = highMmioSize;
-    VirtualMemoryTable[3].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
+    virtualMemoryTable[3].PhysicalBase = virtualMemoryTable[2].PhysicalBase + virtualMemoryTable[2].Length;
+    virtualMemoryTable[3].VirtualBase = virtualMemoryTable[3].PhysicalBase;
+    virtualMemoryTable[3].Length = highMmioSize;
+    virtualMemoryTable[3].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_DEVICE;
 
     // To top of address space.
-    VirtualMemoryTable[4].PhysicalBase = VirtualMemoryTable[3].PhysicalBase + VirtualMemoryTable[3].Length;
-    VirtualMemoryTable[4].VirtualBase = VirtualMemoryTable[4].PhysicalBase;
-    VirtualMemoryTable[4].Length = MaxAddress + 1 - VirtualMemoryTable[4].PhysicalBase;
-    VirtualMemoryTable[4].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
+    virtualMemoryTable[4].PhysicalBase = virtualMemoryTable[3].PhysicalBase + virtualMemoryTable[3].Length;
+    virtualMemoryTable[4].VirtualBase = virtualMemoryTable[4].PhysicalBase;
+    virtualMemoryTable[4].Length = MaxAddress + 1 - virtualMemoryTable[4].PhysicalBase;
+    virtualMemoryTable[4].Attributes = ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK;
 
-    VirtualMemoryTable[5].PhysicalBase = 0;
-    VirtualMemoryTable[5].VirtualBase = 0;
-    VirtualMemoryTable[5].Length = 0;
-    VirtualMemoryTable[5].Attributes = 0;
+    virtualMemoryTable[5].PhysicalBase = 0;
+    virtualMemoryTable[5].VirtualBase = 0;
+    virtualMemoryTable[5].Length = 0;
+    virtualMemoryTable[5].Attributes = 0;
 
     // Lookup the Table Level to get the information
     LookupAddresstoRootTable(MaxAddress, &T0SZ, &RootTableEntryCount);
@@ -569,7 +568,7 @@ ConfigureMmu(
     ZeroMem(TranslationTable, RootTableEntryCount * sizeof(UINT64));
 
     TranslationTableAttribute = TT_ATTR_INDX_INVALID;
-    MemoryTable = VirtualMemoryTable;
+    MemoryTable = virtualMemoryTable;
     while (MemoryTable->Length != 0)
     {
 

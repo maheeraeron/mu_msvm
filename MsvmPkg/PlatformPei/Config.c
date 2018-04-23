@@ -20,7 +20,6 @@ Abstract:
 #if defined(MDE_CPU_AARCH64)
 #include <Library/ArmLib.h>
 #endif
-#include <Library/BiosDeviceLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/PeiServicesLib.h>
@@ -44,11 +43,6 @@ typedef union _CPUID_ADDRESS_SPACE_SIZES
 
     UINT32 Value;
 } CPUID_ADDRESS_SPACE_SIZES;
-
-//
-// Configuration data.
-//
-UINT8 gPhysicalAddressWidth = 0;
 
 UINT8
 GetPhysicalAddressWidth(
@@ -95,7 +89,7 @@ Return Value:
     }
     else
     {
-        // It is highly unlikely that the CPUID leaf doesn't exist. 
+        // It is highly unlikely that the CPUID leaf doesn't exist.
         // Regardless just use the minimum as the default.
         DEBUG((DEBUG_WARN, "Can't query CPUID so defaulting address width to %u bits\n",
             MinimumAddressWidth));
@@ -127,14 +121,14 @@ Return Value:
 
     if (physicalAddressWidth < MinimumAddressWidth)
     {
-        DEBUG((DEBUG_WARN, "Increasing address width from %u to %u\n", 
+        DEBUG((DEBUG_WARN, "Increasing address width from %u to %u\n",
             physicalAddressWidth, MinimumAddressWidth));
         physicalAddressWidth = MinimumAddressWidth;
     }
 
     if (physicalAddressWidth > MaximumAddressWidth)
     {
-        DEBUG((DEBUG_WARN, "Reducing address width from %u to %u\n", 
+        DEBUG((DEBUG_WARN, "Reducing address width from %u to %u\n",
             physicalAddressWidth, MaximumAddressWidth));
         physicalAddressWidth = MaximumAddressWidth;
     }
@@ -619,7 +613,7 @@ Return Value:
     //
 #if defined(MDE_CPU_X64)
     static const UINT64 AllStructuresFound = 0xFF;
-    static union {
+    union {
         struct {
             UINT64 UefiConfigBiosInformation:1;
             UINT64 UefiConfigSrat:1;
@@ -636,7 +630,7 @@ Return Value:
     } requiredStructures;
 #elif defined(MDE_CPU_AARCH64)
     static const UINT64 AllStructuresFound = 0x1FF;
-    static union {
+    union {
         struct {
             UINT64 UefiConfigBiosInformation:1;
             UINT64 UefiConfigSrat:1;
@@ -653,6 +647,7 @@ Return Value:
         UINT64 AsUINT64;
     } requiredStructures;
 #endif
+    requiredStructures.AsUINT64 = 0;
 
     header = GetStartOfConfigBlob();
 
@@ -1034,7 +1029,8 @@ Failure:
 
 EFI_STATUS
 GetConfiguration(
-    _In_ CONST EFI_PEI_SERVICES**  PeiServices
+    _In_ CONST EFI_PEI_SERVICES**  PeiServices,
+    _Out_ UINT8* PhysicalAddressWidth
     )
 /*++
 
@@ -1045,6 +1041,8 @@ Routine Description:
 Arguments:
 
     PeiServices  An indirect pointer to the PEI Services Table.
+
+    PhysicalAddressWidth - Returns the number of bits in the address width.
 
 Return Value:
 
@@ -1068,7 +1066,7 @@ Return Value:
     //
     // Get the address width.
     //
-    gPhysicalAddressWidth = GetPhysicalAddressWidth(PeiServices);
+    *PhysicalAddressWidth = GetPhysicalAddressWidth(PeiServices);
 
     return EFI_SUCCESS;
 }

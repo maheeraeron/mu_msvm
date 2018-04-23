@@ -96,7 +96,6 @@
 #
 [LibraryClasses.common.SEC, LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
   ArmMmuLib|ArmPkg/Library/ArmMmuLib/ArmMmuPeiLib.inf
-  BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDevicePeiLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/BaseExtractGuidedSectionLib/BaseExtractGuidedSectionLib.inf
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
@@ -209,9 +208,9 @@
 
   # Generation Counter Device
   gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector|35          # SPI
-  
+
   # Battery Device
-  gMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xEFFEA000         
+  gMsvmPkgTokenSpaceGuid.PcdBatteryBase|0xEFFEA000
   gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector|36           # SPI
 
   # UART Devices

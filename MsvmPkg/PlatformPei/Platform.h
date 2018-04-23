@@ -42,6 +42,7 @@ typedef struct _PLATFORM_INIT_CONTEXT
 {
     struct _UEFI_CONFIG_HEADER *StartOfConfigBlob;
     HV_HYPERCALL_CONTEXT HvHypercallContext;
+    UINT8 PhysicalAddressWidth;
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 

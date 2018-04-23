@@ -15,11 +15,6 @@ Abstract:
 #pragma once
 
 //
-// Configuration data.
-//
-extern UINT8 gPhysicalAddressWidth;
-
-//
 // Functions
 //
 UEFI_CONFIG_HEADER*
@@ -29,5 +24,6 @@ GetStartOfConfigBlob(
 
 EFI_STATUS
 GetConfiguration(
-    IN CONST EFI_PEI_SERVICES** PeiServices
+    IN CONST EFI_PEI_SERVICES** PeiServices,
+    OUT UINT8* PhysicalAddressWidth
     );
