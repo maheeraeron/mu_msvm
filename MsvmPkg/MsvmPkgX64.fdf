@@ -231,10 +231,6 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdLogoFile) {
     SECTION UI = "Logo"
   }
 
-FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdComplianceLabelFile) {
-    SECTION RAW = MsvmPkg/ComplianceLabel.bmp
-}
-
 FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile) {
     SECTION RAW = MsvmPkg/FrontPage/Resources/MicrosoftLogo.bmp
 }

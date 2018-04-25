@@ -51,20 +51,6 @@ formset
   //
   form formid = FRONT_PAGE_FORM_ID_ABOUT,                                               // About form
     title  = STRING_TOKEN(STR_NULL_STRING);                                             // Form title: None
-
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // About (Regulatory Information) FrontPage settings header
-      text    = STRING_TOKEN(STR_FP_ABOUT_HEADER);                                      //
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // SPACING
-      text    = STRING_TOKEN(STR_NULL_STRING);                                          //
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // SPACING
-      text    = STRING_TOKEN(STR_NULL_STRING);                                          //
-
-    label LABEL_ABOUT_COMPLIANCE_LABLEL_TAG_START;                                  // Compliance label
-    label LABEL_ABOUT_COMPLIANCE_LABLEL_TAG_END;                                    //
-
   endform;
 
   /////////////////////////////////////////////////////////////////////////////

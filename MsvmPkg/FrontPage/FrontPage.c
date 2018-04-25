@@ -520,7 +520,6 @@ UpdateFormWithFirmwareVersions(IN EFI_HII_HANDLE  HiiHandle) {
 }
 */
 
-
 /**
 Function to populate About Menu bitmap.
 
@@ -529,6 +528,7 @@ Function to populate About Menu bitmap.
 @retval     None.
 
 **/
+/*
 VOID
 UpdateAboutForm (
                 IN EFI_HII_HANDLE  HiiHandle
@@ -607,6 +607,7 @@ UpdateAboutForm (
     HiiFreeOpCodeHandle(EndOpCodeHandle);
   }
 }
+*/
 
 /**
   Initialize HII information for the FrontPage
@@ -625,7 +626,7 @@ InitializeFrontPage (
 {
     EFI_STATUS                  Status = EFI_SUCCESS;
     CHAR16                      *StringBuffer;
-    EFI_HII_HANDLE              HiiHandle;
+    //EFI_HII_HANDLE              HiiHandle;
 #if 0
     // MSchange - [UI] Remove language menu selection.  Translation to be done later.
     CHAR8                       *LangCode;
@@ -697,14 +698,14 @@ InitializeFrontPage (
 
     // TODO - Get rid of global.
     //
-    HiiHandle = gFrontPagePrivate.HiiHandle;
+    //HiiHandle = gFrontPagePrivate.HiiHandle;
 
     // Update PC information display strings from EFI variables.
     //
     //UpdateDisplayStrings (HiiHandle);
 
     //UpdateFormWithFirmwareVersions(HiiHandle);
-    UpdateAboutForm(HiiHandle);
+    //UpdateAboutForm(HiiHandle);
 
     //UpdateSecureBootStatusStrings( FALSE );
 
@@ -1300,15 +1301,15 @@ CreateTopMenu(IN UINT32 OrigX,
               IN UINT32 CellTextXOffset)
 {
     EFI_FONT_INFO   FontInfo;
+
+    /*
     EFI_STATUS Status;
     UINT8     *ImageData;
     UINTN      ImageSize;
 
-
     // Check whether there is a system password set.  If so, prompt the user for it before deciding the top-level menu list.
     // If the user doesn't know the password, they can dismiss the dialog and will see a limited-functionality menu.
         //
-    /*
     if (TRUE == IsPasswordSet(ADMIN_PW_HANDLE))
     {
         if (TRUE == ChallengeUserPassword(MAX_PASSWORD_ATTEMPTS))
@@ -1373,7 +1374,6 @@ CreateTopMenu(IN UINT32 OrigX,
     {
         RemoveMenuFromList(STRING_TOKEN(STR_MF_MENU_OP_SETTIME));
     }
-    */
 
     // Get the specified About image from FV. If it does not exist, remove the About item from the menu.
     //
@@ -1386,6 +1386,7 @@ CreateTopMenu(IN UINT32 OrigX,
     {
         FreePool(ImageData);
     }
+    */
 
     for (Count=0 ; Count < MenuOptionCount ; Count++)
     {

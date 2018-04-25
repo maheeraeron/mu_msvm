@@ -103,8 +103,6 @@
   #gMsSurfaceModulePkgTokenSpaceGuid.PcdVolumeUpIndicatorFile
   #gMsSurfaceModulePkgTokenSpaceGuid.PcdBootFailIndicatorFile
   #gMsSurfaceModulePkgTokenSpaceGuid.PcdFirmwareSettingsIndicatorFile
-  #gMsSurfaceModulePkgTokenSpaceGuid.PcdComplianceLabelFile
-  gMsvmPkgTokenSpaceGuid.PcdComplianceLabelFile
   gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile
   gMsvmPkgTokenSpaceGuid.PcdCurrentPointerState
   gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile
