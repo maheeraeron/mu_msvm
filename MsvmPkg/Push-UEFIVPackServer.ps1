@@ -298,7 +298,7 @@ function Get-Edk2Config
               -TargetFilePath ("{0}\conf\target.txt" -f $Workspace) `
               -Config $config
     $config = Parse-PlatformBuildFile `
-              -TargetFilePath ("{0}\MsvmPkg\PlatformBuild.py" -f $Workspace) `
+              -TargetFilePath ("{0}\MsvmPkg\PlatformBuildWorker.py" -f $Workspace) `
               -Config $config
     $config = Parse-Edk2PlatformFile `
               -TargetFilePath ("{0}\{1}" -f $config.WORKSPACE, $config.ACTIVE_PLATFORM) `
@@ -356,9 +356,9 @@ function Get-FirmwareImagePath
         $Config
     )
     # Example: "E:\edk2.x64\Build\MsvmX64\RELEASE_VS2015xASL\FV\MSVM.fd"
-    $fwImagePath = ("{0}\{1}\{2}_{3}\FV\{4}.fd" `
+    $fwImagePath = ("{0}\{1}\{2}_{3}\FV\{4}" `
                    -f $config.WORKSPACE, $config.OUTPUT_DIRECTORY, $config.TARGET,
-                   $config.TOOL_CHAIN_TAG, $config.PLATFORM_NAME)
+                   $config.TOOL_CHAIN_TAG, $config.FD_FILENAME)
     return (Get-ChildItem $fwImagePath).FullName
 }
 
