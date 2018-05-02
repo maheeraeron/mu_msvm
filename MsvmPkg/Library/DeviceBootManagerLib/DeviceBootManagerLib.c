@@ -180,7 +180,7 @@ DeviceBootManagerBeforeConsole (
 
     if (ConsoleOut != NULL) {
         Status = gBS->HandleProtocol (
-                        HandleBuffer[Index],
+                        ConsoleOut,
                         &gEfiDevicePathProtocolGuid,
                         DevicePath                             // device path for ConOut
                         );
