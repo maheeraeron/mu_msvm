@@ -137,10 +137,7 @@ param(
     $OutputDirectory,
 
     [string]
-    $ToolChainTag,
-
-    [String]
-    $Epoch
+    $ToolChainTag
     )
 
 ###################################################################################################
@@ -444,8 +441,18 @@ function Check-RepositoryState
 function Get-CurrentCommitHash
 {
     $LocalCommit = Run-Command -Executable "git" -Arguments ( "rev-parse", "`"@`"" )
-    Write-Verbose ("Current commit is: " + $LocalCommit)
-    return $LocalCommit
+
+    cd $workspace/SM_UDK
+
+    $CoreCommit = Run-Command -Executable "git" -Arguments ( "rev-parse", "`"@`"" )
+
+    cd $workspace
+
+    $FullCommitHash = $LocalCommit + "+" + $CoreCommit
+
+    Write-Verbose ("total it is Current commit is: " + $FullCommitHash)
+
+    return $FullCommitHash
 }
 
 #################################################################################################
@@ -472,6 +479,49 @@ function Get-UTCTimeString
 
     $utcTime = (Get-Date).ToUniversalTime().AddHours($HoursToOffset).ToString("u")
     return $utcTime
+}
+
+###################################################################################################
+
+function Check-Duplicate-Commit-Hash
+{
+    Param(
+        [Parameter(Mandatory=$true)]
+        [hashtable]
+        $Edk2Config,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [PsCustomObject]
+        $VpackConfig,
+
+        [string]
+        $CommitHash = ""
+    )
+
+    Write-Verbose "Checking for duplicate commit in existing VPacks..."
+
+    $vpackExePath = $Edk2Config.WORKSPACE + "\msprivate\internal\vpack\vpack.exe"
+
+    $vpackCmdArgs = @("List")
+    $vpackBaseName = $VpackConfig.vpack.BaseName
+    if ($VpackConfig.vpack.AppendArchToName)
+    {
+        $vpackBaseName += ("." + $Edk2Config.TARGET_ARCH.ToLower())
+    }
+    $vpackCmdArgs += ("/BaseName:" + $vpackBaseName)
+    $packList = Run-Command $vpackExePath $vpackCmdArgs
+    $found = $false
+    foreach ($pack in $packList)
+    {
+        if ($pack -Match $CommitHash)
+        {
+            Write-Verbose ($pack + " matches current commit")
+            $found = $true
+        }
+    }
+
+    return $found
 }
 
 ###################################################################################################
@@ -505,11 +555,6 @@ function Push-VPack
     {
         $vpackBaseName += ("." + $Edk2Config.TARGET_ARCH.ToLower())
     }
-
-    $newVpackName = ("{0}.{1}.{2}.{3}" `
-                   -f $vpackBaseName, $VpackConfig.vpack.Major, $VpackConfig.vpack.Minor,
-                    $VpackConfig.vpack.Patch)
-
     $vpackCmdArgs += ("/BaseName:" + $vpackBaseName)
     $vpackCmdArgs += ("/SourceDirectory:" + $TempDirPath)
     $vpackCmdArgs += "/ServiceType:Drop"
@@ -523,7 +568,6 @@ function Push-VPack
     if ($VpackConfig.meta.AppendLatestCommitHash)
     {
         $vpackCmdArgs += ("/MetaData:" + $CommitHash)
-        $newVpackName += "+" + $CommitHash
     }
     $vpackCmdArgs += ("/VersionIncrementType:" + $VpackConfig.vpack.VersionIncrementType)
     if ($VpackConfig.vpack.ExpirationTimeInHours -gt 0)
@@ -532,41 +576,9 @@ function Push-VPack
             (Get-UtcTimeString -HoursToOffset $VpackConfig.vpack.ExpirationTimeInHours))
     }
     Write-Verbose "vPack command line: $vpackExePath $vpackCmdArgs"
-    Write-Verbose "Name for new vpack: $newVpackName"
-
-    # Checking to make sure the vpack isn't already there
-    $vpacks = Run-Command -Executable $vpackExePath -Arguments ("list", "/name:$vpackBaseName")
-    # If there's multiple vpacks, the newest will be last
-    if ($vpacks -eq  $null)
-    {
-        Write-Verbose "No other vpacks"
-    }
-    elseif ($vpacks -is [system.array])
-    {
-        foreach ($vpack in $vpacks)
-        {
-            if ($vpack.compareTo($newVpackName) -eq 0)
-            {
-                Write-Verbose "Vpack already published"
-                $DryRun = $TRUE
-            }
-        }
-    }
-    else
-    {
-        if ($vpack.compareTo($newVpackName) -eq 0)
-        {
-            Write-Verbose "Vpack already published"
-            $DryRun = $TRUE
-        }
-    }
-
     if (-not $DryRun)
     {
         Run-Command $vpackExePath $vpackCmdArgs
-    }
-    else {
-        "Decided not to publish vpack"
     }
 }
 
@@ -608,26 +620,20 @@ try
     $edk2Config | Format-Table | out-string -Stream | Write-Verbose
 
     $vpackConfig = Get-VpackConfig -Workspace $workspace
+     # If appending commit hash check to ensure current commit is not already pushed.
 
-    if ($PSBoundParameters.ContainsKey('Epoch'))
+    if ($vpackConfig.meta.AppendLatestCommitHash)
     {
-        cd $workspace/SM_UDK
-
-        $epochDate = $Epoch -as [datetime]
-
-        $now = Run-Command -Executable "git" -Arguments ( "log", "-1", "--format=%cd", "--date=short")
-        $nowdate = $now -as [datetime]
-        Write-Verbose $nowdate
-        Write-Verbose $epochDate
-        $patch = ($nowdate - $epochDate).Days
-        Write-Verbose ("Patch #" + $patch)
-
-        $vpackConfig.vpack.Patch = $patch -as [Int]
-        Write-Verbose $vpackConfig.vPack.Patch
-
-        cd ..
+        $currentCommit = Get-CurrentCommitHash
+        if (Check-Duplicate-Commit-Hash -Edk2Config $edk2Config -VpackConfig $vpackConfig -CommitHash $currentCommit)
+        {
+            Write-Error -Message ( `
+            "The current commit already exists with a pushed VPack." `
+            ) -Category InvalidResult
+            return
+        }
     }
-
+    
     # Create a temp directory
 
     $tempFileDir = New-TemporaryDirectory
@@ -666,11 +672,9 @@ try
     Write-Progress -Activity $activity -Completed
 
     # Push the vPack
-
     $currentCommit = Get-CurrentCommitHash
     Push-Vpack -Edk2Config $edk2Config -VpackConfig $vpackConfig `
                -TempDirPath $tempFileDir -CommitHash $currentCommit
-
 }
 finally
 {
