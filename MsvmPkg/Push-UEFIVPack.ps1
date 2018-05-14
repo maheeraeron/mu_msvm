@@ -458,7 +458,7 @@ function Get-CurrentCommitHash
 
     cd $workspace
 
-    $FullCommitHash = $LocalCommit + "+" + $CoreCommit
+    $FullCommitHash = $LocalCommit + "-" + $CoreCommit
 
     Write-Verbose ("total it is Current commit is: " + $FullCommitHash)
 

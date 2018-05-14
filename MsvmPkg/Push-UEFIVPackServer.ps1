@@ -448,7 +448,7 @@ function Get-CurrentCommitHash
 
     cd $workspace
 
-    $FullCommitHash = $LocalCommit + "+" + $CoreCommit
+    $FullCommitHash = $LocalCommit + "-" + $CoreCommit
 
     Write-Verbose ("total it is Current commit is: " + $FullCommitHash)
 
@@ -633,7 +633,7 @@ try
             return
         }
     }
-    
+
     # Create a temp directory
 
     $tempFileDir = New-TemporaryDirectory

@@ -1,18 +1,18 @@
 {
     "vpack":
     {
-        "Major": 2,
+        "Major": 1,
         "Minor": 0,
         "Patch": 0,
         "Prerelease": "",
         "VersionIncrementType": "Patch",
-        "BaseName": "hyperv.uefi",
+        "BaseName": "hyperv.uefi.mscoreuefi",
         "AppendArchToName": true,
-        "ExpirationTimeInHours": 0
+        "ExpirationTimeInHours": 300
     },
     "meta":
     {
-        "GitBranchName": "official/rs5",
+        "GitBranchName": "feature/mscoreuefi",
         "AppendLatestCommitHash": true
     }
 }

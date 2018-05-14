@@ -34,7 +34,7 @@ class PlatformBuilder(UefiBuilder):
         self.env.SetValue("PRODUCT_NAME", "Hyper-V", "Platform Hardcoded")
         self.env.SetValue("TARGET_ARCH", "X64", "Platform Hardcoded")
         self.env.SetValue("ARCH", "X64", "Platform hardcoded")
-        self.env.SetValue("TOOL_CHAIN_TAG", "VS2015xASL", "Platform hardcoded")
+        self.env.SetValue("TOOL_CHAIN_TAG", "VSLATESTx86xASL", "Platform hardcoded")
         self.env.SetValue("BLD_*_BUILD_UNIT_TESTS", "FALSE", "Unit Test build off by default")
         self.env.SetValue("BLD_*_BUILD_APPS", "FALSE", "App Build off by default")
         self.env.SetValue("BLD_*_SECURE_BOOT_ENABLE", "TRUE", "Support Secure Boot")
@@ -58,17 +58,17 @@ class PlatformBuilder(UefiBuilder):
 
     #------------------------------------------------------------------
     #
-    # Method to do stuff pre build.  
-    # This is part of the build flow.  
-    # Currently do nothing.  
+    # Method to do stuff pre build.
+    # This is part of the build flow.
+    # Currently do nothing.
     #
     #------------------------------------------------------------------
     def PlatformPreBuild(self):
         return 0
 
-    # 
-    # Main Build class supports a few methods of flashing but leaves 
-    # one option to Platform when FLASH_METHOD = platform. 
+    #
+    # Main Build class supports a few methods of flashing but leaves
+    # one option to Platform when FLASH_METHOD = platform.
     #
     # For this platform we don't need custom method
     #
