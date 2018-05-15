@@ -16,7 +16,7 @@
 #
 
 #
-#Increase this version tag any time you want user to get warning about updating this file in the Conf dir.  By default it does not do update existing conf dirs. 
+#Increase this version tag any time you want user to get warning about updating this file in the Conf dir.  By default it does not do update existing conf dirs.
 #
 #
 # 1.06 - Updated VS2015 64 dlink flags to set to 4kb aligned for MAT support.  This matches changes needed for vs2013 made earlier
@@ -207,7 +207,7 @@ DEFINE MSFT_ASLDLINK_FLAGS     = /NODEFAULTLIB /ENTRY:ReferenceAcpiTable /SUBSYS
 # ASL definitions
 ##################
 *_VSLATESTx86xASL_*_ASL_PATH        = DEF(WIN_ASL_BIN)
-*_VSLATESTx86xASL_*_ASL_FLAGS       = 
+*_VSLATESTx86xASL_*_ASL_FLAGS       =
 *_VSLATESTx86xASL_*_ASL_OUTFLAGS    = DEF(MS_ASL_OUTFLAGS)
 *_VSLATESTx86xASL_*_ASLCC_FLAGS     = DEF(MSFT_ASLCC_FLAGS)
 *_VSLATESTx86xASL_*_ASLPP_FLAGS     = DEF(MSFT_ASLPP_FLAGS)
@@ -264,8 +264,8 @@ NOOPT_VSLATESTx86xASL_IA32_DLINK_FLAGS   = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /O
 *_VSLATESTx86xASL_X64_DLINK_PATH    = DEF(VS2017x86_BINX64)\link.exe
 *_VSLATESTx86xASL_X64_ASLDLINK_PATH = DEF(VS2017x86_BINX64)\link.exe
 
-  DEBUG_VSLATESTx86xASL_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1ib2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Zi /Gm /Gw
-RELEASE_VSLATESTx86xASL_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1ib2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Gw
+  DEBUG_VSLATESTx86xASL_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1ib2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Zi /Zo /Gm /Gw
+RELEASE_VSLATESTx86xASL_X64_CC_FLAGS     = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1ib2s /GL /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Zi /Zo /Gw
 NOOPT_VSLATESTx86xASL_X64_CC_FLAGS       = /nologo /c /WX /GS- /W4 /Gs32768 /D UNICODE /Gy /FIAutoGen.h /EHs-c- /GR- /GF /Zi /Gm /Od /GL /Gw
 
   DEBUG_VSLATESTx86xASL_X64_ASM_FLAGS    = /nologo /c /WX /W3 /Cx /Zd /Zi
@@ -277,7 +277,7 @@ RELEASE_VSLATESTx86xASL_X64_NASM_FLAGS   = -Ox -f win64
 NOOPT_VSLATESTx86xASL_X64_NASM_FLAGS     = -O0 -f win64 -g
 
   DEBUG_VSLATESTx86xASL_X64_DLINK_FLAGS  = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /OPT:ICF=10 /MAP /SECTION:.xdata,D /SECTION:.pdata,D /Machine:X64 /LTCG /DLL /ENTRY:$(IMAGE_ENTRY_POINT) /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER /SAFESEH:NO /BASE:0 /DRIVER /DEBUG:FULL
-RELEASE_VSLATESTx86xASL_X64_DLINK_FLAGS  = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /IGNORE:4254 /OPT:REF /OPT:ICF=10 /MAP /SECTION:.xdata,D /SECTION:.pdata,D /Machine:X64 /LTCG /DLL /ENTRY:$(IMAGE_ENTRY_POINT) /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER /SAFESEH:NO /BASE:0 /DRIVER
+RELEASE_VSLATESTx86xASL_X64_DLINK_FLAGS  = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /IGNORE:4254 /OPT:REF /OPT:ICF=10 /MAP /SECTION:.xdata,D /SECTION:.pdata,D /Machine:X64 /LTCG /DLL /ENTRY:$(IMAGE_ENTRY_POINT) /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER /SAFESEH:NO /BASE:0 /DRIVER /DEBUG:FULL
 NOOPT_VSLATESTx86xASL_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF /OPT:ICF=10 /MAP /SECTION:.xdata,D /SECTION:.pdata,D /Machine:X64 /LTCG /DLL /ENTRY:$(IMAGE_ENTRY_POINT) /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER /SAFESEH:NO /BASE:0 /DRIVER /DEBUG:FULL
 
 ##################
@@ -507,8 +507,8 @@ NOOPT_VS2015xASL_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:RE
 #
 #       Rsa2048Sha256Sign --private-key MyKey.pem %1 %2 %3 %4 %5 %6 %7 %8 %9
 #
-#   WARNING: Vendors that uses private keys are responsible for proper management and protection 
-#            of private keys.  Vendors may choose to use infrastructure such as signing servers 
+#   WARNING: Vendors that uses private keys are responsible for proper management and protection
+#            of private keys.  Vendors may choose to use infrastructure such as signing servers
 #            or signing portals to support the management and protection of private keys.
 #
 ##################
