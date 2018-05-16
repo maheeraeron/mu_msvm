@@ -86,11 +86,10 @@ DefinitionBlock (
     Name(\_S5, Package(2){0, 0})
 
     // Define the S4 hibernate state only if configured.
-    // It currently writes the same type value as S5.
 
     If(LGreater(HCFG, 0))
     {
-        Name(\_S4, Package(2){0, 0})
+        Name(\_S4, Package(2){1, 0})
     }
 
 #endif
