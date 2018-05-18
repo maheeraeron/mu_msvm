@@ -46,6 +46,78 @@ formset
     name  = FrontPageDeviceConfig,                            // Settings variable name
     guid  = FRONT_PAGE_CONFIG_FORMSET_GUID;                    // Settings GUID
 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Form ID 7: Boot Summary
+  //
+  form formid = FRONT_PAGE_FORM_ID_BOOT_SUMMARY,                                        // Boot Summary form
+    title  = STRING_TOKEN(STR_BOOT_SUMMARY_MENU_TITLE);
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Header
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_HEADER);                                  //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // SPACING
+      text    = STRING_TOKEN(STR_NULL_STRING);                                          //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_1);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_1);                                 //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_2);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_2);                                 //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_3);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_3);                                 //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_4);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_4);                                 //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_5);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_5);                                 //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_6);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_6);                                 //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_7);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
+      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_7);                                 //
+  endform;
+
   /////////////////////////////////////////////////////////////////////////////
   // Form ID 5: About
   //

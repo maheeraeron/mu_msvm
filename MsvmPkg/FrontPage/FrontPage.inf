@@ -27,6 +27,9 @@
   FrontPageVfr.Vfr
   Language.c
   String.c
+  PlatformConsole.c
+  PlatformConsole.h
+  PlatformString.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -41,15 +44,10 @@
   HiiLib
   UefiApplicationEntryPoint
   PcdLib
-  #MsSecureBootLib
   UefiBootManagerLib
-  #MsPasswordLib
   UIToolKitLib
-  #FmpHelperLib
-  #MsSecureBootLib
   SecureMemoryLib
   DxeServicesLib
-  #PlatformHstiLib
   BmpSupportLib
   MsUiThemeLib
   ResetHelperLib
@@ -60,13 +58,8 @@
   gEfiGlobalVariableGuid                        ## SOMETIMES_PRODUCES ## Variable:L"BootNext" (The number of next boot option)
   gEfiImageSecurityDatabaseGuid                 ## CONSUMES
   gEfiIfrTianoGuid                              ## CONSUMES ## GUID (Extended IFR Guid Opcode)
-  gEfiCertPkcs7Guid                             ## CONSUMES
-  #gMsAssetTagVariableGuid                       ## CONSUMES
   gMsEventMasterFrameNotifyGroupGuid            ## CONSUMES
   gSurfaceFrontPageNVVarGuid                    ## CONSUMES
-  #gMsDxePhaseVariablesGuid                      ## CONSUMES ## GUID ## Variable namespace.
-  #gMsSemmMenuFormsetGuid                        ## CONSUMES
-  #gMsSurfaceFrontPageResetGuid                  ## CONSUMES ## Used to signal a specific reset type, in case anyone wants to handle it.
 
 [Protocols]
   gEfiSmbiosProtocolGuid                        ## PROTOCOL CONSUMES
@@ -78,12 +71,6 @@
   gMsOSKProtocolGuid                            ## PROTOCOL CONSUMES
   gMsSWMProtocolGuid
   gEfiHiiConfigRoutingProtocolGuid              ## PROTOCOL CONSUMES
-  gEfiSmmVariableProtocolGuid                   ## PROTOCOL CONSUMES
-  gEfiSmmCommunicationProtocolGuid              ## PROTOCOL CONSUMES
-  #gMsSystemSettingAccessProtocolGuid            ## CONSUMES
-  #gSurfaceTpmProtocolGuid
-  #gMsFrontPageAuthTokenProtocolGuid
-  #gMsAuthenticationProtocolGuid
   gEdkiiFormBrowserEx2ProtocolGuid
 
 [FeaturePcd]
@@ -98,14 +85,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
-  #gMsSurfaceModulePkgTokenSpaceGuid.PcdCurrentPointerState
-  #gMsSurfaceModulePkgTokenSpaceGuid.PcdFrontPageDeviceDisablePlatformSupportMask
-  #gMsSurfaceModulePkgTokenSpaceGuid.PcdVolumeUpIndicatorFile
-  #gMsSurfaceModulePkgTokenSpaceGuid.PcdBootFailIndicatorFile
-  #gMsSurfaceModulePkgTokenSpaceGuid.PcdFirmwareSettingsIndicatorFile
   gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile
   gMsvmPkgTokenSpaceGuid.PcdCurrentPointerState
   gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile
+  gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
 
 [Depex]
   TRUE

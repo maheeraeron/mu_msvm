@@ -20,13 +20,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Protocol/FormBrowser2.h>
 #include <Protocol/HiiConfigAccess.h>
 #include "FrontPageVfr.h"  // all shared VFR / C constants here.  
-//#include <MsSystemSettingTypes.h>
-//#include <Protocol/MsSystemSettingAccess.h>
 #include <Library/HiiLib.h>
-//#include <FrontPageDeviceDisablePlatformSupport.h>
-//#include <Protocol/MsFrontPageAuthTokenProtocol.h>
-//#include <Protocol/MsAuthentication.h>
-//#include <MsSystemSettingTypes.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/HiiConfigRouting.h>
 
@@ -85,11 +79,8 @@ typedef struct {
       )
 
 extern FRONT_PAGE_CALLBACK_DATA  gFrontPagePrivate;
-//extern EFI_GUID                  gMsFrontPageConfigFormSetGuid;
 
 extern EFI_HII_CONFIG_ROUTING_PROTOCOL   *mHiiConfigRouting;
-//extern MS_SYSTEM_SETTING_ACCESS_PROTOCOL *mSettingAccess;
-//extern MS_AUTH_TOKEN                      mAuthToken;
 
 /**
   Initialize HII information for the FrontPage

@@ -81,7 +81,7 @@
   gMsvmPkgTokenSpaceGuid.PcdPlatformBootConsoleMode|0|UINT16|0x4004
 
   # size of the platform string print buffer in Unicode (UTF-16) characters
-  gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize|256|UINT32|0x4005
+  gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize|512|UINT32|0x4005
 
   # Base addresses of memory mapped devices in MMIO space.
   # The first three are defined by other package PCDs.

@@ -215,15 +215,15 @@ INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 
 # UI Theme Protocol.
 INF  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
-# Surface Rendering Engine (SRE) driver.
+# Rendering Engine (SRE) driver.
 INF  MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
 # Simple Window Manager (SWM) driver.
 INF  MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
 # On-Screen Keyboard (OSK) driver.
 INF  MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
 
-# Surface FrontPage application.
-INF  MsvmPkg/FrontPage/SurfaceFrontPage.inf
+# FrontPage application.
+INF  MsvmPkg/FrontPage/FrontPage.inf
 
 
 FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdLogoFile) {

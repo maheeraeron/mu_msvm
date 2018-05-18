@@ -31,6 +31,7 @@
 #define FRONT_PAGE_FORM_ID_BOOTMENU                     0x0004
 #define FRONT_PAGE_FORM_ID_ABOUT                        0x0005
 #define FRONT_PAGE_FORM_ID_EXIT                         0x0006
+#define FRONT_PAGE_FORM_ID_BOOT_SUMMARY                 0x0007
 
 // Surface Front Page triggers the following actions
 //

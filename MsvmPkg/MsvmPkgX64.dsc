@@ -339,7 +339,7 @@
   # COM port used for pre-DXE debugging
   gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8
 
-   # Change PcdBootManagerMenuFile to point to the Surface FrontPage application
+   # Change PcdBootManagerMenuFile to point to the FrontPage application
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x8A, 0x70, 0x42, 0x40, 0x2D, 0x0F, 0x23, 0x48, 0xAC, 0x60, 0x0D, 0x77, 0xB3, 0x11, 0x18, 0x89 }
 
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerInBootOrder|FALSE
@@ -622,12 +622,13 @@
   # Simple Window Manager (SWM) driver.
   MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
 
-  # Surface Rendering Engine (SRE) driver.
+  # Rendering Engine (SRE) driver.
   MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
 
   # On-Screen Keyboard (OSK) driver.
   MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
   #MsGraphicsPkg/OnScreenKeyboardDxe/UnitTests/Display/UT_OSKDisplay.inf
 
-  # Surface FrontPage application.
-  MsvmPkg/FrontPage/SurfaceFrontPage.inf
+  # FrontPage application.
+  MsvmPkg/FrontPage/FrontPage.inf
+

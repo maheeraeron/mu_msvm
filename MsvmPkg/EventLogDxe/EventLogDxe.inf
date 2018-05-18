@@ -57,6 +57,7 @@
 [Protocols]
   gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES
   gEfiEventLogProtocolGuid                      ## PRODUCES
+  gEfiFirmwareVolume2ProtocolGuid               ## CONSUMES
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
@@ -64,6 +65,7 @@
   gMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderLoad                ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderStart               ## SOMETIMES_CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile
 
 [Depex]
   TRUE

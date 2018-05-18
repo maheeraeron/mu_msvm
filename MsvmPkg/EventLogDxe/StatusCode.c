@@ -87,6 +87,35 @@ typedef struct
 } EFI_STATUS_CODE_EVENT;
 
 
+/**
+  Check if it's a Device Path pointing to BootManagerMenu.
+
+  @param  DevicePath     Input device path.
+
+  @retval TRUE   The device path is BootManagerMenu File Device Path.
+  @retval FALSE  The device path is NOT BootManagerMenu File Device Path.
+**/
+BOOLEAN
+IsBootManagerMenuFilePath (
+  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
+)
+{
+  EFI_HANDLE                      FvHandle;
+  VOID                            *NameGuid;
+  EFI_STATUS                      Status;
+
+  Status = gBS->LocateDevicePath (&gEfiFirmwareVolume2ProtocolGuid, &DevicePath, &FvHandle);
+  if (!EFI_ERROR (Status)) {
+    NameGuid = EfiGetNameGuidFromFwVolDevicePathNode ((CONST MEDIA_FW_VOL_FILEPATH_DEVICE_PATH *) DevicePath);
+    if (NameGuid != NULL) {
+      return CompareGuid (NameGuid, PcdGetPtr (PcdBootManagerMenuFile));
+    }
+  }
+
+  return FALSE;
+}
+
+
 EFI_STATUS
 EFIAPI
 ReportStatusCode(
@@ -160,10 +189,15 @@ Return Value:
         if (Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
         {
            DevicePathData = *((UINTN *)(Data + 1));
-           OptionNumber = *((UINTN *)(Data + 1) + 1);
-           DEBUG((DEBUG_INFO, "[HVBE] Starting new boot event. DP Ptr: 0x%X, OptionNumber: %d\n", DevicePathData, OptionNumber));
-           DEBUG((DEBUG_INFO, "[HVBE] DP: %s\n", ConvertDeviceNodeToText((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, FALSE, FALSE)));
-           BootDeviceEventStart((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, (UINT16)OptionNumber, BootDeviceLoadError, EFI_SUCCESS);
+
+           // Filter out FrontPage/BootManager
+           if (!IsBootManagerMenuFilePath((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData))
+           {
+              OptionNumber = *((UINTN *)(Data + 1) + 1);
+              DEBUG((DEBUG_INFO, "[HVBE] Starting new boot event. DP Ptr: 0x%X, OptionNumber: %d\n", DevicePathData, OptionNumber));
+              DEBUG((DEBUG_INFO, "[HVBE] DP: %s\n", ConvertDeviceNodeToText((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, FALSE, FALSE)));
+              BootDeviceEventStart((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, (UINT16)OptionNumber, BootDeviceLoadError, EFI_SUCCESS);
+           }
         }
     }
     else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_LOAD_ERROR))
