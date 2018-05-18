@@ -105,7 +105,7 @@ DeviceBootManagerBdsEntry (
       Initialize the platform boot order
       Supply Console information
 **/
-UINT16
+EFI_HANDLE
 EFIAPI
 DeviceBootManagerBeforeConsole (
   EFI_DEVICE_PATH_PROTOCOL    **DevicePath,
@@ -115,7 +115,6 @@ DeviceBootManagerBeforeConsole (
     EFI_HANDLE              *HandleBuffer;
     UINTN                    HandleCount;
     UINTN                    Index;
-    UINT16                   DisplayType = 0xFFFF;
     EFI_HANDLE               ConsoleIn = NULL;
     EFI_HANDLE               ConsoleOut = NULL;
 
@@ -192,12 +191,11 @@ DeviceBootManagerBeforeConsole (
         DEBUG((DEBUG_ERROR, "Handle for Hyper-V video device not found\n"));
     }
 
-    DisplayType = OEM_DISPLAY_PATH_ROOT;
     *PlatformConsoles = (BDS_CONSOLE_CONNECT_ENTRY *)&gPlatformConsoles;
     gBS->FreePool(HandleBuffer);
 
 Exit:
-    return DisplayType; 
+    return ConsoleOut; 
 }
 
 /**

@@ -102,7 +102,7 @@
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
 
   # MsCore BDS & FrontPage Libs
-  PlatformBootManagerLib|MsvmPkg/Library/MsPlatformBootManagerLib/MsPlatformBootManagerLib.inf
+  PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
   DeviceBootManagerLib|MsvmPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
   MsDisplayOnScreenNotificationLib|MsvmPkg/Library/BaseDisplayOnScreenNotificationLibNull/BaseDisplayOnScreenNotificationLibNull.inf
   MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
