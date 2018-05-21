@@ -53,6 +53,7 @@
 [Guids]
   gMemoryStatusCodeRecordGuid                   ## CONSUMES ## HOB
   gStatusCodeEventChannelGuid                   ## CONSUMES
+  gEfiVmbusChannelDevicePathGuid                ## CONSUMES
 
 [Protocols]
   gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES

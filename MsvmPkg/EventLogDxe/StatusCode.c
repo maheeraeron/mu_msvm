@@ -42,6 +42,13 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/HobLib.h>
 #include <Library/UefiLib.h>
 #include <Library/DevicePathLib.h>
+#include <Protocol/Vmbus.h>
+
+//
+// VMBUS guid for synthetic NIC
+//
+DEFINE_GUID(GUID_NETWORK_CHANNEL_TYPE, 0xf8615163, 0xdf3e, 0x46c5, 0x91,
+    0x3f, 0xf2, 0xd2, 0xf9, 0x65, 0xed, 0xe);
 
 EFI_STATUS
 EFIAPI
@@ -110,6 +117,49 @@ IsBootManagerMenuFilePath (
     if (NameGuid != NULL) {
       return CompareGuid (NameGuid, PcdGetPtr (PcdBootManagerMenuFile));
     }
+  }
+
+  return FALSE;
+}
+
+
+/**
+  Check if it's a Device Path pointing to Network Device.
+
+  @param  DevicePath     Input device path.
+
+  @retval TRUE   The device path is Network Device Device Path.
+  @retval FALSE  The device path is NOT Network Device Device Path.
+**/
+BOOLEAN
+IsNetworkDeviceFilePath (
+  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
+)
+{
+  VMBUS_DEVICE_PATH               *vmbusDevicePath;
+  VENDOR_DEVICE_PATH              *vendorDevicePath;
+
+  while (!IsDevicePathEnd(DevicePath))
+  {
+      if ((DevicePathType(DevicePath) == HARDWARE_DEVICE_PATH) &&
+          (DevicePathSubType(DevicePath) == HW_VENDOR_DP))
+      {
+          vendorDevicePath = (VENDOR_DEVICE_PATH*) DevicePath;
+
+          if (CompareGuid(
+              &vendorDevicePath->Guid,
+              &gEfiVmbusChannelDevicePathGuid))
+          {
+              vmbusDevicePath = (VMBUS_DEVICE_PATH*) DevicePath;
+              if (CompareGuid(
+                  &vmbusDevicePath->InterfaceType,
+                  &GUID_NETWORK_CHANNEL_TYPE))
+              {
+                  return TRUE;
+              }
+          }
+      }
+      DevicePath = NextDevicePathNode(DevicePath);
   }
 
   return FALSE;
@@ -202,8 +252,53 @@ Return Value:
     }
     else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_LOAD_ERROR))
     {
-        BootDeviceEventUpdate(BootDeviceOsNotLoaded, EFI_LOAD_ERROR);
-        DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceOsNotLoaded, EFI_LOAD_ERROR\n"));
+        BOOLEAN   EventAlreadyUpdated = FALSE;
+
+        if (Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
+        {
+            UINTN DevicePathData = *((UINTN *)(Data + 1));
+
+            if (IsNetworkDeviceFilePath((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData))
+            {
+                BOOT_DEVICE_STATUS DeviceStatus = NetworkBootUnexpectedFailure;
+                EFI_STATUS Status = (EFI_STATUS)*((UINTN *)(Data + 1) + 1);
+
+                if (Status == EFI_BUFFER_TOO_SMALL) {
+                  DeviceStatus = NetworkBootBufferTooSmall;
+                } else if (Status == EFI_DEVICE_ERROR) {
+                  DeviceStatus = NetworkBootDeviceError;
+                } else if (Status == EFI_OUT_OF_RESOURCES) {
+                  DeviceStatus = NetworkBootNoResources;
+                } else if (Status == EFI_NO_MEDIA) {
+                  DeviceStatus = NetworkBootMediaDisconnected;
+                } else if (Status == EFI_NO_RESPONSE) {
+                  DeviceStatus = NetworkBootNoResponse;
+                } else if (Status == EFI_TIMEOUT) {
+                  DeviceStatus = NetworkBootServerTimeout;
+                } else if (Status == EFI_ABORTED) {
+                  DeviceStatus = NetworkBootCancelled;
+                } else if (Status == EFI_ICMP_ERROR) {
+                  DeviceStatus = NetworkBootIcmpError;
+                } else if (Status == EFI_TFTP_ERROR) {
+                  DeviceStatus = NetworkBootTftpError;
+                } else if (Status == EFI_NOT_FOUND) {
+                  DeviceStatus = NetworkBootNoBootFile;
+                } else {
+                  DeviceStatus = NetworkBootUnexpectedFailure;
+                }
+
+                BootDeviceEventUpdate(DeviceStatus, Status);
+                DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: 0x%X, %r\n", DeviceStatus, Status));
+                EventAlreadyUpdated = TRUE;
+            }
+        }
+
+        if (!EventAlreadyUpdated)
+        {
+           BootDeviceEventUpdate(BootDeviceOsNotLoaded, EFI_LOAD_ERROR);
+           DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceOsNotLoaded, EFI_LOAD_ERROR\n"));
+        }
+
         BootDeviceEventComplete();
         DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
     }
@@ -218,39 +313,6 @@ Return Value:
     {
         BootDeviceEventComplete();
         DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
-    }
-    else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE &&
-        (Value & (EFI_STATUS_CODE_CLASS_MASK | EFI_STATUS_CODE_SUBCLASS_MASK)) == EFI_PERIPHERAL_NETWORK)
-    {
-        BOOT_DEVICE_STATUS DeviceStatus = NetworkBootUnexpectedFailure;
-        EFI_STATUS         Status       = ENCODE_ERROR (Value & EFI_STATUS_CODE_OPERATION_MASK);
-
-        if (Status == EFI_BUFFER_TOO_SMALL) {
-          DeviceStatus = NetworkBootBufferTooSmall;
-        } else if (Status == EFI_DEVICE_ERROR) {
-          DeviceStatus = NetworkBootDeviceError;
-        } else if (Status == EFI_OUT_OF_RESOURCES) {
-          DeviceStatus = NetworkBootNoResources;
-        } else if (Status == EFI_NO_MEDIA) {
-          DeviceStatus = NetworkBootMediaDisconnected;
-        } else if (Status == EFI_NO_RESPONSE) {
-          DeviceStatus = NetworkBootNoResponse;
-        } else if (Status == EFI_TIMEOUT) {
-          DeviceStatus = NetworkBootServerTimeout;
-        } else if (Status == EFI_ABORTED) {
-          DeviceStatus = NetworkBootCancelled;
-        } else if (Status == EFI_ICMP_ERROR) {
-          DeviceStatus = NetworkBootIcmpError;
-        } else if (Status == EFI_TFTP_ERROR) {
-          DeviceStatus = NetworkBootTftpError;
-        } else if (Status == EFI_NOT_FOUND) {
-          DeviceStatus = NetworkBootNoBootFile;
-        } else {
-          DeviceStatus = NetworkBootUnexpectedFailure;
-        }
-
-        BootDeviceEventUpdate(DeviceStatus, Status);
-        DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: %d, %d\n", DeviceStatus, Status));
     }
 
     if ((Data != NULL) &&
