@@ -71,7 +71,6 @@
 
 
 [Pcd]
-  gMsvmPkgTokenSpaceGuid.PcdUefiVersionNumber
   gMsvmPkgTokenSpaceGuid.PcdLogoFile
   gMsvmPkgTokenSpaceGuid.PcdPostBackgroundColor
   gMsvmPkgTokenSpaceGuid.PcdPostBackgroundColoringSkipCount

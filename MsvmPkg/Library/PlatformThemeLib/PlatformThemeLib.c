@@ -21,7 +21,7 @@ Module Name:
 
 Abstract:
 
-    This module will provide the fonts used in the Surface UI
+    This module will provide the fonts used in the Hyper-V UI
 
 Environment:
 

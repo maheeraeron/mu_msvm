@@ -1,6 +1,6 @@
 /** @file
 
-  Surface FrontPage Microsoft logo.
+  FrontPage Microsoft logo.
 
   Copyright (c) 2015,  Microsoft Corporation. All rights reserved.<BR>
 

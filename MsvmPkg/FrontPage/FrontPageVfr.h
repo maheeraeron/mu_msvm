@@ -20,7 +20,7 @@
 //
 #define PRINTABLE_LANGUAGE_NAME_STRING_ID               0x0001
 
-// Surface Front Page exposes the following forms
+// Hyper-V Front Page exposes the following forms
 //
 // NOTE: Form ID order and values must align with VFR code.
 //
@@ -33,45 +33,14 @@
 #define FRONT_PAGE_FORM_ID_EXIT                         0x0006
 #define FRONT_PAGE_FORM_ID_BOOT_SUMMARY                 0x0007
 
-// Surface Front Page triggers the following actions
+// Hyper-V Front Page triggers the following actions
 //
 // NOTE: Form ID order and values must align with VFR code.
 //
 #define FRONT_PAGE_ACTION_CONTINUE                        0x1000
 #define FRONT_PAGE_ACTION_DEFAULTS                        0x1001
-#define FRONT_PAGE_ACTION_SEC_TPM_ENABLE                  0x1002
-#define FRONT_PAGE_ACTION_SEC_CHANGE_SB_CONFIG            0x1003
-#define FRONT_PAGE_ACTION_SEC_DISPLAY_SB_WHAT_IS          0x1004
-#define FRONT_PAGE_ACTION_SEC_DISPLAY_TPM_WHAT_IS         0x1005
-#define FRONT_PAGE_ACTION_SEC_SET_SYSTEM_PASSWORD         0x1006
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_DOCKINGPORT       0x1007
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_FCAMERA           0x1008
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_RCAMERA           0x1009
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_IRCAMERA          0x100A
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_ONBOARD_AUDIO     0x100B
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_MICROSD           0x100C
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_WIFI              0x100D
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_BLUETOOTH         0x100E
-#define FRONT_PAGE_ACTION_LANG_SELECT_LANGUAGE            0x100F
-#define FRONT_PAGE_ACTION_INF_VIEW_ASSETTAG               0x1010
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_ACAMERA           0x1011
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_WIFI_BLE          0x1012
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_WIRED_LAN         0x1013
 #define FRONT_PAGE_ACTION_EXIT_FRONTPAGE                  0x1014
 #define FRONT_PAGE_ACTION_REBOOT_TO_FRONTPAGE             0x1015
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_BLADE_PORT        0x1016
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_ACC_RADIO         0x1017
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_LTE_MODEM         0x1018
-#define FRONT_PAGE_ACTION_DEVICE_ENABLE_WFOVCAMERA        0x1019
-
-#define FRONT_PAGE_DEVICE_DISABLE_HACK                    0x0FFF
-
-
-#define LABEL_PCINFO_FW_VERSION_TAG_START                 0x2000
-#define LABEL_PCINFO_FW_VERSION_TAG_END                   0x2001
-
-#define LABEL_UPDATE_SECURITY_START                       0x2002
-#define LABEL_UPDATE_SECURITY_END                         0x2003
 
 #define LABEL_ABOUT_COMPLIANCE_LABLEL_TAG_START           0x2004
 #define LABEL_ABOUT_COMPLIANCE_LABLEL_TAG_END             0x2005
@@ -104,13 +73,6 @@
     0xefbdb196, 0x91d7, 0x4e04, { 0xb7, 0xef, 0xa4, 0x4c, 0x5f, 0xba, 0x2e, 0xb5 } \
   }
 
-// Compliance Label Bitmap File GUID.
-//
-#define SURFACE_COMPLIANCE_LABEL_FILE_GUID                                         \
-  {                                                                                \
-    0x0EC6B44F, 0xB26A, 0x472C, { 0xA5, 0x08, 0x29, 0x1F, 0x25, 0xE6, 0x8D, 0x8A } \
-  }
-  
 // Compliance Label Bitmap File GUID - Expanded.
 // NOTE: This is gross but it has to be done until VFR recognizes GUID as a data type for guided opcodes.
 // 
@@ -120,11 +82,6 @@ typedef struct {
   UINT16  Data3;
   UINT64  Data4;
 } VFR_EFI_GUID;
-
-#define SURFACE_COMPLIANCE_LABEL_FILE_GUID_DATA1    0x0EC6B44F
-#define SURFACE_COMPLIANCE_LABEL_FILE_GUID_DATA2    0xB26A
-#define SURFACE_COMPLIANCE_LABEL_FILE_GUID_DATA3    0x472C
-#define SURFACE_COMPLIANCE_LABEL_FILE_GUID_DATA4    0x8A8DE6251F2908A5
 
 typedef struct{
     UINT64  PlatformDeviceDisableSupportedMask;  // This allows platform to control UI elements for what device disable they support 

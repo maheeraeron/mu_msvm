@@ -543,7 +543,7 @@ CallFrontPage (IN UINT32    FormIndex)
                                       &ActionRequest
                                      );
 
-    // If the user selected the "Restart now" button to exit the Surface Frontpage, set the exit flag.
+    // If the user selected the "Restart now" button to exit the Frontpage, set the exit flag.
     //
     if (ActionRequest == EFI_BROWSER_ACTION_REQUEST_EXIT)
     {
@@ -725,7 +725,7 @@ RenderTitlebar(VOID)
         DataSize = MSP_REBOOT_REASON_LENGTH;
         Status = gRT->GetVariable (
                    MSP_REBOOT_REASON_VAR_NAME,
-                   &gSurfaceFrontPageNVVarGuid,
+                   &gFrontPageNVVarGuid,
                    NULL,
                    &DataSize,
                    &RebootReason[0]
@@ -739,7 +739,7 @@ RenderTitlebar(VOID)
             Parameter = RebootReason[0];
             Status = gRT->SetVariable (
                 MSP_REBOOT_REASON_VAR_NAME,
-                &gSurfaceFrontPageNVVarGuid,
+                &gFrontPageNVVarGuid,
                 EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
                 0,
                 NULL
@@ -1266,7 +1266,6 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     if (mResetRequired)
     {
-        //ResetSystemWithSubtype( EfiResetCold, &gMsSurfaceFrontPageResetGuid );
         ResetSystemWithSubtype( EfiResetCold, NULL );
     }
 

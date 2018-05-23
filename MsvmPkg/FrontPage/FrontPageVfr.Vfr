@@ -5,14 +5,14 @@
 #include "FrontPageVfr.h"
 
 
-// Surface UEFI Front Page Formset
+// Hyper-V UEFI Front Page Formset
 //
 formset
 
   // Common Formset values
   //
   guid      = FRONT_PAGE_CONFIG_FORMSET_GUID,           // Formset GUID
-  title     = STRING_TOKEN(STR_FRONT_PAGE_TITLE),       // Formset title (ex: "Surface UEFI")
+  title     = STRING_TOKEN(STR_FRONT_PAGE_TITLE),       // Formset title (ex: "Hyper-V UEFI")
   help      = STRING_TOKEN(STR_NULL_STRING),            // Formset help: None
   classguid = FRONT_PAGE_CONFIG_FORMSET_GUID,           // Formset class GUID
   class     = FRONT_PAGE_CLASS,                         // Formset class

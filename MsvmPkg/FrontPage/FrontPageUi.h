@@ -1,5 +1,5 @@
 /** @file
-  User interaction functions for the Surface FrontPage.
+  User interaction functions for the Hyper-V FrontPage.
 
   Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 

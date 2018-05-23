@@ -1,6 +1,6 @@
 /** @file
 
-This include file is shared between the Surface FrontPage and our custom Forms Display Engine.  It
+This include file is shared between the Hyper-V FrontPage and our custom Forms Display Engine.  It
 defines the master UI layout (something that should be replaced with a XAML-like implementation in the
 future) as well as shared structures for communicating and coordinating user input events between the
 two subsystems.
@@ -15,10 +15,10 @@ Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 #include <Protocol/SimpleWindowManager.h>
 
 // ****************************************************************************
-// **                 Surface UI Element Master Layout                       **
+// **                 Hyper-V UI Element Master Layout                       **
 // **                                                                        **
 // ** The following set of constants represent coordinates in percentage of  **
-// ** screen size values for nearly all displayable Surface UI elements and  **
+// ** screen size values for nearly all displayable Hyper-V UI elements and  **
 // ** are used for layout of our FrontPage, Dialog, and related screens.     **
 // **                                                                        **
 // ** NOTE: This should all be replaced with a XAML-like implementation in   **
@@ -106,7 +106,7 @@ typedef enum
 // ****** Structure Definitions ******
 //
 
-// Custom structure for sharing user event and operating state information between the Surface FrontPage
+// Custom structure for sharing user event and operating state information between the Hyper-V FrontPage
 // and our custom display engine.
 //
 typedef struct _DISPLAY_ENGINE_SHARED_STATE_

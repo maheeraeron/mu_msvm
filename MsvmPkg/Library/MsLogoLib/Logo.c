@@ -125,7 +125,7 @@ IN  EFI_GUID  *LogoFile
     DEBUG((DEBUG_INFO, "PixelFormat:0x%x \n", GraphicsOutput->Mode->Info->PixelFormat));
     DEBUG((DEBUG_INFO, "PixelsPerScanLine:0x%x \n", GraphicsOutput->Mode->Info->PixelsPerScanLine));
 
-    // Color POST background as per the gMsSurfaceModulePkgTokenSpaceGuid.PcdPostBackgroundColor
+    // Color POST background as per the gMsvmPkgTokenSpaceGuid..PcdPostBackgroundColor
 
     Color = PcdGet32 (PcdPostBackgroundColor);
 

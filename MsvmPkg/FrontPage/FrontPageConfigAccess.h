@@ -1,5 +1,5 @@
 /** @file
-  HiiConfigAccess definitions for Surface FrontPage.
+  HiiConfigAccess definitions for Hyper-V FrontPage.
 
   Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 

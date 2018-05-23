@@ -1,5 +1,5 @@
 ## @file
-#  Application that presents & manages the Surface Setup Front Page.
+#  Application that presents & manages the Hyper-V Setup Front Page.
 #
 #  Copyright (c) 2014-2015, Microsoft Corporation. All rights reserved.<BR>
 #
@@ -59,7 +59,7 @@
   gEfiImageSecurityDatabaseGuid                 ## CONSUMES
   gEfiIfrTianoGuid                              ## CONSUMES ## GUID (Extended IFR Guid Opcode)
   gMsEventMasterFrameNotifyGroupGuid            ## CONSUMES
-  gSurfaceFrontPageNVVarGuid                    ## CONSUMES
+  gFrontPageNVVarGuid                           ## CONSUMES
 
 [Protocols]
   gEfiSmbiosProtocolGuid                        ## PROTOCOL CONSUMES

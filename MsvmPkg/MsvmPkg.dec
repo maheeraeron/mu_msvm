@@ -25,7 +25,7 @@
   #
   # Guid for FrontPage NV variable
   #
-  gSurfaceFrontPageNVVarGuid = {0x7f98efe9, 0x50aa, 0x4598, { 0xb7, 0xc1, 0xcb, 0x72, 0xe1, 0xcc, 0x52, 0x24 }}
+  gFrontPageNVVarGuid             = {0x7f98efe9, 0x50aa, 0x4598, { 0xb7, 0xc1, 0xcb, 0x72, 0xe1, 0xcc, 0x52, 0x24 }}
 
 [Ppis]
 
@@ -112,12 +112,6 @@
   # PMEM (nvdimm) device
   gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xEFFE9000|UINT32|0x500B
   gMsvmPkgTokenSpaceGuid.PcdPmemEventVector|37|UINT8|0x500C
-
-  gMsvmPkgTokenSpaceGuid.PcdUefiVersionNumber        |00000000|UINT32|0x40000090
-  gMsvmPkgTokenSpaceGuid.PcdUefiBuildDate            |00000000|UINT32|0x40000092
-  ## If the version type is 0, then the platform chooses to use the old version format (10.12.10)
-  ## If the version type is 1 follow the surface versioning spec (8.16.8).
-  gMsvmPkgTokenSpaceGuid.PcdUefiVersionType          |00000000|UINT8|0x40000093
 
   ##
   # POST background color (default: black).

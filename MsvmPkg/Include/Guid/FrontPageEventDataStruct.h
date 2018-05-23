@@ -1,12 +1,12 @@
 /** @file
-Header file to support the Surface Setup Front Page
+Header file to support the Hyper-V Setup Front Page
 
 Copyright (c) 2015, Microsoft Corporation. All rights reserved.<BR>
 
 **/
 
-#ifndef _SURFACE_FRONT_PAGE_EVENT_DATA_STRUCT_H_
-#define _SURFACE_FRONT_PAGE_EVENT_DATA_STRUCT_H_
+#ifndef _FRONT_PAGE_EVENT_DATA_STRUCT_H_
+#define _FRONT_PAGE_EVENT_DATA_STRUCT_H_
 
 //==========================================
 // Data Structure GUID and Definitions
@@ -80,7 +80,7 @@ typedef struct {
     0x7f98efe9, 0x50aa, 0x4598, { 0xb7, 0xc1, 0xcb, 0x72, 0xe1, 0xcc, 0x52, 0x24 } \
   }
 
-extern EFI_GUID gSurfaceFrontPageNVVarGuid;
+extern EFI_GUID gFrontPageNVVarGuid;
 
 
 //==========================================
@@ -88,7 +88,7 @@ extern EFI_GUID gSurfaceFrontPageNVVarGuid;
 //==========================================
 
 //
-// Create definitions for the Surface FrontPage variables.
+// Create definitions for the Hyper-V FrontPage variables.
 #define SFP_NV_SETTINGS_VAR_NAME          L"FPConfigNVData"
 #define SFP_NV_ATTRIBUTES                 (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 #define SFP_SB_VIOLATION_SIGNAL_VAR_NAME  L"SecureBootAlert"
@@ -103,4 +103,4 @@ extern EFI_GUID gSurfaceFrontPageNVVarGuid;
 #define MSP_REBOOT_REASON_SETUP_OS        "OS      "
 #define MSP_REBOOT_REASON_SETUP_NONE      "        " // Not a fail
 
-#endif  // _SURFACE_FRONT_PAGE_EVENT_DATA_STRUCT_H_
+#endif  // _FRONT_PAGE_EVENT_DATA_STRUCT_H_
