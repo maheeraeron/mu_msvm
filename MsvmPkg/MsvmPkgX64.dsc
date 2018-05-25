@@ -126,6 +126,11 @@
   MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
   PlatformThemeLib|MsvmPkg/Library/PlatformThemeLib/PlatformThemeLib.inf
 
+[LibraryClasses.IA32]
+!if $(PERF_TRACE_ENABLE) == TRUE
+  Performance2Lib|PerformancePkg/Library/PeiPerformance2Lib/PeiPerformance2Lib.inf
+!endif
+
 #
 # Library instance overrides for SEC and PEI
 #
@@ -159,6 +164,9 @@
 #
 [LibraryClasses.common.PEI_CORE]
   PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf
+!if $(PERF_TRACE_ENABLE) == TRUE
+  Performance2Lib|PerformancePkg/Library/CorePerformance2Lib/PeiCorePerformance2Lib.inf
+!endif
 
 #
 # Library instance overrides just for PEIMs
@@ -210,6 +218,9 @@
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
   PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
+!if $(PERF_TRACE_ENABLE) == TRUE
+  Performance2Lib|PerformancePkg/Library/CorePerformance2Lib/DxeCorePerformance2Lib.inf
+!endif
 ##MSChange Begin
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
 
@@ -224,6 +235,9 @@
 #
 [LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER]
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
+!if $(PERF_TRACE_ENABLE) == TRUE
+  Performance2Lib|PerformancePkg/Library/DxePerformance2Lib/DxePerformance2Lib.inf
+!endif
 
 #
 # Library instance overrides for just DXE Runtime Drivers
@@ -356,10 +370,26 @@
 
   gEfiSecurityPkgTokenSpaceGuid.PcdForceReallocatePcrBanks|FALSE
 
+!if $(PERF_TRACE_ENABLE) == TRUE
+  # Set perf verbosity to standard level (1=min, 2=standard, 3=high)
+  gEfiMdePkgTokenSpaceGuid.PcdPerformance2LibraryVerbosityLevel|0x2
+  # Sets bits 0, 1, 3, 4 for entrypoint, loadimage, binding start and stop logging in the core
+  gEfiMdePkgTokenSpaceGuid.PcdPerformance2LibraryCoreFunctionalityMask|0x1B
+  # 16K is enough to fit all of the PEI records
+  gPerformancePkgTokenSpaceGuid.PcdMaxPeiPerformanceLogSize|16384
+!endif
+
+[PcdsFixedAtBuild.X64]
+!if $(PERF_TRACE_ENABLE) == TRUE
+  # 16M should be enough to fit all the verbose measurements
+  gEfiMdeModulePkgTokenSpaceGuid.PcdExtFpdtBootRecordPadSize|0x1000000
+!endif
+
 [PcdsFeatureFlag.common]
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwarePerformanceDataTableS3Support|FALSE
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
@@ -514,6 +544,13 @@
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   MsvmPkg/PlatformPei/PlatformPei.inf
   MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf {
+    <LibraryClasses>
+      LockBoxLib|MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxPeiLib.inf
+      TimerLib|PerformancePkg/Library/TscTimerLib/PeiTscTimerLib.inf
+      PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
+      PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
+  }
 
   #
   # DXE Phase modules
@@ -660,3 +697,7 @@
   # FrontPage application.
   MsvmPkg/FrontPage/FrontPage.inf
 
+  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf {
+    <LibraryClasses>
+      LockBoxLib|MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxDxeLib.inf
+  }

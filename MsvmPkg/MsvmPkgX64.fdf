@@ -145,6 +145,7 @@ INF  MsvmPkg/PlatformPei/PlatformPei.inf
 INF  MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
 INF  MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+INF  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
 
 #
 # DXE components.
@@ -225,6 +226,7 @@ INF  MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
 # FrontPage application.
 INF  MsvmPkg/FrontPage/FrontPage.inf
 
+INF  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf
 
 FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdLogoFile) {
     SECTION RAW = MsvmPkg/bootlogo.bmp
