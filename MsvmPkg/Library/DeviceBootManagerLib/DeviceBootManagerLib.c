@@ -39,6 +39,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/EmclLib.h>
 #include <VirtualDeviceId.h>
 #include <hyperkbdprotocol.h>
+#include <Library/DevicePathLib.h>
 
 //
 // Predefined platform default console device path
@@ -184,7 +185,14 @@ DeviceBootManagerBeforeConsole (
                         DevicePath                             // device path for ConOut
                         );
         if (EFI_ERROR (Status)) {
+            ConsoleOut = NULL;
             DEBUG((DEBUG_ERROR, "Device Path on handle of Hyper-V video device not found.  Status = %r\n", Status));
+        }
+        else {
+            *DevicePath = DuplicateDevicePath(*DevicePath);
+            if (*DevicePath == NULL) {
+                ConsoleOut = NULL;
+            }
         }
     }
     else {

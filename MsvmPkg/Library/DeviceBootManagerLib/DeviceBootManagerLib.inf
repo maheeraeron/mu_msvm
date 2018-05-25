@@ -57,6 +57,7 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   MsPlatBdsLib
   UefiBootServicesTableLib
   EmclLib
+  DevicePathLib
 
 [Protocols]
   gEfiVmbusProtocolGuid
