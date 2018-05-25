@@ -43,6 +43,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/UefiLib.h>
 #include <Library/DevicePathLib.h>
 #include <Protocol/Vmbus.h>
+#include <Protocol/ReportStatusCodeHandler.h>
 
 //
 // VMBUS guid for synthetic NIC
@@ -60,10 +61,6 @@ ReportStatusCode(
   _In_opt_  EFI_STATUS_CODE_DATA     *Data
   );
 
-const EFI_STATUS_CODE_PROTOCOL  mEfiStatusCodeProtocol  = 
-{
-    ReportStatusCode
-};
 
 //
 // GUID for status code event channel.
@@ -400,8 +397,8 @@ Return Value:
     MEMORY_STATUSCODE_RECORD         *Record;
     UINTN                             Index;
     UINTN                             MaxRecordNumber;
-    EFI_HANDLE                        Handle;
     EFI_STATUS                        Status;
+    EFI_RSC_HANDLER_PROTOCOL          *RscHandlerProtocol = NULL;
 
     DEBUG((DEBUG_INIT, "Initializing Status Code Event Channel\n"));
     //
@@ -463,20 +460,16 @@ Return Value:
     }
 
     //
-    // Install Status Code Runtime Protocol implementation
+    // Get Report Status Code Handler Protocol.
     //
-    Handle = NULL;
+    Status = gBS->LocateProtocol (&gEfiRscHandlerProtocolGuid, NULL, (VOID **) &RscHandlerProtocol);
+    ASSERT_EFI_ERROR (Status);
 
-    Status = gBS->InstallMultipleProtocolInterfaces(
-                  &Handle,
-                  &gEfiStatusCodeRuntimeProtocolGuid,
-                  &mEfiStatusCodeProtocol,
-                  NULL);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register Status Code Runtime Protocol. Error %08x\n", Status));
-        ASSERT(FALSE);
-    }
+    //
+    // Register report status code listener for Boot Events.
+    //
+    Status = RscHandlerProtocol->Register (ReportStatusCode, TPL_HIGH_LEVEL);
+    ASSERT_EFI_ERROR (Status);
 
 Exit:
 

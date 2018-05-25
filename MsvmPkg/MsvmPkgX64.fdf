@@ -211,6 +211,7 @@ INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
 INF SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
 
 # UI Theme Protocol.
 INF  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf

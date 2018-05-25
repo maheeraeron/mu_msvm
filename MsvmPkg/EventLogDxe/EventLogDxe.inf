@@ -59,6 +59,7 @@
   gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES
   gEfiEventLogProtocolGuid                      ## PRODUCES
   gEfiFirmwareVolume2ProtocolGuid               ## CONSUMES
+  gEfiRscHandlerProtocolGuid                    ## CONSUMES
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
@@ -69,4 +70,4 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile
 
 [Depex]
-  TRUE
+  gEfiRscHandlerProtocolGuid
