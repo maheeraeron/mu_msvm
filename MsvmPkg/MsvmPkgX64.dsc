@@ -80,7 +80,6 @@
 !endif
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   TimerLib|MsvmPkg/Library/HvTimerLib/HvTimerLib.inf
-  Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
   UefiCpuLib|UefiCpuPkg/Library/BaseUefiCpuLib/BaseUefiCpuLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   #UefiResetSystemLib|MdeModulePkg/Library/BaseUefiResetSystemLibNull/BaseUefiResetSystemLibNull.inf ##MSChange
@@ -90,16 +89,22 @@
   SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
-  TpmMeasurementLib|SecurityPkg/Library/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf
-  Tcg2PhysicalPresenceLib|SecurityPkg/Library/DxeTcg2PhysicalPresenceLib/DxeTcg2PhysicalPresenceLib.inf
-  #OemTpm2InitLib|MsCorePkg/Library/MsTpm2InitLib/MsTpm2InitLibNull.inf
-  OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
-  Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
   #RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
-  Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
   Performance2Lib|MdePkg/Library/BasePerformance2LibNull/BasePerformance2LibNull.inf ## MS_CHANGE
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+
+  ## MS_CHANGE_?
+  # MeasuredBoot and Other TPM-Based Security
+  Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
+  Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+  TpmMeasurementLib|SecurityPkg/Library/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf
+  Tcg2PhysicalPresenceLib|SecurityPkg/Library/DxeTcg2PhysicalPresenceLib/DxeTcg2PhysicalPresenceLib.inf
+  Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
+  OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
+  Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
+  Tcg2PreUefiEventLogLib|MsvmPkg/Library/Tcg2PreUefiEventLogLibNull/Tcg2PreUefiEventLogLibNull.inf
+  ## MS_CHANGE_?
 
   # MsCore BDS & FrontPage Libs
   PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
@@ -212,7 +217,7 @@
   ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
   HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
 ##MSChange End
-  Tcg2PhysicalPresencePromptLib|SecurityPkg/Library/Tcg2PhysicalPresencePromptLib/Tcg2PhysicalPresencePromptLibConsole.inf   ## MS_CHANGE
+  Tcg2PhysicalPresencePromptLib|MsvmPkg/Library/Tcg2PhysicalPresencePromptLibApprove/Tcg2PhysicalPresencePromptLibApprove.inf   ## MS_CHANGE
 
 #
 # Library instance overrides for all DXE Drivers
@@ -345,6 +350,12 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerInBootOrder|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupported|FALSE
 
+  gEfiSecurityPkgTokenSpaceGuid.PcdOptionRomImageVerificationPolicy|0x00000004        # DENY_EXECUTE_ON_SECURITY_VIOLATION
+  gEfiSecurityPkgTokenSpaceGuid.PcdRemovableMediaImageVerificationPolicy|0x00000004   # DENY_EXECUTE_ON_SECURITY_VIOLATION
+  gEfiSecurityPkgTokenSpaceGuid.PcdFixedMediaImageVerificationPolicy|0x00000004       # DENY_EXECUTE_ON_SECURITY_VIOLATION
+
+  gEfiSecurityPkgTokenSpaceGuid.PcdForceReallocatePcrBanks|FALSE
+
 [PcdsFeatureFlag.common]
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
@@ -466,6 +477,22 @@
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0
 
+  # PcdTpm2HashMask
+  # This mask is used to indicate which PCRs are intended to be supported by the *platform* (not UEFI software).
+  # If a PCR is allocated that isn't in this mask, it will be deallocated by Tcg2Pei.
+  # If a PCR is supported in this mask, but isn't supported by the TPM, the mask will be updated by Tcg2Pei.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|0x00000002               # HASH_ALG_SHA256
+
+  # PcdTcg2HashAlgorithmBitmap
+  # This bitmap is updated at runtime by HashLibBaseCryptoRouter.
+  # It indicates the UEFI at boot with the current FW support for TPM PCR hashing algorithms.
+  # For this implementation, we promise no support beyond what is provided by the HashLib instances.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTcg2HashAlgorithmBitmap|0x00000000
+
+  # Default TCG2 stack will try to autodect TPM at startup.
+  # Fix this to dTPM 2.0 and skip the autodetection.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x5a, 0xf2, 0x6b, 0x28, 0xc3, 0xc2, 0x8c, 0x40, 0xb3, 0xb4, 0x25, 0xe6, 0x75, 0x8b, 0x73, 0x17}
+
 
 ################################################################################
 #
@@ -581,27 +608,29 @@
   MsvmPkg/ConNullDxe/ConNullDxe.inf
 
   # TPM related components
+  # TODO: Currently the PH is locked by the hypervisor.
+  #       If this ever changes, will need a driver to lock the PH.
 
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
-      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
+      NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
   }
 
   SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
-      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
-      # The below library was added as a WA MS_CHANGE_103691 in the security package and an inf is missing in the platformsamplepkg.
-      Tcg2PreUefiEventLogLib|SecurityPkg/Library/TempPreUefiEventLogLib/TempPreUefiEventLogLib.inf    ## MS_CHANGE_TEMP
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
+      NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
  !if $(SOURCE_DEBUG_ENABLE) == TRUE
  !else
       SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
  !endif
-      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
   }
 
   !ifdef BUILD_HAVOC
