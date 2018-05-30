@@ -56,10 +56,12 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   MsLogoLib
   MsPlatBdsLib
   UefiBootServicesTableLib
+  DxeServicesTableLib
   EmclLib
   DevicePathLib
 
 [Protocols]
+  gEfiVmbusRootProtocolGuid
   gEfiVmbusProtocolGuid
 
 [Guids]
@@ -69,6 +71,7 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
 
 [Pcd]
   gMsvmPkgTokenSpaceGuid.PcdLogoFile
+  gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
 
 [Depex]
 TRUE
