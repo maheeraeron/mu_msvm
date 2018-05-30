@@ -400,6 +400,7 @@
   gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0

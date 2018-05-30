@@ -126,6 +126,7 @@
     gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
+    gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
