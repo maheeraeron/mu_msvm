@@ -86,7 +86,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
   gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile
-  gMsvmPkgTokenSpaceGuid.PcdCurrentPointerState
+  gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState
   gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile
   gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
 
@@ -96,4 +96,4 @@
 [BuildOptions]
   # Needed because multiple floating-point components define _fltused.
   #
-  *_VS2013x86_*_DLINK_FLAGS = /FORCE:MULTIPLE
+  #*_VS2013x86_*_DLINK_FLAGS = /FORCE:MULTIPLE

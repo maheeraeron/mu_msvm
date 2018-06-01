@@ -169,7 +169,7 @@ INF MsvmPkg/VmbusDxe/VmbusDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
 INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
-INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
+INF MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
 INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
@@ -220,8 +220,6 @@ INF  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
 INF  MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
 # Simple Window Manager (SWM) driver.
 INF  MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
-# On-Screen Keyboard (OSK) driver.
-INF  MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
 
 # FrontPage application.
 INF  MsvmPkg/FrontPage/FrontPage.inf

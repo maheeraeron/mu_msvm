@@ -572,8 +572,8 @@
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
-  #MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
-  MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
+
+  MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
       #DebugLib|MdeModulePkg/Library/PeiDxeDebugLibReportStatusCode/PeiDxeDebugLibReportStatusCode.inf
@@ -696,10 +696,6 @@
 
   # Rendering Engine (SRE) driver.
   MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
-
-  # On-Screen Keyboard (OSK) driver.
-  MsGraphicsPkg/OnScreenKeyboardDxe/OnScreenKeyboardDxe.inf
-  #MsGraphicsPkg/OnScreenKeyboardDxe/UnitTests/Display/UT_OSKDisplay.inf
 
   # FrontPage application.
   MsvmPkg/FrontPage/FrontPage.inf

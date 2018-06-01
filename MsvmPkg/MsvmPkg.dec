@@ -258,7 +258,3 @@
 
   gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|FALSE|BOOLEAN|0x603E
 
-
-[PcdsDynamic, PcdsDynamicEx]
-  gMsvmPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
-

@@ -1168,28 +1168,29 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     if (EFI_ERROR(Status))
     {
-        Status = EFI_UNSUPPORTED;
         mOSKProtocol = (MS_ONSCREEN_KEYBOARD_PROTOCOL *)NULL;
-        DEBUG((DEBUG_ERROR, "ERROR [FP]: Failed to find the on-screen keyboard protocol (%r).\r\n", Status));
-        goto Exit;
+        DEBUG((DEBUG_WARN, "WARN [FP]: Failed to find the on-screen keyboard protocol (%r).\r\n", Status));
+    } 
+    else 
+    {
+
+        // Set default on-screen keyboard size and position.  Disable icon auto-activation (set by BDS) since
+        // we'll display the OSK ourselves when appropriate.
+        //
+
+        // Disable OSK icon auto-activation and self-refresh, and ensure keyboard is disabled.
+        //
+        mOSKProtocol->GetKeyboardMode(mOSKProtocol, &OSKMode);
+        OSKMode &= ~(OSK_MODE_AUTOENABLEICON | OSK_MODE_SELF_REFRESH);
+        mOSKProtocol->ShowKeyboard(mOSKProtocol,FALSE);
+        mOSKProtocol->ShowKeyboardIcon(mOSKProtocol,FALSE);
+        mOSKProtocol->SetKeyboardMode(mOSKProtocol, OSKMode);
+
+        // Set keyboard size and position (75% of screen width, bottom-right corner, docked).
+        //
+        mOSKProtocol->SetKeyboardSize(mOSKProtocol, FP_OSK_WIDTH_PERCENT);
+        mOSKProtocol->SetKeyboardPosition(mOSKProtocol, BottomRight, Docked);
     }
-
-    // Set default on-screen keyboard size and position.  Disable icon auto-activation (set by BDS) since
-    // we'll display the OSK ourselves when appropriate.
-    //
-
-    // Disable OSK icon auto-activation and self-refresh, and ensure keyboard is disabled.
-    //
-    mOSKProtocol->GetKeyboardMode(mOSKProtocol, &OSKMode);
-    OSKMode &= ~(OSK_MODE_AUTOENABLEICON | OSK_MODE_SELF_REFRESH);
-    mOSKProtocol->ShowKeyboard(mOSKProtocol,FALSE);
-    mOSKProtocol->ShowKeyboardIcon(mOSKProtocol,FALSE);
-    mOSKProtocol->SetKeyboardMode(mOSKProtocol, OSKMode);
-
-    // Set keyboard size and position (75% of screen width, bottom-right corner, docked).
-    //
-    mOSKProtocol->SetKeyboardSize(mOSKProtocol, FP_OSK_WIDTH_PERCENT);
-    mOSKProtocol->SetKeyboardPosition(mOSKProtocol, BottomRight, Docked);
 
     if (mGop != NULL)
     {
