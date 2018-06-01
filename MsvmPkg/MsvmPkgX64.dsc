@@ -524,7 +524,11 @@
   # Fix this to dTPM 2.0 and skip the autodetection.
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x5a, 0xf2, 0x6b, 0x28, 0xc3, 0xc2, 0x8c, 0x40, 0xb3, 0xb4, 0x25, 0xe6, 0x75, 0x8b, 0x73, 0x17}
 
-
+  # As a test disable PCR4 measurements
+  # future change should be to have worker process pass config for this value
+  #  This should only be used to support upgrades/existing VMs
+  gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.
@@ -665,6 +669,8 @@
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
+      #special library For HyperV so that boot doesn't measure Main FV
+      NULL|MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.inf
  !if $(SOURCE_DEBUG_ENABLE) == TRUE
  !else
       SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf

@@ -1,13 +1,10 @@
 /BuildConfig.conf
-
 *.pyc
 *.bak
 /Build
 /Conf
-fit.log
-/ProjectPVisualStudio
-/vsproj
 /.vs
-Vbt.btf
+/.vscode
 
 *_extdep/
+

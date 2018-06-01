@@ -1,0 +1,42 @@
+## @file
+# LIbrary to inform Tcg2Pei not to measure FvMain as this isn't the HyperV design 
+# 
+#
+# @copyright
+# Copyright (c) 2017 Microsoft Corporation. All rights reserved
+#
+#
+##
+
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = ExcludeMainFvFromMeasurementLib
+FILE_GUID = f6262462-bffa-495b-86c3-34548c2c1a6b
+VERSION_STRING = 1.0
+MODULE_TYPE = PEIM
+LIBRARY_CLASS = NULL|PEIM
+CONSTRUCTOR = ExcludeMainFvFromMeasurementLibConstructor
+
+[Packages]
+MdePkg/MdePkg.dec
+MsvmPkg/MsvmPkg.dec
+SecurityPkg/SecurityPkg.dec
+
+[Sources]
+ExcludeMainFvFromMeasurementLib.c
+
+[LibraryClasses]
+PeiServicesLib
+PcdLib
+DebugLib
+
+[FixedPcd]
+gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress
+gMsvmPkgTokenSpaceGuid.PcdFvSize
+
+[Pcd]
+gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements  #CONSUMES
+
+[Ppis]
+gEfiPeiFirmwareVolumeInfoMeasurementExcludedPpiGuid

@@ -256,6 +256,9 @@
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0|UINT64|0x603B
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0|UINT32|0x603C
 
+  gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|FALSE|BOOLEAN|0x603E
+
+
 [PcdsDynamic, PcdsDynamicEx]
   gMsvmPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
 
