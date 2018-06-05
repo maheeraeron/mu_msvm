@@ -208,6 +208,7 @@ Return Value:
     EFI_STATUS_CODE_EVENT *eventData = NULL;
     EFI_EVENT_DESCRIPTOR eventDesc;
     UINT32 size = 0;
+    static BOOLEAN EventAlreadyUpdated = FALSE;
 
     ASSERT(EfiGetCurrentTpl() <= TPL_NOTIFY);
 
@@ -243,22 +244,28 @@ Return Value:
               OptionNumber = *((UINTN *)(Data + 1) + 1);
               DEBUG((DEBUG_INFO, "[HVBE] Starting new boot event. DP Ptr: 0x%X, OptionNumber: %d\n", DevicePathData, OptionNumber));
               DEBUG((DEBUG_INFO, "[HVBE] DP: %s\n", ConvertDeviceNodeToText((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, FALSE, FALSE)));
-              BootDeviceEventStart((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, (UINT16)OptionNumber, BootDeviceLoadError, EFI_SUCCESS);
+              BootDeviceEventStart((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData, (UINT16)OptionNumber, BootDeviceOsLoaded, EFI_SUCCESS);
            }
+
+           EventAlreadyUpdated = FALSE;
         }
     }
     else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_LOAD_ERROR))
     {
-        BOOLEAN   EventAlreadyUpdated = FALSE;
-
-        if (Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
+        if (!EventAlreadyUpdated && Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
         {
             UINTN DevicePathData = *((UINTN *)(Data + 1));
+            UINTN StatusCode = *((UINTN *)(Data + 1) + 1);
 
-            if (IsNetworkDeviceFilePath((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData))
+            if ((StatusCode & ~0xFFFF) == DeviceStatusSecureBootGroup)
+            {
+                BootDeviceEventUpdate(StatusCode, EFI_ACCESS_DENIED); 
+                DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: 0x%X, %r\n", StatusCode, EFI_ACCESS_DENIED));
+            }
+            else if (IsNetworkDeviceFilePath((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData))
             {
                 BOOT_DEVICE_STATUS DeviceStatus = NetworkBootUnexpectedFailure;
-                EFI_STATUS Status = (EFI_STATUS)*((UINTN *)(Data + 1) + 1);
+                EFI_STATUS Status = (EFI_STATUS)StatusCode;
 
                 if (Status == EFI_BUFFER_TOO_SMALL) {
                   DeviceStatus = NetworkBootBufferTooSmall;
@@ -286,18 +293,16 @@ Return Value:
 
                 BootDeviceEventUpdate(DeviceStatus, Status);
                 DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: 0x%X, %r\n", DeviceStatus, Status));
-                EventAlreadyUpdated = TRUE;
             }
-        }
+            else {
+               BootDeviceEventUpdate(BootDeviceOsNotLoaded, EFI_LOAD_ERROR);
+               DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceOsNotLoaded, EFI_LOAD_ERROR\n"));
+            }
 
-        if (!EventAlreadyUpdated)
-        {
-           BootDeviceEventUpdate(BootDeviceOsNotLoaded, EFI_LOAD_ERROR);
-           DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: BootDeviceOsNotLoaded, EFI_LOAD_ERROR\n"));
+            BootDeviceEventComplete();
+            DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
+            EventAlreadyUpdated = TRUE;
         }
-
-        BootDeviceEventComplete();
-        DEBUG((DEBUG_INFO, "[HVBE] Completing boot event\n"));
     }
     else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED))
     {

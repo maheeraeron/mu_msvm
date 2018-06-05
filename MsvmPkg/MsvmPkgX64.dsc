@@ -565,7 +565,7 @@
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
   <LibraryClasses>
     SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
-    NULL|SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf
+    NULL|MsvmPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf
     NULL|SecurityPkg/Library/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf
   }
   MsvmPkg/CpuDxe/CpuDxe.inf
