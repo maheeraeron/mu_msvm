@@ -42,9 +42,9 @@ Author:
 //
 // TODO: Could we automate the release version from current UEFI version?
 //
-#define MAJOR_RELEASE_VERSION 3
+#define MAJOR_RELEASE_VERSION 4
 #define MINOR_RELEASE_VERSION 0
-static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v3.0";
+static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v4.0";
 static CHAR8 RELEASE_DATE_STRING[] = "mm/dd/yyyy";
 
 //
