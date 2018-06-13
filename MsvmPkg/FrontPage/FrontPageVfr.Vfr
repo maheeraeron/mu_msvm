@@ -1,7 +1,4 @@
 #include <Guid/FrontPageEventDataStruct.h>
-//#include <Guid/MsBootMenuGuid.h>
-//#include <FrontPageDeviceDisablePlatformSupport.h>
-
 #include "FrontPageVfr.h"
 
 
@@ -103,46 +100,11 @@ formset
 
     text
       help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
-      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_6);                                //
+      text    = STRING_TOKEN(STR_BOOT_RETRY);                                           //
 
     text
       help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
-      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_6);                                 //
-
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
-      text    = STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_7);                                //
-
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Boot Summary Info
-      text    = STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_7);                                 //
-  endform;
-
-  /////////////////////////////////////////////////////////////////////////////
-  // Form ID 5: About
-  //
-  form formid = FRONT_PAGE_FORM_ID_ABOUT,                                               // About form
-    title  = STRING_TOKEN(STR_NULL_STRING);                                             // Form title: None
-  endform;
-
-  /////////////////////////////////////////////////////////////////////////////
-  // Form ID 6: Exit
-  //
-  form formid = FRONT_PAGE_FORM_ID_EXIT,                                                // Exit form
-    title  = STRING_TOKEN(STR_NULL_STRING);                                             // Form title: None
-
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Exit FrontPage settings header
-      text    = STRING_TOKEN(STR_FP_EXIT_HEADER);                                       //
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // SPACING
-      text    = STRING_TOKEN(STR_NULL_STRING);                                          //
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // Exit FrontPage settings description
-      text    = STRING_TOKEN(STR_FP_EXIT_DESCRIPTION);                                  //
-    text
-      help    = STRING_TOKEN(STR_NULL_STRING),                                          // SPACING
-      text    = STRING_TOKEN(STR_NULL_STRING);                                          //
+      text    = STRING_TOKEN(STR_BOOT_RETRY2);                                          //
 
     text
       help    = STRING_TOKEN(STR_NULL_STRING),                                          // "Restart now" button

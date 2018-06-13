@@ -30,16 +30,16 @@ Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 #define MS_DEFAULT_FONT_SIZE                     MsUiGetStandardFontHeight ()     // Default font size
 
 // FrontPage TitleBar (NOTE: Y origins are based on vertically centering the element in the TitleBar).
-#define FP_TBAR_HEIGHT_PERCENT                   8                      // TitleBar height is 8% the height of the screen.
-#define FP_TBAR_MSLOGO_X_PERCENT                 4                      // TitleBar: Microsoft Logo x origin starts at 4% of *Master Frame* width.
-#define FP_TBAR_TEXT_X_PERCENT                   25                     // TitleBar: Title text x origin starts at 25% of the *Master Frame* width.
+#define FP_TBAR_HEIGHT_PERCENT                   9                      // TitleBar height is 9% the height of the screen.
+#define FP_TBAR_MSLOGO_X_PERCENT                 1                      // TitleBar: Microsoft Logo x origin starts at 1% of *Master Frame* width.
+#define FP_TBAR_TEXT_X_PERCENT                   7                      // TitleBar: Title text x origin starts at 7% of the *Master Frame* width.
 #define FP_TBAR_BACKGROUND_COLOR                 &mLightGray2Color      // TitleBar: Background color.
 #define FP_TBAR_TEXT_COLOR                       &mBlackColor           // TitleBar: Title text color.
 #define FP_TBAR_TEXT_FONT_HEIGHT                 MsUiGetLargeFontHeight ()  // TitleBar: Title text font height (maps to Segoe UI).
 #define FP_TBAR_ENTRY_INDICATOR_X_PERCENT        96                     // TitleBar: Entry icon location upper right corner
 
 // FrontPage Master Frame
-#define FP_MFRAME_WIDTH_PERCENT                  25                     // Master Frame is 25% the width of the screen.
+#define FP_MFRAME_WIDTH_PERCENT                  0                      // Master Frame is 100% the width of the screen.
 #define FP_MFRAME_MENU_TEXT_OFFSET_PERCENT       4                      // Master Frame: Indent menu text 4% of the Master Frame width.
 #define FP_MFRAME_MENU_CELL_HEIGHT_PERCENT       6                      // Master Frame: Menu cell height is 6% of the Master Frame height.
 #define FP_MFRAME_BACKGROUND_COLOR               &mLightGray1Color      // Master Frame: Background color.

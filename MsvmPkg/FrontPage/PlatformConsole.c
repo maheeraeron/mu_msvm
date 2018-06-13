@@ -78,17 +78,15 @@ UINTN                           mImageHeight;
 UINTN                           mImageWidth;
 INT32                           mSavedConsoleMode;
 BOOLEAN                         OutOfSpace = FALSE;
-EFI_STRING_ID                   BootSummaryStringIds[] = {                              // Max 5 error entries
+EFI_STRING_ID                   BootSummaryStringIds[] = {                              // Max 4 error entries
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_1), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_1),
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_2), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_2),
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_3), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_3),
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_4), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_4),
-    STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_5), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_5),
-    STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_6), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_6),    // Reserved
-    STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_7), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_7),    // Reserved
+    STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_5), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_5),    // Reserved
 };
 UINT32                          BootSummaryEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID));
-UINT32                          MaxAllowedErrorEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID)) - 2;  // Last 2 Boot Summary entries are reserved
+UINT32                          MaxAllowedErrorEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID)) - 1;  // Last 1 Boot Summary entries are reserved
 
 _Ret_maybenull_z_
 CHAR16*
@@ -616,12 +614,6 @@ Return Value:
     {
         SetStringEntry(BootSummaryStringIds[(eventCount - 1)*2], GetStringById(STRING_TOKEN(STR_BOOT_LOST_EVENT_FORMAT)));
         eventCount++;
-    }
-
-    if (eventCount <= BootSummaryEntries)
-    {
-        SetStringEntry(BootSummaryStringIds[(eventCount - 1) * 2], GetStringById(STRING_TOKEN(STR_BOOT_RETRY)));
-        eventCount++; 
     }
 }
 

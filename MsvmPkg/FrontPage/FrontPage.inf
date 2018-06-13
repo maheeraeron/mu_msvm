@@ -34,9 +34,9 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsvmPkg/MsvmPkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
   MsCapsuleUpdatePkg/MsCapsuleUpdatePkg.dec
-  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   DebugLib

@@ -65,7 +65,6 @@ EFI_HII_FONT_PROTOCOL               *mFont;
 //
 UINT32  mTitleBarWidth, mTitleBarHeight;
 UINT32  mMasterFrameWidth, mMasterFrameHeight;
-ListBox *mTopMenu;
 BOOLEAN mShowFullMenu = FALSE;      // By default we won't show the full FrontPage menu (requires validation if there's a system password).
 // About Menu is only needed if there is a about bitmap.
 BOOLEAN mEnableAboutMenu;
@@ -117,8 +116,6 @@ struct
 //    Index (Full)  Index (Limited)     String                                      Formset Guid                       Form ID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
     { 0,            0,                  STRING_TOKEN(STR_MF_MENU_OP_BOOT_SUMMARY),  FRONT_PAGE_CONFIG_FORMSET_GUID,    FRONT_PAGE_FORM_ID_BOOT_SUMMARY     },  // Boot Summary
-    { 1,            1,                  STRING_TOKEN(STR_MF_MENU_OP_ABOUT),         FRONT_PAGE_CONFIG_FORMSET_GUID,    FRONT_PAGE_FORM_ID_ABOUT            },  // About
-    { 2,            2,                  STRING_TOKEN(STR_MF_MENU_OP_EXIT),          FRONT_PAGE_CONFIG_FORMSET_GUID,    FRONT_PAGE_FORM_ID_EXIT             }   // Exit
 };
 
 // Frontpage form set GUID
@@ -193,23 +190,6 @@ InitializeFrontPage (
 {
     EFI_STATUS                  Status = EFI_SUCCESS;
     CHAR16                      *StringBuffer;
-#if 0
-    // MSchange - [UI] Remove language menu selection.  Translation to be done later.
-    CHAR8                       *LangCode;
-    CHAR8                       *Lang;
-    CHAR8                       *CurrentLang;
-    UINTN                       OptionCount;
-    VOID                        *OptionsOpCodeHandle;
-    VOID                        *StartOpCodeHandle;
-    VOID                        *EndOpCodeHandle;
-    EFI_IFR_GUID_LABEL          *StartLabel;
-    EFI_IFR_GUID_LABEL          *EndLabel;
-    EFI_HII_STRING_PROTOCOL     *HiiString;
-    UINTN                       StringSize;
-    UINTN Size;
-
-    Lang         = NULL;
-#endif
 
     StringBuffer = NULL;
 
@@ -261,184 +241,6 @@ InitializeFrontPage (
             return EFI_OUT_OF_RESOURCES;
         }
     }
-
-    // MSchange - [UI] Remove language menu selection.  Translation to be done later.
-#if 0
-    //
-    // Init OpCode Handle and Allocate space for creation of UpdateData Buffer
-    //
-    StartOpCodeHandle = HiiAllocateOpCodeHandle ();
-    ASSERT (StartOpCodeHandle != NULL);
-
-    EndOpCodeHandle = HiiAllocateOpCodeHandle ();
-    ASSERT (EndOpCodeHandle != NULL);
-
-    OptionsOpCodeHandle = HiiAllocateOpCodeHandle ();
-    ASSERT (OptionsOpCodeHandle != NULL);
-    //
-    // Create Hii Extend Label OpCode as the start opcode
-    //
-    StartLabel = (EFI_IFR_GUID_LABEL *) HiiCreateGuidOpCode (StartOpCodeHandle, &gEfiIfrTianoGuid, NULL, sizeof (EFI_IFR_GUID_LABEL));
-    StartLabel->ExtendOpCode = EFI_IFR_EXTEND_OP_LABEL;
-    StartLabel->Number       = LABEL_SELECT_LANGUAGE;
-
-    //
-    // Create Hii Extend Label OpCode as the end opcode
-    //
-    EndLabel = (EFI_IFR_GUID_LABEL *) HiiCreateGuidOpCode (EndOpCodeHandle, &gEfiIfrTianoGuid, NULL, sizeof (EFI_IFR_GUID_LABEL));
-    EndLabel->ExtendOpCode = EFI_IFR_EXTEND_OP_LABEL;
-    EndLabel->Number       = LABEL_END;
-
-    //
-    // Collect the languages from what our current Language support is based on our VFR
-    //
-
-    GetEfiGlobalVariable2(L"PlatformLang", (VOID**) &CurrentLang, &Size);
-
-    if (CurrentLang != NULL){
-        if (*(CurrentLang + Size - 1) != '\0'){
-            DEBUG((DEBUG_ERROR, " Language Variable is not Null terminated \n"));
-            CurrentLang = NULL;
-        }
-    }
-
-    // Get Support language list from variable.
-    //
-    if (mLanguageString == NULL)
-    {
-        mLanguageString = GetEfiGlobalVariable (L"PlatformLangCodes");
-        if (mLanguageString == NULL)
-        {
-            mLanguageString = AllocateCopyPool (
-                                               AsciiStrSize ((CHAR8 *) PcdGetPtr (PcdUefiVariableDefaultPlatformLangCodes)),
-                                               (CHAR8 *) PcdGetPtr (PcdUefiVariableDefaultPlatformLangCodes)
-                                               );
-            ASSERT (mLanguageString != NULL);
-        }
-    }
-
-    if (gFrontPagePrivate.LanguageToken == NULL)
-    {
-        //
-        // Count the language list number.
-        //
-        LangCode      = mLanguageString;
-        Lang          = AllocatePool (AsciiStrSize (mLanguageString));
-        ASSERT (Lang != NULL);
-        OptionCount = 0;
-        while (*LangCode != 0)
-        {
-            GetNextLanguage (&LangCode, Lang);
-            OptionCount ++;
-        }
-
-        //
-        // Allocate extra 1 as the end tag.
-        //
-        gFrontPagePrivate.LanguageToken = AllocateZeroPool ((OptionCount + 1) * sizeof (EFI_STRING_ID));
-        ASSERT (gFrontPagePrivate.LanguageToken != NULL);
-
-        Status = gBS->LocateProtocol (&gEfiHiiStringProtocolGuid, NULL, (VOID **) &HiiString);
-        ASSERT_EFI_ERROR (Status);
-
-        LangCode     = mLanguageString;
-        OptionCount  = 0;
-        while (*LangCode != 0)
-        {
-            GetNextLanguage (&LangCode, Lang);
-
-            StringSize = 0;
-            Status = HiiString->GetString (HiiString, Lang, HiiHandle, PRINTABLE_LANGUAGE_NAME_STRING_ID, StringBuffer, &StringSize, NULL);
-            if (Status == EFI_BUFFER_TOO_SMALL)
-            {
-                StringBuffer = AllocateZeroPool (StringSize);
-                ASSERT (StringBuffer != NULL);
-                Status = HiiString->GetString (HiiString, Lang, HiiHandle, PRINTABLE_LANGUAGE_NAME_STRING_ID, StringBuffer, &StringSize, NULL);
-                ASSERT_EFI_ERROR (Status);
-            }
-
-            if (EFI_ERROR (Status))
-            {
-                StringBuffer = AllocatePool (AsciiStrSize (Lang) * sizeof (CHAR16));
-                ASSERT (StringBuffer != NULL);
-                AsciiStrToUnicodeStr (Lang, StringBuffer);
-            }
-
-            ASSERT (StringBuffer != NULL);
-            gFrontPagePrivate.LanguageToken[OptionCount] = HiiSetString (HiiHandle, 0, StringBuffer, NULL);
-            FreePool (StringBuffer);
-
-            OptionCount++;
-        }
-    }
-
-    ASSERT (gFrontPagePrivate.LanguageToken != NULL);
-    LangCode     = mLanguageString;
-    OptionCount  = 0;
-    if (Lang == NULL)
-    {
-        Lang = AllocatePool (AsciiStrSize (mLanguageString));
-        ASSERT (Lang != NULL);
-    }
-    while (*LangCode != 0)
-    {
-        GetNextLanguage (&LangCode, Lang);
-
-        if (CurrentLang != NULL && AsciiStrCmp (Lang, CurrentLang) == 0)
-        {
-            HiiCreateOneOfOptionOpCode (
-                                       OptionsOpCodeHandle,
-                                       gFrontPagePrivate.LanguageToken[OptionCount],
-                                       EFI_IFR_OPTION_DEFAULT,
-                                       EFI_IFR_NUMERIC_SIZE_1,
-                                       (UINT8) OptionCount
-                                       );
-        }
-        else
-        {
-            HiiCreateOneOfOptionOpCode (
-                                       OptionsOpCodeHandle,
-                                       gFrontPagePrivate.LanguageToken[OptionCount],
-                                       0,
-                                       EFI_IFR_NUMERIC_SIZE_1,
-                                       (UINT8) OptionCount
-                                       );
-        }
-
-        OptionCount++;
-    }
-
-    if (CurrentLang != NULL)
-    {
-        FreePool (CurrentLang);
-    }
-    FreePool (Lang);
-
-    HiiCreateOneOfOpCode (
-                         StartOpCodeHandle,
-                         FRONT_PAGE_KEY_LANGUAGE,
-                         0,
-                         0,
-                         STRING_TOKEN (STR_LANGUAGE_SELECT),
-                         STRING_TOKEN (STR_NULL_STRING),
-                         EFI_IFR_FLAG_CALLBACK,
-                         EFI_IFR_NUMERIC_SIZE_1,
-                         OptionsOpCodeHandle,
-                         NULL
-                         );
-
-    Status = HiiUpdateForm (
-                           HiiHandle,
-                           &gMsFrontPageConfigFormSetGuid,
-                           FRONT_PAGE_FORM_ID,
-                           StartOpCodeHandle, // LABEL_SELECT_LANGUAGE
-                           EndOpCodeHandle    // LABEL_END
-                           );
-
-    HiiFreeOpCodeHandle (StartOpCodeHandle);
-    HiiFreeOpCodeHandle (EndOpCodeHandle);
-    HiiFreeOpCodeHandle (OptionsOpCodeHandle);
-#endif
 
     return Status;
 }
@@ -697,7 +499,7 @@ RenderTitlebar(VOID)
     EFI_IMAGE_OUTPUT          *pBltBuffer;
     EFI_LOADED_IMAGE_PROTOCOL *ImageInfo;
     CHAR8                     Parameter;
-    EFI_GUID                  *IconFile;
+    EFI_GUID                  *IconFile = NULL;
     UINTN                     DataSize;
     CHAR8                     RebootReason[MSP_REBOOT_REASON_LENGTH];
 
@@ -755,7 +557,7 @@ RenderTitlebar(VOID)
         //IconFile = PcdGetPtr(PcdVolumeUpIndicatorFile);
         break;
     case 'B' : // BOOTFAIL
-        IconFile = PcdGetPtr(PcdBootFailIndicatorFile);
+        //IconFile = PcdGetPtr(PcdBootFailIndicatorFile);
         break;
     case 'O' : // OSIndication
         //IconFile = PcdGetPtr(PcdFirmwareSettingsIndicatorFile);
@@ -848,17 +650,6 @@ EFI_STATUS
 RenderMasterFrame(VOID)
 {
     EFI_STATUS  Status      = EFI_SUCCESS;
-    VOID        *pContext   = NULL;
-
-
-    // Verify that the top-level menu was created.
-    //
-    ASSERT (NULL != mTopMenu);
-    if (NULL == mTopMenu)
-    {
-        Status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
 
     // Draw the master frame background.
     //
@@ -873,32 +664,6 @@ RenderMasterFrame(VOID)
               mMasterFrameHeight,
               0
              );
-
-
-    // Draw divider line.
-    //
-    mGop->Blt(mGop,
-              FP_TBAR_BACKGROUND_COLOR,
-              EfiBltVideoFill,
-              0,
-              0,
-              (mMasterFrameWidth - FP_MFRAME_DIVIDER_LINE_WIDTH_PIXELS),
-              mTitleBarHeight,
-              FP_MFRAME_DIVIDER_LINE_WIDTH_PIXELS,
-              mMasterFrameHeight,
-              0
-             );
-
-
-    // Draw the top-level menu.
-    //
-    mTopMenu->Base.Draw(mTopMenu,
-                        FALSE,
-                        NULL,
-                        &pContext
-                       );
-
-Exit:
 
     return Status;
 }
@@ -918,74 +683,6 @@ EFIAPI
 MasterFrameNotifyCallback (IN  EFI_EVENT    Event,
                            IN  VOID         *Context)
 {
-    UINT32          SelectedIndex       = 0;
-    VOID            *pSelectionContext  = NULL;
-    OBJECT_STATE    MenuState           = NORMAL;
-    SWM_INPUT_STATE *pInputState        = &mDisplayEngineState.InputState;
-    LB_RETURN_DATA  ReturnData;
-
-
-    // If we just need to redraw, do that and exit.
-    //
-    if (REDRAW == mDisplayEngineState.NotificationType)
-    {
-        mTopMenu->Base.Draw (mTopMenu,
-                             mDisplayEngineState.ShowTopMenuHighlight,
-                             &mDisplayEngineState.InputState,
-                             &pSelectionContext
-                            );
-
-        goto Exit;
-    }
-
-    // We'll only handle user input from this point onwards.
-    //
-    if (USERINPUT != mDisplayEngineState.NotificationType)
-    {
-        goto Exit;
-    }
-
-    // If we are receiving touch/mouse data from the display engine and it's a finger/button down event, process it.
-    //
-    if ((SWM_INPUT_TYPE_TOUCH == pInputState->InputType/* && (pInputState->State.TouchState.ActiveButtons & 0x1) */) ||
-        SWM_INPUT_TYPE_KEY   == pInputState->InputType)
-    {
-        // Draw the top-level menu in the master frame.
-        //
-        MenuState = mTopMenu->Base.Draw (mTopMenu,
-                                         mDisplayEngineState.ShowTopMenuHighlight,
-                                         &mDisplayEngineState.InputState,
-                                         &pSelectionContext
-                                        );
-
-        // If nothing was selected (user may simply have moved the highlighted cell), there's no action to take.
-        //
-        if (SELECT != MenuState)
-        {
-            return;
-        }
-
-        // Get the currently selected top-level menu entry (may be none).
-        //
-        mTopMenu->GetSelectedCellIndex (mTopMenu,
-                                        &ReturnData);
-
-        SelectedIndex = ReturnData.SelectedCell;
-
-        if (SelectedIndex != mCurrentFormIndex)
-        {
-            // Update the current form ID to the new one.
-            //
-            mCurrentFormIndex = SelectedIndex;
-
-            // Signal the form (browser) to close so the new form will be displayed.
-            //
-            mDisplayEngineState.CloseFormRequest = TRUE;
-            mTerminateFrontPage = FALSE;
-        }
-    }
-
-Exit:
     mDisplayEngineState.NotificationType = NONE;
 
     return;
@@ -1003,38 +700,11 @@ InitializeFrontPageUI (VOID)
     //
     mTitleBarWidth              = mBootHorizontalResolution;
     mTitleBarHeight             = ((mBootVerticalResolution   * FP_TBAR_HEIGHT_PERCENT)  / 100);
-    mMasterFrameWidth           = ((mBootHorizontalResolution * FP_MFRAME_WIDTH_PERCENT) / 100);
+    mMasterFrameWidth           = mBootHorizontalResolution;
     mMasterFrameHeight          = (mBootVerticalResolution - mTitleBarHeight);
 
     DEBUG((DEBUG_INFO, "INFO [FP]: FP Dimensions: %d, %d, %d, %d, %d, %d\r\n", \
            mBootHorizontalResolution, mBootVerticalResolution, mTitleBarWidth, mTitleBarHeight, mMasterFrameWidth, mMasterFrameHeight));
-
-    // Compute Master Frame origin and menu text indentation.
-    //
-    UINT32 MasterFrameMenuOrigX = 0;
-    UINT32 MasterFrameMenuOrigY = mTitleBarHeight;
-    UINT32 CellTextXOffset      = ((mMasterFrameWidth * FP_MFRAME_MENU_TEXT_OFFSET_PERCENT) / 100);
-
-    // Determine whether there are any events that require user notification.
-    // NOTE: This should come before CreateTopMenu() because it needs to happen before the
-    //       Admin Password prompt.
-    //
-    //NotifyUserOfAlerts();
-
-    // Create the top-level menu in the Master Frame.
-    //
-    mTopMenu = CreateTopMenu(MasterFrameMenuOrigX,
-                             MasterFrameMenuOrigY,
-                             (mMasterFrameWidth - FP_MFRAME_DIVIDER_LINE_WIDTH_PIXELS),
-                             ((mMasterFrameHeight * FP_MFRAME_MENU_CELL_HEIGHT_PERCENT) / 100),
-                             CellTextXOffset);
-
-    ASSERT (NULL != mTopMenu);
-    if (NULL == mTopMenu)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-    }
 
     // Render the TitleBar at the top of the screen.
     //
@@ -1084,7 +754,6 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 {
     EFI_STATUS  Status  = EFI_SUCCESS;
     UINT32      OSKMode = 0;
-    //EVENT_CHANNEL_STATISTICS stats;
 
     //Delete BootNext if entry to BootManager.
     Status = gRT->SetVariable(
