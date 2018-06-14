@@ -345,7 +345,7 @@
   gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
 
   # Publish UEFI PropertiesTable.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|FALSE  # DO NOT TURN THIS ON.  THIS CAUSES BOOT FAILURES ON WIN8.  USE MAT INSTEAD!!!
 
   # Base addresses of memory mapped devices in MMIO space.
   gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress|0xFEE00000
