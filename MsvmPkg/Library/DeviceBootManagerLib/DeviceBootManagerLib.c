@@ -221,47 +221,27 @@ DeviceBootManagerAfterConsole (
 
     EnableQuietBoot(PcdGetPtr(PcdLogoFile));
 
+    EFI_HANDLE  *HandleBuffer = NULL;
+    UINTN        HandleCount;
+    UINTN        Index;
+
+    HandleBuffer = NULL;
+    HandleCount = 0;
     //
-    // For an optimized boot, Bds only connects the device path as provided
-    // in a boot option.  There are boot scenarios where the boot loader is on
-    // one device, and the OS that is being booted is on another device. The
-    // fully optimized Bds will "fail" to boot in this scenario.
+    // Find all instances of VmbusRoot protocol.
     //
-    // For Hyper-V, there is a hint called PcdIsVmbfsBoot.  If this hint is true,
-    // locate and insure all VmBus disks are enumerated.  This code an be improved
-    // later by querying Hyper-V for the list of disks.  For the time being,
-    // connect all of the devices provided by VmBus.
-    //
-    if (PcdGetBool(PcdIsVmbfsBoot)) {
+    gBS->LocateHandleBuffer( ByProtocol,
+                            &gEfiVmbusRootProtocolGuid,
+                             NULL,
+                            &HandleCount,
+                            &HandleBuffer );
 
-        EFI_HANDLE  *HandleBuffer = NULL;
-        UINTN        HandleCount;
-        UINTN        Index;
-        EFI_STATUS   Status;
+    for (Index = 0; Index < HandleCount; Index++) {
+        gBS->ConnectController(HandleBuffer[Index], NULL, NULL, TRUE);
+    }
 
-        do {
-            HandleBuffer = NULL;
-            HandleCount = 0;
-            //
-            // Find all instances of VmbusRoot protocol.
-            //
-            gBS->LocateHandleBuffer( ByProtocol,
-                                    &gEfiVmbusRootProtocolGuid,
-                                     NULL,
-                                    &HandleCount,
-                                    &HandleBuffer );
-
-            for (Index = 0; Index < HandleCount; Index++) {
-                gBS->ConnectController(HandleBuffer[Index], NULL, NULL, TRUE);
-            }
-
-            if (HandleBuffer != NULL) {
-                gBS->FreePool (HandleBuffer);
-            }
-
-            Status = gDS->Dispatch();
-
-        } while (!EFI_ERROR(Status));
+    if (HandleBuffer != NULL) {
+        gBS->FreePool (HandleBuffer);
     }
 
     return NULL;
