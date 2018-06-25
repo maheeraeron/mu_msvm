@@ -379,6 +379,9 @@
   gPerformancePkgTokenSpaceGuid.PcdMaxPeiPerformanceLogSize|16384
 !endif
 
+  # Disable image protection policy so DxeCore does not mess with MTRRs
+  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy|0x00000000
+
 [PcdsFixedAtBuild.X64]
 !if $(PERF_TRACE_ENABLE) == TRUE
   # 16M should be enough to fit all the verbose measurements
