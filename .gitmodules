@@ -5,4 +5,5 @@
 [submodule "SM_UDK_INTERNAL"]
     path = SM_UDK_INTERNAL
     url = https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal
-    branch = master
+    branch = release/20180123_w_BuildEnv
+
