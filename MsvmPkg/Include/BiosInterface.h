@@ -709,7 +709,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 VirtualBatteryEnabled:1;
         UINT64 SgxMemoryEnabled:1;
         UINT64 IsVmbfsBoot:1;
-        UINT64 Reserved:51;
+        UINT64 MeasureAdditionalPcrs:1;
+        UINT64 Reserved:50;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

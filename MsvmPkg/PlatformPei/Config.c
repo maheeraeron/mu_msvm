@@ -401,6 +401,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tVirtualBatteryEnabled: %u\n", flags->Flags.VirtualBatteryEnabled));
             DEBUG((DEBUG_VERBOSE, "\tSgxMemoryEnabled: %u\n", flags->Flags.SgxMemoryEnabled));
             DEBUG((DEBUG_VERBOSE, "\tIsVmbfsBoot: %u\n", flags->Flags.IsVmbfsBoot));
+            DEBUG((DEBUG_VERBOSE, "\tMeasureAdditionalPcrs: %u\n", flags->Flags.MeasureAdditionalPcrs));
             break;
 
         case UefiConfigProcessorInformation:
@@ -934,6 +935,17 @@ Return Value:
                 PcdSetBool(PcdVirtualBatteryEnabled, (UINT8) flags->Flags.VirtualBatteryEnabled);
                 PcdSetBool(PcdSgxMemoryEnabled, (UINT8) flags->Flags.SgxMemoryEnabled);
                 PcdSetBool(PcdIsVmbfsBoot, (UINT8) flags->Flags.IsVmbfsBoot);
+
+                //
+                // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
+                // When TRUE, we will perform a more "standard" measured boot
+                //
+                if (flags->Flags.MeasureAdditionalPcrs)
+                {
+                    PcdSetBool(TcgMeasureBootStringsInPcr4, TRUE);
+                    PcdSetBool(PcdExcludeFvMainFromMeasurements, FALSE);
+                }
+
                 requiredStructures.UefiConfigFlags = 1;
                 break;
 

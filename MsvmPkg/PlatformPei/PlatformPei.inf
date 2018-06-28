@@ -40,6 +40,7 @@
 [Packages]
     MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
+    SecurityPkg/SecurityPkg.dec
     UefiCpuPkg/UefiCpuPkg.dec
     MsvmPkg/MsvmPkg.dec
 
@@ -137,6 +138,8 @@
     gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
+    gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements
+    gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress
