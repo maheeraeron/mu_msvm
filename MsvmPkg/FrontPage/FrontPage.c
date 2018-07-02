@@ -171,6 +171,7 @@ HII_VENDOR_DEVICE_PATH  mFrontPageHiiVendorDevicePath = {
 
 EFI_STATUS GetAndDisplayBitmap(EFI_GUID *FileGuid, UINTN XCoord, BOOLEAN XCoordAdj);
 VOID GenerateBootSummary();
+VOID DisplayBootSummary();
 
 
 /**
@@ -366,7 +367,7 @@ Exit:
 
 
 /**
-  RemoveMenuFromList - 
+  RemoveMenuFromList -
     Updates mFormMap so that the menu item specified by MenuId is omitted.
     The item in question will have FullMenuIndex and LimitedMenuIndex set
     to UNUSED_INDEX, and the other indexes in the list are adjusted accordingly.
@@ -782,6 +783,8 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
     // Insure Gop is in Big Display mode prior to accessing GOP.
     MsLogoLibSetConsoleMode (FALSE, FALSE);
 
+    GenerateBootSummary();
+
     //
     // After the console is ready, get current video resolution
     // and text mode before launching setup at first time.
@@ -839,8 +842,8 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
     {
         mOSKProtocol = (MS_ONSCREEN_KEYBOARD_PROTOCOL *)NULL;
         DEBUG((DEBUG_WARN, "WARN [FP]: Failed to find the on-screen keyboard protocol (%r).\r\n", Status));
-    } 
-    else 
+    }
+    else
     {
 
         // Set default on-screen keyboard size and position.  Disable icon auto-activation (set by BDS) since
@@ -909,7 +912,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         goto Exit;
     }
 
-    GenerateBootSummary();
+    DisplayBootSummary();
 
     // Set the default form ID to show on the canvas.
     //
@@ -945,8 +948,15 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
     //
     UninitializeFrontPage();
 
+    return Status;
+
 Exit:
 
+    // If unable to enter front page, shutdown the system
+
+    gRT->ResetSystem(EfiResetShutdown,EFI_NOT_FOUND,0,NULL);
+
+    CpuDeadLoop();  // Should not get here
     return Status;
 }
 
@@ -1031,6 +1041,9 @@ VOID GenerateBootSummary() {
 
     BootDeviceEventFlushLog();
     DEBUG((DEBUG_INFO, "[HVBE] Flushing boot event log\n"));
+}
+
+VOID DisplayBootSummary() {
 
     //
     // Enumerate and display the current boot entries.
@@ -1048,7 +1061,7 @@ VOID GenerateBootSummary() {
 
 EFI_STATUS
 SetStringEntry (
-   EFI_STRING_ID IdName, 
+   EFI_STRING_ID IdName,
    CHAR16 *StringValue
    )
 {
