@@ -39,6 +39,7 @@
   MsCapsuleUpdatePkg/MsCapsuleUpdatePkg.dec
 
 [LibraryClasses]
+  CpuLib
   DebugLib
   PrintLib
   HiiLib

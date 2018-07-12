@@ -28,6 +28,7 @@
 #include <Protocol/FirmwareManagement.h>
 
 #include <Library/DebugLib.h>
+#include <Library/CpuLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/SecureMemoryLib.h>
 #include <Library/DevicePathLib.h>
@@ -952,9 +953,13 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
 Exit:
 
-    // If unable to enter front page, shutdown the system
+    // If unable to enter front page, hang the system. We should have already
+    // flushed the reason why we didn't boot to the host event log.
 
-    gRT->ResetSystem(EfiResetShutdown,EFI_NOT_FOUND,0,NULL);
+    while (TRUE)
+    {
+        CpuSleep();
+    }
 
     CpuDeadLoop();  // Should not get here
     return Status;
