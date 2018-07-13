@@ -437,6 +437,11 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tAcpi Header Signature:0x%x\n", acpiHeader->Signature));
             break;
 
+        case UefiConfigNvdimmCount:
+            UEFI_CONFIG_NVDIMM_COUNT *cfg = (UEFI_CONFIG_NVDIMM_COUNT*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tNVDIMM Count:0x%lx\n", cfg->Count));
+            break;
+
         default:
             DEBUG((DEBUG_VERBOSE, "\t!!! Unrecognized config structure type !!!\n"));
             break;
@@ -563,7 +568,8 @@ Return Value:
         sizeof(UEFI_CONFIG_PROCESSOR_INFORMATION), //UefiConfigProcessorInformation
         0, //UefiConfigMmioRanges
         0, //UefiConfigAARCH64MPIDR
-        0  //UefiConfigAcpiTable
+        0, //UefiConfigAcpiTable
+        sizeof(UEFI_CONFIG_NVDIMM_COUNT) // UefiConfigNvdimmCount
     };
 
     //
@@ -1027,6 +1033,11 @@ Return Value:
 
                 PcdSet64(PcdAcpiTablePtr, (UINT64) acpiTable->AcpiTableData);
                 PcdSet32(PcdAcpiTableSize, acpiHeader->Length);
+                break;
+
+            case UefiConfigNvdimmCount:
+                UEFI_CONFIG_NVDIMM_COUNT *cfg = (UEFI_CONFIG_NVDIMM_COUNT*) header;
+                PcdSet16(PcdNvdimmCount, cfg->Count);
                 break;
         }
 

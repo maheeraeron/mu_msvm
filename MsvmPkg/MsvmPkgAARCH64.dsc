@@ -424,6 +424,8 @@
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0
 
+  # UEFI_CONFIG_NVDIMM_COUNT
+  gMsvmPkgTokenSpaceGuid.PcdNvdimmCount|0x0
 
 ################################################################################
 #

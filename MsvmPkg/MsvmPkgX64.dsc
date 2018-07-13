@@ -532,6 +532,10 @@
   #  This should only be used to support upgrades/existing VMs
   gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
   gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
+  
+  # UEFI_CONFIG_NVDIMM_COUNT
+  gMsvmPkgTokenSpaceGuid.PcdNvdimmCount|0x0
+
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.

@@ -67,6 +67,7 @@ DefinitionBlock (
         NCFG,8,         // PMEM (NVDIMMs) enabled/disabled
         BCFG,8,         // Virtual Battery enabled/disabled
         SGXE,8,         // SGX Memory enabled/disabled
+        NCNT,16,        // NVDIMM count
     }
 
     // Supported machine sleep states =========================================
@@ -1021,10 +1022,13 @@ DefinitionBlock (
                 Store (LBLD, Index (PKGR, 1))
                 Return (PKGR)
             }
+        }
 
-            // NVDIMM Child Devices
+        // NVDIMM Child Devices
 
-            Device(N000)
+        If(LLessEqual(1, NCNT))
+        {
+            Device(\_SB.NVDR.N000)
             {
                 Name(_ADR, 0)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1032,7 +1036,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N001)
+        }
+        If(LLessEqual(2, NCNT))
+        {
+            Device(\_SB.NVDR.N001)
             {
                 Name(_ADR, 1)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1040,7 +1047,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N002)
+        }
+        If(LLessEqual(3, NCNT))
+        {
+            Device(\_SB.NVDR.N002)
             {
                 Name(_ADR, 2)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1048,7 +1058,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N003)
+        }
+        If(LLessEqual(4, NCNT))
+        {
+            Device(\_SB.NVDR.N003)
             {
                 Name(_ADR, 3)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1056,7 +1069,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N004)
+        }
+        If(LLessEqual(5, NCNT))
+        {
+            Device(\_SB.NVDR.N004)
             {
                 Name(_ADR, 4)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1064,7 +1080,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N005)
+        }
+        If(LLessEqual(6, NCNT))
+        {
+            Device(\_SB.NVDR.N005)
             {
                 Name(_ADR, 5)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1072,7 +1091,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N006)
+        }
+        If(LLessEqual(7, NCNT))
+        {
+            Device(\_SB.NVDR.N006)
             {
                 Name(_ADR, 6)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1080,7 +1102,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N007)
+        }
+        If(LLessEqual(8, NCNT))
+        {
+            Device(\_SB.NVDR.N007)
             {
                 Name(_ADR, 7)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1088,7 +1113,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N008)
+        }
+        If(LLessEqual(9, NCNT))
+        {
+            Device(\_SB.NVDR.N008)
             {
                 Name(_ADR, 8)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1096,7 +1124,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N009)
+        }
+        If(LLessEqual(10, NCNT))
+        {
+            Device(\_SB.NVDR.N009)
             {
                 Name(_ADR, 9)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1104,7 +1135,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N010)
+        }
+        If(LLessEqual(11, NCNT))
+        {
+            Device(\_SB.NVDR.N010)
             {
                 Name(_ADR, 10)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1112,7 +1146,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N011)
+        }
+        If(LLessEqual(12, NCNT))
+        {
+            Device(\_SB.NVDR.N011)
             {
                 Name(_ADR, 11)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1120,7 +1157,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N012)
+        }
+        If(LLessEqual(13, NCNT))
+        {
+            Device(\_SB.NVDR.N012)
             {
                 Name(_ADR, 12)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1128,7 +1168,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N013)
+        }
+        If(LLessEqual(14, NCNT))
+        {
+            Device(\_SB.NVDR.N013)
             {
                 Name(_ADR, 13)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1136,7 +1179,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N014)
+        }
+        If(LLessEqual(15, NCNT))
+        {
+            Device(\_SB.NVDR.N014)
             {
                 Name(_ADR, 14)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1144,7 +1190,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N015)
+        }
+        If(LLessEqual(16, NCNT))
+        {
+            Device(\_SB.NVDR.N015)
             {
                 Name(_ADR, 15)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1152,7 +1201,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N016)
+        }
+        If(LLessEqual(17, NCNT))
+        {
+            Device(\_SB.NVDR.N016)
             {
                 Name(_ADR, 16)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1160,7 +1212,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N017)
+        }
+        If(LLessEqual(18, NCNT))
+        {
+            Device(\_SB.NVDR.N017)
             {
                 Name(_ADR, 17)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1168,7 +1223,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N018)
+        }
+        If(LLessEqual(19, NCNT))
+        {
+            Device(\_SB.NVDR.N018)
             {
                 Name(_ADR, 18)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1176,7 +1234,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N019)
+        }
+        If(LLessEqual(20, NCNT))
+        {
+            Device(\_SB.NVDR.N019)
             {
                 Name(_ADR, 19)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1184,7 +1245,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N020)
+        }
+        If(LLessEqual(21, NCNT))
+        {
+            Device(\_SB.NVDR.N020)
             {
                 Name(_ADR, 20)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1192,7 +1256,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N021)
+        }
+        If(LLessEqual(22, NCNT))
+        {
+            Device(\_SB.NVDR.N021)
             {
                 Name(_ADR, 21)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1200,7 +1267,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N022)
+        }
+        If(LLessEqual(23, NCNT))
+        {
+            Device(\_SB.NVDR.N022)
             {
                 Name(_ADR, 22)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1208,7 +1278,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N023)
+        }
+        If(LLessEqual(24, NCNT))
+        {
+            Device(\_SB.NVDR.N023)
             {
                 Name(_ADR, 23)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1216,7 +1289,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N024)
+        }
+        If(LLessEqual(25, NCNT))
+        {
+            Device(\_SB.NVDR.N024)
             {
                 Name(_ADR, 24)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1224,7 +1300,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N025)
+        }
+        If(LLessEqual(26, NCNT))
+        {
+            Device(\_SB.NVDR.N025)
             {
                 Name(_ADR, 25)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1232,7 +1311,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N026)
+        }
+        If(LLessEqual(27, NCNT))
+        {
+            Device(\_SB.NVDR.N026)
             {
                 Name(_ADR, 26)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1240,7 +1322,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N027)
+        }
+        If(LLessEqual(28, NCNT))
+        {
+            Device(\_SB.NVDR.N027)
             {
                 Name(_ADR, 27)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1248,7 +1333,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N028)
+        }
+        If(LLessEqual(29, NCNT))
+        {
+            Device(\_SB.NVDR.N028)
             {
                 Name(_ADR, 28)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1256,7 +1344,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N029)
+        }
+        If(LLessEqual(30, NCNT))
+        {
+            Device(\_SB.NVDR.N029)
             {
                 Name(_ADR, 29)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1264,7 +1355,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N030)
+        }
+        If(LLessEqual(31, NCNT))
+        {
+            Device(\_SB.NVDR.N030)
             {
                 Name(_ADR, 30)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1272,7 +1366,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N031)
+        }
+        If(LLessEqual(32, NCNT))
+        {
+            Device(\_SB.NVDR.N031)
             {
                 Name(_ADR, 31)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1280,7 +1377,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N032)
+        }
+        If(LLessEqual(33, NCNT))
+        {
+            Device(\_SB.NVDR.N032)
             {
                 Name(_ADR, 32)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1288,7 +1388,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N033)
+        }
+        If(LLessEqual(34, NCNT))
+        {
+            Device(\_SB.NVDR.N033)
             {
                 Name(_ADR, 33)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1296,7 +1399,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N034)
+        }
+        If(LLessEqual(35, NCNT))
+        {
+            Device(\_SB.NVDR.N034)
             {
                 Name(_ADR, 34)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1304,7 +1410,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N035)
+        }
+        If(LLessEqual(36, NCNT))
+        {
+            Device(\_SB.NVDR.N035)
             {
                 Name(_ADR, 35)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1312,7 +1421,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N036)
+        }
+        If(LLessEqual(37, NCNT))
+        {
+            Device(\_SB.NVDR.N036)
             {
                 Name(_ADR, 36)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1320,7 +1432,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N037)
+        }
+        If(LLessEqual(38, NCNT))
+        {
+            Device(\_SB.NVDR.N037)
             {
                 Name(_ADR, 37)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1328,7 +1443,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N038)
+        }
+        If(LLessEqual(39, NCNT))
+        {
+            Device(\_SB.NVDR.N038)
             {
                 Name(_ADR, 38)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1336,7 +1454,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N039)
+        }
+        If(LLessEqual(40, NCNT))
+        {
+            Device(\_SB.NVDR.N039)
             {
                 Name(_ADR, 39)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1344,7 +1465,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N040)
+        }
+        If(LLessEqual(41, NCNT))
+        {
+            Device(\_SB.NVDR.N040)
             {
                 Name(_ADR, 40)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1352,7 +1476,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N041)
+        }
+        If(LLessEqual(42, NCNT))
+        {
+            Device(\_SB.NVDR.N041)
             {
                 Name(_ADR, 41)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1360,7 +1487,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N042)
+        }
+        If(LLessEqual(43, NCNT))
+        {
+            Device(\_SB.NVDR.N042)
             {
                 Name(_ADR, 42)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1368,7 +1498,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N043)
+        }
+        If(LLessEqual(44, NCNT))
+        {
+            Device(\_SB.NVDR.N043)
             {
                 Name(_ADR, 43)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1376,7 +1509,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N044)
+        }
+        If(LLessEqual(45, NCNT))
+        {
+            Device(\_SB.NVDR.N044)
             {
                 Name(_ADR, 44)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1384,7 +1520,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N045)
+        }
+        If(LLessEqual(46, NCNT))
+        {
+            Device(\_SB.NVDR.N045)
             {
                 Name(_ADR, 45)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1392,7 +1531,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N046)
+        }
+        If(LLessEqual(47, NCNT))
+        {
+            Device(\_SB.NVDR.N046)
             {
                 Name(_ADR, 46)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1400,7 +1542,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N047)
+        }
+        If(LLessEqual(48, NCNT))
+        {
+            Device(\_SB.NVDR.N047)
             {
                 Name(_ADR, 47)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1408,7 +1553,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N048)
+        }
+        If(LLessEqual(49, NCNT))
+        {
+            Device(\_SB.NVDR.N048)
             {
                 Name(_ADR, 48)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1416,7 +1564,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N049)
+        }
+        If(LLessEqual(50, NCNT))
+        {
+            Device(\_SB.NVDR.N049)
             {
                 Name(_ADR, 49)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1424,7 +1575,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N050)
+        }
+        If(LLessEqual(51, NCNT))
+        {
+            Device(\_SB.NVDR.N050)
             {
                 Name(_ADR, 50)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1432,7 +1586,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N051)
+        }
+        If(LLessEqual(52, NCNT))
+        {
+            Device(\_SB.NVDR.N051)
             {
                 Name(_ADR, 51)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1440,7 +1597,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N052)
+        }
+        If(LLessEqual(53, NCNT))
+        {
+            Device(\_SB.NVDR.N052)
             {
                 Name(_ADR, 52)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1448,7 +1608,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N053)
+        }
+        If(LLessEqual(54, NCNT))
+        {
+            Device(\_SB.NVDR.N053)
             {
                 Name(_ADR, 53)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1456,7 +1619,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N054)
+        }
+        If(LLessEqual(55, NCNT))
+        {
+            Device(\_SB.NVDR.N054)
             {
                 Name(_ADR, 54)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1464,7 +1630,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N055)
+        }
+        If(LLessEqual(56, NCNT))
+        {
+            Device(\_SB.NVDR.N055)
             {
                 Name(_ADR, 55)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1472,7 +1641,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N056)
+        }
+        If(LLessEqual(57, NCNT))
+        {
+            Device(\_SB.NVDR.N056)
             {
                 Name(_ADR, 56)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1480,7 +1652,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N057)
+        }
+        If(LLessEqual(58, NCNT))
+        {
+            Device(\_SB.NVDR.N057)
             {
                 Name(_ADR, 57)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1488,7 +1663,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N058)
+        }
+        If(LLessEqual(59, NCNT))
+        {
+            Device(\_SB.NVDR.N058)
             {
                 Name(_ADR, 58)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1496,7 +1674,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N059)
+        }
+        If(LLessEqual(60, NCNT))
+        {
+            Device(\_SB.NVDR.N059)
             {
                 Name(_ADR, 59)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1504,7 +1685,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N060)
+        }
+        If(LLessEqual(61, NCNT))
+        {
+            Device(\_SB.NVDR.N060)
             {
                 Name(_ADR, 60)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1512,7 +1696,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N061)
+        }
+        If(LLessEqual(62, NCNT))
+        {
+            Device(\_SB.NVDR.N061)
             {
                 Name(_ADR, 61)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1520,7 +1707,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N062)
+        }
+        If(LLessEqual(63, NCNT))
+        {
+            Device(\_SB.NVDR.N062)
             {
                 Name(_ADR, 62)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1528,7 +1718,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N063)
+        }
+        If(LLessEqual(64, NCNT))
+        {
+            Device(\_SB.NVDR.N063)
             {
                 Name(_ADR, 63)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1536,7 +1729,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N064)
+        }
+        If(LLessEqual(65, NCNT))
+        {
+            Device(\_SB.NVDR.N064)
             {
                 Name(_ADR, 64)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1544,7 +1740,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N065)
+        }
+        If(LLessEqual(66, NCNT))
+        {
+            Device(\_SB.NVDR.N065)
             {
                 Name(_ADR, 65)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1552,7 +1751,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N066)
+        }
+        If(LLessEqual(67, NCNT))
+        {
+            Device(\_SB.NVDR.N066)
             {
                 Name(_ADR, 66)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1560,7 +1762,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N067)
+        }
+        If(LLessEqual(68, NCNT))
+        {
+            Device(\_SB.NVDR.N067)
             {
                 Name(_ADR, 67)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1568,7 +1773,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N068)
+        }
+        If(LLessEqual(69, NCNT))
+        {
+            Device(\_SB.NVDR.N068)
             {
                 Name(_ADR, 68)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1576,7 +1784,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N069)
+        }
+        If(LLessEqual(70, NCNT))
+        {
+            Device(\_SB.NVDR.N069)
             {
                 Name(_ADR, 69)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1584,7 +1795,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N070)
+        }
+        If(LLessEqual(71, NCNT))
+        {
+            Device(\_SB.NVDR.N070)
             {
                 Name(_ADR, 70)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1592,7 +1806,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N071)
+        }
+        If(LLessEqual(72, NCNT))
+        {
+            Device(\_SB.NVDR.N071)
             {
                 Name(_ADR, 71)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1600,7 +1817,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N072)
+        }
+        If(LLessEqual(73, NCNT))
+        {
+            Device(\_SB.NVDR.N072)
             {
                 Name(_ADR, 72)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1608,7 +1828,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N073)
+        }
+        If(LLessEqual(74, NCNT))
+        {
+            Device(\_SB.NVDR.N073)
             {
                 Name(_ADR, 73)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1616,7 +1839,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N074)
+        }
+        If(LLessEqual(75, NCNT))
+        {
+            Device(\_SB.NVDR.N074)
             {
                 Name(_ADR, 74)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1624,7 +1850,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N075)
+        }
+        If(LLessEqual(76, NCNT))
+        {
+            Device(\_SB.NVDR.N075)
             {
                 Name(_ADR, 75)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1632,7 +1861,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N076)
+        }
+        If(LLessEqual(77, NCNT))
+        {
+            Device(\_SB.NVDR.N076)
             {
                 Name(_ADR, 76)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1640,7 +1872,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N077)
+        }
+        If(LLessEqual(78, NCNT))
+        {
+            Device(\_SB.NVDR.N077)
             {
                 Name(_ADR, 77)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1648,7 +1883,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N078)
+        }
+        If(LLessEqual(79, NCNT))
+        {
+            Device(\_SB.NVDR.N078)
             {
                 Name(_ADR, 78)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1656,7 +1894,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N079)
+        }
+        If(LLessEqual(80, NCNT))
+        {
+            Device(\_SB.NVDR.N079)
             {
                 Name(_ADR, 79)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1664,7 +1905,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N080)
+        }
+        If(LLessEqual(81, NCNT))
+        {
+            Device(\_SB.NVDR.N080)
             {
                 Name(_ADR, 80)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1672,7 +1916,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N081)
+        }
+        If(LLessEqual(82, NCNT))
+        {
+            Device(\_SB.NVDR.N081)
             {
                 Name(_ADR, 81)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1680,7 +1927,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N082)
+        }
+        If(LLessEqual(83, NCNT))
+        {
+            Device(\_SB.NVDR.N082)
             {
                 Name(_ADR, 82)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1688,7 +1938,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N083)
+        }
+        If(LLessEqual(84, NCNT))
+        {
+            Device(\_SB.NVDR.N083)
             {
                 Name(_ADR, 83)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1696,7 +1949,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N084)
+        }
+        If(LLessEqual(85, NCNT))
+        {
+            Device(\_SB.NVDR.N084)
             {
                 Name(_ADR, 84)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1704,7 +1960,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N085)
+        }
+        If(LLessEqual(86, NCNT))
+        {
+            Device(\_SB.NVDR.N085)
             {
                 Name(_ADR, 85)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1712,7 +1971,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N086)
+        }
+        If(LLessEqual(87, NCNT))
+        {
+            Device(\_SB.NVDR.N086)
             {
                 Name(_ADR, 86)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1720,7 +1982,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N087)
+        }
+        If(LLessEqual(88, NCNT))
+        {
+            Device(\_SB.NVDR.N087)
             {
                 Name(_ADR, 87)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1728,7 +1993,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N088)
+        }
+        If(LLessEqual(89, NCNT))
+        {
+            Device(\_SB.NVDR.N088)
             {
                 Name(_ADR, 88)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1736,7 +2004,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N089)
+        }
+        If(LLessEqual(90, NCNT))
+        {
+            Device(\_SB.NVDR.N089)
             {
                 Name(_ADR, 89)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1744,7 +2015,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N090)
+        }
+        If(LLessEqual(91, NCNT))
+        {
+            Device(\_SB.NVDR.N090)
             {
                 Name(_ADR, 90)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1752,7 +2026,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N091)
+        }
+        If(LLessEqual(92, NCNT))
+        {
+            Device(\_SB.NVDR.N091)
             {
                 Name(_ADR, 91)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1760,7 +2037,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N092)
+        }
+        If(LLessEqual(93, NCNT))
+        {
+            Device(\_SB.NVDR.N092)
             {
                 Name(_ADR, 92)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1768,7 +2048,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N093)
+        }
+        If(LLessEqual(94, NCNT))
+        {
+            Device(\_SB.NVDR.N093)
             {
                 Name(_ADR, 93)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1776,7 +2059,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N094)
+        }
+        If(LLessEqual(95, NCNT))
+        {
+            Device(\_SB.NVDR.N094)
             {
                 Name(_ADR, 94)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1784,7 +2070,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N095)
+        }
+        If(LLessEqual(96, NCNT))
+        {
+            Device(\_SB.NVDR.N095)
             {
                 Name(_ADR, 95)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1792,7 +2081,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N096)
+        }
+        If(LLessEqual(97, NCNT))
+        {
+            Device(\_SB.NVDR.N096)
             {
                 Name(_ADR, 96)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1800,7 +2092,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N097)
+        }
+        If(LLessEqual(98, NCNT))
+        {
+            Device(\_SB.NVDR.N097)
             {
                 Name(_ADR, 97)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1808,7 +2103,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N098)
+        }
+        If(LLessEqual(99, NCNT))
+        {
+            Device(\_SB.NVDR.N098)
             {
                 Name(_ADR, 98)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1816,7 +2114,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N099)
+        }
+        If(LLessEqual(100, NCNT))
+        {
+            Device(\_SB.NVDR.N099)
             {
                 Name(_ADR, 99)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1824,7 +2125,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N100)
+        }
+        If(LLessEqual(101, NCNT))
+        {
+            Device(\_SB.NVDR.N100)
             {
                 Name(_ADR, 100)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1832,7 +2136,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N101)
+        }
+        If(LLessEqual(102, NCNT))
+        {
+            Device(\_SB.NVDR.N101)
             {
                 Name(_ADR, 101)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1840,7 +2147,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N102)
+        }
+        If(LLessEqual(103, NCNT))
+        {
+            Device(\_SB.NVDR.N102)
             {
                 Name(_ADR, 102)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1848,7 +2158,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N103)
+        }
+        If(LLessEqual(104, NCNT))
+        {
+            Device(\_SB.NVDR.N103)
             {
                 Name(_ADR, 103)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1856,7 +2169,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N104)
+        }
+        If(LLessEqual(105, NCNT))
+        {
+            Device(\_SB.NVDR.N104)
             {
                 Name(_ADR, 104)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1864,7 +2180,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N105)
+        }
+        If(LLessEqual(106, NCNT))
+        {
+            Device(\_SB.NVDR.N105)
             {
                 Name(_ADR, 105)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1872,7 +2191,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N106)
+        }
+        If(LLessEqual(107, NCNT))
+        {
+            Device(\_SB.NVDR.N106)
             {
                 Name(_ADR, 106)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1880,7 +2202,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N107)
+        }
+        If(LLessEqual(108, NCNT))
+        {
+            Device(\_SB.NVDR.N107)
             {
                 Name(_ADR, 107)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1888,7 +2213,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N108)
+        }
+        If(LLessEqual(109, NCNT))
+        {
+            Device(\_SB.NVDR.N108)
             {
                 Name(_ADR, 108)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1896,7 +2224,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N109)
+        }
+        If(LLessEqual(110, NCNT))
+        {
+            Device(\_SB.NVDR.N109)
             {
                 Name(_ADR, 109)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1904,7 +2235,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N110)
+        }
+        If(LLessEqual(111, NCNT))
+        {
+            Device(\_SB.NVDR.N110)
             {
                 Name(_ADR, 110)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1912,7 +2246,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N111)
+        }
+        If(LLessEqual(112, NCNT))
+        {
+            Device(\_SB.NVDR.N111)
             {
                 Name(_ADR, 111)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1920,7 +2257,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N112)
+        }
+        If(LLessEqual(113, NCNT))
+        {
+            Device(\_SB.NVDR.N112)
             {
                 Name(_ADR, 112)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1928,7 +2268,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N113)
+        }
+        If(LLessEqual(114, NCNT))
+        {
+            Device(\_SB.NVDR.N113)
             {
                 Name(_ADR, 113)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1936,7 +2279,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N114)
+        }
+        If(LLessEqual(115, NCNT))
+        {
+            Device(\_SB.NVDR.N114)
             {
                 Name(_ADR, 114)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1944,7 +2290,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N115)
+        }
+        If(LLessEqual(116, NCNT))
+        {
+            Device(\_SB.NVDR.N115)
             {
                 Name(_ADR, 115)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1952,7 +2301,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N116)
+        }
+        If(LLessEqual(117, NCNT))
+        {
+            Device(\_SB.NVDR.N116)
             {
                 Name(_ADR, 116)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1960,7 +2312,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N117)
+        }
+        If(LLessEqual(118, NCNT))
+        {
+            Device(\_SB.NVDR.N117)
             {
                 Name(_ADR, 117)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1968,7 +2323,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N118)
+        }
+        If(LLessEqual(119, NCNT))
+        {
+            Device(\_SB.NVDR.N118)
             {
                 Name(_ADR, 118)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1976,7 +2334,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N119)
+        }
+        If(LLessEqual(120, NCNT))
+        {
+            Device(\_SB.NVDR.N119)
             {
                 Name(_ADR, 119)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1984,7 +2345,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N120)
+        }
+        If(LLessEqual(121, NCNT))
+        {
+            Device(\_SB.NVDR.N120)
             {
                 Name(_ADR, 120)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -1992,7 +2356,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N121)
+        }
+        If(LLessEqual(122, NCNT))
+        {
+            Device(\_SB.NVDR.N121)
             {
                 Name(_ADR, 121)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2000,7 +2367,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N122)
+        }
+        If(LLessEqual(123, NCNT))
+        {
+            Device(\_SB.NVDR.N122)
             {
                 Name(_ADR, 122)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2008,7 +2378,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N123)
+        }
+        If(LLessEqual(124, NCNT))
+        {
+            Device(\_SB.NVDR.N123)
             {
                 Name(_ADR, 123)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2016,7 +2389,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N124)
+        }
+        If(LLessEqual(125, NCNT))
+        {
+            Device(\_SB.NVDR.N124)
             {
                 Name(_ADR, 124)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2024,7 +2400,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N125)
+        }
+        If(LLessEqual(126, NCNT))
+        {
+            Device(\_SB.NVDR.N125)
             {
                 Name(_ADR, 125)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2032,7 +2411,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N126)
+        }
+        If(LLessEqual(127, NCNT))
+        {
+            Device(\_SB.NVDR.N126)
             {
                 Name(_ADR, 126)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2040,7 +2422,10 @@ DefinitionBlock (
                 Function (_LSI, {PkgObj}) { Return (LSIM(_ADR)) }
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
-            Device(N127)
+        }
+        If(LLessEqual(128, NCNT))
+        {
+            Device(\_SB.NVDR.N127)
             {
                 Name(_ADR, 127)
                 Method(_DSM, 4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj})
@@ -2049,7 +2434,7 @@ DefinitionBlock (
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
         }
-
+        
 
 #if defined (_DSDT_INTEL_)
 

@@ -556,7 +556,8 @@ enum UefiStructureType
     UefiConfigProcessorInformation         = 0x13,
     UefiConfigMmioRanges                   = 0x14,
     UefiConfigAARCH64MPIDR                 = 0x15,
-    UefiConfigAcpiTable                    = 0x16
+    UefiConfigAcpiTable                    = 0x16,
+    UefiConfigNvdimmCount                  = 0x17,
 };
 
 //
@@ -747,6 +748,18 @@ typedef struct _UEFI_CONFIG_ACPI_TABLE
     UEFI_CONFIG_HEADER Header;
     UINT8 AcpiTableData[];
 } UEFI_CONFIG_ACPI_TABLE;
+
+typedef struct _UEFI_CONFIG_NVDIMM_COUNT
+{
+    UEFI_CONFIG_HEADER Header;
+#pragma warning(disable : 4201)
+    union
+    {
+        UINT64 Padding;
+        UINT16 Count;
+    };
+#pragma warning(default : 4201)
+} UEFI_CONFIG_NVDIMM_COUNT;
 
 #pragma warning(pop)
 #pragma pack(pop)
