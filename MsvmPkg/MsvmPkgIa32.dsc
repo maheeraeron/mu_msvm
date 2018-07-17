@@ -257,6 +257,9 @@
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangCodes|"engeng"
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes|"en;en-US"
 
+  # Disable front page auto power off
+  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
+
 [PcdsFeatureFlag.common]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE

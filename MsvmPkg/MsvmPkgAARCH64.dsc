@@ -299,6 +299,9 @@
   # Publish UEFI PropertiesTable.
   gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|TRUE
 
+  # Disable front page auto power off
+  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
+
 [PcdsFeatureFlag.common]
   #gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
