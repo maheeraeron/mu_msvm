@@ -2434,7 +2434,7 @@ DefinitionBlock (
                 Function (_LSR, {PkgObj}, {IntObj, IntObj}) { Return (LSRM(Arg0, Arg1, _ADR)) }
             }
         }
-        
+
 
 #if defined (_DSDT_INTEL_)
 
@@ -2464,6 +2464,13 @@ DefinitionBlock (
             {
 
 #endif
+                // Read the Event registers.
+                Store(\_SB.NVDR.NEV0, Local0)
+                Store(\_SB.NVDR.NEV1, Local1)
+                Store(\_SB.NVDR.NEV2, Local2)
+                Store(\_SB.NVDR.NEV3, Local3)
+                Store(\_SB.NVDR.NEV4, Local4)
+
                 // Go through each event register to see what events were signalled.
                 // For NEV0-3, each bit corresponds to a 0x81 event on a different NVDIMM
                 // child device.
