@@ -88,7 +88,7 @@ IN  EFI_GUID  *LogoFile
     UINTN                         Width;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
     EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
-    EFI_BOOT_LOGO_PROTOCOL2       *BootLogo;
+    EDKII_BOOT_LOGO2_PROTOCOL     *BootLogo;
     BOOLEAN                       IsLandscape = FALSE;
     BOOLEAN                       IsSystemLogo = FALSE;
     UINT32                        Color;
@@ -156,7 +156,7 @@ IN  EFI_GUID  *LogoFile
     //
     // Try to open Boot Logo Protocol.
     //
-    gBS->LocateProtocol(&gEfiBootLogoProtocol2Guid, NULL, (VOID **)&BootLogo);
+    gBS->LocateProtocol(&gEdkiiBootLogo2ProtocolGuid, NULL, (VOID **)&BootLogo);
 
     //
     // Erase Cursor from screen
@@ -185,7 +185,7 @@ IN  EFI_GUID  *LogoFile
     Status = TranslateBmpToGopBlt(
         ImageData,
         ImageSize,
-        (VOID **)&Blt,
+        &Blt,
         &BltSize,
         &Height,
         &Width

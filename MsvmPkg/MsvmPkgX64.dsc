@@ -73,6 +73,7 @@
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+  ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
 !ifdef DEBUGLIB_SERIAL
   SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
 !else
@@ -83,7 +84,7 @@
   UefiCpuLib|UefiCpuPkg/Library/BaseUefiCpuLib/BaseUefiCpuLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   #UefiResetSystemLib|MdeModulePkg/Library/BaseUefiResetSystemLibNull/BaseUefiResetSystemLibNull.inf ##MSChange
-  UefiResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
+  HwResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
@@ -113,8 +114,8 @@
   MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
   MsLogoLib|MsvmPkg/Library/MsLogoLib/MsLogoLib.inf #point to MsLogoLib
-  BmpSupportLib|MsCapsuleUpdatePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
-  IntSafeLib|MdePkg/Library/IntSafeLib/IntSafeLib.inf
+  BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   MsPlatBdsLib|MsvmPkg/Library/MsPlatBdsLib/MsPlatBdsLib.inf
 
   #
@@ -154,10 +155,7 @@
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
   PcdLib|MdePkg/Library/PeiPcdLib/PeiPcdLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
-##MSChange Begin
-  ResetSystemCoreLib|MdeModulePkg/Library/ResetSystemCoreLib/PeiResetSystemCoreLib.inf
-  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/PeiResetHelperLib.inf
-##MSChange End
+  ResetSystemLib|MdeModulePkg/Library/PeiResetSystemLib/PeiResetSystemLib.inf
 
 #
 # Library instance overrides just for PEI CORE
@@ -208,7 +206,7 @@
   UdpIoLib|MdeModulePkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
-  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
 
 #
 # Library instances overrides for just DXE CORE
@@ -225,7 +223,7 @@
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
 
 [LibraryClasses.common.DXE_DRIVER]
-  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
   HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
 ##MSChange End
   Tcg2PhysicalPresencePromptLib|MsvmPkg/Library/Tcg2PhysicalPresencePromptLibApprove/Tcg2PhysicalPresencePromptLibApprove.inf   ## MS_CHANGE
@@ -247,8 +245,7 @@
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/RuntimeCryptLib.inf
-  ResetSystemCoreLib|MdeModulePkg/Library/ResetSystemCoreLib/DxeRuntimeResetSystemCoreLib.inf
-  ResetHelperLib|MdeModulePkg/Library/ResetHelperLib/DxeResetHelperLib.inf
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
 
 [LibraryClasses.X64]
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
@@ -293,6 +290,7 @@
   # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
+  # Turns on DEBUG_INFO
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000042
 !else
   # This default turns on errors and warnings
@@ -535,7 +533,7 @@
   #  This should only be used to support upgrades/existing VMs
   gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
   gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
-  
+
   # UEFI_CONFIG_NVDIMM_COUNT
   gMsvmPkgTokenSpaceGuid.PcdNvdimmCount|0x0
 
@@ -556,6 +554,7 @@
   #
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
   MdeModulePkg/Core/Pei/PeiMain.inf
+  MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   MsvmPkg/PlatformPei/PlatformPei.inf
   MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf

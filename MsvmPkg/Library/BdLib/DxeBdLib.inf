@@ -35,7 +35,7 @@
 
 [LibraryClasses.x64]
     LocalApicLib
-    UefiResetSystemLib
+    ResetUtilityLib
 
 [LibraryClasses.AARCH64]
     ArmLib

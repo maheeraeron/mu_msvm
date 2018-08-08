@@ -141,6 +141,7 @@ APRIORI DXE {
 #
 INF  MdeModulePkg/Core/Pei/PeiMain.inf
 INF  MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+INF  MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
 INF  MsvmPkg/PlatformPei/PlatformPei.inf
 INF  MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf

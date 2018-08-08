@@ -928,6 +928,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
 
     // Set a starting position within the canvas for rendering UI controls.
     //
+    // HyperV Override: mMasterFrameWidth is 0 due to not having a sidebar, because there are no UI controls.
     UINT32 OrigX             = (mMasterFrameWidth == 0) ? ((mGop->Mode->Info->HorizontalResolution * (FP_TBAR_MSLOGO_X_PERCENT * 2)) / 100) : (mMasterFrameWidth + ((mMasterFrameWidth * FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT) / 100));
     UINT32 OrigY             = (mTitleBarHeight + ((mMasterFrameHeight * FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT) / 100));
     UINT32 CanvasRightLimit  = (mGop->Mode->Info->HorizontalResolution - ((mMasterFrameWidth * FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT) / 100));
@@ -1156,7 +1157,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                     //
                     Status = TranslateBmpToGopBlt (BMPData,
                                                  BMPDataSize,
-                                                 (VOID **)&BltBuffer,
+                                                 &BltBuffer,
                                                  &BltBufferSize,
                                                  &BitmapHeight,
                                                  &BitmapWidth
@@ -2945,7 +2946,7 @@ InitializeDisplayEngine (
                                   (VOID **)&mGop
                                  );
     //
-    // Known issue where on some devices gop is not found on console out. 
+    // Known issue where on some devices gop is not found on console out.
     // Need to root cause
     //
     if(EFI_ERROR(Status))

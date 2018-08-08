@@ -41,7 +41,7 @@
 #include <Library/DxeServicesLib.h>
 #include <Library/BmpSupportLib.h>
 #include <Library/MsUiThemeLib.h>
-#include <Library/ResetHelperLib.h>
+#include <Library/ResetUtilityLib.h>
 #include <Library/MsLogoLib.h>
 #include <Library/BootEventLogLib.h>
 
@@ -993,7 +993,7 @@ EFI_STATUS  GetAndDisplayBitmap (EFI_GUID *FileGuid, UINTN XCoord, BOOLEAN XCoor
     //
     Status = TranslateBmpToGopBlt(BMPData,
                                 BMPDataSize,
-                                (VOID **)&BltBuffer,
+                                &BltBuffer,
                                 &BltBufferSize,
                                 &BitmapHeight,
                                 &BitmapWidth

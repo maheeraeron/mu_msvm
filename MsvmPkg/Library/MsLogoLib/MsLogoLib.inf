@@ -64,7 +64,7 @@
 
 [Protocols]
   gEfiGraphicsOutputProtocolGuid                # PROTOCOL SOMETIMES_CONSUMES
-  gEfiBootLogoProtocol2Guid                                             # PROTOCOL SOMETIMES_CONSUMES
+  gEdkiiBootLogo2ProtocolGuid                   # PROTOCOL SOMETIMES_CONSUMES
 
 
 [FeaturePcd]

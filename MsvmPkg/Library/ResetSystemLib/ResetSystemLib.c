@@ -20,7 +20,7 @@
 #include <PowerManagementInterface.h>
 #include <Uefi/UefiBaseType.h>
 #include <Uefi/UefiMultiPhase.h>
-#include <Library/UefiResetSystemLib.h>
+#include <Library/ResetSystemLib.h>
 
 VOID
 AcpiPmControl (
