@@ -120,7 +120,8 @@ SerialWriteBanner PROC
     mov     w10, #0x4C  // 'L'
     strb    w10, [x9]
 
-    mrs     x8, currentel
+    // TODO-cho: What's the constant for ARM64_CurrentEL format?
+    // mrs     x8, #ARM64_CurrentEL
     cmp     x8, #0x8
     bgt     %f3
     beq     %f2

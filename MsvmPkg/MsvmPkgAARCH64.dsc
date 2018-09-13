@@ -27,6 +27,8 @@
 #
 ################################################################################
 [BuildOptions]
+  # TODO-cho: X64 has this, something similar needed for AARCH64 full debug support?
+  # *_*_X64_GENFW_FLAGS = --keepexceptiontable
 
 ################################################################################
 #
@@ -58,13 +60,15 @@
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
   CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
+  CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
   CpuExceptionHandlerLib|ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
-  CrashDumpAgentLib|MdeModulePkg/Library/CrashDumpAgentLibNull/CrashDumpAgentLibNull.inf
+#  CrashDumpAgentLib|MdeModulePkg/Library/CrashDumpAgentLibNull/CrashDumpAgentLibNull.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLibBase.inf
-  EfiResetSystemLib|ArmPkg/Library/ArmPsciResetSystemLib/ArmPsciResetSystemLib.inf
+  HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   EmclLib|MsvmPkg/Library/EmclLib/EmclLib.inf
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
@@ -75,11 +79,16 @@
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
-  PL011UartLib|ArmPlatformPkg/Drivers/PL011Uart/PL011Uart.inf
+  Performance2Lib|MdePkg/Library/BasePerformance2LibNull/BasePerformance2LibNull.inf ## MS_CHANGE
+  PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
   PlatformPeiLib|ArmPlatformPkg/PlatformPei/PlatformPeiLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+  ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
+  SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
+  SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
   TimerLib|MsvmPkg/Library/HvTimerLib/HvTimerLib.inf
+  UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
 
@@ -90,6 +99,44 @@
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
 !endif
+
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+
+  ## MS_CHANGE_?
+  # MeasuredBoot and Other TPM-Based Security
+  Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
+  Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+  TpmMeasurementLib|SecurityPkg/Library/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf
+  Tcg2PhysicalPresenceLib|SecurityPkg/Library/DxeTcg2PhysicalPresenceLib/DxeTcg2PhysicalPresenceLib.inf
+  Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
+  OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
+  Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
+  Tcg2PreUefiEventLogLib|MsvmPkg/Library/Tcg2PreUefiEventLogLibNull/Tcg2PreUefiEventLogLibNull.inf
+  ## MS_CHANGE_?
+
+  # MsCore BDS & FrontPage Libs
+  PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+  DeviceBootManagerLib|MsvmPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
+  MsDisplayOnScreenNotificationLib|MsvmPkg/Library/BaseDisplayOnScreenNotificationLibNull/BaseDisplayOnScreenNotificationLibNull.inf
+  MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
+  UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+  MsLogoLib|MsvmPkg/Library/MsLogoLib/MsLogoLib.inf #point to MsLogoLib
+  BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
+  MsPlatBdsLib|MsvmPkg/Library/MsPlatBdsLib/MsPlatBdsLib.inf
+
+  #
+  # MsGraphicsPkg Libs
+  #
+  UIToolKitLib|MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
+  MsBaseStringLib|MsGraphicsPkg/Library/MsBaseStringLib/MsBaseStringLib.inf
+  SecureMemoryLib|MsGraphicsPkg/Library/SecureMemoryLib/SecureMemoryLib.inf
+  MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
+  PlatformThemeLib|MsvmPkg/Library/PlatformThemeLib/PlatformThemeLib.inf
+
+  # FIXME: was marked as X64 only in X64 dsc?
+  MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
 
 #
 # Library instance overrides for SEC and PEI
@@ -115,12 +162,16 @@
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
   PcdLib|MdePkg/Library/PeiPcdLib/PeiPcdLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
+  ResetSystemLib|MdeModulePkg/Library/PeiResetSystemLib/PeiResetSystemLib.inf
 
 #
 # Library instance overrides just for PEI CORE
 #
 [LibraryClasses.common.PEI_CORE]
   PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf
+!if $(PERF_TRACE_ENABLE) == TRUE
+  Performance2Lib|PerformancePkg/Library/CorePerformance2Lib/PeiCorePerformance2Lib.inf
+!endif
 
 #
 # Library instance overrides just for PEIMs
@@ -128,6 +179,8 @@
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
+
+  MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
 
 #
 # Library instance overrides for DXE
@@ -160,6 +213,7 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
 
 #
 # Library instances overrides for just DXE CORE
@@ -168,6 +222,17 @@
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
+!if $(PERF_TRACE_ENABLE) == TRUE
+  Performance2Lib|PerformancePkg/Library/CorePerformance2Lib/DxeCorePerformance2Lib.inf
+!endif
+##MSChange Begin
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
+
+[LibraryClasses.common.DXE_DRIVER]
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
+  HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
+##MSChange End
+  Tcg2PhysicalPresencePromptLib|MsvmPkg/Library/Tcg2PhysicalPresencePromptLibApprove/Tcg2PhysicalPresencePromptLibApprove.inf   ## MS_CHANGE
 
 #
 # Library instance overrides for all DXE Drivers
@@ -231,13 +296,13 @@
   # Static initial memory config - presumes minimum 64MB in VM
   # Page table, stack, and heap are hard-coded in host worker process.
   #
-  # Firmware:            0x00000000 to 0x00400000 4MB (Pcds from FDF file)
-  # PageTable:           0x00400000 to 0x00404000 4KB (starts on 2MB boundary)
-  # Stack and Heap:      0x00404000 to 0x00414000 64KB
-  # System Memory (PEI): 0x00414000 to 0x04000000 ~59MB
+  # Firmware:            0x00000000 to 0x00800000 8MB (Pcds from FDF file)
+  # PageTable:           0x00800000 to 0x00804000 4KB (starts on 2MB boundary)
+  # Stack and Heap:      0x00804000 to 0x00814000 64KB
+  # System Memory (PEI): 0x00814000 to 0x04000000 ~59MB
   #
-  gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress|0x00414000
-  gMsvmPkgTokenSpaceGuid.PcdSystemMemorySize|0x03BEC000
+  gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress|0x00814000
+  gMsvmPkgTokenSpaceGuid.PcdSystemMemorySize|0x037EC000
 
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
@@ -302,13 +367,19 @@
   # Disable front page auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
 
+  # Change PcdBootManagerMenuFile to point to the FrontPage application
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x8A, 0x70, 0x42, 0x40, 0x2D, 0x0F, 0x23, 0x48, 0xAC, 0x60, 0x0D, 0x77, 0xB3, 0x11, 0x18, 0x89 }
+
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerInBootOrder|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupported|FALSE
+
 [PcdsFeatureFlag.common]
   #gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
 
 [PcdsDynamicDefault]
-  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0xFFFF
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
 
   # UEFI Config information from the Bios VDEV
   # UEFI_CONFIG_STRUCTURE_COUNT
@@ -446,12 +517,13 @@
   MdeModulePkg/Core/Pei/PeiMain.inf
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   MsvmPkg/PlatformPei/PlatformPei.inf
+  MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 
-  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
-    <LibraryClasses>
-      HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
-  }
+  #SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
+  #  <LibraryClasses>
+  #    HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
+  #    Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
+  #}
 
   #
   # DXE Phase modules
@@ -459,22 +531,12 @@
   ArmPkg/Drivers/CpuDxe/CpuDxe.inf
   ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
 
-  EmbeddedPkg/ResetRuntimeDxe/ResetRuntimeDxe.inf
-
   FatPkg/EnhancedFatDxe/Fat.inf
 
-  IntelFrameworkModulePkg/Universal/BdsDxe/BdsDxe.inf {
+  MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
+  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
-      CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-      GenericBdsLib|IntelFrameworkModulePkg/Library/GenericBdsLib/GenericBdsLib.inf
-      HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
-      PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
-      PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
-      PlatformBdsLib|MsvmPkg/Library/PlatformBdsLib/PlatformBdsLib.inf
-      UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
-    <PcdsPatchableInModule>
-      gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdSetupVideoHorizontalResolution|1024
-      gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdSetupVideoVerticalResolution|768
+      #DebugLib|MdeModulePkg/Library/PeiDxeDebugLibReportStatusCode/PeiDxeDebugLibReportStatusCode.inf
   }
 
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
@@ -489,6 +551,7 @@
       LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
   }
   MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf {
     <LibraryClasses>
       UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
@@ -506,6 +569,7 @@
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
   MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
+  MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
   MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
   MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
   MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
@@ -514,6 +578,7 @@
   MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
   MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
   MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
   <LibraryClasses>
     SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
@@ -521,6 +586,7 @@
     NULL|SecurityPkg/Library/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf
   }
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+  MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 
   MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
   MsvmPkg/AcpiTables/AcpiTables.inf
@@ -549,9 +615,34 @@
   NetworkPkg/Udp6Dxe/Udp6Dxe.inf
   NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
 
-  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
-    <LibraryClasses>
-      HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
-      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
-  }
+  # TPM related components
+  # TODO: Currently the PH is locked by the hypervisor.
+  #       If this ever changes, will need a driver to lock the PH.
+  # FIXME: no TPM on AARCH64 yet, still need these?
+
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
+
+  SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
+    <LibraryClasses>
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
+      NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
+  }
+
+  # UI Theme Protocol
+  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
+
+  # Simple Window Manager (SWM) driver.
+  MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
+
+  # Rendering Engine (SRE) driver.
+  MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
+
+  # FrontPage application.
+  MsvmPkg/FrontPage/FrontPage.inf
+
+  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf {
+    <LibraryClasses>
+      LockBoxLib|MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxDxeLib.inf
+  }

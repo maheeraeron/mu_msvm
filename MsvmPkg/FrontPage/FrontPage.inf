@@ -51,7 +51,7 @@
   DxeServicesLib
   BmpSupportLib
   MsUiThemeLib
-  ResetUtilityLib
+  ResetSystemLib
   MsLogoLib
   BootEventLogLib
 

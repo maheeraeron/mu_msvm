@@ -34,7 +34,7 @@ Author:
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 #include <Library/PCUart.h>
 #elif defined(MDE_CPU_AARCH64)
-#include <Drivers/PL011Uart.h>
+#include <Library/PL011UartLib.h>
 #endif
 #include "MsvmSerial.h"
 

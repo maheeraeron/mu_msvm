@@ -274,7 +274,9 @@ Return Value:
 
     DEBUG((DEBUG_VERBOSE, ">>> SynicTimerInterruptHandler\n"));
 
+#if defined(MDE_CPU_X64)
     DebugPollDebugger();
+#endif
 
     // A message is not expected due to timer direct mode
     // but complete any message found.
@@ -364,7 +366,7 @@ Return Value:
 #else
                                  FALSE, // not direct mode - will get SINT messages
                                  0);
-#endif                                 
+#endif
     if (EFI_ERROR(status))
     {
         goto Cleanup;

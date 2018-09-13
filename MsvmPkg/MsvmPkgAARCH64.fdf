@@ -28,10 +28,10 @@
 #
 [FD.MSVM]
 BaseAddress   = 0x00000000|gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
-Size          = 0x00400000|gMsvmPkgTokenSpaceGuid.PcdFdSize
+Size          = 0x00800000|gMsvmPkgTokenSpaceGuid.PcdFdSize
 ErasePolarity = 1
 BlockSize     = 0x1000 # This multiplied by NumBlocks should == Size
-NumBlocks     = 0x400
+NumBlocks     = 0x800
 
 #
 # UEFI has trouble dealing with FVs that reside at physical address 0x0.
@@ -46,11 +46,12 @@ DATA = {
 }
 
 # MAIN volume (start|size)
-0x00001000|0x003FF000
+0x00001000|0x007FF000
 gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdFvSize
 FV = MAIN
 
 ################################################################################
+#
 # This FV section describes the MAIN volume contents.
 #
 [FV.MAIN]
@@ -72,35 +73,45 @@ READ_STATUS        = TRUE
 READ_LOCK_CAP      = TRUE
 READ_LOCK_STATUS   = TRUE
 
+#
+# Dispatch these components first in PEI
+#
 APRIORI PEI {
   INF  MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 }
+
+#
+# Dispatch these components first in DXE
+#
 APRIORI DXE {
-  INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
   INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
+  # TODO-cho: Put KdDxe here.
 }
 
-INF  MsvmPkg/Sec/SecMain.inf
-INF  MdeModulePkg/Universal/PCD/Pei/Pcd.inf
-INF  MdeModulePkg/Core/Pei/PeiMain.inf
-INF  MsvmPkg/PlatformPei/PlatformPei.inf
-INF  MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
+#
+# SEC and PEI components
+#
+INF MsvmPkg/Sec/SecMain.inf
+INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+INF MdeModulePkg/Core/Pei/PeiMain.inf
+INF MsvmPkg/PlatformPei/PlatformPei.inf
+INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 !ifdef INCLUDE_TPM
-INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
 !endif
 
-
+#
+# DXE Components
+#
 INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
 INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
 
-INF EmbeddedPkg\ResetRuntimeDxe\ResetRuntimeDxe.inf
-
 INF FatPkg/EnhancedFatDxe/Fat.inf
-
-INF IntelFrameworkModulePkg/Universal/BdsDxe/BdsDxe.inf
 
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
@@ -108,8 +119,10 @@ INF MdeModulePkg/Core/Dxe/DxeMain.inf
 INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
 INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
 INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
 INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
 INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
 INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
@@ -117,6 +130,7 @@ INF MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
 INF MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
 INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+#INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
 INF MdeModulePkg/Universal/Metronome/Metronome.inf
 INF MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
 INF MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
@@ -127,15 +141,16 @@ INF MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
 INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
 INF MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
 INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
 INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
-FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
-    SECTION RAW = MsvmPkg/bootlogo.bmp
-  }
 INF MsvmPkg/ConNullDxe/ConNullDxe.inf
+INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf
 INF MsvmPkg/EventLogDxe/EventLogDxe.inf
@@ -162,6 +177,31 @@ INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
 
 INF SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
+
+# UI Theme Protocol.
+INF  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
+# Rendering Engine (SRE) driver.
+INF  MsGraphicsPkg/RenderingEngineDxe/RenderingEngineDxe.inf
+# Simple Window Manager (SWM) driver.
+INF  MsGraphicsPkg/SimpleWindowManagerDxe/SimpleWindowManagerDxe.inf
+
+# FrontPage application.
+INF  MsvmPkg/FrontPage/FrontPage.inf
+
+#INF  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdLogoFile) {
+    SECTION RAW = MsvmPkg/bootlogo.bmp
+    SECTION UI = "Logo"
+  }
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile) {
+    SECTION RAW = MsvmPkg/FrontPage/Resources/MicrosoftLogo.bmp
+}
+
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
+    SECTION RAW = MsvmPkg/FrontPage/Resources/NoBoot.bmp
+}
 
 ################################################################################
 # Rules section.

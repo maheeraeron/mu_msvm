@@ -41,7 +41,7 @@
 #include <Library/DxeServicesLib.h>
 #include <Library/BmpSupportLib.h>
 #include <Library/MsUiThemeLib.h>
-#include <Library/ResetUtilityLib.h>
+#include <Library/ResetSystemLib.h>
 #include <Library/MsLogoLib.h>
 #include <Library/BootEventLogLib.h>
 
@@ -940,7 +940,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     if (mResetRequired)
     {
-        ResetSystemWithSubtype( EfiResetCold, NULL );
+        EfiResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     }
 
     //ProcessBootNext ();

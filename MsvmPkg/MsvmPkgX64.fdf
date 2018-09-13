@@ -8,14 +8,10 @@
 #  this image gets put in VM memory by the host VM worker process.  The
 #  net effect is the same.
 #
-#  Specifically the BIOS gets copied to the top of configured VM RAM below
-#  4GB. That RAM gets mapped (read-only) to the top of the 4GB address space.
-#  Additionally the top 128KB of the BIOS gets copied to VM RAM just below to
-#  have the reset vector code exist where Hyper-V virtual processors start.
-#
-#  Following execution of the small reset vector code just below 1MB the bios
-#  jumps to and executes in the code that is mapped at the top of the 4GB
-#  address space.
+#  The UEFI image is copied to guest memory starting at 1 MB, up until the end
+#  of the image. The host will set the VP state to the SEC C entry point,
+#  skipping the architectural reset vector startup process, along with the
+#  transitions from 16 bit to 32 bit to 64 bit mode.
 #
 ##
 
@@ -130,90 +126,106 @@ APRIORI PEI {
 
 #
 # Dispatch these components first in DXE.
+# TODO-cho: what's the order for this? KdDxe seems to die with segfault, also KdDxe is supposed to load _before_ SynicDxe? That seems odd.
+# What exactly are KdDxe's required dependencies?
+# Can we hoist KdDxe even earlier?
 #
 APRIORI DXE {
-  INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
-  INF  MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
+  INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+  INF MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
+  INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+  INF MsvmPkg/CpuDxe/CpuDxe.inf
+  INF MdeModulePkg/Universal/Metronome/Metronome.inf
+  INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
+  INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+  INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  INF MsvmPkg/EventLogDxe/EventLogDxe.inf
+  #INF MsKdDebugPkg2/KdDxe/KdDxe.inf
 }
 
 #
 # PEI components
 #
-INF  MdeModulePkg/Core/Pei/PeiMain.inf
-INF  MdeModulePkg/Universal/PCD/Pei/Pcd.inf
-INF  MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
-INF  MsvmPkg/PlatformPei/PlatformPei.inf
-INF  MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
-INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
-INF  MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
-INF  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
+INF MdeModulePkg/Core/Pei/PeiMain.inf
+INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
+INF MsvmPkg/PlatformPei/PlatformPei.inf
+INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
+INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
 
 #
 # DXE components.
 #
-INF MsvmPkg/EventLogDxe/EventLogDxe.inf
-INF MdeModulePkg/Core/Dxe/DxeMain.inf
-INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
-INF MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
-INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
-INF MsvmPkg/CpuDxe/CpuDxe.inf
-INF MdeModulePkg/Universal/Metronome/Metronome.inf
-INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
-INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
-INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
-INF MsvmPkg/VariableDxe/VariableDxe.inf
-INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
-INF MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
-INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
-INF PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
-INF MsvmPkg/VmbusDxe/VmbusDxe.inf
-INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
-INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
-INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
-INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
-INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
-INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
-INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+
 INF FatPkg/EnhancedFatDxe/Fat.inf
-INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
-INF MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-INF MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
-INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
-INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
-INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
-INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
-INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
-INF MsvmPkg/EmclDxe/EmclDxe.inf
+
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
-INF MsvmPkg/StorvscDxe/StorvscDxe.inf
-INF MsvmPkg/SynthKeyDxe/SynthKeyDxe.inf
-INF MsvmPkg/VideoDxe/VideoDxe.inf
+INF MdeModulePkg/Core/Dxe/DxeMain.inf
+INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
+INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+INF MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+INF MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+INF MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+INF MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
+INF MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+INF MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+INF MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+INF MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+INF MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+INF MdeModulePkg/Universal/Metronome/Metronome.inf
+INF MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
+INF MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
+INF MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
+INF MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
+INF MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
+INF MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
+INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
+INF MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
+INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+
+INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
+INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
+INF MsvmPkg/ConNullDxe/ConNullDxe.inf
+INF MsvmPkg/CpuDxe/CpuDxe.inf
+INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
+INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
+INF MsvmPkg/EmclDxe/EmclDxe.inf
+INF MsvmPkg/EventLogDxe/EventLogDxe.inf
+INF MsvmPkg/NetvscDxe/NetvscDxe.inf
 INF MsvmPkg/SbCryptDxe/SbCryptDxe.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf
 INF MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
-INF MsvmPkg/NetvscDxe/NetvscDxe.inf
-INF MsvmPkg/WatchdogTimerDxe/WatchdogTimerDxe.inf
+INF MsvmPkg/StorvscDxe/StorvscDxe.inf
+INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
+INF MsvmPkg/SynthKeyDxe/SynthKeyDxe.inf
+INF MsvmPkg/VariableDxe/VariableDxe.inf
+INF MsvmPkg/VideoDxe/VideoDxe.inf
 INF MsvmPkg/VmbfsDxe/VmbfsDxe.inf
-INF MsvmPkg/ConNullDxe/ConNullDxe.inf
-INF MdeModulePkg/Universal/Network/DpcDxe/DpcDxe.inf
-INF MdeModulePkg/Universal/Network/MnpDxe/MnpDxe.inf
-INF MdeModulePkg/Universal/Network/ArpDxe/ArpDxe.inf
-INF MdeModulePkg/Universal/Network/Dhcp4Dxe/Dhcp4Dxe.inf
+INF MsvmPkg/VmbusDxe/VmbusDxe.inf
+INF MsvmPkg/WatchdogTimerDxe/WatchdogTimerDxe.inf
+
 INF NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf
-INF MdeModulePkg/Universal/Network/Ip4Dxe/Ip4Dxe.inf
 INF NetworkPkg/Ip6Dxe/Ip6Dxe.inf
-INF MdeModulePkg/Universal/Network/Udp4Dxe/Udp4Dxe.inf
-INF NetworkPkg/Udp6Dxe/Udp6Dxe.inf
-INF NetworkPkg/TcpDxe/TcpDxe.inf
-INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
 INF NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
+INF NetworkPkg/TcpDxe/TcpDxe.inf
+INF NetworkPkg/Udp6Dxe/Udp6Dxe.inf
 INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
-INF SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
+
+INF PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
+
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
-INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
-INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+INF SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 
 # UI Theme Protocol.
 INF  MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf

@@ -203,7 +203,7 @@ Return Value:
     ASSERT(Context->Connected);
     ASSERT(CountOfElements <= HV_X64_MAX_HYPERCALL_ELEMENTS);
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+    // DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     callInput.AsUINT64 = 0;
     callInput.CallCode = CallCode;
@@ -265,7 +265,7 @@ Return Value:
 #else
 #error Unsupported Architecture
 #endif
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
+    // DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 
     if (ElementsProcessed != NULL)
     {
@@ -511,7 +511,7 @@ Return Value:
     case HvRegisterTimeRefCount:
         msrIndex = HV_X64_MSR_TIME_REF_COUNT;
         break;
-        
+
     case HvRegisterNestedVpIndex:
         msrIndex = HV_X64_MSR_NESTED_VP_INDEX;
         break;
@@ -568,8 +568,8 @@ Return Value:
 
     UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__, 
-        RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
+    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
+    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
 
     registerValue = AsmReadMsr64(msr);
 
@@ -584,7 +584,7 @@ Return Value:
 #error Unsupported Architecture
 #endif
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: Value 0x%lx\n", __FUNCTION__, registerValue));
+    // DEBUG((DEBUG_VERBOSE, "<<< %a: Value 0x%lx\n", __FUNCTION__, registerValue));
     return registerValue;
 }
 
@@ -612,20 +612,20 @@ Return Value:
 
 --*/
 {
-    
+
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
     UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__, 
+    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
         RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
 
     AsmWriteMsr64(msr, RegisterValue);
 
 #elif defined(MDE_CPU_AARCH64)
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s Value 0x%lx\n", __FUNCTION__, 
-        RegisterName, HvHypercallpRegisterNameToString(RegisterName), 
+    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s Value 0x%lx\n", __FUNCTION__,
+        RegisterName, HvHypercallpRegisterNameToString(RegisterName),
         RegisterValue));
 
     AsmSetVpRegister64(RegisterName, RegisterValue);

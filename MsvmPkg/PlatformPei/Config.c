@@ -948,8 +948,11 @@ Return Value:
                 //
                 if (flags->Flags.MeasureAdditionalPcrs)
                 {
+                    // TODO-cho: no TPM available for AARCH64 yet.
+#if defined (MDE_CPU_X64)
                     PcdSetBool(TcgMeasureBootStringsInPcr4, TRUE);
                     PcdSetBool(PcdExcludeFvMainFromMeasurements, FALSE);
+#endif
                 }
 
                 requiredStructures.UefiConfigFlags = 1;
