@@ -35,7 +35,6 @@ class PlatformBuilder(UefiBuilder):
         self.env.SetValue("TOOL_CHAIN_TAG", "VSLATESTx86xASL", "Platform hardcoded")
         self.env.SetValue("BLD_*_BUILD_UNIT_TESTS", "FALSE", "Unit Test build off by default")
         self.env.SetValue("BLD_*_BUILD_APPS", "FALSE", "App Build off by default")
-        self.env.SetValue("BLD_*_SECURE_BOOT_ENABLE", "TRUE", "Support Secure Boot")
 
         #
         # Build AARCH64 by using BUILD_ARCH=AARCH64 with PlatformBuild.py
@@ -77,15 +76,3 @@ class PlatformBuilder(UefiBuilder):
     #------------------------------------------------------------------
     def PlatformPreBuild(self):
         return 0
-
-    #
-    # Main Build class supports a few methods of flashing but leaves
-    # one option to Platform when FLASH_METHOD = platform.
-    #
-    # For this platform we don't need custom method
-    #
-    def PlatformFlashImage(self):
-        p = os.path.join(self.env.GetValue("DEBUG_BUILD_OUTPUT_BASE"), self.env.GetValue("ARCH"))
-        cmd = os.path.join(p,"secmain.exe")
-        ret = self.RunCmd(cmd, workingdir=p)
-        return ret

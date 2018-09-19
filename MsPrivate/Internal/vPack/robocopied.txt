@@ -1,1 +1,0 @@
-This directory robocopied from "\\winbuilds.ntdev.corp.microsoft.com\buildfile\OSGTools\latest\VPack\VPack.2.0.17072001-Debug+vpack.758e9b7c752a466818d4712a0c876ab83b837186" 

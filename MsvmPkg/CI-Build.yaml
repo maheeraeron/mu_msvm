@@ -1,0 +1,133 @@
+resources:
+- repo: self
+  clean: true
+
+pool:
+  name: Package ES Custom Demands Lab A
+  demands:
+  - ClientAlias -equals sebrogan  # specific string
+
+strategy:
+  maxParallel: 4
+  matrix:
+    TARGET_DEBUG_X64:
+      Build.Target: 'DEBUG'
+      Build.Arch: 'x64'
+    TARGET_RELEASE_x64:
+      Build.Target: 'RELEASE'
+      Build.Arch: 'x64'
+    TARGET_DEBUG_AARCH64:
+      Build.Target: 'DEBUG'
+      Build.Arch: 'AARCH64'
+    TARGET_RELEASE_AARCH64:
+      Build.Target: 'RELEASE'
+      Build.Arch: 'AARCH64'
+
+variables:
+  Build.ToolChainTag: "VSLATESTx86xASL"
+  PlatformPkg: "MsvmPkg"
+  Env.PythonVersion: "3.7.0"
+
+  #parameters for vpack publishing
+  Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
+  Parameters.vPack.majorVer: "2"
+  Parameters.vPack.minorVer: "0"
+
+steps:
+
+- powershell: |
+   @{
+   SM_UDK_INTERNAL = "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal";
+   SM_UDK = "https://user:$(MSCORE.PAT)@microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE";
+   }.GetEnumerator() | % {
+     $SM = $_.Key; $URL = $_.Value
+     git config --file=.gitmodules submodule.${SM}.url ${URL}
+   }
+   git submodule sync
+
+  displayName: 'Use PATs for submodules'
+
+- task: PkgESInstallNuGetToolsPackage@10
+  displayName: 'Install Python'
+  inputs:
+    packageName: python
+    packageVersion: '$(Env.PythonVersion)'
+    packageSources: 'https://api.nuget.org/v3/index.json'
+    subPaths: tools
+
+- task: CmdLine@1
+  displayName: 'Platform build Setup'
+  inputs:
+    filename: python.exe
+    arguments: 'MsvmPkg/PlatformBuild.py --setup --force'
+ 
+- task: CmdLine@1
+  displayName: 'Platform build Update'
+  inputs:
+    filename: python.exe
+    arguments: 'MsvmPkg/PlatformBuild.py --update'
+
+- task: CmdLine@1
+  displayName: 'Run Build '
+  inputs:
+    filename: python.exe
+    arguments: 'MsvmPkg/PlatformBuild.py  tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: BuildLog $(Build.Target) $(Build.Arch)'
+  inputs:
+    PathtoPublish: Build/BuildLog.txt
+    ArtifactName: 'BuildLog_$(Build.Target)_$(Build.Arch)'
+  condition: succeededOrFailed()
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Firmware Bin File $(Build.Target)_$(Build.Arch)'
+  inputs:
+    PathtoPublish: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd'
+    ArtifactName: 'Firmware Binary File $(Build.Target)_$(Build.Arch)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: OverrideLog $(Build.Target)_$(Build.Arch)'
+  inputs:
+    PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/OVERRIDELOG.TXT
+    ArtifactName: 'OverrideLog $(Build.Target)_$(Build.Arch)'
+  continueOnError: true
+  condition: succeededOrFailed()
+
+- powershell: |
+   $LocalCommit = & 'git' rev-parse "@"
+   Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
+   $folder = "$(Build.SourcesDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
+   New-Item $folder -Type Directory
+   copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd" $folder
+   copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB" $folder -Recurse
+   Write-Host "##vso[task.setvariable variable=vPack.Folder]$folder" 
+
+  displayName: 'Compute Hash and Copy firmware to vpack folder'
+
+
+
+- task: PkgESVPack@10
+  displayName: PkgESVPack
+  inputs:
+    versionAs: parts
+    sourceDirectory: '$(vPack.Folder)'
+    description: 'Hyper V UEFI Firmware'
+    pushPkgName: '$(Parameters.vPack.pushPkgName)'
+    majorVer: '$(Parameters.vPack.majorVer)'
+    minorVer: '$(Parameters.vPack.minorVer)'
+    metadata: '$(Build.CommitHash)'
+
+
+- powershell: |
+   @{
+   SM_UDK_INTERNAL = "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal";
+   SM_UDK = "https://microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE";
+   }.GetEnumerator() | % {
+     $SM = $_.Key; $URL = $_.Value
+     git config --file=.gitmodules submodule.${SM}.url ${URL}
+   }
+   git submodule sync
+
+  displayName: 'Restore Submodules'
+  condition: always()
