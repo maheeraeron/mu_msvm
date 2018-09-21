@@ -94,6 +94,20 @@ steps:
   continueOnError: true
   condition: succeededOrFailed()
 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Build Report $(Build.Target)_$(Build.Arch)'
+  inputs:
+    PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/BUILD_REPORT.txt
+    ArtifactName: 'Build Report $(Build.Target)_$(Build.Arch)'
+  continueOnError: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Firmware Size Report $(Build.Target)_$(Build.Arch)'
+  inputs:
+    PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FD_REPORT.HTML
+    ArtifactName: 'Firmware Size Report $(Build.Target)_$(Build.Arch)'
+  continueOnError: true
+
 - powershell: |
    $LocalCommit = & 'git' rev-parse "@"
    Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
