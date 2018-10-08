@@ -300,7 +300,6 @@ DefinitionBlock (
         //
         // Additionally, no Interrupt-Signaled event devices currently work either,
         // due to SPIs not being available to guests.
-#if defined (_DSDT_INTEL_)
         Name(_CRS,
 
             // Include an interrupt resource so that Linux VMs can get IDT
@@ -325,13 +324,16 @@ DefinitionBlock (
                     {FixedPcdGet8(PcdVmbusVector)}
 
 #else
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
-                    {FixedPcdGet8(PcdVmbusVector)}
-#endif
+                // Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
+                //    {FixedPcdGet8(PcdVmbusVector)}
+                //
+                // TODO-cho: Include a dummy resource so this device has a _CRS
+                // until interrupts are figured out.
+                VendorShort() { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
 
+#endif
             }
         )
-#endif
     }
 
     // TPM ====================================================================
