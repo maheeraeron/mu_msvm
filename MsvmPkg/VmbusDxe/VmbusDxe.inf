@@ -30,10 +30,11 @@
     gEfiVmbusChannelDevicePathGuid
 
 [Protocols]
-    gEfiHvProtocolGuid
-    gEfiDevicePathProtocolGuid
-    gEfiVmbusRootProtocolGuid
-    gEfiVmbusProtocolGuid
+    gEfiHvProtocolGuid              # CONSUMES
+    gEfiHvIvmProtocolGuid           # CONSUMES
+    gEfiDevicePathProtocolGuid      # PRODUCES
+    gEfiVmbusRootProtocolGuid       # PRODUCES
+    gEfiVmbusProtocolGuid           # PRODUCES
 
 [Depex]
     gEfiHvProtocolGuid
@@ -41,4 +42,4 @@
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex
-
+    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated

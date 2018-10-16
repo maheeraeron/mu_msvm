@@ -146,6 +146,57 @@ Return Value:
             ((UINTN)Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
     }
 
+    // Call the hypervisor to make these pages host visible
+    if (PcdGetBool(PcdSystemIsolated))
+    {
+        EFI_STATUS modifyStatus;
+        UINT32 pageCountProcessed = 0;
+        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE;
+
+        modifyStatus = mHvIvm->ModifySparseGpaPageHostVisibility(mHvIvm,
+                                                                mapFlags,
+                                                                numPages,
+                                                                ((UINTN)Buffer >> EFI_PAGE_SHIFT),
+                                                                &pageCountProcessed);
+        if (EFI_ERROR(status))
+        {
+            DEBUG((EFI_D_ERROR,
+                "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d\n",
+                __FUNCTION__,
+                __LINE__,
+                modifyStatus,
+                numPages,
+                pageCountProcessed));
+
+            // TODO-19259739: Have a better way of reporting UEFI errors.
+            ASSERT(FALSE);
+            CpuDeadLoop();
+        }
+        else
+        {
+            // Record the pages made host-visible here so they can be revoked when UEFI exits
+            VmbusRootSetGpadlPageRange(channelContext->RootContext,
+                                       gpadlHandle,
+                                       (UINTN)Buffer >> EFI_PAGE_SHIFT,
+                                       numPages);
+        }
+    }
+    else
+    {
+        DEBUG((EFI_D_INFO,
+            "%a(%d) not isolated numPages=%d base=%p gpadlHandle=0x%x\n",
+            __FUNCTION__,
+            __LINE__,
+            numPages,
+            (UINTN)Buffer >> EFI_PAGE_SHIFT,
+            gpadlHandle));
+
+        VmbusRootSetGpadlPageRange(channelContext->RootContext,
+                                   gpadlHandle,
+                                   0,
+                                   0);
+    }
+
     pfnSent = pfnIndex;
     VmbusRootSendMessage(&sendMessage);
 

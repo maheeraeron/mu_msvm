@@ -95,7 +95,7 @@ Return Value:
 
 EFI_STATUS
 StorChannelOpen (
-    __in EFI_EMCL_PROTOCOL* Emcl,
+    __in EFI_EMCL_V2_PROTOCOL* Emcl,
     __out PSTORVSC_CHANNEL_CONTEXT *ChannelContext
     )
 /*++
@@ -129,14 +129,14 @@ Return Value:
     }
 
     status = Emcl->SetReceiveCallback(
-        Emcl,
+        (EFI_EMCL_PROTOCOL*)Emcl,
         StorChannelReceivePacketCallback,
         context,
         TPL_STORVSC_CALLBACK
         );
 
     status = Emcl->StartChannel(
-        Emcl,
+        (EFI_EMCL_PROTOCOL*)Emcl,
         RING_INCOMING_PAGE_COUNT,
         RING_OUTGOING_PAGE_COUNT);
 
@@ -200,7 +200,7 @@ Return Value:
 {
     if (ChannelContext->Emcl != NULL)
     {
-        ChannelContext->Emcl->StopChannel(ChannelContext->Emcl);
+        ChannelContext->Emcl->StopChannel((EFI_EMCL_PROTOCOL*)ChannelContext->Emcl);
     }
     FreePool(ChannelContext);
 }
@@ -478,6 +478,7 @@ Return Value:
     UINT32 packetSize;
     EFI_EXTERNAL_BUFFER* buffers;
     UINT32 buffersCount;
+    UINT32 sendFlags = 0;
 
     ASSERT(*Target <= VMSTOR_MAX_TARGETS);
 
@@ -538,6 +539,16 @@ Return Value:
     {
         buffers = &externalBuffer;
         buffersCount = 1;
+
+        if (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_READ)
+        {
+            sendFlags = EMCL_SEND_FLAG_DATA_IN_ONLY;                
+        }
+        else
+        {
+            ASSERT(ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_WRITE);
+            sendFlags = EMCL_SEND_FLAG_DATA_OUT_ONLY;                
+        }
     }
     else
     {
@@ -545,12 +556,13 @@ Return Value:
         buffersCount = 0;
     }
 
-    status = ChannelContext->Emcl->SendPacket(
-        ChannelContext->Emcl,
+    status = ChannelContext->Emcl->SendPacketEx(
+        (EFI_EMCL_PROTOCOL*)ChannelContext->Emcl,
         &packet,
         packetSize,
         buffers,
         buffersCount,
+        sendFlags,
         StorChannelCompletionRoutine,
         request
         );
@@ -689,7 +701,7 @@ Return Value:
     //
 
     context->Emcl->CompletePacket(
-        context->Emcl,
+        (EFI_EMCL_PROTOCOL*)context->Emcl,
         PacketContext,
         Buffer,
         BufferLength
@@ -753,7 +765,7 @@ Return Value:
     packetSize = ChannelContext->MaxPacketSize;
 
     status = EmclSendPacketSync(
-        ChannelContext->Emcl,
+        (EFI_EMCL_PROTOCOL*)ChannelContext->Emcl,
         Packet,
         packetSize,
         NULL,

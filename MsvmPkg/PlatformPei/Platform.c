@@ -714,7 +714,7 @@ Return Value:
         if (EFI_ERROR(status))
         {
             //
-            // TODO(wjliu): Report this error in a better way to increase debuggability.
+            // TODO-19259739: Have a better way of reporting UEFI errors.
             //
             ASSERT(FALSE);
             CpuDeadLoop();

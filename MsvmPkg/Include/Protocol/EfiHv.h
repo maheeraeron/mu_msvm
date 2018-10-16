@@ -26,6 +26,7 @@ Author:
 #define EFI_HV_PROTOCOL_GUID { 0xa261a0f1, 0xaa53, 0x4c83, {0x94, 0xda, 0x12, 0x0c, 0xdf, 0x6d, 0x8c, 0x8d} }
 
 typedef struct _EFI_HV_PROTOCOL EFI_HV_PROTOCOL;
+typedef struct _EFI_HV_IVM_PROTOCOL EFI_HV_IVM_PROTOCOL;
 
 typedef
 VOID
@@ -128,7 +129,7 @@ EFI_STATUS
     __in HV_CONNECTION_ID ConnectionId,
     __in UINT16 FlagNumber
     );
-
+    
 struct _EFI_HV_PROTOCOL
 {
     EFI_HV_CONNECT_SINT ConnectSint;
@@ -150,4 +151,22 @@ struct _EFI_HV_PROTOCOL
 };
 
 extern GUID gEfiHvProtocolGuid;
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_HV_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY)(
+    _In_ EFI_HV_IVM_PROTOCOL *This,
+    _In_ HV_MAP_GPA_FLAGS MapFlags,
+    _In_ UINT32 PageCount,
+    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
+    _Out_ UINT32* PageCountProcessed
+    );
+
+// Interface to Hypervisor for the Isolated VM (IVM) calls
+struct _EFI_HV_IVM_PROTOCOL
+{
+    EFI_HV_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY ModifySparseGpaPageHostVisibility;
+};
+
+extern GUID gEfiHvIvmProtocolGuid;
 

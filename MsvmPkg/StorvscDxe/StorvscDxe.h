@@ -49,7 +49,7 @@ Author:
 
 typedef struct _STORVSC_CHANNEL_CONTEXT
 {
-    EFI_EMCL_PROTOCOL *Emcl;
+    EFI_EMCL_V2_PROTOCOL *Emcl;
     VMSTORAGE_CHANNEL_PROPERTIES Properties;
     UINT16 ProtocolVersion;
 
@@ -63,7 +63,7 @@ typedef struct _STORVSC_ADAPTER_CONTEXT
     UINTN Signature;
     EFI_HANDLE Handle;
 
-    EFI_EMCL_PROTOCOL *Emcl;
+    EFI_EMCL_V2_PROTOCOL *Emcl;
     EFI_EXT_SCSI_PASS_THRU_PROTOCOL ExtScsiPassThru;
     EFI_EXT_SCSI_PASS_THRU_MODE ExtScsiPassThruMode;
 
@@ -208,7 +208,7 @@ StorvscExtScsiPassThruGetNextTarget (
 
 EFI_STATUS
 StorChannelOpen (
-    __in EFI_EMCL_PROTOCOL* Emcl,
+    __in EFI_EMCL_V2_PROTOCOL* Emcl,
     __out PSTORVSC_CHANNEL_CONTEXT *ChannelContext
     );
 

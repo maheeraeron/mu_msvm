@@ -55,6 +55,7 @@ typedef struct _GPA_RANGE
     {0x9b17e5a2, 0x891, 0x42dd, {0xb6, 0x53, 0x80, 0xb5, 0xc2, 0x28, 0x9, 0xba}}
 
 EFI_HV_PROTOCOL *mHv;
+EFI_HV_IVM_PROTOCOL *mHvIvm;
 
 extern EFI_GUID gEfiVmbusChannelDevicePathGuid;
 
@@ -192,6 +193,14 @@ VOID
 VmbusRootReclaimGpadl(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in UINT32 GpadlHandle
+    );
+
+VOID
+VmbusRootSetGpadlPageRange(    
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in UINT32 GpadlHandle,
+    __in UINT64 GpaPageBase,
+    __in UINT32 PageCount
     );
 
 BOOLEAN

@@ -106,7 +106,7 @@ Return Value:
 
     hvStatus = HvAcceptGpaPages(Context,
                                 HvAcceptMemoryTypeRam,
-                                HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                                HV_MAP_GPA_PERMISSIONS_NONE,
                                 GpaPageBase,
                                 PageCount,
                                 &pageCountProcessed);
@@ -116,7 +116,7 @@ Return Value:
         //
         // This is a host error, i.e. the memory map does not match the GPA mappings.
         //
-        // TODO(wjliu): Report this error in a better way to increase debuggability.
+        // TODO-19259739: Have a better way of reporting UEFI errors.
         //
         CpuDeadLoop();
     }

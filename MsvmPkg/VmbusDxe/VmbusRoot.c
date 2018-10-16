@@ -37,6 +37,19 @@ typedef struct _VMBUS_HOT_MESSAGE
 
 } VMBUS_HOT_MESSAGE;
 
+
+//
+// Track GPADLs that are host visible, so they can be made not visible 
+// during destruction.
+// PageCount != 0 is the 'in use' condition
+//
+
+typedef struct _VMBUS_GPADL_PAGE_RANGE
+{
+    UINT64 GpaPageBase;
+    UINT32 PageCount;
+} VMBUS_GPADL_PAGE_RANGE, *PVMBUS_GPADL_PAGE_RANGE;
+
 struct _VMBUS_ROOT_CONTEXT
 {
     UINT32 Signature;
@@ -52,6 +65,7 @@ struct _VMBUS_ROOT_CONTEXT
     BOOLEAN ContactInitiated;
     BOOLEAN OffersDelivered;
     VMBUS_MESSAGE_RESPONSE GpadlTable[VMBUS_MAX_GPADLS];
+    VMBUS_GPADL_PAGE_RANGE GpadlPageRange[VMBUS_MAX_GPADLS];
 
     VMBUS_CHANNEL_CONTEXT *Channels[VMBUS_MAX_CHANNELS];
     UINT32 MaxInterruptUsed;
@@ -362,6 +376,12 @@ Return Value:
 {
     EFI_STATUS status;
 
+    DEBUG((EFI_D_INFO, "%a(%d) channelContext = %p ChannelId 0x%x\n",
+        __FUNCTION__,
+        __LINE__,
+        ChannelContext,
+        ChannelContext->ChannelId));
+
     status = gBS->UninstallMultipleProtocolInterfaces(
         ChannelContext->Handle,
         &gEfiVmbusProtocolGuid,
@@ -414,6 +434,10 @@ Return Value:
     UINT32 index;
     VMBUS_HOT_MESSAGE *hotMessage;
 
+    DEBUG((EFI_D_INFO, "%a(%d) RootContext = %p\n",
+        __FUNCTION__,
+        __LINE__,
+        RootContext));
 
     if (RootContext->ContactInitiated)
     {
@@ -1193,7 +1217,8 @@ VmbusRootReclaimGpadl(
 
 Routine Description:
 
-    This routine releases a GPADL to be reused.
+    This routine releases a GPADL to be reused. The routine revokes host 
+    visibility.
 
 Arguments:
 
@@ -1212,12 +1237,101 @@ Return Value:
     gpadlEntry = &RootContext->GpadlTable[GpadlHandle];
     if (gpadlEntry->Event != NULL)
     {
+        
+        // If we are tracking this GPADL, it means we need to undo host 
+        // visibility.
+
+        if (RootContext->GpadlPageRange[GpadlHandle].PageCount)
+        {
+            EFI_STATUS modifyStatus;
+            UINT32 pageCountProcessed = 0;
+            HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_PERMISSIONS_NONE;
+
+            modifyStatus = mHvIvm->ModifySparseGpaPageHostVisibility(mHvIvm,
+                                                                    mapFlags,
+                                                                    RootContext->GpadlPageRange[GpadlHandle].PageCount,
+                                                                    RootContext->GpadlPageRange[GpadlHandle].GpaPageBase,
+                                                                    &pageCountProcessed);
+            if (EFI_ERROR(modifyStatus))
+            {
+                DEBUG((EFI_D_ERROR,
+                    "%a(%d) ModifySparseGpaPageHostVisibility GpadlHandle=0x%x returned status 0x%x numPages=%d pageCountProcessed=%d\n",
+                    __FUNCTION__,
+                    __LINE__,
+                    GpadlHandle,
+                    modifyStatus,
+                    RootContext->GpadlPageRange[GpadlHandle].PageCount,
+                    pageCountProcessed));
+
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                ASSERT(FALSE);
+                CpuDeadLoop();
+            }
+            else
+            {
+                DEBUG((EFI_D_INFO,
+                    "%a(%d) GpadlHandle=0x%x revoked page vis base=%p pagecount=0x%x\n",
+                    __FUNCTION__,
+                    __LINE__,
+                    GpadlHandle,
+                    RootContext->GpadlPageRange[GpadlHandle].GpaPageBase,
+                    RootContext->GpadlPageRange[GpadlHandle].PageCount));
+            }
+
+            RootContext->GpadlPageRange[GpadlHandle].GpaPageBase = 0;
+            RootContext->GpadlPageRange[GpadlHandle].PageCount = 0;
+        }
+
         gBS->CloseEvent(gpadlEntry->Event);
         gpadlEntry->Event = NULL;
     }
 }
 
+VOID
+VmbusRootSetGpadlPageRange(    
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in UINT32 GpadlHandle,
+    __in UINT64 GpaPageBase,
+    __in UINT32 PageCount
+    )
+/*++
 
+Routine Description:
+
+    This routine records the starting page and count for a GPADL that needs
+    special cleanup; host page visibility.
+
+Arguments:
+
+    RootContext - Pointer to the root context.
+
+    GpadlHandle - GPADL handle to update. Must have been acquired with 
+                  VmbusRootGetFreeGpadl.
+
+    GpaPageBase - First page in the GPADL
+    
+    PageCount - Number of pages in this GPADL
+
+--*/
+{
+    ASSERT(GpadlHandle < VMBUS_MAX_GPADLS);
+    ASSERT(RootContext->GpadlTable[GpadlHandle].Event != NULL);
+
+    if (PageCount != 0)
+    {
+        DEBUG((EFI_D_INFO,
+            "%a(%d) GpadlHandle=0x%x tracking page vis base=%p pagecount=0x%x\n",
+            __FUNCTION__,
+            __LINE__,
+            GpadlHandle,
+            GpaPageBase,
+            PageCount));
+    }
+
+    RootContext->GpadlPageRange[GpadlHandle].GpaPageBase = GpaPageBase;
+    RootContext->GpadlPageRange[GpadlHandle].PageCount = PageCount;
+}
+    
 BOOLEAN
 VmbusRootValidateGpadl(
     __in VMBUS_ROOT_CONTEXT *RootContext,
@@ -1365,8 +1479,29 @@ Return Value:
 --*/
 {
     VMBUS_ROOT_CONTEXT *rootContext;
+    int i;
+    int orphanedGpadlCount = 0;
 
     rootContext = (VMBUS_ROOT_CONTEXT*)Context;
+
+    for (i = 0; i < VMBUS_MAX_GPADLS; i++);
+    {
+        if (rootContext->GpadlTable[i].Event)
+        {
+            DEBUG((EFI_D_WARN,
+                "%a (%d) GPADL 0x%x not cleaned up.\n",
+                __FUNCTION__,
+                __LINE__,
+                i));
+            orphanedGpadlCount++;                
+        }
+    }
+
+    DEBUG((EFI_D_WARN, "%a (%d) orphaned %d GPADLs (Isolated=%d)\n",
+        __FUNCTION__,
+        __LINE__,
+        orphanedGpadlCount,
+        PcdGetBool(PcdSystemIsolated)));
 
     VmbusRootSendUnload(rootContext);
 }
@@ -1737,6 +1872,13 @@ Return Value:
     ASSERT(ControllerHandle == mRootDevice);
 
     status = gBS->LocateProtocol(&gEfiHvProtocolGuid, NULL, (VOID **)&mHv);
+
+    if (EFI_ERROR(status))
+    {
+        return status;
+    }
+
+    status = gBS->LocateProtocol(&gEfiHvIvmProtocolGuid, NULL, (VOID **)&mHvIvm);
 
     if (EFI_ERROR(status))
     {

@@ -35,7 +35,8 @@
     gEfiEventExitBootServicesGuid
 
 [Protocols]
-    gEfiHvProtocolGuid
+    gEfiHvProtocolGuid      #PRODUCES
+    gEfiHvIvmProtocolGuid   #PRODUCES
 
 [Protocols.X64]
     gEfiCpuArchProtocolGuid

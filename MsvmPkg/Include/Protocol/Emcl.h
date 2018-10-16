@@ -19,12 +19,10 @@ Author:
 
 #pragma once
 
-#define EFI_EMCL_PROTOCOL_GUID \
-    {0x7cbfb8f7, 0xdd49, 0x4699, {0xa1, 0x63, 0xa6, 0xa6, 0xbf, 0x88, 0x13, 0xdf}}
-
 #define TPL_EMCL (TPL_HIGH_LEVEL - 1)
 
 typedef struct _EFI_EMCL_PROTOCOL EFI_EMCL_PROTOCOL;
+typedef struct _EFI_EMCL_V2_PROTOCOL EFI_EMCL_V2_PROTOCOL;
 
 typedef struct _EFI_TRANSFER_RANGE
 {
@@ -154,3 +152,37 @@ struct _EFI_EMCL_PROTOCOL
 };
 
 extern EFI_GUID gEfiEmclProtocolGuid;
+
+
+//
+// VERSION 2 of EMCL interface
+// 
+
+// Modify the handling of ExternalBuffers in scenarios
+// where the data is transfered in a bounce buffer.
+// Data In Only and Data Out Only are mutually exclusive
+#define EMCL_SEND_FLAG_DATA_IN_ONLY 0x1
+#define EMCL_SEND_FLAG_DATA_OUT_ONLY 0x2
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_EMCL_SEND_PACKET_EX)(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount,
+    __in UINT32 SendPacketFlags,
+    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
+    __in_opt VOID *CompletionContext
+    );
+    
+
+struct _EFI_EMCL_V2_PROTOCOL {
+    EFI_EMCL_PROTOCOL;
+
+    EFI_EMCL_SEND_PACKET_EX SendPacketEx;
+};
+
+extern EFI_GUID gEfiEmclV2ProtocolGuid;
+ 

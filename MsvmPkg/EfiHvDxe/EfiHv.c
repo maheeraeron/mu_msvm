@@ -37,6 +37,8 @@ Author:
 #include <Protocol/HardwareInterrupt.h>
 #endif
 
+#define WINHVP_MAX_REPS_PER_HYPERCALL   0xFFF
+
 // Turn off DEBUG output by default as it can be really noisy
 #undef DEBUG
 #define DEBUG(arg)
@@ -80,6 +82,7 @@ EFI_HARDWARE_INTERRUPT_PROTOCOL *mHwInt;
 #endif
 
 extern EFI_HV_PROTOCOL mHv;
+extern EFI_HV_IVM_PROTOCOL mHvIvm;
 
 
 VOID
@@ -851,6 +854,129 @@ Return Value:
 
 
 EFI_STATUS
+EFIAPI
+EfiHvModifySparseGpaPageHostVisibility(
+    _In_ EFI_HV_IVM_PROTOCOL *This,
+    _In_ HV_MAP_GPA_FLAGS MapFlags,
+    _In_ UINT32 PageCount,
+    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
+    _Out_ UINT32* PageCountProcessed
+    )
+{
+    // For this rep call, it's easier to treat the input page as a pointer 
+    // to this structure.
+    PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY pInputBuffer;
+    HV_STATUS hvStatus;
+    EFI_STATUS status;
+    EFI_TPL oldTpl;
+    UINT32 possibleRepsPerCall;
+    UINT32 repsInCurrentCall;
+    UINT32 repsProcessedThisCall;
+    UINT32 gpaPageBaseIndex = 0;
+    UINT32 i;
+
+    DEBUG((DEBUG_VERBOSE,
+        ">>> %a: GpaBase 0x%p PageCount 0x%x MapFlags 0x%x \n",
+        __FUNCTION__,
+        GpaPageBase,
+        PageCount,
+        MapFlags));
+
+    *PageCountProcessed = 0;
+
+    oldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
+
+    //
+    // Simplified version of WinHvpSpecialListRepHypercall with no output parameters
+    //
+
+    possibleRepsPerCall = (HV_PAGE_SIZE - sizeof(*pInputBuffer)) / sizeof(HV_GPA_PAGE_NUMBER);
+    
+    ASSERT(possibleRepsPerCall <= WINHVP_MAX_REPS_PER_HYPERCALL);
+
+    pInputBuffer = (PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY)mHvPages->HypercallInputPage;
+
+    for (;;)
+    {
+        ASSERT(PageCount > 0);
+
+        repsProcessedThisCall = 0;
+
+        ZeroMem(pInputBuffer, HV_PAGE_SIZE);
+
+        //
+        // Build the input.
+        //
+        repsInCurrentCall = MIN(possibleRepsPerCall, PageCount);
+
+        ASSERT(repsInCurrentCall <= WINHVP_MAX_REPS_PER_HYPERCALL);
+
+        // Fill header
+        pInputBuffer->TargetPartitionId = HV_PARTITION_ID_SELF;
+        pInputBuffer->HostVisibility = MapFlags;
+
+        //
+        // Fill page numbers
+        // N.B. instead of copying from an existing list of page numbers, we 
+        // generate a list of consecutive numbers from GpaPageBase.
+        //
+
+        for (i = 0; i < repsInCurrentCall; i++, gpaPageBaseIndex++)
+        {
+            pInputBuffer->GpaPageList[i] = GpaPageBase + gpaPageBaseIndex;
+        }
+
+        //
+        // Call the hypervisor.
+        //
+
+        hvStatus = HvHypercallIssue(&mHvContext,
+                                    HvCallModifySparseGpaPageHostVisibility,
+                                    FALSE, // not fast
+                                    repsInCurrentCall,
+                                    (UINTN)pInputBuffer,
+                                    0, // no output
+                                    &repsProcessedThisCall);
+        status = EfiHvConvertStatus(hvStatus);
+
+        ASSERT(repsProcessedThisCall <= repsInCurrentCall);
+        ASSERT(repsProcessedThisCall <= PageCount);
+
+        ASSERT(((repsProcessedThisCall == repsInCurrentCall) &&
+                (status == EFI_SUCCESS)) ||
+               (status != EFI_SUCCESS));
+
+        //
+        // Update the count of reps processed.
+        //
+        *PageCountProcessed += repsProcessedThisCall;
+
+        //
+        // Check that we haven't overflowed.
+        //
+
+        if (repsProcessedThisCall > PageCount)
+        {
+            status = EFI_BAD_BUFFER_SIZE;
+        }
+
+        PageCount -= repsProcessedThisCall;
+
+        if ((status != EFI_SUCCESS) || (PageCount == 0))
+        {
+            break;
+        }
+    }
+
+    gBS->RestoreTPL(oldTpl);
+
+    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
+
+    return status;
+}
+
+
+EFI_STATUS
 EfiHvConnectToHypervisor (
     VOID
     )
@@ -871,9 +997,9 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    
+
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    
+
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
     HV_CPUID_RESULT cpuidResult;
@@ -906,6 +1032,11 @@ Return Value:
         DEBUG((DEBUG_VERBOSE, "--- %a: Missing Hypervisor features!\n", __FUNCTION__));
         status = EFI_UNSUPPORTED;
         goto Exit;
+    }
+
+    if (cpuidResult.MsHvFeatures.PartitionPrivileges.Isolation)
+    {
+        DEBUG((EFI_D_INFO, "--- %a: Partition is Isolated\n", __FUNCTION__));
     }
 
     // Allocate hypervisor communication pages.
@@ -1154,6 +1285,11 @@ EFI_HV_PROTOCOL mHv =
     EfiHvSignalEvent
 };
 
+EFI_HV_IVM_PROTOCOL mHvIvm =
+{
+    EfiHvModifySparseGpaPageHostVisibility
+};
+
 
 EFI_STATUS
 EFIAPI
@@ -1233,11 +1369,12 @@ Return Value:
     }
     DEBUG((DEBUG_VERBOSE, "--- %a: after EfiHvConnectToSynic\n", __FUNCTION__));
 
-    // Register the HV protocol.
+    // Register the HV protocols.
 
     status = gBS->InstallMultipleProtocolInterfaces(
                     &mHvHandle,
                     &gEfiHvProtocolGuid, &mHv,
+                    &gEfiHvIvmProtocolGuid, &mHvIvm,
                     NULL);
 
     if (EFI_ERROR(status))

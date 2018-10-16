@@ -25,9 +25,12 @@ Author:
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
+#include <Library/PcdLib.h>
 
 #include <Protocol/Emcl.h>
 #include <Protocol/Vmbus.h>
+#include <Protocol/EfiHv.h>
+
 
 #define VMBUS_RING_BUFFER_SINGLE_MAPPED 1
 #include <VmbusPacketInterface.h>
@@ -40,6 +43,37 @@ Author:
 #define VARIABLE_STRUCT_SIZE(_Type_,_Field_,_Size_) \
     ((OFFSET_OF(_Type_,_Field_)) + sizeof(*(((_Type_ *)0)->_Field_)) * (_Size_))
 
+
+typedef struct _EMCL_BOUNCE_BLOCK
+{
+    LIST_ENTRY                  BlockListEntry;
+    
+    struct _EMCL_BOUNCE_PAGE *FreePageListHead;
+
+    UINT32                      InUsePageCount;
+    BOOLEAN                     IsHostVisible;
+
+    PVOID                       BlockBase;
+    UINT32                      BlockPageCount;
+
+    // Allocate associated _EMCL_BOUNCE_PAGE as a large block
+    struct _EMCL_BOUNCE_PAGE    *BouncePageStructureBase;
+} EMCL_BOUNCE_BLOCK, *PEMCL_BOUNCE_BLOCK;
+
+
+//
+// EMCL_BOUNCE_PAGE - represents one guest physical page of a block. 
+// Units of pages are allocated to a vmbus packet as required and 
+// returned to the 'block pool' when not in use.
+//
+typedef struct _EMCL_BOUNCE_PAGE
+{
+    struct _EMCL_BOUNCE_PAGE*   NextBouncePage;
+    struct _EMCL_BOUNCE_BLOCK*  BounceBlock;
+    PVOID                       PageVA; 
+} EMCL_BOUNCE_PAGE, *PEMCL_BOUNCE_PAGE;
+
+
 #define EMCL_MAX_OUTSTANDING_COMPLETIONS 64
 
 typedef struct _EMCL_COMPLETION_ENTRY
@@ -48,6 +82,9 @@ typedef struct _EMCL_COMPLETION_ENTRY
     VOID *CompletionContext;
     LIST_ENTRY Link;
 
+    EFI_EXTERNAL_BUFFER OriginalBuffer; // just one
+    PEMCL_BOUNCE_PAGE EmclBouncePageList;
+    UINT32 SendPacketFlags;
 } EMCL_COMPLETION_ENTRY;
 
 #define EMCL_CONTEXT_SIGNATURE         SIGNATURE_32('e','m','c','l')
@@ -57,7 +94,7 @@ typedef struct _EMCL_CONTEXT
     UINT32 Signature;
 
     EFI_HANDLE Handle;
-    EFI_EMCL_PROTOCOL EmclProtocol;
+    EFI_EMCL_V2_PROTOCOL EmclProtocol;
     EFI_VMBUS_PROTOCOL *VmbusProtocol;
     BOOLEAN IsPipe;
 
@@ -80,6 +117,8 @@ typedef struct _EMCL_CONTEXT
 
     BOOLEAN IsRunning;
     BOOLEAN InterruptDeferred;
+
+    LIST_ENTRY  BounceBlockListHead;
 
 } EMCL_CONTEXT;
 
@@ -104,6 +143,8 @@ typedef struct _EMCL_OUTGOING_PACKET
 } EMCL_OUTGOING_PACKET;
 
 EFI_HANDLE mImageHandle;
+EFI_HV_IVM_PROTOCOL *mHv;
+BOOLEAN mUseBounceBuffer = FALSE;
 
 extern EFI_GUID gEfiEmclTagProtocolGuid;
 
@@ -123,6 +164,41 @@ EmclComponentNameGetControllerName(
     __in_opt EFI_HANDLE ChildHandle,
     __in CHAR8 *Language,
     __out CHAR16 **ControllerName
+    );
+
+EFI_STATUS
+EmclpAllocateBounceBlock(
+    __in EMCL_CONTEXT *Context,
+    __in UINT32 BlockByteCount
+    );
+
+VOID
+EmclpFreeAllBounceBlocks(
+    __in EMCL_CONTEXT *Context
+    );
+
+PEMCL_BOUNCE_PAGE
+EmclpAcquireBouncePages(
+    __in EMCL_CONTEXT *Context,
+    __in UINT32 PageCount
+    );
+
+VOID
+EmclpReleaseBouncePages(
+    __in EMCL_CONTEXT *Context,
+    __in PEMCL_BOUNCE_PAGE BounceListHead
+    );
+
+VOID
+EmclpCopyBouncePagesToExternalBuffer(
+    _In_ EFI_EXTERNAL_BUFFER *ExternalBuffer,
+    _In_ PEMCL_BOUNCE_PAGE BouncePageList,
+    _In_ BOOLEAN CopyToBounce
+    );
+
+VOID
+EmclpZeroBouncePageList(
+    _In_ PEMCL_BOUNCE_PAGE BouncePageList
     );
 
 VOID
@@ -156,6 +232,9 @@ Return Value:
         Context->IncomingPageCount = 0;
         Context->OutgoingPageCount = 0;
     }
+    
+    EmclpFreeAllBounceBlocks(Context);
+    
 }
 
 
@@ -394,6 +473,91 @@ Return Value:
     CopyMem((UINT8*)OutputBuffer + headerSize, InlineBuffer, InlineBufferLength);
 }
 
+VOID
+EmclWriteGpaDirectPacketBounce(
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in EFI_EXTERNAL_BUFFER *ExternalBuffer, // singular; for offset and length
+    __in PEMCL_BOUNCE_PAGE BouncePageList,
+    __in UINT64 TransactionId,
+    __in BOOLEAN RequestCompletion,
+    __in VOID *OutputBuffer
+    )
+/*++
+
+Routine Description:
+
+    This routine constructs a GPA Direct packet into a specified buffer.
+
+Arguments:
+
+    InlineBuffer - Optional buffer to be sent as part of the packet.
+
+    InlineBufferLength - Length of InlineBuffer.
+
+    BouncePageList - list of pages to be sent as part of the GPA direct
+        packet.
+
+    TransactionId - Transaction ID of packet to be sent.
+
+    RequestCompletion - Whether to request a completion packet from the opposite
+        endpoint.
+
+    OutputBuffer - The buffer to write the packet into. It is the caller's
+        responsibility to ensure this buffer is large enough.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    PEMCL_BOUNCE_PAGE bouncePage;
+    VMDATA_GPA_DIRECT *header;
+    UINT32 headerSize;
+    UINT32 pfnCount = 0;
+    UINT32 pfnIndex;
+
+    pfnCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(ExternalBuffer->Buffer,
+                                              ExternalBuffer->BufferSize);
+
+    headerSize = OFFSET_OF(VMDATA_GPA_DIRECT, Range) +
+                 VARIABLE_STRUCT_SIZE(GPA_RANGE, PfnArray, pfnCount);
+
+    header = (VMDATA_GPA_DIRECT*)OutputBuffer;
+    header->Descriptor.Type = VmbusPacketTypeDataUsingGpaDirect;
+    header->Descriptor.DataOffset8 = (UINT16)(headerSize / 8);
+    header->Descriptor.Length8 =
+        (UINT16)(ALIGN_VALUE(headerSize + InlineBufferLength, sizeof(UINT64)) / 8);
+
+    header->Descriptor.Flags = 0;
+    if (RequestCompletion)
+    {
+        header->Descriptor.Flags |= VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
+    }
+
+    header->Descriptor.TransactionId = TransactionId;
+    header->RangeCount = 1;
+
+    //
+    // Initialize the single GPA range with bounce pages
+    //
+
+    header->Range->ByteCount = ExternalBuffer->BufferSize;
+    header->Range->ByteOffset = (UINT32)((UINT_PTR)ExternalBuffer->Buffer & EFI_PAGE_MASK);
+
+    bouncePage = BouncePageList;
+    for (pfnIndex = 0; pfnIndex < pfnCount; ++pfnIndex)
+    {
+        ASSERT(bouncePage);
+        header->Range->PfnArray[pfnIndex] =
+           (UINT_PTR)bouncePage->PageVA >> EFI_PAGE_SHIFT;
+        bouncePage = bouncePage->NextBouncePage;           
+    }
+    ASSERT(bouncePage == NULL);
+
+    CopyMem((UINT8*)OutputBuffer + headerSize, InlineBuffer, InlineBufferLength);
+}
 
 VOID
 EmclDestroyOutgoingPacket(
@@ -485,6 +649,8 @@ Return Value:
     VMPIPE_PROTOCOL_HEADER *pipeHeader;
     EFI_TPL tpl;
     BOOLEAN queuePacket;
+    EMCL_COMPLETION_ENTRY *completionEntry;
+    UINT32 pageCount;
 
     outgoingPacket = NULL;
     queuePacket = FALSE;
@@ -569,13 +735,60 @@ Return Value:
         break;
 
     case VmbusPacketTypeDataUsingGpaDirect:
-        EmclWriteGpaDirectPacket(InlineBuffer,
-                                 InlineBufferLength,
-                                 ExternalBuffers,
-                                 ExternalBufferCount,
-                                 TransactionId,
-                                 RequestCompletion,
-                                 packetBuffer);
+        if (mUseBounceBuffer)
+        {
+            pageCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(ExternalBuffers[0].Buffer,
+                                                       ExternalBuffers[0].BufferSize);
+            completionEntry = (EMCL_COMPLETION_ENTRY *)TransactionId;
+
+            completionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
+            while (completionEntry->EmclBouncePageList == NULL)
+            {
+                UINT32 allocSize = MAX(pageCount * EFI_PAGE_SIZE, 32 * EFI_PAGE_SIZE);
+
+                status = EmclpAllocateBounceBlock(Context, allocSize);
+                if (EFI_ERROR(status))
+                {
+                    // TODO-19259739: Have a better way of reporting UEFI errors.
+                    ASSERT(FALSE);
+                    CpuDeadLoop();
+                }
+                completionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
+            }
+            completionEntry->OriginalBuffer = ExternalBuffers[0];
+
+            if (completionEntry->SendPacketFlags & EMCL_SEND_FLAG_DATA_IN_ONLY)
+            {
+                EmclpZeroBouncePageList(completionEntry->EmclBouncePageList);
+            }
+            else
+            {
+                // Copy into the bounce buffer (TRUE)
+                EmclpCopyBouncePagesToExternalBuffer(&ExternalBuffers[0],
+                                                     completionEntry->EmclBouncePageList,
+                                                     TRUE);
+            }
+
+            EmclWriteGpaDirectPacketBounce(InlineBuffer,
+                                           InlineBufferLength,
+                                           &ExternalBuffers[0],
+                                           completionEntry->EmclBouncePageList,
+                                           TransactionId,
+                                           RequestCompletion,
+                                           packetBuffer);
+
+        }
+        else // Not using a Bounce Buffer
+        {
+            EmclWriteGpaDirectPacket(InlineBuffer,
+                                     InlineBufferLength,
+                                     ExternalBuffers,
+                                     ExternalBufferCount,
+                                     TransactionId,
+                                     RequestCompletion,
+                                     packetBuffer);
+            
+        }
 
         break;
 
@@ -676,6 +889,19 @@ Return Value:
     case VmbusPacketTypeCompletion:
         completion =
             (EMCL_COMPLETION_ENTRY*)(UINTN)Packet->Descriptor.TransactionId;
+
+        // Bounce buffering (optional) copy back and free the bounce buffers.
+        if (completion->EmclBouncePageList)
+        {
+            if ((completion->SendPacketFlags & EMCL_SEND_FLAG_DATA_OUT_ONLY) == 0)
+            {
+                EmclpCopyBouncePagesToExternalBuffer(&completion->OriginalBuffer,
+                                                     completion->EmclBouncePageList,
+                                                     FALSE);
+            }
+            EmclpReleaseBouncePages(Context, completion->EmclBouncePageList);
+            completion->EmclBouncePageList = NULL;
+        }
 
         completion->CompletionRoutine(
             completion->CompletionContext,
@@ -1105,8 +1331,19 @@ Return Value:
 
     while (!IsListEmpty(&context->CompletionEntries))
     {
+        EMCL_COMPLETION_ENTRY  *completionEntry;
+        
         entry = RemoveEntryList(GetFirstNode(&context->CompletionEntries));
-        FreePool(BASE_CR(entry, EMCL_COMPLETION_ENTRY, Link));
+
+        completionEntry = BASE_CR(entry, EMCL_COMPLETION_ENTRY, Link);
+
+        if (completionEntry->EmclBouncePageList)
+        {
+            EmclpReleaseBouncePages(context, completionEntry->EmclBouncePageList);
+            completionEntry->EmclBouncePageList = NULL;
+        }
+
+        FreePool(completionEntry);
     }
 
     context->RingBufferGpadl = 0;
@@ -1246,12 +1483,13 @@ Return Value:
 
 EFI_STATUS
 EFIAPI
-EmclSendPacket(
+EmclSendPacketEx(
     __in EFI_EMCL_PROTOCOL *This,
     __in_bcount(InlineBufferLength) VOID *InlineBuffer,
     __in UINT32 InlineBufferLength,
     __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
     __in UINT32 ExternalBufferCount,
+    __in UINT32 SendPacketFlags,
     __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
     __in_opt VOID *CompletionRoutineContext
     )
@@ -1276,6 +1514,8 @@ Arguments:
         Direct packet.
 
     ExternalBufferCount - Number of buffers in ExternalBuffers.
+
+    SendPacketFlags - optional flags to optimize data transfer direction.
 
     CompletionRoutine - Optional routine to be called when the packet completes.
         This routine will be called at the same TPL specified in
@@ -1333,6 +1573,11 @@ Return Value:
         completionEntry->CompletionRoutine = CompletionRoutine;
         completionEntry->CompletionContext = CompletionRoutineContext;
 
+        completionEntry->OriginalBuffer.Buffer = NULL;
+        completionEntry->OriginalBuffer.BufferSize = 0;
+        completionEntry->EmclBouncePageList = NULL;
+        completionEntry->SendPacketFlags = SendPacketFlags;
+
         //
         // Insert into list so we can keep track of these entries and free
         // them if uncompleted when DriverStop is called.
@@ -1368,6 +1613,62 @@ Cleanup:
     }
 
     return status;
+}
+
+
+EFI_STATUS
+EFIAPI
+EmclSendPacket(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
+    __in UINT32 InlineBufferLength,
+    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    __in UINT32 ExternalBufferCount,
+    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
+    __in_opt VOID *CompletionRoutineContext
+    )
+/*++
+
+Routine Description:
+
+    This routine sends a simple or GPA Direct packet to the opposite endpoint,
+    optionally registering a callback to be called when the packet completes.
+
+    This routine must be called at TPL <= TPL_EMCL.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    InlineBuffer - Optional buffer to be sent as part of the packet.
+
+    InlineBufferLength - Length of InlineBuffer.
+
+    ExternalBuffers - Optional array of buffers to be sent as part of a GPA
+        Direct packet.
+
+    ExternalBufferCount - Number of buffers in ExternalBuffers.
+
+    CompletionRoutine - Optional routine to be called when the packet completes.
+        This routine will be called at the same TPL specified in
+        EmclSetReceiveCallback, or TPL_CALLBACK otherwise.
+
+    CompletionRoutineContext - Context supplied when CompletionRoutine is called.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    return EmclSendPacketEx(This,
+                            InlineBuffer,
+                            InlineBufferLength,
+                            ExternalBuffers,
+                            ExternalBufferCount,
+                            0, // SendPacketFlags,
+                            CompletionRoutine,
+                            CompletionRoutineContext);
 }
 
 
@@ -1633,8 +1934,10 @@ Return Value:
     Context->EmclProtocol.DestroyGpadl = EmclDestroyGpadl;
     Context->EmclProtocol.CreateGpaRange = EmclCreateGpaRange;
     Context->EmclProtocol.DestroyGpaRange = EmclDestroyGpaRange;
+    Context->EmclProtocol.SendPacketEx = EmclSendPacketEx;
     InitializeListHead(&Context->CompletionEntries);
     InitializeListHead(&Context->OutgoingQueue);
+    InitializeListHead(&Context->BounceBlockListHead);
 }
 
 
@@ -1727,6 +2030,25 @@ Return Value:
         goto Cleanup;
     }
 
+    // EMCL communicates directly with Hypervisor for page visibility operations.
+    status = gBS->LocateProtocol(&gEfiHvIvmProtocolGuid, NULL, (VOID **)&mHv);
+    if (EFI_ERROR(status))
+    {
+        DEBUG((EFI_D_ERROR,
+            "%a (%d) LocateProtocol failed. status=0x%x\n",
+            __FUNCTION__,
+            __LINE__,
+            status));
+        return status;
+    }
+    
+    //
+    // Bounce buffer is required for Isolated partitions. 
+    // TODO - Use another PCD flag to enable for non-isolated testing.
+    //
+
+    mUseBounceBuffer = PcdGetBool(PcdSystemIsolated) ? TRUE : FALSE;
+
     context = AllocatePool(sizeof(*context));
     if (context == NULL)
     {
@@ -1746,8 +2068,8 @@ Return Value:
     //
 
     status = gBS->InstallMultipleProtocolInterfaces(&ControllerHandle,
-                                                    &gEfiEmclProtocolGuid,
-                                                    &context->EmclProtocol,
+                                                    &gEfiEmclProtocolGuid, &context->EmclProtocol,
+                                                    &gEfiEmclV2ProtocolGuid, &context->EmclProtocol,
                                                     &gEfiCallerIdGuid,
                                                     context,
                                                     NULL);
@@ -2053,3 +2375,577 @@ Return Value:
         NULL);
 }
 
+
+EFI_STATUS
+EmclpAllocateBounceBlock(
+    __in EMCL_CONTEXT *Context,
+    __in UINT32 BlockByteCount
+    )
+/*++
+
+Routine Description:
+
+    Allocate a large block of memory from EFI for I/O. Mark the memory as host-
+    visible. Allocate tracking structures to sub-allocate the block into 
+    individual pages.
+    
+Arguments:
+
+    Context - Pointer to the EMCL Context.
+
+    BlockByteCount - Number of bytes to allocate for I/O. Must be a multiple of EFI_PAGE_SIZE.
+
+Return Value:
+
+    EFI_SUCCESS
+    EFI_OUT_OF_RESOURCES for memory allocation failures
+    other failures from hypervisor page visibility call.
+    
+--*/
+{
+    EFI_STATUS status = EFI_INVALID_PARAMETER;
+    UINT32 pageCount = 0;
+    UINT32 i = 0;
+    PEMCL_BOUNCE_BLOCK bounceBlock = NULL;
+
+    DEBUG((EFI_D_VERBOSE,
+        "%a(%d) Context=%p ByteCount=0x%x\n",
+        __FUNCTION__,
+        __LINE__,
+        Context,
+        BlockByteCount));
+
+    if (BlockByteCount % EFI_PAGE_SIZE)
+    {
+        status = EFI_INVALID_PARAMETER;
+        goto Cleanup;
+    }
+
+    pageCount = BlockByteCount / EFI_PAGE_SIZE;
+
+    bounceBlock = AllocatePool(sizeof(*bounceBlock));
+    if (bounceBlock == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    ZeroMem(bounceBlock, sizeof(*bounceBlock));
+
+    // Allocate the bounce page memory
+
+    bounceBlock->BlockBase = AllocatePages(pageCount);
+    if (bounceBlock->BlockBase == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+
+    bounceBlock->BlockPageCount = pageCount;
+    ZeroMem(bounceBlock->BlockBase, pageCount * EFI_PAGE_SIZE);
+
+    // Allocate the tracking structures as one
+    bounceBlock->BouncePageStructureBase = AllocatePool(pageCount * sizeof(EMCL_BOUNCE_PAGE));
+    if (bounceBlock->BouncePageStructureBase == NULL)
+    {
+        status = EFI_OUT_OF_RESOURCES;
+        goto Cleanup;
+    }
+    
+    bounceBlock->FreePageListHead = bounceBlock->BouncePageStructureBase;
+    
+    for (i = 0; i < pageCount; i++)
+    {
+        if (i == (pageCount - 1))
+        {
+            bounceBlock->BouncePageStructureBase[i].NextBouncePage = NULL;
+        }
+        else
+        {
+            bounceBlock->BouncePageStructureBase[i].NextBouncePage = 
+                &bounceBlock->BouncePageStructureBase[i+1];
+        }
+        bounceBlock->BouncePageStructureBase[i].BounceBlock = bounceBlock;
+        bounceBlock->BouncePageStructureBase[i].PageVA = (char *)bounceBlock->BlockBase + 
+                                                            (i * EFI_PAGE_SIZE);
+    }
+
+    //
+    // Make these pages visible to the host
+    //
+
+    if (PcdGetBool(PcdSystemIsolated))
+    {
+        UINT32 pageCountProcessed = 0;
+        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE;
+
+        status = mHv->ModifySparseGpaPageHostVisibility(mHv,
+                                                        mapFlags,
+                                                        pageCount,
+                                                        ((UINTN)bounceBlock->BlockBase >> EFI_PAGE_SHIFT),
+                                                        &pageCountProcessed);
+            
+    
+        if (EFI_ERROR(status))
+        {
+            DEBUG((EFI_D_ERROR,
+                "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d bounceBlock=%p\n",
+                __FUNCTION__,
+                __LINE__,
+                status,
+                pageCount,
+                pageCountProcessed,
+                bounceBlock));
+
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                ASSERT(FALSE);
+                CpuDeadLoop();
+        }
+        else
+        {
+            DEBUG((EFI_D_INFO,
+                "%a(%d) ModifySparseGpaPageHostVisibility success. pageCount=%d processed=%d BaseAddr=0x%p bounceBlock=%p\n",
+                __FUNCTION__,
+                __LINE__,
+                pageCount,
+                pageCountProcessed,
+                ((UINTN)bounceBlock->BlockBase >> EFI_PAGE_SHIFT),
+                bounceBlock));
+        }
+        bounceBlock->IsHostVisible = TRUE;
+    }
+
+    InsertTailList(&Context->BounceBlockListHead,
+                   &bounceBlock->BlockListEntry);
+
+    status = EFI_SUCCESS; 
+    
+Cleanup:
+    DEBUG((EFI_D_INFO,
+        "%a (%d) Context=%p bounceBlock=%p status=0x%x\n",
+        __FUNCTION__,
+        __LINE__,
+        Context,
+        bounceBlock,
+        status));
+
+    if (EFI_ERROR(status))
+    {
+        if (bounceBlock)
+        {
+            if (bounceBlock->BouncePageStructureBase)
+            {
+                FreePool(bounceBlock->BouncePageStructureBase);
+                bounceBlock->BouncePageStructureBase = NULL;
+            }
+
+            if (bounceBlock->BlockBase)
+            {
+                FreePages(bounceBlock->BlockBase, bounceBlock->BlockPageCount);
+                bounceBlock->BlockBase = NULL;
+                bounceBlock->BlockPageCount = 0;
+            }
+
+            FreePool(bounceBlock);
+            bounceBlock = NULL;
+        }
+
+    }
+    return status;
+}
+
+
+VOID
+EmclpFreeAllBounceBlocks(
+    __in EMCL_CONTEXT *Context
+    )
+
+/*++
+
+Routine Description:
+
+    Free all of the large blocks of memory allocated for I/O. 
+    Marks the memory as not host-visible. Frees the associated tracking structures.
+        
+Arguments:
+
+    Context - Pointer to the EMCL Context.
+
+Return Value:
+
+    none
+    
+--*/
+{
+    PEMCL_BOUNCE_BLOCK block;
+    LIST_ENTRY* entry;
+
+    while (!IsListEmpty(&Context->BounceBlockListHead))
+    {
+        entry = GetFirstNode(&Context->BounceBlockListHead);
+        RemoveEntryList(entry);
+
+        block = BASE_CR(entry, EMCL_BOUNCE_BLOCK, BlockListEntry);
+
+        DEBUG((EFI_D_WARN,
+            "%a (%d) Context=%p block=%p IsHostVis=%d InUsePageCount=%d BlockBase=%p PageCount=0x%x\n",
+            __FUNCTION__,
+            __LINE__,
+            Context,
+            block,
+            block->IsHostVisible,
+            block->InUsePageCount,
+            block->BlockBase,
+            block->BlockPageCount));
+
+        if (block->IsHostVisible)
+        {
+            // Revoke host visibility for this block
+            EFI_STATUS status;
+            UINT32 pageCountProcessed = 0;
+            HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_PERMISSIONS_NONE;
+
+            status = mHv->ModifySparseGpaPageHostVisibility(mHv,
+                                                            mapFlags,
+                                                            block->BlockPageCount,
+                                                            ((UINTN)block->BlockBase >> EFI_PAGE_SHIFT),
+                                                            &pageCountProcessed);
+
+            if (EFI_ERROR(status))
+            {
+                DEBUG((EFI_D_ERROR,
+                    "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d BounceBlock=%p\n",
+                    __FUNCTION__,
+                    __LINE__,
+                    status,
+                    block->BlockPageCount,
+                    pageCountProcessed,
+                    block));
+
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                ASSERT(FALSE);
+                CpuDeadLoop();
+            }
+            else
+            {
+                block->IsHostVisible = FALSE;
+            }
+        }
+
+        if (block->BouncePageStructureBase)
+        {
+            FreePool(block->BouncePageStructureBase);
+            block->BouncePageStructureBase = NULL;
+        }
+
+        if (block->BlockBase)
+        {
+            FreePages(block->BlockBase, block->BlockPageCount);
+            block->BlockBase = NULL;
+            block->BlockPageCount = 0;
+        }
+
+        FreePool(block);
+        block = NULL;
+    }
+}
+
+
+PEMCL_BOUNCE_PAGE
+EmclpAcquireBouncePages(
+    __in EMCL_CONTEXT *Context,
+    __in UINT32 PageCount
+    )
+/*++
+
+Routine Description:
+
+    Remove 'PageCount' pre-allocated EMCL_BOUNCE_PAGE structures from the 
+    Context and return them in a linked-list. These PAGE structures will be
+    used in an I/O.
+
+Arguments:
+
+    Context - Pointer to the EMCL Context.
+
+    PageCount - Number of EMCL_BOUNCE_PAGE structures to acquire from the 
+                Context structure and return to the caller.
+
+Return Value:
+
+    Linked list of EMCL_BOUNCE_PAGE structures or NULL on failure.
+
+--*/
+{
+    PEMCL_BOUNCE_PAGE listHead = NULL;
+    UINT32 pagesToGo = PageCount;
+
+    DEBUG((EFI_D_VERBOSE,
+        "%a(%d) Context=%p PageCount=%d\n",
+        __FUNCTION__,
+        __LINE__,
+        Context,
+        PageCount));
+
+    if (!IsListEmpty(&Context->BounceBlockListHead))
+    {
+        LIST_ENTRY* blockListEntry;
+        
+        for (blockListEntry = Context->BounceBlockListHead.ForwardLink;
+             blockListEntry != &Context->BounceBlockListHead;
+             blockListEntry = blockListEntry->ForwardLink)
+        {
+            PEMCL_BOUNCE_BLOCK BounceBlock;
+            BounceBlock = BASE_CR(blockListEntry, EMCL_BOUNCE_BLOCK, BlockListEntry);
+
+            while (BounceBlock->FreePageListHead && pagesToGo)
+            {
+                PEMCL_BOUNCE_PAGE bouncePage;
+                
+                bouncePage = BounceBlock->FreePageListHead;
+                BounceBlock->FreePageListHead = bouncePage->NextBouncePage;
+
+                bouncePage->NextBouncePage = listHead;
+                listHead = bouncePage;
+ 
+                BounceBlock->InUsePageCount++;
+
+                pagesToGo--;
+            }
+            
+            if (pagesToGo == 0)
+            {
+                break;
+            }
+        }
+    }
+
+    if (pagesToGo)
+    {
+        // failed
+        EmclpReleaseBouncePages(Context, listHead);
+        listHead = NULL;
+
+        DEBUG((EFI_D_WARN,
+            "%a(%d) Context=%p PageCount=%d Returning=NULL\n",
+            __FUNCTION__,
+            __LINE__,
+            Context,
+            PageCount));
+    }
+    else
+    {
+        DEBUG((EFI_D_VERBOSE,
+            "%a(%d) Context=%p PageCount=%d Returning=%p\n",
+            __FUNCTION__,
+            __LINE__,
+            Context,
+            PageCount,
+            listHead));
+    }
+
+    return listHead;
+}
+
+VOID
+EmclpReleaseBouncePages(
+    __in EMCL_CONTEXT *Context,
+    __in PEMCL_BOUNCE_PAGE BounceListHead
+    )
+/*++
+
+Routine Description:
+
+    Return EMCL_BOUNCE_PAGES from a linked list to their 'home' 
+    EMCL_BOUNCE_BLOCK lists. Effectively frees these temporary pages for use 
+    by another I/O.
+    
+
+Arguments:
+
+    Context - Pointer to the EMCL Context.
+
+    BounceListHead - Linked list of one more EMCL_BOUNCE_PAGE structures.
+
+Return Value:
+
+    none.
+
+--*/
+{
+    PEMCL_BOUNCE_PAGE page;
+    UINT32 count = 0;
+
+    while (BounceListHead)
+    {
+        page = BounceListHead;
+        BounceListHead = BounceListHead->NextBouncePage;
+
+        page->BounceBlock->InUsePageCount--;
+        count++;
+        
+        page->NextBouncePage = page->BounceBlock->FreePageListHead;
+        page->BounceBlock->FreePageListHead = page;
+    }
+
+    DEBUG((EFI_D_VERBOSE,
+        "%a(%d) Context=%p released PageCount=%d\n",
+        __FUNCTION__,
+        __LINE__,
+        Context,
+        count));
+}
+
+
+
+VOID
+EmclpCopyBouncePagesToExternalBuffer(
+    _In_ EFI_EXTERNAL_BUFFER *ExternalBuffer,
+    _In_ PEMCL_BOUNCE_PAGE BouncePageList,
+    _In_ BOOLEAN CopyToBounce
+    )
+/*++
+
+Routine Description:
+
+    Copy between the memory pages in the bounce buffers and the client's 
+    buffer respecting the page offsets of the client's buffer. This function 
+    will zero the partial pages at the beginning and end of the BouncePageList.
+
+Arguments:
+
+    ExternalBuffer - The EFI client's data buffer. Can start at any
+
+    BouncePageList - List of bounce pages (shared with host)
+
+    CopyToBounce - If TRUE, copy from ExternalBuffer into the BouncePageList
+                 - If FALSE, copy from the BouncePageList into ExternalBuffer.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{    
+    UINT64 pageOffset;
+    PEMCL_BOUNCE_PAGE bouncePage;
+    PUCHAR bounceBuffer;
+    PUCHAR extBuffer;
+    UINT32 transferToGo;
+    UINT32 copySize;
+
+    DEBUG((EFI_D_INFO,
+        "%a(%d) ExternalBuffer.Buffer=%p Size=0x%x BouncePageList=%p CopyToBounce=%d\n",
+        __FUNCTION__,
+        __LINE__,
+        ExternalBuffer->Buffer,
+        ExternalBuffer->BufferSize,
+        BouncePageList,
+        CopyToBounce));
+
+    ASSERT(BouncePageList);
+
+    bouncePage = BouncePageList;
+    pageOffset = (UINT64)ExternalBuffer->Buffer % EFI_PAGE_SIZE;
+
+    extBuffer = ExternalBuffer->Buffer;
+    transferToGo = ExternalBuffer->BufferSize;
+
+    while (transferToGo)
+    {
+        ASSERT(bouncePage);
+
+        bounceBuffer = (PUCHAR)bouncePage->PageVA;
+
+        // Zero any unused space in buffer we are sharing with the host.
+        if (CopyToBounce && pageOffset)
+        {
+            DEBUG((EFI_D_VERBOSE,
+                "%a(%d) Zero %p size=0x%x\n",
+                __FUNCTION__,
+                __LINE__,
+                bouncePage->PageVA,
+                pageOffset));
+            ZeroMem(bouncePage->PageVA, pageOffset);
+        }
+
+        // First page offset
+        bounceBuffer += pageOffset;
+        copySize = EFI_PAGE_SIZE - (UINT32)pageOffset;
+        pageOffset = 0; // no more offsets
+        
+        copySize = MIN(copySize, transferToGo);
+
+        if (CopyToBounce)
+        {
+            DEBUG((EFI_D_VERBOSE,
+                "%a(%d) CopyToBounce dst=%p src=%p size=0x%x\n",
+                __FUNCTION__,
+                __LINE__,
+                bounceBuffer,
+                extBuffer,
+                copySize));
+
+            CopyMem(bounceBuffer, extBuffer, copySize);
+        }
+        else
+        {
+            DEBUG((EFI_D_VERBOSE,
+                "%a(%d) CopyToExtBuffer dst=%p src=%p size=0x%x\n",
+                __FUNCTION__,
+                __LINE__,
+                extBuffer,
+                bounceBuffer,
+                copySize));
+
+            CopyMem(extBuffer, bounceBuffer, copySize);
+        }
+
+        transferToGo -= copySize;
+        extBuffer += copySize;
+
+        // Zero any unused space in buffer we are sharing with the host.
+        if (transferToGo == 0 && 
+            CopyToBounce && 
+            ((UINT64)bounceBuffer % EFI_PAGE_SIZE))
+        {
+            pageOffset = (UINT64)bounceBuffer % EFI_PAGE_SIZE;
+            copySize = EFI_PAGE_SIZE - (UINT32)pageOffset;
+
+            DEBUG((EFI_D_VERBOSE,
+                "%a(%d) Zero %p size=0x%x (from offset=0x%x)\n",
+                __FUNCTION__,
+                __LINE__,
+                bounceBuffer,
+                copySize,
+                pageOffset));
+
+            ZeroMem(bounceBuffer, copySize);
+        }
+        bouncePage = bouncePage->NextBouncePage;
+    }
+
+    ASSERT(bouncePage == NULL); // should be all done
+}
+
+
+VOID
+EmclpZeroBouncePageList(
+    _In_ PEMCL_BOUNCE_PAGE BouncePageList
+    )
+{    
+    PEMCL_BOUNCE_PAGE bouncePage = BouncePageList;
+    UINT32 pageCount = 0;
+
+    while (bouncePage)
+    {
+        ZeroMem(bouncePage->PageVA, EFI_PAGE_SIZE);
+        bouncePage = bouncePage->NextBouncePage;
+        pageCount++;
+    }
+    DEBUG((EFI_D_VERBOSE, "%a(%d) BouncePageList=%p zeroed %d pages\n",
+        __FUNCTION__,
+        __LINE__,
+        BouncePageList,
+        pageCount));
+}

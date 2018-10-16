@@ -4,7 +4,6 @@
     FILE_GUID                      = 45386216-9A17-46AE-AD49-423112FBFFB8
     MODULE_TYPE                    = DXE_DRIVER
     VERSION_STRING                 = 1.0
-
     ENTRY_POINT                    = EmclDriverInitialize
 
 [Packages]
@@ -12,6 +11,7 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
+    PcdLib
     UefiBootServicesTableLib
     UefiLib
     BaseLib
@@ -25,9 +25,13 @@
 
 [Protocols]
     gEfiEmclProtocolGuid                #PRODUCES
+    gEfiEmclV2ProtocolGuid              #PRODUCES
     gEfiEmclTagProtocolGuid             #PRODUCES
     gEfiVmbusProtocolGuid               #CONSUMES
+    gEfiHvIvmProtocolGuid               #CONSUMES
 
 [Depex]
     TRUE
 
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated

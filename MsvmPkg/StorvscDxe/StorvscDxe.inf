@@ -32,7 +32,7 @@
 
 [Protocols]
     gEfiVmbusProtocolGuid           #CONSUMES
-    gEfiEmclProtocolGuid            #CONSUMES
+    gEfiEmclV2ProtocolGuid          #CONSUMES
     gEfiExtScsiPassThruProtocolGuid #PRODUCES
 
 [Guids]

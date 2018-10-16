@@ -225,7 +225,7 @@ Return Value:
 
     status = gBS->OpenProtocol(
         ControllerHandle,
-        &gEfiEmclProtocolGuid,
+        &gEfiEmclV2ProtocolGuid,
         (VOID **) &instance->Emcl,
         This->DriverBindingHandle,
         ControllerHandle,
