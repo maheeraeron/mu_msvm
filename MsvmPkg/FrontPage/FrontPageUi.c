@@ -19,7 +19,6 @@
 #include <Protocol/FirmwareVolume2.h>
 
 #include <Library/BaseMemoryLib.h>
-#include <Library/SecureMemoryLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>

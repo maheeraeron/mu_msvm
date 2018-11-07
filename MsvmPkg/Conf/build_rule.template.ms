@@ -371,12 +371,10 @@
         $(DEBUG_DIR)(+)$(MODULE_NAME).dll
 
     <Command.MSFT, Command.INTEL>
-        #TODO-cho: subsystem thing still necessary? What does it even do?
-        #if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /SUBSYSTEM:EFI_RUNTIME_DRIVER > $(OUTPUT_DIR)\subsystem) else if "$(MODULE_TYPE)"=="UEFI_APPLICATION" (echo /SUBSYSTEM:EFI_APPLICATION > $(OUTPUT_DIR)\subsystem) else (echo /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER > $(OUTPUT_DIR)\subsystem)
-        #if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /ALIGN:4096 /FILEALIGN:4096 > $(OUTPUT_DIR)\align) else (echo /ALIGN:4096 /FILEALIGN:4096 > $(OUTPUT_DIR)\align)
+        if "$(MODULE_TYPE)"=="DXE_RUNTIME_DRIVER" (echo /SUBSYSTEM:EFI_RUNTIME_DRIVER > $(OUTPUT_DIR)\subsystem) else if "$(MODULE_TYPE)"=="UEFI_APPLICATION" (echo /SUBSYSTEM:EFI_APPLICATION > $(OUTPUT_DIR)\subsystem) else (echo /SUBSYSTEM:EFI_BOOT_SERVICE_DRIVER > $(OUTPUT_DIR)\subsystem)
         # We always needs /FILEALIGN for genfw to work. Public AARCH64 toolchain no longer supports /ALIGN, as compiler probably requires page alignment
         # for constant loading to work.
-        "$(DLINK)" /OUT:${dst} $(DLINK_FLAGS) $(DLINK_SPATH) @$(STATIC_LIBRARY_FILES_LIST) /FILEALIGN:4096
+        "$(DLINK)" /OUT:${dst} $(DLINK_FLAGS) $(DLINK_SPATH) @$(STATIC_LIBRARY_FILES_LIST) /FILEALIGN:4096 @$(OUTPUT_DIR)\subsystem
 
     <Command.GCC>
         "$(DLINK)" -o ${dst} $(DLINK_FLAGS) --start-group $(DLINK_SPATH) @$(STATIC_LIBRARY_FILES_LIST) --end-group $(DLINK2_FLAGS)

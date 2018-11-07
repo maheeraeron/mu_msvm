@@ -1,7 +1,8 @@
 ## @file
 # The DXE driver produces FORM DISPLAY ENGINE protocol.
 #
-# Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2015 - 2018, Microsoft Corporation.
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -14,7 +15,7 @@
 #
 ##
 
-# Override : 00000001 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | 7ec7bac420cfba7b272db09e98ec9f6e | 2018-06-13T17-23-32
+#Override : 00000001 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | c6259ded798cfd52a26e547bfdeeb8e1 | 2018-11-01T22-41-16
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -59,6 +60,8 @@
   DxeServicesLib
   BmpSupportLib
   MsUiThemeLib
+  MsColorTableLib
+  SwmDialogsLib
 
 [Protocols]
   gEdkiiFormDisplayEngineProtocolGuid   ## PRODUCES

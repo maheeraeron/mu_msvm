@@ -1,7 +1,8 @@
 /** @file
 Implementation for handling user input from the User Interfaces.
 
-Copyright (c) 2004 - 2012, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2018, Microsoft Corporation.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -110,6 +111,9 @@ AdjustQuestionValue (
   Get field info from numeric opcode.
 
   @param  OpCode            Pointer to the current input opcode.
+  @param  IntInput          Whether question shows with EFI_IFR_DISPLAY_INT_DEC type.
+  @param  QuestionValue     Input question value, with EFI_HII_VALUE type.
+  @param  Value             Return question value, always return UINT64 type.
   @param  Minimum           The minimum size info for this opcode.
   @param  Maximum           The maximum size info for this opcode.
   @param  Step              The step size info for this opcode.
@@ -119,6 +123,9 @@ AdjustQuestionValue (
 VOID
 GetValueFromNum (
   IN  EFI_IFR_OP_HEADER     *OpCode,
+  IN  BOOLEAN               IntInput,
+  IN  EFI_HII_VALUE         *QuestionValue,
+  OUT UINT64                *Value,
   OUT UINT64                *Minimum,
   OUT UINT64                *Maximum,
   OUT UINT64                *Step,
@@ -131,29 +138,57 @@ GetValueFromNum (
 
   switch (NumericOp->Flags & EFI_IFR_NUMERIC_SIZE) {
   case EFI_IFR_NUMERIC_SIZE_1:
-    *Minimum = NumericOp->data.u8.MinValue;
-    *Maximum = NumericOp->data.u8.MaxValue;
+    if (IntInput) {
+      *Minimum = (INT64) (INT8) NumericOp->data.u8.MinValue;
+      *Maximum = (INT64) (INT8) NumericOp->data.u8.MaxValue;
+      *Value   = (INT64) (INT8) QuestionValue->Value.u8;
+    } else {
+      *Minimum = NumericOp->data.u8.MinValue;
+      *Maximum = NumericOp->data.u8.MaxValue;
+      *Value   = QuestionValue->Value.u8;
+    }
     *Step    = NumericOp->data.u8.Step;
     *StorageWidth = (UINT16) sizeof (UINT8);
     break;
 
   case EFI_IFR_NUMERIC_SIZE_2:
-    *Minimum = NumericOp->data.u16.MinValue;
-    *Maximum = NumericOp->data.u16.MaxValue;
+    if (IntInput) {
+      *Minimum = (INT64) (INT16) NumericOp->data.u16.MinValue;
+      *Maximum = (INT64) (INT16) NumericOp->data.u16.MaxValue;
+      *Value   = (INT64) (INT16) QuestionValue->Value.u16;
+    } else {
+      *Minimum = NumericOp->data.u16.MinValue;
+      *Maximum = NumericOp->data.u16.MaxValue;
+      *Value   = QuestionValue->Value.u16;
+    }
     *Step    = NumericOp->data.u16.Step;
     *StorageWidth = (UINT16) sizeof (UINT16);
     break;
 
   case EFI_IFR_NUMERIC_SIZE_4:
-    *Minimum = NumericOp->data.u32.MinValue;
-    *Maximum = NumericOp->data.u32.MaxValue;
+    if (IntInput) {
+      *Minimum = (INT64) (INT32) NumericOp->data.u32.MinValue;
+      *Maximum = (INT64) (INT32) NumericOp->data.u32.MaxValue;
+      *Value   = (INT64) (INT32) QuestionValue->Value.u32;
+    } else {
+      *Minimum = NumericOp->data.u32.MinValue;
+      *Maximum = NumericOp->data.u32.MaxValue;
+      *Value   = QuestionValue->Value.u32;
+    }
     *Step    = NumericOp->data.u32.Step;
     *StorageWidth = (UINT16) sizeof (UINT32);
     break;
 
   case EFI_IFR_NUMERIC_SIZE_8:
-    *Minimum = NumericOp->data.u64.MinValue;
-    *Maximum = NumericOp->data.u64.MaxValue;
+    if (IntInput) {
+      *Minimum = (INT64) NumericOp->data.u64.MinValue;
+      *Maximum = (INT64) NumericOp->data.u64.MaxValue;
+      *Value   = (INT64) QuestionValue->Value.u64;
+    } else {
+      *Minimum = NumericOp->data.u64.MinValue;
+      *Maximum = NumericOp->data.u64.MaxValue;
+      *Value   = QuestionValue->Value.u64;
+    }
     *Step    = NumericOp->data.u64.Step;
     *StorageWidth = (UINT16) sizeof (UINT64);
     break;

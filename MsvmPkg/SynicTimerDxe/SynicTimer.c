@@ -26,7 +26,10 @@ Author:
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+
+#if defined(MDE_CPU_X64)
 #include <Library/BdDebugLib.h>
+#endif
 
 // Turn off DEBUG output by default as it can be really noisy
 #undef DEBUG
@@ -274,6 +277,9 @@ Return Value:
 
     DEBUG((DEBUG_VERBOSE, ">>> SynicTimerInterruptHandler\n"));
 
+// Only poll the debugger on the old debug stubs.
+//
+// TODO-cho: Should we poll the debugger more for KdDxe as well?
 #if defined(MDE_CPU_X64)
     DebugPollDebugger();
 #endif

@@ -47,13 +47,13 @@
   PcdLib
   UefiBootManagerLib
   UIToolKitLib
-  SecureMemoryLib
   DxeServicesLib
   BmpSupportLib
   MsUiThemeLib
   ResetSystemLib
   MsLogoLib
   BootEventLogLib
+  MsColorTableLib
 
 [Guids]
   gEfiGlobalVariableGuid                        ## SOMETIMES_PRODUCES ## Variable:L"BootNext" (The number of next boot option)

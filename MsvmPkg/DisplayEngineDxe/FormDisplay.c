@@ -1,14 +1,5 @@
 /** @file
 
-
-    Copyright (C) 2015, 2016 Microsoft Corporation. All Rights Reserved.
-
-    THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-    ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-    PARTICULAR PURPOSE.
-
-
 Entry and initialization module for the Display Engine
 
 This is a derivitive of the Intel Display Engine on TianoCore.
@@ -19,8 +10,9 @@ from the MsThemeLib, there is no need for the CustomizedDisplayLib.
 
 
 
-Copyright (c) 2007 - 2014, Intel Corporation. All rights reserved.<BR>
-Copyright (c) 2014, Hewlett-Packard Development Company, L.P.<BR>
+Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014, Hewlett-Packard Development Company, L.P.
+Copyright (C) 2015 - 2018, Microsoft Corporation.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -89,7 +81,7 @@ SCAN_CODE_TO_SCREEN_OPERATION     gScanCodeToOperation[]          = {
                  }
 };
 
-UINTN                             mScanCodeNumber               = sizeof(gScanCodeToOperation) / sizeof(gScanCodeToOperation[0]);
+UINTN mScanCodeNumber = ARRAY_SIZE (gScanCodeToOperation);
 
 SCREEN_OPERATION_T0_CONTROL_FLAG  gScreenOperationToControlFlag[] = {
     {
@@ -138,8 +130,7 @@ EFI_GUID                          gDisplayEngineGuid            = {
     0xE38C1029, 0xE38F, 0x45b9, { 0x8F, 0x0D, 0xE2, 0xE6, 0x0B, 0xC9, 0xB2, 0x62 }
 };
 
-FORM_ENTRY_INFO                   gFormEntryInfo;
-UINTN                             gSequence;
+BOOLEAN                           gMisMatch;
 EFI_SCREEN_DESCRIPTOR             gStatementDimensions;
 BOOLEAN                           mStatementLayoutIsChanged     = TRUE;
 USER_INPUT                        *gUserInput;
@@ -501,7 +492,7 @@ GetLineByWidth (
     //
     // Need extra glyph info and '\0' info, so +2.
     //
-    *OutputString = AllocateZeroPool (((UINTN)(StrOffset + 2) * sizeof(CHAR16)));
+    *OutputString = AllocateZeroPool ((StrOffset + 2) * sizeof(CHAR16));
     if (*OutputString == NULL) {
         return 0;
     }
@@ -608,7 +599,6 @@ UiAddMenuOption (
     UI_MENU_OPTION *MenuOption;
     UINTN          Index;
     UINTN          Count;
-    CHAR16         *String;
     UINT16         NumberOfLines;
     UINT16         GlyphWidth;
     UINT16         Width;
@@ -627,9 +617,6 @@ UiAddMenuOption (
     PromptId = GetPrompt (Statement->OpCode);
     ASSERT (PromptId != 0);
 
-    String = GetToken (PromptId, gFormData->HiiHandle);
-    ASSERT (String != NULL);
-
     if (Statement->OpCode->OpCode == EFI_IFR_DATE_OP || Statement->OpCode->OpCode == EFI_IFR_TIME_OP) {
         Count = 3;
     }
@@ -639,7 +626,7 @@ UiAddMenuOption (
         ASSERT (MenuOption);
 
         MenuOption->Signature = UI_MENU_OPTION_SIGNATURE;
-        MenuOption->Description = String;
+        MenuOption->Description = GetToken (PromptId, gFormData->HiiHandle);
         MenuOption->Handle = gFormData->HiiHandle;
         MenuOption->ThisTag = Statement;
         MenuOption->NestInStatement = NestIn;
@@ -721,11 +708,11 @@ UiAddMenuOption (
             (Statement->OpCode->OpCode != EFI_IFR_DATE_OP) &&
             (Statement->OpCode->OpCode != EFI_IFR_TIME_OP)) {
             Width = GetWidth (MenuOption, NULL);
-            for (; GetLineByWidth (String, Width, &GlyphWidth, &ArrayEntry, &OutputString) != 0x0000;) {
+            for (; GetLineByWidth (MenuOption->Description, Width, &GlyphWidth,&ArrayEntry, &OutputString) != 0x0000;) {
                 //
                 // If there is more string to process print on the next row and increment the Skip value
                 //
-                if (StrLen (&String[ArrayEntry]) != 0) {
+                if (StrLen (&MenuOption->Description[ArrayEntry]) != 0) {
                     NumberOfLines++;
                 }
                 FreePool (OutputString);
@@ -839,8 +826,8 @@ CalculateGridSize (IN LIST_ENTRY *Link,
             break;
         case EFI_IFR_GUID_OP:
             {
-                EFI_GUID GridEndGuid        = SURFACE_GRID_END_OPCODE_GUID;
-                EFI_GUID GridSelectCellGuid = SURFACE_GRID_SELECT_CELL_OPCODE_GUID;
+                EFI_GUID GridEndGuid        = GRID_END_OPCODE_GUID;
+                EFI_GUID GridSelectCellGuid = GRID_SELECT_CELL_OPCODE_GUID;
 
                 if (CompareGuid (&GridEndGuid, (EFI_GUID *)((CHAR8 *)Statement->OpCode + sizeof(EFI_IFR_OP_HEADER)))) {
                     FoundEndOpCode = TRUE;
@@ -911,7 +898,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
     // Create a canvas for rendering the HII form.
     //
     LocalCanvas = new_Canvas(FormRect,
-                             FP_FCANVAS_BACKGROUND_COLOR
+                             &gMsColorTable.FormCanvasBackgroundColor
                             );
 
     ASSERT(NULL != LocalCanvas);
@@ -1021,10 +1008,10 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
             break;
         case EFI_IFR_GUID_OP:
             {
-                EFI_GUID GridStartOpcodeGuid      = SURFACE_GRID_START_OPCODE_GUID;
-                EFI_GUID GridEndOpcodeGuid        = SURFACE_GRID_END_OPCODE_GUID;
-                EFI_GUID GridSelectCellOpcodeGuid = SURFACE_GRID_SELECT_CELL_OPCODE_GUID;
-                EFI_GUID BitmapOpcodeGuid         = SURFACE_BITMAP_OPCODE_GUID;
+                EFI_GUID GridStartOpcodeGuid      = GRID_START_OPCODE_GUID;
+                EFI_GUID GridEndOpcodeGuid        = GRID_END_OPCODE_GUID;
+                EFI_GUID GridSelectCellOpcodeGuid = GRID_SELECT_CELL_OPCODE_GUID;
+                EFI_GUID BitmapOpcodeGuid         = BITMAP_OPCODE_GUID;
 
                 // Check whether this is a UI Grid Start opcode.
                 //
@@ -1243,23 +1230,23 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                 if ((Statement->Attribute & HII_DISPLAY_READONLY) == HII_DISPLAY_READONLY)    // If this is a link-style button...
                 {
                     // The background should always be white.
-                    NormalColor = HoverColor = SelectColor = RingColor = &mWhiteColor;
+                    NormalColor = HoverColor = SelectColor = RingColor = &gMsColorTable.ButtonNormalColor;
                     // The text color should be blue and grey when clicked.
-                    TextColor = &mSurfaceCyanColor;           // As per UI doc
-                    SelectTextColor = &mMediumGray2Color;  // As per UI doc
+                    TextColor = &gMsColorTable.ButtonTextNormalColor;           // As per UI doc
+                    SelectTextColor = &gMsColorTable.ButtonTextSelectColor;  // As per UI doc
 
                     ButtonWidth = ButtonHeight = SUI_BUTTON_AUTO_SIZE;
                 }
                 else                                                                          // If this is a standard button...
                 {
                     // Button background should be grey.
-                    NormalColor = HoverColor = RingColor = &mLightGray3Color;
+                    NormalColor = HoverColor = RingColor = &gMsColorTable.ButtonLinkNormalColor;
                     // Clicking the button should darken it.
-                    SelectColor = &mMediumGray2Color;
+                    SelectColor = &gMsColorTable.ButtonLinkSelectColor;
                     // Standard text is black for the light background.
-                    TextColor = &mBlackColor;
+                    TextColor = &gMsColorTable.ButtonLinkTextNormalColor;
                     // Clicking the button changes to white text for the darker background.
-                    SelectTextColor = &mWhiteColor;
+                    SelectTextColor = &gMsColorTable.ButtonLinkTextSelectColor;
 
                     ButtonWidth = MsUiScaleByTheme(460);    // Width - TODO.
                     ButtonHeight = MsUiScaleByTheme(100);   // Height - TODO.
@@ -1273,7 +1260,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                        NormalColor,      // Normal.
                                        HoverColor,       // Hover.
                                        SelectColor,      // Select.
-                                       &mMediumGray1Color,  // GrayOut
+                                       &gMsColorTable.ButtonGrayoutColor,  // GrayOut
                                        RingColor,        // Button ring.
                                        TextColor,        // Normal text.
                                        SelectTextColor,  // Select text.
@@ -1352,10 +1339,10 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                 UINT32                  ListWidth;
                 Label                   *L;
 
-                EFI_GRAPHICS_OUTPUT_BLT_PIXEL *TextColor = &mBlackColor;
+                EFI_GRAPHICS_OUTPUT_BLT_PIXEL *TextColor = &gMsColorTable.LabelTextNormalColor;
 
                 if (MenuOption->GrayOut){
-                    TextColor = &mLightGray3Color;
+                    TextColor = &gMsColorTable.LabelTextGrayoutColor;
                 }
 
                 L = new_Label(LabelX,
@@ -1364,7 +1351,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                               LabelHeight,
                               &FontInfo,
                               TextColor,      // Foreground (text) color.
-                              &mWhiteColor,    // Background color.
+                              &gMsColorTable.LabelTextBackgroundColor,    // Background color.
                               Description
                              );
 
@@ -1505,10 +1492,10 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                           Flags,
                                           &FontInfo,
                                           MsUiScaleByTheme(50),                   // Cell text X offset
-                                          &mLightGray1Color,                    // Normal
-                                          &mLightGray2Color,                    // Hover
-                                          &mMediumBlueColor,                    // Select
-                                          &mLightGray2Color,                    //GRAYED
+                                          &gMsColorTable.ListBoxNormalColor,     // Normal
+                                          &gMsColorTable.ListBoxHoverColor,      // Hover
+                                          &gMsColorTable.ListBoxSelectColor,     // Select
+                                          &gMsColorTable.ListBoxGrayoutColor,    // Grayed
                                           OptionList,
                                           MenuOption
                                          );
@@ -1577,8 +1564,8 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                                LabelWidth,
                                                LabelHeight,
                                                &FontInfo,
-                                               (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &mSurfaceCyanColor : &mBlackColor),    // TODO - Foreground (text) color.
-                                               &mWhiteColor,                                                     // Background color.
+                                               ((MsUiGetLargeFontHeight () == FontInfo.FontSize) ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor),    // TODO - Foreground (text) color.
+                                               &gMsColorTable.LabelTextBackgroundColor,                                           // Background color.
                                                Description
                                               );
 
@@ -1641,11 +1628,11 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                                 String->MaxSize,
                                                 UIT_EDITBOX_TYPE_SELECTABLE,
                                                 &FontInfo,
-                                                &mLightGray1Color,
-                                                &mBlackColor,
-                                                &mLightGray1Color,
-                                                &mBlackColor,
-                                                &mSurfaceRedColor,
+                                                &gMsColorTable.EditBoxNormalColor,
+                                                &gMsColorTable.EditBoxTextColor,
+                                                &gMsColorTable.EditBoxGrayoutColor,
+                                                &gMsColorTable.EditBoxTextGrayoutColor,
+                                                &gMsColorTable.EditBoxSelectColor,
                                           //      (String->Question.Flags & EFI_IFR_FLAG_READ_ONLY) ? (CHAR16 *) Statement->CurrentValue.Buffer : NULL,
                                                 (CHAR16 *) Statement->CurrentValue.Buffer,
                                           //      NULL,
@@ -1712,16 +1699,16 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                 UINT32 LabelWidth  = (CanvasRightLimit - LabelX);
                 UINT32 LabelHeight = (CanvasBottomLimit - LabelY);
 
-                EFI_GRAPHICS_OUTPUT_BLT_PIXEL *TextColor = &mBlackColor; // DCR (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &mSurfaceCyanColor : &mBlackColor);
+                EFI_GRAPHICS_OUTPUT_BLT_PIXEL *TextColor = &gMsColorTable.LabelTextNormalColor; // DCR (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor;
 
                 if (0 == StrnCmp(Description, L"\\fc!Red!", 8))
                 {
                     Description += StrLen(L"\\fc!Red!");
-                    TextColor = &mSurfaceTextRedColor;
+                    TextColor = &gMsColorTable.LabelTextRedColor;
                 }
 
                 if (MenuOption->GrayOut){
-                    TextColor = &mLightGray3Color;
+                    TextColor = &gMsColorTable.LabelTextGrayoutColor;
                 }
 
                 Label  *L          = new_Label(LabelX,
@@ -1730,7 +1717,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                                LabelHeight,
                                                &FontInfo,
                                                TextColor,    // TODO - Foreground (text) color.
-                                               &mWhiteColor,                                                     // Background color.
+                                               &gMsColorTable.LabelTextBackgroundColor,                                                     // Background color.
                                                Description
                                               );
 
@@ -1796,8 +1783,8 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                                LabelWidth,
                                                LabelHeight,
                                                &FontInfo,
-                                               (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &mSurfaceCyanColor : &mBlackColor),    // TODO - Foreground (text) color.
-                                               &mWhiteColor,                                                     // Background color.
+                                               (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor),    // TODO - Foreground (text) color.
+                                               &gMsColorTable.LabelTextBackgroundColor,                                                     // Background color.
                                                Description
                                               );
 
@@ -1863,10 +1850,10 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                                                    MsUiScaleByTheme(160),                        // Width  - TODO.
                                                    MsUiScaleByTheme(75),                         // Height - TODO.
                                                    &FontInfo,
-                                                   mSurfaceCyanColor,          // On.
-                                                   mDarkGray2Color,       // Off.
-                                                   mLightGray2Color,           // Hover.
-                                                   mLightGray3Color,           //Gray
+                                                   gMsColorTable.ToggleSwitchOnColor,          // On.
+                                                   gMsColorTable.ToggleSwitchOffColor,       // Off.
+                                                   gMsColorTable.ToggleSwitchHoverColor,           // Hover.
+                                                   gMsColorTable.ToggleSwitchGrayoutColor,           //Gray
                                                    L"On ",
                                                    L"Off",
                                                    MenuOption->ThisTag->CurrentValue.Value.b,   // Initial switch value is based on current setting.
@@ -2047,7 +2034,7 @@ UiDisplayMenu (IN FORM_DISPLAY_ENGINE_FORM *FormData) {
             // For the first time through, fill the canvas with the defined background color (slow).
             //
             mGop->Blt(mGop,
-                      FP_FCANVAS_BACKGROUND_COLOR,
+                      &gMsColorTable.FormCanvasBackgroundColor,
                       EfiBltVideoFill,
                       0,
                       0,
@@ -2583,6 +2570,33 @@ Exit:
     return Status;
 }
 
+/**
+  Free the UI Menu Option structure data.
+
+  @param   MenuOptionList         Point to the menu option list which need to be free.
+
+**/
+VOID
+FreeMenuOptionData(
+  LIST_ENTRY           *MenuOptionList
+  )
+{
+  LIST_ENTRY           *Link;
+  UI_MENU_OPTION       *Option;
+
+  //
+  // Free menu option list
+  //
+  while (!IsListEmpty (MenuOptionList)) {
+    Link = GetFirstNode (MenuOptionList);
+    Option = MENU_OPTION_FROM_LINK (Link);
+    if (Option->Description != NULL){
+      FreePool(Option->Description);
+    }
+    RemoveEntryList (&Option->Link);
+    FreePool (Option);
+  }
+}
 
 /**
 
@@ -2677,25 +2691,23 @@ BrowserStatusProcess (
             PrintString = gSaveNoSubmitProcess;
         }
 
-        mSWMProtocol->MessageBox(mSWMProtocol,
-                                 L"Internal Error",
-                                 ErrorInfo,        // Dialog body text.
-                                 PrintString,      // Dialog Caption text.
-                                 SWM_MB_OK,        // Show OK and CANCEL buttons.
-                                 0,                // No timeout
-                                 &SwmResult);      // Return result.
+        SwmDialogsMessageBox(L"Internal Error",
+                             ErrorInfo,        // Dialog body text.
+                             PrintString,      // Dialog Caption text.
+                             SWM_MB_OK,        // Show OK and CANCEL buttons.
+                             0,                // No timeout
+                             &SwmResult);      // Return result.
 
         gUserInput->Action = BROWSER_ACTION_DISCARD;
         break;
 
     default:
-        Status = mSWMProtocol->MessageBox(mSWMProtocol,
-                                          L"Requested Pause",
-                                          ErrorInfo,        // Dialog body text.
-                                          L"Press OK to continue",  // Dialog Caption text.
-                                          SWM_MB_OK,        // Show OK.
-                                          0,                // No timeout
-                                          &SwmResult);      // Return result.
+        Status = SwmDialogsMessageBox(L"Requested Pause",
+                                      ErrorInfo,        // Dialog body text.
+                                      L"Press OK to continue",  // Dialog Caption text.
+                                      SWM_MB_OK,        // Show OK.
+                                      0,                // No timeout
+                                      &SwmResult);      // Return result.
         break;
     }
 
@@ -2793,6 +2805,11 @@ FormDisplay (
     gOldFormEntry.HiiHandle = FormData->HiiHandle;
     CopyGuid (&gOldFormEntry.FormSetGuid, &FormData->FormSetGuid);
     gOldFormEntry.FormId = FormData->FormId;
+
+    //
+    //Free the Ui menu option list.
+    //
+    FreeMenuOptionData(&gMenuOption);
 
     return Status;
 }
@@ -2946,7 +2963,7 @@ InitializeDisplayEngine (
                                   (VOID **)&mGop
                                  );
     //
-    // Known issue where on some devices gop is not found on console out.
+    // Known issue where on some devices gop is not found on console out. 
     // Need to root cause
     //
     if(EFI_ERROR(Status))
@@ -3123,6 +3140,10 @@ UnloadDisplayEngine (
 
     if (gHighligthMenuInfo.OpCode != NULL) {
         FreePool (gHighligthMenuInfo.OpCode);
+    }
+
+    if (gHighligthMenuInfo.TOSOpCode != NULL) {
+      FreePool (gHighligthMenuInfo.TOSOpCode);
     }
 
     if (NULL != mReadyToBootEvent) {

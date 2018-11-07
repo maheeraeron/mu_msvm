@@ -122,10 +122,10 @@
   # MsGraphicsPkg Libs
   #
   UIToolKitLib|MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
-  MsBaseStringLib|MsGraphicsPkg/Library/MsBaseStringLib/MsBaseStringLib.inf
-  SecureMemoryLib|MsGraphicsPkg/Library/SecureMemoryLib/SecureMemoryLib.inf
+  MsColorTableLib|MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
   MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
   PlatformThemeLib|MsvmPkg/Library/PlatformThemeLib/PlatformThemeLib.inf
+  SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
 
 [LibraryClasses.IA32]
 !if $(PERF_TRACE_ENABLE) == TRUE
@@ -296,7 +296,7 @@
   # This default turns on errors and warnings
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
 !endif
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0xFF
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
 
   #
   # See REPORT_STATUS_CODE_PROPERTY_nnnnn in ReportStatusCodeLib.h

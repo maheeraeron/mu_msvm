@@ -617,16 +617,16 @@ Return Value:
 
     UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
-        RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
+    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
+    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
 
     AsmWriteMsr64(msr, RegisterValue);
 
 #elif defined(MDE_CPU_AARCH64)
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s Value 0x%lx\n", __FUNCTION__,
-        RegisterName, HvHypercallpRegisterNameToString(RegisterName),
-        RegisterValue));
+    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s Value 0x%lx\n", __FUNCTION__,
+    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName),
+    //     RegisterValue));
 
     AsmSetVpRegister64(RegisterName, RegisterValue);
 
@@ -634,5 +634,5 @@ Return Value:
 #error Unsupported Architecture
 #endif
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
+    // DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }

@@ -28,7 +28,7 @@
 ################################################################################
 [BuildOptions]
   # TODO-cho: X64 has this, something similar needed for AARCH64 full debug support?
-  # *_*_X64_GENFW_FLAGS = --keepexceptiontable
+  *_*_AARCH64_GENFW_FLAGS = --keepexceptiontable
 
 ################################################################################
 #
@@ -103,6 +103,9 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
 
+  # KdDxe Libs
+  SourceDebugEnabledLib|MsvmPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
+
   ## MS_CHANGE_?
   # MeasuredBoot and Other TPM-Based Security
   Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
@@ -130,12 +133,11 @@
   # MsGraphicsPkg Libs
   #
   UIToolKitLib|MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
-  MsBaseStringLib|MsGraphicsPkg/Library/MsBaseStringLib/MsBaseStringLib.inf
-  SecureMemoryLib|MsGraphicsPkg/Library/SecureMemoryLib/SecureMemoryLib.inf
+  MsColorTableLib|MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
   MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
   PlatformThemeLib|MsvmPkg/Library/PlatformThemeLib/PlatformThemeLib.inf
+  SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
 
-  # FIXME: was marked as X64 only in X64 dsc?
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
 
 #
@@ -192,6 +194,7 @@
   #DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
   #DebugLib|MsvmPkg/Library/BdDebugLib/BdDebugLib.inf
   #PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
+  DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocol.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|MdeModulePkg/Library/DxeDpcLib/DxeDpcLib.inf
   DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
@@ -214,6 +217,8 @@
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
+  KdTransportLib|MsKdDebugPkg2/Library/KdTransportLibSerial/KdTransportSerial.inf
+  KdProtocolLib|MsKdDebugPkg2/Library/KdProtocolLib/KdProtocolLib.inf
 
 #
 # Library instances overrides for just DXE CORE
@@ -306,7 +311,7 @@
 
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
-  # modifyting EfiKdDebugPrintGlobalMask and EfiKdDebugPrintComponentMask.
+  # modifying EfiKdDebugPrintGlobalMask and EfiKdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEF4B
@@ -314,7 +319,7 @@
   # This default turns on errors and warnings
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
 !endif
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x17
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
 
   #
   # See REPORT_STATUS_CODE_PROPERTY_nnnnn in ReportStatusCodeLib.h
@@ -361,8 +366,8 @@
   # Configure max supported number of Logical Processorss
   #gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
 
-  # Publish UEFI PropertiesTable.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|TRUE
+  # DO NOT Publish UEFI PropertiesTable.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|FALSE
 
   # Disable front page auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
@@ -541,7 +546,11 @@
 
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
-  MdeModulePkg/Core/Dxe/DxeMain.inf
+  MdeModulePkg/Core/Dxe/DxeMain.inf {
+    <LibraryClasses>
+      NULL|MsCorePkg/Library/DebugPortProtocolInstallLib/DebugPortProtocolInstallLib.inf
+      DebugLib|MsKdDebugPkg2/Library/DxeDebugLibRouter/DxeDebugLibRouter.inf
+  }
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
   MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
@@ -628,6 +637,17 @@
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
+  }
+
+  MsKdDebugPkg2/KdDxe/KdDxe.inf {
+    # Use COM1 for debugging
+    # TODO-cho: Fixed at build PCD overrides don't work for consumed libraries.
+    # Instead, we use a LibraryClasses override for a serial port lib that always
+    # uses COM1.
+    <LibraryClasses>
+      SerialPortLib|MsvmPkg/Library/KdPL011SerialPortLib/KdPL011SerialPortLib.inf
+    <PcdsFixedAtBuild>
+      #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xEFFEC000 #COM1
   }
 
   # UI Theme Protocol

@@ -2,7 +2,8 @@
 Implementation for handling the User Interface option processing.
 
 
-Copyright (c) 2004 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2018, Microsoft Corporation.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -21,6 +22,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
   Concatenate a narrow string to another string.
 
   @param Destination The destination string.
+  @param DestMax     The Max length of destination string.
   @param Source      The source string. The string to be concatenated.
                      to the end of Destination.
 
@@ -28,6 +30,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 VOID
 NewStrCat (
   IN OUT CHAR16               *Destination,
+  IN     UINTN                DestMax,
   IN     CHAR16               *Source
   )
 {
@@ -45,7 +48,7 @@ NewStrCat (
   Destination[Length] = NARROW_CHAR;
   Length++;
 
-  StrCpy (Destination + Length, Source);
+  StrCpyS (Destination + Length, DestMax - Length, Source);
 }
 
 /**

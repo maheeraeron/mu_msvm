@@ -30,7 +30,6 @@
 #include <Library/DebugLib.h>
 #include <Library/CpuLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/SecureMemoryLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/HiiLib.h>
 #include <Library/PrintLib.h>
@@ -44,6 +43,7 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/MsLogoLib.h>
 #include <Library/BootEventLogLib.h>
+#include <Library/MsColorTableLib.h>
 
 #include <MsDisplayEngine.h>
 #include <UIToolKit/SimpleUIToolKit.h>
@@ -465,10 +465,10 @@ CreateTopMenu(IN UINT32 OrigX,
                                    0,
                                    &FontInfo,
                                    CellTextXOffset,
-                                   FP_MFRAME_MENU_CELL_NORMAL_COLOR,
-                                   FP_MFRAME_MENU_CELL_HOVER_COLOR,
-                                   FP_MFRAME_MENU_CELL_SELECT_COLOR,
-                                   FP_MFRAME_MENU_CELL_GRAY_COLOR,
+                                   &gMsColorTable.MsterFrameCellNormalColor,
+                                   &gMsColorTable.MsterFrameCellHoverColor,
+                                   &gMsColorTable.MsterFrameCellSelectColor,
+                                   &gMsColorTable.MsterFrameCellGrayoutColor,
                                    MenuOptions,
                                    NULL
                                   );
@@ -508,7 +508,7 @@ RenderTitlebar(VOID)
     // Draw the titlebar background.
     //
     mGop->Blt(mGop,
-              FP_TBAR_BACKGROUND_COLOR,
+              &gMsColorTable.TitleBarBackgroundColor,
               EfiBltVideoFill,
               0,
               0,
@@ -593,8 +593,8 @@ RenderTitlebar(VOID)
     StringInfo.FontInfo.FontSize    = FP_TBAR_TEXT_FONT_HEIGHT;
     StringInfo.FontInfo.FontStyle   = EFI_HII_FONT_STYLE_NORMAL;
 
-    CopyMem (&StringInfo.ForegroundColor, FP_TBAR_TEXT_COLOR,       sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    CopyMem (&StringInfo.BackgroundColor, FP_TBAR_BACKGROUND_COLOR, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.TitleBarTextColor,       sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.TitleBarBackgroundColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
     // Determine the size the TitleBar text string will occupy on the screen.
     //
@@ -656,7 +656,7 @@ RenderMasterFrame(VOID)
     // Draw the master frame background.
     //
     mGop->Blt(mGop,
-              FP_MFRAME_BACKGROUND_COLOR,
+              &gMsColorTable.MasterFrameBackgroundColor,
               EfiBltVideoFill,
               0,
               0,

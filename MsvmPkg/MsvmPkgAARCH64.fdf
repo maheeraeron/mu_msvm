@@ -88,8 +88,8 @@ APRIORI DXE {
   INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
+  INF MsKdDebugPkg2/KdDxe/KdDxe.inf
   INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
-  # TODO-cho: Put KdDxe here.
 }
 
 #
@@ -146,6 +146,8 @@ INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
 INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+
+INF MsKdDebugPkg2/KdDxe/KdDxe.inf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf

@@ -1,7 +1,8 @@
 /** @file
   FormDiplay protocol to show Form
 
-Copyright (c) 2013 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2015 - 2018, Microsoft Corporation.
 This program and the accompanying materials are licensed and made available under
 the terms and conditions of the BSD License that accompanies this distribution.
 The full text of the license may be found at
@@ -29,6 +30,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/CustomizedDisplayLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/MsColorTableLib.h>
+#include <Library/SwmDialogsLib.h>
 
 #include <Protocol/FormBrowserEx2.h>
 #include <Protocol/GraphicsOutput.h>
@@ -36,6 +39,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Protocol/HiiFont.h>
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/DisplayProtocol.h>
+#include <Protocol/HiiPopup.h>
 #include <Protocol/SimpleWindowManager.h>
 #include <Protocol/OnScreenKeyboard.h>
 
@@ -134,8 +138,9 @@ extern MS_SIMPLE_WINDOW_MANAGER_PROTOCOL *mSWMProtocol;
 //
 // It take 23 characters including the NULL to print a 64 bits number with "[" and "]".
 // pow(2, 64) = [18446744073709551616]
+// with extra '-' flat, set the width to 24.
 //
-#define MAX_NUMERIC_INPUT_WIDTH 23
+#define MAX_NUMERIC_INPUT_WIDTH 24
 
 #define EFI_HII_EXPRESSION_INCONSISTENT_IF   0
 #define EFI_HII_EXPRESSION_NO_SUBMIT_IF      1
@@ -224,6 +229,31 @@ typedef struct {
   EFI_QUESTION_ID    QuestionId;
   EFI_IFR_OP_HEADER  *OpCode;
   UINT16             DisplayRow;
+  UINT16             FormId;
+
+  //
+  // Info for the highlight question.
+  // HLT means highlight
+  //
+  // If one statement has questionid, save questionid info to find the question.
+  // If one statement not has questionid info, save the opcode info to find the
+  // statement. If more than one statement has same opcode in one form(just like
+  // empty subtitle info may has more than one info one form), also use Index
+  // info to find the statement.
+  //
+  EFI_QUESTION_ID    HLTQuestionId;
+  EFI_IFR_OP_HEADER  *HLTOpCode;
+  UINTN              HLTIndex;
+  UINTN              HLTSequence;
+
+  //
+  // Info for the top of screen question.
+  // TOS means Top Of Screen
+  //
+  EFI_QUESTION_ID    TOSQuestionId;
+  EFI_IFR_OP_HEADER  *TOSOpCode;
+  UINTN              TOSIndex;
+
   UINT16             SkipValue;
 } DISPLAY_HIGHLIGHT_MENU_INFO;
 

@@ -320,27 +320,27 @@ DebugDumpUefiConfigStruct(
 
         case UefiConfigSmbiosSystemSerialNumber:
             UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER *systemSerialNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios System Serial Number: %s\n", systemSerialNumber->SystemSerialNumber));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios System Serial Number: %a\n", systemSerialNumber->SystemSerialNumber));
             break;
 
         case UefiConfigSmbiosBaseSerialNumber:
             UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER *baseSerialNumber = (UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Base Serial Number: %s\n", baseSerialNumber->BaseSerialNumber));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Base Serial Number: %a\n", baseSerialNumber->BaseSerialNumber));
             break;
 
         case UefiConfigSmbiosChassisSerialNumber:
             UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER *chassisSerialNumber = (UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Chassis Serial Number: %s\n", chassisSerialNumber->ChassisSerialNumber));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Chassis Serial Number: %a\n", chassisSerialNumber->ChassisSerialNumber));
             break;
 
         case UefiConfigSmbiosChassisAssetTag:
             UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG *chassisAssetTag = (UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Chassis Asset Tag: %s\n", chassisAssetTag->ChassisAssetTag));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Chassis Asset Tag: %a\n", chassisAssetTag->ChassisAssetTag));
             break;
 
         case UefiConfigSmbiosBiosLockString:
             UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING *biosLockString = (UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Bios Lock String: %s\n", biosLockString->BiosLockString));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Bios Lock String: %a\n", biosLockString->BiosLockString));
             break;
 
         case UefiConfigSmbios31ProcessorInformation:
@@ -359,32 +359,32 @@ DebugDumpUefiConfigStruct(
 
         case UefiConfigSmbiosSocketDesignation:
             UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION *socketDesignation = (UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Socket Designation: %s\n", socketDesignation->SocketDesignation));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Socket Designation: %a\n", socketDesignation->SocketDesignation));
             break;
 
         case UefiConfigSmbiosProcessorManufacturer:
             UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER *processorManufacturer = (UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Manufacturer: %s\n", processorManufacturer->ProcessorManufacturer));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Manufacturer: %a\n", processorManufacturer->ProcessorManufacturer));
             break;
 
         case UefiConfigSmbiosProcessorVersion:
             UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION *processorVersion = (UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Version: %s\n", processorVersion->ProcessorVersion));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Version: %a\n", processorVersion->ProcessorVersion));
             break;
 
         case UefiConfigSmbiosProcessorSerialNumber:
             UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER *processorSerialNumber = (UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Serial Number: %s\n", processorSerialNumber->ProcessorSerialNumber));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Serial Number: %a\n", processorSerialNumber->ProcessorSerialNumber));
             break;
 
         case UefiConfigSmbiosProcessorAssetTag:
             UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG *processorAssetTag = (UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Asset Tag: %s\n", processorAssetTag->ProcessorAssetTag));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Asset Tag: %a\n", processorAssetTag->ProcessorAssetTag));
             break;
 
         case UefiConfigSmbiosProcessorPartNumber:
             UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER *processorPartNumber = (UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Part Number: %s\n", processorPartNumber->ProcessorPartNumber));
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Processor Part Number: %a\n", processorPartNumber->ProcessorPartNumber));
             break;
 
         case UefiConfigFlags:
@@ -495,7 +495,7 @@ Return Value:
         String[length - 1] = 0;
         *StringLength = (UINT32) length;
 
-        DEBUG((DEBUG_VERBOSE, "SMBIOS String Structure had no null terminator, truncating to size 0x%x. Truncated string:%s", length, String));
+        DEBUG((DEBUG_VERBOSE, "SMBIOS String Structure had no null terminator, truncating to size 0x%x. Truncated string:%a", length, String));
     }
     else
     {

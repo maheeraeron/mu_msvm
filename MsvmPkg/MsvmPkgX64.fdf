@@ -126,8 +126,7 @@ APRIORI PEI {
 
 #
 # Dispatch these components first in DXE.
-# TODO-cho: what's the order for this? KdDxe seems to die with segfault, also KdDxe is supposed to load _before_ SynicDxe? That seems odd.
-# What exactly are KdDxe's required dependencies?
+# TODO-cho: What exactly are KdDxe's required dependencies?
 # Can we hoist KdDxe even earlier?
 #
 APRIORI DXE {
@@ -135,12 +134,14 @@ APRIORI DXE {
   INF MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
   INF MsvmPkg/CpuDxe/CpuDxe.inf
+  INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   INF MdeModulePkg/Universal/Metronome/Metronome.inf
   INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
   INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
   INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   INF MsvmPkg/EventLogDxe/EventLogDxe.inf
   #INF MsKdDebugPkg2/KdDxe/KdDxe.inf
+  INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
 }
 
 #
