@@ -60,7 +60,7 @@ steps:
   inputs:
     filename: python.exe
     arguments: 'MsvmPkg/PlatformBuild.py --setup --force'
- 
+
 - task: CmdLine@1
   displayName: 'Platform build Update'
   inputs:
@@ -115,7 +115,8 @@ steps:
    New-Item $folder -Type Directory
    copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd" $folder
    copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB" $folder -Recurse
-   Write-Host "##vso[task.setvariable variable=vPack.Folder]$folder" 
+   copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/$(Build.Arch)/MsvmPkg/AcpiTables/AcpiTables/OUTPUT/Dsdt.aml" $folder
+   Write-Host "##vso[task.setvariable variable=vPack.Folder]$folder"
 
   displayName: 'Compute Hash and Copy firmware to vpack folder'
 
