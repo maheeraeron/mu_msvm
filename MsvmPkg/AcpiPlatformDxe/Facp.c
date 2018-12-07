@@ -39,7 +39,7 @@ Return Value:
 
 --*/
 {
-    EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *facp = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)Facp;
+    EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE *facp = (EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE *)Facp;
 
     //
     // Get configuration to determine if headless.
@@ -51,7 +51,7 @@ Return Value:
     //
     if (consoleMode != ConfigLibConsoleModeDefault)
     {
-        facp->Flags |= EFI_ACPI_3_0_HEADLESS;
+        facp->Flags |= EFI_ACPI_6_2_HEADLESS;
     }
 
     //
@@ -65,10 +65,10 @@ Return Value:
     if (PcdGetBool(PcdVirtualBatteryEnabled))
     {
         //
-        // Set the profile to Mobile but don't set EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE flag.
-        // EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE causes negative side-effects in a VM.
+        // Set the profile to Mobile but don't set EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE flag.
+        // EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE causes negative side-effects in a VM.
         //
-        facp->PreferredPmProfile = EFI_ACPI_6_1_PM_PROFILE_MOBILE;
+        facp->PreferredPmProfile = EFI_ACPI_6_2_PM_PROFILE_MOBILE;
     }
 
     return EFI_SUCCESS;

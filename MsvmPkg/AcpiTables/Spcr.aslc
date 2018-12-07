@@ -24,15 +24,15 @@ Author:
 
 EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
 {
-    STANDARD_HEADER(EFI_ACPI_3_0_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
+    STANDARD_HEADER(EFI_ACPI_6_2_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
                     sizeof(EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE),
                     EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_REVISION)
     0,                      // InterfaceType (0 = Fully 16550-compatible)
     {                       // Reserved1[]
         0, 0, 0,
     },
-    {                       // BaseAddress EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE
-        EFI_ACPI_2_0_SYSTEM_IO, // AddressSpaceId
+    {                       // BaseAddress EFI_ACPI_6_2_GENERIC_ADDRESS_STRUCTURE
+        EFI_ACPI_6_2_SYSTEM_IO, // AddressSpaceId
         8,                      // RegisterBitWidth
         0,                      // RegisterBitOffset
         0,                      // Reserved
@@ -61,15 +61,15 @@ EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
 
 EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
 {
-    STANDARD_HEADER(EFI_ACPI_6_1_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
+    STANDARD_HEADER(EFI_ACPI_6_2_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE,
                     sizeof(EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE),
                     EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_REVISION)
     EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERFACE_TYPE_ARM_PL011_UART, // InterfaceType - ARM PL011
     {                       // Reserved1[]
         0, 0, 0,
     },
-    {                       // BaseAddress EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE
-        EFI_ACPI_6_1_SYSTEM_MEMORY, // AddressSpaceId
+    {                       // BaseAddress EFI_ACPI_6_2_GENERIC_ADDRESS_STRUCTURE
+        EFI_ACPI_6_2_SYSTEM_MEMORY, // AddressSpaceId
         8,                      // RegisterBitWidth
         0,                      // RegisterBitOffset
         0,                      // Reserved

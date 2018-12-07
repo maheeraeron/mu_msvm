@@ -718,8 +718,10 @@ typedef struct _UEFI_CONFIG_FLAGS
 typedef struct _UEFI_CONFIG_PROCESSOR_INFORMATION
 {
     UEFI_CONFIG_HEADER Header;
+    UINT32 MaxProcessorCount;
     UINT32 ProcessorCount;
     UINT32 ProcessorsPerVirtualSocket;
+    UINT32 ThreadsPerProcessor;
 } UEFI_CONFIG_PROCESSOR_INFORMATION;
 
 typedef struct _UEFI_CONFIG_MMIO

@@ -90,6 +90,7 @@
     gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorAssetTagSize
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
+    gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor
 
 [Depex]
     gEfiSmbiosProtocolGuid

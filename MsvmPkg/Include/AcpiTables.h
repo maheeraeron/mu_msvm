@@ -30,37 +30,31 @@ Abstract:
         1                                                   \
     },
 
-#define MAX_PROCESSORS 240
+#define MAX_PROCESSORS_APIC 255
+#define MAX_PROCESSORS 2048
 
 #pragma pack(push, 1)
 
 //
 // MADT information is architecture dependent.
 //
-#if defined (MDE_CPU_X64)
-
-typedef struct _VM_APIC_TABLE
-{
-    EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER Header;
-    EFI_ACPI_3_0_IO_APIC_STRUCTURE IoApic;
-    EFI_ACPI_3_0_LOCAL_APIC_NMI_STRUCTURE LocalApicNmi;
-    EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE Override1;
-    EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE Override2;
-    EFI_ACPI_3_0_PROCESSOR_LOCAL_APIC_STRUCTURE LocalApicTable[MAX_PROCESSORS];
-} VM_APIC_TABLE;
-
-#elif defined (MDE_CPU_AARCH64)
 
 typedef struct _VM_MADT_TABLE
 {
-    EFI_ACPI_6_1_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER Header;
-    EFI_ACPI_6_1_GIC_DISTRIBUTOR_STRUCTURE GICD;
-    EFI_ACPI_6_1_GIC_STRUCTURE GICC[MAX_PROCESSORS]; // GICV2 only supports 8 CPUs, so technically MAX_PROCESSORS is a lie in that case
-} VM_MADT_TABLE;
-
+    EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER Header;
+#if defined (MDE_CPU_X64)
+    EFI_ACPI_6_2_IO_APIC_STRUCTURE IoApic;
+    EFI_ACPI_6_2_LOCAL_X2APIC_NMI_STRUCTURE LocalX2ApicNmi;
+    EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE Override1;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE LocalApicTable[MAX_PROCESSORS_APIC];
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE LocalX2ApicTable[MAX_PROCESSORS - MAX_PROCESSORS_APIC];
+#elif defined (MDE_CPU_AARCH64)
+    EFI_ACPI_6_2_GIC_DISTRIBUTOR_STRUCTURE GICD;
+    EFI_ACPI_6_2_GIC_STRUCTURE GICC[MAX_PROCESSORS]; // GICV2 only supports 8 CPUs, so technically MAX_PROCESSORS is a lie in that case
 #else
-    #error Unsupported Architecture
+#error Unsupported Architecture
 #endif
+} VM_MADT_TABLE;
 
 typedef struct _VM_ACPI_ENTROPY_TABLE
 {

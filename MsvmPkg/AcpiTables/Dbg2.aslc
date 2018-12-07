@@ -27,7 +27,7 @@ Author:
 
 typedef struct {
     EFI_ACPI_DBG2_DEBUG_DEVICE_INFORMATION_STRUCT PL011;
-    EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE PL011Addr;
+    EFI_ACPI_6_2_GENERIC_ADDRESS_STRUCTURE PL011Addr;
     UINT32 AddressSize;
     UINT8  NameSpaceString[32];
 } VM_ACPI_DEBUG_PORT_2_DDI_PL011;
@@ -40,13 +40,13 @@ typedef struct {
 #pragma pack()
 
 #define VM_ACPI_DBG2_DDI_BASE_ADDRESS_REGISTER_OFFSET sizeof(EFI_ACPI_DBG2_DEBUG_DEVICE_INFORMATION_STRUCT)
-#define VM_ACPI_DBG2_DDI_ADDRESS_SIZE_OFFSET VM_ACPI_DBG2_DDI_BASE_ADDRESS_REGISTER_OFFSET + sizeof(EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE)
+#define VM_ACPI_DBG2_DDI_ADDRESS_SIZE_OFFSET VM_ACPI_DBG2_DDI_BASE_ADDRESS_REGISTER_OFFSET + sizeof(EFI_ACPI_6_2_GENERIC_ADDRESS_STRUCTURE)
 #define VM_ACPI_DBG2_NAMESPACE_STRING_OFFSET VM_ACPI_DBG2_DDI_ADDRESS_SIZE_OFFSET + sizeof(UINT32)
 
 VM_ACPI_DEBUG_PORT_2_IMPL DBG2 =
 {
     {
-        STANDARD_HEADER(EFI_ACPI_6_1_DEBUG_PORT_2_TABLE_SIGNATURE,
+        STANDARD_HEADER(EFI_ACPI_6_2_DEBUG_PORT_2_TABLE_SIGNATURE,
                         sizeof(VM_ACPI_DEBUG_PORT_2_IMPL),
                         EFI_ACPI_DEBUG_PORT_2_TABLE_REVISION)
         sizeof(EFI_ACPI_DEBUG_PORT_2_DESCRIPTION_TABLE),
@@ -77,10 +77,10 @@ VM_ACPI_DEBUG_PORT_2_IMPL DBG2 =
         // and ignores everything else in this GAS.
         //
         {
-            EFI_ACPI_6_1_SYSTEM_MEMORY,
+            EFI_ACPI_6_2_SYSTEM_MEMORY,
             32, // Register Bit Width
             0, // Register Bit offset
-            EFI_ACPI_6_1_DWORD, // Access Size - On Seattle machines, set to DWORD
+            EFI_ACPI_6_2_DWORD, // Access Size - On Seattle machines, set to DWORD
             0xEFFEC000 // addr of pl011 dev (COM1)
         },
         0x00001000, // Address size corresponding to above

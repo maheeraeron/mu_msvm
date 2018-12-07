@@ -45,35 +45,88 @@ Return Value:
 
 --*/
 {
-    EFI_ACPI_3_0_PROCESSOR_LOCAL_APIC_STRUCTURE* entry;
-    INT32 highestLocalApicId;
-    UINT8 index;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE* entry;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE* x2ApicEntry;
     UINT32 processorCount;
-    VM_APIC_TABLE* table;
+    UINT32 maxProcessorCount;
+    UINT8 localApicEntries;
+    UINT32 x2ApicEntries;
+    VM_MADT_TABLE* table;
 
-    table = (VM_APIC_TABLE *)Table;
+    table = (VM_MADT_TABLE *)Table;
+
+    //
+    // PcdProcessorCount contains the number of enabled processors.
+    // PcdMaxProcessorCount contains the number of declared processors
+    //
     processorCount = PcdGet32(PcdProcessorCount);
+    maxProcessorCount = PcdGet32(PcdMaxProcessorCount);
 
     ASSERT(processorCount > 0);
+
+    // 0xff is an invalid APIC ID.  Also, MAX_PROCESSORS_APIC must fit in a UINT8
+    C_ASSERT(MAX_PROCESSORS_APIC < 256);
+
+    if (maxProcessorCount < MAX_PROCESSORS_APIC)
+    {
+        localApicEntries = (UINT8)maxProcessorCount;
+        x2ApicEntries = 0;
+    }
+    else
+    {
+        localApicEntries = MAX_PROCESSORS_APIC;
+
+        if (maxProcessorCount > MAX_PROCESSORS)
+        {
+            x2ApicEntries = MAX_PROCESSORS;
+        }
+        else
+        {
+            x2ApicEntries = (maxProcessorCount - MAX_PROCESSORS_APIC);
+        }
+    }
+    
+    //
+    // Set the overall size of the table based on number of processors.  
+    //
+    table->Header.Header.Length = sizeof(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER) +
+        sizeof(EFI_ACPI_6_2_IO_APIC_STRUCTURE) +
+        sizeof(EFI_ACPI_6_2_LOCAL_X2APIC_NMI_STRUCTURE) +
+        sizeof(EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE) +
+        sizeof(EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE) * localApicEntries +
+        sizeof(EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE) * x2ApicEntries;
 
     //
     // Initialize the local APIC entries.
     //
-
-    highestLocalApicId = 0;
-    for (index = 0; index < MAX_PROCESSORS; index++)
+    for (UINT8 index = 0; index < localApicEntries; index++)
     {
-
         entry = &table->LocalApicTable[index];
-        entry->Type = EFI_ACPI_3_0_PROCESSOR_LOCAL_APIC;
+        entry->Type = EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC;
         entry->Length = sizeof(*entry);
-        entry->AcpiProcessorId = index + 1;
+        entry->AcpiProcessorUid = index + 1;
         entry->ApicId = index;
         entry->Flags = 0;
         if (index < processorCount)
         {
-            entry->ApicId = index;
-            entry->Flags = EFI_ACPI_3_0_LOCAL_APIC_ENABLED;
+            entry->Flags = EFI_ACPI_6_2_LOCAL_APIC_ENABLED;
+        }
+    }
+
+    //
+    // Initialize the X2APIC entries.
+    //
+    for (UINT32 index = 0; index < x2ApicEntries; index++)
+    {
+        x2ApicEntry = &table->LocalX2ApicTable[index];
+        x2ApicEntry->Type = EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC;
+        x2ApicEntry->Length = sizeof(*x2ApicEntry);        
+        x2ApicEntry->AcpiProcessorUid = (index + MAX_PROCESSORS_APIC) + 1; // Processor UIDs start at 1
+        x2ApicEntry->X2ApicId = (index + MAX_PROCESSORS_APIC);
+        x2ApicEntry->Flags = 0;
+        if ((index + MAX_PROCESSORS_APIC) < processorCount)
+        {
+            x2ApicEntry->Flags = EFI_ACPI_6_2_LOCAL_APIC_ENABLED;
         }
     }
 
@@ -114,7 +167,7 @@ Return Value:
 
 --*/
 {
-    EFI_ACPI_6_1_GIC_STRUCTURE* gicc;
+    EFI_ACPI_6_2_GIC_STRUCTURE* gicc;
     UINT8 index, gicVersion;
     UINT32 processorCount;
     UINT64* processorMPIDRValues = NULL;
@@ -138,12 +191,12 @@ Return Value:
         // GICv2 only supports 8 VPs
         //
         ASSERT(processorCount <= 8);
-        gicVersion = EFI_ACPI_6_1_GIC_V2;
+        gicVersion = EFI_ACPI_6_2_GIC_V2;
     }
     else if (gicVersionEnum == ARM_GIC_ARCH_REVISION_3)
     {
         DEBUG((DEBUG_VERBOSE, ">>> Exposing GICv3\n"));
-        gicVersion = EFI_ACPI_6_1_GIC_V3;
+        gicVersion = EFI_ACPI_6_2_GIC_V3;
     }
     else
     {
@@ -159,9 +212,9 @@ Return Value:
     //
     // Set the overall size of the table based on number of processors.
     //
-    table->Header.Header.Length = sizeof(EFI_ACPI_6_1_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER) +
-        sizeof(EFI_ACPI_6_1_GIC_DISTRIBUTOR_STRUCTURE) +
-        sizeof(EFI_ACPI_6_1_GIC_STRUCTURE) * processorCount;
+    table->Header.Header.Length = sizeof(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER) +
+        sizeof(EFI_ACPI_6_2_GIC_DISTRIBUTOR_STRUCTURE) +
+        sizeof(EFI_ACPI_6_2_GIC_STRUCTURE) * processorCount;
 
     //
     // Get MPIDR values from the config blob parsed in PEI.
@@ -176,13 +229,13 @@ Return Value:
     {
         gicc = &table->GICC[index];
 
-        memset(gicc, 0, sizeof(EFI_ACPI_6_1_GIC_STRUCTURE));
+        memset(gicc, 0, sizeof(EFI_ACPI_6_2_GIC_STRUCTURE));
 
-        gicc->Type             = EFI_ACPI_6_1_GIC;
-        gicc->Length           = sizeof(EFI_ACPI_6_1_GIC_STRUCTURE);
+        gicc->Type             = EFI_ACPI_6_2_GIC;
+        gicc->Length           = sizeof(EFI_ACPI_6_2_GIC_STRUCTURE);
 
         gicc->AcpiProcessorUid = index + 1; // Processor UIDs start at 1
-        gicc->Flags            = EFI_ACPI_6_1_GIC_ENABLED;
+        gicc->Flags            = EFI_ACPI_6_2_GIC_ENABLED;
 
         //
         // ACPI requires for ARMv8 that bits 24 thru 31 and bits 40 thru 63
@@ -192,11 +245,11 @@ Return Value:
         //
         gicc->MPIDR = processorMPIDRValues[index] & 0xFF00FFFFFFULL;
 
-        if (gicVersion == EFI_ACPI_6_1_GIC_V2)
+        if (gicVersion == EFI_ACPI_6_2_GIC_V2)
         {
             gicc->CPUInterfaceNumber = index;
         }
-        else if (gicVersion == EFI_ACPI_6_1_GIC_V3)
+        else if (gicVersion == EFI_ACPI_6_2_GIC_V3)
         {
             gicc->GICRBaseAddress = FixedPcdGet64(PcdGicRedistributorsBase) +
                 REDIST_MAPPING_SIZE_V3 * index;

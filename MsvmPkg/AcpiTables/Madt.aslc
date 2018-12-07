@@ -19,22 +19,22 @@ Abstract:
 
 #define DEFINE_OVERRIDE(IrqSource, Vector, Flags) \
     { \
-        EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE, \
-        sizeof(EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE), \
+        EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE, \
+        sizeof(EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE), \
         0, \
         IrqSource, \
         Vector, \
         Flags \
     }
 
-VM_APIC_TABLE MADT =
+VM_MADT_TABLE MADT =
 {
     {
-        STANDARD_HEADER(EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
-                        sizeof(VM_APIC_TABLE),
-                        EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
+        STANDARD_HEADER(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+                        sizeof(VM_MADT_TABLE),
+                        EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
         FixedPcdGet32(PcdCpuLocalApicBaseAddress),
-        0, // EFI_ACPI_3_0_PCAT_COMPAT flag is cleared; Hyper-V does not support the legacy PIC interface when running in UEFI mode.
+        0, // EFI_ACPI_6_2_PCAT_COMPAT flag is cleared; Hyper-V does not support the legacy PIC interface when running in UEFI mode.
     },
 
     //
@@ -42,8 +42,8 @@ VM_APIC_TABLE MADT =
     //
 
     {
-        EFI_ACPI_3_0_IO_APIC,
-        sizeof(EFI_ACPI_3_0_IO_APIC_STRUCTURE),
+        EFI_ACPI_6_2_IO_APIC,
+        sizeof(EFI_ACPI_6_2_IO_APIC_STRUCTURE),
         0, // IoApicId - updated at runtime
         0, // Reserved
         FixedPcdGet32(PcdIoApicBaseAddress),
@@ -51,22 +51,21 @@ VM_APIC_TABLE MADT =
     },
 
     //
-    // Local APIC NMI source.
+    // Local x2APIC NMI source.
     //
 
     {
-        EFI_ACPI_3_0_LOCAL_APIC_NMI,
-        sizeof(EFI_ACPI_3_0_LOCAL_APIC_NMI_STRUCTURE),
-        0xFF, // ACPI Processor ID - 0xFF indicates all processors.
-        0,    // Flags
-        1     // LINT#
+        EFI_ACPI_6_2_LOCAL_X2APIC_NMI,
+        sizeof(EFI_ACPI_6_2_LOCAL_X2APIC_NMI_STRUCTURE),
+        0,      // Flags
+        0x0,    // ACPI Processor ID - 0xFFFFFFFF indicates all processors.  We report just the BSP
+        1,      // LINT#
+        {       // 3 bytes Reserved - Must be zero
+            0,
+            0,
+            0
+        }
     },
-
-    //
-    // Map PIC IRQ0 to APIC IRQ2.
-    //
-
-    DEFINE_OVERRIDE(0, 2, 0),
 
     //
     // Mark the PM interrupt as being active high and level triggered, since
@@ -86,16 +85,16 @@ VM_APIC_TABLE MADT =
 VM_MADT_TABLE MADT =
 {
     {
-        STANDARD_HEADER(EFI_ACPI_6_1_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+        STANDARD_HEADER(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
                         sizeof(VM_MADT_TABLE),
-                        EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
+                        EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
         FixedPcdGet64(PcdGicInterruptInterfaceBase), // Local Interrupt Controller Address - GICC which is the same for all CPUs
         0, // Flags
     },
 
     {
-        EFI_ACPI_6_1_GICD, // Type
-        sizeof(EFI_ACPI_6_1_GIC_DISTRIBUTOR_STRUCTURE), // Length
+        EFI_ACPI_6_2_GICD, // Type
+        sizeof(EFI_ACPI_6_2_GIC_DISTRIBUTOR_STRUCTURE), // Length
         0, // Reserved - Must be zero
         0, // GICD Hardware ID
         FixedPcdGet64(PcdGicDistributorBase), // Physical Base Address

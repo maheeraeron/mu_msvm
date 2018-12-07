@@ -482,8 +482,10 @@
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
+  gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount|0x0
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
   gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket|0x0
+  gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor|0x0
 
   # UEFI_CONFIG_MMIO_DESCRIPTION
   # Currently only two mmio holes, low gap and high gap but we could

@@ -145,8 +145,8 @@ DebugDumpSrat(
 {
 #if !defined(MDEPKG_NDEBUG)
     EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER*) Srat;
-    EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *sratApic;
-    EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *sratMem;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *sratApic;
+    EFI_ACPI_6_2_MEMORY_AFFINITY_STRUCTURE *sratMem;
     UINTN base, size;
     UINT8 *cursor;
 
@@ -158,14 +158,14 @@ DebugDumpSrat(
     DEBUG((DEBUG_VERBOSE, "    Length %x\n", acpiHdr->Length));
 
     cursor = (UINT8 *)acpiHdr;
-    cursor += sizeof(EFI_ACPI_4_0_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER);
+    cursor += sizeof(EFI_ACPI_6_2_SYSTEM_RESOURCE_AFFINITY_TABLE_HEADER);
 
     do
     {
         switch(*cursor)  // UINT8 sized Type always at start of struct
         {
-            case EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY:
-                sratApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *)cursor;
+            case EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY:
+                sratApic = (EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *)cursor;
 
                 DEBUG((DEBUG_VERBOSE, "    APIC Type %x Len %02x Flags %02x ApicId %02x Dom %x\n",
                     sratApic->Type, sratApic->Length, sratApic->Flags, sratApic->ApicId,
@@ -174,8 +174,8 @@ DebugDumpSrat(
                 cursor += sratApic->Length;
                 break;
 
-            case EFI_ACPI_5_0_MEMORY_AFFINITY:
-                sratMem = (EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *)cursor;
+            case EFI_ACPI_6_2_MEMORY_AFFINITY:
+                sratMem = (EFI_ACPI_6_2_MEMORY_AFFINITY_STRUCTURE *)cursor;
 
                 base = (((UINT64)sratMem->AddressBaseHigh) << 32) |
                         (UINT64)sratMem->AddressBaseLow;
@@ -191,7 +191,7 @@ DebugDumpSrat(
                 break;
 
             default:
-                sratMem = (EFI_ACPI_5_0_MEMORY_AFFINITY_STRUCTURE *)cursor;
+                sratMem = (EFI_ACPI_6_2_MEMORY_AFFINITY_STRUCTURE *)cursor;
 
                 DEBUG((DEBUG_VERBOSE, "    *Skipping* Type %x\n", sratMem->Type));
 
@@ -728,7 +728,7 @@ Return Value:
                 // just needs to be less than the overall length.
                 //
                 if (sratStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
-                    acpiHdr->Signature != EFI_ACPI_4_0_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE ||
+                    acpiHdr->Signature != EFI_ACPI_6_2_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE ||
                     acpiHdr->Length > (sratStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SRAT\n"));
@@ -960,8 +960,10 @@ Return Value:
 
             case UefiConfigProcessorInformation:
                 UEFI_CONFIG_PROCESSOR_INFORMATION *processorInfo = (UEFI_CONFIG_PROCESSOR_INFORMATION*) header;
+                PcdSet32(PcdMaxProcessorCount, processorInfo->MaxProcessorCount);
                 PcdSet32(PcdProcessorCount, processorInfo->ProcessorCount);
                 PcdSet32(PcdProcessorsPerVirtualSocket, processorInfo->ProcessorsPerVirtualSocket);
+                PcdSet32(PcdThreadsPerProcessor, processorInfo->ThreadsPerProcessor);
 
                 if (processorInfo->ProcessorCount == 0)
                 {
@@ -969,9 +971,21 @@ Return Value:
                     goto Failure;
                 }
 
+                if (processorInfo->MaxProcessorCount < processorInfo->ProcessorCount)
+                {
+                    DEBUG((DEBUG_ERROR, "MaxProcessorCount was fewer than ProcessorCount.\n"));
+                    goto Failure;
+                }
+
                 if (processorInfo->ProcessorsPerVirtualSocket == 0)
                 {
                     DEBUG((DEBUG_ERROR, "Processors per virtual socket was 0.\n"));
+                    goto Failure;
+                }
+
+                if (processorInfo->ThreadsPerProcessor == 0)
+                {
+                    DEBUG((DEBUG_ERROR, "Threads per processor was 0.\n"));
                     goto Failure;
                 }
 

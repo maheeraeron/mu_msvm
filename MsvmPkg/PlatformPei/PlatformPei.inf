@@ -128,8 +128,10 @@
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
     gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
+    gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
+    gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages
     gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber

@@ -803,6 +803,7 @@ Return Value:
     UINT32 procCount = PcdGet32(PcdProcessorCount);
     UINT32 processorsAdded = 0;
     UINT32 processorsPerVirtualSocket = PcdGet32(PcdProcessorsPerVirtualSocket);
+    UINT32 threadsPerProcessor = PcdGet32(PcdThreadsPerProcessor);
     BOOLEAN isFirstSocket = TRUE;
 
     //
@@ -919,12 +920,12 @@ Return Value:
     while (processorsAdded != procCount)
     {
         UINT32 procCountInThisSocket = MIN(procCount - processorsAdded, processorsPerVirtualSocket);
-        cpuInfo.Formatted.CoreCount  = (UINT8) processorsPerVirtualSocket; // fixme: should this be max possible or just what's enabled?
+        cpuInfo.Formatted.CoreCount  = (UINT8) processorsPerVirtualSocket;
         cpuInfo.Formatted.CoreCount2 = (UINT16) processorsPerVirtualSocket;
         cpuInfo.Formatted.EnabledCoreCount  = (UINT8) procCountInThisSocket;
         cpuInfo.Formatted.EnabledCoreCount2 = (UINT16) procCountInThisSocket;
-        cpuInfo.Formatted.ThreadCount  = 1;
-        cpuInfo.Formatted.ThreadCount2 = 1;
+        cpuInfo.Formatted.ThreadCount  = (UINT8) threadsPerProcessor;
+        cpuInfo.Formatted.ThreadCount2 = (UINT16) threadsPerProcessor;
 
         processorsAdded += procCountInThisSocket;
 
