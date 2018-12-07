@@ -89,6 +89,8 @@ APRIORI DXE {
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   INF MsKdDebugPkg2/KdDxe/KdDxe.inf
+  INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  INF MsvmPkg/EventLogDxe/EventLogDxe.inf
   INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
 }
 
