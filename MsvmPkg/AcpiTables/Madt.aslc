@@ -51,20 +51,15 @@ VM_MADT_TABLE MADT =
     },
 
     //
-    // Local x2APIC NMI source.
+    // Local APIC NMI source.
     //
 
     {
-        EFI_ACPI_6_2_LOCAL_X2APIC_NMI,
-        sizeof(EFI_ACPI_6_2_LOCAL_X2APIC_NMI_STRUCTURE),
-        0,      // Flags
-        0x0,    // ACPI Processor ID - 0xFFFFFFFF indicates all processors.  We report just the BSP
-        1,      // LINT#
-        {       // 3 bytes Reserved - Must be zero
-            0,
-            0,
-            0
-        }
+        EFI_ACPI_6_2_LOCAL_APIC_NMI,
+        sizeof(EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE),
+        0x1,    // ACPI Processor ID - 0xFF indicates all processors.  We report just the BSP, UID 1
+        0x0,    // Flags
+        1      // LINT#
     },
 
     //

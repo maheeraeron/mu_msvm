@@ -78,20 +78,20 @@ Return Value:
 
         if (maxProcessorCount > MAX_PROCESSORS)
         {
-            x2ApicEntries = MAX_PROCESSORS;
+            x2ApicEntries = MAX_PROCESSORS - MAX_PROCESSORS_APIC;
         }
         else
         {
             x2ApicEntries = (maxProcessorCount - MAX_PROCESSORS_APIC);
         }
     }
-    
+
     //
-    // Set the overall size of the table based on number of processors.  
+    // Set the overall size of the table based on number of processors.
     //
     table->Header.Header.Length = sizeof(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER) +
         sizeof(EFI_ACPI_6_2_IO_APIC_STRUCTURE) +
-        sizeof(EFI_ACPI_6_2_LOCAL_X2APIC_NMI_STRUCTURE) +
+        sizeof(EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE) +
         sizeof(EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE) +
         sizeof(EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE) * localApicEntries +
         sizeof(EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE) * x2ApicEntries;
@@ -120,7 +120,7 @@ Return Value:
     {
         x2ApicEntry = &table->LocalX2ApicTable[index];
         x2ApicEntry->Type = EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC;
-        x2ApicEntry->Length = sizeof(*x2ApicEntry);        
+        x2ApicEntry->Length = sizeof(*x2ApicEntry);
         x2ApicEntry->AcpiProcessorUid = (index + MAX_PROCESSORS_APIC) + 1; // Processor UIDs start at 1
         x2ApicEntry->X2ApicId = (index + MAX_PROCESSORS_APIC);
         x2ApicEntry->Flags = 0;
