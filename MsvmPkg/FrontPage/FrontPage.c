@@ -786,6 +786,14 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     GenerateBootSummary();
 
+    // Check if the frontpage interface should be disabled, which will result in the
+    // VM being shutdown.
+    if (PcdGetBool(PcdDisableFrontpage))
+    {
+        DEBUG((DEBUG_INFO, "[FP] PcdDisableFrontpage set, skipping frontpage display.\n"));
+        goto Exit;
+    }
+
     //
     // After the console is ready, get current video resolution
     // and text mode before launching setup at first time.
@@ -953,8 +961,15 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
 Exit:
 
-    // If unable to enter front page, hang the system. We should have already
-    // flushed the reason why we didn't boot to the host event log.
+    // If unable to enter front page, either hang the system or shutdown. We
+    // should have already flushed the reason why we didn't boot to the host
+    // event log.
+
+    if (PcdGetBool(PcdDisableFrontpage))
+    {
+        DEBUG((DEBUG_INFO, "[FP] Configured to shutdown instead of displaying frontpage.\n"));
+        EfiResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+    }
 
     while (TRUE)
     {

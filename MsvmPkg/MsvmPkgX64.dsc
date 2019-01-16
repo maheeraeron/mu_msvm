@@ -492,6 +492,7 @@
   gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount|0x0

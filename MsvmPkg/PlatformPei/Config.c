@@ -402,6 +402,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tSgxMemoryEnabled: %u\n", flags->Flags.SgxMemoryEnabled));
             DEBUG((DEBUG_VERBOSE, "\tIsVmbfsBoot: %u\n", flags->Flags.IsVmbfsBoot));
             DEBUG((DEBUG_VERBOSE, "\tMeasureAdditionalPcrs: %u\n", flags->Flags.MeasureAdditionalPcrs));
+            DEBUG((DEBUG_VERBOSE, "\tShutdownAfterBootFailure: %u\n", flags->Flags.DisableFrontpage));
             break;
 
         case UefiConfigProcessorInformation:
@@ -941,6 +942,7 @@ Return Value:
                 PcdSetBool(PcdVirtualBatteryEnabled, (UINT8) flags->Flags.VirtualBatteryEnabled);
                 PcdSetBool(PcdSgxMemoryEnabled, (UINT8) flags->Flags.SgxMemoryEnabled);
                 PcdSetBool(PcdIsVmbfsBoot, (UINT8) flags->Flags.IsVmbfsBoot);
+                PcdSetBool(PcdDisableFrontpage, (UINT8) flags->Flags.DisableFrontpage);
 
                 //
                 // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.

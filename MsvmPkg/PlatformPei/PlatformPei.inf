@@ -128,6 +128,7 @@
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
     gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
+    gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
     gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket

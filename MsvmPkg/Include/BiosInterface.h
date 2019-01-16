@@ -711,7 +711,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 SgxMemoryEnabled:1;
         UINT64 IsVmbfsBoot:1;
         UINT64 MeasureAdditionalPcrs:1;
-        UINT64 Reserved:50;
+        UINT64 DisableFrontpage:1;
+        UINT64 Reserved:49;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

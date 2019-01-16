@@ -235,6 +235,7 @@
   gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE|BOOLEAN|0x6031
   gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE|BOOLEAN|0x6039
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE|BOOLEAN|0x603D
+  gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE|BOOLEAN|0x6042
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount|0x0|UINT32|0x6040

@@ -90,6 +90,7 @@
   gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState
   gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile
   gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
+  gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
 
 [Depex]
   TRUE
