@@ -24,9 +24,11 @@
     AcpiPlatform.c
     Dsdt.c
     Facp.c
-    Madt.c
     Oem0.c
     spcr.c
+
+[Sources.AARCH64]
+    Madt.c
 
 [Packages]
     MdePkg/MdePkg.dec
@@ -66,6 +68,8 @@
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
     gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
+    gMsvmPkgTokenSpaceGuid.PcdMadtPtr
+    gMsvmPkgTokenSpaceGuid.PcdMadtSize
     gMsvmPkgTokenSpaceGuid.PcdSratPtr
     gMsvmPkgTokenSpaceGuid.PcdSratSize
     gMsvmPkgTokenSpaceGuid.PcdEntropyPtr
@@ -77,7 +81,6 @@
     gMsvmPkgTokenSpaceGuid.PcdConsoleMode
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
-    gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages

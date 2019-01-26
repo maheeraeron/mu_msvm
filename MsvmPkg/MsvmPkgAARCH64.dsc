@@ -392,6 +392,10 @@
   # UEFI_CONFIG_BIOS_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0
 
+  # UEFI_CONFIG_MADT
+  gMsvmPkgTokenSpaceGuid.PcdMadtPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdMadtSize|0x0
+
   # UEFI_CONFIG_SRAT
   gMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdSratSize|0x0
@@ -483,7 +487,6 @@
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
-  gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount|0x0
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
   gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket|0x0
   gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor|0x0

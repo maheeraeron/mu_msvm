@@ -138,6 +138,119 @@ Return Value:
     return physicalAddressWidth;
 }
 
+
+VOID
+DebugDumpMadt(
+    _In_ VOID* Madt
+)
+{
+#if !defined(MDEPKG_NDEBUG)
+    EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER*)Madt;
+    EFI_ACPI_6_2_IO_APIC_STRUCTURE* madtIoApic;
+    EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE* madtApicNmi;
+    EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE* madtOverride;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE* madtApic;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE* madtX2Apic;
+    EFI_ACPI_6_2_GIC_DISTRIBUTOR_STRUCTURE* madtGicd;
+    EFI_ACPI_6_2_GIC_STRUCTURE* madtGicc;
+    
+    UINT8 *cursor;
+
+    //
+    // Debug dump the MADT entries.
+    //
+    DEBUG((DEBUG_VERBOSE, "--- MADT data @ %x\n", acpiHdr));
+    DEBUG((DEBUG_VERBOSE, "    Header Signature %x\n", acpiHdr->Signature));
+    DEBUG((DEBUG_VERBOSE, "    Length %x\n", acpiHdr->Length));
+
+    cursor = (UINT8 *)acpiHdr;
+    cursor += sizeof(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER);
+
+    do
+    {
+        switch (*cursor)  // UINT8 sized Type always at start of struct
+        {
+
+        case EFI_ACPI_6_2_IO_APIC:
+            madtIoApic = (EFI_ACPI_6_2_IO_APIC_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "    IOAPIC Type %x Len %02x IoApicId %02x IoApicAddress %02x\n",
+                madtIoApic->Type, madtIoApic->Length, madtIoApic->IoApicId, madtIoApic->IoApicAddress));
+
+            cursor += madtIoApic->Length;
+            break;
+        
+        case EFI_ACPI_6_2_LOCAL_APIC_NMI:
+            madtApicNmi = (EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "    APIC NMI Type %x Len %02x Flags %02x AcpiProcessorUid %02x LocalApicLint %x\n",
+                madtApicNmi->Type, madtApicNmi->Length, madtApicNmi->Flags, madtApicNmi->AcpiProcessorUid,
+                madtApicNmi->LocalApicLint));
+
+            cursor += madtApicNmi->Length;
+            break;
+
+        case EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE:
+            madtOverride = (EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "    Interrupt Source Override Type %x Len %02x Flags %02x Source %02x GlobalSystemInterrupt %x\n",
+                madtOverride->Type, madtOverride->Length, madtOverride->Flags, madtOverride->Source,
+                madtOverride->GlobalSystemInterrupt));
+
+            cursor += madtOverride->Length;
+            break;
+
+        case EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC:
+            madtApic = (EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "    APIC Type %x Len %02x Flags %02x ApicId %02x\n",
+                madtApic->Type, madtApic->Length, madtApic->Flags, madtApic->ApicId));
+
+            cursor += madtApic->Length;
+            break;
+
+        case EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC:
+            madtX2Apic = (EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "   X2APIC Type %x Len %02x Flags %02x X2ApicId %02x\n",
+                madtX2Apic->Type, madtX2Apic->Length, madtX2Apic->Flags, madtX2Apic->X2ApicId));
+
+            cursor += madtX2Apic->Length;
+            break;
+
+        case EFI_ACPI_6_2_GICD:
+            madtGicd = (EFI_ACPI_6_2_GIC_DISTRIBUTOR_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "   GICD Type %x Len %02x GicId %02x PhysicalBaseAddress %02x\n",
+                madtGicd->Type, madtGicd->Length, madtGicd->GicId, madtGicd->PhysicalBaseAddress));
+
+            cursor += madtGicd->Length;
+            break;
+
+        case EFI_ACPI_6_2_GIC:
+            madtGicc = (EFI_ACPI_6_2_GIC_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "   GICD Type %x Len %02x Flags %02x AcpiProcessorUid %02x\n",
+                madtGicc->Type, madtGicc->Length, madtGicc->Flags, madtGicc->AcpiProcessorUid));
+
+            cursor += madtGicc->Length;
+            break;
+
+        default:
+            madtApic = (EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE *)cursor;
+
+            DEBUG((DEBUG_VERBOSE, "    APIC Type %x Len %02x Flags %02x ApicId %02x\n",
+                madtApic->Type, madtApic->Length, madtApic->Flags, madtApic->ApicId));
+
+            cursor += madtApic->Length;
+            break;
+        }
+    } while (cursor < ((UINT8 *)acpiHdr + acpiHdr->Length));
+    
+#endif
+}
+
+
 VOID
 DebugDumpSrat(
     _In_ VOID* Srat
@@ -146,6 +259,8 @@ DebugDumpSrat(
 #if !defined(MDEPKG_NDEBUG)
     EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER*) Srat;
     EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_SAPIC_AFFINITY_STRUCTURE *sratApic;
+    EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_AFFINITY_STRUCTURE *sratX2Apic;
+    EFI_ACPI_6_2_GICC_AFFINITY_STRUCTURE *sratGicc;
     EFI_ACPI_6_2_MEMORY_AFFINITY_STRUCTURE *sratMem;
     UINTN base, size;
     UINT8 *cursor;
@@ -173,7 +288,27 @@ DebugDumpSrat(
 
                 cursor += sratApic->Length;
                 break;
+            
+            case EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_AFFINITY:
+                sratX2Apic = (EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_AFFINITY_STRUCTURE *)cursor;
 
+                DEBUG((DEBUG_VERBOSE, "   X2APIC Type %x Len %02x Flags %02x X2ApicId %02x Dom %x\n",
+                    sratX2Apic->Type, sratX2Apic->Length, sratX2Apic->Flags, sratX2Apic->X2ApicId,
+                    sratX2Apic->ProximityDomain));
+
+                cursor += sratX2Apic->Length;
+                break;
+
+            case EFI_ACPI_6_2_GICC_AFFINITY:
+                sratGicc = (EFI_ACPI_6_2_GICC_AFFINITY_STRUCTURE *)cursor;
+
+                DEBUG((DEBUG_VERBOSE, "   GICC Type %x Len %02x Flags %02x ProcessorUid %02x Dom %x\n",
+                    sratGicc->Type, sratGicc->Length, sratGicc->Flags, sratGicc->AcpiProcessorUid,
+                    sratGicc->ProximityDomain));
+
+                cursor += sratGicc->Length;
+                break;
+            
             case EFI_ACPI_6_2_MEMORY_AFFINITY:
                 sratMem = (EFI_ACPI_6_2_MEMORY_AFFINITY_STRUCTURE *)cursor;
 
@@ -297,6 +432,11 @@ DebugDumpUefiConfigStruct(
         case UefiConfigBiosInformation:
             UEFI_CONFIG_BIOS_INFORMATION *biosInfo = (UEFI_CONFIG_BIOS_INFORMATION*) Header;
             DEBUG((DEBUG_VERBOSE, "\tBiosSizePages: 0x%x\n\tBiosVdevVersion:0x%x\n", biosInfo->BiosSizePages, biosInfo->BiosVDevVersion));
+            break;
+
+        case UefiConfigMadt:
+            UEFI_CONFIG_MADT * madt = (UEFI_CONFIG_MADT*)Header;
+            DebugDumpMadt(madt->Madt);
             break;
 
         case UefiConfigSrat:
@@ -631,10 +771,11 @@ Return Value:
     // Tracking to see if the config blob has all the required structures.
     //
 #if defined(MDE_CPU_X64)
-    static const UINT64 AllStructuresFound = 0xFF;
+    static const UINT64 AllStructuresFound = 0x1FF;
     union {
         struct {
             UINT64 UefiConfigBiosInformation:1;
+            UINT64 UefiConfigMadt:1;
             UINT64 UefiConfigSrat:1;
             UINT64 UefiConfigMemoryMap:1;
             UINT64 UefiConfigEntropy:1;
@@ -642,7 +783,7 @@ Return Value:
             UINT64 UefiConfigFlags:1;
             UINT64 UefiConfigProcessorInformation:1;
             UINT64 UefiConfigMmioRanges:1;
-            UINT64 Reserved:55;
+            UINT64 Reserved:54;
         };
 
         UINT64 AsUINT64;
@@ -717,6 +858,25 @@ Return Value:
                 UEFI_CONFIG_BIOS_INFORMATION *biosInfo = (UEFI_CONFIG_BIOS_INFORMATION*) header;
                 PcdSet32(PcdBiosVDevVersion, biosInfo->BiosVDevVersion);
                 requiredStructures.UefiConfigBiosInformation = 1;
+                break;
+
+            case UefiConfigMadt:
+                UEFI_CONFIG_MADT * madtStructure = (UEFI_CONFIG_MADT*)header;
+                EFI_ACPI_DESCRIPTION_HEADER *madtHdr = (EFI_ACPI_DESCRIPTION_HEADER*)madtStructure->Madt;
+                                
+                if (madtStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    madtHdr->Signature != EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE ||
+                    madtHdr->Length >(madtStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "*** Malformed MADT\n"));
+                    goto Failure;
+                }
+
+                PcdSet64(PcdMadtPtr, (UINT64)madtStructure->Madt);
+                PcdSet32(PcdMadtSize, madtHdr->Length);
+#if defined(MDE_CPU_X64)
+                requiredStructures.UefiConfigMadt = 1;
+#endif
                 break;
 
             case UefiConfigSrat:
@@ -962,7 +1122,6 @@ Return Value:
 
             case UefiConfigProcessorInformation:
                 UEFI_CONFIG_PROCESSOR_INFORMATION *processorInfo = (UEFI_CONFIG_PROCESSOR_INFORMATION*) header;
-                PcdSet32(PcdMaxProcessorCount, processorInfo->MaxProcessorCount);
                 PcdSet32(PcdProcessorCount, processorInfo->ProcessorCount);
                 PcdSet32(PcdProcessorsPerVirtualSocket, processorInfo->ProcessorsPerVirtualSocket);
                 PcdSet32(PcdThreadsPerProcessor, processorInfo->ThreadsPerProcessor);
@@ -970,12 +1129,6 @@ Return Value:
                 if (processorInfo->ProcessorCount == 0)
                 {
                     DEBUG((DEBUG_ERROR, "Processors count was 0.\n"));
-                    goto Failure;
-                }
-
-                if (processorInfo->MaxProcessorCount < processorInfo->ProcessorCount)
-                {
-                    DEBUG((DEBUG_ERROR, "MaxProcessorCount was fewer than ProcessorCount.\n"));
                     goto Failure;
                 }
 

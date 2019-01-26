@@ -558,6 +558,7 @@ enum UefiStructureType
     UefiConfigAARCH64MPIDR                 = 0x15,
     UefiConfigAcpiTable                    = 0x16,
     UefiConfigNvdimmCount                  = 0x17,
+    UefiConfigMadt                         = 0x18,
 };
 
 //
@@ -587,6 +588,12 @@ typedef struct _UEFI_CONFIG_BIOS_INFORMATION
     UINT32 BiosSizePages;
     UINT32 BiosVDevVersion;
 } UEFI_CONFIG_BIOS_INFORMATION;
+
+typedef struct _UEFI_CONFIG_MADT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Madt[];
+} UEFI_CONFIG_MADT;
 
 typedef struct _UEFI_CONFIG_SRAT
 {

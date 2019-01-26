@@ -47,8 +47,6 @@ INIT_TABLE_ENTRY AcpiInitTable[] =
     { VM_ACPI_ENTROPY_TABLE_SIGNATURE, Oem0InitializeTable },
 #ifdef MDE_CPU_AARCH64
     { EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE, GicInitializeTable },
-#else
-    { EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE, ApicInitializeTable },
 #endif
     { EFI_ACPI_6_2_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE, DsdtInitializeTable },
     { EFI_ACPI_6_2_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE, SpcrInitializeTable },
@@ -191,6 +189,51 @@ Return Value:
     //
 
     gBS->FreePool(handleBuffer);
+    return status;
+}
+
+
+EFI_STATUS
+AcpiInstallMadtTable(
+    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+/*++
+
+Routine Description:
+
+    Retrieves the MADT table from the worker process and installs it.
+
+Arguments:
+
+    AcpiTable - A pointer to the ACPI table protocol.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table;
+    UINTN tableHandle;
+    UINT32 madtSize;
+
+    //
+    // Get the MADT from the config blob parsed in PEI.
+    //
+    madtSize = PcdGet32(PcdMadtSize);
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdMadtPtr);
+
+    ASSERT(table->Length == madtSize);
+
+    //
+    // Install it into the published tables.
+    //
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
     return status;
 }
 
@@ -473,6 +516,20 @@ Return Value:
             goto Cleanup;
         }
     }
+
+#if defined(MDE_CPU_X64)
+
+    //
+    // Add the MADT table.
+    //
+
+    status = AcpiInstallMadtTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+#endif
 
     //
     // Add the SRAT table.

@@ -24,13 +24,13 @@
 [Sources]
     Dsdt.asl
     Fadt.aslc
-    Madt.aslc
     Oem0.aslc
     Spcr.aslc
 
 [Sources.AARCH64]
     Dbg2.aslc
     Gtdt.aslc
+    Madt.aslc
 
 [Sources.X64]
     Facs.aslc

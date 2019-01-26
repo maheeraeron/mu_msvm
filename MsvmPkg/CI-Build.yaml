@@ -30,7 +30,7 @@ variables:
 
   #parameters for vpack publishing
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
-  Parameters.vPack.majorVer: "2"
+  Parameters.vPack.majorVer: "3"
   Parameters.vPack.minorVer: "0"
 
 steps:

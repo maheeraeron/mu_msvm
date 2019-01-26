@@ -15,68 +15,6 @@ Abstract:
 #include <Base.h>
 #include <AcpiTables.h>
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
-
-#define DEFINE_OVERRIDE(IrqSource, Vector, Flags) \
-    { \
-        EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE, \
-        sizeof(EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE), \
-        0, \
-        IrqSource, \
-        Vector, \
-        Flags \
-    }
-
-VM_MADT_TABLE MADT =
-{
-    {
-        STANDARD_HEADER(EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
-                        sizeof(VM_MADT_TABLE),
-                        EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION)
-        FixedPcdGet32(PcdCpuLocalApicBaseAddress),
-        0, // EFI_ACPI_6_2_PCAT_COMPAT flag is cleared; Hyper-V does not support the legacy PIC interface when running in UEFI mode.
-    },
-
-    //
-    // I/O APIC.
-    //
-
-    {
-        EFI_ACPI_6_2_IO_APIC,
-        sizeof(EFI_ACPI_6_2_IO_APIC_STRUCTURE),
-        0, // IoApicId - updated at runtime
-        0, // Reserved
-        FixedPcdGet32(PcdIoApicBaseAddress),
-        0, // GlobalSystemInterruptBase
-    },
-
-    //
-    // Local APIC NMI source.
-    //
-
-    {
-        EFI_ACPI_6_2_LOCAL_APIC_NMI,
-        sizeof(EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE),
-        0x1,    // ACPI Processor ID - 0xFF indicates all processors.  We report just the BSP, UID 1
-        0x0,    // Flags
-        1      // LINT#
-    },
-
-    //
-    // Mark the PM interrupt as being active high and level triggered, since
-    // the OS ordinarily expects it to be active low.
-    //
-
-    DEFINE_OVERRIDE(9, 9, 0xd),
-
-    //
-    // The remainder is runtime-initialized.
-    //
-};
-
-#elif defined(MDE_CPU_AARCH64)
-
-
 VM_MADT_TABLE MADT =
 {
     {
@@ -106,8 +44,6 @@ VM_MADT_TABLE MADT =
     // The rest is runtime-initialized.
     //
 };
-
-#endif
 
 VOID*
 ReferenceAcpiTable()

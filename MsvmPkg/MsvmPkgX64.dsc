@@ -64,7 +64,7 @@
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
-  LocalApicLib|UefiCpuPkg/Library/BaseXApicLib/BaseXApicLib.inf
+  LocalApicLib|UefiCpuPkg/Library/BaseXApicX2ApicLib/BaseXApicX2ApicLib.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PCUartLib|MsvmPkg/Library/PCUart/PCUart.inf
@@ -404,6 +404,10 @@
   # UEFI_CONFIG_BIOS_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0
 
+  # UEFI_CONFIG_MADT
+  gMsvmPkgTokenSpaceGuid.PcdMadtPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdMadtSize|0x0
+
   # UEFI_CONFIG_SRAT
   gMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdSratSize|0x0
@@ -495,7 +499,6 @@
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
-  gMsvmPkgTokenSpaceGuid.PcdMaxProcessorCount|0x0
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
   gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket|0x0
   gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor|0x0
