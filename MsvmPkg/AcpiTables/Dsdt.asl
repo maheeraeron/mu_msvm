@@ -864,12 +864,10 @@ DefinitionBlock (
 
                                         // Copy the contents of the method I/O Buffer.
                                         Name (RBUF, Buffer(MBFL) {})
-                                        Multiply (MBFL, 8, Local0)
                                         Store (MBUF, RBUF)
-                                        CreateField (RBUF, 0, Local0, RBFF)
 
                                         Release (NMTX)
-                                        Return (RBFF)
+                                        Return (RBUF)
                                     }
                                 }
                             }
@@ -933,12 +931,10 @@ DefinitionBlock (
 
                                         // Copy the contents of the method I/O Buffer.
                                         Name (RBUF, Buffer(MBFL) {})
-                                        Multiply (MBFL, 8, Local0)
                                         Store (MBUF, RBUF)
-                                        CreateField (RBUF, 0, Local0, RBFF)
 
                                         Release (NMTX)
-                                        Return (RBFF)
+                                        Return (RBUF)
                                     }
                                 }
                             }
