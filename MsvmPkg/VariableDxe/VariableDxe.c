@@ -4,18 +4,18 @@
         Derivative of:
             SecurityPkg\VariableAuthenticated\RuntimDxe\Variable.c
             SecurityPkg\VariableAuthenticated\RuntimDxe\VariableDxe.c
-    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE 
-    WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE 
-    MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY. 
+    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE
+    WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE
+    MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
 
     Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
-    This program and the accompanying materials                          
-    are licensed and made available under the terms and conditions of the BSD License         
-    which accompanies this distribution.  The full text of the license may be found at        
-    http://opensource.org/licenses/bsd-license.php                                            
-    
-    THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-    WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+    This program and the accompanying materials
+    are licensed and made available under the terms and conditions of the BSD License
+    which accompanies this distribution.  The full text of the license may be found at
+    http://opensource.org/licenses/bsd-license.php
+
+    THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+    WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
     Copyright (c) Microsoft Corporation
 
@@ -29,7 +29,7 @@ Abstract:
 
 Author:
 
-    Larry Cleeton (lcleeton) - 04-Mar-2013 
+    Larry Cleeton (lcleeton) - 04-Mar-2013
 
 --*/
 
@@ -146,7 +146,7 @@ Returns:
 
 --*/
 {
-    return (Variable != NULL) && 
+    return (Variable != NULL) &&
            (Variable->StartId == VARIABLE_DATA) &&
            (Variable->NameSize <= EFI_MAX_VARIABLE_NAME_SIZE) &&
            (Variable->DataSize <= EFI_MAX_VARIABLE_DATA_SIZE);
@@ -201,8 +201,8 @@ Returns:
     // Accounts for the padding of the Name string that
     // puts the data buffer on an appropriate boundary.
     //
-    return (UINT8 *)((UINTN)GetVariableNamePtr(Variable) + 
-                            Variable->NameSize + 
+    return (UINT8 *)((UINTN)GetVariableNamePtr(Variable) +
+                            Variable->NameSize +
                             GET_PAD_SIZE(Variable->NameSize));
 }
 
@@ -236,8 +236,8 @@ Returns:
     // Accounts for the padding of Data that
     // puts the next variable structure on an appropriate boundary.
     //
-    return (VARIABLE_HEADER *)((UINTN)GetVariableDataPtr(Variable) + 
-                                      Variable->DataSize + 
+    return (VARIABLE_HEADER *)((UINTN)GetVariableDataPtr(Variable) +
+                                      Variable->DataSize +
                                       GET_PAD_SIZE(Variable->DataSize));
 }
 
@@ -250,7 +250,7 @@ NameSizeOfVariable(
 
 Routine Description:
 
-    Returns the size in bytes of a variable's Name string including 
+    Returns the size in bytes of a variable's Name string including
     the null terminator.
 
 Arguments:
@@ -266,7 +266,7 @@ Returns:
     if (Variable->State == (UINT8) (-1) ||
         Variable->DataSize == (UINT32) (-1) ||
         Variable->NameSize == (UINT32) (-1) ||
-        Variable->Attributes == (UINT32) (-1)) 
+        Variable->Attributes == (UINT32) (-1))
     {
         return 0;
     }
@@ -375,7 +375,7 @@ Returns:
     VARIABLE_HEADER*  currentVariable;
     VARIABLE_HEADER*  nextVariable;
 
-#if !defined(MDEPKG_NDEBUG)      
+#if !defined(MDEPKG_NDEBUG)
     NvramDebugLog("Reclaim start - offset 0x08%x", mStoreFreeOffset);
 #endif
 
@@ -384,13 +384,13 @@ Returns:
     {
         nextVariable = GetNextVariablePtr(currentVariable);
         if (currentVariable->State != VAR_ADDED &&
-            currentVariable->State != (VAR_IN_DELETED_TRANSITION & VAR_ADDED)) 
+            currentVariable->State != (VAR_IN_DELETED_TRANSITION & VAR_ADDED))
         {
-            CopyMem((VOID*)currentVariable, 
-                    (VOID*)nextVariable, 
+            CopyMem((VOID*)currentVariable,
+                    (VOID*)nextVariable,
                     (UINTN)GetEndPointer(mVariableStore) - (UINTN)nextVariable);
-            SetMem((VOID*)((UINTN)GetStartPointer(mVariableStore) + mStoreFreeOffset), 
-                    STORE_MAIN_SIZE - mStoreFreeOffset, 
+            SetMem((VOID*)((UINTN)GetStartPointer(mVariableStore) + mStoreFreeOffset),
+                    STORE_MAIN_SIZE - mStoreFreeOffset,
                     0xff);
             mStoreFreeOffset -= ((UINTN)nextVariable - (UINTN)currentVariable);
         }
@@ -399,7 +399,7 @@ Returns:
             currentVariable = GetNextVariablePtr(currentVariable);
         }
     }
-#if !defined(MDEPKG_NDEBUG)      
+#if !defined(MDEPKG_NDEBUG)
     NvramDebugLog("Reclaim stop  - offset 0x08%x", mStoreFreeOffset);
 #endif
 }
@@ -424,7 +424,7 @@ Arguments:
     VendorGuid - Vendor GUID to be found.
 
     Variable - Receives a pointer to a variable header or NULL if not found.
-               
+
 Returns:
 
     EFI_INVALID_PARAMETER       - Invalid parameter.
@@ -442,50 +442,50 @@ Returns:
     //
     // Find the variable by enumerating through the variable structures.
     //
-    for( 
+    for(
         deletedVariable = NULL,
-        CurrPtr = GetStartPointer(mVariableStore), 
+        CurrPtr = GetStartPointer(mVariableStore),
         EndPtr = GetEndPointer(mVariableStore);
         (CurrPtr < EndPtr) && IsValidVariableHeader(CurrPtr);
         CurrPtr = GetNextVariablePtr(CurrPtr)
-       ) 
+       )
     {
         if (CurrPtr->State == VAR_ADDED ||
             CurrPtr->State == (VAR_IN_DELETED_TRANSITION & VAR_ADDED))
         {
-            if (VariableName[0] == 0) 
+            if (VariableName[0] == 0)
             {
                 //
                 // Looking for first variable.
                 //
-                if (CurrPtr->State == (VAR_IN_DELETED_TRANSITION & VAR_ADDED)) 
+                if (CurrPtr->State == (VAR_IN_DELETED_TRANSITION & VAR_ADDED))
                 {
                     deletedVariable = CurrPtr;
-                } 
+                }
                 else
                 {
                     *Variable = CurrPtr;
                     return EFI_SUCCESS;
                 }
-            } 
+            }
             else
             {
                 //
                 // Looking for a specific variable.
                 //
-                if (CompareGuid(VendorGuid, &CurrPtr->VendorGuid)) 
+                if (CompareGuid(VendorGuid, &CurrPtr->VendorGuid))
                 {
                     ASSERT(NameSizeOfVariable(CurrPtr) != 0);
-                    if (CompareMem(VariableName, 
-                                   (void *)GetVariableNamePtr(CurrPtr), 
-                                   NameSizeOfVariable(CurrPtr)) == 0) 
+                    if (CompareMem(VariableName,
+                                   (void *)GetVariableNamePtr(CurrPtr),
+                                   NameSizeOfVariable(CurrPtr)) == 0)
                     {
-                        if (CurrPtr->State == 
-                            (VAR_IN_DELETED_TRANSITION & VAR_ADDED)) 
+                        if (CurrPtr->State ==
+                            (VAR_IN_DELETED_TRANSITION & VAR_ADDED))
                         {
                             deletedVariable = CurrPtr;
-                        } 
-                        else 
+                        }
+                        else
                         {
                             *Variable = CurrPtr;
                             return EFI_SUCCESS;
@@ -500,7 +500,7 @@ Returns:
     // Nothing found or VAR_IN_DELETED_TRANSITION found.
     //
     *Variable =  deletedVariable;
-  
+
     return (*Variable == NULL) ? EFI_NOT_FOUND : EFI_SUCCESS;
 }
 
@@ -528,13 +528,13 @@ Arguments:
 
     Attributes - Attributes bitmask to set for the variable.
 
-    DataSize - The size in bytes of the Data buffer. Unless the 
+    DataSize - The size in bytes of the Data buffer. Unless the
                EFI_VARIABLE_APPEND_WRITE or EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                attribute is set, a size of zero causes the variable to be deleted.
-               When the EFI_VARIABLE_APPEND_WRITE attribute is set, then a SetVariable call 
+               When the EFI_VARIABLE_APPEND_WRITE attribute is set, then a SetVariable call
                with a DataSize of zero will not cause any change to the variable value (the
                timestamp associated with the variable my be updated).
-    
+
     Data - The contents for the variable.
 
     Variable - Variable header pointer that contains existing variable information.
@@ -571,13 +571,13 @@ Returns:
         return EFI_INVALID_PARAMETER;
     }
 
-    if (Variable != NULL) 
+    if (Variable != NULL)
     {
         //
         // This is an update or delete of an existing variable.
         //
-        if (EfiAtRuntime()) 
-        {        
+        if (EfiAtRuntime())
+        {
             //
             // Volatile variable are read-only at runtime by definition.
             //
@@ -585,15 +585,15 @@ Returns:
         }
 
         //
-        // Setting a variable with no access attributes or zero DataSize 
+        // Setting a variable with no access attributes or zero DataSize
         // causes it to be deleted.  However if the EFI_VARIABLE_APPEND_WRITE
         // is set a DataSize of zero will not delete the variable.
         //
-        if ((((Attributes & EFI_VARIABLE_APPEND_WRITE) == 0) && (DataSize == 0)) || 
-            ((Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)) == 0)) 
+        if ((((Attributes & EFI_VARIABLE_APPEND_WRITE) == 0) && (DataSize == 0)) ||
+            ((Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)) == 0))
         {
             Variable->State &= VAR_DELETED;
-            return EFI_SUCCESS;     
+            return EFI_SUCCESS;
         }
 
         //
@@ -610,7 +610,7 @@ Returns:
         //
         // EFI_VARIABLE_APPEND_WRITE means append new data to existing
         //
-        if ((Attributes & EFI_VARIABLE_APPEND_WRITE) != 0) 
+        if ((Attributes & EFI_VARIABLE_APPEND_WRITE) != 0)
         {
             //
             // Check if new size will be too big.
@@ -625,22 +625,22 @@ Returns:
             //
             GetVariableDataPtr(Variable);
 
-            dataOffset = sizeof(VARIABLE_HEADER) + Variable->NameSize + 
+            dataOffset = sizeof(VARIABLE_HEADER) + Variable->NameSize +
                             GET_PAD_SIZE(Variable->NameSize);
-            CopyMem(mAppendBuffer, 
-                    (UINT8*)((UINTN)Variable + dataOffset), 
+            CopyMem(mAppendBuffer,
+                    (UINT8*)((UINTN)Variable + dataOffset),
                     Variable->DataSize);
 
             //
             // Append the new data on the end.
             //
             CopyMem((UINT8*)((UINTN)mAppendBuffer + Variable->DataSize),
-                        Data, 
+                        Data,
                         DataSize);
 
             //
             // Override the Data ptr and DataSize to the combined data.
-            //                
+            //
             Data = mAppendBuffer;
             DataSize = Variable->DataSize + DataSize;
         }
@@ -650,26 +650,26 @@ Returns:
         //
         Variable->State &= VAR_IN_DELETED_TRANSITION;
     }
-    else 
+    else
     {
         //
         // Not an existing variable. This is a new variable.
-        //  
+        //
 
         //
         // DataSize of zero and APPEND_WRITE set is a no-op for non-existing variable.
         //
-        if ((DataSize == 0) && ((Attributes & EFI_VARIABLE_APPEND_WRITE) != 0)) 
+        if ((DataSize == 0) && ((Attributes & EFI_VARIABLE_APPEND_WRITE) != 0))
         {
             return EFI_SUCCESS;
         }
 
         //
-        // Setting a data variable with zero DataSize or no access attributes means to delete it.    
+        // Setting a data variable with zero DataSize or no access attributes means to delete it.
         // There is no variable to delete.
         //
-        if (DataSize == 0 || 
-           (Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)) == 0) 
+        if (DataSize == 0 ||
+           (Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)) == 0)
         {
             return EFI_NOT_FOUND;
         }
@@ -677,7 +677,7 @@ Returns:
         //
         // Volatile variable cannot be created at Runtime.
         //
-        if (EfiAtRuntime()) 
+        if (EfiAtRuntime())
         {
             return EFI_INVALID_PARAMETER;
         }
@@ -690,11 +690,11 @@ Returns:
     //
     newVariable = GetEndPointer(mVariableStore);
     scratchSize = STORE_SCRATCH_SIZE;
-    scratchDataSize = scratchSize - sizeof(VARIABLE_HEADER) - 
+    scratchDataSize = scratchSize - sizeof(VARIABLE_HEADER) -
                       StrSize(VariableName) - GET_PAD_SIZE(StrSize(VariableName));
-   
+
     SetMem(newVariable, scratchSize, 0xff);
-    
+
     newVariable->StartId  = VARIABLE_DATA;
     //
     // Intentionally not setting State to VAR_ADDED;
@@ -705,7 +705,7 @@ Returns:
     // Don't store the APPEND_WRITE bit.
     //
     newVariable->Attributes  = Attributes & (~EFI_VARIABLE_APPEND_WRITE);
-    
+
     //
     // Copy name, data, and GUID.
     //
@@ -732,14 +732,14 @@ Returns:
     //
     // Reclaim space if necessary.
     //
-    if ((UINT32)(newVariableSize + mStoreFreeOffset) > STORE_MAIN_SIZE) 
+    if ((UINT32)(newVariableSize + mStoreFreeOffset) > STORE_MAIN_SIZE)
     {
         Reclaim();
-      
+
         //
         // If still not enough space, return out of resources.
         //
-        if ((UINT32)(newVariableSize + mStoreFreeOffset) > STORE_MAIN_SIZE) 
+        if ((UINT32)(newVariableSize + mStoreFreeOffset) > STORE_MAIN_SIZE)
         {
             return EFI_OUT_OF_RESOURCES;
         }
@@ -759,7 +759,7 @@ Returns:
     //
     // Mark the old variable as deleted.
     //
-    if (Variable != NULL) 
+    if (Variable != NULL)
     {
         Variable->State &= VAR_DELETED;
     }
@@ -785,14 +785,14 @@ Arguments:
     VariableName - A Null-terminated string that is the name of the vendor's variable.
 
     VendorGuid - A unique identifier for the vendor.
-    
+
 Returns:
 
     TRUE if variable is read-only. FALSE otherwise.
 
 --*/
 {
-    if (CompareGuid(VendorGuid, &gEfiGlobalVariableGuid)) 
+    if (CompareGuid(VendorGuid, &gEfiGlobalVariableGuid))
     {
         if ((StrCmp(VariableName, EFI_SETUP_MODE_NAME) == 0) ||
             (StrCmp(VariableName, EFI_SIGNATURE_SUPPORT_NAME) == 0) ||
@@ -817,7 +817,7 @@ Routine Description:
 Arguments:
 
     None.
-    
+
 Returns:
 
     EFI_STATUS.
@@ -832,7 +832,7 @@ Returns:
     //
     // Allocate memory for volatile store.
     //
-    mVariableStore = 
+    mVariableStore =
         (VARIABLE_STORE_HEADER*)AllocateRuntimePool(STORE_MAIN_SIZE + STORE_SCRATCH_SIZE);
     if (mVariableStore == NULL)
     {
@@ -844,12 +844,12 @@ Returns:
     // Allocate memory for append write scratch buffer.
     //
     mAppendBuffer  = AllocateRuntimePool(EFI_MAX_VARIABLE_DATA_SIZE);
-    if (mAppendBuffer == NULL) 
+    if (mAppendBuffer == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
         goto Cleanup;
     }
-    
+
     //
     // Init the memory store.
     //
@@ -885,7 +885,7 @@ Routine Description:
 Arguments:
 
     None.
-    
+
 Returns:
 
     EFI_STATUS.
@@ -908,7 +908,7 @@ Returns:
         ASSERT_EFI_ERROR(status);
         return status;
     }
-    
+
     return EFI_SUCCESS;
 }
 
@@ -952,11 +952,11 @@ Returns:
     // Fetch necessary state for exitbootservices from volatile store.
     //
     status = FindVariable(OSLOADER_INDICATIONS_NAME,
-                          &hyperVGuid, 
+                          &hyperVGuid,
                           &variable);
 
-    if ((status == EFI_SUCCESS) && 
-        (variable != NULL) && 
+    if ((status == EFI_SUCCESS) &&
+        (variable != NULL) &&
         (DataSizeOfVariable(variable) == sizeof (UINT32)))
     {
         supportedIndications = *(PUINT32)GetVariableDataPtr(variable);
@@ -994,12 +994,12 @@ Returns:
 {
     //
     // Signal the NVRAM store.
-    //    
+    //
     NvramAddressChangeHandler();
 
     //
     // Update volatile store pointers.
-    //    
+    //
     EfiConvertPointer(0, (void**) &mVariableStore);
 }
 
@@ -1022,7 +1022,7 @@ VariableServiceGetVariable(
 
 Routine Description:
 
-    Finds variable in either the volatile store or the NVRAM store. 
+    Finds variable in either the volatile store or the NVRAM store.
 
 Arguments:
 
@@ -1036,7 +1036,7 @@ Arguments:
                On output receives the size of the returned data in the Data buffer.
                If the return value is EFI_BUFFER_TOO_SMALL this receives the size
                needed to complete the request.
-               
+
     Data - The buffer to return the contents of the variable.
 
 Returns:
@@ -1044,7 +1044,7 @@ Returns:
     EFI_SUCCESS - The function completed successfully.
 
     EFI_NOT_FOUND - The variable was not found.
-    
+
     EFI_INVALID_PARAMETER - The VariableName was NULL.
     EFI_INVALID_PARAMETER - The VendorGuid was NULL.
     EFI_INVALID_PARAMETER - The DataSize was NULL.
@@ -1063,7 +1063,18 @@ Returns:
         return EFI_INVALID_PARAMETER;
     }
 
-#if !defined(MDEPKG_NDEBUG)      
+    if (Data == NULL && *DataSize != 0)
+    {
+        // This is a symptom of usually someone calling GetVariable with DataSize
+        // uninitialized. Regardless, this is just the caller being wrong, which
+        // is always a bug.
+        //
+        // Assert false here to help find those bugs on debug builds.
+        ASSERT(FALSE);
+        return EFI_INVALID_PARAMETER;
+    }
+
+#if !defined(MDEPKG_NDEBUG)
     NvramDebugLog("GetVariable for '%s' DataSize 0x%x", VariableName, *DataSize);
 #endif
 
@@ -1071,7 +1082,7 @@ Returns:
     // First check the volatile store
     //
     status = FindVariable(VariableName, VendorGuid, &variable);
-    if (variable == NULL || EFI_ERROR(status)) 
+    if (variable == NULL || EFI_ERROR(status))
     {
         //
         // Not found so dispatch to the non-volatile store.
@@ -1080,7 +1091,7 @@ Returns:
     }
 
     //
-    // Have volatile variable. 
+    // Have volatile variable.
     //
     dataSize = variable->DataSize;
 
@@ -1128,7 +1139,7 @@ Routine Description:
 
     Enumerates the current variable names.
 
-    Start the enumeration with a call to this function supplying an 
+    Start the enumeration with a call to this function supplying an
     empty string in VariableName.
 
     Get the next variable by supplying the VariableName and VendorGuid that
@@ -1138,14 +1149,14 @@ Arguments:
 
     VariableNameSize - The size fo the VariableName buffer.
 
-    VariableName - On input supplies the last VariableName that was 
+    VariableName - On input supplies the last VariableName that was
                    returned by this function.
                    On output receives the null-terminated string of the
                    variable following the one input.
 
     VendorGuid - On input supplies the last VendorGuidthat was returned
                  by this function.
-                 On output receives the VendorGuid of the variable 
+                 On output receives the VendorGuid of the variable
                  following the one input.
 
 Returns:
@@ -1166,22 +1177,22 @@ Returns:
     VARIABLE_HEADER* variable;
     UINT32 varNameSize;
     static CHAR16 emptyName[1];
-    
-    
-    if (VariableNameSize == NULL || VariableName == NULL || VendorGuid == NULL) 
+
+
+    if (VariableNameSize == NULL || VariableName == NULL || VendorGuid == NULL)
     {
         return EFI_INVALID_PARAMETER;
     }
 
-#if !defined(MDEPKG_NDEBUG)      
+#if !defined(MDEPKG_NDEBUG)
     NvramDebugLog("GetNextVariable for '%s'", VariableName);
 #endif
-    
+
     //
     // First check the non-volatile store for the requested variable.
     //
     status = FindVariable(VariableName, VendorGuid, &variable);
-    if (variable == NULL || EFI_ERROR(status)) 
+    if (variable == NULL || EFI_ERROR(status))
     {
         //
         // Volatile store is empty or caller has enumerated past its end.
@@ -1275,19 +1286,19 @@ Arguments:
 
     Attributes - Attributes bitmask to set for the variable.
 
-    DataSize - The size in bytes of the Data buffer. Unless the 
+    DataSize - The size in bytes of the Data buffer. Unless the
                EFI_VARIABLE_APPEND_WRITE or EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                attribute is set, a size of zero causes the variable to be deleted.
-               When the EFI_VARIABLE_APPEND_WRITE attribute is set, then a SetVariable call 
+               When the EFI_VARIABLE_APPEND_WRITE attribute is set, then a SetVariable call
                with a DataSize of zero will not cause any change to the variable value (the
                timestamp associated with the variable my be updated).
-    
+
     Data - The contents for the variable.
 
 Returns:
 
     EFI_SUCCESS - Variable was successfully stored as defined by its attributes.
-    
+
     EFI_INVALID_PARAMETER - An invalid combination of attribute bits was supplied or
                             the DataSize exceeds the maximum allowed.
 
@@ -1296,16 +1307,16 @@ Returns:
     EFI_OUT_OF_RESOURCES - Not enough storage is available to hold the variable and its data.
 
     EFI_DEVICE_ERROR - Variable can not be saved due to hardware failure.
-    
+
     EFI_WRITE_PROTECTED - The variable is read-only.
 
     EFI_WRITE_PROTECTED - The variable cannot be deleted.
 
-    EFI_SECURITY_VIOLATION - The variable could not be written due to 
+    EFI_SECURITY_VIOLATION - The variable could not be written due to
                              EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
                              being set but the supplied authentication info did
                              not pass the validation check.
-    
+
     EFI_NOT_FOUND - The variable to be deleted does not exist.
 
 --*/
@@ -1322,25 +1333,25 @@ Returns:
     if (VariableName == NULL || VariableName[0] == 0 || VendorGuid == NULL)
     {
         return EFI_INVALID_PARAMETER;
-    } 
+    }
 
-#if !defined(MDEPKG_NDEBUG)      
-    NvramDebugLog("SetVariable for '%s' Attr 0x%x DataSize 0x%x", 
+#if !defined(MDEPKG_NDEBUG)
+    NvramDebugLog("SetVariable for '%s' Attr 0x%x DataSize 0x%x",
         VariableName, Attributes, DataSize);
 #endif
 
     //
     // Check for read-only variables.
     //
-    if (IsReadOnlyVariable (VariableName, VendorGuid)) 
+    if (IsReadOnlyVariable (VariableName, VendorGuid))
     {
         return EFI_WRITE_PROTECTED;
     }
-    
+
     //
     // Must supply data if size is non-zero.
     //
-    if (DataSize != 0 && Data == NULL) 
+    if (DataSize != 0 && Data == NULL)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -1348,7 +1359,7 @@ Returns:
     //
     // Check for reserved bits in variable attribute.
     //
-    if ((Attributes & (~EFI_VARIABLE_ATTRIBUTES_MASK)) != 0) 
+    if ((Attributes & (~EFI_VARIABLE_ATTRIBUTES_MASK)) != 0)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -1356,7 +1367,7 @@ Returns:
     //
     //  If RT is set then BS must be also.
     //
-    if ((Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS)) 
+    if ((Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS))
         == EFI_VARIABLE_RUNTIME_ACCESS)
     {
         return EFI_INVALID_PARAMETER;
@@ -1364,7 +1375,7 @@ Returns:
 
     //
     // The authentication attributes cannot both be set.
-    //    
+    //
     if (((Attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) != 0) &&
        ((Attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS) != 0))
     {
@@ -1374,7 +1385,7 @@ Returns:
     //
     // EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS is simply not supported.
     //
-    if ((Attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) != 0) 
+    if ((Attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) != 0)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -1382,19 +1393,19 @@ Returns:
     //
     // Sanity check for EFI_VARIABLE_AUTHENTICATION_2 descriptor.
     //
-    if ((Attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS) != 0) 
+    if ((Attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS) != 0)
     {
         if (DataSize < OFFSET_OF_AUTHINFO2_CERT_DATA ||
-            ((EFI_VARIABLE_AUTHENTICATION_2 *)Data)->AuthInfo.Hdr.dwLength > 
+            ((EFI_VARIABLE_AUTHENTICATION_2 *)Data)->AuthInfo.Hdr.dwLength >
                 DataSize - (OFFSET_OF(EFI_VARIABLE_AUTHENTICATION_2, AuthInfo)) ||
-            ((EFI_VARIABLE_AUTHENTICATION_2 *) Data)->AuthInfo.Hdr.dwLength < 
-                OFFSET_OF(WIN_CERTIFICATE_UEFI_GUID, CertData)) 
+            ((EFI_VARIABLE_AUTHENTICATION_2 *) Data)->AuthInfo.Hdr.dwLength <
+                OFFSET_OF(WIN_CERTIFICATE_UEFI_GUID, CertData))
         {
             return EFI_SECURITY_VIOLATION;
         }
         payloadSize = DataSize - AUTHINFO2_SIZE(Data);
-    } 
-    else 
+    }
+    else
     {
         payloadSize = DataSize;
     }
@@ -1416,7 +1427,7 @@ Returns:
     {
         volatileExists = TRUE;
     }
-    
+
     //
     // Refuse to do authentication on an existing volatile variable.
     //
@@ -1425,24 +1436,24 @@ Returns:
     {
         return EFI_INVALID_PARAMETER;
     }
-    
+
     //
     // Dispatch to volatile store if it already exists there.
     // Dispatch to volatile store if new volatile variable with actual data.
     //
-    if (volatileExists || 
-        (((Attributes & EFI_VARIABLE_NON_VOLATILE) == 0) && 
+    if (volatileExists ||
+        (((Attributes & EFI_VARIABLE_NON_VOLATILE) == 0) &&
         (DataSize > 0) &&
         (((Attributes & EFI_VARIABLE_BOOTSERVICE_ACCESS) != 0) ||
          ((Attributes & EFI_VARIABLE_RUNTIME_ACCESS) != 0))
         ))
     {
         return UpdateVariable(VariableName, VendorGuid, Data, DataSize, Attributes, variable);
-    } 
+    }
 
     //
     // Dispatch to non-volatile store.
-    //    
+    //
     return NvramSetVariable(VariableName, VendorGuid, Attributes, DataSize, Data);
  }
 
@@ -1464,7 +1475,7 @@ Routine Description:
 Arguments:
 
     Attributes - Attributes bitmask to specify the type of variables
-                 on which to return information. 
+                 on which to return information.
     MaximumVariableStorageSize - Receives the maximum size of the storage space available
                                  for the EFI variables associated with the attributes specified.
     RemainingVariableStorageSize - Receives the remaining size of the storage space available
@@ -1486,13 +1497,13 @@ Returns:
     VARIABLE_HEADER* nextVariable;
     UINT64 variableSize;
 
-#if !defined(MDEPKG_NDEBUG)      
+#if !defined(MDEPKG_NDEBUG)
     NvramDebugLog("QueryVariableInfo Attr 0x%x", Attributes);
 #endif
 
-    if ((MaximumVariableStorageSize == NULL) || 
+    if ((MaximumVariableStorageSize == NULL) ||
         (RemainingVariableStorageSize == NULL) ||
-        (MaximumVariableSize == NULL) || 
+        (MaximumVariableSize == NULL) ||
         (Attributes == 0))
     {
         return EFI_INVALID_PARAMETER;
@@ -1500,9 +1511,9 @@ Returns:
 
     //
     // Validate Attributes.
-    // 
-    if ((Attributes &  (EFI_VARIABLE_NON_VOLATILE | 
-                        EFI_VARIABLE_BOOTSERVICE_ACCESS | 
+    //
+    if ((Attributes &  (EFI_VARIABLE_NON_VOLATILE |
+                        EFI_VARIABLE_BOOTSERVICE_ACCESS |
                         EFI_VARIABLE_RUNTIME_ACCESS)) == 0)
     {
         //
@@ -1510,8 +1521,8 @@ Returns:
         //
         return EFI_UNSUPPORTED;
     }
-    else if ((Attributes & (EFI_VARIABLE_RUNTIME_ACCESS | 
-                             EFI_VARIABLE_BOOTSERVICE_ACCESS)) == 
+    else if ((Attributes & (EFI_VARIABLE_RUNTIME_ACCESS |
+                             EFI_VARIABLE_BOOTSERVICE_ACCESS)) ==
                             EFI_VARIABLE_RUNTIME_ACCESS)
     {
         //
@@ -1532,9 +1543,9 @@ Returns:
     //
     if ((Attributes & EFI_VARIABLE_NON_VOLATILE) != 0)
     {
-        return NvramQueryInfo(Attributes, 
-                              MaximumVariableStorageSize, 
-                              RemainingVariableStorageSize, 
+        return NvramQueryInfo(Attributes,
+                              MaximumVariableStorageSize,
+                              RemainingVariableStorageSize,
                               MaximumVariableSize);
     }
 
@@ -1605,14 +1616,14 @@ VariableServiceInitialize(
 
 Routine Description:
 
-    Variable Services Driver main entry point. 
+    Variable Services Driver main entry point.
 
     This function:
-    
+
     - Initializes the volatile and non-volatile stores
     - Places the 4 EFI runtime variable services in the EFI System Table
-    - Installs the Variable Architectural Tag Protocol to indicate variable 
-      services are available. 
+    - Installs the Variable Architectural Tag Protocol to indicate variable
+      services are available.
     - Registers a notification function for the EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE event.
     - Registers a notification function for the EVT_SIGNAL_EXIT_BOOT_SERVICES event.
 
@@ -1647,7 +1658,7 @@ Returns:
     SystemTable->RuntimeServices->GetNextVariableName = VariableServiceGetNextVariableName;
     SystemTable->RuntimeServices->SetVariable         = VariableServiceSetVariable;
     SystemTable->RuntimeServices->QueryVariableInfo   = VariableServiceQueryVariableInfo;
-      
+
     //
     // Register a function to update addresses when page tables are changed.
     //

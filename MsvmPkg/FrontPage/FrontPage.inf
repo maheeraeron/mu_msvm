@@ -36,7 +36,6 @@
   MdeModulePkg/MdeModulePkg.dec
   MsvmPkg/MsvmPkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
-  MsCapsuleUpdatePkg/MsCapsuleUpdatePkg.dec
 
 [LibraryClasses]
   CpuLib

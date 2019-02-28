@@ -15,7 +15,7 @@
 #
 ##
 
-#Override : 00000001 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | c6259ded798cfd52a26e547bfdeeb8e1 | 2018-11-01T22-41-16
+#Override : 00000001 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | 3e5844253cd5fb4b4c1abbb7666193fc | 2019-02-20T00-51-22
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -45,6 +45,7 @@
   ## HyperV Override: Need internal package for libs.
   MsvmPkg/MsvmPkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
+  MsCorePkg/MsCorePkg.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint

@@ -37,6 +37,7 @@ Environment:
 
 EFI_DUMP_BUFFER     BdDumpBuffer = {0};
 MemoryDumpType      BdDumpType   = MemoryDumpDisabled;
+static CHAR8        CrashDumpBuffer[EFI_DUMP_BUFFER_SIZE] = {0};
 
 /**
   Called to initialize the crash dump agent.
@@ -51,7 +52,6 @@ InitializeCrashDumpAgent(
     )
 {
     EFI_PEI_HOB_POINTERS hob;
-    UINT8* dumpBuffer;
 
     //
     // find and save the initial stack info from the HOB list
@@ -76,18 +76,7 @@ InitializeCrashDumpAgent(
         hob.Raw = GET_NEXT_HOB(hob);
     }
 
-    // allocate buffer
-    dumpBuffer = AllocatePool(EFI_DUMP_BUFFER_SIZE);
-
-    if (dumpBuffer == NULL)
-    {
-        // This initializes early enough that we should always be able
-        // to allocate.
-        ASSERT(FALSE);
-        return;
-    }
-
-    EfiDumpBufferInitialize(&BdDumpBuffer, dumpBuffer, EFI_DUMP_BUFFER_SIZE);
+    EfiDumpBufferInitialize(&BdDumpBuffer, CrashDumpBuffer, EFI_DUMP_BUFFER_SIZE);
 
     //
     // This could be configured via the BIOS config hob

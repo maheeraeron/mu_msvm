@@ -31,7 +31,7 @@ Intel Corporation.
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MsBuildIdLib.h>
-#include <Library/MsDisplayOnScreenNotificationLib.h>
+#include <Library/DisplayDeviceStateLib.h>
 #include <Library/BmpSupportLib.h>
 #include <Library/MsLogoLib.h>
 
@@ -163,7 +163,7 @@ IN  EFI_GUID  *LogoFile
     //
     gST->ConOut->EnableCursor(gST->ConOut, FALSE);
 
-    DisplayOnScreenNotifications(
+    DisplayDeviceState(
         (UINT8*)((UINTN)GraphicsOutput->Mode->FrameBufferBase),
         GraphicsOutput->Mode->Info->PixelsPerScanLine,
         (INT32)SizeOfX,

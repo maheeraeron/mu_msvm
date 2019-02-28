@@ -23,6 +23,7 @@ Author:
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrashDumpAgentLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -106,26 +107,31 @@ Return value:
     BdSerialPrint(">>> %a (%lx, %p, %p)\n", __FUNCTION__, InitFlag, Context, Function);
     if (InitFlag == DEBUG_AGENT_INIT_DXE_CORE)
     {
-        //        
-        // InitializeDebugAgent is called very early on in DXE Core, before any        
-        // drivers are dispatched. Thus, we can't use the PcdDebuggerEnabled to        
-        // determine if debuggers are enabled, rather we search for the special        
-        // HOB containing just this flag to determine if the debug system should        
-        // be enabled or not.        
-        //        
-        void* hob = GetFirstGuidHob(&gMsvmDebuggerEnabledGuid);        
-        if (hob != NULL)        
-        {            
-            BdSubsystemEnabled = *((BOOLEAN *)GET_GUID_HOB_DATA(hob));        
+        //
+        // InitializeDebugAgent is called very early on in DXE Core, before any
+        // drivers are dispatched. Thus, we can't use the PcdDebuggerEnabled to
+        // determine if debuggers are enabled, rather we search for the special
+        // HOB containing just this flag to determine if the debug system should
+        // be enabled or not.
+        //
+        void* hob = GetFirstGuidHob(&gMsvmDebuggerEnabledGuid);
+        if (hob != NULL)
+        {
+            BdSubsystemEnabled = *((BOOLEAN *)GET_GUID_HOB_DATA(hob));
         }
         else
         {
-            // We should always be passing this HOB.            
-            // fixme: just assert? or should we just fail            
+            // We should always be passing this HOB.
             ASSERT(FALSE);
         }
         BdSerialPrint("--- %a: DebuggerEnabled %a\n", __FUNCTION__,
             BdSubsystemEnabled ? "TRUE" : "FALSE");
+
+        //
+        // Initialize crashdump, only once when INIT called during DXE Core.
+        // Context is the HOB list when called from DXE Core.
+        //
+        InitializeCrashDumpAgent(Context);
     }
 
     BdInitialize();

@@ -74,6 +74,10 @@
   UefiCpuLib|UefiCpuPkg/Library/BaseUefiCpuLib/BaseUefiCpuLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
 
+  DeviceStateLib|MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
+  DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
+  UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
+
 #  DebugCommunicationLib|SourceLevelDebugPkg/Library/DebugCommunicationLibSerialPort/DebugCommunicationLibSerialPort.inf
 #  HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
 #  ResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf

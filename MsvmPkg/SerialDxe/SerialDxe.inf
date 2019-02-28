@@ -33,8 +33,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  IntelFrameworkPkg/IntelFrameworkPkg.dec
-  IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
   MsvmPkg/MsvmPkg.dec
 
 [Packages.AARCH64]

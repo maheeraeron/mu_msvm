@@ -44,6 +44,7 @@
   MsvmPkg/MsvmPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
 
 
 [LibraryClasses]
@@ -57,7 +58,7 @@
   PcdLib
   DxeServicesLib
   MsBuildIdLib
-  MsDisplayOnScreenNotificationLib
+  DisplayDeviceStateLib
   BmpSupportLib
 
 [Guids]

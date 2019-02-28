@@ -14,7 +14,10 @@ import struct
 from datetime import datetime
 from datetime import date
 import time
-from UefiBuild import UefiBuilder
+from MuEnvironment.UefiBuild import UefiBuilder
+
+from MuPythonLibrary.UtilityFunctions import RunCmd
+from MuPythonLibrary.UtilityFunctions import RunPythonScript
 
 
 
@@ -23,8 +26,8 @@ from UefiBuild import UefiBuilder
 #
 class PlatformBuilder(UefiBuilder):
 
-    def __init__(self, workspace, packagespath, pluginlist, args):
-        super(PlatformBuilder, self).__init__(workspace, packagespath, pluginlist, args)
+    def __init__(self, WorkSpace, PackagesPath, PInManager, PInHelper, args):
+        super(PlatformBuilder, self).__init__(WorkSpace, PackagesPath, PInManager, PInHelper, args)
 
     def SetPlatformEnv(self):
         logging.debug("PlatformBuilder SetPlatformEnv")

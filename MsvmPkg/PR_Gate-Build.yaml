@@ -23,21 +23,21 @@ strategy:
       Build.Target: 'RELEASE'
       Build.Arch: 'AARCH64'
 
+workspace:
+  clean: all
+
 variables:
   Build.ToolChainTag: "VSLATESTx86xASL"
   PlatformPkg: "MsvmPkg"
-  Env.PythonVersion: "3.7.0"
+  Env.PythonVersion: "3.7.2"
+  GIT_TERMINAL_PROMPT: "0"
 
 steps:
+- checkout: self
+  clean: true
 
 - powershell: |
-   @{
-   SM_UDK_INTERNAL = "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal";
-   SM_UDK = "https://user:$(MSCORE.PAT)@microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE";
-   }.GetEnumerator() | % {
-     $SM = $_.Key; $URL = $_.Value
-     git config --file=.gitmodules submodule.${SM}.url ${URL}
-   }
+   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
    git submodule sync
 
   displayName: 'Use PATs for submodules'
@@ -51,22 +51,28 @@ steps:
     subPaths: tools
 
 - task: CmdLine@1
+  displayName: 'Add mu_build pip'
+  inputs:
+    filename: python.exe
+    arguments: '-m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir'
+
+- task: CmdLine@1
   displayName: 'Platform build Setup'
   inputs:
     filename: python.exe
-    arguments: 'MsvmPkg/PlatformBuild.py --setup --force'
- 
+    arguments: '$(PlatformPkg)/PlatformBuild.py --setup'
+
 - task: CmdLine@1
   displayName: 'Platform build Update'
   inputs:
     filename: python.exe
-    arguments: 'MsvmPkg/PlatformBuild.py --update'
+    arguments: '$(PlatformPkg)/PlatformBuild.py --update'
 
 - task: CmdLine@1
   displayName: 'Run Build '
   inputs:
     filename: python.exe
-    arguments: 'MsvmPkg/PlatformBuild.py  tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch)'
+    arguments: '$(PlatformPkg)/PlatformBuild.py  tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE'
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: BuildLog $(Build.Target) $(Build.Arch)'
@@ -104,13 +110,7 @@ steps:
   continueOnError: true
 
 - powershell: |
-   @{
-   SM_UDK_INTERNAL = "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal";
-   SM_UDK = "https://microsoft.visualstudio.com/DefaultCollection/MsUEFI/_git/CORE";
-   }.GetEnumerator() | % {
-     $SM = $_.Key; $URL = $_.Value
-     git config --file=.gitmodules submodule.${SM}.url ${URL}
-   }
+   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
    git submodule sync
 
   displayName: 'Restore Submodules'

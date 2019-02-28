@@ -288,6 +288,17 @@ EFIAPI
 DeviceBootManagerUnableToBoot (
   VOID
   ) {
+  EFI_BOOT_MANAGER_LOAD_OPTION    BootManagerMenu;
+  EFI_STATUS                      BootManagerMenuStatus;
 
-    // Do nothing so that BDS can enter the front page automatically
+  //
+  // BootManagerMenu doesn't contain the correct information when return status is EFI_NOT_FOUND.
+  //
+  BootManagerMenuStatus = EfiBootManagerGetBootManagerMenu (&BootManagerMenu);
+
+  if(BootManagerMenuStatus != EFI_NOT_FOUND) {
+    for (;;) {
+      EfiBootManagerBoot (&BootManagerMenu);
+    }
+  }
 }

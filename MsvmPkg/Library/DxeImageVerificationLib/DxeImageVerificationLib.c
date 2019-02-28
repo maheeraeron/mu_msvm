@@ -277,12 +277,12 @@ GetImageType (
 /**
   Calculate hash of Pe/Coff image based on the authenticode image hashing in
   PE/COFF Specification 8.0 Appendix A
-  
+
   Caution: This function may receive untrusted input.
   PE/COFF image is external input, so this function will validate its data structure
   within this image buffer before use.
 
-  Notes: PE/COFF image has been checked by BasePeCoffLib PeCoffLoaderGetImageInfo() in 
+  Notes: PE/COFF image has been checked by BasePeCoffLib PeCoffLoaderGetImageInfo() in
   its caller function DxeImageVerificationHandler().
 
   @param[in]    HashAlg   Hash algorithm type.
@@ -1111,14 +1111,14 @@ IsTimeZero (
 }
 
 /**
-  Check whether the timestamp signature is valid and the signing time is also earlier than 
+  Check whether the timestamp signature is valid and the signing time is also earlier than
   the revocation time.
 
   @param[in]  AuthData        Pointer to the Authenticode signature retrieved from signed image.
   @param[in]  AuthDataSize    Size of the Authenticode signature in bytes.
   @param[in]  RevocationTime  The time that the certificate was revoked.
 
-  @retval TRUE      Timestamp signature is valid and signing time is no later than the 
+  @retval TRUE      Timestamp signature is valid and signing time is no later than the
                     revocation time.
   @retval FALSE     Timestamp signature is not valid or the signing time is later than the
                     revocation time.
@@ -1228,9 +1228,9 @@ Done:
 
 **/
 BOOLEAN
-IsForbiddenByDbx (  
+IsForbiddenByDbx (
   IN UINT8                  *AuthData,
-  IN UINTN                  AuthDataSize  
+  IN UINTN                  AuthDataSize
   )
 {
   EFI_STATUS                Status;
@@ -1475,8 +1475,9 @@ IsAllowedByDb (
             //
             // Here We still need to check if this RootCert's Hash is revoked
             //
+            DbxDataSize = 0; // MS_CHANGE DbxDataSize was uninitialized before, which is wrong.
             Status   = gRT->GetVariable (EFI_IMAGE_SECURITY_DATABASE1, &gEfiImageSecurityDatabaseGuid, NULL, &DbxDataSize, NULL);
-            if (Status == EFI_BUFFER_TOO_SMALL) {
+            if (Status != EFI_BUFFER_TOO_SMALL) { // MS_CHANGE Was ==, which is obviously a bug. This will probably change from upstream soon.
               goto Done;
             }
             DbxData = (UINT8 *) AllocateZeroPool (DbxDataSize);

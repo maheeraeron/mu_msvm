@@ -67,19 +67,21 @@
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLibBase.inf
-  HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
-  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+  DeviceStateLib|MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
+  DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
   EmclLib|MsvmPkg/Library/EmclLib/EmclLib.inf
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
+  FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
+  HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+  MathLib|MsCorePkg/Library/MathLib/MathLib.inf
   MemoryInitPeiLib|ArmVirtPkg/Library/ArmVirtMemoryInitPeiLib/ArmVirtMemoryInitPeiLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
-  PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
-  Performance2Lib|MdePkg/Library/BasePerformance2LibNull/BasePerformance2LibNull.inf ## MS_CHANGE
   PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
   PlatformPeiLib|ArmPlatformPkg/PlatformPei/PlatformPeiLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
@@ -91,10 +93,12 @@
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
+  UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
 
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
   SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
+  PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
 !else
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
@@ -121,7 +125,6 @@
   # MsCore BDS & FrontPage Libs
   PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
   DeviceBootManagerLib|MsvmPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
-  MsDisplayOnScreenNotificationLib|MsvmPkg/Library/BaseDisplayOnScreenNotificationLibNull/BaseDisplayOnScreenNotificationLibNull.inf
   MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
   MsLogoLib|MsvmPkg/Library/MsLogoLib/MsLogoLib.inf #point to MsLogoLib
@@ -171,9 +174,6 @@
 #
 [LibraryClasses.common.PEI_CORE]
   PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf
-!if $(PERF_TRACE_ENABLE) == TRUE
-  Performance2Lib|PerformancePkg/Library/CorePerformance2Lib/PeiCorePerformance2Lib.inf
-!endif
 
 #
 # Library instance overrides just for PEIMs
@@ -194,7 +194,7 @@
   #DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
   #DebugLib|MsvmPkg/Library/BdDebugLib/BdDebugLib.inf
   #PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
-  DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocol.inf
+  DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocolDxe.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|MdeModulePkg/Library/DxeDpcLib/DxeDpcLib.inf
   DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
@@ -227,9 +227,7 @@
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
-!if $(PERF_TRACE_ENABLE) == TRUE
-  Performance2Lib|PerformancePkg/Library/CorePerformance2Lib/DxeCorePerformance2Lib.inf
-!endif
+
 ##MSChange Begin
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
 
@@ -255,6 +253,34 @@
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
+  DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocolRuntime.inf
+
+# PERF MODULES START
+!if $(PERF_TRACE_ENABLE) == TRUE
+[PcdsFixedAtBuild]
+    # Sets bits 0, 3 to enable measurement but skip binding supports
+    gEfiMdePkgTokenSpaceGuid.PcdPerformanceLibraryPropertyMask|0x9
+    # 16M should be enough to fit all the verbose measurements
+    gEfiMdeModulePkgTokenSpaceGuid.PcdExtFpdtBootRecordPadSize|0x1000000
+
+[LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
+    PerformanceLib|MdeModulePkg/Library/PeiPerformanceLib/PeiPerformanceLib.inf
+
+[LibraryClasses.common.UEFI_APPLICATION, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_DRIVER]
+    PerformanceLib|MdeModulePkg/Library/DxePerformanceLib/DxePerformanceLib.inf
+
+[LibraryClasses.common.DXE_CORE]
+    PerformanceLib|MdeModulePkg/Library/DxeCorePerformanceLib/DxeCorePerformanceLib.inf
+
+#  [Components.common]
+#      # FBPT Dump App:
+#      # Note, this has a dependency on ShellLib, so can only build this if also building the shell
+#      PerformancePkg/Application/FbptDump/FbptDump.inf
+!else
+[LibraryClasses.common]
+    PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
+!endif
+# PERF MODULES END
 
 [PcdsFixedAtBuild.common]
   # GIC related config
@@ -319,7 +345,13 @@
   # This default turns on errors and warnings
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
 !endif
+
+# Disable asserts when not building debug
+!if $(TARGET) == DEBUG
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
+!else
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x06
+!endif
 
   #
   # See REPORT_STATUS_CODE_PROPERTY_nnnnn in ReportStatusCodeLib.h
@@ -597,7 +629,7 @@
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
   <LibraryClasses>
     SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
-    NULL|SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf
+    NULL|MsvmPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf
     NULL|SecurityPkg/Library/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf
   }
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
@@ -610,6 +642,7 @@
   MsvmPkg/EmclDxe/EmclDxe.inf
   MsvmPkg/EventLogDxe/EventLogDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
+  MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
   MsvmPkg/SbCryptDxe/SbCryptDxe.inf
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf

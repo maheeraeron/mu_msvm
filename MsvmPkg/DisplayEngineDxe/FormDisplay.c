@@ -912,6 +912,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
     //
     FontInfo.FontStyle = EFI_HII_FONT_STYLE_NORMAL;
     FontInfo.FontSize = MsUiGetSmallFontHeight ();     // Cell height for small font.
+    FontInfo.FontName[0] = L'\0';
 
     // Set a starting position within the canvas for rendering UI controls.
     //
@@ -1095,7 +1096,10 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                     // Signal that the current grid no longer has scope. Controls added from this point forward will be added
                     // directly to the canvas (unless another grid is created).
                     //
-                    if (LocalGrid->m_GridInitialHeight != LocalGrid->m_GridCellHeight) {
+                    if (LocalGrid == NULL) {
+                        DEBUG ((DEBUG_ERROR, "ERROR [DE]: GridEndOp without valid StartGridOp\n"));
+                    }
+                    if (LocalGrid != NULL && LocalGrid->m_GridInitialHeight != LocalGrid->m_GridCellHeight) {
                         DEBUG ((DEBUG_ERROR, "ERROR [DE]: Grid elements larger than initial grid height.  Correct VFR StartGridOp value.\r\n"));
                     }
                     GridScope = FALSE;
@@ -2533,7 +2537,7 @@ UiDisplayMenu (IN FORM_DISPLAY_ENGINE_FORM *FormData) {
                             DebugDumpMemory(DEBUG_ERROR,((CHAR8 *)ReturnValue) - 0x18, Statement->CurrentValue.BufferLen + 0x20,DEBUG_DM_PRINT_ASCII);
 #endif
                             if (CompareMem (ReturnValue, ValueArray, Statement->CurrentValue.BufferLen) == 0) {
-                                DEBUG ((DEBUG_ERROR,__FUNCTION__ " no change detected\n"));
+                                DEBUG ((DEBUG_ERROR, "%a no change detected\n", __FUNCTION__));
                                 // ** Error condition ***
                                 FreePool (ReturnValue);
                             } else {
@@ -2875,7 +2879,7 @@ RegisterWithSimpleWindowManager (
     //
     Status = gBS->LocateProtocol (&gMsSWMProtocolGuid,
                                   NULL,
-                                  &mSWMProtocol);
+                                  (VOID **) &mSWMProtocol);
 
     if (EFI_ERROR (Status)) {
         mSWMProtocol = NULL;
@@ -2928,7 +2932,7 @@ FormDisplayOnReadyToBoot (
     IN VOID *Context
     ) {
 
-    DEBUG ((DEBUG_INFO, __FUNCTION__ "\n"));
+    DEBUG ((DEBUG_INFO, "%a\n", __FUNCTION__));
 
     if (NULL != mPrivateData.PreviousCanvas) {
         delete_Canvas (mPrivateData.PreviousCanvas);

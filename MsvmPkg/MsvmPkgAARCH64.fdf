@@ -92,6 +92,8 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   INF MsvmPkg/EventLogDxe/EventLogDxe.inf
   INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
+  INF MsvmPkg/VariableDxe/VariableDxe.inf
+  INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 }
 
 #
@@ -159,6 +161,7 @@ INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf
 INF MsvmPkg/EventLogDxe/EventLogDxe.inf
 INF MsvmPkg/NetvscDxe/NetvscDxe.inf
+INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 INF MsvmPkg/SbCryptDxe/SbCryptDxe.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf
 INF MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
