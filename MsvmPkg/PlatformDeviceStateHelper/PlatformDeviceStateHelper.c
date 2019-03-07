@@ -31,9 +31,9 @@
 BOOLEAN
 IsSecureBootOn()
 {
-  EFI_STATUS  Status;
-  UINT32      *Value;
-  UINTN       Size;
+  EFI_STATUS  Status = EFI_DEVICE_ERROR;
+  UINT8      *Value = NULL;
+  UINTN       Size = 0;
 
   Status = GetVariable2(L"SecureBoot", &gEfiGlobalVariableGuid, (VOID **)&Value, &Size);
   if (EFI_ERROR (Status) || (Value == NULL)) {
@@ -42,12 +42,14 @@ IsSecureBootOn()
     return FALSE;
   }
 
+  ASSERT(Size == 1);
+
   if(*Value == 1) {
     DEBUG((DEBUG_INFO, "%a - Secure boot on\n", __FUNCTION__));
     FreePool (Value);
     return TRUE;
   }
-  
+
   DEBUG((DEBUG_INFO, "%a - Secure boot off\n", __FUNCTION__));
   FreePool (Value);
   return FALSE;
@@ -85,7 +87,7 @@ PlatformDeviceStateHelperInit(
   {
     CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
   }
-  
+
   AddDeviceState(CoreNotifications);
 
   return EFI_SUCCESS;
