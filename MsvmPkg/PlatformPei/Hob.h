@@ -52,6 +52,7 @@ HobAddReservedMemoryRange(
 
 void
 HobAddUntestedMemoryRange(
+    _Inout_ PPLATFORM_INIT_CONTEXT  Context,
     _In_ EFI_PHYSICAL_ADDRESS BaseAddress,
     _In_ UINT64               Size
     );

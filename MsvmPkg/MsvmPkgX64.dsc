@@ -308,6 +308,8 @@
   # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
+  # Turns on DEBUG_INFO and DEBUG_VERBOSE
+  #gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
   # Turns on DEBUG_INFO
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000042
 !else
@@ -641,6 +643,7 @@
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
   MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
+  MdeModulePkg/Universal/MemoryTest/NullMemoryTestDxe/NullMemoryTestDxe.inf
 
   # Networking components
 

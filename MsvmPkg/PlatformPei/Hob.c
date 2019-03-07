@@ -148,14 +148,14 @@ Return Value:
 
 --*/
 {
-    BuildResourceDescriptorHob(EFI_RESOURCE_MEMORY_MAPPED_IO, 
-                               STANDARD_FLAGS, 
-                               BaseAddress, 
+    BuildResourceDescriptorHob(EFI_RESOURCE_MEMORY_MAPPED_IO,
+                               STANDARD_FLAGS,
+                               BaseAddress,
                                Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"MMIO"));
 }
 
@@ -194,14 +194,14 @@ Return Value:
         HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
     }
 
-    BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY, 
-                               MEMORY_FLAGS, 
-                               BaseAddress, 
+    BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
+                               MEMORY_FLAGS,
+                               BaseAddress,
                                Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"Memory"));
 }
 
@@ -229,14 +229,14 @@ Return Value:
 
 --*/
 {
-    BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY, 
-                               PERSISTENT_MEMORY_FLAGS, 
-                               BaseAddress, 
+    BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
+                               PERSISTENT_MEMORY_FLAGS,
+                               BaseAddress,
                                Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"Memory"));
 }
 
@@ -250,7 +250,7 @@ HobAddReservedMemoryRange(
 
 Routine Description:
 
-    Adds a reserved memory range hob to the current hob list.    
+    Adds a reserved memory range hob to the current hob list.
 
 Arguments:
 
@@ -264,20 +264,21 @@ Return Value:
 
 --*/
 {
-    BuildResourceDescriptorHob(EFI_RESOURCE_MEMORY_RESERVED, 
-                               STANDARD_FLAGS, 
-                               BaseAddress, 
+    BuildResourceDescriptorHob(EFI_RESOURCE_MEMORY_RESERVED,
+                               STANDARD_FLAGS,
+                               BaseAddress,
                                Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"Reserved Memory"));
 }
 
 
 void
 HobAddUntestedMemoryRange(
+    _Inout_ PPLATFORM_INIT_CONTEXT  Context,
     __in EFI_PHYSICAL_ADDRESS BaseAddress,
     __in UINT64               Size
     )
@@ -299,14 +300,22 @@ Return Value:
 
 --*/
 {
+    ASSERT((BaseAddress % EFI_PAGE_SIZE) == 0);
+    ASSERT((Size % EFI_PAGE_SIZE) == 0);
+
+    if (PcdGetBool(PcdSystemIsolated))
+    {
+        HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
+    }
+
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
                                MEMORY_FLAGS & ~EFI_RESOURCE_ATTRIBUTE_TESTED,
                                BaseAddress,
                                Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"Untested Memory"));
 }
 
@@ -335,10 +344,10 @@ Return Value:
 --*/
 {
     BuildMemoryAllocationHob(BaseAddress, Size, EfiBootServicesData);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"Allocated Memory"));
 }
 
@@ -367,10 +376,10 @@ Return Value:
 --*/
 {
     BuildFvHob(BaseAddress, Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"Firmware Volume"));
 }
 
@@ -398,10 +407,10 @@ Return Value:
 --*/
 {
     BuildResourceDescriptorHob(EFI_RESOURCE_IO, BASIC_FLAGS, BaseAddress, Size);
-    DEBUG((DEBUG_VERBOSE, 
-           gDebugMemoryFormat, 
-           BaseAddress, 
-           BaseAddress + Size - 1, 
+    DEBUG((DEBUG_VERBOSE,
+           gDebugMemoryFormat,
+           BaseAddress,
+           BaseAddress + Size - 1,
            L"IO Ports"));
 }
 

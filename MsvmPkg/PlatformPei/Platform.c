@@ -505,7 +505,23 @@ Return Value:
                     }
                     else
                     {
+#if defined (MDE_CPU_X64)
+                        // On X64, system memory above 4GB can cause UEFI drivers
+                        // to explode in bad ways due to UINT32 casts. Just mark
+                        // regions above 4GB as untested, and use the null memory
+                        // test later in BDS to mark them as tested.
+                        if (rangeV5->BaseAddress >= 0x100000000)
+                        {
+                            HobAddUntestedMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+                        }
+                        else
+                        {
+                            HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+                        }
+#else
+                        // On other architectures, just add the memory range like normal.
                         HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+#endif
                     }
                 }
 
@@ -710,6 +726,7 @@ Return Value:
 
     if (PcdGetBool(PcdSystemIsolated))
     {
+        DEBUG((DEBUG_INFO, "System detected as isolated, connecting to hypervisor\n"));
         status = HvConnectToHypervisor(&context);
         if (EFI_ERROR(status))
         {
