@@ -30,6 +30,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <EfiNt.h>
 
 #include <Protocol/Emcl.h>
+#include <Protocol/SimpleFileSystem.h>
+#include <Protocol/LoadFile.h>
 
 #include <Library/DeviceBootManagerLib.h>
 #include <Library/MsLogoLib.h>
@@ -42,6 +44,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <hyperkbdprotocol.h>
 #include <Library/DevicePathLib.h>
 #include <Library/PcdLib.h>
+#include <Library/DevicePathLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MsBootPolicyLib.h>
+#include <Library/PcdLib.h>
+#include <Library/UefiLib.h>
 
 //
 // Predefined platform default console device path
@@ -101,6 +109,292 @@ DeviceBootManagerBdsEntry (
    PlatformBdsInit();
 }
 
+//Device path filter routines
+typedef
+BOOLEAN
+(EFIAPI *FILTER_ROUTINE)(
+                         IN  EFI_DEVICE_PATH_PROTOCOL *DevicePath);
+
+BOOLEAN CheckDeviceNode(
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    UINT8  Type,
+    UINT8  SubType) {
+    while (!IsDevicePathEndType(DevicePath)) {
+        if ((DevicePathType(DevicePath) == Type) &&
+            (DevicePathSubType(DevicePath) == SubType)) {
+            return TRUE;
+        }
+        DevicePath = NextDevicePathNode(DevicePath);
+    }
+    return FALSE;
+}
+
+BOOLEAN IsDevicePathUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_USB_DP);
+}
+
+BOOLEAN IsDevicePathIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv4_DP);
+}
+
+BOOLEAN IsDevicePathIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv6_DP);
+}
+
+BOOLEAN FilterNoUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return (FALSE == IsDevicePathUSB(DevicePath));
+}
+
+BOOLEAN FilterOnlyIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return (TRUE == IsDevicePathIPv4(DevicePath));
+}
+
+BOOLEAN FilterOnlyIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return (TRUE == IsDevicePathIPv6(DevicePath));
+}
+
+BOOLEAN FilterOnlyUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return (TRUE == IsDevicePathUSB(DevicePath));
+}
+
+VOID FilterHandles(EFI_HANDLE *HandleBuffer, UINTN *HandleCount, FILTER_ROUTINE KeepHandleFilter) {
+    UINTN                     Index;
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+    EFI_STATUS                Status;
+
+    for (Index = 0; Index < *HandleCount;) {
+
+        Status = gBS->HandleProtocol(
+            HandleBuffer[Index],
+            &gEfiDevicePathProtocolGuid,
+            (VOID **)&DevicePath
+            );
+
+        if (EFI_ERROR(Status) ||            // Remove handles that don't have device path
+            (!KeepHandleFilter(DevicePath))) {  // TRUE keeps handle, FALSE deletes handle
+            (*HandleCount)--;
+            CopyMem(&HandleBuffer[Index], &HandleBuffer[Index + 1], (*HandleCount-Index) * sizeof(EFI_HANDLE *));
+            continue;
+        }
+        Index++;
+    }
+    return;
+}
+
+BOOLEAN CompareDevicePathAgtB(
+    EFI_DEVICE_PATH_PROTOCOL *DevicePathA,
+    EFI_DEVICE_PATH_PROTOCOL *DevicePathB) {
+    UINTN            LengthA;
+    UINTN            LengthB;
+    UINTN            CompareLength;
+    INTN             Result = 0;
+    USB_DEVICE_PATH *UsbPathA;
+    USB_DEVICE_PATH *UsbPathB;
+    PCI_DEVICE_PATH *PciPathA;
+    PCI_DEVICE_PATH *PciPathB;
+
+    LengthA = GetDevicePathSize(DevicePathA);
+    LengthB = GetDevicePathSize(DevicePathB);
+
+    CompareLength = LengthA;  //CompareLength=MIN(LengthA,LengthB);
+    if (LengthB < LengthA) {
+        CompareLength = LengthB;
+    }
+
+    while (!IsDevicePathEnd(DevicePathA) &&
+           !IsDevicePathEnd(DevicePathB)) {
+        Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));
+        if (Result != 0) {
+            // Note - Device paths are not sortable in binary.  Node fields are sortable,
+            //        but may not in the proper order in memory. Only some node types are
+            //        of interest at this time.  All others can use a binary compare for now.
+            if ((DevicePathType(DevicePathA) == DevicePathType(DevicePathB)) &&
+                (DevicePathSubType(DevicePathA) == DevicePathSubType(DevicePathB))) {
+                switch (DevicePathType(DevicePathA)) {
+
+                case HARDWARE_DEVICE_PATH:
+                    switch (DevicePathSubType(DevicePathA)) {
+                    case HW_PCI_DP:
+                        PciPathA = (PCI_DEVICE_PATH *)DevicePathA;
+                        PciPathB = (PCI_DEVICE_PATH *)DevicePathB;
+                        Result = PciPathA->Device - PciPathB->Device;
+                        if (Result == 0) {
+                            Result = PciPathA->Function - PciPathB->Function;
+                        }
+                    default:
+                        Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));
+                    }
+
+                case  MESSAGING_DEVICE_PATH:
+                    switch (DevicePathSubType(DevicePathA)) {
+                    case MSG_USB_DP:
+                        UsbPathA = (USB_DEVICE_PATH *)DevicePathA;
+                        UsbPathB = (USB_DEVICE_PATH *)DevicePathB;
+                        Result = UsbPathA->InterfaceNumber - UsbPathB->InterfaceNumber;
+                        if (Result == 0) {
+                            Result = UsbPathA->ParentPortNumber - UsbPathB->ParentPortNumber;
+                        }
+                    default:
+                        Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));
+                    }
+
+                default:
+                    Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));
+                    break;
+                }
+            } else {
+                Result = CompareMem(DevicePathA, DevicePathB, CompareLength);
+            }
+            if (Result != 0) {
+                break;   // Exit while loop.
+            }
+        }
+        DevicePathA = NextDevicePathNode(DevicePathA);
+        DevicePathB = NextDevicePathNode(DevicePathB);
+        LengthA = GetDevicePathSize(DevicePathA);
+        LengthB = GetDevicePathSize(DevicePathB);
+
+        CompareLength = LengthA;  //CompareLength=MIN(LengthA,LengthB);
+        if (LengthB < LengthA) {
+            CompareLength = LengthB;
+        }
+    }
+
+    return (Result >= 0);
+}
+
+VOID DisplayDevicePaths(EFI_HANDLE *HandleBuffer, UINTN HandleCount) {
+    UINTN   i;
+    UINT16  *Tmp;
+    for (i = 0; i < HandleCount; i++) {
+        Tmp = ConvertDevicePathToText (DevicePathFromHandle(HandleBuffer[i]),TRUE,TRUE);
+        if (Tmp != NULL) {
+          DEBUG((DEBUG_INFO, "%3d %s", i, Tmp)); // Output newline in different call as
+        } else {
+          DEBUG((DEBUG_INFO, "%3d NULL\n", i));
+        }
+        DEBUG((DEBUG_INFO,"\n"));  //Device Paths can be longer than DEBUG limit.
+        if (Tmp != NULL) {
+            FreePool(Tmp);
+        }
+    }
+}
+
+VOID SortHandles(EFI_HANDLE *HandleBuffer, UINTN HandleCount) {
+    UINTN                     Index;
+    EFI_DEVICE_PATH_PROTOCOL *DevicePathA;
+    EFI_DEVICE_PATH_PROTOCOL *DevicePathB;
+    EFI_HANDLE               *TempHandle;
+    BOOLEAN                   Swap;
+    UINTN                     SwapCount;
+
+    DEBUG((DEBUG_INFO,"%a\n",__FUNCTION__));
+    if (HandleCount < 2) {
+        return;
+    }
+    SwapCount = 0;
+    DEBUG((DEBUG_INFO,"SortHandles - Before sorting\n"));
+    DisplayDevicePaths(HandleBuffer, HandleCount);
+    do {
+        Swap = FALSE;
+        for (Index = 0; Index < (HandleCount - 1); Index++) {
+
+            DevicePathA = DevicePathFromHandle(HandleBuffer[Index]);
+            DevicePathB = DevicePathFromHandle(HandleBuffer[Index + 1]);
+
+            if (CompareDevicePathAgtB(DevicePathA, DevicePathB)) {
+                TempHandle = HandleBuffer[Index];
+                HandleBuffer[Index] = HandleBuffer[Index + 1];
+                HandleBuffer[Index + 1] = TempHandle;
+                Swap = TRUE;
+            }
+        }
+        if (Swap) {
+            SwapCount++;
+        }
+    } while ((Swap == TRUE) && (SwapCount < 50));
+    DEBUG((DEBUG_INFO,"SortHandles - After sorting\n"));
+    DisplayDevicePaths(HandleBuffer, HandleCount);
+    DEBUG((DEBUG_INFO,"Exit %a, swapcount = %d\n",__FUNCTION__,SwapCount));
+    return;
+}
+
+EFI_STATUS SelectAndBootDevice(EFI_GUID *ByGuid, FILTER_ROUTINE ByFilter) {
+    EFI_STATUS                   Status;
+    EFI_HANDLE                  *Handles;
+    UINTN                        HandleCount;
+    UINTN                        Index;
+    UINTN                        FlagSize;
+    EFI_BOOT_MANAGER_LOAD_OPTION BootOption;
+    CHAR16                      *TmpStr;
+    EFI_DEVICE_PATH_PROTOCOL    *DevicePath;
+
+    FlagSize = sizeof(UINTN);
+    Status = gBS->LocateHandleBuffer(
+        ByProtocol,
+        ByGuid,
+        NULL,
+        &HandleCount,
+        &Handles
+        );
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR,"Unable to locate any %g handles - code=%r\n",ByGuid,Status));
+        return Status;
+    }
+    DEBUG((DEBUG_INFO,"Found %d handles\n",HandleCount));
+    DisplayDevicePaths(Handles, HandleCount);
+    FilterHandles(Handles, &HandleCount, ByFilter);
+    DEBUG((DEBUG_INFO,"%d handles survived filtering\n",HandleCount));
+    if (HandleCount == 0) {
+        DEBUG((DEBUG_WARN, "No handles survived filtering!\n"));
+        return EFI_NOT_FOUND;
+    }
+
+    SortHandles(Handles, HandleCount);
+
+    Status = EFI_DEVICE_ERROR;
+    for (Index = 0; Index < HandleCount; Index++) {
+        DevicePath = DevicePathFromHandle(Handles[Index]);
+        if (DevicePath == NULL) {
+          DEBUG((DEBUG_ERROR, "DevicePathFromHandle(%p) FAILED\n", Handles[Index]));
+          continue;
+        }
+        TmpStr = ConvertDevicePathToText (DevicePath,TRUE,TRUE);
+        if (TmpStr == NULL) {
+          DEBUG((DEBUG_ERROR,"ConvertDevicePathToText(%p) FAILED ",DevicePath));
+          continue;
+        }
+        DEBUG((DEBUG_INFO,"Selecting device %s",TmpStr));
+        DEBUG((DEBUG_INFO,"\n"));
+        if (MsBootPolicyLibIsDeviceBootable(Handles[Index])) {
+            EfiBootManagerInitializeLoadOption(
+                &BootOption,
+                LoadOptionNumberUnassigned,
+                LoadOptionTypeBoot,
+                LOAD_OPTION_ACTIVE,
+                L"MsTemp",
+                DevicePathFromHandle(Handles[Index]),
+                NULL,
+                0
+                );
+
+            EfiBootManagerBoot(&BootOption);
+            Status = BootOption.Status;
+
+            EfiBootManagerFreeLoadOption(&BootOption);
+            // if EFI_SUCCESS, device was booted, and the return is back to setup
+            if (Status == EFI_SUCCESS) {
+                break;
+            }
+        } else {
+            DEBUG((DEBUG_WARN,"Device %s\n",TmpStr));
+            DEBUG((DEBUG_WARN," was blocked from booting\n"));
+        }
+        FreePool(TmpStr);
+    }
+    return Status;
+}
+
 /**
   Do the device specific action before the console is connected.
 
@@ -144,7 +438,7 @@ DeviceBootManagerBeforeConsole (
                                               &HK_INTERFACE_GUID,
                                               NULL);
             if (!EFI_ERROR(Status)) {
-                ConsoleIn = HandleBuffer[Index]; 
+                ConsoleIn = HandleBuffer[Index];
             }
         }
 
@@ -153,14 +447,14 @@ DeviceBootManagerBeforeConsole (
                                               &SYNTHVID_CLASS_ID,
                                               NULL);
             if (!EFI_ERROR(Status)) {
-                ConsoleOut = HandleBuffer[Index]; 
+                ConsoleOut = HandleBuffer[Index];
             }
             else {
                 Status = EmclChannelTypeSupported(HandleBuffer[Index],
                                                   &SYNTH3DVID_DEVICE_ID,
                                                   NULL);
                 if (!EFI_ERROR(Status)) {
-                    ConsoleOut = HandleBuffer[Index]; 
+                    ConsoleOut = HandleBuffer[Index];
                 }
             }
         }
@@ -205,7 +499,7 @@ DeviceBootManagerBeforeConsole (
     gBS->FreePool(HandleBuffer);
 
 Exit:
-    return ConsoleOut; 
+    return ConsoleOut;
 }
 
 /**
@@ -279,8 +573,9 @@ DeviceBootManagerPriorityBoot (
     return EFI_NOT_FOUND;
 }
 
+
 /**
- This is called from BDS right before going into front page 
+ This is called from BDS right before going into front page
  when no bootable devices/options found
 */
 VOID
@@ -288,17 +583,55 @@ EFIAPI
 DeviceBootManagerUnableToBoot (
   VOID
   ) {
-  EFI_BOOT_MANAGER_LOAD_OPTION    BootManagerMenu;
-  EFI_STATUS                      BootManagerMenuStatus;
+    EFI_BOOT_MANAGER_LOAD_OPTION    BootManagerMenu;
+    EFI_STATUS                      Status;
+    UINT16                          *BootOrder;
+    UINTN                           BootOrderSize;
 
-  //
-  // BootManagerMenu doesn't contain the correct information when return status is EFI_NOT_FOUND.
-  //
-  BootManagerMenuStatus = EfiBootManagerGetBootManagerMenu (&BootManagerMenu);
+    //If no BootOrder variable exists, attempt boot HDD and PXE if configured
+    Status = GetEfiGlobalVariable2 (L"BootOrder", (VOID **) &BootOrder, &BootOrderSize);
+    if(Status == EFI_NOT_FOUND) {
+        EfiBootManagerConnectAll();
 
-  if(BootManagerMenuStatus != EFI_NOT_FOUND) {
-    for (;;) {
-      EfiBootManagerBoot (&BootManagerMenu);
+        //Attempt HDD
+        Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
+
+        if(PcdGetBool(PcdDefaultBootAttemptPxe)) {
+            // Set to low resolution VGA mode
+            // TODO-cho: This fails on Hyper-V, so don't do it here. Probably
+            // because synth video doesn't support it?
+            // Status = MsLogoLibSetConsoleMode(TRUE, FALSE);
+            // if (EFI_ERROR(Status) != FALSE) {
+            //     DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+            // }
+
+            // Attempt PXE based on configured IP version
+            if(PcdGetBool(PcdPxeIpV6))
+            {
+                //IPv6
+                Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv6);
+            }
+            else {
+                //IPv4
+                Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv4);
+            }
+
+            //Reset to native resolution
+            // Status = MsLogoLibSetConsoleMode(FALSE, FALSE);
+            // if (EFI_ERROR(Status) != FALSE) {
+            //     DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+            // }
+        }
     }
-  }
+
+    //
+    // BootManagerMenu doesn't contain the correct information when return status is EFI_NOT_FOUND.
+    //
+    Status = EfiBootManagerGetBootManagerMenu (&BootManagerMenu);
+
+    if(Status != EFI_NOT_FOUND) {
+        for (;;) {
+        EfiBootManagerBoot (&BootManagerMenu);
+        }
+    }
 }

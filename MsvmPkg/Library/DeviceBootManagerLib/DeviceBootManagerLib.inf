@@ -49,6 +49,7 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   MdeModulePkg/MdeModulePkg.dec
   MsCorePkg/MsCorePkg.dec
   MsvmPkg/MsvmPkg.dec
+  PcBdsPkg/PcBdsPkg.dec
 
 [LibraryClasses]
   DebugLib
@@ -59,10 +60,16 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   DxeServicesTableLib
   EmclLib
   DevicePathLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  MsBootPolicyLib
+  UefiLib
 
 [Protocols]
   gEfiVmbusRootProtocolGuid
   gEfiVmbusProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
+  gEfiLoadFileProtocolGuid
 
 [Guids]
   gEfiVmbusChannelDevicePathGuid
@@ -72,6 +79,8 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
 [Pcd]
   gMsvmPkgTokenSpaceGuid.PcdLogoFile
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
+  gMsvmPkgTokenSpaceGuid.PcdPxeIpV6
+  gMsvmPkgTokenSpaceGuid.PcdDefaultBootAttemptPxe
 
 [Depex]
 TRUE

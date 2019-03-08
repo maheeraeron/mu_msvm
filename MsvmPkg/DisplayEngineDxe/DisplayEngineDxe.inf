@@ -63,6 +63,7 @@
   MsUiThemeLib
   MsColorTableLib
   SwmDialogsLib
+  PcdLib
 
 [Protocols]
   gEdkiiFormDisplayEngineProtocolGuid   ## PRODUCES
