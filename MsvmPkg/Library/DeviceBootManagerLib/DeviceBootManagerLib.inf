@@ -81,6 +81,7 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
   gMsvmPkgTokenSpaceGuid.PcdPxeIpV6
   gMsvmPkgTokenSpaceGuid.PcdDefaultBootAttemptPxe
+  gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt
 
 [Depex]
 TRUE

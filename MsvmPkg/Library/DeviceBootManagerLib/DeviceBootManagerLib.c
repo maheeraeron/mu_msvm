@@ -584,13 +584,24 @@ DeviceBootManagerUnableToBoot (
   VOID
   ) {
     EFI_BOOT_MANAGER_LOAD_OPTION    BootManagerMenu;
-    EFI_STATUS                      Status;
-    UINT16                          *BootOrder;
-    UINTN                           BootOrderSize;
+    EFI_STATUS                      Status = EFI_DEVICE_ERROR;
+    UINT16                          *BootOrder = NULL;
+    UINTN                           BootOrderSize = 0;
+    BOOLEAN                         AttemptDefaultBoot = FALSE;
 
-    //If no BootOrder variable exists, attempt boot HDD and PXE if configured
-    Status = GetEfiGlobalVariable2 (L"BootOrder", (VOID **) &BootOrder, &BootOrderSize);
-    if(Status == EFI_NOT_FOUND) {
+    // Default boot has two triggers, either:
+    //      No BootOrder variable exists
+    //      PCD override that says to always attempt it, set in PEI
+
+    if (PcdGetBool(PcdDefaultBootAlwaysAttempt)) {
+        AttemptDefaultBoot = TRUE;
+    }
+    else {
+        Status = GetEfiGlobalVariable2 (L"BootOrder", (VOID **) &BootOrder, &BootOrderSize);
+        AttemptDefaultBoot = (Status == EFI_NOT_FOUND);
+    }
+
+    if (AttemptDefaultBoot) {
         EfiBootManagerConnectAll();
 
         //Attempt HDD

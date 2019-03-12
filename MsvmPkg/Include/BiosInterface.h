@@ -719,7 +719,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 IsVmbfsBoot:1;
         UINT64 MeasureAdditionalPcrs:1;
         UINT64 DisableFrontpage:1;
-        UINT64 Reserved:49;
+        UINT64 DefaultBootAlwaysAttempt:1;
+        UINT64 Reserved:48;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

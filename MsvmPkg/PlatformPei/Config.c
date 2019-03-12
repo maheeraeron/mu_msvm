@@ -153,7 +153,7 @@ DebugDumpMadt(
     EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_STRUCTURE* madtX2Apic;
     EFI_ACPI_6_2_GIC_DISTRIBUTOR_STRUCTURE* madtGicd;
     EFI_ACPI_6_2_GIC_STRUCTURE* madtGicc;
-    
+
     UINT8 *cursor;
 
     //
@@ -179,7 +179,7 @@ DebugDumpMadt(
 
             cursor += madtIoApic->Length;
             break;
-        
+
         case EFI_ACPI_6_2_LOCAL_APIC_NMI:
             madtApicNmi = (EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE *)cursor;
 
@@ -246,7 +246,7 @@ DebugDumpMadt(
             break;
         }
     } while (cursor < ((UINT8 *)acpiHdr + acpiHdr->Length));
-    
+
 #endif
 }
 
@@ -288,7 +288,7 @@ DebugDumpSrat(
 
                 cursor += sratApic->Length;
                 break;
-            
+
             case EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_AFFINITY:
                 sratX2Apic = (EFI_ACPI_6_2_PROCESSOR_LOCAL_X2APIC_AFFINITY_STRUCTURE *)cursor;
 
@@ -308,7 +308,7 @@ DebugDumpSrat(
 
                 cursor += sratGicc->Length;
                 break;
-            
+
             case EFI_ACPI_6_2_MEMORY_AFFINITY:
                 sratMem = (EFI_ACPI_6_2_MEMORY_AFFINITY_STRUCTURE *)cursor;
 
@@ -710,13 +710,14 @@ Return Value:
         0, //UefiConfigMmioRanges
         0, //UefiConfigAARCH64MPIDR
         0, //UefiConfigAcpiTable
-        sizeof(UEFI_CONFIG_NVDIMM_COUNT) // UefiConfigNvdimmCount
+        sizeof(UEFI_CONFIG_NVDIMM_COUNT), //UefiConfigNvdimmCount
+        0, //UefiConfigMadt
     };
 
     //
     // If this is a type that is not currently parsed, ignore it.
     //
-    if (Header->Type > UefiConfigAARCH64MPIDR)
+    if (Header->Type >= sizeof(StructureLengthTable))
     {
         return EFI_SUCCESS;
     }
@@ -728,7 +729,7 @@ Return Value:
     UINT32 expectedLength = StructureLengthTable[Header->Type];
     if (expectedLength != 0 && Header->Length != expectedLength)
     {
-        DEBUG((DEBUG_VERBOSE, "Structure Type 0x%x was length 0x%x, expected Length %x\n",
+        DEBUG((DEBUG_ERROR, "Structure Type 0x%x was length 0x%x, expected Length %x\n",
             Header->Type,
             Header->Length,
             expectedLength));
@@ -863,7 +864,7 @@ Return Value:
             case UefiConfigMadt:
                 UEFI_CONFIG_MADT * madtStructure = (UEFI_CONFIG_MADT*)header;
                 EFI_ACPI_DESCRIPTION_HEADER *madtHdr = (EFI_ACPI_DESCRIPTION_HEADER*)madtStructure->Madt;
-                                
+
                 if (madtStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
                     madtHdr->Signature != EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE ||
                     madtHdr->Length >(madtStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
@@ -1103,6 +1104,7 @@ Return Value:
                 PcdSetBool(PcdSgxMemoryEnabled, (UINT8) flags->Flags.SgxMemoryEnabled);
                 PcdSetBool(PcdIsVmbfsBoot, (UINT8) flags->Flags.IsVmbfsBoot);
                 PcdSetBool(PcdDisableFrontpage, (UINT8) flags->Flags.DisableFrontpage);
+                PcdSetBool(PcdDefaultBootAlwaysAttempt, (UINT8) flags->Flags.DefaultBootAlwaysAttempt);
 
                 //
                 // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
