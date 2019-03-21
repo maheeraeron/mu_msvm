@@ -80,6 +80,7 @@
     gMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
     gMsvmPkgTokenSpaceGuid.PcdConsoleMode
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
+    gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber

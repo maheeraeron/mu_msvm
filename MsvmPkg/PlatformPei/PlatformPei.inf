@@ -132,6 +132,7 @@
     gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
     gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
     gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt
+    gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
     gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor

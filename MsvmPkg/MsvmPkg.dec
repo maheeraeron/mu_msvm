@@ -242,6 +242,7 @@
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE|BOOLEAN|0x6041
   gMsvmPkgTokenSpaceGuid.PcdDefaultBootAttemptPxe|FALSE|BOOLEAN|0x6044
   gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt|FALSE|BOOLEAN|0x6045
+  gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled|FALSE|BOOLEAN|0x6046
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0|UINT32|0x6032

@@ -543,6 +543,8 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tIsVmbfsBoot: %u\n", flags->Flags.IsVmbfsBoot));
             DEBUG((DEBUG_VERBOSE, "\tMeasureAdditionalPcrs: %u\n", flags->Flags.MeasureAdditionalPcrs));
             DEBUG((DEBUG_VERBOSE, "\tShutdownAfterBootFailure: %u\n", flags->Flags.DisableFrontpage));
+            DEBUG((DEBUG_VERBOSE, "\tDefaultBootAlwaysAttempt: %u\n", flags->Flags.DefaultBootAlwaysAttempt));
+            DEBUG((DEBUG_VERBOSE, "\tLowPowerS0IdleEnabled: %u\n", flags->Flags.LowPowerS0IdleEnabled));
             break;
 
         case UefiConfigProcessorInformation:
@@ -1105,6 +1107,7 @@ Return Value:
                 PcdSetBool(PcdIsVmbfsBoot, (UINT8) flags->Flags.IsVmbfsBoot);
                 PcdSetBool(PcdDisableFrontpage, (UINT8) flags->Flags.DisableFrontpage);
                 PcdSetBool(PcdDefaultBootAlwaysAttempt, (UINT8) flags->Flags.DefaultBootAlwaysAttempt);
+                PcdSetBool(PcdLowPowerS0IdleEnabled, (UINT8)flags->Flags.LowPowerS0IdleEnabled);
 
                 //
                 // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.

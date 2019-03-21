@@ -59,14 +59,23 @@ Return Value:
     //
     memcpy(&facp->HypervisorVendorIdentity, "MsHyperV", 8);
 
+
+    if (PcdGetBool(PcdLowPowerS0IdleEnabled))
+    {
+        //
+        // Set EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE flag.
+        // Pending investigation, EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE causes negative side-effects in a VM.
+        //
+        facp->Flags |= EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE;
+    }
+
     //
     // Special case if battery is enabled
     //
     if (PcdGetBool(PcdVirtualBatteryEnabled))
     {
         //
-        // Set the profile to Mobile but don't set EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE flag.
-        // EFI_ACPI_6_2_LOW_POWER_S0_IDLE_CAPABLE causes negative side-effects in a VM.
+        // Set the profile to Mobile
         //
         facp->PreferredPmProfile = EFI_ACPI_6_2_PM_PROFILE_MOBILE;
     }
