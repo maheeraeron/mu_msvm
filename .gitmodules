@@ -3,7 +3,7 @@
     url = https://github.com/Microsoft/mu_basecore.git
 [submodule "Common/MSCORE_INTERNAL"]
     path = Common/MSCORE_INTERNAL
-    url = https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal
+    url = https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal
 
 [submodule "Common/MU"]
     path = Common/MU

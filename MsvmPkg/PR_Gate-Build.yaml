@@ -37,7 +37,7 @@ steps:
   clean: true
 
 - powershell: |
-   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
+   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://user:$(WP.PAT)@dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal"
    git submodule sync
 
   displayName: 'Use PATs for submodules'
@@ -110,7 +110,7 @@ steps:
   continueOnError: true
 
 - powershell: |
-   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
+   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal"
    git submodule sync
 
   displayName: 'Restore Submodules'

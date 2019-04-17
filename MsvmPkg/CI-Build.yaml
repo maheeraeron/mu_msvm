@@ -23,6 +23,9 @@ strategy:
       Build.Target: 'RELEASE'
       Build.Arch: 'AARCH64'
 
+workspace:
+  clean: all
+
 variables:
   Build.ToolChainTag: "VSLATESTx86xASL"
   PlatformPkg: "MsvmPkg"
