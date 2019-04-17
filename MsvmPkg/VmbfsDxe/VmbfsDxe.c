@@ -392,7 +392,7 @@ Return Value:
     }
 
     status = gBS->UninstallMultipleProtocolInterfaces(ControllerHandle,
-                                                      gEfiSimpleFileSystemProtocolGuid,
+                                                      &gEfiSimpleFileSystemProtocolGuid,
                                                       NULL);
 
     ASSERT(simpleFileSystemProtocol->FileSystemInformation.ReferenceCount == 0);
