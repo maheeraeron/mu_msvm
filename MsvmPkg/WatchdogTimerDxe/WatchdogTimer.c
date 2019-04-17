@@ -1,6 +1,6 @@
 /*++
 
-    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE: 
+    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
         Derivative of:
             MdeModulePkg\Universal\WatchdogTimerDxe\WatchdogTimer.c
 
@@ -26,7 +26,7 @@ Module Name:
 Abstract:
 
     Implementation of Watchdog Timer Architectural Protocol
-    If available, this driver will use the Hyper-V BIOS device watchdog equivelent to a 
+    If available, this driver will use the Hyper-V BIOS device watchdog equivelent to a
     hardware watchdog timer.  If the hardware based timer is not available, a software timer
     will be used.
 
@@ -44,6 +44,7 @@ Author:
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/WatchdogTimerLib.h>
+#include <Guid/EventGroup.h>
 #include <Protocol/WatchdogTimer.h>
 #include <BiosInterface.h>
 
@@ -84,7 +85,7 @@ WatchdogGetTimerPeriod (
 // The Watchdog Timer Architectural Protocol instance produced by this driver
 // The SetTimerPeriod handler will be filled in in WatchdogInitialize.
 //
-EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  mWatchdogTimer = 
+EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  mWatchdogTimer =
 {
     WatchdogRegisterHandler,
     NULL,
@@ -116,6 +117,9 @@ UINT64      mWatchdogTimerPeriod = 0;
 //
 UINT32      mWatchdogTimerHwResolution = 0;
 
+// Notification for when ExitBootServices is called.
+static EFI_EVENT    mExitBootServicesEvent = NULL;
+
 
 VOID
 EFIAPI
@@ -144,7 +148,7 @@ Return Value:
     REPORT_STATUS_CODE(EFI_ERROR_CODE | EFI_ERROR_MINOR,
         (EFI_COMPUTING_UNIT_HOST_PROCESSOR | EFI_CU_HP_EC_TIMER_EXPIRED));
 
-    if (mWatchdogTimerNotifyFunction != NULL) 
+    if (mWatchdogTimerNotifyFunction != NULL)
     {
         mWatchdogTimerNotifyFunction(mWatchdogTimerPeriod);
     }
@@ -207,7 +211,7 @@ WatchdogHwSetPeriod (
 
 Routine Description:
 
-    Configures the hardware watchdog counter and enables the hardware timer.   
+    Configures the hardware watchdog counter and enables the hardware timer.
 
 Arguments:
 
@@ -236,7 +240,7 @@ Return Value:
     ASSERT ((mWatchdogTimerHwResolution != BIOS_WATCHDOG_NOT_ENABLED) &&
             (mWatchdogTimerHwResolution != 0));
 
-    if ((TimerPeriod != 0) && 
+    if ((TimerPeriod != 0) &&
         (TimerPeriod < (UINT64)SEC_TO_100NS(mWatchdogTimerHwResolution)))
     {
         return EFI_INVALID_PARAMETER;
@@ -256,7 +260,7 @@ Return Value:
         //
         // Convert the desired expiration into the timer's native format.
         //
-        timerPeriodSeconds  = (UINT32)_100NS_TO_S(TimerPeriod);       
+        timerPeriodSeconds  = (UINT32)_100NS_TO_S(TimerPeriod);
         watchdogCount       = timerPeriodSeconds / mWatchdogTimerHwResolution;
         DEBUG((EFI_D_INFO, "Hyper-V Watchdog Enabled. Expires in %d seconds (COUNT - %d).\n", timerPeriodSeconds, watchdogCount));
         WatchdogConfigure(watchdogCount, WatchdogOneShot);
@@ -300,7 +304,7 @@ Return Value:
 
 --*/
 {
-    if (TimerPeriod == NULL) 
+    if (TimerPeriod == NULL)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -332,7 +336,7 @@ Arguments:
     This                The EFI_WATCHDOG_TIMER_ARCH_PROTOCOL instance.
 
     NotifyFunction      The function to call when the watchdog timer fires.
-                        If NULL, then the handler will be unregistered.   
+                        If NULL, then the handler will be unregistered.
 
 Return Value:
 
@@ -366,6 +370,24 @@ Return Value:
 }
 
 
+/// \brief      Called when the Exit Boot Services event is signaled.
+///
+/// \param[in]  Event    The event
+/// \param      Context  The context
+///
+VOID
+EFIAPI
+ExitBootServicesHandler(
+    __in EFI_EVENT Event,
+    __in void*     Context
+    )
+{
+    // Disable the watchdog as ExitBootServices is about to relinquish control
+    // of the system to the bootloader.
+    WatchdogConfigure(0, WatchdogDisabled);
+}
+
+
 EFI_STATUS
 EFIAPI
 WatchdogInitialize (
@@ -383,7 +405,7 @@ Arguments:
 
     ImageHandle         The image handle of this driver.
 
-    SystemTable         The pointer of EFI_SYSTEM_TABLE.    
+    SystemTable         The pointer of EFI_SYSTEM_TABLE.
 
 Return Value:
 
@@ -426,6 +448,21 @@ Return Value:
         // No Periodic timer is needed when using the HW timer.
         // This driver will use it in one-shot mode.
         //
+    }
+
+    //
+    // Register notify function for EVT_SIGNAL_EXIT_BOOT_SERVICES.
+    //
+    status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
+                              TPL_NOTIFY,
+                              ExitBootServicesHandler,
+                              NULL,
+                              &gEfiEventExitBootServicesGuid,
+                              &mExitBootServicesEvent);
+    ASSERT_EFI_ERROR(status);
+    if (EFI_ERROR(status))
+    {
+        return status;
     }
 
     //

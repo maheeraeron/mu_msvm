@@ -32,5 +32,8 @@
 [Protocols]
   gEfiWatchdogTimerArchProtocolGuid             ## PRODUCES
 
+[Guids]
+  gEfiEventExitBootServicesGuid
+
 [depex]
   gEfiTimerArchProtocolGuid
