@@ -88,6 +88,12 @@ steps:
     ArtifactName: 'Firmware Binary File $(Build.Target)_$(Build.Arch)'
 
 - task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: Firmware PDB Files $(Build.Target)_$(Build.Arch)'
+  inputs:
+    PathtoPublish: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/'
+    ArtifactName: 'Firmware PDB Files $(Build.Target)_$(Build.Arch)'
+
+- task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: OverrideLog $(Build.Target)_$(Build.Arch)'
   inputs:
     PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/OVERRIDELOG.TXT
