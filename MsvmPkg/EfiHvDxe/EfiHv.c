@@ -43,6 +43,18 @@ Author:
 #undef DEBUG
 #define DEBUG(arg)
 
+#if defined (MDE_CPU_X64)
+// Intrinsic defines for X64
+// TODO-cho-19259739: This should be removed when we have real fail-fast support.
+void
+__ud2(
+    void
+    );
+
+#pragma intrinsic(__ud2)
+
+#endif
+
 typedef struct _EFI_HV_SINT_CONFIGURATION
 {
     EFI_HV_INTERRUPT_HANDLER InterruptHandler;
@@ -137,13 +149,13 @@ Return Value:
     sintConfiguration = &mSintConfiguration[mVectorSint[InterruptType]];
     if (sintConfiguration->InterruptHandler != NULL)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: calling 0x%p\n", __FUNCTION__, 
+        DEBUG((DEBUG_VERBOSE, "--- %a: calling 0x%p\n", __FUNCTION__,
             sintConfiguration->InterruptHandler));
         sintConfiguration->InterruptHandler(sintConfiguration->Context);
     }
 
     gBS->RestoreTPL(tpl);
-    
+
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
@@ -266,7 +278,7 @@ Return Value:
 --*/
 {
     EFI_EVENT *event;
-    
+
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     event = Context;
     gBS->SignalEvent(event);
@@ -345,7 +357,7 @@ Return Value:
     HV_SYNIC_SINT sint;
     PEFI_HV_SINT_CONFIGURATION sintConfiguration;
     EFI_TPL tpl;
-    
+
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
@@ -408,7 +420,7 @@ Return Value:
     volatile HV_MESSAGE *message;
 
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
-    
+
     message = &mHvPages->MessagePage.SintMessage[SintIndex];
     if (message->Header.MessageType == HvMessageTypeNone)
     {
@@ -447,7 +459,7 @@ Return Value:
 --*/
 {
     volatile HV_MESSAGE *message;
-    
+
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
     message = &mHvPages->MessagePage.SintMessage[SintIndex];
@@ -487,7 +499,7 @@ Return Value:
 {
     volatile HV_SYNIC_EVENT_FLAGS *pFlags;
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
-   
+
     pFlags = &mHvPages->EventFlagsPage.SintEventFlags[SintIndex];
 
     DEBUG((DEBUG_VERBOSE, "<<< %a: flags @ 0x%p\n", __FUNCTION__, pFlags));
@@ -584,7 +596,7 @@ Return Value:
 
 --*/
 {
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x Expiration 0x%x\n", __FUNCTION__, 
+    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x Expiration 0x%x\n", __FUNCTION__,
         TimerIndex, Expiration));
     HvHypercallSetVpRegister64Self(HvRegisterStimer0Count + (2 * TimerIndex), Expiration);
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
@@ -629,7 +641,7 @@ Return Value:
 {
     HV_X64_MSR_STIMER_CONFIG_CONTENTS config;
     DEBUG((DEBUG_VERBOSE, ">>> %a: tindex 0x%x sindex 0x%x periodic %s direct %s vector 0x%x\n",
-        __FUNCTION__, TimerIndex, SintIndex, Periodic ? L"TRUE" : L"FALSE", 
+        __FUNCTION__, TimerIndex, SintIndex, Periodic ? L"TRUE" : L"FALSE",
         DirectMode ? L"TRUE" : L"FALSE", Vector));
 
     // Stop the timer if it's already running.
@@ -797,7 +809,7 @@ Return Value:
     case HV_STATUS_INSUFFICIENT_BUFFERS:
         status = EFI_NOT_READY;
     }
-    
+
     DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
     return status;
 }
@@ -863,7 +875,7 @@ EfiHvModifySparseGpaPageHostVisibility(
     _Out_ UINT32* PageCountProcessed
     )
 {
-    // For this rep call, it's easier to treat the input page as a pointer 
+    // For this rep call, it's easier to treat the input page as a pointer
     // to this structure.
     PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY pInputBuffer;
     HV_STATUS hvStatus;
@@ -891,7 +903,7 @@ EfiHvModifySparseGpaPageHostVisibility(
     //
 
     possibleRepsPerCall = (HV_PAGE_SIZE - sizeof(*pInputBuffer)) / sizeof(HV_GPA_PAGE_NUMBER);
-    
+
     ASSERT(possibleRepsPerCall <= WINHVP_MAX_REPS_PER_HYPERCALL);
 
     pInputBuffer = (PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY)mHvPages->HypercallInputPage;
@@ -917,7 +929,7 @@ EfiHvModifySparseGpaPageHostVisibility(
 
         //
         // Fill page numbers
-        // N.B. instead of copying from an existing list of page numbers, we 
+        // N.B. instead of copying from an existing list of page numbers, we
         // generate a list of consecutive numbers from GpaPageBase.
         //
 
@@ -1050,7 +1062,19 @@ Return Value:
     }
     DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHvPages));
 
+    // Zero the hypercall page
+    ZeroMem(mHvPages, sizeof(*mHvPages));
+
     HvHypercallConnect(mHvPages->HypercallPage, &mHvContext);
+
+    // Check to see if the hypercall page was mapped. If it wasn't, abort here.
+    if (mHvPages->HypercallPage[0] == 0 &&
+        mHvPages->HypercallPage[1] == 0 &&
+        mHvPages->HypercallPage[2] == 0)
+    {
+        // TODO-cho-19259739: Figure out a better way to abort.
+        __ud2();
+    }
 
     // Cache some enlightenment information.
 
