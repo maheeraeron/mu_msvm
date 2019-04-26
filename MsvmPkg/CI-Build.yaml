@@ -120,6 +120,14 @@ steps:
     ArtifactName: 'Firmware Size Report $(Build.Target)_$(Build.Arch)'
   continueOnError: true
 
+- task: PublishSymbols@2
+  inputs:
+    SearchPattern: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/*.pdb'
+    IndexSources: false
+    SymbolServerType: 'TeamServices'
+    SymbolsProduct: 'Hyper-V UEFI'
+  continueOnError: true
+
 - powershell: |
    $LocalCommit = & 'git' rev-parse "@"
    Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
