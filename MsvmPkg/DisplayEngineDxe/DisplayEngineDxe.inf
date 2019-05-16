@@ -15,7 +15,7 @@
 #
 ##
 
-#Override : 00000001 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | 3e5844253cd5fb4b4c1abbb7666193fc | 2019-02-20T00-51-22
+#Override : 00000001 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | aad536d3bd276009d176cc4f77e59bff | 2019-05-10T23-25-33
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -90,6 +90,3 @@
 [Guids]
     gMsEventMasterFrameNotifyGroupGuid                              ## CONSUMES
     gEfiEventReadyToBootGuid                                        ## CONSUMES
-
-[BuildOptions]
-#  *_VS2015x86_*_CC_FLAGS       = /Od /FAcs

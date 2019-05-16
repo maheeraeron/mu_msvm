@@ -8,7 +8,7 @@
 #  This external input must be validated carefully to avoid security issues such as
 #  buffer overflow or integer overflow.
 #
-# Copyright (c) 2009 - 2014, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2009 - 2018, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials
 # are licensed and made available under the terms and conditions of the BSD License
 # which accompanies this distribution. The full text of the license may be found at
@@ -18,7 +18,7 @@
 #
 ##
 
-#Override : 00000001 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | 93e4b38273f60f8a53920dfb31709458 | 2018-11-15T19-55-26
+#Override : 00000001 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | 0c76a047d3a9237492ea3dc4b630e439 | 2019-04-04T12-20-26
 
 [Defines]
   INF_VERSION                    = 0x00010005

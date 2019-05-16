@@ -948,7 +948,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     if (mResetRequired)
     {
-        EfiResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+        ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
     }
 
     //ProcessBootNext ();
@@ -968,7 +968,7 @@ Exit:
     if (PcdGetBool(PcdDisableFrontpage))
     {
         DEBUG((DEBUG_INFO, "[FP] Configured to shutdown instead of displaying frontpage.\n"));
-        EfiResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+        ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
     }
 
     while (TRUE)
