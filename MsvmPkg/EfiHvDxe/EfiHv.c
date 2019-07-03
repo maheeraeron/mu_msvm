@@ -1221,6 +1221,7 @@ Return Value:
     HV_SYNIC_SIMP simp;
     HV_SYNIC_SINT_INDEX sintIndex;
     UINT32 timerIndex;
+    UINT32 flagsIndex = 0;
 
     if (!mSynicConnected)
     {
@@ -1243,6 +1244,15 @@ Return Value:
         while (EfiHvGetSintMessage(&mHv, sintIndex) != NULL)
         {
             EfiHvCompleteSintMessage(&mHv, sintIndex);
+        }
+
+        // Zero the event flags for this SINT.
+
+        volatile HV_SYNIC_EVENT_FLAGS* flags = EfiHvGetSintEventFlags(&mHv, sintIndex);
+
+        for (flagsIndex = 0; flagsIndex < HV_EVENT_FLAGS_DWORD_COUNT; flagsIndex++)
+        {
+            flags->Flags32[flagsIndex] = 0;
         }
     }
 
