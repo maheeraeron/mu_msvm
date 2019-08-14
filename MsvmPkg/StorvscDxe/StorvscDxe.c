@@ -20,7 +20,7 @@ Author:
 #include "StorvscDxe.h"
 
 
-EFI_DRIVER_BINDING_PROTOCOL gStorvscDriverBinding = 
+EFI_DRIVER_BINDING_PROTOCOL gStorvscDriverBinding =
 {
     StorvscDriverBindingSupported,
     StorvscDriverBindingStart,
@@ -31,7 +31,7 @@ EFI_DRIVER_BINDING_PROTOCOL gStorvscDriverBinding =
 };
 
 
-STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate = 
+STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate =
 {
     STORVSC_ADAPTER_CONTEXT_SIGNATURE,
     0, // Handle
@@ -55,13 +55,13 @@ STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate =
         //
         0xFFFFFFFF,
         //
-        // According to UEFI2.3 spec Section 14.7, Drivers for non-RAID SCSI 
-        // controllers should set both EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_PHYSICAL 
+        // According to UEFI2.3 spec Section 14.7, Drivers for non-RAID SCSI
+        // controllers should set both EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_PHYSICAL
         // and EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_LOGICAL
         // bits.
-        // 
-        EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_PHYSICAL | 
-        EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_LOGICAL | 
+        //
+        EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_PHYSICAL |
+        EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_LOGICAL |
         EFI_EXT_SCSI_PASS_THRU_ATTRIBUTES_NONBLOCKIO,
         //
         // IoAlign
@@ -148,7 +148,7 @@ Return Value:
 {
     EFI_STATUS status;
     EFI_VMBUS_PROTOCOL *vmbus;
-    
+
     status = gBS->OpenProtocol(
         ControllerHandle,
         &gEfiVmbusProtocolGuid,
@@ -163,8 +163,8 @@ Return Value:
     }
 
     return EmclChannelTypeSupported(
-        ControllerHandle, 
-        &GUID_STORAGE_CHANNEL_TYPE, 
+        ControllerHandle,
+        &GUID_STORAGE_CHANNEL_TYPE,
         This->DriverBindingHandle);
 }
 
@@ -230,7 +230,7 @@ Return Value:
         This->DriverBindingHandle,
         ControllerHandle,
         EFI_OPEN_PROTOCOL_BY_DRIVER);
-      
+
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -239,7 +239,7 @@ Return Value:
     instance->Handle = ControllerHandle;
     instance->ExtScsiPassThru.Mode = &instance->ExtScsiPassThruMode;
 
-    InitializeListHead(&instance->LunList);    
+    InitializeListHead(&instance->LunList);
 
     status = StorChannelOpen(instance->Emcl, &instance->ChannelContext);
 
@@ -249,7 +249,7 @@ Return Value:
     }
 
     //
-    // No locking is required when modifying the lun list, because the 
+    // No locking is required when modifying the lun list, because the
     // ExtScsiPassThruProtocol is not yet installed, so the list is not
     // accessed by any other caller.
     //
@@ -289,7 +289,7 @@ Cleanup:
 
         gBS->CloseProtocol(
             ControllerHandle,
-            &gEfiEmclProtocolGuid,
+            &gEfiEmclV2ProtocolGuid,
             This->DriverBindingHandle,
             ControllerHandle);
 
@@ -298,7 +298,7 @@ Cleanup:
             EmclUninstallProtocol(ControllerHandle);
         }
     }
-    
+
     return status;
 }
 
@@ -345,7 +345,7 @@ Return Value:
         ControllerHandle,
         EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 
-    if (EFI_ERROR(status)) 
+    if (EFI_ERROR(status))
     {
         status = EFI_DEVICE_ERROR;
         goto Cleanup;
@@ -362,7 +362,7 @@ Return Value:
 
     gBS->CloseProtocol(
         ControllerHandle,
-        &gEfiEmclProtocolGuid,
+        &gEfiEmclV2ProtocolGuid,
         This->DriverBindingHandle,
         ControllerHandle);
 

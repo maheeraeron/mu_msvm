@@ -92,6 +92,8 @@ typedef UINTN UINT_PTR, *PUINT_PTR, ULONG_PTR, *PULONG_PTR, SIZE_T;
 
 typedef VOID *PVOID;
 
+typedef ULONG_PTR KAFFINITY;
+
 //
 // General defines.
 //
@@ -312,6 +314,10 @@ WriteNoFence16 (
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)   (sizeof(x) / sizeof(x[0]))
+#endif
+
+#ifndef ANYSIZE_ARRAY
+#define ANYSIZE_ARRAY 1       // winnt
 #endif
 
 DEFINE_GUID(GUID_NULL, 0L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);

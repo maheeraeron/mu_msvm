@@ -545,6 +545,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tShutdownAfterBootFailure: %u\n", flags->Flags.DisableFrontpage));
             DEBUG((DEBUG_VERBOSE, "\tDefaultBootAlwaysAttempt: %u\n", flags->Flags.DefaultBootAlwaysAttempt));
             DEBUG((DEBUG_VERBOSE, "\tLowPowerS0IdleEnabled: %u\n", flags->Flags.LowPowerS0IdleEnabled));
+            DEBUG((DEBUG_VERBOSE, "\tVpciBootEnabled: %u\n", flags->Flags.VpciBootEnabled));
             break;
 
         case UefiConfigProcessorInformation:
@@ -1108,6 +1109,7 @@ Return Value:
                 PcdSetBool(PcdDisableFrontpage, (UINT8) flags->Flags.DisableFrontpage);
                 PcdSetBool(PcdDefaultBootAlwaysAttempt, (UINT8) flags->Flags.DefaultBootAlwaysAttempt);
                 PcdSetBool(PcdLowPowerS0IdleEnabled, (UINT8)flags->Flags.LowPowerS0IdleEnabled);
+                PcdSetBool(PcdVpciBootEnabled, (UINT8)flags->Flags.VpciBootEnabled);
 
                 //
                 // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.

@@ -193,6 +193,7 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|MdeModulePkg/Library/DxeIpIoLib/DxeIpIoLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+  MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
@@ -640,6 +641,7 @@
   }
   MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
@@ -680,6 +682,7 @@
   MsvmPkg/VariableDxe/VariableDxe.inf
   MsvmPkg/VideoDxe/VideoDxe.inf
   MsvmPkg/VmbusDxe/VmbusDxe.inf
+  MsvmPkg/VpcivscDxe/VpcivscDxe.inf
   MsvmPkg/WatchdogTimerDxe/WatchdogTimerDxe.inf
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/VmbfsDxe/VmbfsDxe.inf

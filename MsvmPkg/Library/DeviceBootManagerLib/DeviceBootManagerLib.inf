@@ -82,6 +82,7 @@ CONSTRUCTOR                    = DeviceBootManagerConstructor
   gMsvmPkgTokenSpaceGuid.PcdPxeIpV6
   gMsvmPkgTokenSpaceGuid.PcdDefaultBootAttemptPxe
   gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt
+  gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled
 
 [Depex]
 TRUE

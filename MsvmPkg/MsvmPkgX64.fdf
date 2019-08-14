@@ -164,6 +164,7 @@ INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerforma
 
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
+INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF MdeModulePkg/Core/Dxe/DxeMain.inf
@@ -218,6 +219,7 @@ INF MsvmPkg/VariableDxe/VariableDxe.inf
 INF MsvmPkg/VideoDxe/VideoDxe.inf
 INF MsvmPkg/VmbfsDxe/VmbfsDxe.inf
 INF MsvmPkg/VmbusDxe/VmbusDxe.inf
+INF MsvmPkg/VpcivscDxe/VpcivscDxe.inf
 INF MsvmPkg/WatchdogTimerDxe/WatchdogTimerDxe.inf
 
 INF NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf

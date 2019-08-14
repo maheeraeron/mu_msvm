@@ -133,6 +133,7 @@
     gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
     gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt
     gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled
+    gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdProcessorsPerVirtualSocket
     gMsvmPkgTokenSpaceGuid.PcdThreadsPerProcessor

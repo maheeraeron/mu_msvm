@@ -207,6 +207,7 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|MdeModulePkg/Library/DxeIpIoLib/DxeIpIoLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+  MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
@@ -584,6 +585,7 @@
       #DebugLib|MdeModulePkg/Library/PeiDxeDebugLibReportStatusCode/PeiDxeDebugLibReportStatusCode.inf
   }
 
+  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Core/Dxe/DxeMain.inf {
@@ -656,6 +658,7 @@
   MsvmPkg/VideoDxe/VideoDxe.inf
   MsvmPkg/VmbfsDxe/VmbfsDxe.inf
   MsvmPkg/VmbusDxe/VmbusDxe.inf
+  MsvmPkg/VpcivscDxe/VpcivscDxe.inf
   MsvmPkg/WatchdogTimerDxe/WatchdogTimerDxe.inf
 
   NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf

@@ -1,0 +1,40 @@
+[Defines]
+    INF_VERSION = 0x00010005
+    BASE_NAME = VpcivscDxe
+    FILE_GUID = 5D1C9F32-965E-432E-B4BF-ED585D4E0896
+    MODULE_TYPE = UEFI_DRIVER
+    VERSION_STRING = 1.0
+    ENTRY_POINT = VpcivscDriverEntryPoint
+
+
+[Sources]
+    VpcivscDxe.c
+    VpcivscPciIo.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+    UefiDriverEntryPoint
+    DebugLib
+    UefiLib
+    BaseLib
+    BaseMemoryLib
+    MemoryAllocationLib
+    UefiBootServicesTableLib
+    DevicePathLib
+    EmclLib
+    MmioAllocationLib
+    IoLib
+
+[Protocols]
+    gEfiVmbusProtocolGuid           #CONSUMES
+    gEfiEmclV2ProtocolGuid          #CONSUMES
+    gEfiPciIoProtocolGuid           #PRODUCES
+
+[Guids]
+    gEfiVmbusChannelDevicePathGuid  #CONSUMES
+
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled
