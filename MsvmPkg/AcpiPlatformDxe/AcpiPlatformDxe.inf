@@ -82,6 +82,7 @@
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled
     gMsvmPkgTokenSpaceGuid.PcdProcessorCount
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
     gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages

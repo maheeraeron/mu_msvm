@@ -67,6 +67,7 @@ DefinitionBlock (
         NCFG,8,         // PMEM (NVDIMMs) enabled/disabled
         BCFG,8,         // Virtual Battery enabled/disabled
         SGXE,8,         // SGX Memory enabled/disabled
+        PADE,8,         // Processor Aggregator Device enabled/disabled
         NCNT,16,        // NVDIMM count
     }
 
@@ -586,6 +587,79 @@ DefinitionBlock (
         })
     }
 #endif
+
+    // Processor Aggregator Device  ===========================================
+
+    If(LGreater(PADE, 0))
+    {
+        // MMIO region for Processor Aggregator Device
+        OperationRegion(PADM, SystemMemory, FixedPcdGet32(PcdProcIdleBase), 0x1000)
+        Field(PADM, DWordAcc, NoLock, WriteAsZeros)
+        {
+            PRID,32, // Number of processors to idle
+            OST1,32, // _OST Arg1 Status Code (success 0, no action 1)
+            OST2,32, // _OST Arg2 Number processors idled
+        }
+
+        Device(\_SB.VMOD.PAD1)
+        {
+            Name(_CID, "Virtual Processor Aggregator Device")
+            Name(_HID, "ACPI000C")
+
+            Method(_PUR, 0)
+            {
+                Name(PUR, Package ()
+                {
+                    1, // RevisionID 1
+                    0  // Number of processors to idle
+                })
+
+                Store(PRID, Index(PUR, 1))
+                Return(PUR)
+            }
+
+            Method(_OST, 3, Serialized)
+            {
+                If (LEqual(Arg1, 0x0))
+                {
+                    Store(Arg2, OST2)
+                }
+                Store(Arg1, OST1)
+            }
+        }
+
+#if defined (_DSDT_INTEL_)
+
+        // GPE method for Processor Aggregator
+        Scope(\_GPE)
+        {
+            // Method for notifying external changes to the Processor Aggregator Device:
+            //      E  - This event is edge triggered
+            //      0B - Use bit B in the General Purpose Event register described
+            //           in the FADT
+            Method(_E0B)
+            {
+
+#elif defined (_DSDT_ARM_)
+
+        // Interrupt signalled event device for Processor Aggregator
+        Device(\_SB.GED4)
+        {
+            Name(_HID,"ACPI0013")
+            Name(_UID, 4)
+            Name(_CRS, ResourceTemplate()
+            {
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
+                    {FixedPcdGet8(PcdProcIdleEventVector)}
+            })
+            Method(_EVT, 1)
+            {
+#endif
+                // Notify OSPM of new idle request
+                Notify(\_SB.VMOD.PAD1, 0x80)
+            }
+        }
+    }
 
     // Battery ================================================================
 
@@ -2439,7 +2513,7 @@ DefinitionBlock (
         // GPE method for PMEM
         Scope(\_GPE)
         {
-            // Method for notifying external changes to the battery device:
+            // Method for notifying external changes to the PMEM device:
             //      E  - This event is edge triggered
             //      0A - Use bit A in the General Purpose Event register described
             //           in the FADT

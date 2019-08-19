@@ -41,6 +41,7 @@ typedef struct _DSDT_AML_DATA
     UINT8  PmemEnabled;
     UINT8  VirtualBatteryEnabled;
     UINT8  SgxMemoryEnabled;
+    UINT8  ProcIdleEnabled;
     UINT16 NvdimmCount;
 } DSDT_AML_DATA;
 
@@ -145,6 +146,7 @@ Return Value:
     data->PmemEnabled = (GetNfitSize() > 0);
     data->VirtualBatteryEnabled = PcdGetBool(PcdVirtualBatteryEnabled);
     data->SgxMemoryEnabled = PcdGetBool(PcdSgxMemoryEnabled);
+    data->ProcIdleEnabled = PcdGetBool(PcdProcIdleEnabled);
     data->NvdimmCount = PcdGet16(PcdNvdimmCount);
 
     DEBUG((DEBUG_VERBOSE, "--- %a: Mmio1Start               0x%lx\n", __FUNCTION__, data->Mmio1Start));
@@ -157,6 +159,7 @@ Return Value:
     DEBUG((DEBUG_VERBOSE, "--- %a: PmemEnabled              0x%x\n", __FUNCTION__, data->PmemEnabled));
     DEBUG((DEBUG_VERBOSE, "--- %a: VirtualBatteryEnabled    0x%x\n", __FUNCTION__, data->VirtualBatteryEnabled));
     DEBUG((DEBUG_VERBOSE, "--- %a: SgxMemoryEnabled         0x%x\n", __FUNCTION__, data->SgxMemoryEnabled));
+    DEBUG((DEBUG_VERBOSE, "--- %a: ProcIdleEnabled          0x%x\n", __FUNCTION__, data->ProcIdleEnabled));
     DEBUG((DEBUG_VERBOSE, "--- %a: NvdimmCount              0x%x\n", __FUNCTION__, data->NvdimmCount));
 
     //

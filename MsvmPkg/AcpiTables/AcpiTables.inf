@@ -45,6 +45,7 @@
     gMsvmPkgTokenSpaceGuid.PcdCom2Vector
     gMsvmPkgTokenSpaceGuid.PcdVmbusVector
     gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleBase
     
 [Pcd.AARCH64]
     gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
@@ -52,6 +53,7 @@
     gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector
     gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector
     gMsvmPkgTokenSpaceGuid.PcdPmemEventVector
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector
 
 [Pcd.X64]
     gMsvmPkgTokenSpaceGuid.PcdRtcRegisterBase

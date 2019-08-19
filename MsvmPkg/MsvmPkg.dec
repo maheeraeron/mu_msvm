@@ -115,6 +115,10 @@
   gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xEFFE9000|UINT32|0x500B
   gMsvmPkgTokenSpaceGuid.PcdPmemEventVector|37|UINT8|0x500C
 
+  # Virtual Processor Aggregator Device
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xEFFE8000|UINT32|0x500D
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector|38|UINT8|0x500E
+
   ##
   # POST background color (default: black).
   #
@@ -244,6 +248,7 @@
   gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt|FALSE|BOOLEAN|0x6045
   gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled|FALSE|BOOLEAN|0x6046
   gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled|FALSE|BOOLEAN|0x6047
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled|FALSE|BOOLEAN|0x6048
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0|UINT32|0x6032

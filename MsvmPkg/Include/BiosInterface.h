@@ -722,7 +722,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 DefaultBootAlwaysAttempt:1;
         UINT64 LowPowerS0IdleEnabled : 1;
         UINT64 VpciBootEnabled:1;
-        UINT64 Reserved:46;
+        UINT64 ProcIdleEnabled : 1;
+        UINT64 Reserved:45;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

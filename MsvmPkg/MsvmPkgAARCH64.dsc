@@ -326,6 +326,10 @@
   gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xEFFE9000
   gMsvmPkgTokenSpaceGuid.PcdPmemEventVector|37              # SPI
 
+  # Processor Aggregator
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xEFFE8000
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector|38           # SPI
+
   #
   # Static initial memory config - presumes minimum 64MB in VM
   # Page table, stack, and heap are hard-coded in host worker process.
@@ -518,6 +522,7 @@
   gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
 

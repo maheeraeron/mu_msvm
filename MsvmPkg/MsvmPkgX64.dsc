@@ -302,6 +302,9 @@
   # PMEM (NVDIMM)
   gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xFED3D000
 
+  # Processor Aggregator Device
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xFED3C000
+
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|0x00100032
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Microsoft"
 
@@ -516,6 +519,7 @@
   gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
 
