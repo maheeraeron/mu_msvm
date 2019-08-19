@@ -1,0 +1,40 @@
+{"Registrations":[
+    {
+      "component": {
+       "type": "git",
+       "git": {
+         "repositoryUrl": "https://github.com/Microsoft/mu_basecore.git",
+         "commitHash": "271c1c69a4aea317fa61d0ed83786d3db8b7919c"
+         }
+       }
+    },
+    {
+      "component": {
+       "type": "git",
+       "git": {
+         "repositoryUrl": "https://github.com/Microsoft/mu_plus.git",
+         "commitHash": "6bf9f569d8b26bbd09cc933f270c71efcd234cf5"
+         }
+       }
+    },
+    {
+      "component": {
+       "type": "git",
+       "git": {
+         "repositoryUrl": "https://github.com/Microsoft/mu_tiano_plus.git",
+         "commitHash": "7b9de5ece3ae432dbd21d0d0ce03cdf4f7f008c1"
+         }
+       }
+    },
+    {
+      "component": {
+       "type": "git",
+       "git": {
+         "repositoryUrl": "https://github.com/Microsoft/mu_silicon_arm_tiano.git",
+         "commitHash": "f2f15ad77b12f70220c506e965a81515bdb07afd"
+         }
+       }
+    },
+ ],
+ "Version": 1
+}
