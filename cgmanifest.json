@@ -3,8 +3,8 @@
       "component": {
        "type": "git",
        "git": {
-         "repositoryUrl": "https://github.com/Microsoft/mu_basecore.git",
-         "commitHash": "271c1c69a4aea317fa61d0ed83786d3db8b7919c"
+         "repositoryUrl": "https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore",
+         "commitHash": "003c2d25a5b76079f1ab42af9adc84dd89a627c6"
          }
        }
     },
@@ -21,8 +21,8 @@
       "component": {
        "type": "git",
        "git": {
-         "repositoryUrl": "https://github.com/Microsoft/mu_tiano_plus.git",
-         "commitHash": "7b9de5ece3ae432dbd21d0d0ce03cdf4f7f008c1"
+         "repositoryUrl": "https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus",
+         "commitHash": "4bdaaed29243f45370520b96551d8676f6a342bf"
          }
        }
     },

@@ -44,9 +44,9 @@ ConvertBmpToGopBlt (
      OUT UINTN     *PixelWidth
   );
 
-EFI_STATUS 
+EFI_STATUS
 SetStringEntry (
-   EFI_STRING_ID IdName, 
+   EFI_STRING_ID IdName,
    CHAR16 *StringValue
    );
 
@@ -145,6 +145,8 @@ Return Value:
         return PlatformStringById(STRING_TOKEN(STR_DEVSTATUS_IMAGE_INVALID));
     case SecureBootUnsignedHashNotInDb:
         return PlatformStringById(STRING_TOKEN(STR_DEVSTATUS_IMAGE_UNSIGNED_HASH_NOT_FOUND));
+    case SecureBootSignedHashNotFound:
+        return PlatformStringById(STRING_TOKEN(STR_DEVSTATUS_IMAGE_SIGNED_HASH_NOT_FOUND));
     case SecureBootNeitherCertNorHashInDb:
         return PlatformStringById(STRING_TOKEN(STR_DEVSTATUS_IMAGE_HASH_CERT_NOT_FOUND));
     case NetworkBootMediaDisconnected:
@@ -542,7 +544,7 @@ Return Value:
     {
         //PlatformStringPrint(L"%s\n", statusString);
 
-        if (PlatformStringPrint(L"%s", statusString) && gStringBuffer != NULL) 
+        if (PlatformStringPrint(L"%s", statusString) && gStringBuffer != NULL)
         {
             SetStringEntry(BootSummaryStringIds[(*entryNumber - 1)*2], gStringBuffer);
         }
@@ -555,12 +557,12 @@ Return Value:
 
         if (PlatformStringPrint(L"%2d. %s", *entryNumber, friendlyName) && gStringBuffer != NULL)
         {
-            SetStringEntry(BootSummaryStringIds[(*entryNumber - 1)*2], gStringBuffer); 
+            SetStringEntry(BootSummaryStringIds[(*entryNumber - 1)*2], gStringBuffer);
         }
 
         if (PlatformStringPrint(L"        %s\n", statusString, Event->ExtendedStatus) && gStringBuffer != NULL)
         {
-            SetStringEntry(BootSummaryStringIds[(*entryNumber - 1)*2 + 1], gStringBuffer); 
+            SetStringEntry(BootSummaryStringIds[(*entryNumber - 1)*2 + 1], gStringBuffer);
         }
 
     }

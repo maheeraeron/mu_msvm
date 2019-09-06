@@ -34,7 +34,7 @@ typedef enum
 
 //
 // Device failure reason codes
-// Status codes are made up of a group ID in the high word and a 
+// Status codes are made up of a group ID in the high word and a
 // status code in the low word
 //
 // If items are added to this enum the UEFI string mapping function
@@ -58,6 +58,7 @@ typedef enum
     SecureBootCertDenied,
     SecureBootInvalidImage,
     SecureBootUnsignedHashNotInDb,
+    SecureBootSignedHashNotFound,
     SecureBootNeitherCertNorHashInDb,
     NetworkBootMediaDisconnected        = DeviceStatusNetworkGroup,
     NetworkBootDhcpFailed,

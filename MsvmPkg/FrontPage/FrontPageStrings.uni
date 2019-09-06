@@ -143,6 +143,7 @@
 #string STR_DEVSTATUS_IMAGE_CERT_DENIED               #language en-US  "The image's certificate was denied (DBX)."
 #string STR_DEVSTATUS_IMAGE_INVALID                   #language en-US  "The PE/COFF image is invalid."
 #string STR_DEVSTATUS_IMAGE_UNSIGNED_HASH_NOT_FOUND   #language en-US  "The unsigned image's hash is not allowed (DB)"
+#string STR_DEVSTATUS_IMAGE_SIGNED_HASH_NOT_FOUND     #language en-US  "The signed image's hash is not allowed (DB)"
 #string STR_DEVSTATUS_IMAGE_HASH_CERT_NOT_FOUND       #language en-US  "The image's hash and certificate are not allowed (DB)."
 #string STR_DEVSTATUS_NET_MEDIA_DISCONNECT            #language en-US  "The network media is disconnected."
 #string STR_DEVSTATUS_NET_DHCP_FAILED                 #language en-US  "DHCP failed."
