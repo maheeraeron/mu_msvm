@@ -38,3 +38,4 @@
 
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled
+    gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr

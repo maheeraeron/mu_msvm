@@ -43,8 +43,15 @@ EmclSendPacketSync (
 
 EFI_STATUS
 EmclChannelTypeSupported (
-    __in EFI_HANDLE ControllerHandle, 
-    __in const EFI_GUID *ChannelType, 
+    __in EFI_HANDLE ControllerHandle,
+    __in const EFI_GUID *ChannelType,
     __in EFI_HANDLE AgentHandle
     );
 
+EFI_STATUS
+EmclChannelTypeAndInstanceSupported (
+    __in EFI_HANDLE ControllerHandle,
+    __in const EFI_GUID *ChannelType,
+    __in EFI_HANDLE AgentHandle,
+    __in_opt const EFI_GUID *ChannelInstance
+    );

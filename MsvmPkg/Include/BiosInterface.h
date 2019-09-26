@@ -559,6 +559,7 @@ enum UefiStructureType
     UefiConfigAcpiTable                    = 0x16,
     UefiConfigNvdimmCount                  = 0x17,
     UefiConfigMadt                         = 0x18,
+    UefiConfigVpciInstanceFilter           = 0x19
 };
 
 //
@@ -774,6 +775,12 @@ typedef struct _UEFI_CONFIG_NVDIMM_COUNT
     };
 #pragma warning(default : 4201)
 } UEFI_CONFIG_NVDIMM_COUNT;
+
+typedef struct _UEFI_CONFIG_VPCI_INSTANCE_FILTER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 InstanceGuid[sizeof(GUID)];
+} UEFI_CONFIG_VPCI_INSTANCE_FILTER;
 
 #pragma warning(pop)
 #pragma pack(pop)

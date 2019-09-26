@@ -1007,6 +1007,7 @@ VpcivscDriverBindingSupported (
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
     EFI_VMBUS_PROTOCOL *vmbus = NULL;
+    EFI_GUID* instanceFilter = (EFI_GUID*) ((UINTN) PcdGet64(PcdVpciInstanceFilterGuidPtr));
 
     // Get the vmbus protocol
     status = gBS->OpenProtocol(
@@ -1022,11 +1023,13 @@ VpcivscDriverBindingSupported (
         return status;
     }
 
-    // Test and see if the channel offer is a VPCI one
-    return EmclChannelTypeSupported(
+    // Test and see if the channel offer is a VPCI one, and if it matches the
+    // specific instance guid if set.
+    return EmclChannelTypeAndInstanceSupported(
         ControllerHandle,
         &GUID_VPCI_VSP_CHANNEL_TYPE,
-        This->DriverBindingHandle);
+        This->DriverBindingHandle,
+        instanceFilter);
 }
 
 /// \brief      The driver start routine, called by DxeCore when driver binding

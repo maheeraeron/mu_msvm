@@ -192,6 +192,8 @@ BOOLEAN CompareDevicePathAgtB(
     USB_DEVICE_PATH *UsbPathB;
     PCI_DEVICE_PATH *PciPathA;
     PCI_DEVICE_PATH *PciPathB;
+    NVME_NAMESPACE_DEVICE_PATH *NvmePathA;
+    NVME_NAMESPACE_DEVICE_PATH *NvmePathB;
 
     LengthA = GetDevicePathSize(DevicePathA);
     LengthB = GetDevicePathSize(DevicePathB);
@@ -221,9 +223,11 @@ BOOLEAN CompareDevicePathAgtB(
                         if (Result == 0) {
                             Result = PciPathA->Function - PciPathB->Function;
                         }
+                        break;
                     default:
                         Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));
                     }
+                    break;
 
                 case  MESSAGING_DEVICE_PATH:
                     switch (DevicePathSubType(DevicePathA)) {
@@ -234,9 +238,17 @@ BOOLEAN CompareDevicePathAgtB(
                         if (Result == 0) {
                             Result = UsbPathA->ParentPortNumber - UsbPathB->ParentPortNumber;
                         }
+                        break;
+                    case MSG_NVME_NAMESPACE_DP:
+                        NvmePathA = (NVME_NAMESPACE_DEVICE_PATH*)DevicePathA;
+                        NvmePathB = (NVME_NAMESPACE_DEVICE_PATH*)DevicePathB;
+                        Result = NvmePathA->NamespaceId - NvmePathB->NamespaceId;
+                        break;
+
                     default:
                         Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));
                     }
+                    break;
 
                 default:
                     Result = CompareMem(DevicePathA, DevicePathB, DevicePathNodeLength(DevicePathA));

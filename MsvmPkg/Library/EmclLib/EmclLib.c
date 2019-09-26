@@ -312,6 +312,33 @@ Return Value:
 
 --*/
 {
+    return EmclChannelTypeAndInstanceSupported(ControllerHandle,
+        ChannelType,
+        AgentHandle,
+        NULL);
+}
+
+/// \brief        This method checks if a controller supports an EMCL channel
+///               type and optionally with the given channel instance guid. The
+///               controller handle must support VMBUS protocol.
+///
+/// \param[in]    ControllerHandle  The handle of the controller to test.
+/// \param[in]    ChannelType       Channel type to be checked if supported.
+/// \param[in]    AgentHandle       The handle of the agent that is opening the
+///                                 protocol interface.
+/// \param[inopt] ChannelInstance   The channel instance guid to optionally
+///                                 filter on
+///
+/// \return       EFI_STATUS
+///
+EFI_STATUS
+EmclChannelTypeAndInstanceSupported (
+    __in EFI_HANDLE ControllerHandle,
+    __in const EFI_GUID *ChannelType,
+    __in EFI_HANDLE AgentHandle,
+    __in_opt const EFI_GUID *ChannelInstance
+    )
+{
     EFI_STATUS status;
     EFI_DEVICE_PATH_PROTOCOL *devicePathNode;
     VMBUS_DEVICE_PATH *vmbusDevicePath;
@@ -363,7 +390,19 @@ Return Value:
                     &vmbusDevicePath->InterfaceType,
                     ChannelType))
                 {
-                    status = EFI_SUCCESS;
+                    if (ChannelInstance != NULL)
+                    {
+                        if (CompareGuid(&vmbusDevicePath->InterfaceInstance,
+                            ChannelInstance))
+                        {
+                            status = EFI_SUCCESS;
+                        }
+                    }
+                    else
+                    {
+                        status = EFI_SUCCESS;
+                    }
+
                     break;
                 }
             }
@@ -384,4 +423,3 @@ Cleanup:
 
     return status;
 }
-

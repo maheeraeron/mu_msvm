@@ -568,6 +568,9 @@
   # UEFI_CONFIG_NVDIMM_COUNT
   gMsvmPkgTokenSpaceGuid.PcdNvdimmCount|0x0
 
+  # UEFI_CONFIG_VPCI_INSTANCE_FILTER_GUID
+  gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr|0x0
+
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.

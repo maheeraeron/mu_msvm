@@ -587,6 +587,11 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tNVDIMM Count:0x%lx\n", cfg->Count));
             break;
 
+        case UefiConfigVpciInstanceFilter:
+            UEFI_CONFIG_VPCI_INSTANCE_FILTER *filter = (UEFI_CONFIG_VPCI_INSTANCE_FILTER*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tVpci instance filter:%g\n", (EFI_GUID*) filter->InstanceGuid));
+            break;
+
         default:
             DEBUG((DEBUG_VERBOSE, "\t!!! Unrecognized config structure type !!!\n"));
             break;
@@ -716,6 +721,7 @@ Return Value:
         0, //UefiConfigAcpiTable
         sizeof(UEFI_CONFIG_NVDIMM_COUNT), //UefiConfigNvdimmCount
         0, //UefiConfigMadt
+        sizeof(UEFI_CONFIG_VPCI_INSTANCE_FILTER), //UefiConfigVpciInstanceFilter
     };
 
     //
@@ -1219,6 +1225,11 @@ Return Value:
             case UefiConfigNvdimmCount:
                 UEFI_CONFIG_NVDIMM_COUNT *cfg = (UEFI_CONFIG_NVDIMM_COUNT*) header;
                 PcdSet16(PcdNvdimmCount, cfg->Count);
+                break;
+
+            case UefiConfigVpciInstanceFilter:
+                UEFI_CONFIG_VPCI_INSTANCE_FILTER *filter = (UEFI_CONFIG_VPCI_INSTANCE_FILTER*) header;
+                PcdSet64(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid);
                 break;
         }
 

@@ -148,6 +148,7 @@
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
     gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
+    gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress
