@@ -563,16 +563,6 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tStart:0x%17lx Size:0x%x\n", mmioRanges->Ranges[1].MmioPageNumberStart, mmioRanges->Ranges[1].MmioSizeInPages));
             break;
 
-        case UefiConfigAARCH64MPIDR:
-            UEFI_CONFIG_AARCH64_MPIDR *mpidr = (UEFI_CONFIG_AARCH64_MPIDR*) Header;
-            UINT64 mpidrSize = (mpidr->Header.Length - sizeof(UEFI_CONFIG_HEADER)) / 8;
-            DEBUG((DEBUG_VERBOSE, "\tMPIDR Size:%u\n", mpidrSize));
-            for (UINT64 i = 0; i < mpidrSize; i++)
-            {
-                DEBUG((DEBUG_VERBOSE, "\tProcessor %u MPIDR: 0x%x\n", i, mpidr->ProcessorMPIDRValues[i]));
-            }
-            break;
-
         case UefiConfigAcpiTable:
             UEFI_CONFIG_ACPI_TABLE *acpi = (UEFI_CONFIG_ACPI_TABLE*) Header;
             UINT64 acpiTableSize = acpi->Header.Length - sizeof(UEFI_CONFIG_HEADER);
@@ -717,7 +707,7 @@ Return Value:
         sizeof(UEFI_CONFIG_FLAGS), //UefiConfigFlags
         sizeof(UEFI_CONFIG_PROCESSOR_INFORMATION), //UefiConfigProcessorInformation
         0, //UefiConfigMmioRanges
-        0, //UefiConfigAARCH64MPIDR
+        0, //UefiConfigAARCH64MPIDR - not used
         0, //UefiConfigAcpiTable
         sizeof(UEFI_CONFIG_NVDIMM_COUNT), //UefiConfigNvdimmCount
         0, //UefiConfigMadt
@@ -727,7 +717,7 @@ Return Value:
     //
     // If this is a type that is not currently parsed, ignore it.
     //
-    if (Header->Type >= sizeof(StructureLengthTable))
+    if (Header->Type >= (sizeof(StructureLengthTable)/sizeof(StructureLengthTable[0])))
     {
         return EFI_SUCCESS;
     }
@@ -774,9 +764,6 @@ Return Value:
     UEFI_CONFIG_HEADER *header = NULL;
     UEFI_CONFIG_STRUCTURE_COUNT *configCount = NULL;
     UINT32 calculatedConfigSize = 0;
-#if defined(MDE_CPU_AARCH64)
-    UINT64 ProcessorMPIDRSize = 0;
-#endif
 
     //
     // Tracking to see if the config blob has all the required structures.
@@ -794,13 +781,13 @@ Return Value:
             UINT64 UefiConfigFlags:1;
             UINT64 UefiConfigProcessorInformation:1;
             UINT64 UefiConfigMmioRanges:1;
-            UINT64 Reserved:54;
+            UINT64 Reserved:55;
         };
 
         UINT64 AsUINT64;
     } requiredStructures;
 #elif defined(MDE_CPU_AARCH64)
-    static const UINT64 AllStructuresFound = 0x1FF;
+    static const UINT64 AllStructuresFound = 0xFF;
     union {
         struct {
             UINT64 UefiConfigBiosInformation:1;
@@ -811,8 +798,7 @@ Return Value:
             UINT64 UefiConfigFlags:1;
             UINT64 UefiConfigProcessorInformation:1;
             UINT64 UefiConfigMmioRanges:1;
-            UINT64 UefiConfigAARCH64MPIDR:1;
-            UINT64 Reserved:54;
+            UINT64 Reserved:56;
         };
 
         UINT64 AsUINT64;
@@ -1195,14 +1181,6 @@ Return Value:
                 requiredStructures.UefiConfigMmioRanges = 1;
                 break;
 
-#if defined(MDE_CPU_AARCH64)
-            case UefiConfigAARCH64MPIDR:
-                UEFI_CONFIG_AARCH64_MPIDR *mpidr = (UEFI_CONFIG_AARCH64_MPIDR*) header;
-                ProcessorMPIDRSize = (mpidr->Header.Length - sizeof(UEFI_CONFIG_HEADER)) / 8;
-                PcdSet64(PcdProcessorMPIDRValuesPtr, (UINT64) mpidr->ProcessorMPIDRValues);
-                requiredStructures.UefiConfigAARCH64MPIDR = 1;
-                break;
-#endif
             case UefiConfigAcpiTable:
                 UEFI_CONFIG_ACPI_TABLE *acpiTable = (UEFI_CONFIG_ACPI_TABLE*) header;
                 EFI_ACPI_DESCRIPTION_HEADER *acpiHeader = (EFI_ACPI_DESCRIPTION_HEADER*) acpiTable->AcpiTableData;
@@ -1250,14 +1228,6 @@ Return Value:
         ASSERT(FALSE);
         return EFI_DEVICE_ERROR;
     }
-
-#if defined(MDE_CPU_AARCH64)
-    if (PcdGet32(PcdProcessorCount) != ProcessorMPIDRSize)
-    {
-        DEBUG((DEBUG_ERROR, "MPIDR count did not match processor count\n"));
-        return EFI_DEVICE_ERROR;
-    }
-#endif
 
     return EFI_SUCCESS;
 

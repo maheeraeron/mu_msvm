@@ -555,7 +555,7 @@ enum UefiStructureType
     UefiConfigFlags                        = 0x12,
     UefiConfigProcessorInformation         = 0x13,
     UefiConfigMmioRanges                   = 0x14,
-    UefiConfigAARCH64MPIDR                 = 0x15,
+    UefiConfigAARCH64MPIDR                 = 0x15, // to remove
     UefiConfigAcpiTable                    = 0x16,
     UefiConfigNvdimmCount                  = 0x17,
     UefiConfigMadt                         = 0x18,

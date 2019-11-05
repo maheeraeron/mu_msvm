@@ -263,9 +263,6 @@
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0|UINT64|0x6036
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0|UINT64|0x6037
 
-  # UEFI_CONFIG_AARCH64_MPIDR
-  gMsvmPkgTokenSpaceGuid.PcdProcessorMPIDRValuesPtr|0x0|UINT64|0x6038
-
   # Isolation
   gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE|BOOLEAN|0x603A
 

@@ -30,7 +30,6 @@
 [Sources.AARCH64]
     Dbg2.aslc
     Gtdt.aslc
-    Madt.aslc
 
 [Sources.X64]
     Facs.aslc
@@ -48,8 +47,6 @@
     gMsvmPkgTokenSpaceGuid.PcdProcIdleBase
     
 [Pcd.AARCH64]
-    gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
-    gArmTokenSpaceGuid.PcdGicDistributorBase
     gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector
     gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector
     gMsvmPkgTokenSpaceGuid.PcdPmemEventVector

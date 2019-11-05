@@ -153,7 +153,6 @@
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdSystemMemorySize
-    gMsvmPkgTokenSpaceGuid.PcdProcessorMPIDRValuesPtr
 
 [Pcd.X64]
     gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable

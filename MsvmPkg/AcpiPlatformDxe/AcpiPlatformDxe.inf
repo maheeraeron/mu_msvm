@@ -27,9 +27,6 @@
     Oem0.c
     spcr.c
 
-[Sources.AARCH64]
-    Madt.c
-
 [Packages]
     MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
@@ -49,18 +46,11 @@
     IoLib
     ConfigLib
 
-[LibraryClasses.AARCH64]
-    ArmGicLib
-
 [Protocols]
     gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
 
 [Guids]
     gEfiAcpi20TableGuid
-
-[Pcd.AARCH64]
-    gArmTokenSpaceGuid.PcdGicRedistributorsBase
-    gMsvmPkgTokenSpaceGuid.PcdProcessorMPIDRValuesPtr
 
 [Pcd]
     gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiTableStorageFile

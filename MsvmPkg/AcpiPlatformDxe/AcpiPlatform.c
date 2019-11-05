@@ -45,9 +45,6 @@ typedef struct _INIT_TABLE_ENTRY
 INIT_TABLE_ENTRY AcpiInitTable[] =
 {
     { VM_ACPI_ENTROPY_TABLE_SIGNATURE, Oem0InitializeTable },
-#ifdef MDE_CPU_AARCH64
-    { EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE, GicInitializeTable },
-#endif
     { EFI_ACPI_6_2_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE, DsdtInitializeTable },
     { EFI_ACPI_6_2_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE, SpcrInitializeTable },
     { EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE, FacpInitializeTable },
@@ -517,8 +514,6 @@ Return Value:
         }
     }
 
-#if defined(MDE_CPU_X64)
-
     //
     // Add the MADT table.
     //
@@ -528,8 +523,6 @@ Return Value:
     {
         goto Cleanup;
     }
-
-#endif
 
     //
     // Add the SRAT table.
@@ -564,6 +557,3 @@ Return Value:
 Cleanup:
     return status;
 }
-
-
-
