@@ -189,6 +189,7 @@
   EmclLib|MsvmPkg/Library/EmclLib/EmclLib.inf
   EventLogLib|MsvmPkg/Library/EventLogLib/EventLogLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
+  FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|MdeModulePkg/Library/DxeIpIoLib/DxeIpIoLib.inf
@@ -637,6 +638,7 @@
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf {
     <LibraryClasses>
       UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf

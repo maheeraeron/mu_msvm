@@ -210,6 +210,7 @@
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
+  FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   UdpIoLib|MdeModulePkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
@@ -618,6 +619,7 @@
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  MdeModulePkg/Universal/Disk/RamDiskDxe/RamDiskDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
   MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
