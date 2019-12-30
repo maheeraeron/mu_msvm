@@ -559,7 +559,12 @@ enum UefiStructureType
     UefiConfigAcpiTable                    = 0x16,
     UefiConfigNvdimmCount                  = 0x17,
     UefiConfigMadt                         = 0x18,
-    UefiConfigVpciInstanceFilter           = 0x19
+    UefiConfigVpciInstanceFilter           = 0x19,
+    UefiConfigSmbiosSystemManufacturer     = 0x1A,
+    UefiConfigSmbiosSystemProductName      = 0x1B,
+    UefiConfigSmbiosSystemVersion          = 0x1C,
+    UefiConfigSmbiosSystemSKUNumber        = 0x1D,
+    UefiConfigSmbiosSystemFamily           = 0x1E
 };
 
 //
@@ -620,11 +625,41 @@ typedef struct _UEFI_CONFIG_BIOS_GUID
     UINT8 BiosGuid[sizeof(GUID)];
 } UEFI_CONFIG_BIOS_GUID;
 
+typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SystemManufacturer[];
+} UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SystemProductName[];
+} UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME;
+
+typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_VERSION
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SystemVersion[];
+} UEFI_CONFIG_SMBIOS_SYSTEM_VERSION;
+
 typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER
 {
     UEFI_CONFIG_HEADER Header;
     UINT8 SystemSerialNumber[];
 } UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SystemSKUNumber[];
+} UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER;
+
+typedef struct _UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 SystemFamily[];
+} UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY;
 
 typedef struct _UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER
 {

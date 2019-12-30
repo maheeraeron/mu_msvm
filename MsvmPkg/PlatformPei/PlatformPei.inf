@@ -86,8 +86,18 @@
     gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize
     gMsvmPkgTokenSpaceGuid.PcdEntropyPtr
     gMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemManufacturerStr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemManufacturerSize
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemProductNameStr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemProductNameSize
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemVersionStr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemVersionSize
     gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberStr
     gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberSize
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSKUNumberStr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSKUNumberSize
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemFamilyStr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemFamilySize
     gMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberStr
     gMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberSize
     gMsvmPkgTokenSpaceGuid.PcdSmbiosChassisSerialNumberStr

@@ -552,12 +552,12 @@ Return Value:
     static struct
     {
         SMBIOS_TABLE_TYPE1 Formatted;
-        CHAR8 Unformed[sizeof(MANUFACTURER_STRING) +
-                       sizeof(VIRTUAL_MACHINE_STRING) +
-                       sizeof(RELEASE_VERSION_STRING) +
-                       BiosInterfaceSmbiosStringMax + 1 +
-                       sizeof(NONE_STRING) +
-                       sizeof(VIRTUAL_MACHINE_STRING) +
+        CHAR8 Unformed[BiosInterfaceSmbiosStringMax + 1 + // Manufacturer
+                       BiosInterfaceSmbiosStringMax + 1 + // Product Name
+                       BiosInterfaceSmbiosStringMax + 1 + // Version
+                       BiosInterfaceSmbiosStringMax + 1 + // Serial Number
+                       BiosInterfaceSmbiosStringMax + 1 + // SKU Number
+                       BiosInterfaceSmbiosStringMax + 1 + // Family
                        1];
     } systemInformation =
 
@@ -576,12 +576,86 @@ Return Value:
     };
 
     //
-    // Add the dynamic information to the structure.
+    // Add the dynamic system information table fields to the structure.
+    // If the user passed in field values manually, or simply wants the
+    // host SMBIOS values mirrored, then update the corresponding strings.
+    // If not, retain the default values.
+    //
+
+    UINT32 stringLength;
+    //
+    // Add the System Manufacturer string.
+    //
+    stringLength = PcdGet32(PcdSmbiosSystemManufacturerSize);
+    
+    if (stringLength)
+    {
+        strings[0] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemManufacturerStr),
+                            stringLength,
+                            BiosInterfaceSmbiosStringMax + 1);
+    }
+    
+    //
+    // Add the System Product Number string.
+    //
+    stringLength = PcdGet32(PcdSmbiosSystemProductNameSize);
+
+    if (stringLength)
+    {
+        strings[1] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemProductNameStr),
+                            stringLength,
+                            BiosInterfaceSmbiosStringMax + 1);
+    }
+    
+    //
+    // Add the System Version string.
+    //
+    stringLength = PcdGet32(PcdSmbiosSystemVersionSize);
+    
+    if (stringLength)
+    {
+        strings[2] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemVersionStr),
+                            stringLength,
+                            BiosInterfaceSmbiosStringMax + 1);
+    }
+    
+    //
+    // Add the System Serial Number string.
+    // If it wasn't passed in, then we set the System Serial Number to the default - "None".
     //
     strings[3] =
         LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemSerialNumberStr),
                             PcdGet32(PcdSmbiosSystemSerialNumberSize),
                             BiosInterfaceSmbiosStringMax + 1);
+
+    //
+    // Add the System SKU Number string.
+    //
+    stringLength = PcdGet32(PcdSmbiosSystemSKUNumberSize);
+
+    if (stringLength)
+    {
+        strings[4] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemSKUNumberStr),
+                            stringLength,
+                            BiosInterfaceSmbiosStringMax + 1);
+    }
+
+    //
+    // Add the System Family string.
+    //
+    stringLength = PcdGet32(PcdSmbiosSystemFamilySize);
+
+    if (stringLength)
+    {
+        strings[5] =
+        LoadPcdSmbiosString(PcdGet64(PcdSmbiosSystemFamilyStr),
+                            stringLength,
+                            BiosInterfaceSmbiosStringMax + 1);
+    }
 
     CopyMem(&systemInformation.Formatted.Uuid, (VOID*)(UINTN) PcdGet64(PcdBiosGuidPtr), sizeof(EFI_GUID));
 

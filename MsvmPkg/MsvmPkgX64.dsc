@@ -449,10 +449,35 @@
   # Points to the actual GUID, not the containing config structure
   gMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr|0x0
 
+  # UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemManufacturerStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemManufacturerSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemProductNameStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemProductNameSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_VERSION
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemVersionStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemVersionSize|0x0
+
   # UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER
   # Points to a null terminated string of the specified size
   gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberStr|0x0
   gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSerialNumberSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSKUNumberStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSKUNumberSize|0x0
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemFamilyStr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemFamilySize|0x0
 
   # UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER
   gMsvmPkgTokenSpaceGuid.PcdSmbiosBaseSerialNumberStr|0x0

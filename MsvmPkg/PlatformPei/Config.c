@@ -458,9 +458,34 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tBiosGuid: %g\n", (EFI_GUID*) biosGuid->BiosGuid));
             break;
 
+        case UefiConfigSmbiosSystemManufacturer:
+            UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER *systemManufacturer = (UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSmbios System Manufacturer: %a\n", systemManufacturer->SystemManufacturer));
+            break;
+
+        case UefiConfigSmbiosSystemProductName:
+            UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME *systemProductName = (UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSmbios System Product Name: %a\n", systemProductName->SystemProductName));
+            break;
+
+        case UefiConfigSmbiosSystemVersion:
+            UEFI_CONFIG_SMBIOS_SYSTEM_VERSION *systemVersion = (UEFI_CONFIG_SMBIOS_SYSTEM_VERSION*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSmbios System Version: %a\n", systemVersion->SystemVersion));
+            break;
+
         case UefiConfigSmbiosSystemSerialNumber:
             UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER *systemSerialNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER*) Header;
             DEBUG((DEBUG_VERBOSE, "\tSmbios System Serial Number: %a\n", systemSerialNumber->SystemSerialNumber));
+            break;
+
+        case UefiConfigSmbiosSystemSKUNumber:
+            UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER *systemSKUNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSmbios System SKU Number: %a\n", systemSKUNumber->SystemSKUNumber));
+            break;
+
+        case UefiConfigSmbiosSystemFamily:
+            UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY *systemFamily = (UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSmbios System Family: %a\n", systemFamily->SystemFamily));
             break;
 
         case UefiConfigSmbiosBaseSerialNumber:
@@ -712,6 +737,11 @@ Return Value:
         sizeof(UEFI_CONFIG_NVDIMM_COUNT), //UefiConfigNvdimmCount
         0, //UefiConfigMadt
         sizeof(UEFI_CONFIG_VPCI_INSTANCE_FILTER), //UefiConfigVpciInstanceFilter
+        0, //UefiConfigSmbiosSystemManufacturer
+        0, //UefiConfigSmbiosSystemProductName
+        0, //UefiConfigSmbiosSystemVersion
+        0, //UefiConfigSmbiosSystemSKUNumber
+        0, //UefiConfigSmbiosSystemFamily
     };
 
     //
@@ -917,6 +947,48 @@ Return Value:
                 requiredStructures.UefiConfigBiosGuid = 1;
                 break;
 
+            case UefiConfigSmbiosSystemManufacturer:
+                UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER *systemManufacturer = (UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER*) header;
+                PcdSet64(PcdSmbiosSystemManufacturerStr, (UINT64) systemManufacturer->SystemManufacturer);
+                status = GetSmbiosStructureStringLength(header->Length, systemManufacturer->SystemManufacturer, &stringLength);
+
+                if (EFI_ERROR(status))
+                {
+                    goto Failure;
+                }
+
+                PcdSet32(PcdSmbiosSystemManufacturerSize, stringLength);
+
+                break;
+
+            case UefiConfigSmbiosSystemProductName:
+                UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME *systemProductName = (UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME*) header;
+                PcdSet64(PcdSmbiosSystemProductNameStr, (UINT64) systemProductName->SystemProductName);
+                status = GetSmbiosStructureStringLength(header->Length, systemProductName->SystemProductName, &stringLength);
+
+                if (EFI_ERROR(status))
+                {
+                    goto Failure;
+                }
+
+                PcdSet32(PcdSmbiosSystemProductNameSize, stringLength);
+
+                break;
+
+            case UefiConfigSmbiosSystemVersion:
+                UEFI_CONFIG_SMBIOS_SYSTEM_VERSION *systemVersion = (UEFI_CONFIG_SMBIOS_SYSTEM_VERSION*) header;
+                PcdSet64(PcdSmbiosSystemVersionStr, (UINT64) systemVersion->SystemVersion);
+                status = GetSmbiosStructureStringLength(header->Length, systemVersion->SystemVersion, &stringLength);
+
+                if (EFI_ERROR(status))
+                {
+                    goto Failure;
+                }
+
+                PcdSet32(PcdSmbiosSystemVersionSize, stringLength);
+
+                break;
+
             case UefiConfigSmbiosSystemSerialNumber:
                 UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER *systemSerialNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER*) header;
                 PcdSet64(PcdSmbiosSystemSerialNumberStr, (UINT64) systemSerialNumber->SystemSerialNumber);
@@ -928,6 +1000,34 @@ Return Value:
                 }
 
                 PcdSet32(PcdSmbiosSystemSerialNumberSize, stringLength);
+
+                break;
+
+            case UefiConfigSmbiosSystemSKUNumber:
+                UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER *systemSKUNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER*) header;
+                PcdSet64(PcdSmbiosSystemSKUNumberStr, (UINT64) systemSKUNumber->SystemSKUNumber);
+                status = GetSmbiosStructureStringLength(header->Length, systemSKUNumber->SystemSKUNumber, &stringLength);
+
+                if (EFI_ERROR(status))
+                {
+                    goto Failure;
+                }
+
+                PcdSet32(PcdSmbiosSystemSKUNumberSize, stringLength);
+
+                break;
+
+            case UefiConfigSmbiosSystemFamily:
+                UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY *systemFamily = (UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY*) header;
+                PcdSet64(PcdSmbiosSystemFamilyStr, (UINT64) systemFamily->SystemFamily);
+                status = GetSmbiosStructureStringLength(header->Length, systemFamily->SystemFamily, &stringLength);
+
+                if (EFI_ERROR(status))
+                {
+                    goto Failure;
+                }
+
+                PcdSet32(PcdSmbiosSystemFamilySize, stringLength);
 
                 break;
 

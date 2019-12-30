@@ -277,3 +277,28 @@
 
   # UEFI_CONFIG_VPCI_INSTANCE_FILTER_GUID
   gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr|0x0|UINT64|0x6049
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemManufacturerStr|0x0|UINT64|0x604A
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemManufacturerSize|0x0|UINT32|0x604B
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemProductNameStr|0x0|UINT64|0x604C
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemProductNameSize|0x0|UINT32|0x604D
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_VERSION
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemVersionStr|0x0|UINT64|0x604E
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemVersionSize|0x0|UINT32|0x604F
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSKUNumberStr|0x0|UINT64|0x6050
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemSKUNumberSize|0x0|UINT32|0x6051
+
+  # UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY
+  # Points to a null terminated string of the specified size
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemFamilyStr|0x0|UINT64|0x6052
+  gMsvmPkgTokenSpaceGuid.PcdSmbiosSystemFamilySize|0x0|UINT32|0x6053
