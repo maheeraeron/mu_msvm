@@ -508,6 +508,11 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tSmbios Bios Lock String: %a\n", biosLockString->BiosLockString));
             break;
 
+        case UefiConfigSmbiosMemoryDeviceSerialNumber:
+            UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER *memoryDeviceSerialNumber = (UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER*) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSmbios Memory Device Serial Number: %a\n", memoryDeviceSerialNumber->MemoryDeviceSerialNumber));
+            break;
+
         case UefiConfigSmbios31ProcessorInformation:
             UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION *procInfo = (UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION*) Header;
             DEBUG((DEBUG_VERBOSE, "\tProcessorType: %u\n", procInfo->ProcessorType));
@@ -742,6 +747,7 @@ Return Value:
         0, //UefiConfigSmbiosSystemVersion
         0, //UefiConfigSmbiosSystemSKUNumber
         0, //UefiConfigSmbiosSystemFamily
+        0, //UefiConfigSmbiosMemoryDeviceSerialNumber
     };
 
     //
@@ -1084,6 +1090,20 @@ Return Value:
                 }
 
                 PcdSet32(PcdSmbiosBiosLockStringSize, stringLength);
+
+                break;
+            
+            case UefiConfigSmbiosMemoryDeviceSerialNumber:
+                UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER *memoryDeviceSerialNumber = (UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER*) header;
+                PcdSet64(PcdSmbiosMemoryDeviceSerialNumberStr, (UINT64) memoryDeviceSerialNumber->MemoryDeviceSerialNumber);
+                status = GetSmbiosStructureStringLength(header->Length, memoryDeviceSerialNumber->MemoryDeviceSerialNumber, &stringLength);
+
+                if (EFI_ERROR(status))
+                {
+                    goto Failure;
+                }
+
+                PcdSet32(PcdSmbiosMemoryDeviceSerialNumberSize, stringLength);
 
                 break;
 

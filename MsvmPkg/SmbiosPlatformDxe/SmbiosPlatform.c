@@ -65,6 +65,7 @@ static CHAR8 NONE_STRING[]            = "None";
 // Naming convention is "MXXXX" where XXXX are hex digits.
 //
 #define LOCATION_STRING_SIZE 6
+static CHAR8 LOCATION_STRING_PRIMARY_MEMORY_DEVICE[] = "M0001";
 
 //
 // Maximum SMBIOS memory regions to create.
@@ -1318,12 +1319,12 @@ Return Value:
     static struct
     {
         SMBIOS_TABLE_TYPE17 Formatted;
-        CHAR8 Unformed[LOCATION_STRING_SIZE +
-                       sizeof(NONE_STRING) +
-                       sizeof(MANUFACTURER_STRING) +
-                       sizeof(NONE_STRING) +
-                       sizeof(NONE_STRING) +
-                       sizeof(NONE_STRING) +
+        CHAR8 Unformed[LOCATION_STRING_SIZE +             // Device Locator
+                       sizeof(NONE_STRING) +              // Bank Locator
+                       sizeof(MANUFACTURER_STRING) +      // Manufacturer
+                       BiosInterfaceSmbiosStringMax + 1 + // Serial Number
+                       sizeof(NONE_STRING) +              // Asset Tag
+                       sizeof(NONE_STRING) +              // Part Number
                        1];
     } memoryDevice =
 
@@ -1408,6 +1409,26 @@ Return Value:
     memoryDevice.Formatted.MemoryArrayHandle = PhysicalMemoryArrayHandle;
     memoryDevice.Formatted.MemoryErrorInformationHandle = MemoryErrorHandle;
     strings[0] = LocationString;
+
+    //
+    // Add the Memory Device Serial Number to the Bank 0 device.
+    //
+    if (AsciiStrCmp(LocationString, LOCATION_STRING_PRIMARY_MEMORY_DEVICE) == 0)
+    {
+        UINT32 stringLength = PcdGet32(PcdSmbiosMemoryDeviceSerialNumberSize);
+
+        if (stringLength)
+        {
+            strings[3] =
+            LoadPcdSmbiosString(PcdGet64(PcdSmbiosMemoryDeviceSerialNumberStr),
+                                stringLength,
+                                BiosInterfaceSmbiosStringMax + 1);
+        }
+    }
+    else
+    {
+        strings[3] = NONE_STRING;
+    }
 
     //
     // Add the structure to the SMBIOS table.

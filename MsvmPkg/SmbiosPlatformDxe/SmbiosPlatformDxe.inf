@@ -76,6 +76,8 @@
     gMsvmPkgTokenSpaceGuid.PcdSmbiosChassisAssetTagSize
     gMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringStr
     gMsvmPkgTokenSpaceGuid.PcdSmbiosBiosLockStringSize
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosMemoryDeviceSerialNumberStr
+    gMsvmPkgTokenSpaceGuid.PcdSmbiosMemoryDeviceSerialNumberSize
     gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorType
     gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorID
     gMsvmPkgTokenSpaceGuid.PcdSmbiosProcessorVoltage

@@ -534,37 +534,38 @@ typedef struct _UEFI_CONFIG_HEADER
 //
 enum UefiStructureType
 {
-    UefiConfigStructureCount               = 0x00,
-    UefiConfigBiosInformation              = 0x01,
-    UefiConfigSrat                         = 0x02,
-    UefiConfigMemoryMap                    = 0x03,
-    UefiConfigEntropy                      = 0x04,
-    UefiConfigBiosGuid                     = 0x05,
-    UefiConfigSmbiosSystemSerialNumber     = 0x06,
-    UefiConfigSmbiosBaseSerialNumber       = 0x07,
-    UefiConfigSmbiosChassisSerialNumber    = 0x08,
-    UefiConfigSmbiosChassisAssetTag        = 0x09,
-    UefiConfigSmbiosBiosLockString         = 0x0A,
-    UefiConfigSmbios31ProcessorInformation = 0x0B,
-    UefiConfigSmbiosSocketDesignation      = 0x0C,
-    UefiConfigSmbiosProcessorManufacturer  = 0x0D,
-    UefiConfigSmbiosProcessorVersion       = 0x0E,
-    UefiConfigSmbiosProcessorSerialNumber  = 0x0F,
-    UefiConfigSmbiosProcessorAssetTag      = 0x10,
-    UefiConfigSmbiosProcessorPartNumber    = 0x11,
-    UefiConfigFlags                        = 0x12,
-    UefiConfigProcessorInformation         = 0x13,
-    UefiConfigMmioRanges                   = 0x14,
-    UefiConfigAARCH64MPIDR                 = 0x15, // to remove
-    UefiConfigAcpiTable                    = 0x16,
-    UefiConfigNvdimmCount                  = 0x17,
-    UefiConfigMadt                         = 0x18,
-    UefiConfigVpciInstanceFilter           = 0x19,
-    UefiConfigSmbiosSystemManufacturer     = 0x1A,
-    UefiConfigSmbiosSystemProductName      = 0x1B,
-    UefiConfigSmbiosSystemVersion          = 0x1C,
-    UefiConfigSmbiosSystemSKUNumber        = 0x1D,
-    UefiConfigSmbiosSystemFamily           = 0x1E
+    UefiConfigStructureCount                 = 0x00,
+    UefiConfigBiosInformation                = 0x01,
+    UefiConfigSrat                           = 0x02,
+    UefiConfigMemoryMap                      = 0x03,
+    UefiConfigEntropy                        = 0x04,
+    UefiConfigBiosGuid                       = 0x05,
+    UefiConfigSmbiosSystemSerialNumber       = 0x06,
+    UefiConfigSmbiosBaseSerialNumber         = 0x07,
+    UefiConfigSmbiosChassisSerialNumber      = 0x08,
+    UefiConfigSmbiosChassisAssetTag          = 0x09,
+    UefiConfigSmbiosBiosLockString           = 0x0A,
+    UefiConfigSmbios31ProcessorInformation   = 0x0B,
+    UefiConfigSmbiosSocketDesignation        = 0x0C,
+    UefiConfigSmbiosProcessorManufacturer    = 0x0D,
+    UefiConfigSmbiosProcessorVersion         = 0x0E,
+    UefiConfigSmbiosProcessorSerialNumber    = 0x0F,
+    UefiConfigSmbiosProcessorAssetTag        = 0x10,
+    UefiConfigSmbiosProcessorPartNumber      = 0x11,
+    UefiConfigFlags                          = 0x12,
+    UefiConfigProcessorInformation           = 0x13,
+    UefiConfigMmioRanges                     = 0x14,
+    UefiConfigAARCH64MPIDR                   = 0x15, // to remove
+    UefiConfigAcpiTable                      = 0x16,
+    UefiConfigNvdimmCount                    = 0x17,
+    UefiConfigMadt                           = 0x18,
+    UefiConfigVpciInstanceFilter             = 0x19,
+    UefiConfigSmbiosSystemManufacturer       = 0x1A,
+    UefiConfigSmbiosSystemProductName        = 0x1B,
+    UefiConfigSmbiosSystemVersion            = 0x1C,
+    UefiConfigSmbiosSystemSKUNumber          = 0x1D,
+    UefiConfigSmbiosSystemFamily             = 0x1E,
+    UefiConfigSmbiosMemoryDeviceSerialNumber = 0x1F,
 };
 
 //
@@ -684,6 +685,12 @@ typedef struct _UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING
     UEFI_CONFIG_HEADER Header;
     UINT8 BiosLockString[];
 } UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING;
+
+typedef struct _UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 MemoryDeviceSerialNumber[];
+} UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER;
 
 typedef struct _UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION
 {
