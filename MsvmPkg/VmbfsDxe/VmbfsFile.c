@@ -306,7 +306,7 @@ Return Value:
         goto Cleanup;
     }
 
-    filePathLength = wcslen(parentFilePath);
+    filePathLength = StrLen(parentFilePath);
     parentFilePathLength = filePathLength;
     if (filePathLength > 1)
     {
@@ -319,7 +319,7 @@ Return Value:
         filePathLength += 1;
     }
 
-    filePathLength += (wcslen(FileName) + 1);
+    filePathLength += (StrLen(FileName) + 1);
     filePathLengthInBytes = filePathLength * sizeof(CHAR16);
 
 

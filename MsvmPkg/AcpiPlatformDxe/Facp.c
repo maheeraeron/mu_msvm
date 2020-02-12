@@ -18,6 +18,7 @@ Author:
 
 #include <PiDxe.h>
 #include "AcpiPlatform.h"
+#include <Library/BaseMemoryLib.h>
 
 EFI_STATUS
 FacpInitializeTable(
@@ -57,7 +58,7 @@ Return Value:
     //
     // Set the hypervisor vendor identity to MsHyperV
     //
-    memcpy(&facp->HypervisorVendorIdentity, "MsHyperV", 8);
+    CopyMem(&facp->HypervisorVendorIdentity, "MsHyperV", 8);
 
 
     if (PcdGetBool(PcdLowPowerS0IdleEnabled))

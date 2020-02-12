@@ -27,7 +27,7 @@ workspace:
   clean: all
 
 variables:
-  Build.ToolChainTag: "VSLATESTx86xASL"
+  Build.ToolChainTag: "VS2017"
   PlatformPkg: "MsvmPkg"
   Env.PythonVersion: "3.7.2"
   GIT_TERMINAL_PROMPT: "0"

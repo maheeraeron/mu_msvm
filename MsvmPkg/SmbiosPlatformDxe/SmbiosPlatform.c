@@ -43,8 +43,8 @@ Author:
 // TODO: Could we automate the release version from current UEFI version?
 //
 #define MAJOR_RELEASE_VERSION 4
-#define MINOR_RELEASE_VERSION 0
-static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v4.0";
+#define MINOR_RELEASE_VERSION 1
+static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v4.1";
 static CHAR8 RELEASE_DATE_STRING[] = "mm/dd/yyyy";
 
 //
@@ -588,7 +588,7 @@ Return Value:
     // Add the System Manufacturer string.
     //
     stringLength = PcdGet32(PcdSmbiosSystemManufacturerSize);
-    
+
     if (stringLength)
     {
         strings[0] =
@@ -596,7 +596,7 @@ Return Value:
                             stringLength,
                             BiosInterfaceSmbiosStringMax + 1);
     }
-    
+
     //
     // Add the System Product Number string.
     //
@@ -609,12 +609,12 @@ Return Value:
                             stringLength,
                             BiosInterfaceSmbiosStringMax + 1);
     }
-    
+
     //
     // Add the System Version string.
     //
     stringLength = PcdGet32(PcdSmbiosSystemVersionSize);
-    
+
     if (stringLength)
     {
         strings[2] =
@@ -622,7 +622,7 @@ Return Value:
                             stringLength,
                             BiosInterfaceSmbiosStringMax + 1);
     }
-    
+
     //
     // Add the System Serial Number string.
     // If it wasn't passed in, then we set the System Serial Number to the default - "None".

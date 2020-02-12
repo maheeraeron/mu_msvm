@@ -430,8 +430,11 @@ VpciChannelNegotiateProtocol(
     if (NT_SUCCESS(ntStatus))
     {
         // Version accepted by VSP
-        DEBUG((DEBUG_VPCI_INFO, "vpci VSP accepted latest version\n"));
-        ASSERT(replyPacket.ProtocolVersion == VPCI_PROTOCOL_VERSION_CURRENT);
+        // NOTE: The protocol is a bit weird. the reply packed doesn't contain
+        //       the version we  negotiated, rather, it contains the highest version
+        //       the VSP supports, which can be higher than the one we negotiated.
+        DEBUG((DEBUG_VPCI_INFO, "vpci VSP accepted requested version\n"));
+        DEBUG((DEBUG_VPCI_INFO, "vpci VSP latest version is %x\n", replyPacket.ProtocolVersion));
     }
     else
     {

@@ -2,14 +2,8 @@
   FormDiplay protocol to show Form
 
 Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
-Copyright (c) 2015 - 2018, Microsoft Corporation.
-This program and the accompanying materials are licensed and made available under
-the terms and conditions of the BSD License that accompanies this distribution.
-The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php.
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -556,7 +550,7 @@ GetSelectionInputPopUp (
   FormattedString and the glyph width of each line cannot exceed gHelpBlockWidth.
 
   @param  StringPtr              The entire help string.
-  @param  FormattedString        The oupput formatted string.
+  @param  FormattedString        The output formatted string.
   @param  EachLineWidth          The max string length of each line in the formatted string.
   @param  RowCount               TRUE: if Question is selected.
 

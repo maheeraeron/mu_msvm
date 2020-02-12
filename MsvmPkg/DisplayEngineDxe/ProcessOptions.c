@@ -3,14 +3,8 @@ Implementation for handling the User Interface option processing.
 
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
-Copyright (c) 2015 - 2018, Microsoft Corporation.
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -280,7 +274,7 @@ CompareHiiValue (
     *Result = CompareMem (Buf1, Buf2, Len);
     if ((*Result == 0) && (Buf1Len != Buf2Len)) {
       //
-      // In this case, means base on samll number buffer, the data is same
+      // In this case, means base on small number buffer, the data is same
       // So which value has more data, which value is bigger.
       //
       *Result = Buf1Len > Buf2Len ? 1 : -1;
@@ -569,7 +563,6 @@ PrintFormattedNumber (
 
   default:
     return EFI_UNSUPPORTED;
-    break;
   }
 
   UnicodeSPrint (FormattedNumber, BufferSize, Format, Value);
@@ -614,22 +607,14 @@ ProcessOptions (
   )
 {
   EFI_STATUS                      Status;
-  CHAR16                          *StringPtr;
   FORM_DISPLAY_ENGINE_STATEMENT   *Question;
   CHAR16                          FormattedNumber[21];
-  CHAR16                          Character[2];
   UINTN                           BufferSize;
   EFI_HII_VALUE                   *QuestionValue;
-  EFI_STRING_ID                   StringId;
-  BOOLEAN                         ValueInvalid;
 
   Status        = EFI_SUCCESS;
 
-  StringPtr     = NULL;
-  Character[1]  = L'\0';
   *OptionString = NULL;
-  StringId      = 0;
-  ValueInvalid  = FALSE;
 
   ZeroMem (FormattedNumber, 21 * sizeof (CHAR16));
   BufferSize = (gOptionBlockWidth + 1) * 2 * gStatementDimensions.BottomRow;
@@ -677,7 +662,7 @@ ProcessOptions (
   FormattedString and the glyph width of each line cannot exceed gHelpBlockWidth.
 
   @param  StringPtr              The entire help string.
-  @param  FormattedString        The oupput formatted string.
+  @param  FormattedString        The output formatted string.
   @param  EachLineWidth          The max string length of each line in the formatted string.
   @param  RowCount               TRUE: if Question is selected.
 
