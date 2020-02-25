@@ -1,0 +1,11 @@
+//
+// This driver measures VM Identify information to the TPM.
+//
+// Copyright (c) 2020, Microsoft Corporation.  All rights reserved.
+//
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "This driver measures VM properties to the TPM."
+
+#string STR_MODULE_DESCRIPTION          #language en-US "This driver measures VM properties to TPM PCR[06]."
+
