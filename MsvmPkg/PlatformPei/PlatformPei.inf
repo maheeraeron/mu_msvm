@@ -169,6 +169,7 @@
 [Pcd.X64]
     gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable
     gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4
+    gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask
 
 [Ppis]
     gEfiPeiMasterBootModePpiGuid

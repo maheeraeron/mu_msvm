@@ -576,7 +576,8 @@
   # This mask is used to indicate which PCRs are intended to be supported by the *platform* (not UEFI software).
   # If a PCR is allocated that isn't in this mask, it will be deallocated by Tcg2Pei.
   # If a PCR is supported in this mask, but isn't supported by the TPM, the mask will be updated by Tcg2Pei.
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|0x00000003               # HASH_ALG_SHA256 HASH_ALG_SHA1
+  # This mask is adjusted for legacy VM versions for compatibility reasons.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|0x00000007               # HASH_ALG_SHA[384 | 256 | 1]
 
   # PcdTcg2HashAlgorithmBitmap
   # This bitmap is updated at runtime by HashLibBaseCryptoRouter.
@@ -736,6 +737,7 @@
     <LibraryClasses>
       Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
@@ -745,6 +747,7 @@
     <LibraryClasses>
       Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf

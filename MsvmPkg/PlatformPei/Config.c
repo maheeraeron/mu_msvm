@@ -17,6 +17,7 @@ Abstract:
 #include <Platform.h>
 #include <BiosInterface.h>
 #include <IndustryStandard/Acpi.h>
+#include <IndustryStandard/Tpm20.h>
 #if defined(MDE_CPU_AARCH64)
 #include <Library/ArmLib.h>
 #endif
@@ -577,6 +578,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tLowPowerS0IdleEnabled: %u\n", flags->Flags.LowPowerS0IdleEnabled));
             DEBUG((DEBUG_VERBOSE, "\tVpciBootEnabled: %u\n", flags->Flags.VpciBootEnabled));
             DEBUG((DEBUG_VERBOSE, "\tProcIdleEnabled: %u\n", flags->Flags.ProcIdleEnabled));
+            DEBUG((DEBUG_VERBOSE, "\tDisableSha384Pcr: %u\n", flags->Flags.DisableSha384Pcr));
             break;
 
         case UefiConfigProcessorInformation:
@@ -1235,6 +1237,17 @@ Return Value:
 #if defined (MDE_CPU_X64)
                     PcdSetBool(TcgMeasureBootStringsInPcr4, TRUE);
                     PcdSetBool(PcdExcludeFvMainFromMeasurements, FALSE);
+#endif
+                }
+
+                //
+                // For VM versions below 9.3, DisableSha384Pcr will be TRUE.
+                // When TRUE, we remove SHA-384 from the PCR hash mask.
+                //
+                if (flags->Flags.DisableSha384Pcr)
+                {
+#if defined (MDE_CPU_X64)
+                    PcdSet32(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384));
 #endif
                 }
 
