@@ -431,7 +431,7 @@
   # UEFI_CONFIG_STRUCTURE_COUNT
   gMsvmPkgTokenSpaceGuid.PcdConfigBlobSize|0x0
   # UEFI_CONFIG_BIOS_INFORMATION
-  gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0
+  gMsvmPkgTokenSpaceGuid.PcdLegacyMemoryMap|0x0
 
   # UEFI_CONFIG_MADT
   gMsvmPkgTokenSpaceGuid.PcdMadtPtr|0x0

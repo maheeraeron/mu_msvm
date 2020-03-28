@@ -342,7 +342,7 @@ VOID
 DebugDumpMemoryMap(
     _In_ VOID* MemMap,
     _In_ UINT32 MemMapSize,
-    _In_ UINT32 VDevVersion
+    _In_ BOOLEAN LegacyMemoryMap
     )
 {
     //
@@ -350,7 +350,7 @@ DebugDumpMemoryMap(
     //
 #if !defined(MDEPKG_NDEBUG)
     DEBUG((DEBUG_VERBOSE, "--- Memory Map data @ %x Length %x\n", MemMap, MemMapSize));
-    if (VDevVersion >= VDevVersion5)
+    if (!LegacyMemoryMap)
     {
         PVM_MEMORY_RANGE_V5 range = (PVM_MEMORY_RANGE_V5)MemMap;
         do
@@ -432,7 +432,7 @@ DebugDumpUefiConfigStruct(
 
         case UefiConfigBiosInformation:
             UEFI_CONFIG_BIOS_INFORMATION *biosInfo = (UEFI_CONFIG_BIOS_INFORMATION*) Header;
-            DEBUG((DEBUG_VERBOSE, "\tBiosSizePages: 0x%x\n\tBiosVdevVersion:0x%x\n", biosInfo->BiosSizePages, biosInfo->BiosVDevVersion));
+            DEBUG((DEBUG_VERBOSE, "\tBiosSizePages: 0x%x\n\tLegacyMemoryMap:%u\n", biosInfo->BiosSizePages, biosInfo->Flags.LegacyMemoryMap));
             break;
 
         case UefiConfigMadt:
@@ -447,7 +447,7 @@ DebugDumpUefiConfigStruct(
 
         case UefiConfigMemoryMap:
             UEFI_CONFIG_MEMORY_MAP *memMap = (UEFI_CONFIG_MEMORY_MAP*) Header;
-            DebugDumpMemoryMap(memMap->MemoryMap, Header->Length - sizeof(UEFI_CONFIG_HEADER), PcdGet32(PcdBiosVDevVersion));
+            DebugDumpMemoryMap(memMap->MemoryMap, Header->Length - sizeof(UEFI_CONFIG_HEADER), PcdGetBool(PcdLegacyMemoryMap));
             break;
 
         case UefiConfigEntropy:
@@ -891,7 +891,7 @@ Return Value:
         {
             case UefiConfigBiosInformation:
                 UEFI_CONFIG_BIOS_INFORMATION *biosInfo = (UEFI_CONFIG_BIOS_INFORMATION*) header;
-                PcdSet32(PcdBiosVDevVersion, biosInfo->BiosVDevVersion);
+                PcdSetBool(PcdLegacyMemoryMap, (UINT8)biosInfo->Flags.LegacyMemoryMap);
                 requiredStructures.UefiConfigBiosInformation = 1;
                 break;
 

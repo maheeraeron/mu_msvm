@@ -52,7 +52,7 @@
 [Guids]
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion
+    gMsvmPkgTokenSpaceGuid.PcdLegacyMemoryMap
     gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr
     gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize
     gMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr

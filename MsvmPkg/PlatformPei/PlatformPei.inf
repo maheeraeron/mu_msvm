@@ -77,7 +77,7 @@
     gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdFvSize
     gMsvmPkgTokenSpaceGuid.PcdConfigBlobSize
-    gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion
+    gMsvmPkgTokenSpaceGuid.PcdLegacyMemoryMap
     gMsvmPkgTokenSpaceGuid.PcdMadtPtr
     gMsvmPkgTokenSpaceGuid.PcdMadtSize
     gMsvmPkgTokenSpaceGuid.PcdSratPtr

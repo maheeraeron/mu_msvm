@@ -150,7 +150,7 @@
   gMsvmPkgTokenSpaceGuid.PcdConfigBlobSize|0x0|UINT32|0x6000
 
   # UEFI_CONFIG_BIOS_INFORMATION
-  gMsvmPkgTokenSpaceGuid.PcdBiosVDevVersion|0x0|UINT32|0x6001
+  gMsvmPkgTokenSpaceGuid.PcdLegacyMemoryMap|0x0|BOOLEAN|0x6001
 
   # UEFI_CONFIG_MADT
   gMsvmPkgTokenSpaceGuid.PcdMadtPtr|0x0|UINT64|0x6042

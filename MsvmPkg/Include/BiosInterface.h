@@ -242,19 +242,6 @@ typedef struct _SMBIOS_CPU_INFORMATION_LEGACY
 
 #pragma pack(pop)
 
-
-#define MAKE_VDEV_VERSION(_major_, _minor_) ((_major_) << 8 | (_minor_))
-
-
-enum
-{
-    VDevVersion2   = MAKE_VDEV_VERSION(2, 0),
-    VDevVersion3   = MAKE_VDEV_VERSION(3, 0),
-    VDevVersion4   = MAKE_VDEV_VERSION(4, 0),
-    VDevVersion5   = MAKE_VDEV_VERSION(5, 0)
-};
-
-
 //
 // Memory map for VDev versions 2-4
 //
@@ -593,7 +580,10 @@ typedef struct _UEFI_CONFIG_BIOS_INFORMATION
 {
     UEFI_CONFIG_HEADER Header;
     UINT32 BiosSizePages;
-    UINT32 BiosVDevVersion;
+    struct {
+        UINT32 LegacyMemoryMap : 1;
+        UINT32 Reserved : 31;
+    } Flags;
 } UEFI_CONFIG_BIOS_INFORMATION;
 
 typedef struct _UEFI_CONFIG_MADT

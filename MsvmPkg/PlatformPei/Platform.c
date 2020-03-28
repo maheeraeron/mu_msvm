@@ -416,122 +416,113 @@ Return Value:
 
 --*/
 {
-    UINT32 vDevVersion = PcdGet32(PcdBiosVDevVersion);
+    BOOLEAN legacyMemoryMap = PcdGetBool(PcdLegacyMemoryMap);
     UINT32 memMapSize = PcdGet32(PcdMemoryMapSize);
     VOID* memMap = (VOID*)(UINTN) PcdGet64(PcdMemoryMapPtr);
 
     //
     // Process the memory map and create HOBs for memory regions..
     //
-    switch (vDevVersion)
+    if (legacyMemoryMap)
     {
-        case VDevVersion2:
-        case VDevVersion3:
-        case VDevVersion4:
+        //
+        // VDev versions 3 & 4
+        //
+        // A memory map range contains only base address and length.
+        //
+        // Loop through the Memory Map and create HOBs for RAM regions.
+        //
+        ASSERT(memMap != NULL);
+        PVM_MEMORY_RANGE range = (PVM_MEMORY_RANGE)memMap;
+        do
         {
+            DEBUG((DEBUG_VERBOSE, "Range BaseAddress %lx \n", range->BaseAddress));
+            DEBUG((DEBUG_VERBOSE, "Range Length      %lx \n", range->Length));
             //
-            // VDev versions 3 & 4
+            // First memory region is a special case that isn't fully
+            // described in the Memory Map.
             //
-            // A memory map range contains only base address and length.
-            //
-            // Loop through the Memory Map and create HOBs for RAM regions.
-            //
-            ASSERT(memMap != NULL);
-            PVM_MEMORY_RANGE range = (PVM_MEMORY_RANGE)memMap;
-            do
+            if (range->BaseAddress == 0)
             {
-                DEBUG((DEBUG_VERBOSE, "Range BaseAddress %lx \n", range->BaseAddress));
-                DEBUG((DEBUG_VERBOSE, "Range Length      %lx \n", range->Length));
+                ADDFIRSTMEMORYRANGE(Context, range->Length);
+            }
+            else
+            {
+                HobAddMemoryRange(Context, range->BaseAddress, range->Length);
+            }
+
+            //
+            // Next memory map range.
+            //
+            range++;
+        } while ((UINT8*)range < ((UINT8*)memMap + memMapSize));
+    }
+    else
+    {
+        //
+        // VDev version 5 and up
+        //
+        // A memory map range now contains base address, length, and attribute flags.
+        // The reserved bit allows for support of Intel SGX memory.
+        //
+        // Loop through the Memory Map and create HOBs for RAM regions.
+        //
+        ASSERT(memMap != NULL);
+        PVM_MEMORY_RANGE_V5 rangeV5 = (PVM_MEMORY_RANGE_V5)memMap;
+        do
+        {
+            DEBUG((DEBUG_VERBOSE, "BaseAddress %lx \n", rangeV5->BaseAddress));
+            DEBUG((DEBUG_VERBOSE, "Length      %lx \n", rangeV5->Length));
+            DEBUG((DEBUG_VERBOSE, "Flags       %x \n", rangeV5->Flags));
+
+            //
+            // First memory region is a special case that isn't fully
+            // described in the Memory Map.
+            //
+            if (rangeV5->BaseAddress == 0)
+            {
+                ADDFIRSTMEMORYRANGE(Context, rangeV5->Length);
+            }
+            else
+            {
                 //
-                // First memory region is a special case that isn't fully
-                // described in the Memory Map.
+                // Report subsequent memory regions directly.
                 //
-                if (range->BaseAddress == 0)
+                if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
                 {
-                    ADDFIRSTMEMORYRANGE(Context, range->Length);
+                    HobAddReservedMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
+                }
+                else if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY)
+                {
+                    HobAddPersistentMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
                 }
                 else
                 {
-                    HobAddMemoryRange(Context, range->BaseAddress, range->Length);
-                }
-
-                //
-                // Next memory map range.
-                //
-                range++;
-            } while ((UINT8*)range < ((UINT8*)memMap + memMapSize));
-        }
-        break;
-
-        case VDevVersion5:
-        default:
-        {
-            //
-            // VDev version 5 and up
-            //
-            // A memory map range now contains base address, length, and attribute flags.
-            // The reserved bit allows for support of Intel SGX memory.
-            //
-            // Loop through the Memory Map and create HOBs for RAM regions.
-            //
-            ASSERT(memMap != NULL);
-            PVM_MEMORY_RANGE_V5 rangeV5 = (PVM_MEMORY_RANGE_V5)memMap;
-            do
-            {
-                DEBUG((DEBUG_VERBOSE, "BaseAddress %lx \n", rangeV5->BaseAddress));
-                DEBUG((DEBUG_VERBOSE, "Length      %lx \n", rangeV5->Length));
-                DEBUG((DEBUG_VERBOSE, "Flags       %x \n", rangeV5->Flags));
-
-                //
-                // First memory region is a special case that isn't fully
-                // described in the Memory Map.
-                //
-                if (rangeV5->BaseAddress == 0)
-                {
-                    ADDFIRSTMEMORYRANGE(Context, rangeV5->Length);
-                }
-                else
-                {
-                    //
-                    // Report subsequent memory regions directly.
-                    //
-                    if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
+#if defined (MDE_CPU_X64)
+                    // On X64, system memory above 4GB can cause UEFI drivers
+                    // to explode in bad ways due to UINT32 casts. Just mark
+                    // regions above 4GB as untested, and use the null memory
+                    // test later in BDS to mark them as tested.
+                    if (rangeV5->BaseAddress >= 0x100000000)
                     {
-                        HobAddReservedMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
-                    }
-                    else if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY)
-                    {
-                        HobAddPersistentMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
+                        HobAddUntestedMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
                     }
                     else
                     {
-#if defined (MDE_CPU_X64)
-                        // On X64, system memory above 4GB can cause UEFI drivers
-                        // to explode in bad ways due to UINT32 casts. Just mark
-                        // regions above 4GB as untested, and use the null memory
-                        // test later in BDS to mark them as tested.
-                        if (rangeV5->BaseAddress >= 0x100000000)
-                        {
-                            HobAddUntestedMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
-                        }
-                        else
-                        {
-                            HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
-                        }
-#else
-                        // On other architectures, just add the memory range like normal.
                         HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
-#endif
                     }
+#else
+                    // On other architectures, just add the memory range like normal.
+                    HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+#endif
                 }
+            }
 
-                //
-                // Next memory map range.
-                //
-                rangeV5++;
-            } while ((UINT8*)rangeV5 < ((UINT8*)memMap + memMapSize));
-        }
-        break;
+            //
+            // Next memory map range.
+            //
+            rangeV5++;
+        } while ((UINT8*)rangeV5 < ((UINT8*)memMap + memMapSize));
     }
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
@@ -753,15 +744,9 @@ Return Value:
     HobAddFvMemoryRange(PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize));
 
     //
-    // Init the watchdog.
+    // Init the watchdog (available starting with Threshold VDev)
     //
-    if (PcdGet32(PcdBiosVDevVersion) > VDevVersion2)
-    {
-        //
-        // Watchdog only available starting with Threshold VDev.
-        //
-        InitializeWatchdog();
-    }
+    InitializeWatchdog();
 
     if (connectedToHypervisor)
     {

@@ -100,7 +100,7 @@ typedef struct {
 typedef
 VOID
 (*ENUMERATE_MEMMAP_CALLBACK)(
-    UINT32 VDevVersion,
+    BOOLEAN LegacyMemoryMap,
     VOID *Range,
     VOID *Context
 );
@@ -1676,7 +1676,7 @@ Return Value:
 
 VOID
 AccumulateMemoryRegionsFromMemoryRange(
-    UINT32 VDevVersion,
+    BOOLEAN LegacyMemoryMap,
     VOID *Range,
     VOID *Context
     )
@@ -1703,7 +1703,7 @@ Return Value:
     UINT64 *numMemoryRegions = (UINT64 *)Context;
     UINT64 size;
 
-    if (VDevVersion < VDevVersion5)
+    if (LegacyMemoryMap)
     {
         size = ((PVM_MEMORY_RANGE)Range)->Length;
     }
@@ -1722,7 +1722,7 @@ Return Value:
 
 VOID
 AddMemoryRegionsFromMemoryRange(
-    UINT32 VDevVersion,
+    BOOLEAN LegacyMemoryMap,
     VOID *Range,
     VOID *Context
     )
@@ -1751,7 +1751,7 @@ Return Value:
     UINT64 size;
     UINT32 flags = 0;
 
-    if (VDevVersion < VDevVersion5)
+    if (LegacyMemoryMap)
     {
         base = ((PVM_MEMORY_RANGE)Range)->BaseAddress;
         size = ((PVM_MEMORY_RANGE)Range)->Length;
@@ -1787,7 +1787,7 @@ Return Value:
 
 VOID
 EnumerateMemoryRanges(
-    UINT32                      VDevVersion,
+    BOOLEAN                     LegacyMemoryMap,
     VOID                        *Memmap,
     UINT32                      MemmapLength,
     ENUMERATE_MEMMAP_CALLBACK   Callback,
@@ -1816,13 +1816,13 @@ Return Value:
 
 --*/
 {
-    if (VDevVersion < VDevVersion5)
+    if (LegacyMemoryMap)
     {
         VM_MEMORY_RANGE *cursor;
 
         for (cursor = Memmap; cursor < ((PVM_MEMORY_RANGE)Memmap + MemmapLength); cursor++)
         {
-            Callback(VDevVersion, cursor, Context);
+            Callback(LegacyMemoryMap, cursor, Context);
         }
     }
     else
@@ -1831,7 +1831,7 @@ Return Value:
 
         for (cursor = Memmap; cursor < ((PVM_MEMORY_RANGE_V5)Memmap + MemmapLength); cursor++)
         {
-            Callback(VDevVersion, cursor, Context);
+            Callback(LegacyMemoryMap, cursor, Context);
         }
     }
 }
@@ -1871,18 +1871,17 @@ Return Value:
     UINT32 memmapSize;
     PVOID memmap;
     UINT32 memmapLength;
-    UINT32 vdevVersion;
     UINT32 memRangeSize;
     UINT64 regions;
 
-    vdevVersion = PcdGet32(PcdBiosVDevVersion);
+    BOOLEAN legacyMemoryMap = PcdGetBool(PcdLegacyMemoryMap);
 
     //
     // Get Memory Map from Config blob via PCDs.
     //
     memmapSize = PcdGet32(PcdMemoryMapSize);
     memmap = (PVOID)(UINTN) PcdGet64(PcdMemoryMapPtr);
-    memRangeSize = (vdevVersion < VDevVersion5) ? sizeof(VM_MEMORY_RANGE) : sizeof(VM_MEMORY_RANGE_V5);
+    memRangeSize = legacyMemoryMap ? sizeof(VM_MEMORY_RANGE) : sizeof(VM_MEMORY_RANGE_V5);
     memmapLength = memmapSize / memRangeSize;
 
     //
@@ -1892,7 +1891,7 @@ Return Value:
     //
     regions = 0;
     EnumerateMemoryRanges(
-        vdevVersion,
+        legacyMemoryMap,
         memmap,
         memmapLength,
         AccumulateMemoryRegionsFromMemoryRange,
@@ -1923,7 +1922,7 @@ Return Value:
         context.Smbios = Smbios;
         context.CurrentRegion = 0;
         EnumerateMemoryRanges(
-            vdevVersion,
+            legacyMemoryMap,
             memmap,
             memmapLength,
             AddMemoryRegionsFromMemoryRange,
