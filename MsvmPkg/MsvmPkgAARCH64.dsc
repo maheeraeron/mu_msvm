@@ -71,7 +71,7 @@
   DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
   EmclLib|MsvmPkg/Library/EmclLib/EmclLib.inf
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
-  FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
+  FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
   HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
