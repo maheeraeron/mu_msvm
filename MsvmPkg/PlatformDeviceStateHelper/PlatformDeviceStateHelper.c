@@ -37,7 +37,7 @@ IsSecureBootOn()
 
   Status = GetVariable2(L"SecureBoot", &gEfiGlobalVariableGuid, (VOID **)&Value, &Size);
   if (EFI_ERROR (Status) || (Value == NULL)) {
-    DEBUG ((DEBUG_ERROR, "%a - Failed to read SecureBoot variable.  Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to read SecureBoot variable.  Status = %r\n", __FUNCTION__, Status));
     ASSERT(FALSE);
     return FALSE;
   }
