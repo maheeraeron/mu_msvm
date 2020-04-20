@@ -191,7 +191,7 @@ Return Value:
 
     if (PcdGetBool(PcdSystemIsolated))
     {
-        HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
+        // HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
     }
 
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
@@ -305,7 +305,7 @@ Return Value:
 
     if (PcdGetBool(PcdSystemIsolated))
     {
-        HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
+        // HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
     }
 
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
