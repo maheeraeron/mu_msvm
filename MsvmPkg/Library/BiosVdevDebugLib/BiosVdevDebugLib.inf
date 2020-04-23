@@ -19,6 +19,7 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
+    IoLib
     BaseLib
     BaseMemoryLib
     DebugPrintErrorLevelLib
@@ -27,3 +28,4 @@
 
 [Pcd]
 gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel  ## CONSUMES
+gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

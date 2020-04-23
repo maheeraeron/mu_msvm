@@ -16,6 +16,7 @@ Abstract:
 #include <Base.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
+#include <Library/IoLib.h>
 #include <Library/PrintLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -28,12 +29,48 @@ Abstract:
 
 #define DEBUG_PRINT_MAX_SIZE 1024
 
-// ------------------------------------------------------------------ Globals
-
-static CHAR8 gBuffer[DEBUG_PRINT_MAX_SIZE];
-
 // ------------------------------------------------------------------ Functions
 
+//
+// Read/write Bios Device helper functions.
+//
+// N.B. Don't use the common library as PEI should not use mutable global
+// variables, which only work in our environment because the whole UEFI image is
+// located in read/write system memory. In the case of MMIO, the address space
+// is identity mapped throughout PEI and does not change.
+//
+static
+VOID
+WriteBiosDevice(
+    IN UINT32 AddressRegisterValue,
+    IN UINT32 DataRegisterValue
+    )
+{
+    UINTN biosBaseAddress = PcdGet32(PcdBiosBaseAddress);
+#if defined(MDE_CPU_AARCH64)
+    MmioWrite32(biosBaseAddress, AddressRegisterValue);
+    MmioWrite32(biosBaseAddress + 4, DataRegisterValue);
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+    IoWrite32(biosBaseAddress, AddressRegisterValue);
+    IoWrite32(biosBaseAddress + 4, DataRegisterValue);
+#endif
+}
+
+static
+UINT32
+ReadBiosDevice(
+    IN UINT32 AddressRegisterValue
+    )
+{
+    UINTN biosBaseAddress = PcdGet32(PcdBiosBaseAddress);
+#if defined(MDE_CPU_AARCH64)
+    MmioWrite32(biosBaseAddress, AddressRegisterValue);
+    return MmioRead32(biosBaseAddress + 4);
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+    IoWrite32(biosBaseAddress, AddressRegisterValue);
+    return IoRead32(biosBaseAddress + 4);
+#endif
+}
 
 VOID
 EFIAPI
@@ -77,15 +114,16 @@ Return value:
 
 --*/
 {
+    CHAR8 buffer[DEBUG_PRINT_MAX_SIZE];
     VA_LIST marker;
 
     ASSERT(String != NULL);
 
     VA_START(marker, String);
-    AsciiVSPrint(gBuffer, sizeof(gBuffer), String, marker);
+    AsciiVSPrint(buffer, sizeof(buffer), String, marker);
     VA_END (marker);
 
-    DebugPrintString(gBuffer, sizeof(gBuffer));
+    DebugPrintString(buffer, sizeof(buffer));
 }
 
 
@@ -117,14 +155,15 @@ Return Value:
 
 --*/
 {
-    UINTN length = AsciiSPrint(gBuffer,
-                               DEBUG_PRINT_MAX_SIZE,
-                               "**ASSERT** FILE: %s LINE: %ull DESC: %s\n",
+    CHAR8 buffer[DEBUG_PRINT_MAX_SIZE];
+    UINTN length = AsciiSPrint(buffer,
+                               DEBUG_PRINT_MAX_SIZE - 1,
+                               "**ASSERT** FILE: %a LINE: %ull DESC: %a\n",
                                FileName,
                                LineNumber,
                                Description);
 
-    DebugPrintString(gBuffer, length+1); // include null
+    DebugPrintString(buffer, length + 1); // Include null
 
     return;
 }
@@ -320,22 +359,113 @@ Return Value:
 
 --*/
 {
-    static UINTN * const pBiosAddressRegister = (UINTN*)BiosAddressRegister;
-    static UINTN * const pBiosDataRegister = (UINTN*)BiosDataRegister;
-
     //
-    // Copy string into our intercept buffer and ensure it is null terminated.
+    // Ensure it is null terminated.
     //
-    CopyMem(gBuffer, String, MIN(1024, Length));
-    gBuffer[DEBUG_PRINT_MAX_SIZE-1] = 0;
+    String[Length - 1] = 0;
 
     //
     // Intercept the Bios VDev with the correct codepoint and buffer GPA.
     //
-    *pBiosAddressRegister = (UINT32)BiosDebugOutputString;
-    *pBiosDataRegister = (UINT32)(UINTN)gBuffer;
+    WriteBiosDevice(BiosDebugOutputString, (UINT32)(UINTN)String);
 }
 
+// Taken from \MU_BASECORE\MdePkg\Library\BaseDebugLibSerialPort\DebugLib.c
+VOID
+EFIAPI
+DebugDumpMemory(
+  IN  UINTN         ErrorLevel,
+  IN  CONST VOID   *Address,
+  IN  UINTN         Length,
+  IN  UINT32        Flags
+  )
+{
+  UINTN       Indx;
+  UINT8      *p;
+  CHAR8       Txt[17]; // 16 characters, and a NULL
+
+  p = (UINT8 *)Address;
+
+  Txt[16] = '\0';
+  Indx = 0;
+  while (Indx < Length)
+  {
+    UINTN LoopLen = ((Length - Indx) >= 16) ? 16 : (Length - Indx);
+    if (0 == (Indx % 16))  // first time and every 16 bytes thereafter
+    {
+      if (Flags & DEBUG_DM_PRINT_ADDRESS)
+      {
+        DebugPrint(ErrorLevel, "\n0x%16.16X:  ", p);
+      }
+      else if (Flags & DEBUG_DM_PRINT_OFFSET)
+      {
+        DebugPrint(ErrorLevel, "\n0x%8.8X:  ", (p - (UINT8 *)Address));
+      }
+      else
+      {
+        DebugPrint(ErrorLevel, "\n");
+      }
+
+      //Get all Ascii Chars if Ascii flag for the next 16 or less
+      if (Flags & DEBUG_DM_PRINT_ASCII)
+      {
+        SetMem(Txt, sizeof(Txt) - 1, ' ');
+        for (UINTN I = (Indx % 16); I < LoopLen; I++)
+        {
+          CHAR8* c = ((CHAR8 *)p) + I;
+          Txt[I] = ((*c >= 0x20) && (*c <= 0x7e)) ? *c : '.';
+        }
+      }
+    }  //first pass -- done only at (index % 16 == 0)
+
+    if (LoopLen == 16)
+    {
+      DebugPrint(ErrorLevel, "%02X %02X %02X %02X %02X %02X %02X %02X - ", *(p), *(p + 1), *(p + 2), *(p + 3), *(p + 4), *(p + 5), *(p + 6), *(p + 7));
+      DebugPrint(ErrorLevel, "%02X %02X %02X %02X %02X %02X %02X %02X ", *(p + 8), *(p + 9), *(p + 10), *(p + 11), *(p + 12), *(p + 13), *(p + 14), *(p + 15));
+      Indx += 16;
+      p += 16;
+    }
+    else
+    {
+      if ((Indx % 16) == 7)
+      {
+        DebugPrint(ErrorLevel, "%02X - ", *(p));
+      }
+      else
+      {
+        DebugPrint(ErrorLevel, "%02X ", *(p));
+      }
+      Indx++;
+      p++;
+    }
+
+    //end of line and/or end of buffer
+    if (((Indx % 16) == 0) || (Indx == Length))
+    {
+
+      //special case where we need to print out a few blank spaces because our length
+      //was not evenly divisible by 16
+      if (Flags & DEBUG_DM_PRINT_ASCII)
+      {
+        if ((Indx % 16) != 0)
+        {
+          //figure out how many spaces to print
+          CHAR8 empty[48]; //(15 bytes * 3 chars) + 2 (for -) + 1 (\0)
+          UINTN endchar = ((16 - (Indx % 16)) * 3);
+          SetMem(empty, 47, ' ');
+          if ((Indx % 16) <= 8)
+          {
+            endchar += 2;
+          }
+          empty[endchar] = '\0';  //null terminate
+          DebugPrint(ErrorLevel, "%a", empty);
+        }
+        DebugPrint(ErrorLevel, "  *%a*", Txt);   // print the txt
+      }
+    }
+  }  //End while loop
+  DebugPrint(ErrorLevel, "\n");
+}
 
 VOID
 EFIAPI

@@ -57,6 +57,8 @@
   CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+!elseif DEBUGLIB_BIOS
+  DebugLib|MsvmPkg/Library/BiosVdevDebugLib/BiosVdevDebugLib.inf
 !else
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 !endif

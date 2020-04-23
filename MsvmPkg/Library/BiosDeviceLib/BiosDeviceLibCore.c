@@ -5,7 +5,7 @@
 Module Name:
 
     BiosDeviceLibCore.c
-    
+
 Abstract:
 
     Library for accessing the BIOS VDev emulated device registers.
@@ -40,7 +40,7 @@ SetupBaseAddress()
 
 VOID
 WriteBiosDevice(
-    IN UINT32 AddressRegisterValue, 
+    IN UINT32 AddressRegisterValue,
     IN UINT32 DataRegisterValue
     )
 {

@@ -527,7 +527,7 @@ InitializeEnd:
 
         BdArchDestroy();
     }
-    
+
     BdSerialPrint("<<< %a: %r\n", __FUNCTION__, status);
 
     return status;
