@@ -74,7 +74,9 @@ EFI_HV_PROTOCOL *mHv;
 EFI_TIMER_NOTIFY mTimerNotifyFunction;
 UINT64 mTimerPeriod;
 UINT64 mLastTime;
+BOOLEAN mUseDirectTimer;
 BOOLEAN mSintConnected;
+BOOLEAN mTimerConfigured;
 HV_SYNIC_SINT_INDEX mSintIndex;
 UINT32 mTimerIndex;
 
@@ -284,18 +286,18 @@ Return Value:
     DebugPollDebugger();
 #endif
 
-    // A message is not expected due to timer direct mode
-    // but complete any message found.
-
-    message = mHv->GetSintMessage(mHv, mSintIndex);
-    if (message != NULL)
+    if (mUseDirectTimer == FALSE)
     {
-        messageType = message->Header.MessageType;
-        if (messageType != HvMessageTimerExpired)
+        message = mHv->GetSintMessage(mHv, mSintIndex);
+        if (message != NULL)
         {
-            DEBUG((EFI_D_ERROR, "%a: Unexpected message type 0xlx%", __FUNCTION__, messageType));
+            messageType = message->Header.MessageType;
+            if (messageType != HvMessageTimerExpired)
+            {
+                DEBUG((EFI_D_ERROR, "%a: Unexpected message type 0xlx%", __FUNCTION__, messageType));
+            }
+            mHv->CompleteSintMessage(mHv, mSintIndex);
         }
-        mHv->CompleteSintMessage(mHv, mSintIndex);
     }
 
     SynicTimerCallNotifyFunction();
@@ -345,20 +347,27 @@ Return Value:
         goto Cleanup;
     }
 
-    // Connect the SINT interrupt.
+    // Determine whether direct timers are supported.
 
-    status = mHv->ConnectSint(mHv,
-                              mSintIndex,
-                              PcdGet8(PcdSynicTimerVector),
-                              SynicTimerInterruptHandler,
-                              NULL);
+    mUseDirectTimer = mHv->DirectTimerSupported();
 
-    if (EFI_ERROR(status))
+    if (!mUseDirectTimer)
     {
-        goto Cleanup;
-    }
+        // Connect the SINT interrupt.
 
-    mSintConnected = TRUE;
+        status = mHv->ConnectSint(mHv,
+                                  mSintIndex,
+                                  PcdGet8(PcdSynicTimerVector),
+                                  SynicTimerInterruptHandler,
+                                  NULL);
+
+        if (EFI_ERROR(status))
+        {
+            goto Cleanup;
+        }
+
+        mSintConnected = TRUE;
+    }
 
     // Enable the timer.
 
@@ -366,17 +375,15 @@ Return Value:
                                  mTimerIndex,
                                  mSintIndex,
                                  TRUE, // periodic
-#if defined(MDE_CPU_AARCH64)
-                                 TRUE,  // direct mode
-                                 PcdGet8(PcdSynicTimerVector));
-#else
-                                 FALSE, // not direct mode - will get SINT messages
-                                 0);
-#endif
+                                 mUseDirectTimer,
+                                 PcdGet8(PcdSynicTimerVector),
+                                 SynicTimerInterruptHandler);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
     }
+
+    mTimerConfigured = TRUE;
 
     status = SynicTimerSetTimerPeriod(&mTimer, PcdGet64(PcdSynicTimerDefaultPeriod));
     if (EFI_ERROR(status))
@@ -401,9 +408,13 @@ Return Value:
 Cleanup:
     if (EFI_ERROR(status))
     {
-        if (mSintConnected)
+        if (mTimerConfigured)
         {
             SynicTimerSetTimerPeriod(&mTimer, 0);
+        }
+
+        if (mSintConnected)
+        {
             mHv->DisconnectSint(mHv, mSintIndex);
             mSintConnected = FALSE;
         }

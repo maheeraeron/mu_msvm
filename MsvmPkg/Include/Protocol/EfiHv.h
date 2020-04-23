@@ -94,6 +94,12 @@ UINT32
     );
 
 typedef
+BOOLEAN
+(EFIAPI *EFI_HV_DIRECT_TIMER_SUPPORTED)(
+    VOID
+    );
+
+typedef
 EFI_STATUS
 (EFIAPI *EFI_HV_CONFIGURE_TIMER)(
     __in EFI_HV_PROTOCOL *This,
@@ -101,7 +107,8 @@ EFI_STATUS
     __in HV_SYNIC_SINT_INDEX SintIndex,
     __in BOOLEAN Periodic,
     __in BOOLEAN DirectMode,
-    __in UINT8 Vector
+    __in UINT8 Vector,
+    __in_opt EFI_HV_INTERRUPT_HANDLER InterruptHandler
     );
 
 typedef
@@ -143,6 +150,7 @@ struct _EFI_HV_PROTOCOL
     EFI_HV_GET_REFERENCE_TIME GetReferenceTime;
     EFI_HV_GET_CURRENT_VP_INDEX GetCurrentVpIndex;
 
+    EFI_HV_DIRECT_TIMER_SUPPORTED DirectTimerSupported;
     EFI_HV_CONFIGURE_TIMER ConfigureTimer;
     EFI_HV_SET_TIMER SetTimer;
 

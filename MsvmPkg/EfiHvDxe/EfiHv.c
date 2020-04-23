@@ -79,9 +79,13 @@ EFI_HANDLE mHvHandle;
 BOOLEAN mSynicConnected;
 EFI_EVENT mExitBootServicesEvent;
 BOOLEAN mAutoEoi;
+BOOLEAN mDirectTimerSupported;
 
 EFI_HV_SINT_CONFIGURATION mSintConfiguration[HV_SYNIC_SINT_COUNT];
 UINT8 mVectorSint[256];
+
+EFI_HV_INTERRUPT_HANDLER mDirectTimerInterruptHandlers[256];
+HV_X64_MSR_STIMER_CONFIG_CONTENTS mTimerConfiguration[HV_SYNIC_STIMER_COUNT];
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
@@ -603,6 +607,92 @@ Return Value:
 }
 
 
+BOOLEAN
+EFIAPI
+EfiHvDirectTimerSupported (
+    VOID
+    )
+/*++
+
+Routine Description:
+
+    Indicates whether the hypervisor supports direct-mode timers.
+
+Arguments:
+
+    None.
+
+Return Value:
+
+    TRUE if direct mode timers are supported.
+
+--*/
+{
+    return mDirectTimerSupported;
+}
+
+
+VOID
+EFIAPI
+EfiHvDirectTimerInterruptHandler (
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+    __in EFI_EXCEPTION_TYPE InterruptType,
+#elif defined(MDE_CPU_AARCH64)
+    __in HARDWARE_INTERRUPT_SOURCE InterruptType,
+#endif
+    __in EFI_SYSTEM_CONTEXT SystemContext
+    )
+/*++
+
+Routine Description:
+
+    The interrupt handler for direct-mode timers. Raises to high level and
+    calls out to the connected handler.
+
+Arguments:
+
+    InterruptType - The interrupt vector of the arriving interrupt.
+
+    SystemContext - A pointer to a structure containing the processor context
+        when the processor was interrupted.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EFI_TPL tpl;
+
+    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+
+    tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
+    if (!mAutoEoi)
+    {
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+
+        SendApicEoi();
+
+#elif defined(MDE_CPU_AARCH64)
+
+        mHwInt->EndOfInterrupt(mHwInt, InterruptType);
+
+#endif
+    }
+
+    if (mDirectTimerInterruptHandlers[InterruptType] != NULL)
+    {
+        DEBUG((DEBUG_VERBOSE, "--- %a: calling 0x%p\n", __FUNCTION__,
+            mDirectTimerInterruptHandlers[InterruptType]));
+        mDirectTimerInterruptHandlers[InterruptType](NULL);
+    }
+
+    gBS->RestoreTPL(tpl);
+
+    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
+}
+
+
 EFI_STATUS
 EFIAPI
 EfiHvConfigureTimer (
@@ -611,7 +701,8 @@ EfiHvConfigureTimer (
     __in HV_SYNIC_SINT_INDEX SintIndex,
     __in BOOLEAN Periodic,
     __in BOOLEAN DirectMode,
-    __in UINT8 Vector
+    __in UINT8 Vector,
+    __in_opt EFI_HV_INTERRUPT_HANDLER InterruptHandler
     )
 /*++
 
@@ -633,6 +724,8 @@ Arguments:
 
     Vector - Interrupt vector/number.
 
+    InterruptHandler - A pointer to the interrupt handler for the timer.
+
 Return Value:
 
     EFI status.
@@ -640,9 +733,58 @@ Return Value:
 --*/
 {
     HV_X64_MSR_STIMER_CONFIG_CONTENTS config;
+    EFI_STATUS status;
     DEBUG((DEBUG_VERBOSE, ">>> %a: tindex 0x%x sindex 0x%x periodic %s direct %s vector 0x%x\n",
         __FUNCTION__, TimerIndex, SintIndex, Periodic ? L"TRUE" : L"FALSE",
         DirectMode ? L"TRUE" : L"FALSE", Vector));
+
+    if (TimerIndex >= HV_SYNIC_STIMER_COUNT)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    // Verify that an existing timer is not being reconfigured with an incompatible configuration.
+
+    if (DirectMode)
+    {
+        if (mTimerConfiguration[TimerIndex].Enable)
+        {
+            if (!mTimerConfiguration[TimerIndex].DirectMode ||
+                (mTimerConfiguration[TimerIndex].ApicVector != Vector) ||
+                (mDirectTimerInterruptHandlers[Vector] != InterruptHandler))
+            {
+                return EFI_INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            // Configure the interrupt handler for this timer.
+
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+
+            status = mCpu->RegisterInterruptHandler(mCpu, Vector, EfiHvDirectTimerInterruptHandler);
+
+#elif defined(MDE_CPU_AARCH64)
+
+            status = mHwInt->RegisterInterruptSource(mHwInt, (UINTN)Vector, EfiHvDirectTimerInterruptHandler);
+
+#endif
+
+            if (EFI_ERROR(status))
+            {
+                return status;
+            }
+
+            mDirectTimerInterruptHandlers[Vector] = InterruptHandler;
+        }
+    }
+    else
+    {
+        if (mTimerConfiguration[TimerIndex].DirectMode)
+        {
+            return EFI_INVALID_PARAMETER;
+        }
+    }
 
     // Stop the timer if it's already running.
 
@@ -654,10 +796,19 @@ Return Value:
     config.Periodic = (Periodic != FALSE);
     config.Lazy = (Periodic != FALSE);
     config.AutoEnable = TRUE;
-    config.ApicVector = Vector;
-    config.DirectMode = (DirectMode != FALSE);
-    config.SINTx = SintIndex;
+    if (DirectMode)
+    {
+        config.DirectMode = 1;
+        config.ApicVector = Vector;
+    }
+    else
+    {
+        config.SINTx = SintIndex;
+    }
+    mTimerConfiguration[TimerIndex] = config;
+    mTimerConfiguration[TimerIndex].Enable = 1;
     HvHypercallSetVpRegister64Self(HvRegisterStimer0Config + (2 * TimerIndex), config.AsUINT64);
+
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
     return EFI_SUCCESS;
 }
@@ -1046,6 +1197,11 @@ Return Value:
         goto Exit;
     }
 
+    if (cpuidResult.MsHvFeatures.DirectSyntheticTimers)
+    {
+        mDirectTimerSupported = TRUE;
+    }
+
     if (cpuidResult.MsHvFeatures.PartitionPrivileges.Isolation)
     {
         DEBUG((EFI_D_INFO, "--- %a: Partition is Isolated\n", __FUNCTION__));
@@ -1084,6 +1240,10 @@ Return Value:
 
 
 #elif defined(MDE_CPU_AARCH64)
+
+    // Direct timers are always supported on ARM64.
+
+    mDirectTimerSupported = TRUE;
 
     //
     // Allocate hypervisor communication pages.
@@ -1313,6 +1473,7 @@ EFI_HV_PROTOCOL mHv =
     EfiHvGetSintEventFlags,
     EfiHvGetReferenceTime,
     EfiHvGetCurrentVpIndex,
+    EfiHvDirectTimerSupported,
     EfiHvConfigureTimer,
     EfiHvSetTimer,
     EfiHvPostMessage,
