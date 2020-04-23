@@ -161,6 +161,9 @@
     gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
     gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress

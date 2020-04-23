@@ -306,3 +306,8 @@
   # UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER
   gMsvmPkgTokenSpaceGuid.PcdSmbiosMemoryDeviceSerialNumberStr|0x0|UINT64|0x6054
   gMsvmPkgTokenSpaceGuid.PcdSmbiosMemoryDeviceSerialNumberSize|0x0|UINT32|0x6055
+
+  # UEFI_CONFIG_ISOLATION_SETTINGS
+  gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture|0x0|UINT32|0x6056
+  gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|0x0|BOOLEAN|0x6057
+  gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary|0x0|UINT64|0x6058

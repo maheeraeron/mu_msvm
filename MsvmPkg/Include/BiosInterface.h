@@ -553,6 +553,7 @@ enum UefiStructureType
     UefiConfigSmbiosSystemSKUNumber          = 0x1D,
     UefiConfigSmbiosSystemFamily             = 0x1E,
     UefiConfigSmbiosMemoryDeviceSerialNumber = 0x1F,
+    UefiConfigIsolationSettings              = 0x20,
 };
 
 //
@@ -760,6 +761,24 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 Reserved:44;
     } Flags;
 } UEFI_CONFIG_FLAGS;
+
+typedef struct _UEFI_CONFIG_ISOLATION_SETTINGS
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT64 SharedGpaBoundary;
+    UINT32 IsolationArchitecture;
+    struct {
+        UINT32 ParavisorPresent:1;
+        UINT32 Reserved:31;
+    } Flags;
+} UEFI_CONFIG_ISOLATION_SETTINGS;
+
+enum
+{
+    UefiIsolationTypeNone       = 0x00,
+    UefiIsolationTypeVbs        = 0x01,
+    UefiIsolationTypeSnp        = 0x02,
+};
 
 typedef struct _UEFI_CONFIG_PROCESSOR_INFORMATION
 {

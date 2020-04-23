@@ -1342,6 +1342,13 @@ Return Value:
                 UEFI_CONFIG_VPCI_INSTANCE_FILTER *filter = (UEFI_CONFIG_VPCI_INSTANCE_FILTER*) header;
                 PcdSet64(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid);
                 break;
+
+            case UefiConfigIsolationSettings:
+                UEFI_CONFIG_ISOLATION_SETTINGS *isolation = (UEFI_CONFIG_ISOLATION_SETTINGS*) header;
+                PcdSet64(PcdIsolationSharedGpaBoundary, isolation->SharedGpaBoundary);
+                PcdSet32(PcdIsolationArchitecture, isolation->IsolationArchitecture);
+                PcdSetBool(PcdIsolationParavisorPresent, (UINT8)isolation->Flags.ParavisorPresent);
+                break;
         }
 
         calculatedConfigSize += header->Length;
