@@ -614,6 +614,13 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tVpci instance filter:%g\n", (EFI_GUID*) filter->InstanceGuid));
             break;
 
+        case UefiConfigIsolationSettings:
+            UEFI_CONFIG_ISOLATION_SETTINGS *isolation = (UEFI_CONFIG_ISOLATION_SETTINGS *) Header;
+            DEBUG((DEBUG_VERBOSE, "\tSharedGpaBoundary: 0x%x\n", isolation->SharedGpaBoundary));
+            DEBUG((DEBUG_VERBOSE, "\tIsolationArchitecture: 0x%x\n", isolation->IsolationArchitecture));
+            DEBUG((DEBUG_VERBOSE, "\tParavisorPresent: %u\n", isolation->Flags.ParavisorPresent));
+            break;
+
         default:
             DEBUG((DEBUG_VERBOSE, "\t!!! Unrecognized config structure type !!!\n"));
             break;
@@ -750,6 +757,7 @@ Return Value:
         0, //UefiConfigSmbiosSystemSKUNumber
         0, //UefiConfigSmbiosSystemFamily
         0, //UefiConfigSmbiosMemoryDeviceSerialNumber
+        sizeof(UEFI_CONFIG_ISOLATION_SETTINGS), //UefiConfigIsolationSettings
     };
 
     //
@@ -1094,7 +1102,7 @@ Return Value:
                 PcdSet32(PcdSmbiosBiosLockStringSize, stringLength);
 
                 break;
-            
+
             case UefiConfigSmbiosMemoryDeviceSerialNumber:
                 UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER *memoryDeviceSerialNumber = (UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER*) header;
                 PcdSet64(PcdSmbiosMemoryDeviceSerialNumberStr, (UINT64) memoryDeviceSerialNumber->MemoryDeviceSerialNumber);
