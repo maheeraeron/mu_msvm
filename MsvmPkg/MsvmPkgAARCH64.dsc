@@ -72,7 +72,6 @@
   EmclLib|MsvmPkg/Library/EmclLib/EmclLib.inf
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
-  HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
   HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
@@ -164,6 +163,7 @@
 # Library instance overrides for PEI
 #
 [LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
+  HvHypercallLib|MsvmPkg/Library/HvHypercallLib/PeiHvHypercallLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
   PcdLib|MdePkg/Library/PeiPcdLib/PeiPcdLib.inf
@@ -246,6 +246,7 @@
 # Library instance overrides for all DXE Drivers
 #
 [LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER]
+  HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
 
 #
