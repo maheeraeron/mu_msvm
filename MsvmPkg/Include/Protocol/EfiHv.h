@@ -177,4 +177,3 @@ struct _EFI_HV_IVM_PROTOCOL
 };
 
 extern GUID gEfiHvIvmProtocolGuid;
-

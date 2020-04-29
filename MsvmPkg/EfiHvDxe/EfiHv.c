@@ -18,6 +18,7 @@ Author:
 --*/
 
 #include <PiDxe.h>
+#include <BiosInterface.h>
 
 #include <Protocol/Cpu.h>
 #include <Protocol/EfiHv.h>
@@ -74,7 +75,12 @@ typedef struct _EFI_HV_PAGES
 } EFI_HV_PAGES, *PEFI_HV_PAGES;
 
 HV_HYPERCALL_CONTEXT mHvContext;
+HV_HYPERCALL_CONTEXT mHvBypassContext;
+BOOLEAN mUseBypassContext;
 PEFI_HV_PAGES mHvPages;
+PVOID mOutputPageBypass;
+PHV_SYNIC_EVENT_FLAGS_PAGE mEventFlagsPage;
+PHV_MESSAGE_PAGE mMessagePage;
 EFI_HANDLE mHvHandle;
 BOOLEAN mSynicConnected;
 EFI_EVENT mExitBootServicesEvent;
@@ -243,7 +249,17 @@ Return Value:
     sint.Vector = Vector;
     sint.Masked = FALSE;
     sint.AutoEoi = mAutoEoi;
-    HvHypercallSetVpRegister64Self(HvRegisterSint0 + SintIndex, sint.AsUINT64);
+
+    if (mUseBypassContext)
+    {
+        // Register the SINT with the host hypervisor before registering it with the paravisor as a proxy interrupt.
+
+        HvHypercallSetVpRegister64Self(&mHvBypassContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
+
+        sint.Proxy = 1;
+    }
+
+    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
 
     // Store the state used by the interrupt handler.
 
@@ -370,7 +386,12 @@ Return Value:
 
     sint.AsUINT64 = 0;
     sint.Masked = 1;
-    HvHypercallSetVpRegister64Self(HvRegisterSint0 + SintIndex, sint.AsUINT64);
+
+    if (mUseBypassContext)
+    {
+        HvHypercallSetVpRegister64Self(&mHvBypassContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
+    }
+    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
 
     // Unregister the interrupt handler.
 
@@ -425,7 +446,7 @@ Return Value:
 
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
-    message = &mHvPages->MessagePage.SintMessage[SintIndex];
+    message = &mMessagePage->SintMessage[SintIndex];
     if (message->Header.MessageType == HvMessageTypeNone)
     {
         DEBUG((DEBUG_VERBOSE, "<<< %a: message is NULL\n", __FUNCTION__));
@@ -466,12 +487,12 @@ Return Value:
 
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
-    message = &mHvPages->MessagePage.SintMessage[SintIndex];
+    message = &mMessagePage->SintMessage[SintIndex];
     message->Header.MessageType = HvMessageTypeNone;
     MemoryBarrier();
     if (message->Header.MessageFlags.MessagePending)
     {
-        HvHypercallSetVpRegister64Self(HvRegisterEom, 0);
+        HvHypercallSetVpRegister64Self(mUseBypassContext ? &mHvBypassContext : &mHvContext, HvRegisterEom, 0);
     }
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
@@ -504,7 +525,7 @@ Return Value:
     volatile HV_SYNIC_EVENT_FLAGS *pFlags;
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
-    pFlags = &mHvPages->EventFlagsPage.SintEventFlags[SintIndex];
+    pFlags = &mEventFlagsPage->SintEventFlags[SintIndex];
 
     DEBUG((DEBUG_VERBOSE, "<<< %a: flags @ 0x%p\n", __FUNCTION__, pFlags));
     return pFlags;
@@ -534,7 +555,7 @@ Return Value:
 {
     UINT64 refTime;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    refTime = HvHypercallGetVpRegister64Self(HvRegisterTimeRefCount);
+    refTime = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterTimeRefCount);
     DEBUG((DEBUG_VERBOSE, "<<< %a: reftime 0x%p\n", __FUNCTION__, refTime));
     return refTime;
 }
@@ -563,7 +584,7 @@ Return Value:
 {
     UINT32 vpIndex;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    vpIndex = (UINT32)HvHypercallGetVpRegister64Self(HvRegisterVpIndex);
+    vpIndex = (UINT32)HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterVpIndex);
     DEBUG((DEBUG_VERBOSE, "<<< %a: index 0x%x\n", __FUNCTION__, vpIndex));
     return vpIndex;
 }
@@ -602,7 +623,7 @@ Return Value:
 {
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x Expiration 0x%x\n", __FUNCTION__,
         TimerIndex, Expiration));
-    HvHypercallSetVpRegister64Self(HvRegisterStimer0Count + (2 * TimerIndex), Expiration);
+    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Count + (2 * TimerIndex), Expiration);
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
@@ -807,7 +828,7 @@ Return Value:
     }
     mTimerConfiguration[TimerIndex] = config;
     mTimerConfiguration[TimerIndex].Enable = 1;
-    HvHypercallSetVpRegister64Self(HvRegisterStimer0Config + (2 * TimerIndex), config.AsUINT64);
+    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Config + (2 * TimerIndex), config.AsUINT64);
 
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
     return EFI_SUCCESS;
@@ -843,7 +864,7 @@ Return Value:
 
 --*/
 {
-    return HvHypercallIssue(&mHvContext,
+    return HvHypercallIssue(mUseBypassContext ? &mHvBypassContext : &mHvContext,
                             CallCode,
                             Fast,
                             0,
@@ -1221,7 +1242,7 @@ Return Value:
     // Zero the hypercall page
     ZeroMem(mHvPages, sizeof(*mHvPages));
 
-    HvHypercallConnect(mHvPages->HypercallPage, &mHvContext);
+    HvHypercallConnect(mHvPages->HypercallPage, NULL, &mHvContext);
 
     // Check to see if the hypercall page was mapped. If it wasn't, abort here.
     if (mHvPages->HypercallPage[0] == 0 &&
@@ -1265,6 +1286,57 @@ Return Value:
 #error Unsupported architecture
 #endif
 
+#if defined(MDE_CPU_X64)
+
+    // Determine whether this system uses a hardware isolation architecture
+    // that will require a direct connection to the hypervisor that bypasses
+    // the paravisor.
+
+    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeSnp)
+    {
+        UINT64 sharedGpaBoundary;
+
+        ASSERT(PcdGetBool(PcdIsolationParavisorPresent) != FALSE);
+
+        sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+        ASSERT(sharedGpaBoundary != 0);
+
+        //
+        // Allocate a page to use as the hypercall output page.
+        //
+
+        mOutputPageBypass = AllocatePages(1);
+        if (mOutputPageBypass == NULL)
+        {
+            status = EFI_OUT_OF_RESOURCES;
+            goto Exit;
+        }
+
+        //
+        // Make this page visible to the hypervisor.
+        //
+
+        status = EfiHvModifySparseGpaPageHostVisibility(
+            NULL,
+            HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+            1,
+            (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
+            NULL);
+
+        if (EFI_ERROR(status))
+        {
+            goto Exit;
+        }
+
+        HvHypercallConnect(NULL,
+                           (PVOID)((UINTN)mOutputPageBypass + sharedGpaBoundary),
+                           &mHvBypassContext);
+
+        mUseBypassContext = TRUE;
+    }
+
+#endif
+
     status = EFI_SUCCESS;
 
 Exit:
@@ -1295,6 +1367,32 @@ Return Value:
 
 --*/
 {
+    EFI_STATUS status;
+
+    if (mUseBypassContext)
+    {
+        HvHypercallDisconnect(&mHvBypassContext);
+    }
+
+    // Free the bypass output page if required.
+
+    if (mOutputPageBypass != NULL)
+    {
+        status = EfiHvModifySparseGpaPageHostVisibility(
+            NULL,
+            HV_MAP_GPA_PERMISSIONS_NONE,
+            1,
+            (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
+            NULL);
+
+        if (EFI_ERROR(status))
+        {
+            // Failure is not allowed here - need to crash
+            ASSERT(FALSE);
+            CpuDeadLoop();
+        }
+    }
+
     HvHypercallDisconnect(&mHvContext);
 
     // Free the hypercall communication pages.
@@ -1327,28 +1425,60 @@ Return Value:
 
 --*/
 {
+    HV_HYPERCALL_CONTEXT *context;
+    UINT64 sharedGpaBoundary;
     HV_SYNIC_SIEFP siefp;
     HV_SYNIC_SIMP simp;
 
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
+    context = mUseBypassContext ? &mHvBypassContext : &mHvContext;
+
+    sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+
     // Enable the message page.
 
-    simp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSipp);
-    ASSERT(simp.SimpEnabled == 0);
-
-    simp.SimpEnabled = 1;
-    simp.BaseSimpGpa = (UINTN)&mHvPages->MessagePage / EFI_PAGE_SIZE;
-    HvHypercallSetVpRegister64Self(HvRegisterSipp, simp.AsUINT64);
+    simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
+    if (simp.SimpEnabled != 0)
+    {
+        mMessagePage = (PHV_MESSAGE_PAGE)(simp.BaseSimpGpa * EFI_PAGE_SIZE);
+        if ((UINTN)mMessagePage < sharedGpaBoundary)
+        {
+            // Failure is not allowed here - need to crash
+            ASSERT(FALSE);
+            CpuDeadLoop();
+        }
+    }
+    else
+    {
+        ASSERT(mUseBypassContext == FALSE);
+        mMessagePage = &mHvPages->MessagePage;
+        simp.SimpEnabled = 1;
+        simp.BaseSimpGpa = (UINTN)mMessagePage / EFI_PAGE_SIZE;
+        HvHypercallSetVpRegister64Self(context, HvRegisterSipp, simp.AsUINT64);
+    }
 
     // Enable the event page.
 
-    siefp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSifp);
-    ASSERT(siefp.SiefpEnabled == 0);
-
-    siefp.SiefpEnabled = 1;
-    siefp.BaseSiefpGpa = (UINTN)&mHvPages->EventFlagsPage / EFI_PAGE_SIZE;
-    HvHypercallSetVpRegister64Self(HvRegisterSifp, siefp.AsUINT64);
+    siefp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSifp);
+    if (siefp.SiefpEnabled != 0)
+    {
+        mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)(siefp.BaseSiefpGpa * EFI_PAGE_SIZE);
+        if ((UINTN)mEventFlagsPage < sharedGpaBoundary)
+        {
+            // Failure is not allowed here - need to crash
+            ASSERT(FALSE);
+            CpuDeadLoop();
+        }
+    }
+    else
+    {
+        ASSERT(mUseBypassContext == FALSE);
+        mEventFlagsPage = &mHvPages->EventFlagsPage;
+        siefp.SiefpEnabled = 1;
+        siefp.BaseSiefpGpa = (UINTN)mEventFlagsPage / EFI_PAGE_SIZE;
+        HvHypercallSetVpRegister64Self(context, HvRegisterSifp, siefp.AsUINT64);
+    }
 
     mSynicConnected = TRUE;
 
@@ -1392,8 +1522,8 @@ Return Value:
 
     for (timerIndex = 0; timerIndex < HV_SYNIC_STIMER_COUNT; timerIndex += 1)
     {
-        HvHypercallSetVpRegister64Self(HvRegisterStimer0Count + (2 * timerIndex), 0);
-        HvHypercallSetVpRegister64Self(HvRegisterStimer0Config + (2 * timerIndex), 0);
+        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Count + (2 * timerIndex), 0);
+        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Config + (2 * timerIndex), 0);
     }
 
     // Disconnect the SINTs and drain all the message queues.
@@ -1416,19 +1546,23 @@ Return Value:
         }
     }
 
-    // Disable the message page.
+    if (mUseBypassContext == FALSE)
+    {
+        // Disable the message page.
 
-    simp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSipp);
-    simp.SimpEnabled = 0;
-    simp.BaseSimpGpa = 0;
-    HvHypercallSetVpRegister64Self(HvRegisterSipp, simp.AsUINT64);
+        simp.AsUINT64 = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterSipp);
+        simp.SimpEnabled = 0;
+        simp.BaseSimpGpa = 0;
+        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSipp, simp.AsUINT64);
 
-    // Disable the event page.
+        // Disable the event page.
 
-    siefp.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterSifp);
-    siefp.SiefpEnabled = 0;
-    siefp.BaseSiefpGpa = 0;
-    HvHypercallSetVpRegister64Self(HvRegisterSifp, siefp.AsUINT64);
+        siefp.AsUINT64 = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterSifp);
+        siefp.SiefpEnabled = 0;
+        siefp.BaseSiefpGpa = 0;
+        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSifp, siefp.AsUINT64);
+    }
+
     mSynicConnected = FALSE;
 }
 

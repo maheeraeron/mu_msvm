@@ -18,12 +18,16 @@ Abstract:
 #include <Library/DebugLib.h>
 #include <Library/HvHypercallLib.h>
 
+#include <HvHypercallLibP.h>
+
+#define SEV_MSR_GHCB                    0xC0010130
 
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
 VOID
 HvHypercallConnect(
     _In_ PVOID HypercallPage,
+    _In_opt_ PVOID OutputPageForIsolationBypass,
     _Out_ HV_HYPERCALL_CONTEXT *Context
     )
 /*++
@@ -35,6 +39,11 @@ Routine Description:
 Arguments:
 
     HypercallPage - An address at which to place the hypercall page.
+
+    OutputPageForIsolationBypass - If present, indicates that this connection
+                                   should bypass isolation protections and go
+                                   directly to the hypervisor.  The specified
+                                   address is used for hypercall output.
 
     Context - Receives the hypercall context.
 
@@ -50,24 +59,94 @@ Return Value:
     ZeroMem(Context, sizeof(*Context));
 
     //
-    // Set the guest ID.
+    // Choose a value for the guest ID.
     //
 
     guestOsId.AsUINT64 = 0;
     guestOsId.OsId = 1;
-    HvHypercallSetVpRegister64Self(HvRegisterGuestOsId, guestOsId.AsUINT64);
 
-    //
-    // Enable the hypercall page.
-    //
+    if (OutputPageForIsolationBypass != NULL)
+    {
+#if defined(MDE_CPU_X64)
 
-    hypercallMsr.AsUINT64 = HvHypercallGetVpRegister64Self(HvX64RegisterHypercall);
-    ASSERT(hypercallMsr.Enable == 0);
-    hypercallMsr.Enable = 1;
-    hypercallMsr.GpaPageNumber = (UINTN)HypercallPage / HV_PAGE_SIZE;
-    HvHypercallSetVpRegister64Self(HvX64RegisterHypercall, hypercallMsr.AsUINT64);
+        UINT64 ghcbAddress;
+        UINT64 sharedGpaBoundary;
 
-    Context->HypercallPage = HypercallPage;
+        //
+        // Obtain the shared GPA boundary.  For isolation architectures that
+        // require bypass calls, this must be non-zero.
+        //
+        sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+        ASSERT(sharedGpaBoundary != 0);
+
+        //
+        // Obtain the GHCB address.  If this is not above the shared GPA
+        // boundary, then it must be incorrectly configured.  If the address
+        // is above the shared GPA boundary, then the address can be used
+        // without further validation, since only one of four outcomes is
+        // possible:
+        // 1. The address is non-canonical, which will result in a fatal
+        //    exception when it is used.
+        // 2. The address is canonical but exceeds the physical address width,
+        //    which will result in a fatal exception when it is used.
+        // 3. The address is the shared alias for a valid protected page.
+        //    When it is used as shared, the hypervisor will revoke the
+        //    private copy, resulting in a fatal exception the next time the
+        //    protected memory is accessed.
+        // 4. The address is legitimate.
+        //
+
+        ghcbAddress = AsmReadMsr64(SEV_MSR_GHCB);
+        if ((ghcbAddress < sharedGpaBoundary) || ((ghcbAddress & (EFI_PAGE_SIZE - 1)) != 0))
+        {
+            // If the GHCB is misconfigured, then no further work is possible.
+            ASSERT(FALSE);
+            CpuDeadLoop();
+        }
+
+        Context->Ghcb = (PVOID)ghcbAddress;
+        Context->OutputPage = OutputPageForIsolationBypass;
+
+        //
+        // Set the guest OS ID via a direct GHCB-based MSR write, since
+        // GHCB-based hypercalls are not permitted until the guest OS MSR is
+        // set.
+        //
+
+        HvHypercallpDisableInterrupts();
+
+        HvHypercallpSetMsrWithGhcb(Context,
+                                   HV_X64_MSR_GUEST_OS_ID,
+                                   guestOsId.AsUINT64);
+
+        HvHypercallpEnableInterrupts();
+
+#else
+
+        //
+        // Isolation bypass is not permitted on 32-bit systems.
+        //
+
+        ASSERT(FALSE);
+
+#endif
+    }
+    else
+    {
+        //
+        // Set the guest ID before enabling hypercalls.
+        //
+
+        HvHypercallSetVpRegister64Self(Context, HvRegisterGuestOsId, guestOsId.AsUINT64);
+
+        hypercallMsr.AsUINT64 = HvHypercallGetVpRegister64Self(Context, HvX64RegisterHypercall);
+        ASSERT(hypercallMsr.Enable == 0);
+        hypercallMsr.Enable = 1;
+        hypercallMsr.GpaPageNumber = (UINTN)HypercallPage / HV_PAGE_SIZE;
+        HvHypercallSetVpRegister64Self(Context, HvX64RegisterHypercall, hypercallMsr.AsUINT64);
+
+        Context->HypercallPage = HypercallPage;
+    }
 
     Context->Connected = TRUE;
 }
@@ -105,10 +184,10 @@ Return Value:
     guestOsId.AsUINT64 = 0;
     guestOsId.OsId = 4;     // Windows NT
     guestOsId.VendorId = 1; // Microsoft
-    HvHypercallSetVpRegister64Self(HvRegisterGuestOsId, guestOsId.AsUINT64);
+    HvHypercallSetVpRegister64Self(Context, HvRegisterGuestOsId, guestOsId.AsUINT64);
 
     guestOsId.AsUINT64 = 0;
-    guestOsId.AsUINT64 = HvHypercallGetVpRegister64Self(HvRegisterGuestOsId);
+    guestOsId.AsUINT64 = HvHypercallGetVpRegister64Self(Context, HvRegisterGuestOsId);
     ASSERT(guestOsId.VendorId == 1 && guestOsId.OsId == 4);
 
     Context->Connected = TRUE;
@@ -143,14 +222,17 @@ Return Value:
 
         HV_X64_MSR_HYPERCALL_CONTENTS hypercallMsr;
 
-        hypercallMsr.AsUINT64 = HvHypercallGetVpRegister64Self(HvX64RegisterHypercall);
-        hypercallMsr.Enable = 0;
-        hypercallMsr.GpaPageNumber = 0;
-        HvHypercallSetVpRegister64Self(HvX64RegisterHypercall, hypercallMsr.AsUINT64);
+        if (Context->Ghcb == NULL)
+        {
+            hypercallMsr.AsUINT64 = HvHypercallGetVpRegister64Self(Context, HvX64RegisterHypercall);
+            hypercallMsr.Enable = 0;
+            hypercallMsr.GpaPageNumber = 0;
+            HvHypercallSetVpRegister64Self(Context, HvX64RegisterHypercall, hypercallMsr.AsUINT64);
+        }
 
 #endif
 
-        HvHypercallSetVpRegister64Self(HvRegisterGuestOsId, 0);
+        HvHypercallSetVpRegister64Self(Context, HvRegisterGuestOsId, 0);
 
         Context->Connected = FALSE;
     }
@@ -212,6 +294,37 @@ Return Value:
 
 #if defined(MDE_CPU_X64)
 
+    if (Context->Ghcb != NULL)
+    {
+        HvHypercallpDisableInterrupts();
+
+        //
+        // When a GHCB is present, it means that the call must be made via
+        // VMGEXIT directly.
+        //
+
+        if (Fast)
+        {
+            //
+            // No input page copy is required; just fill the GHCB with the
+            // input parameters.
+            //
+
+            ((PUINT64)Context->Ghcb)[0] = FirstRegister;
+            ((PUINT64)Context->Ghcb)[1] = SecondRegister;
+
+            FirstRegister = 0;
+        }
+
+        HvHypercallpIssueGhcbHypercall(Context,
+                                       CallCode,
+                                       (VOID *)FirstRegister,
+                                       CountOfElements,
+                                       ElementsProcessed);
+
+        HvHypercallpEnableInterrupts();
+    }
+    else
     {
         typedef HV_X64_HYPERCALL_OUTPUT HYPERCALL_ROUTINE(
             __in HV_X64_HYPERCALL_INPUT Control,
@@ -544,6 +657,7 @@ Return Value:
 
 UINT64
 HvHypercallGetVpRegister64Self(
+    _In_ HV_HYPERCALL_CONTEXT *Context,
     _In_ HV_REGISTER_NAME RegisterName
     )
 /*++
@@ -553,6 +667,8 @@ Routine Description:
     Gets a 64 bit register value on the current virtual processor.
 
 Arguments:
+
+    Context - The hypercall context (set up via HvHypercallConnect).
 
     RegisterName - Supplies the register name to be mapped.
 
@@ -566,17 +682,56 @@ Return Value:
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
-    UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+#if defined(MDE_CPU_X64)
+    if (Context->Ghcb != NULL)
+    {
+        PHV_INPUT_GET_VP_REGISTERS inputPage;
+        PHV_REGISTER_VALUE outputPage;
+        HV_STATUS status;
 
-    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
-    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
+        HvHypercallpDisableInterrupts();
 
-    registerValue = AsmReadMsr64(msr);
+        inputPage = Context->Ghcb;
+        ZeroMem(inputPage, sizeof *inputPage);
+        inputPage->PartitionId = HV_PARTITION_ID_SELF;
+        inputPage->VpIndex = HV_VP_INDEX_SELF;
+        inputPage->Names[0] = RegisterName;
+
+        status = HvHypercallpIssueGhcbHypercall(Context,
+                                                HvCallGetVpRegisters,
+                                                NULL,
+                                                1,
+                                                NULL);
+
+        //
+        // What to do in case of failure?
+        //
+
+        ASSERT(status == 0);
+
+        outputPage = Context->OutputPage;
+        registerValue = outputPage->Reg64;
+
+        HvHypercallpEnableInterrupts();
+    }
+    else
+#endif
+    {
+        UINT32 msr;
+
+        msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+
+        // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
+        //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
+
+        registerValue = AsmReadMsr64(msr);
+    }
 
 #elif defined(MDE_CPU_AARCH64)
 
     HV_STATUS status;
 
+    ASSERT(Context->Ghcb == NULL);
     status = AsmGetVpRegister64(RegisterName, &registerValue);
     ASSERT(status == 0);
 
@@ -591,6 +746,7 @@ Return Value:
 
 VOID
 HvHypercallSetVpRegister64Self(
+    _In_ HV_HYPERCALL_CONTEXT *Context,
     _In_ HV_REGISTER_NAME RegisterName,
     _In_ UINT64 RegisterValue
     )
@@ -601,6 +757,8 @@ Routine Description:
     Sets a 64 bit register on the current virtual processor.
 
 Arguments:
+
+    Context - The hypercall context (set up via HvHypercallConnect).
 
     RegisterName - Supplies the register name to be mapped.
 
@@ -615,12 +773,42 @@ Return Value:
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
-    UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+    if (Context->Ghcb != NULL)
+    {
+        PHV_INPUT_SET_VP_REGISTERS inputPage;
+        HV_STATUS status;
 
-    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
-    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
+        HvHypercallpDisableInterrupts();
 
-    AsmWriteMsr64(msr, RegisterValue);
+        inputPage = Context->Ghcb;
+        ZeroMem(inputPage, sizeof *inputPage);
+        inputPage->PartitionId = HV_PARTITION_ID_SELF;
+        inputPage->VpIndex = HV_VP_INDEX_SELF;
+        inputPage->Elements[0].Name = RegisterName;
+        inputPage->Elements[0].Value.Reg64 = RegisterValue;
+
+        status = HvHypercallpIssueGhcbHypercall(Context,
+                                                HvCallSetVpRegisters,
+                                                NULL,
+                                                1,
+                                                NULL);
+        //
+        // What to do in case of failure?
+        //
+
+        ASSERT(status == 0);
+
+        HvHypercallpEnableInterrupts();
+    }
+    else
+    {
+        UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+
+        // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
+        //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
+
+        AsmWriteMsr64(msr, RegisterValue);
+    }
 
 #elif defined(MDE_CPU_AARCH64)
 
@@ -628,6 +816,7 @@ Return Value:
     //     RegisterName, HvHypercallpRegisterNameToString(RegisterName),
     //     RegisterValue));
 
+    ASSERT(Context->Ghcb == NULL);
     AsmSetVpRegister64(RegisterName, RegisterValue);
 
 #else

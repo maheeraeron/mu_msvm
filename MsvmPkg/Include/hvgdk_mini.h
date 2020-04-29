@@ -3051,7 +3051,9 @@ typedef union _HV_SYNIC_SINT
         UINT64 Masked       :1;
         UINT64 AutoEoi      :1;
         UINT64 Polling      :1;
-        UINT64 ReservedP2   :45;
+        UINT64 AsIntercept  :1;
+        UINT64 Proxy        :1;
+        UINT64 ReservedP2   :43;
     };
 } HV_SYNIC_SINT, *PHV_SYNIC_SINT;
 

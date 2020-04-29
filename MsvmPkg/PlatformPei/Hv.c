@@ -138,7 +138,7 @@ Return Value:
         (UINTN)Context->StartOfConfigBlob - (MISC_PAGE_COUNT_TOTAL * EFI_PAGE_SIZE) +
         (MISC_PAGE_OFFSET_FREE_RW * EFI_PAGE_SIZE));
 
-    HvHypercallConnect(Context->HvPages->HypercallPage, &Context->HvHypercallContext);
+    HvHypercallConnect(Context->HvPages->HypercallPage, NULL, &Context->HvHypercallContext);
 
 #else
 

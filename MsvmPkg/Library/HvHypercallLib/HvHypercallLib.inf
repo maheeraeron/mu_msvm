@@ -8,6 +8,11 @@
 
 [Sources]
     HvHypercallLib.c
+    DxeHvHypercallLibSupport.c
+
+[Sources.X64]
+    X64/GhcbCall.c
+    X64/SvmSnp.asm | MSFT
 
 [Sources.AARCH64]
     AArch64/HypercallImpl.masm
@@ -16,5 +21,9 @@
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
 
-[LibraryClasses]
+[LibraryClasses.X64]
+    PcdLib
     UefiBootServicesTableLib
+
+[Pcd.X64]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary

@@ -50,3 +50,7 @@
 [Depex.AARCH64]
     gHardwareInterruptProtocolGuid
 
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
