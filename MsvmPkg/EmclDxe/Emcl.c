@@ -104,7 +104,7 @@ typedef struct _EMCL_CONTEXT
     VOID *RingBufferPages;
     VOID *IncomingData;
     VOID *OutgoingData;
-    UINT32 RingBufferGpadl;
+    EFI_VMBUS_GPADL *RingBufferGpadl;
 
     EFI_EVENT ReceiveEvent;
     EFI_EMCL_RECEIVE_PACKET ReceiveCallback;
@@ -147,6 +147,13 @@ EFI_HV_IVM_PROTOCOL *mHv;
 BOOLEAN mUseBounceBuffer = FALSE;
 
 extern EFI_GUID gEfiEmclTagProtocolGuid;
+
+EFI_STATUS
+EFIAPI
+EmclDestroyGpadl(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in EFI_EMCL_GPADL *Gpadl
+    );
 
 EFI_STATUS
 EFIAPI
@@ -221,6 +228,13 @@ Return Value:
 
 --*/
 {
+    if (Context->RingBufferGpadl != NULL)
+    {
+        Context->VmbusProtocol->DestroyGpadl(Context->VmbusProtocol,
+                                             Context->RingBufferGpadl);
+        Context->RingBufferGpadl = NULL;
+    }
+
     if (Context->RingBufferPages != NULL)
     {
         FreePages(Context->RingBufferPages,
@@ -283,6 +297,16 @@ Return Value:
 
     Context->IncomingPageCount = IncomingRingBufferPageCount + 1;
     Context->OutgoingPageCount = OutgoingRingBufferPageCount + 1;
+
+    status = Context->VmbusProtocol->PrepareGpadl(Context->VmbusProtocol,
+                                                  Context->RingBufferPages,
+                                                  pageCount * EFI_PAGE_SIZE,
+                                                  &Context->RingBufferGpadl);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
     ZeroMem(Context->RingBufferPages, pageCount * EFI_PAGE_SIZE);
 
     incomingControl = (VOID*)((UINT_PTR)Context->RingBufferPages +
@@ -1165,9 +1189,7 @@ Return Value:
 
     status = context->VmbusProtocol->CreateGpadl(
         context->VmbusProtocol,
-        context->RingBufferPages,
-        (context->IncomingPageCount + context->OutgoingPageCount) * EFI_PAGE_SIZE,
-        &context->RingBufferGpadl);
+        context->RingBufferGpadl);
 
     if (EFI_ERROR(status))
     {
@@ -1222,10 +1244,11 @@ Return Value:
 Cleanup:
     if (EFI_ERROR(status))
     {
-        if (context->RingBufferGpadl != 0)
+        if (context->RingBufferGpadl != NULL)
         {
             context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
                                                  context->RingBufferGpadl);
+            context->RingBufferGpadl = NULL;
         }
 
         if (isrRegistered)
@@ -1301,6 +1324,8 @@ Return Value:
                                                   context->RingBufferGpadl);
     ASSERT_EFI_ERROR(status);
 
+    context->RingBufferGpadl = NULL;
+
     //
     // If the current TPL and the receive TPL are equal, the receive event
     // could still be queued up to be run after the TPL drops. Clear out the
@@ -1346,7 +1371,6 @@ Return Value:
         FreePool(completionEntry);
     }
 
-    context->RingBufferGpadl = 0;
     EmclDestroyPacketLibrary(context);
     context->IsRunning = FALSE;
 }
@@ -1825,7 +1849,7 @@ EmclCreateGpadl(
     __in EFI_EMCL_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
-    __out UINT32 *GpadlHandle
+    __out EFI_EMCL_GPADL **Gpadl
     )
 /*++
 
@@ -1843,7 +1867,7 @@ Arguments:
 
     BufferLength - Length of Buffer.
 
-    GpadlHandle - Returns a handle to the GPADL.
+    Gpadl - Returns a pointer to the GPADL.
 
 Return Value:
 
@@ -1852,16 +1876,45 @@ Return Value:
 --*/
 {
     EMCL_CONTEXT *context;
+    EFI_VMBUS_GPADL *vmbusGpadl;
+    EFI_STATUS status;
 
     context = CR(This,
                  EMCL_CONTEXT,
                  EmclProtocol,
                  EMCL_CONTEXT_SIGNATURE);
 
-    return context->VmbusProtocol->CreateGpadl(context->VmbusProtocol,
-                                               Buffer,
-                                               BufferLength,
-                                               GpadlHandle);
+    vmbusGpadl = NULL;
+    status = context->VmbusProtocol->PrepareGpadl(context->VmbusProtocol,
+                                                  Buffer,
+                                                  BufferLength,
+                                                  &vmbusGpadl);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    status = context->VmbusProtocol->CreateGpadl(context->VmbusProtocol,
+                                                 vmbusGpadl);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    *Gpadl = vmbusGpadl;
+    vmbusGpadl = NULL;
+
+    status = EFI_SUCCESS;
+
+Cleanup:
+
+    if (vmbusGpadl != NULL)
+    {
+        context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
+                                             vmbusGpadl);
+    }
+
+    return status;
 }
 
 
@@ -1869,7 +1922,7 @@ EFI_STATUS
 EFIAPI
 EmclDestroyGpadl(
     __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 GpadlHandle
+    __in EFI_EMCL_GPADL *Gpadl
     )
 /*++
 
@@ -1883,11 +1936,57 @@ Arguments:
 
     This - Pointer to the EMCL protocol.
 
-    GpadlHandle - Handle of the GPADL to be destroyed.
+    Gpadl - Pointer to the GPADL to be destroyed.
 
 Return Value:
 
     EFI_STATUS.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+    EFI_STATUS status;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    if (Gpadl != NULL)
+    {
+        status = context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
+                                                      Gpadl);
+    }
+    else
+    {
+        status = EFI_SUCCESS;
+    }
+
+    return status;
+}
+
+
+UINT32
+EFIAPI
+EmclGetGpadlHandle(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in EFI_EMCL_GPADL *Gpadl
+    )
+/*++
+
+Routine Description:
+
+    This routine retrieves the GPADL handle associated with a GPADL.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    Gpadl - Pointer to the GPADL.
+
+Return Value:
+
+    GPADL handle.
 
 --*/
 {
@@ -1898,8 +1997,8 @@ Return Value:
                  EmclProtocol,
                  EMCL_CONTEXT_SIGNATURE);
 
-    return context->VmbusProtocol->DestroyGpadl(context->VmbusProtocol,
-                                                GpadlHandle);
+    return context->VmbusProtocol->GetGpadlHandle(context->VmbusProtocol,
+                                                  Gpadl);
 }
 
 
@@ -1932,6 +2031,7 @@ Return Value:
     Context->EmclProtocol.SetReceiveCallback = EmclSetReceiveCallback;
     Context->EmclProtocol.CreateGpadl = EmclCreateGpadl;
     Context->EmclProtocol.DestroyGpadl = EmclDestroyGpadl;
+    Context->EmclProtocol.GetGpadlHandle = EmclGetGpadlHandle;
     Context->EmclProtocol.CreateGpaRange = EmclCreateGpaRange;
     Context->EmclProtocol.DestroyGpaRange = EmclDestroyGpaRange;
     Context->EmclProtocol.SendPacketEx = EmclSendPacketEx;

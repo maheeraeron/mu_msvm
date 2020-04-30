@@ -83,7 +83,6 @@ Return Value:
     UINT32 rndisMsgSize;
     UINT32 rndisBufferIndex, index;
     NVSP_MESSAGE nvspMessage;
-    UINT32 inPageCount, outPageCount;
     UINTN eventIndex;
 
     ASSERT(AdapterInfo != NULL);
@@ -94,8 +93,8 @@ Return Value:
     AdapterInfo->RxBuffer = NULL;
     AdapterInfo->TxBuffer = NULL;
 
-    AdapterInfo->TxGpadlHandle = 0;
-    AdapterInfo->RxGpadlHandle = 0;
+    AdapterInfo->TxGpadl = NULL;
+    AdapterInfo->RxGpadl = NULL;
 
     AdapterInfo->ReceiveStarted = FALSE;
 
@@ -159,22 +158,17 @@ Return Value:
         goto Exit;
     }
 
-    inPageCount = NVSC_DEFAULT_RECEIVE_BUFFER_SIZE >> 12;
-    if (NVSC_DEFAULT_RECEIVE_BUFFER_SIZE & 0xFFF)
-    {
-        inPageCount++;
-    }
-
-    outPageCount = NVSC_DEFAULT_SEND_BUFFER_SIZE >> 12;
-    if (NVSC_DEFAULT_SEND_BUFFER_SIZE & 0xFFF)
-    {
-        outPageCount++;
-    }
+    //
+    // Allocate receive and transmit buffers as a multiple of pages.  This is
+    // required for isolated VMs and is acceptable in all VMs.
+    //
+    AdapterInfo->RxBufferPageCount = (NVSC_DEFAULT_RECEIVE_BUFFER_SIZE + EFI_PAGE_SIZE - 1) >> EFI_PAGE_SHIFT;
+    AdapterInfo->TxBufferPageCount = (NVSC_DEFAULT_SEND_BUFFER_SIZE + EFI_PAGE_SIZE - 1) >> EFI_PAGE_SHIFT;
 
     status = AdapterInfo->Emcl->StartChannel(
         AdapterInfo->Emcl,
-        inPageCount,
-        outPageCount);
+        AdapterInfo->RxBufferPageCount,
+        AdapterInfo->TxBufferPageCount);
 
     if (EFI_ERROR(status))
     {
@@ -260,7 +254,7 @@ Return Value:
     //
     // Allocate the Receive buffers and report them to the VSP.
     //
-    AdapterInfo->RxBuffer = AllocatePool(NVSC_DEFAULT_RECEIVE_BUFFER_SIZE);
+    AdapterInfo->RxBuffer = AllocatePages(AdapterInfo->RxBufferPageCount);
     if (AdapterInfo->RxBuffer == NULL)
     {
         goto Cleanup;
@@ -269,8 +263,8 @@ Return Value:
     status = AdapterInfo->Emcl->CreateGpadl(
         AdapterInfo->Emcl,
         AdapterInfo->RxBuffer,
-        NVSC_DEFAULT_RECEIVE_BUFFER_SIZE,
-        (UINT32 *)&AdapterInfo->RxGpadlHandle);
+        AdapterInfo->RxBufferPageCount * EFI_PAGE_SIZE,
+        &AdapterInfo->RxGpadl);
 
     if (EFI_ERROR(status))
     {
@@ -279,7 +273,8 @@ Return Value:
 
     ZeroMem(&nvspMessage, sizeof(nvspMessage));
     nvspMessage.Header.MessageType = NvspMessage1TypeSendReceiveBuffer;
-    nvspMessage.Messages.Version1Messages.SendReceiveBuffer.GpadlHandle = AdapterInfo->RxGpadlHandle;
+    nvspMessage.Messages.Version1Messages.SendReceiveBuffer.GpadlHandle =
+        AdapterInfo->Emcl->GetGpadlHandle(AdapterInfo->Emcl, AdapterInfo->RxGpadl);
     nvspMessage.Messages.Version1Messages.SendReceiveBuffer.Id = RECEIVE_BUFFER_ID;
 
     status = EmclSendPacketSync(
@@ -323,8 +318,7 @@ Return Value:
     //
     // Allocate the Send buffers and report them to the VSP.
     //
-    AdapterInfo->TxBuffer = AllocatePool(NVSC_DEFAULT_SEND_BUFFER_SIZE);
-
+    AdapterInfo->TxBuffer = AllocatePages(AdapterInfo->TxBufferPageCount);
     if (AdapterInfo->TxBuffer == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
@@ -334,8 +328,8 @@ Return Value:
     status = AdapterInfo->Emcl->CreateGpadl(
         AdapterInfo->Emcl,
         AdapterInfo->TxBuffer,
-        NVSC_DEFAULT_SEND_BUFFER_SIZE,
-        (UINT32 *)&AdapterInfo->TxGpadlHandle);
+        AdapterInfo->TxBufferPageCount * EFI_PAGE_SIZE,
+        &AdapterInfo->TxGpadl);
 
     if (EFI_ERROR(status))
     {
@@ -344,7 +338,8 @@ Return Value:
 
     ZeroMem(&nvspMessage, sizeof(nvspMessage));
     nvspMessage.Header.MessageType = NvspMessage1TypeSendSendBuffer;
-    nvspMessage.Messages.Version1Messages.SendSendBuffer.GpadlHandle = AdapterInfo->TxGpadlHandle;
+    nvspMessage.Messages.Version1Messages.SendSendBuffer.GpadlHandle =
+        AdapterInfo->Emcl->GetGpadlHandle(AdapterInfo->Emcl, AdapterInfo->TxGpadl);
     nvspMessage.Messages.Version1Messages.SendSendBuffer.Id = SEND_BUFFER_ID;
 
     status = EmclSendPacketSync(
@@ -1404,16 +1399,16 @@ Returns:
         // GPADLs need to be destroyed after the channel is closed to
         // make sure the VSP has torn down its view mapping.
         //
-        if (AdapterInfo->RxGpadlHandle != 0)
+        if (AdapterInfo->RxGpadl != NULL)
         {
-            AdapterInfo->Emcl->DestroyGpadl(AdapterInfo->Emcl, AdapterInfo->RxGpadlHandle);
-            AdapterInfo->RxGpadlHandle = 0;
+            AdapterInfo->Emcl->DestroyGpadl(AdapterInfo->Emcl, AdapterInfo->RxGpadl);
+            AdapterInfo->RxGpadl = NULL;
         }
 
-        if (AdapterInfo->TxGpadlHandle != 0)
+        if (AdapterInfo->TxGpadl != NULL)
         {
-            AdapterInfo->Emcl->DestroyGpadl(AdapterInfo->Emcl, AdapterInfo->TxGpadlHandle);
-            AdapterInfo->TxGpadlHandle = 0;
+            AdapterInfo->Emcl->DestroyGpadl(AdapterInfo->Emcl, AdapterInfo->TxGpadl);
+            AdapterInfo->TxGpadl = NULL;
         }
     }
 
@@ -1443,13 +1438,13 @@ Returns:
 
     if (AdapterInfo->RxBuffer != NULL)
     {
-        FreePool(AdapterInfo->RxBuffer);
+        FreePages(AdapterInfo->RxBuffer, AdapterInfo->RxBufferPageCount);
         AdapterInfo->RxBuffer = NULL;
     }
 
     if (AdapterInfo->TxBuffer != NULL)
     {
-        FreePool(AdapterInfo->TxBuffer);
+        FreePages(AdapterInfo->TxBuffer, AdapterInfo->TxBufferPageCount);
         AdapterInfo->TxBuffer = NULL;
     }
 

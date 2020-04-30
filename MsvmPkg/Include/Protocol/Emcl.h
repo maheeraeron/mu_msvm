@@ -24,6 +24,8 @@ Author:
 typedef struct _EFI_EMCL_PROTOCOL EFI_EMCL_PROTOCOL;
 typedef struct _EFI_EMCL_V2_PROTOCOL EFI_EMCL_V2_PROTOCOL;
 
+typedef VOID EFI_EMCL_GPADL;
+
 typedef struct _EFI_TRANSFER_RANGE
 {
     UINT32 ByteCount;
@@ -108,14 +110,21 @@ EFI_STATUS
     __in EFI_EMCL_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
-    __out UINT32 *GpadlHandle
+    __out EFI_EMCL_GPADL **Gpadl
+    );
+
+typedef
+UINT32
+(EFIAPI *EFI_EMCL_GET_GPADL_HANDLE)(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in EFI_EMCL_GPADL *Gpadl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_DESTROY_GPADL)(
     __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 GpadlHandle
+    __in EFI_EMCL_GPADL *Gpadl
     );
 
 typedef
@@ -146,6 +155,7 @@ struct _EFI_EMCL_PROTOCOL
 
     EFI_EMCL_CREATE_GPADL CreateGpadl;
     EFI_EMCL_DESTROY_GPADL DestroyGpadl;
+    EFI_EMCL_GET_GPADL_HANDLE GetGpadlHandle;
 
     EFI_EMCL_CREATE_GPA_RANGE CreateGpaRange;
     EFI_EMCL_DESTROY_GPA_RANGE DestroyGpaRange;

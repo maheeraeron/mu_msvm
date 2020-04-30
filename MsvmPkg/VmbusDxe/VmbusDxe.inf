@@ -35,6 +35,7 @@
     gEfiDevicePathProtocolGuid      # PRODUCES
     gEfiVmbusRootProtocolGuid       # PRODUCES
     gEfiVmbusProtocolGuid           # PRODUCES
+    gEfiVmbusLegacyProtocolGuid     # PRODUCES
 
 [Depex]
     gEfiHvProtocolGuid

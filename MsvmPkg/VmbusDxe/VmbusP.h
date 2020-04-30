@@ -143,6 +143,7 @@ typedef struct _VMBUS_CHANNEL_CONTEXT
     UINT32 Signature;
 
     EFI_HANDLE Handle;
+    EFI_VMBUS_LEGACY_PROTOCOL LegacyVmbusProtocol;
     EFI_VMBUS_PROTOCOL VmbusProtocol;
     VMBUS_CHANNEL_DEVICE_PATH DevicePath;
     LIST_ENTRY Link;
@@ -158,6 +159,15 @@ typedef struct _VMBUS_CHANNEL_CONTEXT
     EFI_EVENT Interrupt;
 
 } VMBUS_CHANNEL_CONTEXT;
+
+struct _EFI_VMBUS_GPADL
+{
+    PVOID Buffer;
+    UINT32 BufferLength;
+    UINT32 NumberOfPages;
+    UINT32 GpadlHandle;
+    BOOLEAN Legacy;
+};
 
 VMBUS_MESSAGE*
 VmbusRootWaitForChannelResponse(

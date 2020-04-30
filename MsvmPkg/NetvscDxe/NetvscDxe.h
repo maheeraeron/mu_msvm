@@ -129,16 +129,18 @@ typedef struct _NIC_DATA_INSTANCE
     EFI_STATUS                InitRndisStatus;
 
     VOID                      *RxBuffer;
+    UINT32                    RxBufferPageCount;
     UINT32                    RxQueueCount;
-    GPADL_HANDLE              RxGpadlHandle;
+    EFI_EMCL_GPADL            *RxGpadl;
     BOOLEAN                   RxInterrupt;
     BOOLEAN                   ReceiveStarted;
     UINT8                     RxFilter;
 
     VOID                      *TxBuffer;
+    UINT32                    TxBufferPageCount;
     UINT32                    TxBufCount;
     UINT32                    TxSectionSize;
-    GPADL_HANDLE              TxGpadlHandle;
+    EFI_EMCL_GPADL            *TxGpadl;
     BOOLEAN                   TxedInterrupt;
 
     RX_QUEUE                  RxPacketQueue;
