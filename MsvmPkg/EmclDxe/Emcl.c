@@ -43,6 +43,12 @@ Author:
 #define VARIABLE_STRUCT_SIZE(_Type_,_Field_,_Size_) \
     ((OFFSET_OF(_Type_,_Field_)) + sizeof(*(((_Type_ *)0)->_Field_)) * (_Size_))
 
+#define UINT64_MAX       0xffffffffffffffff
+
+// TODO-19259739: Have a better way of reporting UEFI errors.
+#define EMCL_FAIL_FAST() \
+                    ASSERT(FALSE); \
+                    CpuDeadLoop();
 
 typedef struct _EMCL_BOUNCE_BLOCK
 {
@@ -74,7 +80,6 @@ typedef struct _EMCL_BOUNCE_PAGE
 } EMCL_BOUNCE_PAGE, *PEMCL_BOUNCE_PAGE;
 
 
-#define EMCL_MAX_OUTSTANDING_COMPLETIONS 64
 
 typedef struct _EMCL_COMPLETION_ENTRY
 {
@@ -85,6 +90,7 @@ typedef struct _EMCL_COMPLETION_ENTRY
     EFI_EXTERNAL_BUFFER OriginalBuffer; // just one
     PEMCL_BOUNCE_PAGE EmclBouncePageList;
     UINT32 SendPacketFlags;
+    UINT64 TransactionId;
 } EMCL_COMPLETION_ENTRY;
 
 #define EMCL_CONTEXT_SIGNATURE         SIGNATURE_32('e','m','c','l')
@@ -145,6 +151,7 @@ typedef struct _EMCL_OUTGOING_PACKET
 EFI_HANDLE mImageHandle;
 EFI_HV_IVM_PROTOCOL *mHv;
 BOOLEAN mUseBounceBuffer = FALSE;
+UINT64 mCurrentTransactionId = 0;
 
 extern EFI_GUID gEfiEmclTagProtocolGuid;
 
@@ -177,6 +184,11 @@ EFI_STATUS
 EmclpAllocateBounceBlock(
     __in EMCL_CONTEXT *Context,
     __in UINT32 BlockByteCount
+    );
+
+VOID
+EmclpFreeBounceBlock(
+    _In_ PEMCL_BOUNCE_BLOCK Block
     );
 
 VOID
@@ -580,7 +592,7 @@ Return Value:
         ASSERT(bouncePage);
         header->Range->PfnArray[pfnIndex] =
            (UINT_PTR)bouncePage->PageVA >> EFI_PAGE_SHIFT;
-        bouncePage = bouncePage->NextBouncePage;           
+        bouncePage = bouncePage->NextBouncePage;
     }
     ASSERT(bouncePage == NULL);
 
@@ -625,7 +637,7 @@ EmclpSendPacket(
     __in VMBUS_PACKET_TYPE PacketType,
     __in VMPIPE_PROTOCOL_MESSAGE_TYPE PipePacketType,
     __in UINT64 TransactionId,
-    __in BOOLEAN RequestCompletion,
+    __in EMCL_COMPLETION_ENTRY *CompletionEntry,
     __in BOOLEAN DeferInterrupt
     )
 /*++
@@ -655,8 +667,8 @@ Arguments:
 
     TransactionId - Transaction ID of packet to be sent.
 
-    RequestCompletion - Whether to request a completion packet from the opposite
-        endpoint.
+    CompletionEntry - An optional completion entry. When present a completion 
+        is requested.
 
     DeferInterrupt - If TRUE, don't send an interrupt with this packet even
         if one is necessary to notify the host. Instead, defer it to the
@@ -677,11 +689,21 @@ Return Value:
     VMPIPE_PROTOCOL_HEADER *pipeHeader;
     EFI_TPL tpl;
     BOOLEAN queuePacket;
-    EMCL_COMPLETION_ENTRY *completionEntry;
     UINT32 pageCount;
 
     outgoingPacket = NULL;
     queuePacket = FALSE;
+
+    // If external buffers are used, there must be a completion
+    // entry associated with this packet transfer. External buffers are
+    // used for the VmbusPacketTypeDataUsingGpaDirect case.
+    ASSERT(((ExternalBufferCount == 0) && 
+                (ExternalBuffers == NULL) && 
+                (PacketType != VmbusPacketTypeDataUsingGpaDirect)) ||
+            ((ExternalBufferCount != 0) &&
+                (ExternalBuffers != NULL) &&
+                (PacketType == VmbusPacketTypeDataUsingGpaDirect) &&
+                (CompletionEntry != NULL)));
 
     packetSize = (ExternalBufferCount == 0 ?
                   sizeof(VMPACKET_DESCRIPTOR) :
@@ -741,7 +763,7 @@ Return Value:
         header->Type = PacketType;
         header->DataOffset8 = (UINT16)(sizeof(*header) / 8);
         header->Flags = 0;
-        if (RequestCompletion)
+        if (CompletionEntry)
         {
             header->Flags |= VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
         }
@@ -767,42 +789,39 @@ Return Value:
         {
             pageCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(ExternalBuffers[0].Buffer,
                                                        ExternalBuffers[0].BufferSize);
-            completionEntry = (EMCL_COMPLETION_ENTRY *)TransactionId;
 
-            completionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
-            while (completionEntry->EmclBouncePageList == NULL)
+            CompletionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
+            if (CompletionEntry->EmclBouncePageList == NULL)
             {
                 UINT32 allocSize = MAX(pageCount * EFI_PAGE_SIZE, 32 * EFI_PAGE_SIZE);
 
                 status = EmclpAllocateBounceBlock(Context, allocSize);
                 if (EFI_ERROR(status))
                 {
-                    // TODO-19259739: Have a better way of reporting UEFI errors.
-                    ASSERT(FALSE);
-                    CpuDeadLoop();
+                    EMCL_FAIL_FAST();
                 }
-                completionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
+                CompletionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
             }
-            completionEntry->OriginalBuffer = ExternalBuffers[0];
+            CompletionEntry->OriginalBuffer = ExternalBuffers[0];
 
-            if (completionEntry->SendPacketFlags & EMCL_SEND_FLAG_DATA_IN_ONLY)
+            if (CompletionEntry->SendPacketFlags & EMCL_SEND_FLAG_DATA_IN_ONLY)
             {
-                EmclpZeroBouncePageList(completionEntry->EmclBouncePageList);
+                EmclpZeroBouncePageList(CompletionEntry->EmclBouncePageList);
             }
             else
             {
                 // Copy into the bounce buffer (TRUE)
                 EmclpCopyBouncePagesToExternalBuffer(&ExternalBuffers[0],
-                                                     completionEntry->EmclBouncePageList,
+                                                     CompletionEntry->EmclBouncePageList,
                                                      TRUE);
             }
 
             EmclWriteGpaDirectPacketBounce(InlineBuffer,
                                            InlineBufferLength,
                                            &ExternalBuffers[0],
-                                           completionEntry->EmclBouncePageList,
+                                           CompletionEntry->EmclBouncePageList,
                                            TransactionId,
-                                           RequestCompletion,
+                                           (CompletionEntry != NULL) ? TRUE : FALSE,
                                            packetBuffer);
 
         }
@@ -813,7 +832,7 @@ Return Value:
                                      ExternalBuffers,
                                      ExternalBufferCount,
                                      TransactionId,
-                                     RequestCompletion,
+                                     (CompletionEntry != NULL) ? TRUE : FALSE,
                                      packetBuffer);
             
         }
@@ -825,6 +844,12 @@ Return Value:
     }
 
     tpl = gBS->RaiseTPL(TPL_EMCL);
+
+    if (CompletionEntry)
+    {
+        InsertTailList(&Context->CompletionEntries, &CompletionEntry->Link);
+    }
+
     ntStatus = PkSendPacketSingleMapped(&Context->PkLibContext,
                                         packetBuffer,
                                         packetSize);
@@ -855,6 +880,20 @@ Return Value:
     else if (!NT_SUCCESS(ntStatus))
     {
         status = EFI_DEVICE_ERROR;
+
+        // Perform cleanup actions that should be done at high TPL here so that
+        // the setup, packet send and cleanup are synchronized correctly.
+
+        if (CompletionEntry)
+        {
+            RemoveEntryList(&CompletionEntry->Link);
+            if (CompletionEntry->EmclBouncePageList)
+            {
+                EmclpReleaseBouncePages(Context, CompletionEntry->EmclBouncePageList);
+            }
+            FreePool(CompletionEntry);
+        }
+
         gBS->RestoreTPL(tpl);
         goto Cleanup;
     }
@@ -890,6 +929,8 @@ Routine Description:
 
 Arguments:
 
+    Context - Pointer to the EMCL context.
+
     Packet - Pointer to the packet.
 
 Return Value:
@@ -899,10 +940,20 @@ Return Value:
 --*/
 {
     EFI_TPL tpl;
-    EMCL_COMPLETION_ENTRY *completion;
+    EMCL_COMPLETION_ENTRY *completionEntry;
     VOID *inlineBuffer;
     UINT32 inlineBufferLength;
     PVMPIPE_PROTOCOL_HEADER pipeHeader;
+    LIST_ENTRY *listEntry;
+    ULONG expectedRangeCount;
+
+    expectedRangeCount = 0;
+
+    if ((Packet->Descriptor.Length8 * 8 < sizeof(VMPACKET_DESCRIPTOR)) ||
+        (Packet->Descriptor.DataOffset8 > Packet->Descriptor.Length8))
+    {
+        EMCL_FAIL_FAST();
+    }
 
     inlineBuffer = (VOID*)((UINT_PTR)(&Packet->Descriptor) +
         Packet->Descriptor.DataOffset8 * 8);
@@ -910,36 +961,50 @@ Return Value:
     inlineBufferLength = (Packet->Descriptor.Length8 -
         Packet->Descriptor.DataOffset8) * 8;
 
-    ASSERT((PUCHAR)inlineBuffer + inlineBufferLength <= ((PUCHAR)Packet + Packet->Descriptor.Length8 * 8));
-
     switch (Packet->Descriptor.Type)
     {
     case VmbusPacketTypeCompletion:
-        completion =
-            (EMCL_COMPLETION_ENTRY*)(UINTN)Packet->Descriptor.TransactionId;
 
-        // Bounce buffering (optional) copy back and free the bounce buffers.
-        if (completion->EmclBouncePageList)
+        tpl = gBS->RaiseTPL(TPL_EMCL);
+
+        completionEntry = NULL;
+        for (listEntry = Context->CompletionEntries.ForwardLink;
+            listEntry != &Context->CompletionEntries;
+            listEntry = listEntry->ForwardLink)
         {
-            if ((completion->SendPacketFlags & EMCL_SEND_FLAG_DATA_OUT_ONLY) == 0)
+            completionEntry = CONTAINING_RECORD(listEntry, EMCL_COMPLETION_ENTRY, Link);
+            if (completionEntry->TransactionId == Packet->Descriptor.TransactionId)
             {
-                EmclpCopyBouncePagesToExternalBuffer(&completion->OriginalBuffer,
-                                                     completion->EmclBouncePageList,
-                                                     FALSE);
+                RemoveEntryList(&completionEntry->Link);
+                break;
             }
-            EmclpReleaseBouncePages(Context, completion->EmclBouncePageList);
-            completion->EmclBouncePageList = NULL;
+        }
+        gBS->RestoreTPL(tpl);
+
+        if ((completionEntry == NULL) || (completionEntry->TransactionId != Packet->Descriptor.TransactionId))
+        {
+            EMCL_FAIL_FAST();
         }
 
-        completion->CompletionRoutine(
-            completion->CompletionContext,
+        // Bounce buffering (optional) copy back and free the bounce buffers.
+        if (completionEntry->EmclBouncePageList)
+        {
+            if ((completionEntry->SendPacketFlags & EMCL_SEND_FLAG_DATA_OUT_ONLY) == 0)
+            {
+                EmclpCopyBouncePagesToExternalBuffer(&completionEntry->OriginalBuffer,
+                                                     completionEntry->EmclBouncePageList,
+                                                     FALSE);
+            }
+            EmclpReleaseBouncePages(Context, completionEntry->EmclBouncePageList);
+            completionEntry->EmclBouncePageList = NULL;
+        }
+
+        completionEntry->CompletionRoutine(
+            completionEntry->CompletionContext,
             inlineBuffer,
             inlineBufferLength);
 
-        tpl = gBS->RaiseTPL(TPL_EMCL);
-        RemoveEntryList(&completion->Link);
-        gBS->RestoreTPL(tpl);
-        FreePool(completion);
+        FreePool(completionEntry);
         FreePool(Packet);
         break;
 
@@ -948,17 +1013,24 @@ Return Value:
         {
             if (Context->IsPipe)
             {
+                // Validate the packet and header values before processing the packet.
+                if (inlineBufferLength < sizeof(VMPIPE_PROTOCOL_HEADER))
+                {
+                    EMCL_FAIL_FAST();
+                }
+
                 pipeHeader = (PVMPIPE_PROTOCOL_HEADER)inlineBuffer;
                 if (pipeHeader->PacketType != VmPipeMessageData)
                 {
                     DEBUG((EFI_D_ERROR, "Invalid pipe packet received\n"));
                     return;
                 }
+                if (pipeHeader->DataSize > (inlineBufferLength - sizeof(VMPIPE_PROTOCOL_HEADER)))
+                {
+                    EMCL_FAIL_FAST();
+                }
 
                 inlineBuffer = (VOID*)((UINT_PTR)inlineBuffer + sizeof(*pipeHeader));
-
-                ASSERT(sizeof(*pipeHeader) + pipeHeader->DataSize <= inlineBufferLength);
-
                 inlineBufferLength = pipeHeader->DataSize;
             }
 
@@ -977,6 +1049,21 @@ Return Value:
     case VmbusPacketTypeDataUsingTransferPages:
         if (Context->ReceiveCallback != NULL)
         {
+            // Validate the packet and header values before processing the packet.
+            if (Packet->Descriptor.DataOffset8 * 8 < FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges))
+            {
+                EMCL_FAIL_FAST();
+            }
+
+            expectedRangeCount = 
+                ((Packet->Descriptor.DataOffset8 * 8) - FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges)) /
+                    sizeof(VMTRANSFER_PAGE_RANGE);
+
+            if (Packet->TransferHeader.RangeCount != expectedRangeCount)
+            {
+                EMCL_FAIL_FAST();
+            }
+
             Context->ReceiveCallback(
                 Context->ReceiveContext,
                 (VOID*)Packet,
@@ -1448,7 +1535,7 @@ Return Value:
                              VmbusPacketTypeDataInBand,
                              VmPipeMessageSetupGpaDirect,
                              0,
-                             FALSE,
+                             NULL,
                              TRUE);
 
 Cleanup:
@@ -1504,7 +1591,7 @@ Return Value:
                            VmbusPacketTypeDataInBand,
                            VmPipeMessageTeardownGpaDirect,
                            0,
-                           FALSE,
+                           NULL,
                            TRUE);
 }
 
@@ -1564,6 +1651,7 @@ Return Value:
     UINT32 index;
 
     completionEntry = NULL;
+
     context = CR(This,
                  EMCL_CONTEXT,
                  EmclProtocol,
@@ -1608,11 +1696,20 @@ Return Value:
 
         //
         // Insert into list so we can keep track of these entries and free
-        // them if uncompleted when DriverStop is called.
+        // them if uncompleted when DriverStop is called. Increment the
+        // TransactionID to use with this completion Entry. Ensure that the
+        // increment of the transaction ID does not lead to an overflow.
         //
 
         tpl = gBS->RaiseTPL(TPL_EMCL);
-        InsertTailList(&context->CompletionEntries, &completionEntry->Link);
+
+        if (mCurrentTransactionId == UINT64_MAX)
+        {
+            EMCL_FAIL_FAST();
+        }
+
+        mCurrentTransactionId++;
+        completionEntry->TransactionId = mCurrentTransactionId;
         gBS->RestoreTPL(tpl);
     }
 
@@ -1624,8 +1721,8 @@ Return Value:
                              (ExternalBuffers == 0 ? VmbusPacketTypeDataInBand :
                              VmbusPacketTypeDataUsingGpaDirect),
                              VmPipeMessageData,
-                             (UINT64)completionEntry,
-                             completionEntry != NULL,
+                             ((completionEntry != NULL) ? completionEntry->TransactionId : 0),
+                             completionEntry,
                              FALSE);
 
 Cleanup:
@@ -1633,9 +1730,6 @@ Cleanup:
     {
         if (completionEntry != NULL)
         {
-            tpl = gBS->RaiseTPL(TPL_EMCL);
-            RemoveEntryList(&completionEntry->Link);
-            gBS->RestoreTPL(tpl);
             FreePool(completionEntry);
         }
     }
@@ -1754,7 +1848,7 @@ Return Value:
                                  VmbusPacketTypeCompletion,
                                  0,
                                  incomingPacket->Descriptor.TransactionId,
-                                 FALSE,
+                                 NULL,
                                  FALSE);
     }
     else
@@ -2640,9 +2734,7 @@ Return Value:
                 pageCountProcessed,
                 bounceBlock));
 
-                // TODO-19259739: Have a better way of reporting UEFI errors.
-                ASSERT(FALSE);
-                CpuDeadLoop();
+            EMCL_FAIL_FAST();
         }
         else
         {
@@ -2692,20 +2784,7 @@ Cleanup:
     {
         if (bounceBlock)
         {
-            if (bounceBlock->BouncePageStructureBase)
-            {
-                FreePool(bounceBlock->BouncePageStructureBase);
-                bounceBlock->BouncePageStructureBase = NULL;
-            }
-
-            if (bounceBlock->BlockBase)
-            {
-                FreePages(bounceBlock->BlockBase, bounceBlock->BlockPageCount);
-                bounceBlock->BlockBase = NULL;
-                bounceBlock->BlockPageCount = 0;
-            }
-
-            FreePool(bounceBlock);
+            EmclpFreeBounceBlock(bounceBlock);
             bounceBlock = NULL;
         }
 
@@ -2713,6 +2792,74 @@ Cleanup:
     return status;
 }
 
+VOID
+EmclpFreeBounceBlock(
+    _In_ PEMCL_BOUNCE_BLOCK Block
+    )
+/*++
+
+Routine Description:
+
+    Free the block of memory allocated for I/O. 
+    Marks the memory as not host-visible.
+        
+Arguments:
+
+    Block - Bounce block that needs to be freed.
+
+Return Value:
+
+    none
+    
+--*/
+{
+    if (Block->IsHostVisible)
+    {
+        // Revoke host visibility for this block
+        EFI_STATUS status;
+        UINT32 pageCountProcessed = 0;
+        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_PERMISSIONS_NONE;
+
+        status = mHv->ModifySparseGpaPageHostVisibility(mHv,
+                                                        mapFlags,
+                                                        Block->BlockPageCount,
+                                                        ((UINTN)Block->BlockBase >> EFI_PAGE_SHIFT),
+                                                        &pageCountProcessed);
+
+        if (EFI_ERROR(status))
+        {
+            DEBUG((EFI_D_ERROR,
+                "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d BounceBlock=%p\n",
+                __FUNCTION__,
+                __LINE__,
+                status,
+                Block->BlockPageCount,
+                pageCountProcessed,
+                Block));
+
+            EMCL_FAIL_FAST();
+        }
+        else
+        {
+            Block->IsHostVisible = FALSE;
+        }
+    }
+
+    if (Block->BouncePageStructureBase)
+    {
+        FreePool(Block->BouncePageStructureBase);
+        Block->BouncePageStructureBase = NULL;
+    }
+
+    if (Block->BlockBase)
+    {
+        FreePages(Block->BlockBase, Block->BlockPageCount);
+        Block->BlockBase = NULL;
+        Block->BlockPageCount = 0;
+    }
+
+    FreePool(Block);
+}
 
 VOID
 EmclpFreeAllBounceBlocks(
@@ -2757,54 +2904,7 @@ Return Value:
             block->BlockBase,
             block->BlockPageCount));
 
-        if (block->IsHostVisible)
-        {
-            // Revoke host visibility for this block
-            EFI_STATUS status;
-            UINT32 pageCountProcessed = 0;
-            HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_PERMISSIONS_NONE;
-
-            status = mHv->ModifySparseGpaPageHostVisibility(mHv,
-                                                            mapFlags,
-                                                            block->BlockPageCount,
-                                                            ((UINTN)block->BlockBase >> EFI_PAGE_SHIFT),
-                                                            &pageCountProcessed);
-
-            if (EFI_ERROR(status))
-            {
-                DEBUG((EFI_D_ERROR,
-                    "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d BounceBlock=%p\n",
-                    __FUNCTION__,
-                    __LINE__,
-                    status,
-                    block->BlockPageCount,
-                    pageCountProcessed,
-                    block));
-
-                // TODO-19259739: Have a better way of reporting UEFI errors.
-                ASSERT(FALSE);
-                CpuDeadLoop();
-            }
-            else
-            {
-                block->IsHostVisible = FALSE;
-            }
-        }
-
-        if (block->BouncePageStructureBase)
-        {
-            FreePool(block->BouncePageStructureBase);
-            block->BouncePageStructureBase = NULL;
-        }
-
-        if (block->BlockBase)
-        {
-            FreePages(block->BlockBase, block->BlockPageCount);
-            block->BlockBase = NULL;
-            block->BlockPageCount = 0;
-        }
-
-        FreePool(block);
+        EmclpFreeBounceBlock(block);
         block = NULL;
     }
 }
@@ -2854,20 +2954,20 @@ Return Value:
              blockListEntry != &Context->BounceBlockListHead;
              blockListEntry = blockListEntry->ForwardLink)
         {
-            PEMCL_BOUNCE_BLOCK BounceBlock;
-            BounceBlock = BASE_CR(blockListEntry, EMCL_BOUNCE_BLOCK, BlockListEntry);
+            PEMCL_BOUNCE_BLOCK bounceBlock;
+            bounceBlock = BASE_CR(blockListEntry, EMCL_BOUNCE_BLOCK, BlockListEntry);
 
-            while (BounceBlock->FreePageListHead && pagesToGo)
+            while (bounceBlock->FreePageListHead && pagesToGo)
             {
                 PEMCL_BOUNCE_PAGE bouncePage;
                 
-                bouncePage = BounceBlock->FreePageListHead;
-                BounceBlock->FreePageListHead = bouncePage->NextBouncePage;
+                bouncePage = bounceBlock->FreePageListHead;
+                bounceBlock->FreePageListHead = bouncePage->NextBouncePage;
 
                 bouncePage->NextBouncePage = listHead;
                 listHead = bouncePage;
  
-                BounceBlock->InUsePageCount++;
+                bounceBlock->InUsePageCount++;
 
                 pagesToGo--;
             }
