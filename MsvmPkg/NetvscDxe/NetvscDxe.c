@@ -90,7 +90,10 @@ Return Value:
     //
     // Initialize variables.
     //
+    AdapterInfo->RxBufferAllocation = NULL;
     AdapterInfo->RxBuffer = NULL;
+
+    AdapterInfo->TxBufferAllocation = NULL;
     AdapterInfo->TxBuffer = NULL;
 
     AdapterInfo->TxGpadl = NULL;
@@ -254,15 +257,15 @@ Return Value:
     //
     // Allocate the Receive buffers and report them to the VSP.
     //
-    AdapterInfo->RxBuffer = AllocatePages(AdapterInfo->RxBufferPageCount);
-    if (AdapterInfo->RxBuffer == NULL)
+    AdapterInfo->RxBufferAllocation = AllocatePages(AdapterInfo->RxBufferPageCount);
+    if (AdapterInfo->RxBufferAllocation == NULL)
     {
         goto Cleanup;
     }
 
     status = AdapterInfo->Emcl->CreateGpadl(
         AdapterInfo->Emcl,
-        AdapterInfo->RxBuffer,
+        AdapterInfo->RxBufferAllocation,
         AdapterInfo->RxBufferPageCount * EFI_PAGE_SIZE,
         &AdapterInfo->RxGpadl);
 
@@ -270,6 +273,10 @@ Return Value:
     {
         goto Cleanup;
     }
+
+    AdapterInfo->RxBuffer = AdapterInfo->Emcl->GetGpadlBuffer(
+        AdapterInfo->Emcl,
+        AdapterInfo->RxGpadl);
 
     ZeroMem(&nvspMessage, sizeof(nvspMessage));
     nvspMessage.Header.MessageType = NvspMessage1TypeSendReceiveBuffer;
@@ -318,8 +325,8 @@ Return Value:
     //
     // Allocate the Send buffers and report them to the VSP.
     //
-    AdapterInfo->TxBuffer = AllocatePages(AdapterInfo->TxBufferPageCount);
-    if (AdapterInfo->TxBuffer == NULL)
+    AdapterInfo->TxBufferAllocation = AllocatePages(AdapterInfo->TxBufferPageCount);
+    if (AdapterInfo->TxBufferAllocation == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
         goto Cleanup;
@@ -327,7 +334,7 @@ Return Value:
 
     status = AdapterInfo->Emcl->CreateGpadl(
         AdapterInfo->Emcl,
-        AdapterInfo->TxBuffer,
+        AdapterInfo->TxBufferAllocation,
         AdapterInfo->TxBufferPageCount * EFI_PAGE_SIZE,
         &AdapterInfo->TxGpadl);
 
@@ -335,6 +342,10 @@ Return Value:
     {
         goto Cleanup;
     }
+
+    AdapterInfo->TxBuffer = AdapterInfo->Emcl->GetGpadlBuffer(
+        AdapterInfo->Emcl,
+        AdapterInfo->TxGpadl);
 
     ZeroMem(&nvspMessage, sizeof(nvspMessage));
     nvspMessage.Header.MessageType = NvspMessage1TypeSendSendBuffer;
@@ -1403,12 +1414,14 @@ Returns:
         {
             AdapterInfo->Emcl->DestroyGpadl(AdapterInfo->Emcl, AdapterInfo->RxGpadl);
             AdapterInfo->RxGpadl = NULL;
+            AdapterInfo->RxBuffer = NULL;
         }
 
         if (AdapterInfo->TxGpadl != NULL)
         {
             AdapterInfo->Emcl->DestroyGpadl(AdapterInfo->Emcl, AdapterInfo->TxGpadl);
             AdapterInfo->TxGpadl = NULL;
+            AdapterInfo->TxBuffer = NULL;
         }
     }
 
@@ -1436,16 +1449,18 @@ Returns:
     TxQueueDestroy(&AdapterInfo->TxedBuffersQueue);
     TxQueueDestroy(&AdapterInfo->FreeTxBuffersQueue);
 
-    if (AdapterInfo->RxBuffer != NULL)
+    if (AdapterInfo->RxBufferAllocation != NULL)
     {
-        FreePages(AdapterInfo->RxBuffer, AdapterInfo->RxBufferPageCount);
-        AdapterInfo->RxBuffer = NULL;
+        ASSERT(AdapterInfo->RxBuffer == NULL);
+        FreePages(AdapterInfo->RxBufferAllocation, AdapterInfo->RxBufferPageCount);
+        AdapterInfo->RxBufferAllocation = NULL;
     }
 
-    if (AdapterInfo->TxBuffer != NULL)
+    if (AdapterInfo->TxBufferAllocation != NULL)
     {
-        FreePages(AdapterInfo->TxBuffer, AdapterInfo->TxBufferPageCount);
-        AdapterInfo->TxBuffer = NULL;
+        ASSERT(AdapterInfo->TxBuffer == NULL);
+        FreePages(AdapterInfo->TxBufferAllocation, AdapterInfo->TxBufferPageCount);
+        AdapterInfo->TxBufferAllocation = NULL;
     }
 
     return EFI_SUCCESS;

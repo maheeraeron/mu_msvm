@@ -56,6 +56,7 @@ typedef struct _GPA_RANGE
 
 EFI_HV_PROTOCOL *mHv;
 EFI_HV_IVM_PROTOCOL *mHvIvm;
+UINTN mSharedGpaBoundary;
 
 extern EFI_GUID gEfiVmbusChannelDevicePathGuid;
 
@@ -162,7 +163,8 @@ typedef struct _VMBUS_CHANNEL_CONTEXT
 
 struct _EFI_VMBUS_GPADL
 {
-    PVOID Buffer;
+    PVOID AllocatedBuffer;
+    PVOID VisibleBuffer;
     UINT32 BufferLength;
     UINT32 NumberOfPages;
     UINT32 GpadlHandle;

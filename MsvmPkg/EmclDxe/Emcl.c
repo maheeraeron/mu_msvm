@@ -281,6 +281,7 @@ Return Value:
     EFI_STATUS status;
     NTSTATUS ntStatus;
     UINT32 pageCount;
+    PVOID ringData;
     VOID *incomingControl;
 
     //
@@ -307,19 +308,22 @@ Return Value:
         goto Cleanup;
     }
 
-    ZeroMem(Context->RingBufferPages, pageCount * EFI_PAGE_SIZE);
+    ringData = Context->VmbusProtocol->GetGpadlBuffer(Context->VmbusProtocol,
+                                                      Context->RingBufferGpadl);
 
-    incomingControl = (VOID*)((UINT_PTR)Context->RingBufferPages +
+    ZeroMem(ringData, pageCount * EFI_PAGE_SIZE);
+
+    incomingControl = (VOID*)((UINT_PTR)ringData +
                       Context->OutgoingPageCount * EFI_PAGE_SIZE);
 
-    Context->OutgoingData = (PVOID)((UINT_PTR)Context->RingBufferPages + EFI_PAGE_SIZE);
+    Context->OutgoingData = (PVOID)((UINT_PTR)ringData + EFI_PAGE_SIZE);
     Context->IncomingData = (PVOID)((UINT_PTR)incomingControl + EFI_PAGE_SIZE);
 
     ntStatus = PkInitializeSingleMappedRingBuffer(&Context->PkLibContext,
                                                   incomingControl,
                                                   Context->IncomingData,
                                                   IncomingRingBufferPageCount,
-                                                  Context->RingBufferPages,
+                                                  ringData,
                                                   Context->OutgoingData,
                                                   OutgoingRingBufferPageCount);
 
@@ -2002,6 +2006,43 @@ Return Value:
 }
 
 
+PVOID
+EFIAPI
+EmclGetGpadlBuffer(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in EFI_EMCL_GPADL *Gpadl
+    )
+/*++
+
+Routine Description:
+
+    This routine retrieves the usable GPADL buffer pointer associated with
+    a GPADL.
+
+Arguments:
+
+    This - Pointer to the EMCL protocol.
+
+    Gpadl - Pointer to the GPADL.
+
+Return Value:
+
+    GPADL buffer.
+
+--*/
+{
+    EMCL_CONTEXT *context;
+
+    context = CR(This,
+                 EMCL_CONTEXT,
+                 EmclProtocol,
+                 EMCL_CONTEXT_SIGNATURE);
+
+    return context->VmbusProtocol->GetGpadlBuffer(context->VmbusProtocol,
+                                                  Gpadl);
+}
+
+
 VOID
 EmclInitializeContext(
     __in EMCL_CONTEXT *Context
@@ -2032,6 +2073,7 @@ Return Value:
     Context->EmclProtocol.CreateGpadl = EmclCreateGpadl;
     Context->EmclProtocol.DestroyGpadl = EmclDestroyGpadl;
     Context->EmclProtocol.GetGpadlHandle = EmclGetGpadlHandle;
+    Context->EmclProtocol.GetGpadlBuffer = EmclGetGpadlBuffer;
     Context->EmclProtocol.CreateGpaRange = EmclCreateGpaRange;
     Context->EmclProtocol.DestroyGpaRange = EmclDestroyGpaRange;
     Context->EmclProtocol.SendPacketEx = EmclSendPacketEx;
@@ -2578,6 +2620,7 @@ Return Value:
     {
         UINT32 pageCountProcessed = 0;
         HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE;
+        UINT64 sharedGpaBoundary;
 
         status = mHv->ModifySparseGpaPageHostVisibility(mHv,
                                                         mapFlags,
@@ -2612,6 +2655,22 @@ Return Value:
                 ((UINTN)bounceBlock->BlockBase >> EFI_PAGE_SHIFT),
                 bounceBlock));
         }
+
+        //
+        // Adjust the address above the shared GPA boundary if required.
+        //
+
+        sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+        if (sharedGpaBoundary != 0)
+        {
+            for (i = 0; i < pageCount; i += 1)
+            {
+                bounceBlock->BouncePageStructureBase[i].PageVA =
+                    (char *)bounceBlock->BouncePageStructureBase[i].PageVA +
+                    sharedGpaBoundary;
+            }
+        }
+
         bounceBlock->IsHostVisible = TRUE;
     }
 

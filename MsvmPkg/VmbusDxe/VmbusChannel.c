@@ -61,6 +61,11 @@ Routine Description:
 
     This routine must be called at TPL < TPL_NOTIFY.
 
+    For isolated guests, buffer address of the buffer may change after the
+    pages are made visible to the host, so the caller is expected to call
+    GetGpadlBuffer to determine the usable buffer address once this routine
+    completes.
+
 Arguments:
 
     This - Pointer to the VMBus protocol.
@@ -113,7 +118,7 @@ Return Value:
         goto Cleanup;
     }
 
-    gpadl->Buffer = Buffer;
+    gpadl->AllocatedBuffer = Buffer;
     gpadl->BufferLength = BufferLength;
     gpadl->NumberOfPages = (UINT32)((UINTN)BufferLength >> EFI_PAGE_SHIFT);
     gpadl->GpadlHandle = 0;
@@ -147,6 +152,12 @@ Return Value:
             ASSERT(FALSE);
             CpuDeadLoop();
         }
+
+        gpadl->VisibleBuffer = (PVOID)((UINTN)Buffer + mSharedGpaBoundary);
+    }
+    else
+    {
+        gpadl->VisibleBuffer = Buffer;
     }
 
     *Gpadl = gpadl;
@@ -238,12 +249,12 @@ Return Value:
 
     sendMessage.GpadlHeader.Range[0].ByteCount = Gpadl->BufferLength;
     sendMessage.GpadlHeader.Range[0].ByteOffset =
-        (UINT32)((UINTN)Gpadl->Buffer & EFI_PAGE_MASK);
+        (UINT32)((UINTN)Gpadl->VisibleBuffer & EFI_PAGE_MASK);
 
     for (pfnIndex = 0; pfnIndex < MIN(Gpadl->NumberOfPages, numPfnInHeader); ++pfnIndex)
     {
         sendMessage.GpadlHeader.Range[0].PfnArray[pfnIndex] =
-            ((UINTN)Gpadl->Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
+            ((UINTN)Gpadl->VisibleBuffer >> EFI_PAGE_SHIFT) + pfnIndex;
     }
 
     DEBUG((EFI_D_INFO,
@@ -251,7 +262,7 @@ Return Value:
         __FUNCTION__,
         __LINE__,
         Gpadl->NumberOfPages,
-        (UINTN)Gpadl->Buffer >> EFI_PAGE_SHIFT,
+        (UINTN)Gpadl->VisibleBuffer >> EFI_PAGE_SHIFT,
         Gpadl->GpadlHandle));
 
     pfnSent = pfnIndex;
@@ -271,7 +282,7 @@ Return Value:
         for (pfnIndex = 0; pfnIndex < MIN(Gpadl->NumberOfPages - pfnSent, numPfnInBody); ++pfnIndex)
         {
             sendMessage.GpadlBody.Pfn[pfnIndex] =
-                ((UINTN)Gpadl->Buffer >> EFI_PAGE_SHIFT) + pfnSent + pfnIndex;
+                ((UINTN)Gpadl->VisibleBuffer >> EFI_PAGE_SHIFT) + pfnSent + pfnIndex;
         }
 
         pfnSent += pfnIndex;
@@ -357,7 +368,8 @@ Return Value:
                         LegacyVmbusProtocol,
                         VMBUS_CHANNEL_CONTEXT_SIGNATURE);
 
-    gpadl.Buffer = Buffer;
+    gpadl.AllocatedBuffer = Buffer;
+    gpadl.VisibleBuffer = Buffer;
     gpadl.BufferLength = BufferLength;
     gpadl.NumberOfPages = ((UINT32)((UINTN)Buffer & EFI_PAGE_MASK) + BufferLength +
         EFI_PAGE_SIZE - 1) >> EFI_PAGE_SHIFT;
@@ -386,6 +398,10 @@ Routine Description:
     This routine implements GPADL destruction for the EFI VMBus protocol.
 
     This routine must be called at TPL < TPL_NOTIFY.
+
+    The buffer address is guaranteed to be restored to whatever value it had
+    prior to the call to PrepareGpadl, so it can be freed correctly by the
+    caller based on its original address.
 
 Arguments:
 
@@ -452,7 +468,7 @@ Return Value:
         modifyStatus = mHvIvm->ModifySparseGpaPageHostVisibility(mHvIvm,
                                                                 mapFlags,
                                                                 Gpadl->NumberOfPages,
-                                                                (UINTN)Gpadl->Buffer / EFI_PAGE_SIZE,
+                                                                (UINTN)Gpadl->AllocatedBuffer / EFI_PAGE_SIZE,
                                                                 &pageCountProcessed);
         if (EFI_ERROR(modifyStatus))
         {
@@ -461,7 +477,7 @@ Return Value:
                 __FUNCTION__,
                 __LINE__,
                 modifyStatus,
-                (UINTN)Gpadl->Buffer / EFI_PAGE_SIZE,
+                (UINTN)Gpadl->AllocatedBuffer / EFI_PAGE_SIZE,
                 Gpadl->NumberOfPages,
                 pageCountProcessed));
 
@@ -475,7 +491,7 @@ Return Value:
                 "%a(%d) GpadlHandle=0x%x revoked page vis base=%p pagecount=0x%x\n",
                 __FUNCTION__,
                 __LINE__,
-                (UINTN)Gpadl->Buffer / EFI_PAGE_SIZE,
+                (UINTN)Gpadl->AllocatedBuffer / EFI_PAGE_SIZE,
                 Gpadl->NumberOfPages));
         }
     }
@@ -530,7 +546,8 @@ Return Value:
                         LegacyVmbusProtocol,
                         VMBUS_CHANNEL_CONTEXT_SIGNATURE);
 
-    gpadl.Buffer = NULL;
+    gpadl.AllocatedBuffer = NULL;
+    gpadl.VisibleBuffer = NULL;
     gpadl.BufferLength = 0;
     gpadl.NumberOfPages = 0;
     gpadl.GpadlHandle = GpadlHandle;
@@ -565,6 +582,35 @@ Return Value:
 --*/
 {
     return Gpadl->GpadlHandle;
+}
+
+
+PVOID
+EFIAPI
+VmbusChannelGetGpadlBuffer(
+    __in EFI_VMBUS_PROTOCOL *This,
+    __in EFI_VMBUS_GPADL *Gpadl
+    )
+/*++
+
+Routine Description:
+
+    This routine retrieves the usable GPADL buffer pointer associated with
+    a GPADL.
+
+Arguments:
+
+    This - Pointer to the VMBus protocol.
+
+    Gpadl - Pointer to the GPADL.
+
+Return Value:
+
+    GPADL buffer.
+
+--*/
+{
+    return Gpadl->VisibleBuffer;
 }
 
 
@@ -667,7 +713,8 @@ Return Value:
                         LegacyVmbusProtocol,
                         VMBUS_CHANNEL_CONTEXT_SIGNATURE);
 
-    gpadl.Buffer = NULL;
+    gpadl.AllocatedBuffer = NULL;
+    gpadl.VisibleBuffer = NULL;
     gpadl.BufferLength = 0;
     gpadl.NumberOfPages = 0;
     gpadl.GpadlHandle = RingBufferGpadlHandle;
@@ -957,6 +1004,7 @@ Return Value:
     ChannelContext->VmbusProtocol.CreateGpadl = VmbusChannelCreateGpadl;
     ChannelContext->VmbusProtocol.DestroyGpadl = VmbusChannelDestroyGpadl;
     ChannelContext->VmbusProtocol.GetGpadlHandle = VmbusChannelGetGpadlHandle;
+    ChannelContext->VmbusProtocol.GetGpadlBuffer = VmbusChannelGetGpadlBuffer;
     ChannelContext->VmbusProtocol.OpenChannel = VmbusChannelOpenChannel;
     ChannelContext->VmbusProtocol.CloseChannel = VmbusChannelCloseChannel;
     ChannelContext->VmbusProtocol.RegisterIsr = VmbusChannelRegisterIsr;

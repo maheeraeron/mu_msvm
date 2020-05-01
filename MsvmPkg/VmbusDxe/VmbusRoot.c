@@ -1808,6 +1808,9 @@ Return Value:
         return status;
     }
 
+    mSharedGpaBoundary = (UINTN)PcdGet64(PcdIsolationSharedGpaBoundary);
+    ASSERT(PcdGetBool(PcdSystemIsolated) || (mSharedGpaBoundary == 0));
+
     status = VmbusRootInitializeContext(&mRootContext);
     if (EFI_ERROR(status))
     {

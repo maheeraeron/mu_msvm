@@ -121,6 +121,13 @@ UINT32
     );
 
 typedef
+PVOID
+(EFIAPI *EFI_EMCL_GET_GPADL_BUFFER)(
+    __in EFI_EMCL_PROTOCOL *This,
+    __in EFI_EMCL_GPADL *Gpadl
+    );
+
+typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_DESTROY_GPADL)(
     __in EFI_EMCL_PROTOCOL *This,
@@ -156,6 +163,7 @@ struct _EFI_EMCL_PROTOCOL
     EFI_EMCL_CREATE_GPADL CreateGpadl;
     EFI_EMCL_DESTROY_GPADL DestroyGpadl;
     EFI_EMCL_GET_GPADL_HANDLE GetGpadlHandle;
+    EFI_EMCL_GET_GPADL_BUFFER GetGpadlBuffer;
 
     EFI_EMCL_CREATE_GPA_RANGE CreateGpaRange;
     EFI_EMCL_DESTROY_GPA_RANGE DestroyGpaRange;

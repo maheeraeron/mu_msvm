@@ -128,6 +128,7 @@ typedef struct _NIC_DATA_INSTANCE
     EFI_EVENT                 InitRndisEvt;
     EFI_STATUS                InitRndisStatus;
 
+    VOID                      *RxBufferAllocation;
     VOID                      *RxBuffer;
     UINT32                    RxBufferPageCount;
     UINT32                    RxQueueCount;
@@ -136,6 +137,7 @@ typedef struct _NIC_DATA_INSTANCE
     BOOLEAN                   ReceiveStarted;
     UINT8                     RxFilter;
 
+    VOID                      *TxBufferAllocation;
     VOID                      *TxBuffer;
     UINT32                    TxBufferPageCount;
     UINT32                    TxBufCount;

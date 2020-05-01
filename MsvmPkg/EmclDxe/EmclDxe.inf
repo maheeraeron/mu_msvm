@@ -35,3 +35,4 @@
 
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
