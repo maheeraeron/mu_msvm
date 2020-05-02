@@ -14,9 +14,10 @@
 [LibraryClasses]
     BaseLib
     DebugLib
+    MemoryAllocationLib
+    PrintLib
     UefiBootServicesTableLib
     UefiDriverEntryPoint
-    MemoryAllocationLib
 
 [Sources]
     ExdiSupportDxe.c
@@ -25,7 +26,7 @@
     gEfiDebugImageInfoTableGuid
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdExdiSupportVersionAddress   
+    gMsvmPkgTokenSpaceGuid.PcdExdiSupportVersionAddress
 
 [Depex]
     TRUE
