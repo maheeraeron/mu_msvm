@@ -168,6 +168,7 @@ struct _EFI_VMBUS_GPADL
     UINT32 BufferLength;
     UINT32 NumberOfPages;
     UINT32 GpadlHandle;
+    EFI_HV_PROTECTION_HANDLE ProtectionHandle;
     BOOLEAN Legacy;
 };
 

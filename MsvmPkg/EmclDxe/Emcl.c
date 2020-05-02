@@ -61,6 +61,7 @@ typedef struct _EMCL_BOUNCE_BLOCK
 
     PVOID                       BlockBase;
     UINT32                      BlockPageCount;
+    EFI_HV_PROTECTION_HANDLE    ProtectionHandle;
 
     // Allocate associated _EMCL_BOUNCE_PAGE as a large block
     struct _EMCL_BOUNCE_PAGE    *BouncePageStructureBase;
@@ -314,6 +315,7 @@ Return Value:
     status = Context->VmbusProtocol->PrepareGpadl(Context->VmbusProtocol,
                                                   Context->RingBufferPages,
                                                   pageCount * EFI_PAGE_SIZE,
+                                                  TRUE,
                                                   &Context->RingBufferGpadl);
     if (EFI_ERROR(status))
     {
@@ -322,8 +324,6 @@ Return Value:
 
     ringData = Context->VmbusProtocol->GetGpadlBuffer(Context->VmbusProtocol,
                                                       Context->RingBufferGpadl);
-
-    ZeroMem(ringData, pageCount * EFI_PAGE_SIZE);
 
     incomingControl = (VOID*)((UINT_PTR)ringData +
                       Context->OutgoingPageCount * EFI_PAGE_SIZE);
@@ -1986,6 +1986,7 @@ Return Value:
     status = context->VmbusProtocol->PrepareGpadl(context->VmbusProtocol,
                                                   Buffer,
                                                   BufferLength,
+                                                  FALSE,
                                                   &vmbusGpadl);
     if (EFI_ERROR(status))
     {
@@ -2712,40 +2713,18 @@ Return Value:
 
     if (PcdGetBool(PcdSystemIsolated))
     {
-        UINT32 pageCountProcessed = 0;
-        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE;
         UINT64 sharedGpaBoundary;
 
-        status = mHv->ModifySparseGpaPageHostVisibility(mHv,
-                                                        mapFlags,
-                                                        pageCount,
-                                                        ((UINTN)bounceBlock->BlockBase >> EFI_PAGE_SHIFT),
-                                                        &pageCountProcessed);
-            
-    
+        status = mHv->MakeAddressRangeHostVisible(mHv,
+                                                  HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                                                  bounceBlock->BlockBase,
+                                                  pageCount * EFI_PAGE_SIZE,
+                                                  FALSE,
+                                                  &bounceBlock->ProtectionHandle);
+
         if (EFI_ERROR(status))
         {
-            DEBUG((EFI_D_ERROR,
-                "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d bounceBlock=%p\n",
-                __FUNCTION__,
-                __LINE__,
-                status,
-                pageCount,
-                pageCountProcessed,
-                bounceBlock));
-
-            EMCL_FAIL_FAST();
-        }
-        else
-        {
-            DEBUG((EFI_D_INFO,
-                "%a(%d) ModifySparseGpaPageHostVisibility success. pageCount=%d processed=%d BaseAddr=0x%p bounceBlock=%p\n",
-                __FUNCTION__,
-                __LINE__,
-                pageCount,
-                pageCountProcessed,
-                ((UINTN)bounceBlock->BlockBase >> EFI_PAGE_SHIFT),
-                bounceBlock));
+            goto Cleanup;
         }
 
         //
@@ -2815,34 +2794,7 @@ Return Value:
 {
     if (Block->IsHostVisible)
     {
-        // Revoke host visibility for this block
-        EFI_STATUS status;
-        UINT32 pageCountProcessed = 0;
-        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_PERMISSIONS_NONE;
-
-        status = mHv->ModifySparseGpaPageHostVisibility(mHv,
-                                                        mapFlags,
-                                                        Block->BlockPageCount,
-                                                        ((UINTN)Block->BlockBase >> EFI_PAGE_SHIFT),
-                                                        &pageCountProcessed);
-
-        if (EFI_ERROR(status))
-        {
-            DEBUG((EFI_D_ERROR,
-                "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d BounceBlock=%p\n",
-                __FUNCTION__,
-                __LINE__,
-                status,
-                Block->BlockPageCount,
-                pageCountProcessed,
-                Block));
-
-            EMCL_FAIL_FAST();
-        }
-        else
-        {
-            Block->IsHostVisible = FALSE;
-        }
+        mHv->MakeAddressRangeNotHostVisible(mHv, Block->ProtectionHandle);
     }
 
     if (Block->BouncePageStructureBase)

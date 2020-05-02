@@ -160,20 +160,31 @@ struct _EFI_HV_PROTOCOL
 
 extern GUID gEfiHvProtocolGuid;
 
+typedef struct _EFI_HV_PROTECTION_OBJECT *EFI_HV_PROTECTION_HANDLE;
+
 typedef
 EFI_STATUS
-(EFIAPI *EFI_HV_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY)(
+(EFIAPI *EFI_HV_MAKE_ADDRESS_RANGE_HOST_VISIBLE)(
     _In_ EFI_HV_IVM_PROTOCOL *This,
     _In_ HV_MAP_GPA_FLAGS MapFlags,
-    _In_ UINT32 PageCount,
-    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
-    _Out_ UINT32* PageCountProcessed
+    _In_ VOID *BaseAddress,
+    _In_ UINT32 ByteCount,
+    _In_ BOOLEAN ZeroPages,
+    _Out_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
+    );
+
+typedef
+VOID
+(EFIAPI *EFI_HV_MAKE_ADDRESS_RANGE_NOT_HOST_VISIBLE)(
+    _In_ EFI_HV_IVM_PROTOCOL *This,
+    _In_ EFI_HV_PROTECTION_HANDLE ProtectionHandle
     );
 
 // Interface to Hypervisor for the Isolated VM (IVM) calls
 struct _EFI_HV_IVM_PROTOCOL
 {
-    EFI_HV_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY ModifySparseGpaPageHostVisibility;
+    EFI_HV_MAKE_ADDRESS_RANGE_HOST_VISIBLE MakeAddressRangeHostVisible;
+    EFI_HV_MAKE_ADDRESS_RANGE_NOT_HOST_VISIBLE MakeAddressRangeNotHostVisible;
 };
 
 extern GUID gEfiHvIvmProtocolGuid;

@@ -74,6 +74,15 @@ typedef struct _EFI_HV_PAGES
     HV_MESSAGE_PAGE MessagePage;
 } EFI_HV_PAGES, *PEFI_HV_PAGES;
 
+struct _EFI_HV_PROTECTION_OBJECT
+{
+    LIST_ENTRY ListEntry;
+    UINT64 GpaPageBase;
+    UINT32 NumberOfPages;
+};
+
+typedef struct _EFI_HV_PROTECTION_OBJECT EFI_HV_PROTECTION_OBJECT;
+
 HV_HYPERCALL_CONTEXT mHvContext;
 HV_HYPERCALL_CONTEXT mHvBypassContext;
 BOOLEAN mUseBypassContext;
@@ -86,6 +95,8 @@ BOOLEAN mSynicConnected;
 EFI_EVENT mExitBootServicesEvent;
 BOOLEAN mAutoEoi;
 BOOLEAN mDirectTimerSupported;
+LIST_ENTRY mHostVisiblePageList;
+UINT64 mSharedGpaBoundary;
 
 EFI_HV_SINT_CONFIGURATION mSintConfiguration[HV_SYNIC_SINT_COUNT];
 UINT8 mVectorSint[256];
@@ -1039,8 +1050,7 @@ Return Value:
 
 EFI_STATUS
 EFIAPI
-EfiHvModifySparseGpaPageHostVisibility(
-    _In_ EFI_HV_IVM_PROTOCOL *This,
+EfiHvpModifySparseGpaPageHostVisibility(
     _In_ HV_MAP_GPA_FLAGS MapFlags,
     _In_ UINT32 PageCount,
     _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
@@ -1157,6 +1167,150 @@ EfiHvModifySparseGpaPageHostVisibility(
     DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
 
     return status;
+}
+
+
+EFI_STATUS
+EFIAPI
+EfiHvMakeAddressRangeHostVisible(
+    _In_ EFI_HV_IVM_PROTOCOL *This,
+    _In_ HV_MAP_GPA_FLAGS MapFlags,
+    _In_ VOID *BaseAddress,
+    _In_ UINT32 ByteCount,
+    _In_ BOOLEAN ZeroPages,
+    _Out_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
+    )
+{
+    UINT32 isolationType;
+    UINT32 pageCountProcessed;
+    EFI_HV_PROTECTION_OBJECT *protectionObject;
+    EFI_STATUS revertStatus;
+    EFI_STATUS status;
+
+    //
+    // Visibility changes are only permitted on isolated systems.
+    //
+
+    isolationType = PcdGet32(PcdIsolationArchitecture);
+    if (isolationType == UefiIsolationTypeNone)
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    //
+    // All arguments must be page aligned, and the access must imply host
+    // visibility.
+    //
+
+    if ((((UINTN)BaseAddress & (EFI_PAGE_SIZE - 1)) != 0) ||
+        ((ByteCount & (EFI_PAGE_SIZE - 1)) != 0) ||
+        ((MapFlags & HV_MAP_GPA_READABLE) == 0) ||
+        ((MapFlags & ~(HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE)) != 0))
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    //
+    // Allocate memory to use as a tracking object.
+    //
+
+    protectionObject = AllocatePool(sizeof(*protectionObject));
+    if (protectionObject == NULL)
+    {
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    protectionObject->GpaPageBase = (UINTN)BaseAddress / EFI_PAGE_SIZE;
+    protectionObject->NumberOfPages = ByteCount / EFI_PAGE_SIZE;
+
+    //
+    // If this is a software-isolated VM, then memory must be zeroed before it
+    // is made visible to the host, since page contents will remain intact
+    // following the visibility change.  For a hardware-isolated VM, memory
+    // encryption differences will obscure the original contents following the
+    // visibility change.
+    //
+
+    if (ZeroPages || (isolationType == UefiIsolationTypeVbs))
+    {
+        ZeroMem(BaseAddress, ByteCount);
+        ZeroPages = FALSE;
+    }
+
+    //
+    // Update the visibility as requested.
+    //
+
+    status = EfiHvpModifySparseGpaPageHostVisibility(MapFlags,
+                                                     protectionObject->NumberOfPages,
+                                                     protectionObject->GpaPageBase,
+                                                     &pageCountProcessed);
+
+    if (EFI_ERROR(status))
+    {
+        //
+        // If the protection change was partially made, then undo whatever
+        // was done.
+        //
+
+        if (pageCountProcessed != 0)
+        {
+            revertStatus = EfiHvpModifySparseGpaPageHostVisibility(HV_MAP_GPA_PERMISSIONS_NONE,
+                                                                   pageCountProcessed,
+                                                                   protectionObject->GpaPageBase,
+                                                                   &pageCountProcessed);
+            if (EFI_ERROR(revertStatus))
+            {
+                // this is not allowed to fail - need to crash here.
+                ASSERT(FALSE);
+                CpuDeadLoop();
+            }
+        }
+
+        FreePool(protectionObject);
+    }
+    else
+    {
+        InsertTailList(&mHostVisiblePageList, &protectionObject->ListEntry);
+
+        //
+        // If zeroing was requested and has not already been performed, then
+        // zero the buffer now.
+        //
+
+        if (ZeroPages)
+        {
+            ZeroMem((PVOID)((UINTN)BaseAddress + mSharedGpaBoundary), ByteCount);
+        }
+
+        *ProtectionHandle = protectionObject;
+    }
+
+    return status;
+}
+
+
+VOID
+EFIAPI
+EfiHvMakeAddressRangeNotHostVisible(
+    _In_ EFI_HV_IVM_PROTOCOL *This,
+    _In_ EFI_HV_PROTECTION_HANDLE ProtectionHandle
+    )
+{
+    UINT32 pageCountProcessed;
+    EFI_STATUS status;
+
+    RemoveEntryList(&ProtectionHandle->ListEntry);
+
+    status = EfiHvpModifySparseGpaPageHostVisibility(HV_MAP_GPA_PERMISSIONS_NONE,
+                                                     ProtectionHandle->NumberOfPages,
+                                                     ProtectionHandle->GpaPageBase,
+                                                     &pageCountProcessed);
+    if (EFI_ERROR(status))
+    {
+        // this is not allowed to fail - need to crash here.
+        ASSERT(FALSE);
+    }
 }
 
 
@@ -1286,6 +1440,8 @@ Return Value:
 #error Unsupported architecture
 #endif
 
+    mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+
 #if defined(MDE_CPU_X64)
 
     // Determine whether this system uses a hardware isolation architecture
@@ -1294,12 +1450,8 @@ Return Value:
 
     if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeSnp)
     {
-        UINT64 sharedGpaBoundary;
-
         ASSERT(PcdGetBool(PcdIsolationParavisorPresent) != FALSE);
-
-        sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-        ASSERT(sharedGpaBoundary != 0);
+        ASSERT(mSharedGpaBoundary != 0);
 
         //
         // Allocate a page to use as the hypercall output page.
@@ -1313,11 +1465,12 @@ Return Value:
         }
 
         //
-        // Make this page visible to the hypervisor.
+        // Make this page visible to the hypervisor.  Zero its contents first
+        // to prevent any data leakage.
         //
 
-        status = EfiHvModifySparseGpaPageHostVisibility(
-            NULL,
+        ZeroMem(mOutputPageBypass, EFI_PAGE_SIZE);
+        status = EfiHvpModifySparseGpaPageHostVisibility(
             HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
             1,
             (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
@@ -1329,7 +1482,7 @@ Return Value:
         }
 
         HvHypercallConnect(NULL,
-                           (PVOID)((UINTN)mOutputPageBypass + sharedGpaBoundary),
+                           (PVOID)((UINTN)mOutputPageBypass + mSharedGpaBoundary),
                            &mHvBypassContext);
 
         mUseBypassContext = TRUE;
@@ -1367,6 +1520,8 @@ Return Value:
 
 --*/
 {
+    LIST_ENTRY *entry;
+    EFI_HV_PROTECTION_OBJECT *protectionObject;
     EFI_STATUS status;
 
     if (mUseBypassContext)
@@ -1374,12 +1529,20 @@ Return Value:
         HvHypercallDisconnect(&mHvBypassContext);
     }
 
+    // Revoke host visibility for any pages that were made visible.
+
+    while (!IsListEmpty(&mHostVisiblePageList))
+    {
+        entry = GetFirstNode(&mHostVisiblePageList);
+        protectionObject = BASE_CR(entry, EFI_HV_PROTECTION_OBJECT, ListEntry);
+        EfiHvMakeAddressRangeNotHostVisible(NULL, protectionObject);
+    }
+
     // Free the bypass output page if required.
 
     if (mOutputPageBypass != NULL)
     {
-        status = EfiHvModifySparseGpaPageHostVisibility(
-            NULL,
+        status = EfiHvpModifySparseGpaPageHostVisibility(
             HV_MAP_GPA_PERMISSIONS_NONE,
             1,
             (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
@@ -1391,6 +1554,8 @@ Return Value:
             ASSERT(FALSE);
             CpuDeadLoop();
         }
+
+        FreePages(mOutputPageBypass, 1);
     }
 
     HvHypercallDisconnect(&mHvContext);
@@ -1426,7 +1591,6 @@ Return Value:
 --*/
 {
     HV_HYPERCALL_CONTEXT *context;
-    UINT64 sharedGpaBoundary;
     HV_SYNIC_SIEFP siefp;
     HV_SYNIC_SIMP simp;
 
@@ -1434,15 +1598,13 @@ Return Value:
 
     context = mUseBypassContext ? &mHvBypassContext : &mHvContext;
 
-    sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-
     // Enable the message page.
 
     simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
     if (simp.SimpEnabled != 0)
     {
         mMessagePage = (PHV_MESSAGE_PAGE)(simp.BaseSimpGpa * EFI_PAGE_SIZE);
-        if ((UINTN)mMessagePage < sharedGpaBoundary)
+        if ((UINTN)mMessagePage < mSharedGpaBoundary)
         {
             // Failure is not allowed here - need to crash
             ASSERT(FALSE);
@@ -1464,7 +1626,7 @@ Return Value:
     if (siefp.SiefpEnabled != 0)
     {
         mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)(siefp.BaseSiefpGpa * EFI_PAGE_SIZE);
-        if ((UINTN)mEventFlagsPage < sharedGpaBoundary)
+        if ((UINTN)mEventFlagsPage < mSharedGpaBoundary)
         {
             // Failure is not allowed here - need to crash
             ASSERT(FALSE);
@@ -1616,7 +1778,8 @@ EFI_HV_PROTOCOL mHv =
 
 EFI_HV_IVM_PROTOCOL mHvIvm =
 {
-    EfiHvModifySparseGpaPageHostVisibility
+    EfiHvMakeAddressRangeHostVisible,
+    EfiHvMakeAddressRangeNotHostVisible
 };
 
 
@@ -1646,6 +1809,8 @@ Return Value:
 {
     EFI_STATUS status;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+
+    InitializeListHead(&mHostVisiblePageList);
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 

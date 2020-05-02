@@ -80,6 +80,7 @@ EFI_STATUS
     __in EFI_VMBUS_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
+    __in BOOLEAN ZeroPages,
     __out EFI_VMBUS_GPADL **Gpadl
     );
 

@@ -51,6 +51,7 @@ VmbusChannelPrepareGpadl (
     __in EFI_VMBUS_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
+    __in BOOLEAN ZeroPages,
     __out EFI_VMBUS_GPADL **Gpadl
     )
 /*++
@@ -73,6 +74,9 @@ Arguments:
     Buffer - Buffer describing the GPADL to create.
 
     BufferLength - Length of the buffer.
+
+    ZeroPages - TRUE if the pages must be zero-filled upon return to the
+                caller.
 
     Gpadl - Returns a pointer to the GPADL.
 
@@ -130,27 +134,16 @@ Return Value:
 
     if (PcdGetBool(PcdSystemIsolated))
     {
-        UINT32 pageCountProcessed = 0;
-        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE;
+        status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
+                                                     HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                                                     Buffer,
+                                                     BufferLength,
+                                                     ZeroPages,
+                                                     &gpadl->ProtectionHandle);
 
-        status = mHvIvm->ModifySparseGpaPageHostVisibility(mHvIvm,
-                                                           mapFlags,
-                                                           gpadl->NumberOfPages,
-                                                           ((UINTN)Buffer >> EFI_PAGE_SHIFT),
-                                                           &pageCountProcessed);
         if (EFI_ERROR(status))
         {
-            DEBUG((EFI_D_ERROR,
-                   "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x numPages=%d pageCountProcessed=%d\n",
-                   __FUNCTION__,
-                   __LINE__,
-                   status,
-                   gpadl->NumberOfPages,
-                   pageCountProcessed));
-
-            // TODO-19259739: Have a better way of reporting UEFI errors.
-            ASSERT(FALSE);
-            CpuDeadLoop();
+            goto Cleanup;
         }
 
         gpadl->VisibleBuffer = (PVOID)((UINTN)Buffer + mSharedGpaBoundary);
@@ -158,12 +151,25 @@ Return Value:
     else
     {
         gpadl->VisibleBuffer = Buffer;
+        if (ZeroPages)
+        {
+            ZeroMem(Buffer, BufferLength);
+        }
     }
 
     *Gpadl = gpadl;
     status = EFI_SUCCESS;
 
 Cleanup:
+
+    if (EFI_ERROR(status))
+    {
+        if (gpadl != NULL)
+        {
+            FreePool(gpadl);
+            gpadl = NULL;
+        }
+    }
 
     return status;
 }
@@ -355,9 +361,10 @@ Return Value:
 --*/
 {
     VMBUS_CHANNEL_CONTEXT *channelContext;
-    EFI_VMBUS_GPADL gpadl = {0};
+    EFI_VMBUS_GPADL gpadl;
     EFI_STATUS status;
 
+    ZeroMem(&gpadl, sizeof(gpadl));
     if (BufferLength == 0)
     {
         return EFI_INVALID_PARAMETER;
@@ -459,41 +466,8 @@ Return Value:
 
     if (PcdGetBool(PcdSystemIsolated))
     {
-        EFI_STATUS modifyStatus;
-        UINT32 pageCountProcessed = 0;
-        HV_MAP_GPA_FLAGS mapFlags = HV_MAP_GPA_PERMISSIONS_NONE;
-
         ASSERT(!Gpadl->Legacy);
-
-        modifyStatus = mHvIvm->ModifySparseGpaPageHostVisibility(mHvIvm,
-                                                                mapFlags,
-                                                                Gpadl->NumberOfPages,
-                                                                (UINTN)Gpadl->AllocatedBuffer / EFI_PAGE_SIZE,
-                                                                &pageCountProcessed);
-        if (EFI_ERROR(modifyStatus))
-        {
-            DEBUG((EFI_D_ERROR,
-                "%a(%d) ModifySparseGpaPageHostVisibility returned status 0x%x base=%p numPages=%d pageCountProcessed=%d\n",
-                __FUNCTION__,
-                __LINE__,
-                modifyStatus,
-                (UINTN)Gpadl->AllocatedBuffer / EFI_PAGE_SIZE,
-                Gpadl->NumberOfPages,
-                pageCountProcessed));
-
-            // TODO-19259739: Have a better way of reporting UEFI errors.
-            ASSERT(FALSE);
-            CpuDeadLoop();
-        }
-        else
-        {
-            DEBUG((EFI_D_INFO,
-                "%a(%d) GpadlHandle=0x%x revoked page vis base=%p pagecount=0x%x\n",
-                __FUNCTION__,
-                __LINE__,
-                (UINTN)Gpadl->AllocatedBuffer / EFI_PAGE_SIZE,
-                Gpadl->NumberOfPages));
-        }
+        mHvIvm->MakeAddressRangeNotHostVisible(mHvIvm, Gpadl->ProtectionHandle);
     }
 
     //
