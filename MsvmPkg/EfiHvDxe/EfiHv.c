@@ -1229,7 +1229,7 @@ EfiHvMakeAddressRangeHostVisible(
     // visibility change.
     //
 
-    if (ZeroPages || (isolationType == UefiIsolationTypeVbs))
+    if (isolationType == UefiIsolationTypeVbs)
     {
         ZeroMem(BaseAddress, ByteCount);
         ZeroPages = FALSE;
