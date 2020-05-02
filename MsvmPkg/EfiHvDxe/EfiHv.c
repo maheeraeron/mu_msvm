@@ -699,18 +699,16 @@ Return Value:
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
-    if (!mAutoEoi)
-    {
+
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
-        SendApicEoi();
+    SendApicEoi();
 
 #elif defined(MDE_CPU_AARCH64)
 
-        mHwInt->EndOfInterrupt(mHwInt, InterruptType);
+    mHwInt->EndOfInterrupt(mHwInt, InterruptType);
 
 #endif
-    }
 
     if (mDirectTimerInterruptHandlers[InterruptType] != NULL)
     {
