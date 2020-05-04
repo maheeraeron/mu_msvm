@@ -41,3 +41,7 @@
 [Guids]
     gEfiEventExitBootServicesGuid   #CONSUMES
     gEfiVmbusChannelDevicePathGuid  #CONSUMES
+
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture

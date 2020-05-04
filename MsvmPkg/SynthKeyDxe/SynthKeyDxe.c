@@ -33,6 +33,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "SynthKeyDxe.h"
 #include "SynthKeyChannel.h"
 #include "SynthSimpleTextIn.h"
+#include <BiosInterface.h>
 
 EFI_STATUS
 EFIAPI
@@ -111,6 +112,17 @@ Return Value:
 --*/
 {
     EFI_STATUS              status;
+
+    //
+    // If this is an isolated VM which is not VBS-isolated, then keyboard is
+    // not supported.
+    //
+
+    if (PcdGetBool(PcdSystemIsolated) &&
+        (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeVbs))
+    {
+        return EFI_UNSUPPORTED;
+    }
 
     //
     // Install driver model protocol(s).
