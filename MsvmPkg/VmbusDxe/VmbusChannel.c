@@ -17,6 +17,7 @@ Author:
 --*/
 
 #include <VmbusP.h>
+#include <IsolationTypes.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -136,7 +137,7 @@ Return Value:
     // Make the entire buffer visible to the host if required.
     //
 
-    if (PcdGetBool(PcdSystemIsolated))
+    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
     {
         status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
                                                      MapFlags,
@@ -476,7 +477,7 @@ Return Value:
     // GPADL has been deleted.
     //
 
-    if (PcdGetBool(PcdSystemIsolated))
+    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
     {
         ASSERT(!Gpadl->Legacy);
         mHvIvm->MakeAddressRangeNotHostVisible(mHvIvm, Gpadl->ProtectionHandle);

@@ -21,7 +21,7 @@ Author:
 #include <Library/EmclLib.h>
 #include <Library/DebugLib.h>
 #include <hvhdk.h>
-#include <BiosInterface.h>
+#include <IsolationTypes.h>
 #include <Library/PcdLib.h>
 
 //

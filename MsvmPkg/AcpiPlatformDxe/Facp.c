@@ -18,6 +18,7 @@ Author:
 
 #include <PiDxe.h>
 #include "AcpiPlatform.h"
+#include <IsolationTypes.h>
 #include <Library/BaseMemoryLib.h>
 
 #include <BiosInterface.h>

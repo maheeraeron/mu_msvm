@@ -33,7 +33,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "SynthKeyDxe.h"
 #include "SynthKeyChannel.h"
 #include "SynthSimpleTextIn.h"
-#include <BiosInterface.h>
+#include <IsolationTypes.h>
 
 EFI_STATUS
 EFIAPI
@@ -111,6 +111,7 @@ Return Value:
 
 --*/
 {
+    UINT32                  isolationType;
     EFI_STATUS              status;
 
     //
@@ -118,8 +119,8 @@ Return Value:
     // not supported.
     //
 
-    if (PcdGetBool(PcdSystemIsolated) &&
-        (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeVbs))
+    isolationType = PcdGet32(PcdIsolationArchitecture);
+    if ((isolationType != UefiIsolationTypeNone) && (isolationType != UefiIsolationTypeVbs))
     {
         return EFI_UNSUPPORTED;
     }

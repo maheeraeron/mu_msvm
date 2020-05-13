@@ -155,7 +155,6 @@
     gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
     gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
-    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
     gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements

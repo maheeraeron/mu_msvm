@@ -189,11 +189,6 @@ Return Value:
     ASSERT((BaseAddress % EFI_PAGE_SIZE) == 0);
     ASSERT((Size % EFI_PAGE_SIZE) == 0);
 
-    if (PcdGetBool(PcdSystemIsolated))
-    {
-        // HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
-    }
-
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
                                MEMORY_FLAGS,
                                BaseAddress,
@@ -302,11 +297,6 @@ Return Value:
 {
     ASSERT((BaseAddress % EFI_PAGE_SIZE) == 0);
     ASSERT((Size % EFI_PAGE_SIZE) == 0);
-
-    if (PcdGetBool(PcdSystemIsolated))
-    {
-        // HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
-    }
 
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
                                MEMORY_FLAGS & ~EFI_RESOURCE_ATTRIBUTE_TESTED,

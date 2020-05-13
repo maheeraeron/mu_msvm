@@ -19,6 +19,7 @@ Author:
 
 #include <PiDxe.h>
 #include <VmbusP.h>
+#include <IsolationTypes.h>
 
 #include <Library/DevicePathLib.h>
 #include <Library/BaseLib.h>
@@ -383,7 +384,7 @@ Return Value:
         return status;
     }
 
-    if (!PcdGetBool(PcdSystemIsolated))
+    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
     {
         status = gBS->UninstallMultipleProtocolInterfaces(
             ChannelContext->Handle,
@@ -1418,11 +1419,11 @@ Return Value:
         }
     }
 
-    DEBUG((EFI_D_WARN, "%a (%d) orphaned %d GPADLs (Isolated=%d)\n",
+    DEBUG((EFI_D_WARN, "%a (%d) orphaned %d GPADLs (IsolationArchitecture=%d)\n",
         __FUNCTION__,
         __LINE__,
         orphanedGpadlCount,
-        PcdGetBool(PcdSystemIsolated)));
+        PcdGet32(PcdIsolationArchitecture)));
 
     VmbusRootSendUnload(rootContext);
 }
@@ -1610,7 +1611,7 @@ Return Value:
 
     ASSERT_EFI_ERROR(status);
 
-    if (!PcdGetBool(PcdSystemIsolated))
+    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
     {
         status = gBS->InstallMultipleProtocolInterfaces(&channelContext->Handle,
                                                         &gEfiVmbusLegacyProtocolGuid,
@@ -1830,7 +1831,6 @@ Return Value:
     }
 
     mSharedGpaBoundary = (UINTN)PcdGet64(PcdIsolationSharedGpaBoundary);
-    ASSERT(PcdGetBool(PcdSystemIsolated) || (mSharedGpaBoundary == 0));
 
     status = VmbusRootInitializeContext(&mRootContext);
     if (EFI_ERROR(status))

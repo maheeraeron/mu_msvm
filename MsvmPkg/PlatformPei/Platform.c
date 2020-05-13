@@ -713,9 +713,7 @@ Return Value:
     status = PeiServicesInstallPpi(MsvmBootModePpiDescriptor);
     ASSERT_EFI_ERROR(status);
 
-    HvInitialize();
-
-    if (PcdGetBool(PcdSystemIsolated))
+    if (HvInitialize())
     {
         DEBUG((DEBUG_INFO, "System detected as isolated, connecting to hypervisor\n"));
         status = HvConnectToHypervisor(&context);

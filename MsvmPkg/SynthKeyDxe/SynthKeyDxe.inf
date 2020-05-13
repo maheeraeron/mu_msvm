@@ -63,5 +63,4 @@
     gEfiVmbusChannelDevicePathGuid      # CONSUMES
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
     gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture

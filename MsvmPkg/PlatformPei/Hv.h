@@ -18,7 +18,7 @@ Abstract:
 #include <hvhdk.h>
 #include <hvgdk.h>
 
-VOID
+BOOLEAN
 HvInitialize(
     VOID
     );

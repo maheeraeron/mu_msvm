@@ -614,13 +614,6 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tVpci instance filter:%g\n", (EFI_GUID*) filter->InstanceGuid));
             break;
 
-        case UefiConfigIsolationSettings:
-            UEFI_CONFIG_ISOLATION_SETTINGS *isolation = (UEFI_CONFIG_ISOLATION_SETTINGS *) Header;
-            DEBUG((DEBUG_VERBOSE, "\tSharedGpaBoundary: 0x%x\n", isolation->SharedGpaBoundary));
-            DEBUG((DEBUG_VERBOSE, "\tIsolationArchitecture: 0x%x\n", isolation->IsolationArchitecture));
-            DEBUG((DEBUG_VERBOSE, "\tParavisorPresent: %u\n", isolation->Flags.ParavisorPresent));
-            break;
-
         default:
             DEBUG((DEBUG_VERBOSE, "\t!!! Unrecognized config structure type !!!\n"));
             break;
@@ -757,7 +750,6 @@ Return Value:
         0, //UefiConfigSmbiosSystemSKUNumber
         0, //UefiConfigSmbiosSystemFamily
         0, //UefiConfigSmbiosMemoryDeviceSerialNumber
-        sizeof(UEFI_CONFIG_ISOLATION_SETTINGS), //UefiConfigIsolationSettings
     };
 
     //
@@ -1349,13 +1341,6 @@ Return Value:
             case UefiConfigVpciInstanceFilter:
                 UEFI_CONFIG_VPCI_INSTANCE_FILTER *filter = (UEFI_CONFIG_VPCI_INSTANCE_FILTER*) header;
                 PcdSet64(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid);
-                break;
-
-            case UefiConfigIsolationSettings:
-                UEFI_CONFIG_ISOLATION_SETTINGS *isolation = (UEFI_CONFIG_ISOLATION_SETTINGS*) header;
-                PcdSet64(PcdIsolationSharedGpaBoundary, isolation->SharedGpaBoundary);
-                PcdSet32(PcdIsolationArchitecture, isolation->IsolationArchitecture);
-                PcdSetBool(PcdIsolationParavisorPresent, (UINT8)isolation->Flags.ParavisorPresent);
                 break;
         }
 

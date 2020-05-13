@@ -18,6 +18,7 @@ Author:
 
 #include <PiDxe.h>
 #include <EfiNt.h>
+#include <IsolationTypes.h>
 
 #include <Library/UefiLib.h>
 #include <Library/BaseLib.h>
@@ -2290,7 +2291,14 @@ Return Value:
     // TODO - Use another PCD flag to enable for non-isolated testing.
     //
 
-    mUseBounceBuffer = PcdGetBool(PcdSystemIsolated) ? TRUE : FALSE;
+    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
+    {
+        mUseBounceBuffer = FALSE;
+    }
+    else
+    {
+        mUseBounceBuffer = TRUE;
+    }
 
     context = AllocatePool(sizeof(*context));
     if (context == NULL)
@@ -2717,7 +2725,7 @@ Return Value:
     // Make these pages visible to the host
     //
 
-    if (PcdGetBool(PcdSystemIsolated))
+    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
     {
         UINT64 sharedGpaBoundary;
 

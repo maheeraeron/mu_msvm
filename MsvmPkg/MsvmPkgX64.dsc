@@ -568,9 +568,6 @@
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0
 
-  # Isolation
-  gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE
-
   # UEFI_CONFIG_ACPI_TABLE
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0
@@ -603,6 +600,11 @@
 
   # UEFI_CONFIG_VPCI_INSTANCE_FILTER_GUID
   gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr|0x0
+
+  # Isolation configuration
+  gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture|0x0
+  gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary|0x0
 
 ################################################################################
 #

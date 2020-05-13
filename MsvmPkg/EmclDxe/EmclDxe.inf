@@ -34,5 +34,5 @@
     TRUE
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdSystemIsolated
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary

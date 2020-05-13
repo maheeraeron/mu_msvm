@@ -18,7 +18,7 @@ Author:
 --*/
 
 #include "VideoDxe.h"
-#include <BiosInterface.h>
+#include <IsolationTypes.h>
 #include <VirtualDeviceId.h>
 #include <VramSize.h>
 
@@ -62,13 +62,15 @@ Return Value:
 
 --*/
 {
+    UINT32 isolationType;
+
     //
     // If this is an isolated VM which is not VBS-isolated, then video is not
     // supported.
     //
 
-    if (PcdGetBool(PcdSystemIsolated) &&
-        (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeVbs))
+    isolationType = PcdGet32(PcdIsolationArchitecture);
+    if ((isolationType != UefiIsolationTypeNone) && (isolationType != UefiIsolationTypeVbs))
     {
         return EFI_UNSUPPORTED;
     }

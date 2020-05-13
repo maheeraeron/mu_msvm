@@ -264,9 +264,6 @@
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber|0x0|UINT64|0x6036
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0|UINT64|0x6037
 
-  # Isolation
-  gMsvmPkgTokenSpaceGuid.PcdSystemIsolated|FALSE|BOOLEAN|0x603A
-
   # UEFI_CONFIG_ACPI_TABLE
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0|UINT64|0x603B
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0|UINT32|0x603C
@@ -308,7 +305,7 @@
   gMsvmPkgTokenSpaceGuid.PcdSmbiosMemoryDeviceSerialNumberStr|0x0|UINT64|0x6054
   gMsvmPkgTokenSpaceGuid.PcdSmbiosMemoryDeviceSerialNumberSize|0x0|UINT32|0x6055
 
-  # UEFI_CONFIG_ISOLATION_SETTINGS
+  # Isolation configuration
   gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture|0x0|UINT32|0x6056
-  gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|0x0|BOOLEAN|0x6057
+  gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|FALSE|BOOLEAN|0x6057
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary|0x0|UINT64|0x6058

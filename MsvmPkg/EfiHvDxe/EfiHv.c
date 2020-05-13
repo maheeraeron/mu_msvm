@@ -18,7 +18,7 @@ Author:
 --*/
 
 #include <PiDxe.h>
-#include <BiosInterface.h>
+#include <IsolationTypes.h>
 
 #include <Protocol/Cpu.h>
 #include <Protocol/EfiHv.h>

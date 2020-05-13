@@ -15,6 +15,7 @@ Abstract:
 #include <PiPei.h>
 #include <Platform.h>
 #include <Hv.h>
+#include <IsolationTypes.h>
 
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -42,7 +43,7 @@ C_ASSERT(sizeof(HV_PAGES) <= MISC_PAGE_COUNT_FREE_RW * EFI_PAGE_SIZE);
 
 static
 BOOLEAN
-HvpQueryIsolation(
+HvpConfigureIsolation(
     VOID
     )
 /*++
@@ -78,7 +79,37 @@ Return Value:
     }
 
     __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionMsHvFeatures);
-    return cpuidResult.MsHvFeatures.PartitionPrivileges.Isolation != 0;
+    if (!cpuidResult.MsHvFeatures.PartitionPrivileges.Isolation)
+    {
+        return FALSE;
+    }
+
+    __cpuid(cpuidResult.AsUINT32, HvCpuidFunctionMsHvIsolationConfiguration);
+    switch (cpuidResult.MsHvIsolationConfiguration.IsolationType)
+    {
+    case HV_PARTITION_ISOLATION_TYPE_VBS:
+        PcdSet32(PcdIsolationArchitecture, UefiIsolationTypeVbs);
+        break;
+    case HV_PARTITION_ISOLATION_TYPE_SNP:
+        PcdSet32(PcdIsolationArchitecture, UefiIsolationTypeSnp);
+        break;
+    case HV_PARTITION_ISOLATION_TYPE_NONE:
+        return FALSE;
+    default:
+        ASSERT(FALSE);
+        return FALSE;
+    }
+    
+    if (cpuidResult.MsHvIsolationConfiguration.ParavisorPresent)
+    {
+        PcdSetBool(PcdIsolationParavisorPresent, TRUE);
+    }
+    if (cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryActive)
+    {
+        PcdSet64(PcdIsolationSharedGpaBoundary, 1UI64 << cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits);
+    }
+
+    return TRUE;
 
 #else
 
@@ -88,7 +119,7 @@ Return Value:
 }
 
 
-VOID
+BOOLEAN
 HvInitialize(
     VOID
     )
@@ -104,11 +135,11 @@ Arguments:
 
 Return Value:
 
-    None.
+    TRUE if a hypervisor connection is required, otherwise FALSE.
 
 --*/
 {
-    PcdSetBool(PcdSystemIsolated, HvpQueryIsolation());
+    return HvpConfigureIsolation();
 }
 
 

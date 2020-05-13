@@ -1005,7 +1005,8 @@ typedef enum _HV_CPUID_FUNCTION
     HvCpuIdFunctionMsHvSvmFeatures              = 0x40000008,
     HvCpuIdFunctionMsHvSkipLevelFeatures        = 0x40000009,
     HvCpuidFunctionMsHvNestedVirtFeatures       = 0x4000000A,
-    HvCpuIdFunctionMaxReserved                  = 0x4000000A
+    HvCpuidFunctionMsHvIsolationConfiguration   = 0x4000000C,
+    HvCpuIdFunctionMaxReserved                  = 0x4000000C
 
 #else
 
@@ -1478,6 +1479,35 @@ typedef struct _HV_HYPERVISOR_NESTED_VIRT_FEATURES
 #endif
 
 //
+// Isolated VM configuration - HvCpuidFunctionMsHvIsolationConfiguration leaf.
+//
+
+typedef struct _HV_HYPERVISOR_ISOLATION_CONFIGURATION
+{
+    // Eax
+    UINT32 ParavisorPresent : 1;
+    UINT32 Reserved0 : 31;
+
+    // Ebx
+    UINT32 IsolationType : 4;
+    UINT32 Reserved11 : 1;
+    UINT32 SharedGpaBoundaryActive : 1;
+    UINT32 SharedGpaBoundaryBits : 6;
+    UINT32 Reserved12 : 20;
+
+    // Ecx
+    UINT32 Reserved2;
+
+    // Edx
+    UINT32 Reserved3;
+
+} HV_HYPERVISOR_ISOLATION_CONFIGURATION, *PHV_HYPERVISOR_ISOLATION_CONFIGURATION;
+
+#define HV_PARTITION_ISOLATION_TYPE_NONE            0
+#define HV_PARTITION_ISOLATION_TYPE_VBS             1
+#define HV_PARTITION_ISOLATION_TYPE_SNP             2
+
+//
 // Typedefs for CPUID leaves on HvMicrosoftHypercallInterface-supporting
 // hypervisors.
 // =====================================================================
@@ -1551,6 +1581,8 @@ typedef union _HV_CPUID_RESULT
     HV_HYPERVISOR_CPU_MANAGEMENT_FEATURES MsHvCpuManagementFeatures;
 
     HV_HYPERVISOR_SVM_FEATURES MsHvSvmFeatures;
+
+    HV_HYPERVISOR_ISOLATION_CONFIGURATION MsHvIsolationConfiguration;
 
 #if defined(XBOX_SYSTEMOS)
     HV_PLATFORM_INFORMATION MsHvPlatformInformation;
@@ -4647,6 +4679,7 @@ typedef enum _HV_REGISTER_NAME
     HvRegisterSvmFeaturesInfo           = 0x00000205,   // 128-bit result same as CPUID 0x40000008
     HvRegisterSkipLevelFeaturesInfo     = 0x00000206,   // 128-bit result same as CPUID 0x40000009
     HvRegisterNestedVirtFeaturesInfo    = 0x00000207,   // 128-bit result same as CPUID 0x4000000A
+    HvRegisterIsolationConfiguration    = 0x00000209,   // 128-bit result same as CPUID 0x4000000C
 
     // Guest Crash Registers
     HvRegisterGuestCrashP0  = 0x00000210,
