@@ -20,6 +20,9 @@ Author:
 #include "vmrndis.h"
 #include <Library/EmclLib.h>
 #include <Library/DebugLib.h>
+#include <hvhdk.h>
+#include <BiosInterface.h>
+#include <Library/PcdLib.h>
 
 //
 // This number is just a random 16 bit number which is used to
@@ -84,6 +87,7 @@ Return Value:
     UINT32 rndisBufferIndex, index;
     NVSP_MESSAGE nvspMessage;
     UINTN eventIndex;
+    UINT32 isolationType;
 
     ASSERT(AdapterInfo != NULL);
 
@@ -267,6 +271,7 @@ Return Value:
         AdapterInfo->Emcl,
         AdapterInfo->RxBufferAllocation,
         AdapterInfo->RxBufferPageCount * EFI_PAGE_SIZE,
+        HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
         &AdapterInfo->RxGpadl);
 
     if (EFI_ERROR(status))
@@ -332,10 +337,17 @@ Return Value:
         goto Cleanup;
     }
 
+    //
+    // SNP hardware does not support read-only pages. But only allow read
+    // access for the VBS isolation case where more restricted access is possible.
+    //
+    isolationType = PcdGet32(PcdIsolationArchitecture);
+
     status = AdapterInfo->Emcl->CreateGpadl(
         AdapterInfo->Emcl,
         AdapterInfo->TxBufferAllocation,
         AdapterInfo->TxBufferPageCount * EFI_PAGE_SIZE,
+        (isolationType == UefiIsolationTypeVbs) ? HV_MAP_GPA_READABLE : HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
         &AdapterInfo->TxGpadl);
 
     if (EFI_ERROR(status))

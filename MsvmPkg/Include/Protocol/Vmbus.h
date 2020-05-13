@@ -30,6 +30,7 @@ typedef struct _EFI_VMBUS_PROTOCOL EFI_VMBUS_PROTOCOL;
 typedef struct _EFI_VMBUS_LEGACY_PROTOCOL EFI_VMBUS_LEGACY_PROTOCOL;
 
 typedef struct _EFI_VMBUS_GPADL EFI_VMBUS_GPADL;
+typedef UINT32 HV_MAP_GPA_FLAGS, *PHV_MAP_GPA_FLAGS;
 
 typedef
 EFI_STATUS
@@ -81,6 +82,7 @@ EFI_STATUS
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
     __in BOOLEAN ZeroPages,
+    __in HV_MAP_GPA_FLAGS MapFlags,
     __out EFI_VMBUS_GPADL **Gpadl
     );
 

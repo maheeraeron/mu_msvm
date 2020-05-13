@@ -54,6 +54,14 @@ typedef struct _GPA_RANGE
 #define EFI_VMBUS_CHANNEL_DEVICE_PATH_GUID \
     {0x9b17e5a2, 0x891, 0x42dd, {0xb6, 0x53, 0x80, 0xb5, 0xc2, 0x28, 0x9, 0xba}}
 
+// TODO-19259739: Have a better way of reporting UEFI errors.
+#define VMBUS_FAIL_FAST() \
+                    ASSERT(FALSE); \
+                    CpuDeadLoop();
+
+#define VMBUS_FAIL_FAST_IF_FALSE(cond) \
+                    if (!(cond)) {VMBUS_FAIL_FAST()}
+
 EFI_HV_PROTOCOL *mHv;
 EFI_HV_IVM_PROTOCOL *mHvIvm;
 UINTN mSharedGpaBoundary;

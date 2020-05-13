@@ -316,6 +316,7 @@ Return Value:
                                                   Context->RingBufferPages,
                                                   pageCount * EFI_PAGE_SIZE,
                                                   TRUE,
+                                                  HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
                                                   &Context->RingBufferGpadl);
     if (EFI_ERROR(status))
     {
@@ -1947,6 +1948,7 @@ EmclCreateGpadl(
     __in EFI_EMCL_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
+    __in HV_MAP_GPA_FLAGS MapFlags,
     __out EFI_EMCL_GPADL **Gpadl
     )
 /*++
@@ -1964,6 +1966,9 @@ Arguments:
     Buffer - Buffer to be used for the GPADL.
 
     BufferLength - Length of Buffer.
+
+    MapFlags - Mapping flags to control the host visibility. Only HV_MAP_GPA_READABLE and
+        HV_MAP_GPA_WRITABLE are valid in the access mask when isolation isused .
 
     Gpadl - Returns a pointer to the GPADL.
 
@@ -1987,6 +1992,7 @@ Return Value:
                                                   Buffer,
                                                   BufferLength,
                                                   FALSE,
+                                                  MapFlags,
                                                   &vmbusGpadl);
     if (EFI_ERROR(status))
     {

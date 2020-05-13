@@ -463,7 +463,7 @@ Return Value:
             {
                 return status;
             }
-            RootContext->Channels[index] = NULL;
+            ASSERT(RootContext->Channels[index] == NULL);
         }
     }
 
@@ -544,7 +544,6 @@ Return Value:
 --*/
 {   UINTN index;
     HV_MESSAGE *hvMessage;
-    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     //
     // TPL must be less than TPL_NOTIFY, since hot add/remove messages are
@@ -552,7 +551,6 @@ Return Value:
     //
 
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
-
     ASSERT(RootContext->SintConnected);
 
     if (!PollForMessage)
@@ -566,13 +564,14 @@ Return Value:
         hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
     }
 
-    ASSERT(hvMessage != NULL);
-
+    // Read the message size and store it before validation to avoid
+    // double fetch.
     Message->Size = hvMessage->Header.PayloadSize;
+
+    VMBUS_FAIL_FAST_IF_FALSE(Message->Size <= MAXIMUM_SYNIC_MESSAGE_BYTES);
+
     CopyMem(Message->Data, hvMessage->Payload, Message->Size);
     mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
-
-    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -723,7 +722,6 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     do
     {
@@ -739,7 +737,6 @@ Return Value:
     {
         DEBUG((EFI_D_ERROR, "Vmbus failed to send message\n"));
     }
-    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -768,7 +765,6 @@ Return Value:
 {
     VMBUS_ROOT_CONTEXT *rootContext;
     HV_MESSAGE *hvMessage;
-    //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     rootContext = (VMBUS_ROOT_CONTEXT*)Context;
 
@@ -779,13 +775,11 @@ Return Value:
 
     if (hvMessage != NULL)
     {
-        //DEBUG((DEBUG_VERBOSE, "--- %a dispatching message\n", __FUNCTION__));
         if (VmbusRootDispatchMessage(rootContext, hvMessage))
         {
             mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
         }
     }
-    //DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -835,7 +829,6 @@ Return Value:
         while(_BitScanForward64(&bitIndex, currentWord) != 0)
         {
             currentWord &= ~((UINT64)1 << bitIndex);
-            //DEBUG((DEBUG_VERBOSE, "--- %a channel [%lu]\n", __FUNCTION__, wordIndex * 64 + bitIndex));
             gBS->SignalEvent(
                     RootContext->Channels[wordIndex * 64 + bitIndex]->Interrupt);
         }
@@ -857,6 +850,9 @@ Routine Description:
 
     This routine must be called at TPL == TPL_HIGH_LEVEL.
 
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
+
 Arguments:
 
     RootContext - Pointer to the root context.
@@ -872,24 +868,26 @@ Return Value:
     VMBUS_MESSAGE *message;
     VMBUS_MESSAGE_RESPONSE *response;
     BOOLEAN completeMessage;
+    UINT32 childId;
+    UINT32 gpadl;
 
     completeMessage = TRUE;
     response = NULL;
 
-    ASSERT(HvMessage->Header.MessageType == VMBUS_MESSAGE_TYPE);
+    childId = 0;
+    gpadl = 0;
+
+    VMBUS_FAIL_FAST_IF_FALSE(HvMessage->Header.MessageType == VMBUS_MESSAGE_TYPE);
 
     message = BASE_CR(HvMessage->Payload, VMBUS_MESSAGE, Header);
 
     switch (message->Header.MessageType)
     {
     case ChannelMessageOfferChannel:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "OfferChannel"));
-
         //
         // Hot add events need to drop TPL to allocate memory and should queue
         // up messages behind them, so don't complete this message.
         //
-
         if (RootContext->OffersDelivered)
         {
             gBS->SignalEvent(RootContext->HotAllocationEvent);
@@ -900,13 +898,12 @@ Return Value:
         __fallthrough;
 
     case ChannelMessageVersionResponse:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "VersionResponse"));
         __fallthrough;
+
     case ChannelMessageAllOffersDelivered:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "AllOffersDelivered"));
         __fallthrough;
+
     case ChannelMessageUnloadComplete:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "UnloadComplete"));
 
         //
         // These messages are dealt with differently, since they arrive
@@ -919,38 +916,35 @@ Return Value:
         break;
 
     case ChannelMessageOpenChannelResult:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "OpenChannelResult"));
 
-        ASSERT(message->OpenResult.ChildRelId < VMBUS_MAX_CHANNELS);
-
-        response = &RootContext->Channels[message->OpenResult.ChildRelId]->Response;
+        // Store the channel ID before validating to avoid a double fetch.
+        childId = message->OpenResult.ChildRelId;
+        VMBUS_FAIL_FAST_IF_FALSE(childId < VMBUS_MAX_CHANNELS);
+        response = &RootContext->Channels[childId]->Response;
 
         break;
 
     case ChannelMessageGpadlTorndown:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "GpadlTorndown"));
 
-        ASSERT(message->GpadlTorndown.Gpadl < VMBUS_MAX_GPADLS);
-
-        response = &RootContext->GpadlTable[message->GpadlTorndown.Gpadl];
-
-        ASSERT(response->Event != NULL);
+        // Store the GPADL before validating to avoid a double fetch.
+        gpadl = message->GpadlTorndown.Gpadl;
+        VMBUS_FAIL_FAST_IF_FALSE(gpadl < VMBUS_MAX_GPADLS);
+        VMBUS_FAIL_FAST_IF_FALSE(VmbusRootValidateGpadl(RootContext, gpadl));
+        response = &RootContext->GpadlTable[gpadl];
 
         break;
 
     case ChannelMessageGpadlCreated:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "GpadlCreated"));
 
-        ASSERT(message->GpadlCreated.Gpadl < VMBUS_MAX_GPADLS);
-
-        response = &RootContext->GpadlTable[message->GpadlCreated.Gpadl];
-
-        ASSERT(response->Event != NULL);
+        // Store the GPADL before validating to avoid a double fetch.
+        gpadl = message->GpadlCreated.Gpadl;
+        VMBUS_FAIL_FAST_IF_FALSE(gpadl < VMBUS_MAX_GPADLS);
+        VMBUS_FAIL_FAST_IF_FALSE(VmbusRootValidateGpadl(RootContext, gpadl));
+        response = &RootContext->GpadlTable[gpadl];
 
         break;
 
     case ChannelMessageRescindChannelOffer:
-        //DEBUG((DEBUG_VERBOSE, ">>> %a: %a\n", __FUNCTION__, "RescindChannelOffer"));
 
         //
         // Hot remove is not supported because UEFI makes it difficult to
@@ -962,19 +956,23 @@ Return Value:
 
     default:
         ASSERT(!"Vmbus received unexpected message");
+
         break;
     }
 
     if (response != NULL)
     {
+        // Validate the payload size coming in from the host.
+        // Validate a locally stored value to avoid a double fetch.
         response->Message.Size = HvMessage->Header.PayloadSize;
+        VMBUS_FAIL_FAST_IF_FALSE(response->Message.Size <= MAXIMUM_SYNIC_MESSAGE_BYTES);
+
         CopyMem(response->Message.Data,
                 HvMessage->Payload,
                 response->Message.Size);
 
         gBS->SignalEvent(response->Event);
     }
-    //DEBUG((DEBUG_VERBOSE, "<<< %a %a\n", __FUNCTION__, completeMessage ? "TRUE" : "FALSE"));
 
     return completeMessage;
 }
@@ -992,6 +990,9 @@ Routine Description:
 
     This routine allocates space for hot add messages and copies the message
     from the SINT queue, to be processed by VmbusRootHotAdd.
+
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
 
 Arguments:
 
@@ -1014,19 +1015,27 @@ Return Value:
     context = (VMBUS_ROOT_CONTEXT*)Context;
     hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
 
-    ASSERT(hvMessage != NULL);
-
     hotMessage = AllocatePool(sizeof(*hotMessage));
     if (hotMessage == NULL)
     {
         goto Cleanup;
     }
 
-    CopyMem(hotMessage->Message.Data,
-            hvMessage->Payload,
-            hvMessage->Header.PayloadSize);
+    ZeroMem(hotMessage, sizeof(*hotMessage));
 
     hotMessage->Message.Size = hvMessage->Header.PayloadSize;
+
+    VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.Size == sizeof(hotMessage->Message.OfferChannel));
+
+    CopyMem(hotMessage->Message.Data,
+            hvMessage->Payload,
+            hotMessage->Message.Size);
+    
+    VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel);
+
+    VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS);
+    VMBUS_FAIL_FAST_IF_FALSE(context->Channels[hotMessage->Message.OfferChannel.ChildRelId] == NULL);
+
     InsertTailList(&context->HotMessageList, &hotMessage->Link);
     gBS->SignalEvent(context->HotEvent);
 
@@ -1091,8 +1100,8 @@ Return Value:
     {
         hotMessage = BASE_CR(GetFirstNode(&list), VMBUS_HOT_MESSAGE, Link);
 
+        // The offer message is validated before adding it to the list. 
         ASSERT(hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel);
-
         ASSERT(hotMessage->Message.Size == sizeof(hotMessage->Message.OfferChannel));
 
         status = VmbusRootCreateChannel(context,
@@ -1340,7 +1349,7 @@ Return Value:
     EFI_TPL tpl;
     UINT32 index;
 
-    ASSERT(ChannelId < HV_EVENT_FLAGS_COUNT);
+    ASSERT(ChannelId < VMBUS_MAX_CHANNELS);
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
     RootContext->Channels[ChannelId]->Interrupt = NULL;
@@ -1432,6 +1441,9 @@ Routine Description:
 
     This function must be called at TPL < TPL_HIGH_LEVEL.
 
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
+
 Arguments:
 
     RootContext - Pointer to the root context.
@@ -1445,19 +1457,15 @@ Return Value:
     VMBUS_MESSAGE message;
     EFI_STATUS status;
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-
     ASSERT(RootContext->SintConnected);
 
     VmbusRootInitializeMessage(&message,
                            ChannelMessageInitiateContact,
                            sizeof(message.InitiateContact));
-    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitializeMessage\n", __FUNCTION__));
 
     message.InitiateContact.VMBusVersionRequested = VMBUS_VERSION_LATEST;
     message.InitiateContact.TargetMessageVp = mHv->GetCurrentVpIndex(mHv);
     VmbusRootSendMessage(&message);
-    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootSendMessage\n", __FUNCTION__));
 
     //
     // We may have leftover messages if this driver was stopped previously.
@@ -1465,16 +1473,14 @@ Return Value:
     do
     {
         VmbusRootWaitForMessage(RootContext, FALSE, &message);
+    } while (message.Header.MessageType != ChannelMessageVersionResponse);
 
-    } while (message.Size != sizeof(message.VersionResponse) ||
-             message.Header.MessageType != ChannelMessageVersionResponse);
-    DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootWaitForMessage loop\n", __FUNCTION__));
+    VMBUS_FAIL_FAST_IF_FALSE(message.Size == sizeof(message.VersionResponse));
 
     if (!message.VersionResponse.VersionSupported ||
         message.VersionResponse.ConnectionState
             != VmbusChannelConnectionSuccessful)
     {
-        DEBUG((DEBUG_VERBOSE, "<<< %a EFI_PROTOCOL_ERROR\n", __FUNCTION__));
         status = EFI_PROTOCOL_ERROR;
 
     }
@@ -1483,7 +1489,6 @@ Return Value:
         RootContext->ContactInitiated = TRUE;
         status = EFI_SUCCESS;
     }
-    DEBUG((DEBUG_VERBOSE, "<<< %a Status %r\n", __FUNCTION__, status));
     return status;
 }
 
@@ -1500,6 +1505,9 @@ Routine Description:
     from the root.
 
     This function must be called at TPL < TPL_HIGH_LEVEL.
+
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
 
 Arguments:
 
@@ -1526,8 +1534,9 @@ Return Value:
     do
     {
         VmbusRootWaitForMessage(RootContext, TRUE, &message);
-    } while (message.Size != sizeof(message.Header) ||
-             message.Header.MessageType != ChannelMessageUnloadComplete);
+    } while (message.Header.MessageType != ChannelMessageUnloadComplete);
+
+    VMBUS_FAIL_FAST_IF_FALSE(message.Size == sizeof(message.Header));
 }
 
 
@@ -1561,6 +1570,7 @@ Return Value:
     EFI_STATUS status;
     VMBUS_CHANNEL_CONTEXT *channelContext;
     VOID *protocol;
+    EFI_TPL tpl;
 
     channelContext = AllocatePool(sizeof(VMBUS_CHANNEL_CONTEXT));
     if (channelContext == NULL)
@@ -1574,12 +1584,17 @@ Return Value:
                                   RootContext);
 
     //
-    // Insert into channel array.
+    // The following validations should have been done when the channel offer
+    // was received. However, it is possible that the host can send multiple
+    // channel offers with the same channel ID which would not be caught
+    // unless an entry for this ID was made into the Channels list.
     //
+    ASSERT(OfferMessage->ChildRelId < VMBUS_MAX_CHANNELS);
 
-    ASSERT(RootContext->Channels[channelContext->ChannelId] == NULL);
-
+    tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
+    VMBUS_FAIL_FAST_IF_FALSE(RootContext->Channels[channelContext->ChannelId] == NULL);
     RootContext->Channels[channelContext->ChannelId] = channelContext;
+    gBS->RestoreTPL(tpl);
 
     //
     // Install the Device Path and VMBus protocols onto a new child handle.
@@ -1656,6 +1671,9 @@ Routine Description:
 
     This function must be called at TPL < TPL_HIGH_LEVEL.
 
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
+
 Arguments:
 
     RootContext - Pointer to the root context.
@@ -1690,6 +1708,9 @@ Return Value:
             ASSERT(!"Unexpected VMBus message received from root");
             return EFI_PROTOCOL_ERROR;
         }
+
+        VMBUS_FAIL_FAST_IF_FALSE(message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS);
+        VMBUS_FAIL_FAST_IF_FALSE(RootContext->Channels[message.OfferChannel.ChildRelId] == NULL);
 
         status = VmbusRootCreateChannel(RootContext,
                                         &message.OfferChannel,
@@ -1950,7 +1971,7 @@ Return Value:
                         return status;
                     }
 
-                    mRootContext.Channels[channelIndex] = NULL;
+                    ASSERT(mRootContext.Channels[channelIndex] == NULL);
                     break;
                 }
             }

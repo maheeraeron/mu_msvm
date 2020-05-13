@@ -52,6 +52,7 @@ VmbusChannelPrepareGpadl (
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
     __in BOOLEAN ZeroPages,
+    __in HV_MAP_GPA_FLAGS MapFlags,
     __out EFI_VMBUS_GPADL **Gpadl
     )
 /*++
@@ -77,6 +78,9 @@ Arguments:
 
     ZeroPages - TRUE if the pages must be zero-filled upon return to the
                 caller.
+
+    MapFlags - Mapping flags to control the host visibility. Only HV_MAP_GPA_READABLE and
+        HV_MAP_GPA_WRITABLE are valid in the access mask when isolation is used.
 
     Gpadl - Returns a pointer to the GPADL.
 
@@ -135,7 +139,7 @@ Return Value:
     if (PcdGetBool(PcdSystemIsolated))
     {
         status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
-                                                     HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                                                     MapFlags,
                                                      Buffer,
                                                      BufferLength,
                                                      ZeroPages,
@@ -188,6 +192,9 @@ Routine Description:
     This routine implements GPADL creation for the EFI VMBus protocol.
 
     This routine must be called at TPL < TPL_NOTIFY.
+
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
 
 Arguments:
 
@@ -302,9 +309,10 @@ Return Value:
 
     ASSERT_EFI_ERROR(status);
 
-    ASSERT(receiveMessage->Header.MessageType == ChannelMessageGpadlCreated);
-    ASSERT(receiveMessage->GpadlCreated.ChildRelId == channelContext->ChannelId);
-    ASSERT(receiveMessage->GpadlCreated.Gpadl == Gpadl->GpadlHandle);
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Header.MessageType == ChannelMessageGpadlCreated);
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Size == sizeof(receiveMessage->GpadlCreated));
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->GpadlCreated.Gpadl == Gpadl->GpadlHandle);
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->GpadlCreated.ChildRelId == channelContext->ChannelId);
 
     if (receiveMessage->GpadlCreated.CreationStatus != 0)
     {
@@ -410,6 +418,9 @@ Routine Description:
     prior to the call to PrepareGpadl, so it can be freed correctly by the
     caller based on its original address.
 
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
+
 Arguments:
 
     This - Pointer to the VMBus protocol.
@@ -452,8 +463,9 @@ Return Value:
 
         ASSERT_EFI_ERROR(status);
 
-        ASSERT(receiveMessage->Header.MessageType == ChannelMessageGpadlTorndown);
-        ASSERT(receiveMessage->GpadlTorndown.Gpadl == Gpadl->GpadlHandle);
+        VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Size == sizeof(receiveMessage->GpadlTorndown));
+        VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Header.MessageType == ChannelMessageGpadlTorndown);
+        VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->GpadlTorndown.Gpadl == Gpadl->GpadlHandle);
 
         VmbusRootReclaimGpadl(channelContext->RootContext, Gpadl->GpadlHandle);
         Gpadl->GpadlHandle = 0;
@@ -603,6 +615,9 @@ Routine Description:
 
     This routine must be called at TPL < TPL_NOTIFY.
 
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
+
 Arguments:
 
     This - Pointer to the VMBus protocol.
@@ -637,8 +652,9 @@ Return Value:
     VmbusRootSendMessage(&sendMessage);
     receiveMessage = VmbusRootWaitForChannelResponse(channelContext);
 
-    ASSERT(receiveMessage->Header.MessageType == ChannelMessageOpenChannelResult);
-    ASSERT(receiveMessage->OpenResult.ChildRelId == channelContext->ChannelId);
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Size == sizeof(receiveMessage->OpenResult));
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Header.MessageType == ChannelMessageOpenChannelResult);
+    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->OpenResult.ChildRelId == channelContext->ChannelId);
 
     if (receiveMessage->OpenResult.Status != 0)
     {
@@ -949,18 +965,13 @@ Return Value:
 --*/
 {
     ZeroMem(ChannelContext, sizeof(*ChannelContext));
+
     ChannelContext->Signature = VMBUS_CHANNEL_CONTEXT_SIGNATURE;
     InitializeListHead(&ChannelContext->Link);
     ChannelContext->DevicePath.VmbusRootNode = gVmbusRootNode;
     CopyMem(&ChannelContext->DevicePath.VmbusChannelNode,
             &gVmbusChannelNode,
             sizeof(VMBUS_DEVICE_PATH));
-
-    //
-    // Win8 and above forces dedicated interrupts.
-    //
-
-    ASSERT(Offer->IsDedicatedInterrupt);
 
     ChannelContext->DevicePath.VmbusChannelNode.InterfaceType = Offer->InterfaceType;
     ChannelContext->DevicePath.VmbusChannelNode.InterfaceInstance = Offer->InterfaceInstance;

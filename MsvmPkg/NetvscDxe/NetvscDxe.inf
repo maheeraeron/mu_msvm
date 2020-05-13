@@ -65,6 +65,7 @@
   EmclLib
   SerialPortLib
   PrintLib
+  PcdLib
 
 [Guids]
   gEfiEventExitBootServicesGuid                 # CONSUMES
@@ -77,3 +78,5 @@
   gEfiVmbusProtocolGuid                         # CONSUMES
   gEfiEmclProtocolGuid                          # CONSUMES
 
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture

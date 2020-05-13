@@ -25,6 +25,7 @@ typedef struct _EFI_EMCL_PROTOCOL EFI_EMCL_PROTOCOL;
 typedef struct _EFI_EMCL_V2_PROTOCOL EFI_EMCL_V2_PROTOCOL;
 
 typedef VOID EFI_EMCL_GPADL;
+typedef UINT32 HV_MAP_GPA_FLAGS, *PHV_MAP_GPA_FLAGS;
 
 typedef struct _EFI_TRANSFER_RANGE
 {
@@ -110,6 +111,7 @@ EFI_STATUS
     __in EFI_EMCL_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
+    __in HV_MAP_GPA_FLAGS MapFlags,
     __out EFI_EMCL_GPADL **Gpadl
     );
 
