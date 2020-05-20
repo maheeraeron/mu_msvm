@@ -361,9 +361,8 @@ PCUartRead(
 {
     UINTN   Count;
 
-    for (Count = 0; Count < NumberOfBytes; Count++, Buffer++)
+    for (Count = 0; (Count < NumberOfBytes) && PCUartPoll(UartBase); Count++, Buffer++)
     {
-        while (!PCUartPoll(UartBase));
         *Buffer = IoRead8(UartBase + R_UART_RXBUF);
     }
     return Count;
