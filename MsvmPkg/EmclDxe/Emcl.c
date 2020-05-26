@@ -793,7 +793,7 @@ Return Value:
                                                        ExternalBuffers[0].BufferSize);
 
             CompletionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
-            if (CompletionEntry->EmclBouncePageList == NULL)
+            while (CompletionEntry->EmclBouncePageList == NULL)
             {
                 UINT32 allocSize = MAX(pageCount * EFI_PAGE_SIZE, 32 * EFI_PAGE_SIZE);
 

@@ -76,6 +76,47 @@ extern EFI_GUID gEfiVmbusChannelDevicePathGuid;
 
 extern EFI_GUID gEfiVmbusRootProtocolGuid;
 
+//
+// Keep track of the GUIDs of channels that are created during the UEFI boot phase.
+//
+// The following VmBus channels are supported during UEFI:
+//
+//      Storage channel (StorvscDxe)
+//      Networking channel (NetvscDxe)
+//      Video channel (VideoDxe)
+//      Virtual SMB channel (VmbfsDxe)
+//      Keyboard channel (SynthKeyDxe)
+//      Virtual PCI channel (VpcivscDxe)
+//
+// For isolated guests, only allow the channels for drivers that have been triaged for security
+// and guest hardening.
+// TODO: This restriction only applies to SNP for now since we need VBS to be less restrictive to
+// allow easy development. Once we have covered more guest hardening, this restriction should be
+// applied to VBS as well.
+//
+// The following channels have gone through a security review and are allowed during UEFI:
+//
+// The following channels are pending security review but are critical for boot, therefore
+// allowed during UEFI:
+//      Storage channel (StorvscDxe)
+//
+typedef struct
+{
+    BOOLEAN IsAllowedWhenIsolated;
+    EFI_GUID AllowedGuid;
+
+} VMBUS_ROOT_ALLOWED_GUIDS;
+
+VMBUS_ROOT_ALLOWED_GUIDS gAllowedGuids[] =
+{
+    {TRUE, { 0xba6163d9, 0x04a1, 0x4d29, {0xb6, 0x05, 0x72, 0xe2, 0xff, 0xb1, 0xdc, 0x7f} }},   // StorvscDxe
+    {FALSE, { 0xf8615163, 0xdf3e, 0x46c5, {0x91, 0x3f, 0xf2, 0xd2, 0xf9, 0x65, 0xed, 0xe} }},   // NetvscDxe
+    {FALSE, { 0xda0a7802, 0xe377, 0x4aac, {0x8e, 0x77, 0x05, 0x58, 0xeb, 0x10, 0x73, 0xf8} }},  // VideoDxe
+    {FALSE, { 0xc376c1c3, 0xd276, 0x48d2, {0x90, 0xa9, 0xc0, 0x47, 0x48, 0x07, 0x2c, 0x60} }},  // VmbfsDxe
+    {FALSE, { 0xd34b2567, 0xb9b6, 0x42b9, {0x87, 0x78, 0x0a, 0x4e, 0xc0, 0xb9, 0x55, 0xbf} }},  // SynthKeyDxe
+    {FALSE, { 0xf912ad6d, 0x2b17, 0x48ea, {0xbd, 0x65, 0xf9, 0x27, 0xa6, 0x1c, 0x76, 0x84} }}   // VpcivscDxe
+};
+
 typedef struct
 {
     ACPI_EXTENDED_HID_DEVICE_PATH AcpiExtendedNode;

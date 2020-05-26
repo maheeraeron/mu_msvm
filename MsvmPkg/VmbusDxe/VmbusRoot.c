@@ -182,6 +182,11 @@ VmbusRootCreateChannel(
     __out_opt VMBUS_CHANNEL_CONTEXT **ChannelContext
     );
 
+BOOLEAN
+VmbusRootIsChannelAllowed(
+    __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
+);
+
 EFI_STATUS
 VmbusRootEnumerateChildren(
     __in VMBUS_ROOT_CONTEXT *RootContext
@@ -1037,6 +1042,14 @@ Return Value:
     VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS);
     VMBUS_FAIL_FAST_IF_FALSE(context->Channels[hotMessage->Message.OfferChannel.ChildRelId] == NULL);
 
+    // Do not proceed if this channel is not allowed during UEFI boot.
+    if (!VmbusRootIsChannelAllowed(&hotMessage->Message.OfferChannel))
+    {
+        // Do nothing for this channel creation.
+        FreePool(hotMessage);
+        goto Cleanup;
+    }
+
     InsertTailList(&context->HotMessageList, &hotMessage->Link);
     gBS->SignalEvent(context->HotEvent);
 
@@ -1658,6 +1671,56 @@ Cleanup:
 }
 
 
+BOOLEAN
+VmbusRootIsChannelAllowed(
+    __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
+)
+/*++
+
+Routine Description:
+
+    This routine determines if a VmBus channel is allowed or not.
+
+Arguments:
+
+    OfferMessage - The offer message received that contains the channel details.
+
+Return Value:
+
+    TRUE if the channel is allowed, FALSE otherwise.
+
+--*/
+{
+    int index = 0;
+    int allowedGuidCount = 0;
+    UINT32 isolationType = 0;
+
+    allowedGuidCount = sizeof(gAllowedGuids) / sizeof(gAllowedGuids[0]);
+    isolationType = PcdGet32(PcdIsolationArchitecture);
+
+    for (index = 0; index < allowedGuidCount; index++)
+    {
+        if (isolationType == UefiIsolationTypeSnp)
+        {
+            if (gAllowedGuids[index].IsAllowedWhenIsolated == FALSE)
+            {
+                continue;
+            }
+        }
+
+        if (CompareMem(&OfferMessage->InterfaceType, &gAllowedGuids[index].AllowedGuid, sizeof(EFI_GUID)) == 0)
+        {
+            DEBUG((DEBUG_INFO, "%a: Channel allowed during boot (%g).\n", __FUNCTION__, &OfferMessage->InterfaceType));
+            return TRUE;
+        }
+    }
+
+    DEBUG((DEBUG_WARN, "%a: Channel not allowed during boot (%g).\n", __FUNCTION__, &OfferMessage->InterfaceType));
+    return FALSE;
+
+}
+
+
 EFI_STATUS
 VmbusRootEnumerateChildren(
     __in VMBUS_ROOT_CONTEXT *RootContext
@@ -1712,6 +1775,13 @@ Return Value:
 
         VMBUS_FAIL_FAST_IF_FALSE(message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS);
         VMBUS_FAIL_FAST_IF_FALSE(RootContext->Channels[message.OfferChannel.ChildRelId] == NULL);
+
+        // Do not proceed if this channel is not allowed during UEFI boot.
+        if (!VmbusRootIsChannelAllowed(&message.OfferChannel))
+        {
+            // Do nothing for this channel creation.
+            continue;
+        }
 
         status = VmbusRootCreateChannel(RootContext,
                                         &message.OfferChannel,
