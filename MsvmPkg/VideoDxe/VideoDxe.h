@@ -37,7 +37,6 @@ Author:
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/EmclLib.h>
 #include <Library/DxeServicesTableLib.h>
-#include <Library/PcdLib.h>
 
 #include <Guid/EventGroup.h>
 
