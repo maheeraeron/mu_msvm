@@ -121,7 +121,6 @@ Return Value:
     PSTORVSC_CHANNEL_CONTEXT context = NULL;
 
     context = AllocateZeroPool(sizeof(*context));
-
     if (context == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
@@ -248,6 +247,13 @@ Return Value:
     {
         return EFI_INVALID_PARAMETER;
     }
+
+    if (!StorChannelIsValidDataBuffer(
+        ScsiRequest->SenseData, ScsiRequest->SenseDataLength))
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
     Packet->VmSrb.CdbLength = ScsiRequest->CdbLength;
     CopyMem(&Packet->VmSrb.Cdb , ScsiRequest->Cdb, ScsiRequest->CdbLength);
 
@@ -258,11 +264,6 @@ Return Value:
     Packet->VmSrb.DataIn =
         (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_READ);
 
-    if (!StorChannelIsValidDataBuffer(
-        ScsiRequest->SenseData, ScsiRequest->SenseDataLength))
-    {
-        return EFI_INVALID_PARAMETER;
-    }
     Packet->VmSrb.SenseInfoExLength = MIN(ScsiRequest->SenseDataLength,
                                           sizeof(Packet->VmSrb.SenseDataEx));
 
@@ -338,13 +339,10 @@ Return Value:
     {
         ScsiRequest->InTransferLength = Packet->VmSrb.DataTransferLength;
     }
-    else if (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_WRITE)
+    else
     {
+        ASSERT(ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_WRITE);
         ScsiRequest->OutTransferLength = Packet->VmSrb.DataTransferLength;
-    }
-    else if (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_BIDIRECTIONAL)
-    {
-        ASSERT(!"Bidirectional operations are not currently supported");
     }
 
     ScsiRequest->TargetStatus = Packet->VmSrb.ScsiStatus;
@@ -400,6 +398,9 @@ Routine Description:
 
     This is the routine called when an scsi request has been completed.
 
+    This routine receives/processes a message from the host and therefore
+    must validate this information before using it.
+
 Arguments:
 
     Context - Pointer to the channel request that was sent.
@@ -417,17 +418,36 @@ Return Value:
     PSTORVSC_CHANNEL_REQUEST request;
     PVSTOR_PACKET packet;
 
-    ASSERT(BufferLength >= VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1);
-
     request = Context;
     packet = Buffer;
 
-    ASSERT(packet->Operation == VStorOperationCompleteIo);
+    //
+    // Validate the response received from the host before proceeding.
+    //
+    STORVSC_FAIL_FAST_IF_FALSE(BufferLength >= VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1);
+    STORVSC_FAIL_FAST_IF_FALSE(packet->Operation == VStorOperationCompleteIo);
+    STORVSC_FAIL_FAST_IF_FALSE(packet->VmSrb.SenseInfoExLength <= VMSCSI_SENSE_BUFFER_SIZE);
+
+    switch (request->ScsiRequest->DataDirection)
+    {
+    case EFI_EXT_SCSI_DATA_DIRECTION_READ:
+        STORVSC_FAIL_FAST_IF_FALSE(packet->VmSrb.DataTransferLength <= request->ScsiRequest->InTransferLength);
+        break;
+
+    case EFI_EXT_SCSI_DATA_DIRECTION_WRITE:
+        STORVSC_FAIL_FAST_IF_FALSE(packet->VmSrb.DataTransferLength <= request->ScsiRequest->OutTransferLength)
+        break;
+
+    case EFI_EXT_SCSI_DATA_DIRECTION_BIDIRECTIONAL:
+        // Bidirectional data transfer is not supported.
+    default: 
+        STORVSC_FAIL_FAST();
+
+    }
 
     //
     // Copy completion packet data to SRB
     //
-
     StorChannelCopyPacketDataToRequest(packet, request->ScsiRequest);
 
     if (request->Event != NULL)
@@ -512,7 +532,7 @@ Return Value:
         goto Cleanup;
     }
 
-    request = AllocatePool(sizeof(*request));
+    request = AllocateZeroPool(sizeof(*request));
 
     if (request == NULL)
     {
@@ -542,12 +562,12 @@ Return Value:
 
         if (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_READ)
         {
-            sendFlags = EMCL_SEND_FLAG_DATA_IN_ONLY;                
+            sendFlags = EMCL_SEND_FLAG_DATA_IN_ONLY;
         }
         else
         {
             ASSERT(ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_WRITE);
-            sendFlags = EMCL_SEND_FLAG_DATA_OUT_ONLY;                
+            sendFlags = EMCL_SEND_FLAG_DATA_OUT_ONLY;
         }
     }
     else
@@ -934,23 +954,26 @@ Return Value:
     EFI_STATUS status;
 
     ZeroMem(Request, sizeof(*Request));
+
     Request->CdbLength = CDB12GENERIC_LENGTH;
-    Request->Cdb = AllocatePool(Request->CdbLength);
+    Request->Cdb = AllocateZeroPool(Request->CdbLength);
     if (Request->Cdb == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
         goto Cleanup;
     }
+
     ((PUCHAR)Request->Cdb)[0] = EFI_SCSI_OP_REPORT_LUNS;
     Request->DataDirection = EFI_EXT_SCSI_DATA_DIRECTION_READ;
-    Request->InTransferLength =
-        sizeof(LUN_LIST) + sizeof(UCHAR) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET;
-    Request->InDataBuffer = AllocatePool(Request->InTransferLength);
+
+    Request->InTransferLength = FIELD_OFFSET(LUN_LIST, Lun) + STORVSC_MAX_LUN_TRANSFER_LENGTH;
+    Request->InDataBuffer = AllocateZeroPool(Request->InTransferLength);
     if (Request->InDataBuffer == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
         goto Cleanup;
     }
+
     Request->SenseDataLength = 0;
     Request->SenseData = NULL;
     Request->Timeout = 0;
@@ -1015,11 +1038,16 @@ Routine Description:
     Inserts the reported devices into the list. If the function fails, it
     will not clean up the inserted entries.
 
+    This routine receives/processes a message from the host and therefore
+    must validate this information before using it.
+
 Arguments:
 
     Request - The request to be parsed.
 
     LunList - A list where to add the found devices.
+
+    Target - The target for which the LUNs are parsed.
 
 Return Value:
 
@@ -1049,6 +1077,15 @@ Return Value:
         rawList->LunListLength[2] <<  8 |
         rawList->LunListLength[3] <<  0;
 
+    //
+    // The following size was used to allocate the Request->InDataBuffer when a
+    // request was sent to the host.
+    //
+    if (rawListLength > STORVSC_MAX_LUN_TRANSFER_LENGTH)
+    {
+        STORVSC_FAIL_FAST();
+    }
+
     for (index = 0; index < rawListLength / sizeof(rawList->Lun[0]); index++)
     {
         lun = rawList->Lun[index][0] << 8 |
@@ -1060,6 +1097,9 @@ Return Value:
             status = EFI_OUT_OF_RESOURCES;
             goto Cleanup;
         }
+
+        STORVSC_FAIL_FAST_IF_FALSE(lun < SCSI_MAXIMUM_LUNS_PER_TARGET);
+
         targetLunEntry->Lun = (UCHAR)lun;
         targetLunEntry->TargetId = Target;
         InsertTailList(LunList, &targetLunEntry->ListEntry);

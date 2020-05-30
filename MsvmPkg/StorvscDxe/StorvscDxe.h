@@ -46,6 +46,17 @@ Author:
 #define TPL_STORVSC_CALLBACK (TPL_CALLBACK + 1)
 #define TPL_STORVSC_NOTIFY TPL_NOTIFY
 
+// TODO-19259739: Have a better way of reporting UEFI errors.
+#define STORVSC_FAIL_FAST() \
+                    ASSERT(FALSE); \
+                    CpuDeadLoop();
+
+#define STORVSC_FAIL_FAST_IF_FALSE(cond) \
+                    if (!(cond)) {STORVSC_FAIL_FAST()}
+
+
+#define STORVSC_MAX_LUN_TRANSFER_LENGTH (sizeof(UCHAR) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET)
+
 
 typedef struct _STORVSC_CHANNEL_CONTEXT
 {

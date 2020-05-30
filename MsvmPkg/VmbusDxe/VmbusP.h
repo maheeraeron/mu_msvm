@@ -96,8 +96,6 @@ extern EFI_GUID gEfiVmbusRootProtocolGuid;
 //
 // The following channels have gone through a security review and are allowed during UEFI:
 //
-// The following channels are pending security review but are critical for boot, therefore
-// allowed during UEFI:
 //      Storage channel (StorvscDxe)
 //
 typedef struct
