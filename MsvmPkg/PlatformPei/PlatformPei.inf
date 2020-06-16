@@ -141,7 +141,8 @@
     gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
-    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled    
+    gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault
     gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
     gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
     gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt

@@ -579,6 +579,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tVpciBootEnabled: %u\n", flags->Flags.VpciBootEnabled));
             DEBUG((DEBUG_VERBOSE, "\tProcIdleEnabled: %u\n", flags->Flags.ProcIdleEnabled));
             DEBUG((DEBUG_VERBOSE, "\tDisableSha384Pcr: %u\n", flags->Flags.DisableSha384Pcr));
+            DEBUG((DEBUG_VERBOSE, "\tMediaPresentEnabledByDefault: %u\n", flags->Flags.MediaPresentEnabledByDefault));
             break;
 
         case UefiConfigProcessorInformation:
@@ -1226,6 +1227,7 @@ Return Value:
                 PcdSetBool(PcdLowPowerS0IdleEnabled, (UINT8)flags->Flags.LowPowerS0IdleEnabled);
                 PcdSetBool(PcdVpciBootEnabled, (UINT8)flags->Flags.VpciBootEnabled);
                 PcdSetBool(PcdProcIdleEnabled, (UINT8) flags->Flags.ProcIdleEnabled);
+                PcdSetBool(PcdMediaPresentEnabledByDefault, (UINT8) flags->Flags.MediaPresentEnabledByDefault);
 
                 //
                 // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.

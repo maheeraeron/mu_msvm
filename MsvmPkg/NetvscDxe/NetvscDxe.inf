@@ -59,13 +59,12 @@
   MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
   DebugLib
   NetLib
   EmclLib
-  SerialPortLib
-  PrintLib
   PcdLib
+  PrintLib
+  UefiDriverEntryPoint
 
 [Guids]
   gEfiEventExitBootServicesGuid                 # CONSUMES
@@ -79,4 +78,5 @@
   gEfiEmclProtocolGuid                          # CONSUMES
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+  gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+  gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault

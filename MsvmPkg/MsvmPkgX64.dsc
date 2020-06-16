@@ -554,6 +554,7 @@
   gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0

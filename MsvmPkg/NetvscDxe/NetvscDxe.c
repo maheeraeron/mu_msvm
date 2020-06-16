@@ -109,6 +109,10 @@ Return Value:
     AdapterInfo->SetRxFilterStatus = (EFI_STATUS) -1;
     AdapterInfo->GetStnAddrStatus = (EFI_STATUS) -1;
 
+    // When the host has disabled media present notifications, NetvscDxe
+    // must default to TRUE or PXE won't work
+    AdapterInfo->MediaPresent = PcdGetBool(PcdMediaPresentEnabledByDefault);
+
     NetvscResetStatistics(AdapterInfo);
 
     //
