@@ -553,7 +553,7 @@ enum UefiStructureType
     UefiConfigSmbiosSystemSKUNumber          = 0x1D,
     UefiConfigSmbiosSystemFamily             = 0x1E,
     UefiConfigSmbiosMemoryDeviceSerialNumber = 0x1F,
-    UefiConfigIsolationSettings              = 0x20,
+    UefiConfigSlit                           = 0x20,
 };
 
 //
@@ -598,6 +598,12 @@ typedef struct _UEFI_CONFIG_SRAT
     UEFI_CONFIG_HEADER Header;
     UINT8 Srat[];
 } UEFI_CONFIG_SRAT;
+
+typedef struct _UEFI_CONFIG_SLIT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Slit[];
+} UEFI_CONFIG_SLIT;
 
 typedef struct _UEFI_CONFIG_MEMORY_MAP
 {

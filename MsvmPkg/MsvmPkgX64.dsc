@@ -443,6 +443,10 @@
   gMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdSratSize|0x0
 
+  # UEFI_CONFIG_SLIT
+  gMsvmPkgTokenSpaceGuid.PcdSlitPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdSlitSize|0x0
+
   # UEFI_CONFIG_MEMORY_MAP
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0

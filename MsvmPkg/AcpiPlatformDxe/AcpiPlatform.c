@@ -279,6 +279,59 @@ Return Value:
     return status;
 }
 
+
+EFI_STATUS
+AcpiInstallSlitTable(
+    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+/*++
+
+Routine Description:
+
+    Retrieves the SLIT table from the worker process and installs it.
+
+Arguments:
+
+    AcpiTable - A pointer to the ACPI table protocol.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table;
+    UINTN tableHandle;
+    UINT32 slitSize;
+
+    //
+    // Get the SLIT from the config blob parsed in PEI.
+    //
+    slitSize = PcdGet32(PcdSlitSize);
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdSlitPtr);
+
+    if (slitSize == 0)
+    {
+        ASSERT(table == NULL);
+        DEBUG((EFI_D_INFO, "SLIT not installed.\n"));
+        return EFI_SUCCESS;
+    }
+
+    ASSERT(table->Length == slitSize);
+
+    //
+    // Install it into the published tables.
+    //
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
+    return status;
+}
+
+
 EFI_STATUS
 AcpiInstallNfitTable(
     EFI_ACPI_TABLE_PROTOCOL *AcpiTable
@@ -529,6 +582,16 @@ Return Value:
     //
 
     status = AcpiInstallSratTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // Add the SLIT table.
+    //
+
+    status = AcpiInstallSlitTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;

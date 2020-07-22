@@ -338,6 +338,49 @@ DebugDumpSrat(
 #endif
 }
 
+
+VOID
+DebugDumpSlit(
+    _In_ VOID* Slit
+    )
+{
+#if !defined(MDEPKG_NDEBUG)
+    EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER*) Slit;
+    UINT8 *cursor;
+
+    DEBUG((DEBUG_VERBOSE, "--- SLIT data @ %x\n", acpiHdr));
+    DEBUG((DEBUG_VERBOSE, "    Header Signature %x\n", acpiHdr->Signature));
+    DEBUG((DEBUG_VERBOSE, "    Length %x\n", acpiHdr->Length));
+
+    cursor = (UINT8*)acpiHdr;
+    cursor += sizeof(EFI_ACPI_DESCRIPTION_HEADER);
+
+    UINT64 localityCount = *(UINT64*)cursor;
+    DEBUG((DEBUG_VERBOSE, "    Number of Localities: %x\n", localityCount));
+
+    cursor += sizeof(UINT64);
+
+    DEBUG((DEBUG_VERBOSE, "    Entries:\n"));
+    DEBUG((DEBUG_VERBOSE, "    "));
+    for (UINT64 i = 0;i < localityCount;i += 1)
+    {
+        DEBUG((DEBUG_VERBOSE, "    [%d]", i));
+    }
+    DEBUG((DEBUG_VERBOSE, "\n"));
+
+    for (UINT64 i = 0;i < localityCount;i += 1)
+    {
+        DEBUG((DEBUG_VERBOSE, "    [%d]", i));
+        for (UINT64 j = 0;j < localityCount;j += 1)
+        {
+            DEBUG((DEBUG_VERBOSE, "    %d", *cursor));
+            cursor += 1;
+        }
+        DEBUG((DEBUG_VERBOSE, "\n"));
+    }
+#endif
+}
+
 VOID
 DebugDumpMemoryMap(
     _In_ VOID* MemMap,
@@ -443,6 +486,11 @@ DebugDumpUefiConfigStruct(
         case UefiConfigSrat:
             UEFI_CONFIG_SRAT *srat = (UEFI_CONFIG_SRAT*) Header;
             DebugDumpSrat(srat->Srat);
+            break;
+
+        case UefiConfigSlit:
+            UEFI_CONFIG_SLIT *slit = (UEFI_CONFIG_SLIT*)Header;
+            DebugDumpSlit(slit->Slit);
             break;
 
         case UefiConfigMemoryMap:
@@ -751,6 +799,7 @@ Return Value:
         0, //UefiConfigSmbiosSystemSKUNumber
         0, //UefiConfigSmbiosSystemFamily
         0, //UefiConfigSmbiosMemoryDeviceSerialNumber
+        0, //UefiConfigSlit
     };
 
     //
@@ -935,6 +984,22 @@ Return Value:
                 PcdSet64(PcdSratPtr, (UINT64) sratStructure->Srat);
                 PcdSet32(PcdSratSize, acpiHdr->Length);
                 requiredStructures.UefiConfigSrat = 1;
+                break;
+
+            case UefiConfigSlit:
+                UEFI_CONFIG_SLIT *slitStructure = (UEFI_CONFIG_SLIT*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *slitHdr = (EFI_ACPI_DESCRIPTION_HEADER*) slitStructure->Slit;
+
+                if (slitStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    slitHdr->Signature != EFI_ACPI_6_2_SYSTEM_LOCALITY_INFORMATION_TABLE_SIGNATURE ||
+                    slitHdr->Length > (slitStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "*** Malformed SLIT\n"));
+                    goto Failure;
+                }
+
+                PcdSet64(PcdSlitPtr, (UINT64)slitStructure->Slit);
+                PcdSet32(PcdSlitSize, slitHdr->Length);
                 break;
 
             case UefiConfigMemoryMap:

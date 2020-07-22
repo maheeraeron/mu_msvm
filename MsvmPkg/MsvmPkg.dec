@@ -161,6 +161,10 @@
   gMsvmPkgTokenSpaceGuid.PcdSratPtr|0x0|UINT64|0x6002
   gMsvmPkgTokenSpaceGuid.PcdSratSize|0x0|UINT32|0x6003
 
+  # UEFI_CONFIG_SLIT
+  gMsvmPkgTokenSpaceGuid.PcdSlitPtr|0x0|UINT64|0x605A
+  gMsvmPkgTokenSpaceGuid.PcdSlitSize|0x0|UINT32|0x605B
+
   # UEFI_CONFIG_MEMORY_MAP
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0|UINT64|0x6004
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0|UINT32|0x6005

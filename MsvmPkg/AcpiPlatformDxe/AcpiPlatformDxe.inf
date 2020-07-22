@@ -62,6 +62,8 @@
     gMsvmPkgTokenSpaceGuid.PcdMadtSize
     gMsvmPkgTokenSpaceGuid.PcdSratPtr
     gMsvmPkgTokenSpaceGuid.PcdSratSize
+    gMsvmPkgTokenSpaceGuid.PcdSlitPtr
+    gMsvmPkgTokenSpaceGuid.PcdSlitSize
     gMsvmPkgTokenSpaceGuid.PcdEntropyPtr
     gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
     gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
