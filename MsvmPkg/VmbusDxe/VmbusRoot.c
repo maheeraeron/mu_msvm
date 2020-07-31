@@ -229,6 +229,7 @@ VMBUS_ROOT_CONTEXT mRootContext;
 EFI_HANDLE mRootDevice;
 EFI_HANDLE mVmbusImageHandle;
 HV_CONNECTION_ID gVmbusConnectionId = {VMBUS_MESSAGE_CONNECTION_ID};
+EFI_GUID *mVmbusLegacyProtocolGuid;
 
 VMBUS_ROOT_DEVICE_PATH gVmbusRootDevicePath;
 VMBUS_ROOT_NODE gVmbusRootNode =
@@ -389,19 +390,16 @@ Return Value:
         return status;
     }
 
-    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
-    {
-        status = gBS->UninstallMultipleProtocolInterfaces(
-            ChannelContext->Handle,
-            &gEfiVmbusLegacyProtocolGuid,
-            &ChannelContext->LegacyVmbusProtocol,
-            NULL);
+    status = gBS->UninstallMultipleProtocolInterfaces(
+        ChannelContext->Handle,
+        mVmbusLegacyProtocolGuid,
+        &ChannelContext->LegacyVmbusProtocol,
+        NULL);
 
-        if (EFI_ERROR(status))
-        {
-            DEBUG((EFI_D_ERROR, "Could not uninstall legacy VMBus protocol\n"));
-            return status;
-        }
+    if (EFI_ERROR(status))
+    {
+        DEBUG((EFI_D_ERROR, "Could not uninstall legacy VMBus protocol\n"));
+        return status;
     }
 
     gBS->CloseProtocol(mRootDevice,
@@ -1612,7 +1610,6 @@ Return Value:
 
     //
     // Install the Device Path and VMBus protocols onto a new child handle.
-    // The legacy protocol is only available in non-isolated VMs.
     //
 
     status = gBS->InstallMultipleProtocolInterfaces(&channelContext->Handle,
@@ -1624,15 +1621,12 @@ Return Value:
 
     ASSERT_EFI_ERROR(status);
 
-    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
-    {
-        status = gBS->InstallMultipleProtocolInterfaces(&channelContext->Handle,
-                                                        &gEfiVmbusLegacyProtocolGuid,
-                                                        &channelContext->LegacyVmbusProtocol,
-                                                        NULL);
+    status = gBS->InstallMultipleProtocolInterfaces(&channelContext->Handle,
+                                                    mVmbusLegacyProtocolGuid,
+                                                    &channelContext->LegacyVmbusProtocol,
+                                                    NULL);
 
-        ASSERT_EFI_ERROR(status);
-    }
+    ASSERT_EFI_ERROR(status);
 
     //
     // Open the root VMBus tag protocol BY_CHILD_CONTROLLER so EFI can track
@@ -2269,6 +2263,23 @@ Return Value:
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     mVmbusImageHandle = ImageHandle;
+
+    //
+    // Determine which GUID will be used for the legacy interface.  The legacy
+    // protocol is available in all VMs, but the GUID used to expose it
+    // differs between isolated and non-isolated VMs.  This is required to
+    // ensure that isolated VMs are correclty opting into the required
+    // isolation behavior of the legacy protocol.
+    //
+
+    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
+    {
+        mVmbusLegacyProtocolGuid = &gEfiVmbusLegacyProtocolGuid;
+    }
+    else
+    {
+        mVmbusLegacyProtocolGuid = &gEfiVmbusLegacyProtocolIvmGuid;
+    }
 
     //
     // Install the VMBus root controller tag and device path protocols onto a

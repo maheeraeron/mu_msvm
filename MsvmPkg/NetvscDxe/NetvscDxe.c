@@ -92,6 +92,16 @@ Return Value:
     ASSERT(AdapterInfo != NULL);
 
     //
+    // The net VSC cannot run safely inside of an isolated VM, so refuse to
+    // start up if this VM is isolated.
+    //
+
+    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
+    {
+        return EFI_DEVICE_ERROR;
+    }
+
+    //
     // Initialize variables.
     //
     AdapterInfo->RxBufferAllocation = NULL;

@@ -36,6 +36,7 @@
     gEfiVmbusRootProtocolGuid       # PRODUCES
     gEfiVmbusProtocolGuid           # PRODUCES
     gEfiVmbusLegacyProtocolGuid     # PRODUCES
+    gEfiVmbusLegacyProtocolIvmGuid  # PRODUCES
 
 [Depex]
     gEfiHvProtocolGuid

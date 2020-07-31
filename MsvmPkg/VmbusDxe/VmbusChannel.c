@@ -477,9 +477,9 @@ Return Value:
     // GPADL has been deleted.
     //
 
-    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
+    if ((PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone) &&
+        !Gpadl->Legacy)
     {
-        ASSERT(!Gpadl->Legacy);
         mHvIvm->MakeAddressRangeNotHostVisible(mHvIvm, Gpadl->ProtectionHandle);
     }
 
