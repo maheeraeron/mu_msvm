@@ -325,12 +325,10 @@ DefinitionBlock (
                     {FixedPcdGet8(PcdVmbusVector)}
 
 #else
-                // Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
-                //    {FixedPcdGet8(PcdVmbusVector)}
-                //
-                // TODO-cho: Include a dummy resource so this device has a _CRS
-                // until interrupts are figured out.
-                VendorShort() { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+                // On AArch64, we select a PPI (16) because Linux expects it to
+                // be available to all CPUs.
+                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
+                   {FixedPcdGet8(PcdVmbusVector)}
 
 #endif
             }

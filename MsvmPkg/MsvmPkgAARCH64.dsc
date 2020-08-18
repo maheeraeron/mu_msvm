@@ -303,7 +303,7 @@
   # Vmbus Config
   gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector|18              # use PPI for SINTs
   gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex|0x2
-  gMsvmPkgTokenSpaceGuid.PcdVmbusVector|32                  # SPI
+  gMsvmPkgTokenSpaceGuid.PcdVmbusVector|16                  # PPI for Linux
 
   # BIOS Device
   gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress|0xEFFED000
