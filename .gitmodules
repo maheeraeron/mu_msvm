@@ -14,3 +14,6 @@
 [submodule "Silicon/ARM/MU_TIANO"]
     path = Silicon/ARM/MU_TIANO
     url = https://github.com/Microsoft/mu_silicon_arm_tiano.git
+[submodule "Common/PRM"]
+	path = Common/PRM
+	url = https://windowspartners.visualstudio.com/MSCoreUEFI/_git/platform_runtime_mechanism

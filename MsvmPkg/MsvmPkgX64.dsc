@@ -131,6 +131,13 @@
   PlatformThemeLib|MsvmPkg/Library/PlatformThemeLib/PlatformThemeLib.inf
   SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
 
+  #
+  # Platform Runtime Package (PRM) Libs
+  #
+  PrmContextBufferLib|PrmPkg/Library/DxePrmContextBufferLib/DxePrmContextBufferLib.inf
+  PrmModuleDiscoveryLib|PrmPkg/Library/DxePrmModuleDiscoveryLib/DxePrmModuleDiscoveryLib.inf
+  PrmPeCoffLib|PrmPkg/Library/DxePrmPeCoffLib/DxePrmPeCoffLib.inf
+
 [LibraryClasses.IA32]
 
 #
@@ -279,6 +286,12 @@
 
 
 [PcdsFixedAtBuild.common]
+!if $(PRM_ENABLE) == TRUE
+  # Defines a unique PRM Platform GUID for MsvmPkg
+  # {a46cbafd-0039-4817-8428-5baf85c11b64}
+  gPrmPkgTokenSpaceGuid.PcdPrmPlatformGuid|{0xfd, 0xba, 0x6c, 0xa4, 0x39, 0x00, 0x17, 0x48, 0x84, 0x28, 0x5b, 0xaf, 0x85, 0xc1, 0x1b, 0x64}
+!endif
+
   # Synthetic Timer Config
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex|0x0
@@ -796,6 +809,39 @@
     <LibraryClasses>
       LockBoxLib|MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxDxeLib.inf
   }
+
+!if $(PRM_ENABLE) == TRUE
+  #
+  # PRM Configuration Driver
+  #
+  PrmPkg/PrmConfigDxe/PrmConfigDxe.inf {
+    <LibraryClasses>
+      NULL|PrmPkg/Samples/PrmSampleAcpiParameterBufferModule/Library/DxeAcpiParameterBufferModuleConfigLib/DxeAcpiParameterBufferModuleConfigLib.inf
+      NULL|PrmPkg/Samples/PrmSampleContextBufferModule/Library/DxeContextBufferModuleConfigLib/DxeContextBufferModuleConfigLib.inf
+      NULL|PrmPkg/Samples/PrmSampleHardwareAccessModule/Library/DxeHardwareAccessModuleConfigLib/DxeHardwareAccessModuleConfigLib.inf
+  }
+
+  #
+  # PRM Module Loader Driver
+  #
+  PrmPkg/PrmLoaderDxe/PrmLoaderDxe.inf
+
+  #
+  # PRM SSDT Installation Driver
+  #
+  PrmPkg/PrmSsdtInstallDxe/PrmSsdtInstallDxe.inf
+
+  #
+  # PRM Sample Modules
+  #
+  PrmPkg/Samples/PrmSamplePrintModule/PrmSamplePrintModule.inf
+  PrmPkg/Samples/PrmSampleAcpiParameterBufferModule/PrmSampleAcpiParameterBufferModule.inf
+  PrmPkg/Samples/PrmSampleHardwareAccessModule/PrmSampleHardwareAccessModule.inf {
+    <LibraryClasses>
+      DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+  }
+  PrmPkg/Samples/PrmSampleContextBufferModule/PrmSampleContextBufferModule.inf
+!endif
 
 [BuildOptions]
   # Generate PDBs on release builds with full debugging, with linker and CC flags
