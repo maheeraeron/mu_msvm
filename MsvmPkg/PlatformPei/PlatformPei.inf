@@ -50,7 +50,6 @@
 [LibraryClasses]
     DebugLib
     HobLib
-    HvHypercallLib
     IoLib
     PeimEntryPoint
     PeiResourcePublicationLib

@@ -674,13 +674,18 @@ Return Value:
 
 --*/
 {
-    BOOLEAN connectedToHypervisor = FALSE;
     PLATFORM_INIT_CONTEXT context;
     EFI_STATUS status;
 
     DEBUG((DEBUG_VERBOSE, ">>> *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));
 
     ZeroMem(&context, sizeof(context));
+
+    //
+    // Determine whether this system is running isolated in order to determine
+    // the correct mechanism for loading the configuration.
+    //
+    HvDetectIsolation();
 
     //
     // Get the configuration from the worker process.
@@ -713,22 +718,6 @@ Return Value:
     status = PeiServicesInstallPpi(MsvmBootModePpiDescriptor);
     ASSERT_EFI_ERROR(status);
 
-    if (HvInitialize())
-    {
-        DEBUG((DEBUG_INFO, "System detected as isolated, connecting to hypervisor\n"));
-        status = HvConnectToHypervisor(&context);
-        if (EFI_ERROR(status))
-        {
-            //
-            // TODO-19259739: Have a better way of reporting UEFI errors.
-            //
-            ASSERT(FALSE);
-            CpuDeadLoop();
-        }
-
-        connectedToHypervisor = TRUE;
-    }
-
     //
     // Init memory map before publishing any other HOBs.
     //
@@ -745,11 +734,6 @@ Return Value:
     // Init the watchdog (available starting with Threshold VDev)
     //
     InitializeWatchdog();
-
-    if (connectedToHypervisor)
-    {
-        HvDisconnectFromHypervisor(&context);
-    }
 
     DEBUG((DEBUG_VERBOSE, "<<< *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));
 
