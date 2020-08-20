@@ -26,6 +26,7 @@
 #include <Ppi/TemporaryRamSupport.h>
 #include <EfiNt.h>
 #include <hvgdk_mini.h>
+#include <BiosInterface.h>
 #include "SecP.h"
 
 #define SEC_IDT_ENTRY_COUNT 46
@@ -61,6 +62,7 @@ EFI_PEI_PPI_DESCRIPTOR mPrivateDispatchTable[] =
     },
 };
 
+HV_HYPERVISOR_ISOLATION_CONFIGURATION mIsolationConfiguration;
 
 UINT32
 Expand3ByteSize (
@@ -1064,7 +1066,8 @@ EFIAPI
 SecCoreStartupWithStack (
     _In_ EFI_FIRMWARE_VOLUME_HEADER              *BootFv,
     _In_ VOID                                    *TopOfCurrentStack,
-    _In_ PHV_HYPERVISOR_ISOLATION_CONFIGURATION  IsolationConfiguration
+    _In_ PHV_HYPERVISOR_ISOLATION_CONFIGURATION  IsolationConfiguration,
+    _In_opt_ VOID                                *UefiIgvmConfigHeader
     )
 /*++
 
@@ -1125,8 +1128,10 @@ Return Value:
     // function.
     //
 
-    if ((IsolationConfiguration->IsolationType == HV_PARTITION_ISOLATION_TYPE_SNP) &&
-        (IsolationConfiguration->ParavisorPresent == 0))
+    mIsolationConfiguration = *IsolationConfiguration;
+
+    if ((mIsolationConfiguration.IsolationType == HV_PARTITION_ISOLATION_TYPE_SNP) &&
+        (mIsolationConfiguration.ParavisorPresent == 0))
     {
         //
         // #VC is exception vector 29.
@@ -1134,6 +1139,11 @@ Return Value:
 
         Handler = (UINTN)SecVirtualCommunicationExceptionHandler;
         Vector = 29;
+
+        if (!SecInitializeSnp(UefiIgvmConfigHeader))
+        {
+            return;
+        }
 
         IdtTableInStack.IdtTable[Vector].Uint128.Uint64 = 0;
         IdtTableInStack.IdtTable[Vector].Uint128.Uint64_1 = 0;

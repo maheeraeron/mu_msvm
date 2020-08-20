@@ -32,6 +32,7 @@ EXTERN SecProcessVirtualCommunicationException:PROC
 ; @param[in]  DI    'BP': boot-strap processor, or 'AP': application processor
 ; @param[in]  RBP   Pointer to the start of the Boot Firmware Volume
 ; @param[in]  R8, R9, R10, R11  Hypervisor isolation configuration CPUID leaf
+; @param[in]  R12   Pointer to UEFI IGVM config header if required
 ;
 ; @return     None  This routine does not return
 ;
@@ -49,6 +50,7 @@ _ModuleEntryPoint PROC PUBLIC
     ;   rcx: BootFirmwareVolumePtr
     ;   rdx: TopOfCurrentStack
     ;   r8:  IsolationConfiguration
+    ;   r9:  IgvmConfigHeader
     ;
     mov     rcx, rbp
     mov     rdx, rsp
@@ -58,7 +60,14 @@ _ModuleEntryPoint PROC PUBLIC
     mov     28h[rsp], r10d
     mov     2ch[rsp], r11d
     lea     r8, 20h[rsp]
+    mov     r9, r12
     call    SecCoreStartupWithStack
+
+    ;
+    ; If SecCoreStartupWithStack returns, then startup has failed.  Invoke a
+    ; fatal exception.
+    ;
+    int     3
 
 _ModuleEntryPoint ENDP
 
@@ -152,5 +161,19 @@ SecVirtualCommunicationExceptionHandler PROC PUBLIC
             END_TRAP_HANDLER
 
 SecVirtualCommunicationExceptionHandler ENDP
+
+;
+; SecVmgexit
+;
+; Executes the VMGEXIT instruction
+;
+
+SecVmgexit PROC PUBLIC
+
+            db      0f2h                ; VMGEXIT prefix
+            vmmcall
+            ret
+
+SecVmgexit ENDP
 
 END

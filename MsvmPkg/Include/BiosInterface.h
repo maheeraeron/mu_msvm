@@ -823,5 +823,14 @@ typedef struct _UEFI_CONFIG_VPCI_INSTANCE_FILTER
     UINT8 InstanceGuid[sizeof(GUID)];
 } UEFI_CONFIG_VPCI_INSTANCE_FILTER;
 
+//
+// UEFI configuration information for hardware isolated VMs.
+//
+
+typedef struct _UEFI_IGVM_PARAMETER_INFO
+{
+    UINT32 ParameterPageCount;
+} UEFI_IGVM_PARAMETER_INFO;
+
 #pragma warning(pop)
 #pragma pack(pop)

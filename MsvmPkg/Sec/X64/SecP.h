@@ -14,6 +14,8 @@ Abstract:
 
 #pragma once
 
+extern HV_HYPERVISOR_ISOLATION_CONFIGURATION mIsolationConfiguration;
+
 typedef struct _TRAP_FRAME {
     UINT64 P1;
     UINT64 P2;
@@ -36,7 +38,19 @@ typedef struct _TRAP_FRAME {
     UINT64 SegSs;
 } TRAP_FRAME, *PTRAP_FRAME;
 
+BOOLEAN
+SecInitializeSnp (
+    UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+    );
+
+#define MSR_GHCB        0xC0010130
+
 VOID
 SecVirtualCommunicationExceptionHandler (
+    VOID
+    );
+
+VOID
+SecVmgexit (
     VOID
     );
