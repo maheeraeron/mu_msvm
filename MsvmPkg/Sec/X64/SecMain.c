@@ -25,6 +25,8 @@
 #include <Library/PeCoffExtraActionLib.h>
 #include <Ppi/TemporaryRamSupport.h>
 #include <EfiNt.h>
+#include <hvgdk_mini.h>
+#include "SecP.h"
 
 #define SEC_IDT_ENTRY_COUNT 46
 
@@ -1060,8 +1062,9 @@ Return Value:
 VOID
 EFIAPI
 SecCoreStartupWithStack (
-    _In_ EFI_FIRMWARE_VOLUME_HEADER *BootFv,
-    _In_ VOID                       *TopOfCurrentStack
+    _In_ EFI_FIRMWARE_VOLUME_HEADER              *BootFv,
+    _In_ VOID                                    *TopOfCurrentStack,
+    _In_ PHV_HYPERVISOR_ISOLATION_CONFIGURATION  IsolationConfiguration
     )
 /*++
 
@@ -1075,6 +1078,9 @@ Arguments:
 
     TopOfCurrentStack - The top of the current stack.
 
+    IsolationConfiguration - Supplies the isolation configuration of the
+        current partition.
+
 Return Value:
 
     None.
@@ -1082,9 +1088,11 @@ Return Value:
 --*/
 {
     EFI_SEC_PEI_HAND_OFF    SecCoreData;
+    UINT64                  Handler;
     SEC_IDT_TABLE           IdtTableInStack;
     IA32_DESCRIPTOR         IdtDescriptor;
     UINT32                  Index;
+    UINT32                  Vector;
 
     DEBUG((DEBUG_VERBOSE, "\x1b")); // clear screen and scrollback
     DEBUG((DEBUG_VERBOSE, "c\x1b")); 
@@ -1109,6 +1117,31 @@ Return Value:
     for (Index = 0; Index < SEC_IDT_ENTRY_COUNT; Index ++)
     {
         IdtTableInStack.IdtTable[Index].Bits.GateType = 0;
+    }
+
+    //
+    // If this is a hardware-isolated VM with no paravisor, then install a
+    // minimal isolation exception handler to enable PEI core services to
+    // function.
+    //
+
+    if ((IsolationConfiguration->IsolationType == HV_PARTITION_ISOLATION_TYPE_SNP) &&
+        (IsolationConfiguration->ParavisorPresent == 0))
+    {
+        //
+        // #VC is exception vector 29.
+        //
+
+        Handler = (UINTN)SecVirtualCommunicationExceptionHandler;
+        Vector = 29;
+
+        IdtTableInStack.IdtTable[Vector].Uint128.Uint64 = 0;
+        IdtTableInStack.IdtTable[Vector].Uint128.Uint64_1 = 0;
+        IdtTableInStack.IdtTable[Vector].Bits.OffsetLow = (UINT16)Handler;
+        IdtTableInStack.IdtTable[Vector].Bits.OffsetHigh = (UINT16)(Handler >> 16);
+        IdtTableInStack.IdtTable[Vector].Bits.OffsetUpper = Handler >> 32;
+        IdtTableInStack.IdtTable[Vector].Bits.Selector = (UINT16)AsmReadCs();
+        IdtTableInStack.IdtTable[Vector].Bits.GateType = IA32_IDT_GATE_TYPE_INTERRUPT_32;
     }
 
     IdtDescriptor.Base  = (UINTN)&IdtTableInStack.IdtTable;

@@ -150,11 +150,19 @@ Return Value:
          index <= 0x2d;
          index += 1)
     {
-        ArchSetIdtEntry(idtBase,
-                        index * sizeof(IA32_IDT_GATE_DESCRIPTOR),
-                        BdUnhandledException,
-                        0x8e00,
-                        CodeSegment);
+        //
+        // Leave isolation-related exception handlers alone if they are installed.
+        //
+
+        if ((idtBase[index].Bits.GateType == 0) ||
+            (index != 0x1D))
+        {
+            ArchSetIdtEntry(idtBase,
+                            index * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                            BdUnhandledException,
+                            0x8e00,
+                            CodeSegment);
+        }
     }
 
     //
