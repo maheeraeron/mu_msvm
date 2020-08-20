@@ -1207,7 +1207,9 @@ InitInterruptDescriptorTable (
     // If the old IDT had a handler for this interrupt, then
     // preserve it.
     //
-    if (Index < OldIdtSize) {
+    if ((Index < OldIdtSize) &&
+        (OldIdt[Index].Bits.GateType != 0)) {
+
       IntHandler =
         (VOID*) (
           OldIdt[Index].Bits.OffsetLow +
@@ -1216,14 +1218,12 @@ InitInterruptDescriptorTable (
             + (((UINTN) OldIdt[Index].Bits.OffsetUpper) << 32)
 #endif
           );
-    } else {
-      IntHandler = NULL;
-    }
 
-    gIdtTable[Index].Bits.Selector    = CurrentCs;
-    gIdtTable[Index].Bits.Reserved_0  = 0;
-    gIdtTable[Index].Bits.GateType    = IA32_IDT_GATE_TYPE_INTERRUPT_32;
-    SetInterruptDescriptorTableHandlerAddress (Index, IntHandler);
+        gIdtTable[Index].Bits.Selector    = CurrentCs;
+        gIdtTable[Index].Bits.Reserved_0  = 0;
+        gIdtTable[Index].Bits.GateType    = IA32_IDT_GATE_TYPE_INTERRUPT_32;
+        SetInterruptDescriptorTableHandlerAddress (Index, IntHandler);
+    }
   }
 
   //
@@ -1237,9 +1237,11 @@ InitInterruptDescriptorTable (
   //
   // Initialize Exception Handlers
   //
-  for (Index = OldIdtSize; Index < 32; Index++) {
-    Status = CpuRegisterInterruptHandler (&gCpu, Index, CommonExceptionHandler);
-    ASSERT_EFI_ERROR (Status);
+  for (Index = 0; Index < 32; Index++) {
+    if (gIdtTable[Index].Bits.GateType == 0) {
+      Status = CpuRegisterInterruptHandler (&gCpu, Index, CommonExceptionHandler);
+      ASSERT_EFI_ERROR (Status);
+    }
   }
 }
 

@@ -60,21 +60,6 @@ EFI_PEI_PPI_DESCRIPTOR mPrivateDispatchTable[] =
 };
 
 
-//
-// Template of an IDT entry pointing to 10:FFFFFFE4h.
-//
-IA32_IDT_GATE_DESCRIPTOR  mIdtEntryTemplate =
-{
-    {                                        // Bits
-        0xffe4,                              // OffsetLow
-        0x10,                                // Selector
-        0x0,                                 // Reserved_0
-        IA32_IDT_GATE_TYPE_INTERRUPT_32,     // GateType
-        0xffff                               // OffsetHigh
-    }
-};
-
-
 UINT32
 Expand3ByteSize (
   _In_ VOID* Size
@@ -1118,11 +1103,12 @@ Return Value:
     InitializeFloatingPointUnits ();
 
     //
-    // Initialize IDT
+    // Initialize IDT.  No valid vectors exist, so mark every entry as invalid.
     //
     IdtTableInStack.PeiService = NULL;
-    for (Index = 0; Index < SEC_IDT_ENTRY_COUNT; Index ++) {
-        CopyMem(&IdtTableInStack.IdtTable[Index], &mIdtEntryTemplate, sizeof (mIdtEntryTemplate));
+    for (Index = 0; Index < SEC_IDT_ENTRY_COUNT; Index ++)
+    {
+        IdtTableInStack.IdtTable[Index].Bits.GateType = 0;
     }
 
     IdtDescriptor.Base  = (UINTN)&IdtTableInStack.IdtTable;
