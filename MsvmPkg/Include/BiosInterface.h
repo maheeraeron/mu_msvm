@@ -830,6 +830,7 @@ typedef struct _UEFI_CONFIG_VPCI_INSTANCE_FILTER
 typedef struct _UEFI_IGVM_PARAMETER_INFO
 {
     UINT32 ParameterPageCount;
+    UINT32 CpuidPagesOffset;
 } UEFI_IGVM_PARAMETER_INFO;
 
 #pragma warning(pop)

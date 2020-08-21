@@ -176,4 +176,25 @@ SecVmgexit PROC PUBLIC
 
 SecVmgexit ENDP
 
+;
+; MulDiv64
+;
+; Multiply two 64-bit numbers and divide by a third.
+;
+; @param[in] RCX  Value
+; @param[in] RDX  Multiplier
+; @param[in] R8   Divisor
+;
+; @return         Result
+;
+
+MulDiv64 PROC PUBLIC
+
+            mov     rax, rdx            ; move multiplier to correct register
+            mul     rcx                 ; multiply into RDX:RAX
+            div     r8                  ; divide RDX:RAX by R8
+            ret                         ; result is in rax
+
+MulDiv64 ENDP
+
 END

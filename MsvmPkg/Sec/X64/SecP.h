@@ -50,7 +50,46 @@ SecVirtualCommunicationExceptionHandler (
     VOID
     );
 
+#define VC_EXIT_CODE_CPUID      0x72
+#define VC_EXIT_CODE_MSR        0x7C
+
 VOID
 SecVmgexit (
     VOID
+    );
+
+typedef struct _HV_PSP_CPUID_LEAF
+{
+    UINT32 EaxIn;
+    UINT32 EcxIn;
+    UINT64 XfemIn;
+    UINT64 XssIn;
+    UINT32 EaxOut;
+    UINT32 EbxOut;
+    UINT32 EcxOut;
+    UINT32 EdxOut;
+    UINT64 ReservedZ;
+} HV_PSP_CPUID_LEAF, *PHV_PSP_CPUID_LEAF;
+
+#define HV_PSP_CPUID_LEAF_COUNT_MAX     64
+
+typedef struct _HV_PSP_CPUID_PAGE
+{
+    UINT32 Count;
+    UINT32 ReservedZ1;
+    UINT64 ReservedZ2;
+    HV_PSP_CPUID_LEAF CpuidLeafInfo[HV_PSP_CPUID_LEAF_COUNT_MAX];
+} HV_PSP_CPUID_PAGE, *PHV_PSP_CPUID_PAGE;
+
+typedef struct _SEC_CPUID_INFO
+{
+    UINT64 SupportedLeaves;
+    UINT32 MaximumLeafIndex;
+} SEC_CPUID_INFO;
+
+UINT64
+MulDiv64 (
+    _In_ UINT64 Value,
+    _In_ UINT64 Multiplier,
+    _In_ UINT64 Divisor
     );
