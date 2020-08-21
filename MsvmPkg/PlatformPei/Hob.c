@@ -23,6 +23,7 @@ Author:
 #include <Config.h>
 #include <Hob.h>
 #include <Hv.h>
+#include <IsolationTypes.h>
 
 
 #define BASIC_FLAGS                                     \
@@ -47,6 +48,140 @@ Author:
 const char * const gDebugMemoryFormat = "HOB Start % 17lx End %17lx %s\n";
 const char * const gDebugCpuFormat    = "HOB MemWidth %d IOWidth %d Cpu\n";
 const char * const gDebugGuidFormat   = "HOB Base % 17lx Size %17lx GUID Data\n";
+
+
+static
+VOID
+HobpAcceptRamPages(
+    _Inout_ PPLATFORM_INIT_CONTEXT Context,
+    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
+    _In_ UINT64 PageCount
+    )
+/*++
+
+Routine Description:
+
+    Accepts a range of RAM GPA pages on hardware isolated platforms that require
+    such acceptance.
+
+Arguments:
+
+    Context - The platform init context.
+
+    GpaPageBase - Supplies the address of the first target GPA to accept. The
+        remaining pages will be modified sequentially from this GPA.
+
+    PageCount - The number of pages to modify.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    UINT32 isolationType;
+    UINT32 configBlobSize = PcdGet32(PcdConfigBlobSize);
+    UINT64 configBlobBase = (UINT64)Context->StartOfConfigBlob;
+    HV_GPA_PAGE_NUMBER configBlobPageLimit =
+        ((configBlobBase + configBlobSize - 1) / EFI_PAGE_SIZE) + 1;
+
+    //
+    // No acceptance is required unless this is a hardware isolated platform
+    // with no paravisor.
+    //
+
+    isolationType = PcdGet32(PcdIsolationArchitecture);
+    if ((isolationType < UefiIsolationTypeSnp) ||
+        PcdGetBool(PcdIsolationParavisorPresent))
+    {
+        return;
+    }
+
+    //
+    // The region from 0 to the end of the config blob is expected to be pre-accepted, so exclude
+    // that from the range.
+    //
+    if (GpaPageBase < configBlobPageLimit)
+    {
+        if (GpaPageBase + PageCount > configBlobPageLimit)
+        {
+            PageCount -= configBlobPageLimit - GpaPageBase;
+            GpaPageBase = configBlobPageLimit;
+        }
+        else
+        {
+            //
+            // The region is entirely pre-accepted - there is nothing to do.
+            //
+            return;
+        }
+    }
+
+    //
+    // Accept pages as required by the architecture.
+    //
+
+#if defined(MDE_CPU_X64)
+    if (isolationType == UefiIsolationTypeSnp)
+    {
+        while (PageCount != 0)
+        {
+            UINT64 errorCode;
+
+            //
+            // Attempt to validate a 2 MB page if possible.
+            //
+
+            if (((GpaPageBase & (SIZE_2MB - 1)) == 0) &&
+                (PageCount >= SIZE_2MB))
+            {
+                if (_sev_pvalidate(
+                    (PVOID)(GpaPageBase * EFI_PAGE_SIZE),
+                    1,
+                    1,
+                    &errorCode) != 0)
+                {
+                    errorCode = SNP_FAIL_INPUT;
+                }
+
+                if (errorCode == SNP_SUCCESS)
+                {
+                    GpaPageBase += SIZE_2MB / EFI_PAGE_SIZE;
+                    PageCount -= SIZE_2MB / EFI_PAGE_SIZE;
+                    continue;
+                }
+                else if (errorCode != SNP_FAIL_SIZEMISMATCH)
+                {
+                    //
+                    // TODO-19259739: Have a better way of reporting UEFI errors.
+                    //
+                    CpuDeadLoop();
+                }
+            }
+
+            if (_sev_pvalidate(
+                (PVOID)(GpaPageBase * EFI_PAGE_SIZE),
+                0,
+                1,
+                &errorCode) != 0)
+            {
+                errorCode = SNP_FAIL_INPUT;
+            }
+
+            if (errorCode != SNP_SUCCESS)
+            {
+                //
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                //
+                CpuDeadLoop();
+            }
+
+            GpaPageBase += 1;
+            PageCount -= 1;
+        }
+    }
+#endif
+}
 
 
 void
@@ -112,6 +247,8 @@ Return Value:
 {
     ASSERT((BaseAddress % EFI_PAGE_SIZE) == 0);
     ASSERT((Size % EFI_PAGE_SIZE) == 0);
+
+    HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
 
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
                                MEMORY_FLAGS,
@@ -221,6 +358,8 @@ Return Value:
 {
     ASSERT((BaseAddress % EFI_PAGE_SIZE) == 0);
     ASSERT((Size % EFI_PAGE_SIZE) == 0);
+
+    HobpAcceptRamPages(Context, BaseAddress / EFI_PAGE_SIZE, Size / EFI_PAGE_SIZE);
 
     BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
                                MEMORY_FLAGS & ~EFI_RESOURCE_ATTRIBUTE_TESTED,

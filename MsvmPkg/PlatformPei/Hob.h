@@ -93,3 +93,14 @@ HobAddGuidData(
     _In_ UINTN     DataSize
   );
 
+BOOLEAN
+_sev_pvalidate(
+    _In_ PVOID Address,
+    _In_ UINT32 PageSize,
+    _In_ UINT32 Validate,
+    _Out_ PUINT64 ErrorCode
+    );
+
+#define SNP_SUCCESS             0
+#define SNP_FAIL_INPUT          1
+#define SNP_FAIL_SIZEMISMATCH   6
