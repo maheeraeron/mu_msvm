@@ -303,7 +303,9 @@
   # Vmbus Config
   gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector|18              # use PPI for SINTs
   gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex|0x2
-  gMsvmPkgTokenSpaceGuid.PcdVmbusVector|16                  # PPI for Linux
+  # PPI for Linux. Older public kernels used by WSL2 had 16 and 17 hardcoded, so
+  # use the next available, 18.
+  gMsvmPkgTokenSpaceGuid.PcdVmbusVector|18
 
   # BIOS Device
   gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress|0xEFFED000
