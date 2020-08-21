@@ -824,14 +824,32 @@ typedef struct _UEFI_CONFIG_VPCI_INSTANCE_FILTER
 } UEFI_CONFIG_VPCI_INSTANCE_FILTER;
 
 //
-// UEFI configuration information for hardware isolated VMs.
+// UEFI configuration information for direct parsing of IGVM parameters.
 //
 
 typedef struct _UEFI_IGVM_PARAMETER_INFO
 {
     UINT32 ParameterPageCount;
     UINT32 CpuidPagesOffset;
+    UINT32 VpContextPageOffset;
+    UINT32 LoaderBlockOffset;
+    UINT32 CommandLineOffset;
+    UINT32 CommandLinePageCount;
+    UINT32 MemoryMapOffset;
+    UINT32 MemoryMapPageCount;
+    UINT32 MadtOffset;
+    UINT32 MadtPageCount;
+    UINT32 SratOffset;
+    UINT32 SratPageCount;
+    UINT32 MaximumProcessorCount;
+    UINT32 UefiMemoryMapOffset;
+    UINT32 UefiMemoryMapPageCount;
 } UEFI_IGVM_PARAMETER_INFO;
+
+typedef struct _UEFI_IGVM_LOADER_BLOCK
+{
+    UINT32 NumberOfProcessors;
+} UEFI_IGVM_LOADER_BLOCK;
 
 #pragma warning(pop)
 #pragma pack(pop)

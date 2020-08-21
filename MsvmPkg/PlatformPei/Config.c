@@ -26,6 +26,8 @@ Abstract:
 #include <Library/PeiServicesLib.h>
 #include <Library/ResourcePublicationLib.h>
 #include <Ppi/ConfigPpi.h>
+#include <IsolationTypes.h>
+#include "Config.h"
 
 //
 // Values and type used with CPUID to get the physical address width.
@@ -729,6 +731,89 @@ Return Value:
     return EFI_SUCCESS;
 }
 
+BOOLEAN
+ConfigSetProcessorInfo(
+    UEFI_CONFIG_PROCESSOR_INFORMATION *ProcessorInfo
+    )
+{
+    PcdSet32(PcdProcessorCount, ProcessorInfo->ProcessorCount);
+    PcdSet32(PcdProcessorsPerVirtualSocket, ProcessorInfo->ProcessorsPerVirtualSocket);
+    PcdSet32(PcdThreadsPerProcessor, ProcessorInfo->ThreadsPerProcessor);
+
+    if (ProcessorInfo->ProcessorCount == 0)
+    {
+        DEBUG((DEBUG_ERROR, "Processors count was 0.\n"));
+        return FALSE;
+    }
+
+    if (ProcessorInfo->ProcessorsPerVirtualSocket == 0)
+    {
+        DEBUG((DEBUG_ERROR, "Processors per virtual socket was 0.\n"));
+        return FALSE;
+    }
+
+    if (ProcessorInfo->ThreadsPerProcessor == 0)
+    {
+        DEBUG((DEBUG_ERROR, "Threads per processor was 0.\n"));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+BOOLEAN
+ConfigSetUefiConfigFlags(
+    UEFI_CONFIG_FLAGS *ConfigFlags
+    )
+{
+    PcdSetBool(PcdSerialControllersEnabled, (UINT8) ConfigFlags->Flags.SerialControllersEnabled);
+    PcdSetBool(PcdPauseAfterBootFailure, (UINT8) ConfigFlags->Flags.PauseAfterBootFailure);
+    PcdSetBool(PcdPxeIpV6, (UINT8) ConfigFlags->Flags.PxeIpV6);
+    PcdSetBool(PcdDebuggerEnabled, (UINT8) ConfigFlags->Flags.DebuggerEnabled);
+    PcdSetBool(PcdLoadOempTable, (UINT8) ConfigFlags->Flags.LoadOempTable);
+    PcdSetBool(PcdTpmEnabled, (UINT8) ConfigFlags->Flags.TpmEnabled);
+    PcdSetBool(PcdHibernateEnabled, (UINT8) ConfigFlags->Flags.HibernateEnabled);
+    PcdSet8(PcdConsoleMode, (UINT8) ConfigFlags->Flags.ConsoleMode);
+    PcdSetBool(PcdMemoryAttributesTableEnabled, (UINT8) ConfigFlags->Flags.MemoryAttributesTableEnabled);
+    PcdSetBool(PcdVirtualBatteryEnabled, (UINT8) ConfigFlags->Flags.VirtualBatteryEnabled);
+    PcdSetBool(PcdSgxMemoryEnabled, (UINT8) ConfigFlags->Flags.SgxMemoryEnabled);
+    PcdSetBool(PcdIsVmbfsBoot, (UINT8) ConfigFlags->Flags.IsVmbfsBoot);
+    PcdSetBool(PcdDisableFrontpage, (UINT8) ConfigFlags->Flags.DisableFrontpage);
+    PcdSetBool(PcdDefaultBootAlwaysAttempt, (UINT8) ConfigFlags->Flags.DefaultBootAlwaysAttempt);
+    PcdSetBool(PcdLowPowerS0IdleEnabled, (UINT8)ConfigFlags->Flags.LowPowerS0IdleEnabled);
+    PcdSetBool(PcdVpciBootEnabled, (UINT8)ConfigFlags->Flags.VpciBootEnabled);
+    PcdSetBool(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled);
+    PcdSetBool(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault);
+
+    //
+    // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
+    // When TRUE, we will perform a more "standard" measured boot
+    //
+    if (ConfigFlags->Flags.MeasureAdditionalPcrs)
+    {
+        // TODO-cho: no TPM available for AARCH64 yet.
+#if defined (MDE_CPU_X64)
+        PcdSetBool(TcgMeasureBootStringsInPcr4, TRUE);
+        PcdSetBool(PcdExcludeFvMainFromMeasurements, FALSE);
+#endif
+    }
+
+    //
+    // For VM versions below 9.3, DisableSha384Pcr will be TRUE.
+    // When TRUE, we remove SHA-384 from the PCR hash mask.
+    //
+    if (ConfigFlags->Flags.DisableSha384Pcr)
+    {
+#if defined (MDE_CPU_X64)
+        PcdSet32(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384));
+#endif
+    }
+
+    return TRUE;
+}
+
+
 EFI_STATUS
 VerifyStructureLength(
     _In_ UEFI_CONFIG_HEADER* Header
@@ -1275,47 +1360,9 @@ Return Value:
 
             case UefiConfigFlags:
                 UEFI_CONFIG_FLAGS *flags = (UEFI_CONFIG_FLAGS*) header;
-                PcdSetBool(PcdSerialControllersEnabled, (UINT8) flags->Flags.SerialControllersEnabled);
-                PcdSetBool(PcdPauseAfterBootFailure, (UINT8) flags->Flags.PauseAfterBootFailure);
-                PcdSetBool(PcdPxeIpV6, (UINT8) flags->Flags.PxeIpV6);
-                PcdSetBool(PcdDebuggerEnabled, (UINT8) flags->Flags.DebuggerEnabled);
-                PcdSetBool(PcdLoadOempTable, (UINT8) flags->Flags.LoadOempTable);
-                PcdSetBool(PcdTpmEnabled, (UINT8) flags->Flags.TpmEnabled);
-                PcdSetBool(PcdHibernateEnabled, (UINT8) flags->Flags.HibernateEnabled);
-                PcdSet8(PcdConsoleMode, (UINT8) flags->Flags.ConsoleMode);
-                PcdSetBool(PcdMemoryAttributesTableEnabled, (UINT8) flags->Flags.MemoryAttributesTableEnabled);
-                PcdSetBool(PcdVirtualBatteryEnabled, (UINT8) flags->Flags.VirtualBatteryEnabled);
-                PcdSetBool(PcdSgxMemoryEnabled, (UINT8) flags->Flags.SgxMemoryEnabled);
-                PcdSetBool(PcdIsVmbfsBoot, (UINT8) flags->Flags.IsVmbfsBoot);
-                PcdSetBool(PcdDisableFrontpage, (UINT8) flags->Flags.DisableFrontpage);
-                PcdSetBool(PcdDefaultBootAlwaysAttempt, (UINT8) flags->Flags.DefaultBootAlwaysAttempt);
-                PcdSetBool(PcdLowPowerS0IdleEnabled, (UINT8)flags->Flags.LowPowerS0IdleEnabled);
-                PcdSetBool(PcdVpciBootEnabled, (UINT8)flags->Flags.VpciBootEnabled);
-                PcdSetBool(PcdProcIdleEnabled, (UINT8) flags->Flags.ProcIdleEnabled);
-                PcdSetBool(PcdMediaPresentEnabledByDefault, (UINT8) flags->Flags.MediaPresentEnabledByDefault);
-
-                //
-                // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
-                // When TRUE, we will perform a more "standard" measured boot
-                //
-                if (flags->Flags.MeasureAdditionalPcrs)
+                if (!ConfigSetUefiConfigFlags(flags))
                 {
-                    // TODO-cho: no TPM available for AARCH64 yet.
-#if defined (MDE_CPU_X64)
-                    PcdSetBool(TcgMeasureBootStringsInPcr4, TRUE);
-                    PcdSetBool(PcdExcludeFvMainFromMeasurements, FALSE);
-#endif
-                }
-
-                //
-                // For VM versions below 9.3, DisableSha384Pcr will be TRUE.
-                // When TRUE, we remove SHA-384 from the PCR hash mask.
-                //
-                if (flags->Flags.DisableSha384Pcr)
-                {
-#if defined (MDE_CPU_X64)
-                    PcdSet32(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384));
-#endif
+                    goto Failure;
                 }
 
                 requiredStructures.UefiConfigFlags = 1;
@@ -1323,25 +1370,8 @@ Return Value:
 
             case UefiConfigProcessorInformation:
                 UEFI_CONFIG_PROCESSOR_INFORMATION *processorInfo = (UEFI_CONFIG_PROCESSOR_INFORMATION*) header;
-                PcdSet32(PcdProcessorCount, processorInfo->ProcessorCount);
-                PcdSet32(PcdProcessorsPerVirtualSocket, processorInfo->ProcessorsPerVirtualSocket);
-                PcdSet32(PcdThreadsPerProcessor, processorInfo->ThreadsPerProcessor);
-
-                if (processorInfo->ProcessorCount == 0)
+                if (!ConfigSetProcessorInfo(processorInfo))
                 {
-                    DEBUG((DEBUG_ERROR, "Processors count was 0.\n"));
-                    goto Failure;
-                }
-
-                if (processorInfo->ProcessorsPerVirtualSocket == 0)
-                {
-                    DEBUG((DEBUG_ERROR, "Processors per virtual socket was 0.\n"));
-                    goto Failure;
-                }
-
-                if (processorInfo->ThreadsPerProcessor == 0)
-                {
-                    DEBUG((DEBUG_ERROR, "Threads per processor was 0.\n"));
                     goto Failure;
                 }
 
@@ -1467,7 +1497,21 @@ Return Value:
 {
     EFI_STATUS status;
 
-    status = GetUefiConfigInfo();
+    //
+    // If this is a hardware-isolated VM running without a paravisor, then no
+    // config blob is present.  Instead, the parameters were inserted in IGVM
+    // format and must be parsed as such.
+    //
+
+    if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
+        (PcdGetBool(PcdIsolationParavisorPresent) == FALSE))
+    {
+        status = GetIgvmConfigInfo();
+    }
+    else
+    {
+        status = GetUefiConfigInfo();
+    }
 
     //
     // The config blob was not well formed, do not proceed.

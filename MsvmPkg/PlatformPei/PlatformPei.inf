@@ -30,6 +30,7 @@
 
 [Sources]
     Config.c
+    IgvmConfig.c
     Hob.c
     Hv.c
     Platform.c

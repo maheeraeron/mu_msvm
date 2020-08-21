@@ -27,3 +27,18 @@ GetConfiguration(
     IN CONST EFI_PEI_SERVICES** PeiServices,
     OUT UINT8* PhysicalAddressWidth
     );
+
+EFI_STATUS
+GetIgvmConfigInfo(
+    VOID
+    );
+
+BOOLEAN
+ConfigSetProcessorInfo(
+    UEFI_CONFIG_PROCESSOR_INFORMATION *ProcessorInfo
+    );
+
+BOOLEAN
+ConfigSetUefiConfigFlags(
+    UEFI_CONFIG_FLAGS *ConfigFlags
+    );
