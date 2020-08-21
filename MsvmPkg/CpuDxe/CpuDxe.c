@@ -1293,7 +1293,7 @@ InitializeCpu (
   // paravisor is present to handle them.
   //
   if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
-      PcdGetBool(PcdIsolationParavisorPresent))
+      !PcdGetBool(PcdIsolationParavisorPresent))
   {
       strictIsolation = TRUE;
   }
