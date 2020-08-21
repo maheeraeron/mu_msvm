@@ -100,6 +100,10 @@
 [Pcd]
     gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
 
+[Pcd.X64]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
+
 [Depex]
     gEfiCpuArchProtocolGuid
 

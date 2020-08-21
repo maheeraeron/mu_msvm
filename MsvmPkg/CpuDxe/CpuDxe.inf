@@ -70,3 +70,6 @@
 [Depex]
   TRUE
 
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent

@@ -32,6 +32,7 @@
 #include <Library/LocalApicLib.h>
 #include <Library/UefiCpuLib.h>
 #include <Guid/IdleLoopEvent.h>
+#include <IsolationTypes.h>
 
 //
 //

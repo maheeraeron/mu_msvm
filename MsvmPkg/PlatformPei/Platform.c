@@ -36,6 +36,7 @@ Abstract:
 #include <Library/ResourcePublicationLib.h>
 #include <Ppi/MasterBootMode.h>
 #include <Ppi/ConfigPpi.h>
+#include <IsolationTypes.h>
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 #define ADDFIRSTMEMORYRANGE AddFirstMemoryRangeIntel
@@ -419,6 +420,22 @@ Return Value:
     BOOLEAN legacyMemoryMap = PcdGetBool(PcdLegacyMemoryMap);
     UINT32 memMapSize = PcdGet32(PcdMemoryMapSize);
     VOID* memMap = (VOID*)(UINTN) PcdGet64(PcdMemoryMapPtr);
+    BOOLEAN suppressMtrrs;
+    
+    //
+    // If this is a hardware isolated VM with no paravisor, then skip all
+    // MTRR configuration.
+    //
+
+    suppressMtrrs = FALSE;
+
+#if defined(MDE_CPU_X64)
+    if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
+        !PcdGetBool(PcdIsolationParavisorPresent))
+    {
+        suppressMtrrs = TRUE;
+    }
+#endif
 
     //
     // Process the memory map and create HOBs for memory regions..
@@ -534,7 +551,10 @@ Return Value:
     // N.B. This call also has the effect of enabling MTRRs. The default
     // MTRR type remains uncached.
     //
-    MtrrSetMemoryAttribute(0, SIZE_512KB + SIZE_128KB, CacheWriteBack);
+    if (!suppressMtrrs)
+    {
+        MtrrSetMemoryAttribute(0, SIZE_512KB + SIZE_128KB, CacheWriteBack);
+    }
 #endif
 
     //
@@ -596,7 +616,10 @@ Return Value:
     //
     // Tell the BiosDevice to set up the variable MTRRs.
     //
-    WriteBiosDevice(BiosConfigBootFinalize, Context->PhysicalAddressWidth);
+    if (!suppressMtrrs)
+    {
+        WriteBiosDevice(BiosConfigBootFinalize, Context->PhysicalAddressWidth);
+    }
 #endif
 
 #if defined(MDE_CPU_AARCH64)
@@ -730,10 +753,14 @@ Return Value:
         PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize)));
     HobAddFvMemoryRange(PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize));
 
-    //
-    // Init the watchdog (available starting with Threshold VDev)
-    //
-    InitializeWatchdog();
+    if ((PcdGet32(PcdIsolationArchitecture) < UefiIsolationTypeSnp) ||
+        PcdGetBool(PcdIsolationParavisorPresent))
+    {
+        //
+        // Init the watchdog (available starting with Threshold VDev)
+        //
+        InitializeWatchdog();
+    }
 
     DEBUG((DEBUG_VERBOSE, "<<< *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));
 

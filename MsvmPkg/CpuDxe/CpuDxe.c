@@ -1285,6 +1285,22 @@ InitializeCpu (
 {
   EFI_STATUS  Status;
   EFI_EVENT   IdleLoopEvent;
+  BOOLEAN     strictIsolation;
+
+  //
+  // Determine whether hardware isolation is being enforced.  If so, then
+  // certain aspects of hardware initialization are not supported when no
+  // paravisor is present to handle them.
+  //
+  if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
+      PcdGetBool(PcdIsolationParavisorPresent))
+  {
+      strictIsolation = TRUE;
+  }
+  else
+  {
+      strictIsolation = FALSE;
+  }
 
   InitializeFloatingPointUnits ();
 
@@ -1306,7 +1322,10 @@ InitializeCpu (
   //
   // Enable the local APIC for Virtual Wire Mode.
   //
-  ProgramVirtualWireMode ();
+  if (!strictIsolation)
+  {
+    ProgramVirtualWireMode ();
+  }
 
   //
   // Install CPU Architectural Protocol
@@ -1322,7 +1341,10 @@ InitializeCpu (
   //
   // Refresh GCD memory space map according to MTRR value.
   //
-  RefreshGcdMemoryAttributes ();
+  if (!strictIsolation)
+  {
+    RefreshGcdMemoryAttributes ();
+  }
 
   //
   // Setup a callback for idle events

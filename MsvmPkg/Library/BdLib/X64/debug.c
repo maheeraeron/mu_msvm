@@ -25,10 +25,13 @@ Environment:
 #include <EfiNt.h>
 #include "Bd.h"
 #include <Library/ResetSystemLib.h>
+#include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/WatchdogTimerLib.h>
+#include <IsolationTypes.h>
 #include "CrashDump.h"
+#include <hvgdk_mini.h>
 
 BD_DEBUG_TABLE BdDebugTable =
 {
@@ -37,6 +40,8 @@ BD_DEBUG_TABLE BdDebugTable =
     &BdDebugPrintGlobalMask,
     &BdDebuggerNotPresent
 };
+
+BOOLEAN mWatchdogActive;
 
 NTSTATUS
 BdArchInitialize (
@@ -63,12 +68,77 @@ Return Value:
 
 --*/
 {
+    BOOLEAN hardwareIsolated = FALSE;
+
     BdSerialPrint(">>> %a\n", __FUNCTION__);
     //
     // Allocate the boot debugger PCR.
     //
 
     BdPrcb = &BdPcr.Prcb;
+
+    //
+    // Determine whether the watchdog is active.  It is always active except
+    // on platforms that enable hardware isolation with no paravisor.
+    //
+
+#if defined(MDE_CPU_X64)
+
+    //
+    // Since boot services have not yet been initialized, PCD values are not
+    // accessible, and the determination of isolation status must be done
+    // through CPUID.
+    //
+
+    {
+        HV_CPUID_RESULT cpuidResult;
+
+        AsmCpuid(HvCpuIdFunctionVersionAndFeatures,
+                 &cpuidResult.Eax,
+                 &cpuidResult.Ebx,
+                 &cpuidResult.Ecx,
+                 &cpuidResult.Edx);
+
+        if (cpuidResult.VersionAndFeatures.HypervisorPresent)
+        {
+            AsmCpuid(HvCpuIdFunctionHvInterface,
+                     &cpuidResult.Eax,
+                     &cpuidResult.Ebx,
+                     &cpuidResult.Ecx,
+                     &cpuidResult.Edx);
+
+            if (cpuidResult.HvInterface.Interface == HvMicrosoftHypervisorInterface)
+            {
+                AsmCpuid(HvCpuIdFunctionMsHvFeatures,
+                         &cpuidResult.Eax,
+                         &cpuidResult.Ebx,
+                         &cpuidResult.Ecx,
+                         &cpuidResult.Edx);
+
+                if (cpuidResult.MsHvFeatures.PartitionPrivileges.Isolation)
+                {
+                    AsmCpuid(HvCpuidFunctionMsHvIsolationConfiguration,
+                             &cpuidResult.Eax,
+                             &cpuidResult.Ebx,
+                             &cpuidResult.Ecx,
+                             &cpuidResult.Edx);
+
+                    if ((cpuidResult.MsHvIsolationConfiguration.IsolationType >= HV_PARTITION_ISOLATION_TYPE_SNP) &&
+                        !cpuidResult.MsHvIsolationConfiguration.ParavisorPresent)
+                    {
+                        hardwareIsolated = TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+#endif
+
+    if (!hardwareIsolated)
+    {
+        mWatchdogActive = TRUE;
+    }
 
     //
     // Install the boot debugger trap handlers.  Each boot application has a
@@ -397,7 +467,10 @@ Return Value:
     // Even simple debug events, like symbol loading,
     // can wait in the debugger if there was a pending break-in
     //
-    watchdogState = WatchdogSuspend();
+    if (mWatchdogActive)
+    {
+        watchdogState = WatchdogSuspend();
+    }
 
     //
     // Dispatch based on exception code
@@ -444,7 +517,11 @@ Return Value:
         BdControlCPressed = FALSE;
     }
 
-    WatchdogResume(watchdogState);
+    if (mWatchdogActive)
+    {
+        WatchdogResume(watchdogState);
+    }
+
     return Handled;
 }
 
