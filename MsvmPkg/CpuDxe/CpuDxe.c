@@ -1130,6 +1130,7 @@ SetInterruptDescriptorTableHandlerAddress (
     UintnHandler = ((UINTN) AsmIdtVector00) + (8 * Index);
   }
 
+  gIdtTable[Index].Bits.Selector    = AsmReadCs();
   gIdtTable[Index].Bits.OffsetLow   = (UINT16)UintnHandler;
   gIdtTable[Index].Bits.Reserved_0  = 0;
   gIdtTable[Index].Bits.GateType    = IA32_IDT_GATE_TYPE_INTERRUPT_32;
@@ -1203,6 +1204,7 @@ InitInterruptDescriptorTable (
   //
   CurrentCs = AsmReadCs();
   for (Index = 0; Index < INTERRUPT_VECTOR_NUMBER; Index ++) {
+
     //
     // If the old IDT had a handler for this interrupt, then
     // preserve it.
@@ -1219,9 +1221,6 @@ InitInterruptDescriptorTable (
 #endif
           );
 
-        gIdtTable[Index].Bits.Selector    = CurrentCs;
-        gIdtTable[Index].Bits.Reserved_0  = 0;
-        gIdtTable[Index].Bits.GateType    = IA32_IDT_GATE_TYPE_INTERRUPT_32;
         SetInterruptDescriptorTableHandlerAddress (Index, IntHandler);
     }
   }
