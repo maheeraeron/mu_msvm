@@ -338,10 +338,11 @@ SecProcessVirtualCpuid (
         // must be calculated here.
         //
 
-        cpuidResult.Eax = cpuidInfo->MaximumLeafIndex;
+        cpuidResult.Eax = cpuidInfo->MaximumLeafIndex | (leaf & 0x80000000);
         cpuidResult.Ebx = 'htuA';
         cpuidResult.Edx = 'itne';
         cpuidResult.Ecx = 'DMAc';
+        break;
 
     case 1:
 
