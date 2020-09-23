@@ -67,6 +67,7 @@
   DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
   DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
+  HostVisibilityLib|MsvmPkg/Library/HostVisibilityLib/HostVisibilityLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   LocalApicLib|UefiCpuPkg/Library/BaseXApicX2ApicLib/BaseXApicX2ApicLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
