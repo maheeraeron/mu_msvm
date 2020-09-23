@@ -131,6 +131,13 @@ BOOLEAN BdSubsystemInitialized = FALSE;
 BOOLEAN BdSubsystemEnabled = FALSE;
 
 //
+// Context sent flag.  Prevents the debugger from setting a context that it has
+// not yet read from the target machine.
+//
+
+BOOLEAN BdpContextSent;
+
+//
 // Used to track unloaded UEFI modules.
 //
 //

@@ -91,6 +91,7 @@ Return Value:
     MessageHeader.Buffer = (PCHAR)&ManipulateState;
     MessageData.MaximumLength = BD_MESSAGE_BUFFER_SIZE;
     MessageData.Buffer = (PCHAR)(&BdMessageBuffer[0]);
+    BdpContextSent = FALSE;
 
     //
     // Send event notification packet to debugger on host. Come back here
@@ -160,6 +161,14 @@ ResendPacket:
 
         case DbgKdSetContextApi:
             BdSetContext(&ManipulateState, &MessageData, ContextRecord);
+            break;
+
+        case DbgKdGetContextExApi:
+            BdGetContextEx(&ManipulateState, &MessageData, ContextRecord);
+            break;
+
+        case DbgKdSetContextExApi:
+            BdSetContextEx(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWriteBreakPointApi:

@@ -171,6 +171,7 @@ Return Value:
 
     AdditionalData->Length = sizeof(CONTEXT);
     BdCopyMemory(AdditionalData->Buffer, (PCHAR)Context, sizeof(CONTEXT));
+    BdpContextSent = TRUE;
 
     //
     // Send reply packet.
@@ -181,6 +182,112 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     AdditionalData);
+
+    return;
+}
+
+
+VOID
+BdGetContextEx (
+    __in PDBGKD_MANIPULATE_STATE64 m,
+    __out PSTRING AdditionalData,
+    __in PCONTEXT Context
+    )
+
+/*++
+
+Routine Description:
+
+    This function is called in response to an extended get context state
+    manipulation message.  Its function is to return a portion of the current
+    context.  This allows the context to be queried in chunks that are smaller
+    than the debugger transport maximum packet size.
+
+Arguments:
+
+    m - Supplies the state manipulation message.
+
+    AdditionalData - Supplies any additional data for the message.
+
+    Context - Supplies the current context.
+
+Return Value:
+
+    None.
+
+--*/
+
+{
+
+    ULONG ByteCount;
+    ULONG ContextLength;
+    STRING MessageHeader;
+    ULONG Offset;
+
+    ASSERT(AdditionalData->Length == 0);
+    MessageHeader.Length = sizeof(*m);
+    MessageHeader.Buffer = (PCHAR)m;
+    Offset = m->u.GetContextEx.Offset;
+    ByteCount = m->u.GetContextEx.ByteCount;
+
+    ContextLength = sizeof(CONTEXT);
+
+    //
+    // Return just the portion that was requested.
+    //
+
+    m->u.GetContextEx.BytesCopied = 0;
+
+    //
+    // Calculate how much can be copied.
+    //
+
+    if (Offset >= ContextLength) {
+        Offset = ContextLength;
+    }
+
+    if (ByteCount > (ContextLength - Offset)) {
+        ByteCount = (ContextLength - Offset);
+    }
+
+    //
+    // Move the requested portion of the context to the buffer.
+    //
+
+    BdCopyMemory(AdditionalData->Buffer, (PCHAR)Context + Offset, ByteCount);
+
+    //
+    // Return the length of the context and how much was copied and its
+    // location.
+    //
+
+    m->u.GetContextEx.Offset = Offset;
+    m->u.GetContextEx.ByteCount = ContextLength;
+    m->u.GetContextEx.BytesCopied = ByteCount;
+
+    //
+    // Track when a complete context has been sent.  Specifically exclude
+    // cases when the Offset was equal to or larger than the Context and
+    // nothing was copied.
+    //
+
+    if ((Offset < ContextLength) && ((Offset + ByteCount) == ContextLength)) {
+        BdpContextSent = TRUE;
+    }
+
+    //
+    // Set the length of the returned buffer.
+    //
+
+    AdditionalData->Length = (USHORT)ByteCount;
+
+    //
+    // Send the response.
+    //
+
+    BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
+                 &MessageHeader,
+                 AdditionalData);
 
     return;
 }
@@ -216,6 +323,13 @@ Return Value:
 {
     STRING messageHeader;
 
+    messageHeader.Length = sizeof(*m);
+    messageHeader.Buffer = (PCHAR)m;
+    if (BdpContextSent == FALSE) {
+        m->ReturnStatus = STATUS_UNSUCCESSFUL;
+        goto BdSetContextEnd;
+    }
+
     m->ReturnStatus = STATUS_SUCCESS;
     BdCopyMemory((PCHAR)Context, AdditionalData->Buffer, sizeof(CONTEXT));
 
@@ -223,11 +337,103 @@ Return Value:
     // Send reply packet.
     //
 
-    messageHeader.Length = sizeof(*m);
-    messageHeader.Buffer = (PCHAR)m;
+BdSetContextEnd:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     NULL);
+}
+
+
+VOID
+BdSetContextEx (
+    __in PDBGKD_MANIPULATE_STATE64 m,
+    __in PSTRING AdditionalData,
+    __out PCONTEXT Context
+    )
+
+/*++
+
+Routine Description:
+
+    This function is called in response to an extended set context state
+    manipulation message.    Its function is to set a portion of the current
+    context.  This allows the context to be set using chunks that are smaller
+    than the debugger transport maximum packet size.
+
+Arguments:
+
+    m - Supplies the state manipulation message.
+
+    AdditionalData - Supplies any additional data for the message.
+
+    Context - Supplies the current context.
+
+Return Value:
+
+    None.
+
+--*/
+
+{
+
+    ULONG ByteCount;
+    ULONG ContextLength;
+    STRING MessageHeader;
+    ULONG Offset;
+    static UCHAR DECLSPEC_ALIGN(8) CachedData[BD_MESSAGE_BUFFER_SIZE];
+
+    MessageHeader.Length = sizeof(*m);
+    MessageHeader.Buffer = (PCHAR)m;
+    Offset = m->u.SetContextEx.Offset;
+    ByteCount = m->u.SetContextEx.ByteCount;
+    ContextLength = m->u.SetContextEx.BytesCopied;
+
+    ASSERT(ContextLength >= sizeof(CONTEXT));
+
+    if (BdpContextSent == FALSE) {
+        m->ReturnStatus = STATUS_UNSUCCESSFUL;
+        goto BdSetContextExEnd;
+    }
+
+    if ((ContextLength > BD_MESSAGE_BUFFER_SIZE) ||
+        (Offset >= ContextLength) || (ByteCount == 0) ||
+        (((ULONG64)Offset + ByteCount) > ContextLength)) {
+
+        m->ReturnStatus = STATUS_INVALID_PARAMETER;
+        goto BdSetContextExEnd;
+    }
+
+    //
+    // Move the supplied portion of the Context to its location in CachedData.
+    //
+
+    BdCopyMemory((PCHAR)&CachedData[Offset],
+                 AdditionalData->Buffer,
+                 ByteCount);
+
+    //
+    // If the complete Context has been captured into CachedData, then set the
+    // Context into the processor.
+    //
+
+    if (((ULONG64)Offset + ByteCount) == ContextLength) {
+
+        //
+        // Copy context.
+        //
+
+        BdCopyMemory((PCHAR)Context, (PCHAR)CachedData, sizeof(CONTEXT));
+    }
+
+    m->ReturnStatus = STATUS_SUCCESS;
+    m->u.SetContextEx.BytesCopied = ByteCount;
+
+BdSetContextExEnd:
+    BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
+                 &MessageHeader,
+                 NULL);
+
+    return;
 }
 
 

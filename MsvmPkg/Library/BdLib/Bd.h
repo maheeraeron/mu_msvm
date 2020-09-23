@@ -703,7 +703,21 @@ BdGetContext (
     );
 
 VOID
+BdGetContextEx (
+    __in PDBGKD_MANIPULATE_STATE64 m,
+    __out PSTRING AdditionalData,
+    __in PCONTEXT Context
+    );
+
+VOID
 BdSetContext (
+    __in PDBGKD_MANIPULATE_STATE64 m,
+    __in PSTRING AdditionalData,
+    __out PCONTEXT Context
+    );
+
+VOID
+BdSetContextEx (
     __in PDBGKD_MANIPULATE_STATE64 m,
     __in PSTRING AdditionalData,
     __out PCONTEXT Context
@@ -1021,6 +1035,7 @@ extern KDDEBUGGER_DATA64 BdDebuggerDataBlock;
 extern LIST_ENTRY BdDebuggerDataListHead;
 extern BOOLEAN BdSubsystemInitialized;
 extern BOOLEAN BdSubsystemEnabled;
+extern BOOLEAN BdpContextSent;
 extern EFI_UNLOADED_MODULE BdUnloadedModules[];
 extern ULONG BdLastUnloadedModule;
 
