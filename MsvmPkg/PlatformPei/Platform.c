@@ -18,6 +18,7 @@ Abstract:
 #include <BiosInterface.h>
 #include <Platform.h>
 #include <Config.h>
+#include <KdNet.h>
 #include <Hob.h>
 #include <Hv.h>
 #include <Guid/MemoryTypeInformation.h>
@@ -421,7 +422,7 @@ Return Value:
     UINT32 memMapSize = PcdGet32(PcdMemoryMapSize);
     VOID* memMap = (VOID*)(UINTN) PcdGet64(PcdMemoryMapPtr);
     BOOLEAN suppressMtrrs;
-    
+
     //
     // If this is a hardware isolated VM with no paravisor, then skip all
     // MTRR configuration.
@@ -673,6 +674,7 @@ Return Value:
 
 }
 
+
 EFI_STATUS
 EFIAPI
 InitializePlatform(
@@ -745,6 +747,14 @@ Return Value:
     // Init memory map before publishing any other HOBs.
     //
     InitializeMemoryMap(&context);
+
+    //
+    // Load KDNET if required.
+    //
+    if (UseKdNetDebugger)
+    {
+        LoadKdNet(FileHandle);
+    }
 
     //
     // Publish the FV HOB.

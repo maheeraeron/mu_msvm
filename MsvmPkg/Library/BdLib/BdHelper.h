@@ -3917,68 +3917,6 @@ typedef enum {
 #define SEGMENT_MASK    0xffff
 
 
-typedef struct {
-    UCHAR     Type;  //CmResourceType      BOOLEAN   Valid;
-    UCHAR     Reserved[2];
-    PUCHAR    TranslatedAddress;
-    ULONG     Length;
-} DEBUG_DEVICE_ADDRESS, *PDEBUG_DEVICE_ADDRESS;
-
-typedef struct {
-    PHYSICAL_ADDRESS  Start;
-    PHYSICAL_ADDRESS  MaxEnd;
-    PVOID             VirtualAddress;
-    ULONG             Length;
-    BOOLEAN           Cached;
-    BOOLEAN           Aligned;
-} DEBUG_MEMORY_REQUIREMENTS, *PDEBUG_MEMORY_REQUIREMENTS;
-
-typedef enum {
-    KdNameSpacePCI,
-    KdNameSpaceACPI,
-    KdNameSpaceAny,
-
-    //      // Maxmimum namespace enumerator.      //
-    KdNameSpaceMax,
-} KD_NAMESPACE_ENUM, *PKD_NAMESPACE_ENUM;
-
-typedef enum {
-    KdConfigureDeviceAndContinue,
-    KdSkipDeviceAndContinue,
-    KdConfigureDeviceAndStop,
-    KdSkipDeviceAndStop,
-} KD_CALLBACK_ACTION, *PKD_CALLBACK_ACTION;
-
-#define MAXIMUM_DEBUG_BARS 6
-
-typedef struct {
-    ULONG     Bus;
-    ULONG     Slot;
-    USHORT    Segment;
-    USHORT    VendorID;
-    USHORT    DeviceID;
-    UCHAR     BaseClass;
-    UCHAR     SubClass;
-    UCHAR     ProgIf;
-    UCHAR     Flags;
-    BOOLEAN   Initialized;
-    BOOLEAN   Configured;
-    DEBUG_DEVICE_ADDRESS BaseAddress[MAXIMUM_DEBUG_BARS];
-    DEBUG_MEMORY_REQUIREMENTS Memory;
-    USHORT    PortType;
-    USHORT    PortSubtype;
-    PVOID     OemData;
-    ULONG     OemDataLength;
-    KD_NAMESPACE_ENUM NameSpace;
-    PVOID     NameSpacePath;
-    ULONG     NameSpacePathLength;
-} DEBUG_DEVICE_DESCRIPTOR, *PDEBUG_DEVICE_DESCRIPTOR;
-
-typedef struct _KD_CONTEXT {
-    ULONG KdpDefaultRetries;
-    BOOLEAN KdpControlCPending;
-} KD_CONTEXT, *PKD_CONTEXT;
-
 typedef enum _KD_EXCEPTION_CODE
 {
     KdExceptionSingleStep =             0x1001, // Single step

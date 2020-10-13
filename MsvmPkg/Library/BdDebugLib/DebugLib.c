@@ -33,13 +33,6 @@ Author:
 
 #define DEBUG_PRINT_MAX_SIZE 1024
 
-typedef struct _STRING
-{
-    UINT16 Length;
-    UINT16 MaximumLength;
-    CHAR8 *Buffer;
-} STRING, *PSTRING;
-
 // ------------------------------------------------------------------ Globals
 
 UINT32 BdDebugPrintComponentMask = 0;

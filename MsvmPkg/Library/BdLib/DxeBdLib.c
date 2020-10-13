@@ -104,6 +104,10 @@ Return value:
 
 --*/
 {
+    VOID *kdnetHob;
+
+    kdnetHob = NULL;
+
     BdSerialPrint(">>> %a (%lx, %p, %p)\n", __FUNCTION__, InitFlag, Context, Function);
     if (InitFlag == DEBUG_AGENT_INIT_DXE_CORE)
     {
@@ -128,13 +132,26 @@ Return value:
             BdSubsystemEnabled ? "TRUE" : "FALSE");
 
         //
+        // Get the hob that specifies where the KDNET binary was loaded to in
+        // PEI.
+        //
+        if (BdSubsystemEnabled)
+        {
+            hob = GetFirstGuidHob(&gMsvmDebuggerKdnetBinaryGuid);
+            if (hob != NULL)
+            {
+                kdnetHob = GET_GUID_HOB_DATA(hob);
+            }
+        }
+
+        //
         // Initialize crashdump, only once when INIT called during DXE Core.
         // Context is the HOB list when called from DXE Core.
         //
         InitializeCrashDumpAgent(Context);
     }
 
-    BdInitialize();
+    BdInitialize(kdnetHob);
 
     if (Function != NULL)
     {

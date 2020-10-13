@@ -94,6 +94,13 @@ typedef VOID *PVOID;
 
 typedef ULONG_PTR KAFFINITY;
 
+typedef struct _STRING
+{
+    USHORT Length;
+    USHORT MaximumLength;
+    CHAR *Buffer;
+} STRING, *PSTRING;
+
 //
 // General defines.
 //

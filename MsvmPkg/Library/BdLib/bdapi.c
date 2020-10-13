@@ -72,7 +72,8 @@ BdpDeviceStop (
 
 NTSTATUS
 BdpGetConnectionParameters (
-    __out PBD_CONNECTION_PARAMETERS Parameters
+    _In_opt_ PVOID TransportHob,
+    _Out_ PBD_CONNECTION_PARAMETERS Parameters
     );
 
 VOID
@@ -299,21 +300,27 @@ Return Value:
     BdConnectionActive = TRUE;
 
     //
-    // Perform a debug print before loading the image symbols.
+    // Perform a debug print before loading the image symbols.  This is only
+    // performed over a serial link, since other transports expect the symbol
+    // load packet to come first and will set BdDebuggerNotPresent on their
+    // own.
     //
 
-    retries = CONNECTION_RETRIES;
-    do
+    if (BdDebuggerType == BdSerial)
     {
-        //
-        // Note: Use DebugService2 directly since DebugPrintString uses the DebugLib
-        // which has not been initialized yet.
-        //
-        BdDebuggerNotPresent = FALSE;
+        retries = CONNECTION_RETRIES;
+        do
+        {
+            //
+            // Note: Use DebugService2 directly since DebugPrintString uses the DebugLib
+            // which has not been initialized yet.
+            //
+            BdDebuggerNotPresent = FALSE;
 #define INIT_STRING "Microsoft UEFI Boot Debugger Initialized\n"
-        DebugService2(INIT_STRING, (PVOID)sizeof(INIT_STRING), BREAKPOINT_PRINT);
-        retries -= 1;
-    } while ((BdDebuggerNotPresent != FALSE) && (retries > 0));
+            DebugService2(INIT_STRING, (PVOID)sizeof(INIT_STRING), BREAKPOINT_PRINT);
+            retries -= 1;
+        } while ((BdDebuggerNotPresent != FALSE) && (retries > 0));
+    }
 
     //
     // Track initial connection success.
@@ -369,7 +376,7 @@ Return Value:
 
 NTSTATUS
 BdInitialize (
-    VOID
+    _In_opt_ VOID *Hob
     )
 /*++
 
@@ -382,7 +389,8 @@ Routine Description:
 
 Arguments:
 
-    None.
+    Hob - Optionally supplies a pointer to a HOB describing the loaded KDNET
+          transport module.
 
 Return Value:
 
@@ -442,12 +450,16 @@ Return Value:
         }
 
         //
+        // Determine the type of debugging that will be used.
+        //
+
+        //
         // Only initialize the boot debugger if specified in the application's
         // options.  Considered exit successful if there was no request to
         // initialize the debugger.
         //
 
-        optionStatus = BdpGetConnectionParameters(&BdParameters);
+        optionStatus = BdpGetConnectionParameters(Hob, &BdParameters);
         if (!NT_SUCCESS(optionStatus))
         {
             goto InitializeEnd;
@@ -464,6 +476,12 @@ Return Value:
             BdTransportMaxPacketSize = LEGACY_PACKET_MAX_SIZE;
             BdSendPacket = BdComSendPacket;
             BdReceivePacket = BdComReceivePacket;
+        }
+        else if (BdDebuggerType == BdNet)
+        {
+            BdTransportMaxPacketSize = LEGACY_PACKET_MAX_SIZE;
+            BdSendPacket = BdNetSendPacket;
+            BdReceivePacket = BdNetReceivePacket;
         }
 
         //
@@ -681,9 +699,13 @@ Return Value:
 --*/
 {
 
-    if (Parameters->Type == BdSerial)
+    switch (Parameters->Type)
     {
+    case BdSerial:
         return BdComConfigureDebuggerDevice(Parameters);
+
+    case BdNet:
+        return BdNetConfigureDebuggerDevice(Parameters);
     }
 
     return STATUS_INVALID_PARAMETER;
@@ -717,7 +739,8 @@ Return Value:
 
 NTSTATUS
 BdpGetConnectionParameters (
-    __out PBD_CONNECTION_PARAMETERS Parameters
+    _In_opt_ PVOID TransportHob,
+    _Out_ PBD_CONNECTION_PARAMETERS Parameters
     )
 /*++
 
@@ -727,6 +750,8 @@ Routine Deescriptoin:
     device, along with the type of debugging device to be used.
 
 Arguments:
+
+    TransportHob - Optionally supplies a pointer to the KDNET transport HOB.
 
     Parameters - Supplies a pointer to a variable that receives the connection
         parameters.
@@ -743,8 +768,19 @@ Return Value:
 
     NTSTATUS status;
 
-    status = STATUS_UNSUCCESSFUL;
-    Parameters->Type = BdSerial;
+    //
+    // Use KDNET debugging if the transport was loaded.
+    //
+
+    if (ARGUMENT_PRESENT(TransportHob))
+    {
+        Parameters->Type = BdNet;
+    }
+    else
+    {
+        Parameters->Type = BdSerial;
+    }
+
     switch (Parameters->Type)
     {
     case BdSerial:
@@ -752,8 +788,20 @@ Return Value:
         break;
 
     case BdNet:
+
+        //
+        // If network debugging is active, then the connection parameters were
+        // captured when the transport was loaded.  Simply capture the
+        // location of the transport HOB for later configuration.
+        //
+
+        Parameters->Net.TransportHob = TransportHob;
+        status = STATUS_SUCCESS;
+        break;
+
     default:
         status = STATUS_UNSUCCESSFUL;
+        break;
     }
 
     return status;
@@ -820,6 +868,10 @@ Return Value:
     if (BdDebuggerType == BdSerial)
     {
         packetCount = BdComSentReceivedPacketCount();
+    }
+    else if (BdDebuggerType == BdNet)
+    {
+        packetCount = BdNetSentReceivedPacketCount();
     }
 
     return packetCount;

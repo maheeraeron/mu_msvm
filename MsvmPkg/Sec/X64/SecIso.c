@@ -77,6 +77,28 @@ SecReadMsrWithGhcb(
 }
 
 VOID
+SecWriteMsrWithGhcb(
+    _In_ UINT64 MsrNumber,
+    _In_ UINT64 Value
+    )
+{
+    //
+    // Initialize the GHCB page to indicate a request to set the specified
+    // MSR.
+    //
+
+    SetGhcbField64(Ghcb, GHCB_FIELD64_EXITCODE, GHCB_EXITCODE_MSR);
+    SetGhcbField64(Ghcb, GHCB_FIELD64_EXITINFO1, 1);
+    SetGhcbField64(Ghcb, GHCB_FIELD64_RCX, MsrNumber);
+    SetGhcbField64(Ghcb, GHCB_FIELD64_RAX, (UINT32)Value);
+    SetGhcbField64(Ghcb, GHCB_FIELD64_RDX, Value >> 32);
+    SetGhcbField32(Ghcb, GHCB_FIELD32_FORMAT, 0);
+    SetGhcbField16(Ghcb, GHCB_FIELD16_VERSION, 1);
+
+    SecVmgexit();
+}
+
+VOID
 SecInitializeReferenceTime (
     _In_ UINT32 ClockFrequency,
     _In_ UINT32 TscNumerator,
@@ -110,6 +132,7 @@ SecInitializeSnp (
     SEC_CPUID_INFO *cpuidInfo;
     UINT64 ghcbAddress;
     UINT64 ghcbMsr;
+    HV_GUEST_OS_ID_CONTENTS guestOsId;
     UINT32 index;
     UINT32 leafNumber;
     UINT32 leafType;
@@ -218,6 +241,19 @@ SecInitializeSnp (
 
     SecInitializeReferenceTime(clockFrequency, 1, 1);
 
+    //
+    // Set the guest OS ID so that hypercalls are possible.
+    //
+
+    guestOsId.AsUINT64 = 0;
+    guestOsId.BuildNumber = 1;
+    guestOsId.ServiceVersion = 1;
+    guestOsId.MinorVersion = 1;
+    guestOsId.MajorVersion = 1;
+    guestOsId.OsId = HvGuestOsMicrosoftUndefined;
+    guestOsId.VendorId = HvGuestOsVendorMicrosoft;
+    SecWriteMsrWithGhcb(HV_X64_MSR_GUEST_OS_ID, guestOsId.AsUINT64);
+
     return TRUE;
 }
 
@@ -226,21 +262,29 @@ SecProcessVirtualMsrRead (
     _In_ PTRAP_FRAME TrapFrame
     )
 {
-    UINT64 referenceTime;
+    UINT64 value;
 
-    //
-    // Only handle requests to obtain reference time.
-    //
-
-    if (TrapFrame->Rcx != HV_X64_MSR_TIME_REF_COUNT)
+    switch (TrapFrame->Rcx)
     {
+    case HvSyntheticMsrTimeRefCount:
+        value = MulDiv64(AsmReadTsc(), TscMultiplier, TscDivisor);
+        break;
+
+    case HvSyntheticMsrDebugDeviceOptions:
+
+        //
+        // This must be read directly from the hypervisor.
+        //
+
+        value = SecReadMsrWithGhcb(TrapFrame->Rcx);
+        break;
+
+    default:
         return FALSE;
     }
 
-    referenceTime = MulDiv64(AsmReadTsc(), TscMultiplier, TscDivisor);
-    TrapFrame->Rax = (UINT32)referenceTime;
-    TrapFrame->Rdx = referenceTime >> 32;
-
+    TrapFrame->Rax = (UINT32)value;
+    TrapFrame->Rdx = value >> 32;
     return TRUE;
 }
 

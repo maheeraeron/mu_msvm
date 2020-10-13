@@ -33,10 +33,11 @@
     IgvmConfig.c
     Hob.c
     Hv.c
+    KdNet.c
     Platform.c
 
 [Sources.X64]
-    X64/Snp.asm
+    X64/kduefi.preefi
 
 [Sources.AARCH64]
     AArch64/Mmu.c
@@ -55,6 +56,7 @@
     DebugLib
     HobLib
     IoLib
+    PeCoffLib
     PeimEntryPoint
     PeiResourcePublicationLib
     PeiServicesLib
@@ -62,6 +64,7 @@
     PcdLib
 
 [LibraryClasses.X64]
+    HostVisibilityLib
     MtrrLib
 
 [LibraryClasses.IA32]
@@ -73,6 +76,7 @@
 [Guids]
     gEfiMemoryTypeInformationGuid
     gMsvmDebuggerEnabledGuid
+    gMsvmDebuggerKdnetBinaryGuid
 
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
@@ -146,7 +150,7 @@
     gMsvmPkgTokenSpaceGuid.PcdMemoryAttributesTableEnabled
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
-    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled    
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled
     gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault
     gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
     gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage

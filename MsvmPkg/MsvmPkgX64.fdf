@@ -152,7 +152,7 @@ APRIORI DXE {
 INF MdeModulePkg/Core/Pei/PeiMain.inf
 INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
-INF MsvmPkg/PlatformPei/PlatformPei.inf
+INF RuleOverride = PLATFORM_PEI MsvmPkg/PlatformPei/PlatformPei.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
 INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
@@ -296,6 +296,15 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
 
 [Rule.Common.PEIM]
   FILE PEIM = $(NAMED_GUID) {
+     PEI_DEPEX PEI_DEPEX Optional        $(INF_OUTPUT)/$(MODULE_NAME).depex
+     PE32      PE32   Align=32           $(INF_OUTPUT)/$(MODULE_NAME).efi
+     UI       STRING="$(MODULE_NAME)" Optional
+     VERSION  STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
+  }
+
+[Rule.Common.PEIM.PLATFORM_PEI]
+  FILE PEIM = $(NAMED_GUID) {
+     RAW       BIN                       kduefi.efi
      PEI_DEPEX PEI_DEPEX Optional        $(INF_OUTPUT)/$(MODULE_NAME).depex
      PE32      PE32   Align=32           $(INF_OUTPUT)/$(MODULE_NAME).efi
      UI       STRING="$(MODULE_NAME)" Optional

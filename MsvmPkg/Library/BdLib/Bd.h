@@ -57,13 +57,6 @@ typedef HANDLE *PHANDLE;
 
 typedef DWORD ACCESS_MASK, *PACCESS_MASK;
 
-typedef struct _STRING
-{
-    USHORT Length;
-    USHORT MaximumLength;
-    CHAR *Buffer;
-} STRING, *PSTRING;
-
 typedef struct _UNICODE_STRING
 {
     UINT16 Length;
@@ -195,16 +188,9 @@ typedef struct _BD_CONNECTION_PARAMETERS
 
     struct
     {
-        ULONG TargetIP;
-        ULONG HostIP;
-        USHORT Port;
-        ULONG Bus;
-        ULONG Slot;
-        BOOLEAN Dhcp;
-        BOOLEAN EncryptedLink;
-        BOOLEAN Vm;
-        UCHAR Key[KD_NET_KEY_SIZE];
+        PVOID TransportHob;
     } Net;
+
 } BD_CONNECTION_PARAMETERS, *PBD_CONNECTION_PARAMETERS;
 
 extern BD_CONNECTION_TYPE BdDebuggerType;
@@ -243,7 +229,7 @@ Return Value:
 
 NTSTATUS
 BdInitialize (
-    VOID
+    _In_opt_ VOID *Hob
     );
 
 /*++
@@ -254,7 +240,8 @@ Routine Description:
 
 Arguments:
 
-    None.
+    Hob - Optionally supplies a pointer to a HOB describing the loaded KDNET
+          transport module.
 
 Return Value:
 
@@ -516,6 +503,34 @@ BdComSentReceivedPacketCount(
     VOID
     );
 
+//
+// Network communication functions (netio.c).
+//
+
+NTSTATUS
+BdNetConfigureDebuggerDevice (
+    __in PBD_CONNECTION_PARAMETERS Parameters
+    );
+
+UINT32
+BdNetReceivePacket (
+    __in UINT32 ExpectedPacketType,
+    __out_opt PSTRING MessageHeader,
+    __out_opt PSTRING MessageData,
+    __out_opt PUINT32 DataLength
+    );
+
+VOID
+BdNetSendPacket (
+    __in UINT32 PacketType,
+    __in PSTRING MessageHeader,
+    __in_opt PSTRING MessageData
+    );
+
+UINT64
+BdNetSentReceivedPacketCount(
+    VOID
+    );
 
 //
 // Breakpoint functions (break.c).

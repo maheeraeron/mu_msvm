@@ -27,6 +27,7 @@ Abstract:
 #include <Library/ResourcePublicationLib.h>
 #include <Ppi/ConfigPpi.h>
 #include <Config.h>
+#include <KdNet.h>
 #include <IsolationTypes.h>
 
 typedef struct _IGVM_VHS_MEMORY_MAP_ENTRY {
@@ -44,7 +45,6 @@ enum IGVM_VHS_MEMORY_MAP_ENTRY_TYPES
     IGVM_VHF_MEMORY_MAP_ENTRY_TYPE_PERSISTENT        = 0x2,
     IGVM_VHF_MEMORY_MAP_ENTRY_TYPE_VTL2_PROTECTABLE  = 0x3,
 };
-
 
 PVOID
 GetIgvmData(
@@ -223,6 +223,67 @@ Return Value:
 }
 
 
+VOID
+ParseIgvmCommandLine(
+    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo,
+    _In_ BOOLEAN DebuggerEnabled
+    )
+/*++
+
+Routine Description:
+
+    Parses the command line in IGVM format to determine additional parameters
+    (e.g. debug parameters).
+
+Arguments:
+
+    ParameterInfo - Supplies a pointer to the parameter information block.
+
+    DebuggerEnabled - Supplies a flag indicating whether the debugger should be enabled.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    PUCHAR commandString;
+    UINT32 maximumSize;
+    UINT32 size;
+
+    if (DebuggerEnabled)
+    {
+        //
+        // Verify command line is within parameter page.
+        //
+
+        commandString = GetIgvmData(ParameterInfo, ParameterInfo->CommandLineOffset);
+        size = 0;
+        maximumSize = ParameterInfo->CommandLinePageCount * EFI_PAGE_SIZE;
+
+        while (commandString[size] != '\0')
+        {
+            size++;
+
+            //
+            // No null terminator found, can't be valid.
+            //
+
+            if (size >= maximumSize)
+            {
+                return;
+            }
+        }
+
+        //
+        // Extract the KDNET parameters.
+        //
+
+        ParseKdNetParameters(commandString);
+    }
+}
+
+
 EFI_STATUS
 GetIgvmConfigInfo(
     VOID
@@ -294,6 +355,12 @@ Return Value:
     {
         return status;
     }
+
+    //
+    // Parse the command line to obtain debug parameters.
+    //
+
+    ParseIgvmCommandLine(parameterInfo, (BOOLEAN)configFlags.Flags.DebuggerEnabled);
 
     return EFI_SUCCESS;
 }
