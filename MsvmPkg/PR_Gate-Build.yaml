@@ -76,11 +76,38 @@ steps:
     filename: python.exe
     arguments: '$(PlatformPkg)/PlatformBuild.py  tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE'
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: BuildLog $(Build.Target) $(Build.Arch)'
+# Copy the build logs to the artifact staging directory
+- task: CopyFiles@2
+  displayName: "Copy build logs"
   inputs:
-    PathtoPublish: Build/BuildLog.txt
-    ArtifactName: 'BuildLog_$(Build.Target)_$(Build.Arch)'
+    targetFolder: "$(Build.ArtifactStagingDirectory)"
+    SourceFolder: "Build"
+    contents: |
+      BuildLog.txt
+      BUILDLOG_*.txt
+      BUILDLOG_*.md
+      **/BUILD_REPORT.txt
+      CI_*.txt
+      CI_*.md
+      CISETUP.txt
+      SETUPLOG.txt
+      UPDATE_LOG.txt
+      PREVALLOG.txt
+      TestSuites.xml
+      **/BUILD_TOOLS_REPORT.html
+      **/OVERRIDELOG.TXT
+      BASETOOLS_BUILD*.*
+      **/FD_REPORT.HTML
+    flattenFolders: true
+  condition: succeededOrFailed()
+
+# Publish build artifacts to Azure Artifacts/TFS or a file share
+- task: PublishBuildArtifacts@1
+  continueOnError: true
+  displayName: "Publish build logs"
+  inputs:
+    pathtoPublish: "$(Build.ArtifactStagingDirectory)"
+    artifactName: "Build Logs $(System.JobName)"
   condition: succeededOrFailed()
 
 - task: PublishBuildArtifacts@1
@@ -100,28 +127,6 @@ steps:
   inputs:
     PathtoPublish: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/MAP/'
     ArtifactName: 'Firmware Map Files $(Build.Target)_$(Build.Arch)'
-
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: OverrideLog $(Build.Target)_$(Build.Arch)'
-  inputs:
-    PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/OVERRIDELOG.TXT
-    ArtifactName: 'OverrideLog $(Build.Target)_$(Build.Arch)'
-  continueOnError: true
-  condition: succeededOrFailed()
-
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: Build Report $(Build.Target)_$(Build.Arch)'
-  inputs:
-    PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/BUILD_REPORT.txt
-    ArtifactName: 'Build Report $(Build.Target)_$(Build.Arch)'
-  continueOnError: true
-
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: Firmware Size Report $(Build.Target)_$(Build.Arch)'
-  inputs:
-    PathtoPublish: Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FD_REPORT.HTML
-    ArtifactName: 'Firmware Size Report $(Build.Target)_$(Build.Arch)'
-  continueOnError: true
 
 - task: PublishSymbols@2
   inputs:
