@@ -286,12 +286,6 @@
 # PERF MODULES END
 
 [PcdsFixedAtBuild.common]
-!if $(PRM_ENABLE) == TRUE
-  # Defines a unique PRM Platform GUID for MsvmPkg
-  # {a46cbafd-0039-4817-8428-5baf85c11b64}
-  gPrmPkgTokenSpaceGuid.PcdPrmPlatformGuid|{0xfd, 0xba, 0x6c, 0xa4, 0x39, 0x00, 0x17, 0x48, 0x84, 0x28, 0x5b, 0xaf, 0x85, 0xc1, 0x1b, 0x64}
-!endif
-
   # Synthetic Timer Config
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex|0x0
