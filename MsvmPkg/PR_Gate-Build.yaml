@@ -53,10 +53,14 @@ steps:
     subPaths: tools
 
 - task: CmdLine@1
-  displayName: 'Add mu_build pip'
+  displayName: 'install python requirements'
   inputs:
     filename: python.exe
     arguments: '-m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir'
+
+- task: NuGetAuthenticate@0
+  inputs:
+    nuGetServiceConnections: WindowsPartnersNugetFeedConnection
 
 - task: CmdLine@1
   displayName: 'Platform build Setup'
