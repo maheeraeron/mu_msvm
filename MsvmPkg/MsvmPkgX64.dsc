@@ -419,6 +419,9 @@
 
   # Disable auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
+  
+  # Enable NVME changes for ASAP devices
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSupportAlternativeQueueSize|TRUE
 
 [PcdsFixedAtBuild.X64]
 !if $(PERF_TRACE_ENABLE) == TRUE
