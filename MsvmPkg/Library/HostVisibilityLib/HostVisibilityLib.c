@@ -15,6 +15,7 @@ Abstract:
 --*/
 
 #include <EfiNt.h>
+#include <Library/DebugLib.h>
 #include <Uefi/UefiBaseType.h>
 #include <hvgdk_mini.h>
 #include <IsolationTypes.h>
@@ -26,6 +27,10 @@ _sev_pvalidate(
     _In_ UINT32 Validate,
     _Out_ PUINT64 ErrorCode
     );
+
+#define SNP_SUCCESS             0
+#define SNP_FAIL_INPUT          1
+#define SNP_FAIL_SIZEMISMATCH   6
 
 UINT64
 SpecialGhcbCall(
@@ -55,6 +60,132 @@ typedef union _GHCB_MSR
 
 #define GHCB_DATA_PAGE_STATE_PRIVATE    0x001
 #define GHCB_DATA_PAGE_STATE_SHARED     0x002
+
+
+VOID
+EfiUpdatePageRangeAcceptanceSnp(
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _In_ BOOLEAN Accept
+    )
+/*++
+
+Routine Description:
+
+    This routine updates hardware page acceptance state on an SNP platform
+    that runs with no paravisor.
+
+Arguments:
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         change.
+
+    PageCount - Supplies the number of pages to change.
+
+    Accept - Supplies TRUE if the pages are to be accepted, or FALSE if the
+             pages are to be unaccepted.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    UINT64 errorCode;
+
+    while (PageCount != 0)
+    {
+        //
+        // Attempt to validate a 2 MB page if possible.
+        //
+
+        if (((StartingPageNumber & (SIZE_2MB - 1)) == 0) &&
+            (PageCount >= SIZE_2MB))
+        {
+            if (_sev_pvalidate(
+                (PVOID)(StartingPageNumber * EFI_PAGE_SIZE),
+                1,
+                Accept,
+                &errorCode) != 0)
+            {
+                errorCode = SNP_FAIL_INPUT;
+            }
+
+            if (errorCode == SNP_SUCCESS)
+            {
+                StartingPageNumber += SIZE_2MB / EFI_PAGE_SIZE;
+                PageCount -= SIZE_2MB / EFI_PAGE_SIZE;
+                continue;
+            }
+            else if (errorCode != SNP_FAIL_SIZEMISMATCH)
+            {
+                //
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                //
+                continue;
+            }
+        }
+
+        if (_sev_pvalidate(
+            (PVOID)(StartingPageNumber * EFI_PAGE_SIZE),
+            0,
+            Accept,
+            &errorCode) != 0)
+        {
+            errorCode = SNP_FAIL_INPUT;
+        }
+
+        if (errorCode != SNP_SUCCESS)
+        {
+            //
+            // TODO-19259739: Have a better way of reporting UEFI errors.
+            //
+            continue;
+        }
+
+        StartingPageNumber += 1;
+        PageCount -= 1;
+    }
+}
+
+
+VOID
+EfiUpdatePageRangeAcceptance(
+    _In_ UINT32 IsolationType,
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _In_ BOOLEAN Accept
+    )
+/*++
+
+Routine Description:
+
+    This routine updates hardware page acceptance state on an SNP platform
+    that runs with no paravisor.
+
+Arguments:
+
+    IsolationType - Supplies the isolation type of the current platform.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         change.
+
+    PageCount - Supplies the number of pages to change.
+
+    Accept - Supplies TRUE if the pages are to be accepted, or FALSE if the
+             pages are to be unaccepted.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    ASSERT(IsolationType == UefiIsolationTypeSnp);
+    UNREFERENCED_PARAMETER(IsolationType);
+
+    EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber, PageCount, Accept);
+}
 
 
 EFI_STATUS

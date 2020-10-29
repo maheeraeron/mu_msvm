@@ -23,6 +23,7 @@ Author:
 #include <Config.h>
 #include <Hob.h>
 #include <Hv.h>
+#include <Library/HostVisibilityLib.h>
 #include <IsolationTypes.h>
 
 
@@ -122,63 +123,12 @@ Return Value:
     //
 
 #if defined(MDE_CPU_X64)
-    if (isolationType == UefiIsolationTypeSnp)
+    if (isolationType >= UefiIsolationTypeSnp)
     {
-        while (PageCount != 0)
-        {
-            UINT64 errorCode;
-
-            //
-            // Attempt to validate a 2 MB page if possible.
-            //
-
-            if (((GpaPageBase & (SIZE_2MB - 1)) == 0) &&
-                (PageCount >= SIZE_2MB))
-            {
-                if (_sev_pvalidate(
-                    (PVOID)(GpaPageBase * EFI_PAGE_SIZE),
-                    1,
-                    1,
-                    &errorCode) != 0)
-                {
-                    errorCode = SNP_FAIL_INPUT;
-                }
-
-                if (errorCode == SNP_SUCCESS)
-                {
-                    GpaPageBase += SIZE_2MB / EFI_PAGE_SIZE;
-                    PageCount -= SIZE_2MB / EFI_PAGE_SIZE;
-                    continue;
-                }
-                else if (errorCode != SNP_FAIL_SIZEMISMATCH)
-                {
-                    //
-                    // TODO-19259739: Have a better way of reporting UEFI errors.
-                    //
-                    CpuDeadLoop();
-                }
-            }
-
-            if (_sev_pvalidate(
-                (PVOID)(GpaPageBase * EFI_PAGE_SIZE),
-                0,
-                1,
-                &errorCode) != 0)
-            {
-                errorCode = SNP_FAIL_INPUT;
-            }
-
-            if (errorCode != SNP_SUCCESS)
-            {
-                //
-                // TODO-19259739: Have a better way of reporting UEFI errors.
-                //
-                CpuDeadLoop();
-            }
-
-            GpaPageBase += 1;
-            PageCount -= 1;
-        }
+        EfiUpdatePageRangeAcceptance(isolationType,
+            GpaPageBase,
+            PageCount,
+            TRUE);
     }
 #endif
 }
