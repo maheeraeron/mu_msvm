@@ -28,14 +28,14 @@ EFI_ACPI_6_2_GENERIC_TIMER_DESCRIPTION_TABLE GTDT =
     0, // Reserved
     0, // Secure EL1 timer GSIV: doesn't exist so zero
     0, // Secure EL1 timer Flags: doesn't exist so zero
-    0, // Non-Secure EL1 timer GSIV: doesn't exist so zero
+    FixedPcdGet32(PcdNonSecureEL1TimerGSIV), // Non-Secure EL1 timer GSIV
     0, // Non-Secure EL1 timer Flags: doesn't exist so zero
-    0, // Virtual timer GSIV: doesn't exist so zero
+    FixedPcdGet32(PcdVirtualEL1TimerGSIV), // Virtual EL1 timer GSIV
     0, // Virtual Timer Flags: doesn't exist so zero
-    0, // Non-Secure EL2 timer GSIV: doesn't exist so zero
+    FixedPcdGet32(PcdNonSecureEL2TimerGSIV), // Non-Secure EL2 timer GSIV
     0, // Non-Secure EL2 timer Flags: doesn't exist so zero
     0xFFFFFFFFFFFFFFFF, // CntReadBase Physical address: doesn't exist so -1
-    0, // Platform Timer Count 
+    0, // Platform Timer Count
     0, // Platform Timer Offset
 };
 

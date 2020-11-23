@@ -335,6 +335,13 @@
   gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xEFFE8000
   gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector|38           # SPI
 
+  # GTDT for AArch64. Currently these aren't exposed to guests, and 0 is a valid
+  # value to configure. Linux will attempt to configure them, so assign valid
+  # interrupt lines.
+  gMsvmPkgTokenSpaceGuid.PcdNonSecureEL1TimerGSIV|19
+  gMsvmPkgTokenSpaceGuid.PcdVirtualEL1TimerGSIV|20
+  gMsvmPkgTokenSpaceGuid.PcdNonSecureEL2TimerGSIV|21
+
   #
   # Static initial memory config - presumes minimum 64MB in VM
   # Page table, stack, and heap are hard-coded in host worker process.

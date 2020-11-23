@@ -45,19 +45,22 @@
     gMsvmPkgTokenSpaceGuid.PcdVmbusVector
     gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase
     gMsvmPkgTokenSpaceGuid.PcdProcIdleBase
-    
+
 [Pcd.AARCH64]
     gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector
     gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector
     gMsvmPkgTokenSpaceGuid.PcdPmemEventVector
     gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector
+    gMsvmPkgTokenSpaceGuid.PcdNonSecureEL1TimerGSIV
+    gMsvmPkgTokenSpaceGuid.PcdVirtualEL1TimerGSIV
+    gMsvmPkgTokenSpaceGuid.PcdNonSecureEL2TimerGSIV
 
 [Pcd.X64]
     gMsvmPkgTokenSpaceGuid.PcdRtcRegisterBase
     gMsvmPkgTokenSpaceGuid.PcdRtcVector
     gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress
     gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress
-    
+
 [Packages]
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
