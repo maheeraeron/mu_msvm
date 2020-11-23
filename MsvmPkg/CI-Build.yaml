@@ -43,6 +43,7 @@ steps:
 
 - powershell: |
    git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
+   git config --file=.gitmodules submodule.Common/PRM.url "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/platform_runtime_mechanism"
    git config --file=.gitmodules submodule.Common/MU_TIANO.url "https://user:$(OS.PAT)@dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus"
    git config --file=.gitmodules submodule.MU_BASECORE.url "https://user:$(OS.PAT)@dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore"
    git submodule sync
@@ -168,6 +169,7 @@ steps:
 
 - powershell: |
    git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
+   git config --file=.gitmodules submodule.Common/PRM.url "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/platform_runtime_mechanism"
    git config --file=.gitmodules submodule.Common/MU_TIANO.url "https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus"
    git config --file=.gitmodules submodule.MU_BASECORE.url "https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore"
    git submodule sync
