@@ -170,7 +170,7 @@ SecVirtualCommunicationExceptionHandler ENDP
 
 SecVmgexit PROC PUBLIC
 
-            db      0f2h                ; VMGEXIT prefix
+            db      0f3h                ; VMGEXIT prefix
             vmmcall
             ret
 

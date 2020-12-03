@@ -42,7 +42,7 @@ include macamd64.inc
 
         LEAF_ENTRY _sev_vmgexit, _TEXT$00
 
-        db      0f2h                    ; VMGEXIT prefix
+        db      0f3h                    ; VMGEXIT prefix
         vmmcall
         ret
 

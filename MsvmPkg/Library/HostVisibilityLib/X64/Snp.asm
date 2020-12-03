@@ -110,7 +110,7 @@ include macamd64.inc
         shr     rdx, 32                 ; capture high 32 bits of GHCB value
         wrmsr                           ; update GHCB value
 
-        db      0f2h                    ; rep prefix for VMGEXIT
+        db      0f3h                    ; rep prefix for VMGEXIT
         vmmcall                         ;
 
         rdmsr                           ; read current GHCB value
