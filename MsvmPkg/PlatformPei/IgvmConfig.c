@@ -330,10 +330,7 @@ Return Value:
     processorInfo.ProcessorCount = 1;
     processorInfo.ProcessorsPerVirtualSocket = 1;
     processorInfo.ThreadsPerProcessor = 1;
-    if (!ConfigSetProcessorInfo(&processorInfo))
-    {
-        ASSERT(FALSE);
-    }
+    ConfigSetProcessorInfo(&processorInfo);
 
     //
     // Build a config structure with a statically defined configuration.
@@ -341,10 +338,7 @@ Return Value:
 
     ZeroMem(&configFlags, sizeof(configFlags));
     configFlags.Flags.DebuggerEnabled = 1;
-    if (!ConfigSetUefiConfigFlags(&configFlags))
-    {
-        ASSERT(FALSE);
-    }
+    ConfigSetUefiConfigFlags(&configFlags);
 
     //
     // Convert the memory map to UEFI format.

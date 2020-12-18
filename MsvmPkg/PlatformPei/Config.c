@@ -35,6 +35,11 @@ Abstract:
 #define CPUID_FUNCTION_EXTENDED_MAX_FUNCTION        0x80000000
 #define CPUID_FUNCTION_EXTENDED_ADDRESS_SPACE_SIZES 0x80000008
 
+// TODO-19259739: Have a better way of reporting UEFI errors.
+#define CONFIG_FAIL_FAST() \
+                    ASSERT(FALSE); \
+                    CpuDeadLoop();
+
 typedef union _CPUID_ADDRESS_SPACE_SIZES
 {
     struct
@@ -672,7 +677,7 @@ DebugDumpUefiConfigStruct(
 #endif
 }
 
-EFI_STATUS
+VOID
 GetSmbiosStructureStringLength(
     _In_ UINT32 HeaderLength,
     _In_ UINT8* String,
@@ -695,16 +700,10 @@ Arguments:
 
 Return Value:
 
-    EFI_SUCCESS on success. EFI_INVALID_PARAMETER if HeaderLength is not long
-    enough to contain a valid string.
+    None
 
 --*/
 {
-    if (HeaderLength <= sizeof(UEFI_CONFIG_HEADER))
-    {
-        return EFI_INVALID_PARAMETER;
-    }
-
     *StringLength = 0;
     UINT64 remainingStructureSize = HeaderLength - sizeof(UEFI_CONFIG_HEADER);
 
@@ -716,7 +715,7 @@ Return Value:
         // No NULL found, truncate by adding one at the end.
         //
         String[length - 1] = 0;
-        *StringLength = (UINT32) length;
+        *StringLength = (UINT32)length;
 
         DEBUG((DEBUG_VERBOSE, "SMBIOS String Structure had no null terminator, truncating to size 0x%x. Truncated string:%a", length, String));
     }
@@ -727,42 +726,38 @@ Return Value:
         //
         *StringLength = (UINT32) (length + 1);
     }
-
-    return EFI_SUCCESS;
 }
 
-BOOLEAN
+VOID
 ConfigSetProcessorInfo(
     UEFI_CONFIG_PROCESSOR_INFORMATION *ProcessorInfo
     )
 {
-    PcdSet32(PcdProcessorCount, ProcessorInfo->ProcessorCount);
-    PcdSet32(PcdProcessorsPerVirtualSocket, ProcessorInfo->ProcessorsPerVirtualSocket);
-    PcdSet32(PcdThreadsPerProcessor, ProcessorInfo->ThreadsPerProcessor);
-
     if (ProcessorInfo->ProcessorCount == 0)
     {
         DEBUG((DEBUG_ERROR, "Processors count was 0.\n"));
-        return FALSE;
+        CONFIG_FAIL_FAST();
     }
 
     if (ProcessorInfo->ProcessorsPerVirtualSocket == 0)
     {
         DEBUG((DEBUG_ERROR, "Processors per virtual socket was 0.\n"));
-        return FALSE;
+        CONFIG_FAIL_FAST();
     }
 
     if (ProcessorInfo->ThreadsPerProcessor == 0)
     {
         DEBUG((DEBUG_ERROR, "Threads per processor was 0.\n"));
-        return FALSE;
+        CONFIG_FAIL_FAST();
     }
 
-    return TRUE;
+    PcdSet32(PcdProcessorCount, ProcessorInfo->ProcessorCount);
+    PcdSet32(PcdProcessorsPerVirtualSocket, ProcessorInfo->ProcessorsPerVirtualSocket);
+    PcdSet32(PcdThreadsPerProcessor, ProcessorInfo->ThreadsPerProcessor);
 }
 
 
-BOOLEAN
+VOID
 ConfigSetUefiConfigFlags(
     UEFI_CONFIG_FLAGS *ConfigFlags
     )
@@ -809,8 +804,6 @@ ConfigSetUefiConfigFlags(
         PcdSet32(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384));
 #endif
     }
-
-    return TRUE;
 }
 
 
@@ -837,10 +830,19 @@ Return Value:
     //
     // All structures must be aligned to 8 bytes, as AARCH64 does not allow
     // unaligned access like X64.
+    // The size must be as big as the header size.
     //
     if (Header->Length % 8 != 0)
     {
         DEBUG((DEBUG_ERROR, "Structure Type 0x%x was length 0x%x, not aligned to 8 bytes.\n",
+            Header->Type,
+            Header->Length));
+        return EFI_INVALID_PARAMETER;
+    }
+
+    if (Header->Length <= sizeof(UEFI_CONFIG_HEADER))
+    {
+        DEBUG((DEBUG_ERROR, "Structure Type 0x%x was length 0x%x, and smaller than the header size and information.\n",
             Header->Type,
             Header->Length));
         return EFI_INVALID_PARAMETER;
@@ -921,6 +923,8 @@ GetUefiConfigInfo(
 Routine Description:
 
     Get and parse the config blob that contains information from the Bios VDEV.
+    Note that the information received and parsed here can come from the host 
+    and cannot be trusted. Validate the config information before using it.
 
 Arguments:
 
@@ -932,7 +936,6 @@ Return Value:
 
 --*/
 {
-    EFI_STATUS status;
     UINT32 stringLength = 0;
     UEFI_CONFIG_HEADER *header = NULL;
     UEFI_CONFIG_STRUCTURE_COUNT *configCount = NULL;
@@ -989,15 +992,19 @@ Return Value:
     configCount = (UEFI_CONFIG_STRUCTURE_COUNT*) header;
 
     //
-    // Anything less than 1 structure the Bios VDEV failed to create the config.
-    // Also sanity check the header.
+    // Sanity checks to make sure that the header is correct.
     //
     if (header->Type != UefiConfigStructureCount ||
-        configCount->TotalStructureCount <= 1 ||
-        header->Length != sizeof(UEFI_CONFIG_STRUCTURE_COUNT))
+        configCount->TotalStructureCount <= 1)
     {
-        ASSERT(FALSE);
-        return EFI_DEVICE_ERROR;
+        DEBUG((DEBUG_ERROR, "*** Malformed Header (Structure count) \n"));
+        CONFIG_FAIL_FAST();
+    }
+
+    if (EFI_ERROR(VerifyStructureLength(header)))
+    {
+        DEBUG((DEBUG_ERROR, "*** Malformed Header Length (Structure count) \n"));
+        CONFIG_FAIL_FAST();
     }
 
     PcdSet32(PcdConfigBlobSize, configCount->TotalConfigBlobSize);
@@ -1013,11 +1020,18 @@ Return Value:
     //
     for (UINT64 i = 1; i < configCount->TotalStructureCount; i++)
     {
-        status = VerifyStructureLength(header);
-
-        if (EFI_ERROR(status))
+        if (EFI_ERROR(VerifyStructureLength(header)))
         {
-            goto Failure;
+            DEBUG((DEBUG_ERROR, "*** Malformed Header Length\n"));
+            CONFIG_FAIL_FAST();
+        }
+
+        if (calculatedConfigSize > configCount->TotalConfigBlobSize)
+        {
+            DEBUG((DEBUG_ERROR, "Config offset of 0x%x is greater than the actual size of 0x%x\n", 
+                calculatedConfigSize,
+                configCount->TotalConfigBlobSize));
+            CONFIG_FAIL_FAST();
         }
 
         DebugDumpUefiConfigStruct(header);
@@ -1039,7 +1053,7 @@ Return Value:
                     madtHdr->Length >(madtStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed MADT\n"));
-                    goto Failure;
+                    CONFIG_FAIL_FAST();
                 }
 
                 PcdSet64(PcdMadtPtr, (UINT64)madtStructure->Madt);
@@ -1051,7 +1065,7 @@ Return Value:
 
             case UefiConfigSrat:
                 UEFI_CONFIG_SRAT *sratStructure = (UEFI_CONFIG_SRAT*) header;
-                EFI_ACPI_DESCRIPTION_HEADER *acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER*) sratStructure->Srat;
+                EFI_ACPI_DESCRIPTION_HEADER *sratHdr = (EFI_ACPI_DESCRIPTION_HEADER*) sratStructure->Srat;
 
                 //
                 // NOTE: Because ARM GICC affinity structures are not aligned to 8 bytes,
@@ -1059,15 +1073,15 @@ Return Value:
                 // just needs to be less than the overall length.
                 //
                 if (sratStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
-                    acpiHdr->Signature != EFI_ACPI_6_2_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE ||
-                    acpiHdr->Length > (sratStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                    sratHdr->Signature != EFI_ACPI_6_2_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE ||
+                    sratHdr->Length > (sratStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SRAT\n"));
-                    goto Failure;
+                    CONFIG_FAIL_FAST();
                 }
 
                 PcdSet64(PcdSratPtr, (UINT64) sratStructure->Srat);
-                PcdSet32(PcdSratSize, acpiHdr->Length);
+                PcdSet32(PcdSratSize, sratHdr->Length);
                 requiredStructures.UefiConfigSrat = 1;
                 break;
 
@@ -1080,7 +1094,7 @@ Return Value:
                     slitHdr->Length > (slitStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SLIT\n"));
-                    goto Failure;
+                    CONFIG_FAIL_FAST();
                 }
 
                 PcdSet64(PcdSlitPtr, (UINT64)slitStructure->Slit);
@@ -1108,112 +1122,64 @@ Return Value:
 
             case UefiConfigSmbiosSystemManufacturer:
                 UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER *systemManufacturer = (UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER*) header;
-                PcdSet64(PcdSmbiosSystemManufacturerStr, (UINT64) systemManufacturer->SystemManufacturer);
-                status = GetSmbiosStructureStringLength(header->Length, systemManufacturer->SystemManufacturer, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, systemManufacturer->SystemManufacturer, &stringLength);
+                PcdSet64(PcdSmbiosSystemManufacturerStr, (UINT64)systemManufacturer->SystemManufacturer);
                 PcdSet32(PcdSmbiosSystemManufacturerSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosSystemProductName:
                 UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME *systemProductName = (UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME*) header;
-                PcdSet64(PcdSmbiosSystemProductNameStr, (UINT64) systemProductName->SystemProductName);
-                status = GetSmbiosStructureStringLength(header->Length, systemProductName->SystemProductName, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, systemProductName->SystemProductName, &stringLength);
+                PcdSet64(PcdSmbiosSystemProductNameStr, (UINT64)systemProductName->SystemProductName);
                 PcdSet32(PcdSmbiosSystemProductNameSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosSystemVersion:
                 UEFI_CONFIG_SMBIOS_SYSTEM_VERSION *systemVersion = (UEFI_CONFIG_SMBIOS_SYSTEM_VERSION*) header;
-                PcdSet64(PcdSmbiosSystemVersionStr, (UINT64) systemVersion->SystemVersion);
-                status = GetSmbiosStructureStringLength(header->Length, systemVersion->SystemVersion, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, systemVersion->SystemVersion, &stringLength);
+                PcdSet64(PcdSmbiosSystemVersionStr, (UINT64)systemVersion->SystemVersion);
                 PcdSet32(PcdSmbiosSystemVersionSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosSystemSerialNumber:
                 UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER *systemSerialNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER*) header;
-                PcdSet64(PcdSmbiosSystemSerialNumberStr, (UINT64) systemSerialNumber->SystemSerialNumber);
-                status = GetSmbiosStructureStringLength(header->Length, systemSerialNumber->SystemSerialNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, systemSerialNumber->SystemSerialNumber, &stringLength);
+                PcdSet64(PcdSmbiosSystemSerialNumberStr, (UINT64)systemSerialNumber->SystemSerialNumber);
                 PcdSet32(PcdSmbiosSystemSerialNumberSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosSystemSKUNumber:
                 UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER *systemSKUNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER*) header;
-                PcdSet64(PcdSmbiosSystemSKUNumberStr, (UINT64) systemSKUNumber->SystemSKUNumber);
-                status = GetSmbiosStructureStringLength(header->Length, systemSKUNumber->SystemSKUNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, systemSKUNumber->SystemSKUNumber, &stringLength);
+                PcdSet64(PcdSmbiosSystemSKUNumberStr, (UINT64)systemSKUNumber->SystemSKUNumber);
                 PcdSet32(PcdSmbiosSystemSKUNumberSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosSystemFamily:
                 UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY *systemFamily = (UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY*) header;
-                PcdSet64(PcdSmbiosSystemFamilyStr, (UINT64) systemFamily->SystemFamily);
-                status = GetSmbiosStructureStringLength(header->Length, systemFamily->SystemFamily, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, systemFamily->SystemFamily, &stringLength);
+                PcdSet64(PcdSmbiosSystemFamilyStr, (UINT64)systemFamily->SystemFamily);
                 PcdSet32(PcdSmbiosSystemFamilySize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosBaseSerialNumber:
                 UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER *baseSerialNumber = (UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER*) header;
-                PcdSet64(PcdSmbiosBaseSerialNumberStr, (UINT64) baseSerialNumber->BaseSerialNumber);
-                status = GetSmbiosStructureStringLength(header->Length, baseSerialNumber->BaseSerialNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, baseSerialNumber->BaseSerialNumber, &stringLength);
+                PcdSet64(PcdSmbiosBaseSerialNumberStr, (UINT64)baseSerialNumber->BaseSerialNumber);
                 PcdSet32(PcdSmbiosBaseSerialNumberSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosChassisSerialNumber:
                 UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER *chassisSerialNumber = (UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER*) header;
-                PcdSet64(PcdSmbiosChassisSerialNumberStr, (UINT64) chassisSerialNumber->ChassisSerialNumber);
-                status = GetSmbiosStructureStringLength(header->Length, chassisSerialNumber->ChassisSerialNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, chassisSerialNumber->ChassisSerialNumber, &stringLength);
+                PcdSet64(PcdSmbiosChassisSerialNumberStr, (UINT64)chassisSerialNumber->ChassisSerialNumber);
                 PcdSet32(PcdSmbiosChassisSerialNumberSize, stringLength);
 
                 break;
@@ -1221,41 +1187,23 @@ Return Value:
             case UefiConfigSmbiosChassisAssetTag:
                 UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG *chassisAssetTag = (UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG*) header;
                 PcdSet64(PcdSmbiosChassisAssetTagStr, (UINT64) chassisAssetTag->ChassisAssetTag);
-                status = GetSmbiosStructureStringLength(header->Length, chassisAssetTag->ChassisAssetTag, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, chassisAssetTag->ChassisAssetTag, &stringLength);
                 PcdSet32(PcdSmbiosChassisAssetTagSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosBiosLockString:
                 UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING *biosLockString = (UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING*) header;
-                PcdSet64(PcdSmbiosBiosLockStringStr, (UINT64) biosLockString->BiosLockString);
-                status = GetSmbiosStructureStringLength(header->Length, biosLockString->BiosLockString, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, biosLockString->BiosLockString, &stringLength);
+                PcdSet64(PcdSmbiosBiosLockStringStr, (UINT64)biosLockString->BiosLockString);
                 PcdSet32(PcdSmbiosBiosLockStringSize, stringLength);
 
                 break;
 
             case UefiConfigSmbiosMemoryDeviceSerialNumber:
                 UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER *memoryDeviceSerialNumber = (UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER*) header;
-                PcdSet64(PcdSmbiosMemoryDeviceSerialNumberStr, (UINT64) memoryDeviceSerialNumber->MemoryDeviceSerialNumber);
-                status = GetSmbiosStructureStringLength(header->Length, memoryDeviceSerialNumber->MemoryDeviceSerialNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, memoryDeviceSerialNumber->MemoryDeviceSerialNumber, &stringLength);
+                PcdSet64(PcdSmbiosMemoryDeviceSerialNumberStr, (UINT64)memoryDeviceSerialNumber->MemoryDeviceSerialNumber);
                 PcdSet32(PcdSmbiosMemoryDeviceSerialNumberSize, stringLength);
 
                 break;
@@ -1277,13 +1225,7 @@ Return Value:
             case UefiConfigSmbiosSocketDesignation:
                 UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION *socketDesignation = (UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION*) header;
                 PcdSet64(PcdSmbiosProcessorSocketDesignationStr, (UINT64) socketDesignation->SocketDesignation);
-                status = GetSmbiosStructureStringLength(header->Length, socketDesignation->SocketDesignation, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, socketDesignation->SocketDesignation, &stringLength);
                 PcdSet32(PcdSmbiosProcessorSocketDesignationSize, stringLength);
 
                 break;
@@ -1291,13 +1233,7 @@ Return Value:
             case UefiConfigSmbiosProcessorManufacturer:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER *processorManufacturer = (UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER*) header;
                 PcdSet64(PcdSmbiosProcessorManufacturerStr, (UINT64) processorManufacturer->ProcessorManufacturer);
-                status = GetSmbiosStructureStringLength(header->Length, processorManufacturer->ProcessorManufacturer, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, processorManufacturer->ProcessorManufacturer, &stringLength);
                 PcdSet32(PcdSmbiosProcessorManufacturerSize, stringLength);
 
                 break;
@@ -1305,13 +1241,7 @@ Return Value:
             case UefiConfigSmbiosProcessorVersion:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION *processorVersion = (UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION*) header;
                 PcdSet64(PcdSmbiosProcessorVersionStr, (UINT64) processorVersion->ProcessorVersion);
-                status = GetSmbiosStructureStringLength(header->Length, processorVersion->ProcessorVersion, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, processorVersion->ProcessorVersion, &stringLength);
                 PcdSet32(PcdSmbiosProcessorVersionSize, stringLength);
 
                 break;
@@ -1319,13 +1249,7 @@ Return Value:
             case UefiConfigSmbiosProcessorSerialNumber:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER *processorSerialNumber = (UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER*) header;
                 PcdSet64(PcdSmbiosProcessorSerialNumberStr, (UINT64) processorSerialNumber->ProcessorSerialNumber);
-                status = GetSmbiosStructureStringLength(header->Length, processorSerialNumber->ProcessorSerialNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, processorSerialNumber->ProcessorSerialNumber, &stringLength);
                 PcdSet32(PcdSmbiosProcessorSerialNumberSize, stringLength);
 
                 break;
@@ -1333,13 +1257,7 @@ Return Value:
             case UefiConfigSmbiosProcessorAssetTag:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG *processorAssetTag = (UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG*) header;
                 PcdSet64(PcdSmbiosProcessorAssetTagStr, (UINT64) processorAssetTag->ProcessorAssetTag);
-                status = GetSmbiosStructureStringLength(header->Length, processorAssetTag->ProcessorAssetTag, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, processorAssetTag->ProcessorAssetTag, &stringLength);
                 PcdSet32(PcdSmbiosProcessorAssetTagSize, stringLength);
 
                 break;
@@ -1347,34 +1265,20 @@ Return Value:
             case UefiConfigSmbiosProcessorPartNumber:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER *processorPartNumber = (UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER*) header;
                 PcdSet64(PcdSmbiosProcessorAssetTagStr, (UINT64) processorPartNumber->ProcessorPartNumber);
-                status = GetSmbiosStructureStringLength(header->Length, processorPartNumber->ProcessorPartNumber, &stringLength);
-
-                if (EFI_ERROR(status))
-                {
-                    goto Failure;
-                }
-
+                GetSmbiosStructureStringLength(header->Length, processorPartNumber->ProcessorPartNumber, &stringLength);
                 PcdSet32(PcdSmbiosProcessorAssetTagSize, stringLength);
 
                 break;
 
             case UefiConfigFlags:
                 UEFI_CONFIG_FLAGS *flags = (UEFI_CONFIG_FLAGS*) header;
-                if (!ConfigSetUefiConfigFlags(flags))
-                {
-                    goto Failure;
-                }
-
+                ConfigSetUefiConfigFlags(flags);
                 requiredStructures.UefiConfigFlags = 1;
                 break;
 
             case UefiConfigProcessorInformation:
                 UEFI_CONFIG_PROCESSOR_INFORMATION *processorInfo = (UEFI_CONFIG_PROCESSOR_INFORMATION*) header;
-                if (!ConfigSetProcessorInfo(processorInfo))
-                {
-                    goto Failure;
-                }
-
+                ConfigSetProcessorInfo(processorInfo);
                 requiredStructures.UefiConfigProcessorInformation = 1;
                 break;
 
@@ -1387,7 +1291,8 @@ Return Value:
                 //
                 if (header->Length != (sizeof(UEFI_CONFIG_HEADER) + sizeof(UEFI_CONFIG_MMIO) * 2))
                 {
-                    goto Failure;
+                    DEBUG((DEBUG_ERROR, "***Malformed MMIO range structure\n"));
+                    CONFIG_FAIL_FAST();
                 }
 
                 //
@@ -1417,13 +1322,12 @@ Return Value:
 
                 //
                 // Verify ACPI table header is completely within the config structure.
-                // Skip if not.
                 //
                 if (acpiTable->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
                     acpiHeader->Length > (acpiTable->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
-                    DEBUG((DEBUG_ERROR, "***ACPI table is not contained within config structure size, skipping!\n"));
-                    break;
+                    DEBUG((DEBUG_ERROR, "***ACPI table is not contained within config structure size.\n"));
+                    CONFIG_FAIL_FAST();
                 }
 
                 PcdSet64(PcdAcpiTablePtr, (UINT64) acpiTable->AcpiTableData);
@@ -1448,28 +1352,16 @@ Return Value:
     if (requiredStructures.AsUINT64 != AllStructuresFound)
     {
         DEBUG((DEBUG_ERROR, "Missing required structures, found structures: 0x%x\n", requiredStructures.AsUINT64));
-        ASSERT(FALSE);
-        return EFI_DEVICE_ERROR;
+        CONFIG_FAIL_FAST();
     }
 
     if (configCount->TotalConfigBlobSize != calculatedConfigSize)
     {
         DEBUG((DEBUG_ERROR, "Reported config size of 0x%x did not match actual size of 0x%x\n", configCount->TotalConfigBlobSize, calculatedConfigSize));
-        ASSERT(FALSE);
-        return EFI_DEVICE_ERROR;
+        CONFIG_FAIL_FAST();
     }
 
     return EFI_SUCCESS;
-
-Failure:
-
-    //
-    // Some structure is malformed, stop boot.
-    //
-    DEBUG((DEBUG_ERROR, "Config Structure of type 0x%x, with length 0x%x was malformed\n", header->Type, header->Length));
-    ASSERT(FALSE);
-
-    return EFI_DEVICE_ERROR;
 }
 
 EFI_STATUS

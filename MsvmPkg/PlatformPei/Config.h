@@ -33,12 +33,12 @@ GetIgvmConfigInfo(
     VOID
     );
 
-BOOLEAN
+VOID
 ConfigSetProcessorInfo(
     UEFI_CONFIG_PROCESSOR_INFORMATION *ProcessorInfo
     );
 
-BOOLEAN
+VOID
 ConfigSetUefiConfigFlags(
     UEFI_CONFIG_FLAGS *ConfigFlags
     );
