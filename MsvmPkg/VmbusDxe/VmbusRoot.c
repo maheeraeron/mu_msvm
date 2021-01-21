@@ -1694,7 +1694,7 @@ Return Value:
 
     for (index = 0; index < allowedGuidCount; index++)
     {
-        if (isolationType == UefiIsolationTypeSnp)
+        if (isolationType != UefiIsolationTypeNone)
         {
             if (gAllowedGuids[index].IsAllowedWhenIsolated == FALSE)
             {
