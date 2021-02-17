@@ -20,11 +20,22 @@ Abstract:
 
 #include <HvHypercallLibP.h>
 
+#define GHCB_FIELD_INDEX(Field) ((Field) / 8)
+#define GHCB_SET_FIELD_VALID(Ghcb, Field) \
+    do { \
+        if (Field < GHCB_FIELD_VALID_BITMAP0) { \
+            _bittestandset64((PUINT64)((PUCHAR)(Ghcb) + GHCB_FIELD_VALID_BITMAP0), GHCB_FIELD_INDEX(Field)); \
+        } \
+    } while (0)
+
 #define SetGhcbField16(Ghcb, Field, Value) \
+    GHCB_SET_FIELD_VALID(Ghcb, Field); \
     (*(PUINT16)((PUCHAR)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField32(Ghcb, Field, Value) \
+    GHCB_SET_FIELD_VALID(Ghcb, Field); \
     (*(PUINT32)((PUCHAR)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField64(Ghcb, Field, Value) \
+    GHCB_SET_FIELD_VALID(Ghcb, Field); \
     (*(PUINT64)((PUCHAR)(Ghcb) + (Field)) = (Value))
 #define GetGhcbField64(Ghcb, Field) \
     (*(PUINT64)((PUCHAR)(Ghcb) + (Field)))
@@ -36,6 +47,9 @@ Abstract:
 #define GHCB_FIELD64_RDX                0x310
 #define GHCB_FIELD64_EXITCODE           0x390
 #define GHCB_FIELD64_EXITINFO1          0x398
+#define GHCB_FIELD64_EXITINFO2          0x3A0
+#define GHCB_FIELD_VALID_BITMAP0        0x3F0
+#define GHCB_FIELD_VALID_BITMAP1        0x3F8
 #define GHCB_FIELD16_VERSION            0xFFA
 #define GHCB_FIELD32_FORMAT             0xFFC
 #define GHCB_FIELD64_HYPERCALL_CODE     0xFF0
@@ -62,8 +76,12 @@ HvHypercallpSetMsrWithGhcb(
     // MSR.
     //
 
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD_VALID_BITMAP0, 0);
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD_VALID_BITMAP1, 0);
+
     SetGhcbField64(Context->Ghcb, GHCB_FIELD64_EXITCODE, GHCB_EXITCODE_MSR);
     SetGhcbField64(Context->Ghcb, GHCB_FIELD64_EXITINFO1, 1);
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD64_EXITINFO2, 0);
     SetGhcbField64(Context->Ghcb, GHCB_FIELD64_RCX, MsrNumber);
     SetGhcbField64(Context->Ghcb, GHCB_FIELD64_RAX, (UINT32)RegisterValue);
     SetGhcbField64(Context->Ghcb, GHCB_FIELD64_RDX, (RegisterValue >> 32));

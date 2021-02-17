@@ -21,11 +21,22 @@ Abstract:
 #include <BiosInterface.h>
 #include "SecP.h"
 
+#define GHCB_FIELD_INDEX(Field) ((Field) / 8)
+#define GHCB_SET_FIELD_VALID(Ghcb, Field) \
+    do { \
+        if (Field < GHCB_FIELD_VALID_BITMAP0) { \
+            _bittestandset64((PUINT64)((PUCHAR)(Ghcb) + GHCB_FIELD_VALID_BITMAP0), GHCB_FIELD_INDEX(Field)); \
+        } \
+    } while (0)
+
 #define SetGhcbField16(Ghcb, Field, Value) \
+    GHCB_SET_FIELD_VALID(Ghcb, Field); \
     (*(PUINT16)((PUCHAR)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField32(Ghcb, Field, Value) \
+    GHCB_SET_FIELD_VALID(Ghcb, Field); \
     (*(PUINT32)((PUCHAR)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField64(Ghcb, Field, Value) \
+    GHCB_SET_FIELD_VALID(Ghcb, Field); \
     (*(PUINT64)((PUCHAR)(Ghcb) + (Field)) = (Value))
 #define GetGhcbField64(Ghcb, Field) \
     (*(PUINT64)((PUCHAR)(Ghcb) + (Field)))
@@ -40,6 +51,9 @@ Abstract:
 #define GHCB_FIELD64_RDX                0x310
 #define GHCB_FIELD64_EXITCODE           0x390
 #define GHCB_FIELD64_EXITINFO1          0x398
+#define GHCB_FIELD64_EXITINFO2          0x3A0
+#define GHCB_FIELD_VALID_BITMAP0        0x3F0
+#define GHCB_FIELD_VALID_BITMAP1        0x3F8
 #define GHCB_FIELD16_VERSION            0xFFA
 #define GHCB_FIELD32_FORMAT             0xFFC
 
@@ -62,8 +76,12 @@ SecReadMsrWithGhcb(
     // MSR.
     //
 
+    SetGhcbField64(Ghcb, GHCB_FIELD_VALID_BITMAP0, 0);
+    SetGhcbField64(Ghcb, GHCB_FIELD_VALID_BITMAP1, 0);
+
     SetGhcbField64(Ghcb, GHCB_FIELD64_EXITCODE, GHCB_EXITCODE_MSR);
     SetGhcbField64(Ghcb, GHCB_FIELD64_EXITINFO1, 0);
+    SetGhcbField64(Ghcb, GHCB_FIELD64_EXITINFO2, 0);
     SetGhcbField64(Ghcb, GHCB_FIELD64_RCX, MsrNumber);
     SetGhcbField32(Ghcb, GHCB_FIELD32_FORMAT, 0);
     SetGhcbField16(Ghcb, GHCB_FIELD16_VERSION, 1);
@@ -87,8 +105,12 @@ SecWriteMsrWithGhcb(
     // MSR.
     //
 
+    SetGhcbField64(Ghcb, GHCB_FIELD_VALID_BITMAP0, 0);
+    SetGhcbField64(Ghcb, GHCB_FIELD_VALID_BITMAP1, 0);
+
     SetGhcbField64(Ghcb, GHCB_FIELD64_EXITCODE, GHCB_EXITCODE_MSR);
     SetGhcbField64(Ghcb, GHCB_FIELD64_EXITINFO1, 1);
+    SetGhcbField64(Ghcb, GHCB_FIELD64_EXITINFO2, 0);
     SetGhcbField64(Ghcb, GHCB_FIELD64_RCX, MsrNumber);
     SetGhcbField64(Ghcb, GHCB_FIELD64_RAX, (UINT32)Value);
     SetGhcbField64(Ghcb, GHCB_FIELD64_RDX, Value >> 32);
@@ -165,7 +187,7 @@ SecInitializeSnp (
         SecVmgexit();
         ghcbMsr = AsmReadMsr64(MSR_GHCB);
     }
-    
+
     //
     // The selected GHCB is usable as long as it is either the selected
     // address or it is beyond the parameter block and above the shared GPA
