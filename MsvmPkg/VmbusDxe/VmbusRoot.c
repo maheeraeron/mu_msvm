@@ -572,7 +572,11 @@ Return Value:
     // double fetch.
     Message->Size = hvMessage->Header.PayloadSize;
 
-    VMBUS_FAIL_FAST_IF_FALSE(Message->Size <= MAXIMUM_SYNIC_MESSAGE_BYTES);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        Message->Size <= MAXIMUM_SYNIC_MESSAGE_BYTES,
+        VMBUS,
+        __LINE__,
+        0);
 
     CopyMem(Message->Data, hvMessage->Payload, Message->Size);
     mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
@@ -881,7 +885,11 @@ Return Value:
     childId = 0;
     gpadl = 0;
 
-    VMBUS_FAIL_FAST_IF_FALSE(HvMessage->Header.MessageType == VMBUS_MESSAGE_TYPE);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        HvMessage->Header.MessageType == VMBUS_MESSAGE_TYPE,
+        VMBUS,
+        __LINE__,
+        0);
 
     message = BASE_CR(HvMessage->Payload, VMBUS_MESSAGE, Header);
 
@@ -923,7 +931,11 @@ Return Value:
 
         // Store the channel ID before validating to avoid a double fetch.
         childId = message->OpenResult.ChildRelId;
-        VMBUS_FAIL_FAST_IF_FALSE(childId < VMBUS_MAX_CHANNELS);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            childId < VMBUS_MAX_CHANNELS,
+            VMBUS,
+            __LINE__,
+            0);
         response = &RootContext->Channels[childId]->Response;
 
         break;
@@ -932,8 +944,16 @@ Return Value:
 
         // Store the GPADL before validating to avoid a double fetch.
         gpadl = message->GpadlTorndown.Gpadl;
-        VMBUS_FAIL_FAST_IF_FALSE(gpadl < VMBUS_MAX_GPADLS);
-        VMBUS_FAIL_FAST_IF_FALSE(VmbusRootValidateGpadl(RootContext, gpadl));
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            gpadl < VMBUS_MAX_GPADLS,
+            VMBUS,
+            __LINE__,
+            0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            VmbusRootValidateGpadl(RootContext, gpadl),
+            VMBUS,
+            __LINE__,
+            0);
         response = &RootContext->GpadlTable[gpadl];
 
         break;
@@ -942,8 +962,16 @@ Return Value:
 
         // Store the GPADL before validating to avoid a double fetch.
         gpadl = message->GpadlCreated.Gpadl;
-        VMBUS_FAIL_FAST_IF_FALSE(gpadl < VMBUS_MAX_GPADLS);
-        VMBUS_FAIL_FAST_IF_FALSE(VmbusRootValidateGpadl(RootContext, gpadl));
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            gpadl < VMBUS_MAX_GPADLS,
+            VMBUS,
+            __LINE__,
+            0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            VmbusRootValidateGpadl(RootContext, gpadl),
+            VMBUS,
+            __LINE__,
+            0);
         response = &RootContext->GpadlTable[gpadl];
 
         break;
@@ -969,7 +997,11 @@ Return Value:
         // Validate the payload size coming in from the host.
         // Validate a locally stored value to avoid a double fetch.
         response->Message.Size = HvMessage->Header.PayloadSize;
-        VMBUS_FAIL_FAST_IF_FALSE(response->Message.Size <= MAXIMUM_SYNIC_MESSAGE_BYTES);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            response->Message.Size <= MAXIMUM_SYNIC_MESSAGE_BYTES,
+            VMBUS,
+            __LINE__,
+            0);
 
         CopyMem(response->Message.Data,
                 HvMessage->Payload,
@@ -1029,16 +1061,32 @@ Return Value:
 
     hotMessage->Message.Size = hvMessage->Header.PayloadSize;
 
-    VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.Size == sizeof(hotMessage->Message.OfferChannel));
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        hotMessage->Message.Size == sizeof(hotMessage->Message.OfferChannel),
+        VMBUS,
+        __LINE__,
+        0);
 
     CopyMem(hotMessage->Message.Data,
             hvMessage->Payload,
             hotMessage->Message.Size);
     
-    VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel,
+        VMBUS,
+        __LINE__,
+        0);
 
-    VMBUS_FAIL_FAST_IF_FALSE(hotMessage->Message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS);
-    VMBUS_FAIL_FAST_IF_FALSE(context->Channels[hotMessage->Message.OfferChannel.ChildRelId] == NULL);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        hotMessage->Message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS,
+        VMBUS,
+        __LINE__,
+        0);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        context->Channels[hotMessage->Message.OfferChannel.ChildRelId] == NULL,
+        VMBUS,
+        __LINE__,
+        0);
 
     // Do not proceed if this channel is not allowed during UEFI boot.
     if (!VmbusRootIsChannelAllowed(&hotMessage->Message.OfferChannel))
@@ -1487,7 +1535,11 @@ Return Value:
         VmbusRootWaitForMessage(RootContext, FALSE, &message);
     } while (message.Header.MessageType != ChannelMessageVersionResponse);
 
-    VMBUS_FAIL_FAST_IF_FALSE(message.Size == sizeof(message.VersionResponse));
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        message.Size == sizeof(message.VersionResponse),
+        VMBUS,
+        __LINE__,
+        0);
 
     if (!message.VersionResponse.VersionSupported ||
         message.VersionResponse.ConnectionState
@@ -1548,7 +1600,11 @@ Return Value:
         VmbusRootWaitForMessage(RootContext, TRUE, &message);
     } while (message.Header.MessageType != ChannelMessageUnloadComplete);
 
-    VMBUS_FAIL_FAST_IF_FALSE(message.Size == sizeof(message.Header));
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        message.Size == sizeof(message.Header),
+        VMBUS,
+        __LINE__,
+        0);
 }
 
 
@@ -1604,7 +1660,11 @@ Return Value:
     ASSERT(OfferMessage->ChildRelId < VMBUS_MAX_CHANNELS);
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
-    VMBUS_FAIL_FAST_IF_FALSE(RootContext->Channels[channelContext->ChannelId] == NULL);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        RootContext->Channels[channelContext->ChannelId] == NULL,
+        VMBUS,
+        __LINE__,
+        0);
     RootContext->Channels[channelContext->ChannelId] = channelContext;
     gBS->RestoreTPL(tpl);
 
@@ -1767,8 +1827,16 @@ Return Value:
             return EFI_PROTOCOL_ERROR;
         }
 
-        VMBUS_FAIL_FAST_IF_FALSE(message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS);
-        VMBUS_FAIL_FAST_IF_FALSE(RootContext->Channels[message.OfferChannel.ChildRelId] == NULL);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            message.OfferChannel.ChildRelId < VMBUS_MAX_CHANNELS,
+            VMBUS,
+            __LINE__,
+            0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            RootContext->Channels[message.OfferChannel.ChildRelId] == NULL,
+            VMBUS,
+            __LINE__,
+            0);
 
         // Do not proceed if this channel is not allowed during UEFI boot.
         if (!VmbusRootIsChannelAllowed(&message.OfferChannel))

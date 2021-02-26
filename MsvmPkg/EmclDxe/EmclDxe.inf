@@ -18,6 +18,7 @@
     DebugLib
     UefiDriverEntryPoint
     MemoryAllocationLib
+    DebugAgentLib
 
 [Sources]
     Emcl.c

@@ -310,10 +310,27 @@ Return Value:
 
     ASSERT_EFI_ERROR(status);
 
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Header.MessageType == ChannelMessageGpadlCreated);
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Size == sizeof(receiveMessage->GpadlCreated));
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->GpadlCreated.Gpadl == Gpadl->GpadlHandle);
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->GpadlCreated.ChildRelId == channelContext->ChannelId);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->Header.MessageType == ChannelMessageGpadlCreated, 
+        VMBUS, 
+        __LINE__, 
+        0);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->Size == sizeof(receiveMessage->GpadlCreated),
+        VMBUS,
+        __LINE__,
+        0);
+
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->GpadlCreated.Gpadl == Gpadl->GpadlHandle,
+        VMBUS,
+        __LINE__,
+        0);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->GpadlCreated.ChildRelId == channelContext->ChannelId,
+        VMBUS,
+        __LINE__,
+        0);
 
     if (receiveMessage->GpadlCreated.CreationStatus != 0)
     {
@@ -464,9 +481,21 @@ Return Value:
 
         ASSERT_EFI_ERROR(status);
 
-        VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Size == sizeof(receiveMessage->GpadlTorndown));
-        VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Header.MessageType == ChannelMessageGpadlTorndown);
-        VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->GpadlTorndown.Gpadl == Gpadl->GpadlHandle);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            receiveMessage->Size == sizeof(receiveMessage->GpadlTorndown),
+            VMBUS,
+            __LINE__,
+            0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            receiveMessage->Header.MessageType == ChannelMessageGpadlTorndown,
+            VMBUS,
+            __LINE__,
+            0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+            receiveMessage->GpadlTorndown.Gpadl == Gpadl->GpadlHandle,
+            VMBUS,
+            __LINE__,
+            0);
 
         VmbusRootReclaimGpadl(channelContext->RootContext, Gpadl->GpadlHandle);
         Gpadl->GpadlHandle = 0;
@@ -653,9 +682,21 @@ Return Value:
     VmbusRootSendMessage(&sendMessage);
     receiveMessage = VmbusRootWaitForChannelResponse(channelContext);
 
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Size == sizeof(receiveMessage->OpenResult));
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->Header.MessageType == ChannelMessageOpenChannelResult);
-    VMBUS_FAIL_FAST_IF_FALSE(receiveMessage->OpenResult.ChildRelId == channelContext->ChannelId);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->Size == sizeof(receiveMessage->OpenResult),
+        VMBUS,
+        __LINE__,
+        0);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->Header.MessageType == ChannelMessageOpenChannelResult,
+        VMBUS,
+        __LINE__,
+        0);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
+        receiveMessage->OpenResult.ChildRelId == channelContext->ChannelId,
+        VMBUS,
+        __LINE__,
+        0);
 
     if (receiveMessage->OpenResult.Status != 0)
     {

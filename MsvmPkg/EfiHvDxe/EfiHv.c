@@ -31,6 +31,8 @@ Author:
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/HvHypercallLib.h>
+#include <Library/CrashDumpAgentLib.h>
+
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 #include <Library/LocalApicLib.h>
 #endif
@@ -40,21 +42,11 @@ Author:
 
 #define WINHVP_MAX_REPS_PER_HYPERCALL   0xFFF
 
+#define EFI 0x454649 // "EFI"
+
 // Turn off DEBUG output by default as it can be really noisy
 #undef DEBUG
 #define DEBUG(arg)
-
-#if defined (MDE_CPU_X64)
-// Intrinsic defines for X64
-// TODO-cho-19259739: This should be removed when we have real fail-fast support.
-void
-__ud2(
-    void
-    );
-
-#pragma intrinsic(__ud2)
-
-#endif
 
 typedef struct _EFI_HV_SINT_CONFIGURATION
 {
@@ -1401,8 +1393,7 @@ Return Value:
         mHvPages->HypercallPage[1] == 0 &&
         mHvPages->HypercallPage[2] == 0)
     {
-        // TODO-cho-19259739: Figure out a better way to abort.
-        __ud2();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
     }
 
     // Cache some enlightenment information.

@@ -27,6 +27,7 @@ Author:
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
+#include <Library/CrashDumpAgentLib.h>
 
 #include <Protocol/Emcl.h>
 #include <Protocol/Vmbus.h>
@@ -46,10 +47,7 @@ Author:
 
 #define UINT64_MAX       0xffffffffffffffff
 
-// TODO-19259739: Have a better way of reporting UEFI errors.
-#define EMCL_FAIL_FAST() \
-                    ASSERT(FALSE); \
-                    CpuDeadLoop();
+#define EMCL 0x454d434c // "EMCL"
 
 typedef struct _EMCL_BOUNCE_BLOCK
 {
@@ -800,7 +798,7 @@ Return Value:
                 status = EmclpAllocateBounceBlock(Context, allocSize);
                 if (EFI_ERROR(status))
                 {
-                    EMCL_FAIL_FAST();
+                    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
                 }
                 CompletionEntry->EmclBouncePageList = EmclpAcquireBouncePages(Context, pageCount);
             }
@@ -954,7 +952,7 @@ Return Value:
     if ((Packet->Descriptor.Length8 * 8 < sizeof(VMPACKET_DESCRIPTOR)) ||
         (Packet->Descriptor.DataOffset8 > Packet->Descriptor.Length8))
     {
-        EMCL_FAIL_FAST();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
     }
 
     inlineBuffer = (VOID*)((UINT_PTR)(&Packet->Descriptor) +
@@ -985,7 +983,7 @@ Return Value:
 
         if ((completionEntry == NULL) || (completionEntry->TransactionId != Packet->Descriptor.TransactionId))
         {
-            EMCL_FAIL_FAST();
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
         }
 
         // Bounce buffering (optional) copy back and free the bounce buffers.
@@ -1018,7 +1016,7 @@ Return Value:
                 // Validate the packet and header values before processing the packet.
                 if (inlineBufferLength < sizeof(VMPIPE_PROTOCOL_HEADER))
                 {
-                    EMCL_FAIL_FAST();
+                    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
                 }
 
                 pipeHeader = (PVMPIPE_PROTOCOL_HEADER)inlineBuffer;
@@ -1029,7 +1027,7 @@ Return Value:
                 }
                 if (pipeHeader->DataSize > (inlineBufferLength - sizeof(VMPIPE_PROTOCOL_HEADER)))
                 {
-                    EMCL_FAIL_FAST();
+                    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
                 }
 
                 inlineBuffer = (VOID*)((UINT_PTR)inlineBuffer + sizeof(*pipeHeader));
@@ -1054,7 +1052,7 @@ Return Value:
             // Validate the packet and header values before processing the packet.
             if (Packet->Descriptor.DataOffset8 * 8 < FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges))
             {
-                EMCL_FAIL_FAST();
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
             }
 
             expectedRangeCount = 
@@ -1063,7 +1061,7 @@ Return Value:
 
             if (Packet->TransferHeader.RangeCount != expectedRangeCount)
             {
-                EMCL_FAIL_FAST();
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
             }
 
             Context->ReceiveCallback(
@@ -1707,7 +1705,7 @@ Return Value:
 
         if (mCurrentTransactionId == UINT64_MAX)
         {
-            EMCL_FAIL_FAST();
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
         }
 
         mCurrentTransactionId++;

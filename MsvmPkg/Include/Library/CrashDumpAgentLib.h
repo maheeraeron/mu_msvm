@@ -6,6 +6,25 @@
 #ifndef __CRASH_DUMP_AGENT_LIB_H__
 #define __CRASH_DUMP_AGENT_LIB_H__
 
+#define KERNEL_SECURITY_CHECK_FAILURE 0x139
+#define FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR 58
+
+
+#if defined(MDE_CPU_AARCH64)
+#define FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2, Info3) \
+    { ASSERT(FALSE); CpuDeadLoop(); }
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2, Info3) \
+    EfiBugCheck(KERNEL_SECURITY_CHECK_FAILURE, FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR, Info1, Info2, Info3);
+#else
+#error Unsupported Architecture
+#endif
+
+
+#define FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(cond, Info1, Info2, Info3) \
+        if (!(cond)) { FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2, Info3) } \
+
+
 /**
   Called to initialize the crash dump agent.
 

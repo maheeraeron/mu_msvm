@@ -28,6 +28,13 @@
 #  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
+[Sources.X64]
+    X64/kduefi.preefi
+    X64/debugstb.asm
+
+[Sources.AARCH64]
+    AArch64/Mmu.c
+
 [Sources]
     Config.c
     IgvmConfig.c
@@ -35,12 +42,6 @@
     Hv.c
     KdNet.c
     Platform.c
-
-[Sources.X64]
-    X64/kduefi.preefi
-
-[Sources.AARCH64]
-    AArch64/Mmu.c
 
 [Packages]
     MdePkg/MdePkg.dec

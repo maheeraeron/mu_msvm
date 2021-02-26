@@ -21,6 +21,7 @@ Abstract:
 #if defined(MDE_CPU_AARCH64)
 #include <Library/ArmLib.h>
 #endif
+#include <Library/CrashDumpAgentLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/PeiServicesLib.h>
@@ -29,16 +30,31 @@ Abstract:
 #include <IsolationTypes.h>
 #include "Config.h"
 
+VOID
+TripleFault(
+    __in    UINTN   Rax,
+    __in    UINTN   Rbx,
+    __in    UINTN   Rcx,
+    __in    UINTN   Rdx
+);
+
 //
 // Values and type used with CPUID to get the physical address width.
 //
 #define CPUID_FUNCTION_EXTENDED_MAX_FUNCTION        0x80000000
 #define CPUID_FUNCTION_EXTENDED_ADDRESS_SPACE_SIZES 0x80000008
 
-// TODO-19259739: Have a better way of reporting UEFI errors.
-#define CONFIG_FAIL_FAST() \
-                    ASSERT(FALSE); \
-                    CpuDeadLoop();
+#define CONFIG 0x434f4e464947 // "CONFIG"
+
+#if defined(MDE_CPU_AARCH64)
+#define CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2) \
+    { ASSERT(FALSE); CpuDeadLoop(); }
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2) \
+    TripleFault(KERNEL_SECURITY_CHECK_FAILURE, FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR, Info1, Info2);
+#else
+#error Unsupported Architecture
+#endif
 
 typedef union _CPUID_ADDRESS_SPACE_SIZES
 {
@@ -736,19 +752,19 @@ ConfigSetProcessorInfo(
     if (ProcessorInfo->ProcessorCount == 0)
     {
         DEBUG((DEBUG_ERROR, "Processors count was 0.\n"));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     if (ProcessorInfo->ProcessorsPerVirtualSocket == 0)
     {
         DEBUG((DEBUG_ERROR, "Processors per virtual socket was 0.\n"));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     if (ProcessorInfo->ThreadsPerProcessor == 0)
     {
         DEBUG((DEBUG_ERROR, "Threads per processor was 0.\n"));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     PcdSet32(PcdProcessorCount, ProcessorInfo->ProcessorCount);
@@ -998,13 +1014,13 @@ Return Value:
         configCount->TotalStructureCount <= 1)
     {
         DEBUG((DEBUG_ERROR, "*** Malformed Header (Structure count) \n"));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     if (EFI_ERROR(VerifyStructureLength(header)))
     {
         DEBUG((DEBUG_ERROR, "*** Malformed Header Length (Structure count) \n"));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     PcdSet32(PcdConfigBlobSize, configCount->TotalConfigBlobSize);
@@ -1023,7 +1039,7 @@ Return Value:
         if (EFI_ERROR(VerifyStructureLength(header)))
         {
             DEBUG((DEBUG_ERROR, "*** Malformed Header Length\n"));
-            CONFIG_FAIL_FAST();
+            CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
         }
 
         if (calculatedConfigSize > configCount->TotalConfigBlobSize)
@@ -1031,7 +1047,7 @@ Return Value:
             DEBUG((DEBUG_ERROR, "Config offset of 0x%x is greater than the actual size of 0x%x\n", 
                 calculatedConfigSize,
                 configCount->TotalConfigBlobSize));
-            CONFIG_FAIL_FAST();
+            CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
         }
 
         DebugDumpUefiConfigStruct(header);
@@ -1053,7 +1069,7 @@ Return Value:
                     madtHdr->Length >(madtStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed MADT\n"));
-                    CONFIG_FAIL_FAST();
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
                 }
 
                 PcdSet64(PcdMadtPtr, (UINT64)madtStructure->Madt);
@@ -1077,7 +1093,7 @@ Return Value:
                     sratHdr->Length > (sratStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SRAT\n"));
-                    CONFIG_FAIL_FAST();
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
                 }
 
                 PcdSet64(PcdSratPtr, (UINT64) sratStructure->Srat);
@@ -1094,7 +1110,7 @@ Return Value:
                     slitHdr->Length > (slitStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SLIT\n"));
-                    CONFIG_FAIL_FAST();
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
                 }
 
                 PcdSet64(PcdSlitPtr, (UINT64)slitStructure->Slit);
@@ -1292,7 +1308,7 @@ Return Value:
                 if (header->Length != (sizeof(UEFI_CONFIG_HEADER) + sizeof(UEFI_CONFIG_MMIO) * 2))
                 {
                     DEBUG((DEBUG_ERROR, "***Malformed MMIO range structure\n"));
-                    CONFIG_FAIL_FAST();
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
                 }
 
                 //
@@ -1327,7 +1343,7 @@ Return Value:
                     acpiHeader->Length > (acpiTable->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "***ACPI table is not contained within config structure size.\n"));
-                    CONFIG_FAIL_FAST();
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
                 }
 
                 PcdSet64(PcdAcpiTablePtr, (UINT64) acpiTable->AcpiTableData);
@@ -1352,13 +1368,13 @@ Return Value:
     if (requiredStructures.AsUINT64 != AllStructuresFound)
     {
         DEBUG((DEBUG_ERROR, "Missing required structures, found structures: 0x%x\n", requiredStructures.AsUINT64));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     if (configCount->TotalConfigBlobSize != calculatedConfigSize)
     {
         DEBUG((DEBUG_ERROR, "Reported config size of 0x%x did not match actual size of 0x%x\n", configCount->TotalConfigBlobSize, calculatedConfigSize));
-        CONFIG_FAIL_FAST();
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
     }
 
     return EFI_SUCCESS;
