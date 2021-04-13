@@ -248,7 +248,7 @@ DefinitionBlock (
             Name(_CRS, ResourceTemplate()
             {
                 Memory32Fixed(ReadWrite, FixedPcdGet32(PcdCom1RegisterBase), 0x1000)
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
+                Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom1Vector)}
             })
         }
@@ -262,7 +262,7 @@ DefinitionBlock (
             Name(_CRS, ResourceTemplate()
             {
                 Memory32Fixed(ReadWrite, FixedPcdGet32(PcdCom2RegisterBase), 0x1000)
-                Interrupt(ResourceConsumer, Edge, ActiveHigh, Exclusive)
+                Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom2Vector)}
             })
         }
