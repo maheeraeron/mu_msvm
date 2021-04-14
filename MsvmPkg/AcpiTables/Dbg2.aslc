@@ -21,7 +21,7 @@ Author:
 #include <AcpiTables.h>
 #include <IndustryStandard/DebugPort2Table.h>
 
-#define VM_ACPI_PL011_DEVICE_NAME_SPACE_STRING "\\_SB.UAR1"
+#define VM_ACPI_PL011_DEVICE_NAME_SPACE_STRING "\\_SB.VMOD.UAR1"
 
 #pragma pack(1)
 
@@ -58,7 +58,7 @@ VM_ACPI_DEBUG_PORT_2_IMPL DBG2 =
             EFI_ACPI_DBG2_DEBUG_DEVICE_INFORMATION_STRUCT_REVISION,
             sizeof(VM_ACPI_DEBUG_PORT_2_DDI_PL011),
             1, // Number of Generic Address Registers
-            sizeof(VM_ACPI_PL011_DEVICE_NAME_SPACE_STRING), // Length of Namespace STring
+            sizeof(VM_ACPI_PL011_DEVICE_NAME_SPACE_STRING), // Length of Namespace String
             VM_ACPI_DBG2_NAMESPACE_STRING_OFFSET,//namespace str offset
             0, // oem data length
             0, // oem data offset
