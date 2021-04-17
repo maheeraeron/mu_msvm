@@ -651,6 +651,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tProcIdleEnabled: %u\n", flags->Flags.ProcIdleEnabled));
             DEBUG((DEBUG_VERBOSE, "\tDisableSha384Pcr: %u\n", flags->Flags.DisableSha384Pcr));
             DEBUG((DEBUG_VERBOSE, "\tMediaPresentEnabledByDefault: %u\n", flags->Flags.MediaPresentEnabledByDefault));
+            DEBUG((DEBUG_VERBOSE, "\tMemoryProtectionDisabled: %u\n", flags->Flags.MemoryProtectionDisabled));
             break;
 
         case UefiConfigProcessorInformation:
@@ -796,6 +797,7 @@ ConfigSetUefiConfigFlags(
     PcdSetBool(PcdVpciBootEnabled, (UINT8)ConfigFlags->Flags.VpciBootEnabled);
     PcdSetBool(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled);
     PcdSetBool(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault);
+    PcdSetBool(PcdMemoryProtectionDisabled, (UINT8) ConfigFlags->Flags.MemoryProtectionDisabled);
 
     //
     // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.

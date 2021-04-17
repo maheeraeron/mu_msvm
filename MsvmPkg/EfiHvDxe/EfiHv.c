@@ -57,9 +57,6 @@ typedef struct _EFI_HV_SINT_CONFIGURATION
 
 typedef struct _EFI_HV_PAGES
 {
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
-    UCHAR HypercallPage[EFI_PAGE_SIZE];
-#endif
     UCHAR HypercallInputPage[EFI_PAGE_SIZE];
     UCHAR HypercallOutputPage[EFI_PAGE_SIZE];
     HV_SYNIC_EVENT_FLAGS_PAGE EventFlagsPage;
@@ -79,6 +76,13 @@ HV_HYPERCALL_CONTEXT mHvContext;
 HV_HYPERCALL_CONTEXT mHvBypassContext;
 BOOLEAN mUseBypassContext;
 PEFI_HV_PAGES mHvPages;
+
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+
+UCHAR *mHypercallPage;
+
+#endif
+
 PVOID mOutputPageBypass;
 PHV_SYNIC_EVENT_FLAGS_PAGE mEventFlagsPage;
 PHV_MESSAGE_PAGE mMessagePage;
@@ -1331,6 +1335,7 @@ Return Value:
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
     HV_CPUID_RESULT cpuidResult;
+    EFI_PHYSICAL_ADDRESS executableHyperCallPage;
 
     // Validate that the hypervisor is present, is a Microsoft hypervisor,
     // and has all the required features.
@@ -1373,25 +1378,39 @@ Return Value:
     }
 
     // Allocate hypervisor communication pages.
-
+    mHypercallPage = NULL;
     mHvPages = AllocatePages(sizeof(*mHvPages) / EFI_PAGE_SIZE);
     if (mHvPages == NULL)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate hypercall pages!\n", __FUNCTION__));
+        DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate HV pages!\n", __FUNCTION__));
         status =  EFI_OUT_OF_RESOURCES;
         goto Exit;
     }
     DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHvPages));
 
+
+    status = gBS->AllocatePages(AllocateAnyPages,
+                                EfiBootServicesCode,
+                                1,
+                                &executableHyperCallPage);
+    if (EFI_ERROR(status))
+    {
+        DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate the hypercall page!\n", __FUNCTION__));
+        goto Exit;
+    }
+    mHypercallPage = (UCHAR *)(UINTN)executableHyperCallPage;
+    DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHypercallPage));
+
     // Zero the hypercall page
     ZeroMem(mHvPages, sizeof(*mHvPages));
+    ZeroMem(mHypercallPage, EFI_PAGE_SIZE);
 
-    HvHypercallConnect(mHvPages->HypercallPage, NULL, &mHvContext);
+    HvHypercallConnect(mHypercallPage, NULL, &mHvContext);
 
     // Check to see if the hypercall page was mapped. If it wasn't, abort here.
-    if (mHvPages->HypercallPage[0] == 0 &&
-        mHvPages->HypercallPage[1] == 0 &&
-        mHvPages->HypercallPage[2] == 0)
+    if (mHypercallPage[0] == 0 &&
+        mHypercallPage[1] == 0 &&
+        mHypercallPage[2] == 0)
     {
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
     }
@@ -1556,6 +1575,13 @@ Return Value:
         FreePages(mHvPages, sizeof(*mHvPages) / EFI_PAGE_SIZE);
         mHvPages = NULL;
     }
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+    if (mHypercallPage != NULL)
+    {
+        FreePages(mHypercallPage, 1);
+        mHypercallPage = NULL;
+    }
+#endif
 }
 
 

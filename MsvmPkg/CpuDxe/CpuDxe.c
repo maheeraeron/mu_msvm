@@ -13,6 +13,8 @@
 **/
 
 #include "CpuDxe.h"
+#include "CpuMp.h"
+#include "CpuPageTable.h"
 
 // MSCHANGE BEGIN Copied from MU_BASECORE 1808 since these definitions have been removed from public release
 //
@@ -43,6 +45,9 @@
 #define  MTRR_LIB_CACHE_MTRR_ENABLED                 0x800
 #define  MTRR_LIB_CACHE_FIXED_MTRR_ENABLED           0x400
 // MSCHANGE END Copied from MU_BASECORE 1808 since these definitions have been removed from public release
+
+#define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP)
+#define MEMORY_ATTRIBUTE_MASK  (EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO)
 
 
 //
@@ -655,10 +660,22 @@ CpuSetMemoryAttributes (
 {
   RETURN_STATUS             Status;
   MTRR_MEMORY_CACHE_TYPE    CacheType;
+  UINT64                    CacheAttributes;
+  UINT64                    MemoryAttributes;
 
   if (!IsMtrrSupported ()) {
     return EFI_UNSUPPORTED;
   }
+
+  CacheAttributes = Attributes & CACHE_ATTRIBUTE_MASK;
+  MemoryAttributes = Attributes & MEMORY_ATTRIBUTE_MASK;
+
+  if (Attributes != (CacheAttributes | MemoryAttributes)) {
+    DEBUG ((DEBUG_ERROR, "Invalid attributes.\n"));  
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // DEBUG((DEBUG_VERBOSE, "CacheAttributes: 0x%lx , MemoryAttributes: (0x%lx)\n", CacheAttributes, MemoryAttributes));
 
   //
   // If this function is called because GCD SetMemorySpaceAttributes () is called
@@ -671,46 +688,50 @@ CpuSetMemoryAttributes (
       return EFI_SUCCESS;
     }
 
-  switch (Attributes) {
-  case EFI_MEMORY_UC:
-    CacheType = CacheUncacheable;
-    break;
+  if (CacheAttributes != 0) {
+    switch (CacheAttributes) {
+    case EFI_MEMORY_UC:
+      CacheType = CacheUncacheable;
+      break;
 
-  case EFI_MEMORY_WC:
-    CacheType = CacheWriteCombining;
-    break;
+    case EFI_MEMORY_WC:
+      CacheType = CacheWriteCombining;
+      break;
 
-  case EFI_MEMORY_WT:
-    CacheType = CacheWriteThrough;
-    break;
+    case EFI_MEMORY_WT:
+      CacheType = CacheWriteThrough;
+      break;
 
-  case EFI_MEMORY_WP:
-    CacheType = CacheWriteProtected;
-    break;
+    case EFI_MEMORY_WP:
+      CacheType = CacheWriteProtected;
+      break;
 
-  case EFI_MEMORY_WB:
-    CacheType = CacheWriteBack;
-    break;
+    case EFI_MEMORY_WB:
+      CacheType = CacheWriteBack;
+      break;
 
-  case EFI_MEMORY_UCE:
-  case EFI_MEMORY_RP:
-  case EFI_MEMORY_XP:
-  case EFI_MEMORY_RUNTIME:
-    return EFI_UNSUPPORTED;
+    default:
+      DEBUG ((DEBUG_ERROR, "Invalid cache attributes.\n"));    
+      return EFI_INVALID_PARAMETER;
+    }
+    //
+    // call MTRR libary function
+    //
+    Status = MtrrSetMemoryAttribute (
+              BaseAddress,
+              Length,
+              CacheType
+              );
 
-  default:
-    return EFI_INVALID_PARAMETER;
+    if (EFI_ERROR(Status)) {
+      return (EFI_STATUS) Status;
+    }
   }
-  //
-  // call MTRR libary function
-  //
-  Status = MtrrSetMemoryAttribute (
-             BaseAddress,
-             Length,
-             CacheType
-             );
 
-  return (EFI_STATUS) Status;
+  //
+  // Set memory attribute by page table
+  //
+  return AssignMemoryPageAttributes (NULL, BaseAddress, Length, MemoryAttributes, NULL);
 }
 
 /**
@@ -1301,6 +1322,8 @@ InitializeCpu (
       strictIsolation = FALSE;
   }
 
+  InitializePageTableLib();
+
   InitializeFloatingPointUnits ();
 
   //
@@ -1357,6 +1380,8 @@ InitializeCpu (
                   &IdleLoopEvent
                   );
   ASSERT_EFI_ERROR (Status);
+
+  InitializeMpSupport ();
 
   return Status;
 }

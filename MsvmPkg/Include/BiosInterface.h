@@ -765,7 +765,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 ProcIdleEnabled : 1;
         UINT64 DisableSha384Pcr : 1;
         UINT64 MediaPresentEnabledByDefault : 1;
-        UINT64 Reserved:43;
+        UINT64 MemoryProtectionDisabled: 1;
+        UINT64 Reserved:42;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

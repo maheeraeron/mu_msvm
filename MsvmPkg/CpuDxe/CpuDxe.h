@@ -19,6 +19,10 @@
 
 #include <Protocol/Cpu.h>
 #include <Protocol/Cpu2.h>
+#include <Protocol/MpService.h>
+
+#include <Ppi/SecPlatformInformation.h>
+#include <Ppi/SecPlatformInformation2.h>
 
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -31,6 +35,10 @@
 #include <Library/MtrrLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/UefiCpuLib.h>
+#include <Library/CpuExceptionHandlerLib.h>
+#include <Library/HobLib.h>
+#include <Library/ReportStatusCodeLib.h>
+#include <Library/MpInitLib.h>
 #include <Guid/IdleLoopEvent.h>
 #include <IsolationTypes.h>
 
@@ -45,6 +53,17 @@
                                        EFI_MEMORY_WB  | \
                                        EFI_MEMORY_UCE   \
                                        )
+
+#define EFI_MEMORY_PAGETYPE_MASK      (EFI_MEMORY_RP  | \
+                                       EFI_MEMORY_XP  | \
+                                       EFI_MEMORY_RO    \
+                                       )
+
+#define HEAP_GUARD_NONSTOP_MODE       \
+        ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
+
+#define NULL_DETECTION_NONSTOP_MODE   \
+        ((PcdGet8 (PcdNullPointerDetectionPropertyMask) & (BIT6|BIT0)) > BIT6)
 
 
 /**
@@ -291,6 +310,41 @@ VOID
 RestoreInterruptDescriptorTableHandlerAddress (
   IN UINTN       Index
   );
+
+/**
+  Special handler for #DB exception, which will restore the page attributes
+  (not-present). It should work with #PF handler which will set pages to
+  'present'.
+
+  @param ExceptionType  Exception type.
+  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
+
+**/
+VOID
+EFIAPI
+DebugExceptionHandler (
+  IN EFI_EXCEPTION_TYPE   ExceptionType,
+  IN EFI_SYSTEM_CONTEXT   SystemContext
+  );
+
+/**
+  Special handler for #PF exception, which will set the pages which caused
+  #PF to be 'present'. The attribute of those pages should be restored in
+  the subsequent #DB handler.
+
+  @param ExceptionType  Exception type.
+  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
+
+**/
+VOID
+EFIAPI
+PageFaultExceptionHandler (
+  IN EFI_EXCEPTION_TYPE   ExceptionType,
+  IN EFI_SYSTEM_CONTEXT   SystemContext
+  );
+
+
+extern UINTN   mNumberOfProcessors;
 
 #endif
 

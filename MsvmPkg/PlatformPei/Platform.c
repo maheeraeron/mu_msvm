@@ -735,6 +735,15 @@ Return Value:
         sizeof(BOOLEAN));
 
     //
+    // Send the memory protection disabled boolean via a HOB since
+    // it needs to be queried very early in the boot process.
+    //
+    BOOLEAN memoryProtectionDisabled = PcdGetBool(PcdMemoryProtectionDisabled);
+    HobAddGuidData(&gMsvmMemoryProtectionDisabledGuid,
+        &memoryProtectionDisabled,
+        sizeof(BOOLEAN));
+
+    //
     // Set the boot mode and installs the boot mode tag PPI.
     //
     status = PeiServicesSetBootMode(BOOT_WITH_FULL_CONFIGURATION);

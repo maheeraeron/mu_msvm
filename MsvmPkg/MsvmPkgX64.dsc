@@ -100,6 +100,8 @@
   #RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  MemoryProtectionLib|MsvmPkg/Library/MemoryProtectionLib/MemoryProtectionLib.inf
+  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf
 
   ## MS_CHANGE_?
   # MeasuredBoot and Other TPM-Based Security
@@ -322,13 +324,24 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|0x00100032
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Microsoft"
 
+  # Memory protection settings
+  # See MdeModulePkg.dec for more comments and Description
+  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000002              ## Image from firmware volume
+  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy       | 0x00007FD5              ## For all memory except Code.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask  | 0x03                    ## UEFI and SMM Null Detection
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                 | 0x0000000000000050      ## BsData and RtData
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                 | 0x0000000000000050      ## BsData and RtData
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask             | 0x0000000000000003      ## UEFI page guard and pool guard
+  gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                     | TRUE                    ## Enabled to catch stack overflow
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                     | TRUE
+
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
   # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
   # Turns on DEBUG_INFO and DEBUG_VERBOSE
-  #gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
+  # gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
   # Turns on DEBUG_INFO
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000042
 !else
@@ -570,6 +583,7 @@
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
   gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdMemoryProtectionDisabled|FALSE
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0

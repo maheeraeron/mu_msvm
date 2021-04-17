@@ -31,11 +31,15 @@
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
+  CpuExceptionHandlerLib
   CpuLib
   DebugLib
   DxeServicesTableLib
   MemoryAllocationLib
+  MemoryProtectionLib
+  MpInitLib
   MtrrLib
+  ReportStatusCodeLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   LocalApicLib
@@ -45,6 +49,10 @@
   CpuDxe.c
   CpuDxe.h
   CpuGdt.c
+  CpuMp.c
+  CpuMp.h
+  CpuPageTable.h
+  CpuPageTable.c
 
   Ia32/IvtAsm.asm | MSFT
   Ia32/IvtAsm.asm | INTEL
@@ -55,17 +63,26 @@
   Ia32/CpuAsm.asm | INTEL
   Ia32/CpuAsm.S   | GCC
 
+  Ia32/PagingAttribute.c
+
 [Sources.X64]
   X64/CpuAsm.asm | MSFT
   X64/CpuAsm.asm | INTEL
   X64/CpuAsm.S   | GCC
 
+  X64/PagingAttribute.c
+
 [Protocols]
   gEfiCpuArchProtocolGuid
   gEfiCpu2ProtocolGuid
+  gEfiMpServiceProtocolGuid                     ## PRODUCES
 
 [Guids]
   gIdleLoopEventGuid                            ## CONSUMES ## GUID
+
+[Ppis]
+  gEfiSecPlatformInformation2PpiGuid            ## UNDEFINED # HOB
+  gEfiSecPlatformInformationPpiGuid             ## UNDEFINED # HOB
 
 [Depex]
   TRUE
@@ -73,3 +90,9 @@
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
     gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
+    gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
+    gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
+    gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
+    gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
+    gUefiCpuPkgTokenSpaceGuid.PcdCpuStackSwitchExceptionList              ## CONSUMES
+    gUefiCpuPkgTokenSpaceGuid.PcdCpuKnownGoodStackSize                    ## CONSUMES
