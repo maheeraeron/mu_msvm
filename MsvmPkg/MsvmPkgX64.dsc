@@ -326,14 +326,20 @@
 
   # Memory protection settings
   # See MdeModulePkg.dec for more comments and Description
-  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000002              ## Image from firmware volume
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy       | 0x00007FD5              ## For all memory except Code.
   gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask  | 0x03                    ## UEFI and SMM Null Detection
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                 | 0x0000000000000050      ## BsData and RtData
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                 | 0x0000000000000050      ## BsData and RtData
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask             | 0x0000000000000003      ## UEFI page guard and pool guard
+
+  # HeapGuard is temporarily disabled for performance reasons and possible implementation
+  # See bug 32592514 and 32704335.
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                 | 0x0000000000000050      ## BsData and RtData
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                 | 0x0000000000000050      ## BsData and RtData
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask             | 0x0000000000000003      ## UEFI page guard and pool guard
+
   gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                     | TRUE                    ## Enabled to catch stack overflow
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                     | TRUE
+
+  # Disable image protection policy so DxeCore does not mess with MTRRs
+  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000000
 
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
@@ -426,9 +432,6 @@
   gEfiSecurityPkgTokenSpaceGuid.PcdFixedMediaImageVerificationPolicy|0x00000004       # DENY_EXECUTE_ON_SECURITY_VIOLATION
 
   gEfiSecurityPkgTokenSpaceGuid.PcdForceReallocatePcrBanks|FALSE
-
-  # Disable image protection policy so DxeCore does not mess with MTRRs
-  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy|0x00000000
 
   # Disable auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff

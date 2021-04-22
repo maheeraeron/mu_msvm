@@ -1412,6 +1412,7 @@ Return Value:
     ASSERT(ChannelId < VMBUS_MAX_CHANNELS);
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
+
     RootContext->Channels[ChannelId]->Interrupt = NULL;
     if (ChannelId == RootContext->MaxInterruptUsed)
     {
@@ -1421,7 +1422,8 @@ Return Value:
 
         for (index = RootContext->MaxInterruptUsed; index > 0; --index)
         {
-            if (RootContext->Channels[index]->Interrupt != NULL)
+            if ((RootContext->Channels[index] != NULL) && 
+                (RootContext->Channels[index]->Interrupt != NULL))
             {
                 break;
             }
