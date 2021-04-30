@@ -1048,7 +1048,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
     _In_ HV_MAP_GPA_FLAGS MapFlags,
     _In_ UINT32 PageCount,
     _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
-    _Out_ UINT32* PageCountProcessed
+    _Out_opt_ UINT32* PageCountProcessed
     )
 {
     // For this rep call, it's easier to treat the input page as a pointer
@@ -1062,6 +1062,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
     UINT32 repsProcessedThisCall;
     UINT32 gpaPageBaseIndex = 0;
     UINT32 i;
+    UINT32 totalPageCountProcessed = 0;
 
     DEBUG((DEBUG_VERBOSE,
         ">>> %a: GpaBase 0x%p PageCount 0x%x MapFlags 0x%x \n",
@@ -1070,7 +1071,10 @@ EfiHvpModifySparseGpaPageHostVisibility(
         PageCount,
         MapFlags));
 
-    *PageCountProcessed = 0;
+    if (PageCountProcessed)
+    {
+        *PageCountProcessed = 0;
+    }
 
     oldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
@@ -1133,11 +1137,11 @@ EfiHvpModifySparseGpaPageHostVisibility(
         ASSERT(((repsProcessedThisCall == repsInCurrentCall) &&
                 (status == EFI_SUCCESS)) ||
                (status != EFI_SUCCESS));
-
+            
         //
         // Update the count of reps processed.
         //
-        *PageCountProcessed += repsProcessedThisCall;
+        totalPageCountProcessed += repsProcessedThisCall;
 
         //
         // Check that we haven't overflowed.
@@ -1157,6 +1161,11 @@ EfiHvpModifySparseGpaPageHostVisibility(
     }
 
     gBS->RestoreTPL(oldTpl);
+
+    if (PageCountProcessed)
+    {
+        *PageCountProcessed = totalPageCountProcessed;
+    }
 
     DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
 
@@ -1255,9 +1264,8 @@ EfiHvMakeAddressRangeHostVisible(
                                                                    &pageCountProcessed);
             if (EFI_ERROR(revertStatus))
             {
-                // this is not allowed to fail - need to crash here.
-                ASSERT(FALSE);
-                CpuDeadLoop();
+                // this is not allowed to fail - need to fail fast
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
             }
         }
 
@@ -1291,7 +1299,6 @@ EfiHvMakeAddressRangeNotHostVisible(
     _In_ EFI_HV_PROTECTION_HANDLE ProtectionHandle
     )
 {
-    UINT32 pageCountProcessed;
     EFI_STATUS status;
 
     RemoveEntryList(&ProtectionHandle->ListEntry);
@@ -1299,11 +1306,11 @@ EfiHvMakeAddressRangeNotHostVisible(
     status = EfiHvpModifySparseGpaPageHostVisibility(HV_MAP_GPA_PERMISSIONS_NONE,
                                                      ProtectionHandle->NumberOfPages,
                                                      ProtectionHandle->GpaPageBase,
-                                                     &pageCountProcessed);
+                                                     NULL);
     if (EFI_ERROR(status))
     {
-        // this is not allowed to fail - need to crash here.
-        ASSERT(FALSE);
+        // this is not allowed to fail - need to fail fast
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
     }
 }
 
@@ -1558,9 +1565,8 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
-            // Failure is not allowed here - need to crash
-            ASSERT(FALSE);
-            CpuDeadLoop();
+            // Failure is not allowed here - need to fail fast.
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
         FreePages(mOutputPageBypass, 1);
@@ -1621,9 +1627,8 @@ Return Value:
         mMessagePage = (PHV_MESSAGE_PAGE)(simp.BaseSimpGpa * EFI_PAGE_SIZE);
         if ((UINTN)mMessagePage < mSharedGpaBoundary)
         {
-            // Failure is not allowed here - need to crash
-            ASSERT(FALSE);
-            CpuDeadLoop();
+            // Failure is not allowed here - need to fail fast
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
     }
     else
@@ -1643,9 +1648,8 @@ Return Value:
         mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)(siefp.BaseSiefpGpa * EFI_PAGE_SIZE);
         if ((UINTN)mEventFlagsPage < mSharedGpaBoundary)
         {
-            // Failure is not allowed here - need to crash
-            ASSERT(FALSE);
-            CpuDeadLoop();
+            // Failure is not allowed here - need to fail fast
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
     }
     else
