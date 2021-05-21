@@ -832,7 +832,7 @@ typedef struct _UEFI_IGVM_PARAMETER_INFO
 {
     UINT32 ParameterPageCount;
     UINT32 CpuidPagesOffset;
-    UINT32 VpContextPageOffset;
+    UINT64 VpContextPageNumber;
     UINT32 LoaderBlockOffset;
     UINT32 CommandLineOffset;
     UINT32 CommandLinePageCount;

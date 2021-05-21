@@ -95,7 +95,6 @@ Return Value:
 --*/
 {
     UINT64 basePage;
-    UINT64 contextPage;
     UINT32 index;
     UINT32 maximumIndex;
     UINT32 maximumRange;
@@ -110,13 +109,6 @@ Return Value:
     memoryMap = GetIgvmData(ParameterInfo, ParameterInfo->MemoryMapOffset);
     maximumIndex = (ParameterInfo->MemoryMapPageCount * EFI_PAGE_SIZE) /
                    sizeof(IGVM_VHS_MEMORY_MAP_ENTRY);
-
-    //
-    // Determine which page holds the VP context, since this page will need to
-    // be marked permanently reserved.
-    //
-
-    contextPage = (UINTN)GetIgvmData(ParameterInfo, ParameterInfo->VpContextPageOffset) / EFI_PAGE_SIZE;
 
     //
     // Convert the memory map to the format expected by UEFI.
@@ -175,30 +167,35 @@ Return Value:
 
         if ((rangeFlags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED) == 0)
         {
-            if (basePage == contextPage)
+            if (basePage == ParameterInfo->VpContextPageNumber)
             {
                 //
                 // Generate a single reserved page and process the remainder
-                // of the range in the next pass.
+                // of the range (if any) in the next pass.
                 //
 
                 memoryMap[index].StartingGpaPageNumber += 1;
                 memoryMap[index].NumberOfPages -= 1;
+                if (memoryMap[index].NumberOfPages == 0)
+                {
+                    index += 1;
+                }
 
                 pageCount = 1;
                 nextPage = basePage + pageCount;
                 rangeFlags = VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED;
             }
-            else if ((basePage < contextPage) && (nextPage > contextPage))
+            else if ((basePage < ParameterInfo->VpContextPageNumber) &&
+                     (nextPage > ParameterInfo->VpContextPageNumber))
             {
                 //
-                // If this page straddles the architectural reset page, then
-                // split it into the portion before the page and the
-                // remainder.
+                // If this range straddles the VP context page, then split off
+                // the portion before the page and process the remainder in
+                // the next pass.
                 //
 
-                pageCount = contextPage - basePage;
-                memoryMap[index].StartingGpaPageNumber = contextPage;
+                pageCount = ParameterInfo->VpContextPageNumber - basePage;
+                memoryMap[index].StartingGpaPageNumber = ParameterInfo->VpContextPageNumber;
                 memoryMap[index].NumberOfPages -= pageCount;
                 nextPage = basePage + pageCount;
             }
