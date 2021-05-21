@@ -40,9 +40,9 @@ Abstract:
 #include <IsolationTypes.h>
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
-#define ADDFIRSTMEMORYRANGE AddFirstMemoryRangeIntel
+#define INITPEIMEMORY InitPeiMemoryIntel
 #elif defined(MDE_CPU_AARCH64)
-#define ADDFIRSTMEMORYRANGE AddFirstMemoryRangeArm
+#define INITPEIMEMORY InitPeiMemoryArm
 #else
 #error Unsupported Architecture
 #endif
@@ -207,23 +207,30 @@ Return Value:
 
 #if defined(MDE_CPU_AARCH64)
 VOID
-AddFirstMemoryRangeArm(
+InitPeiMemoryArm(
     _Inout_ PPLATFORM_INIT_CONTEXT Context,
-    _In_ CONST UINT64 Length
+    _In_ CONST UINT64 Base,
+    _In_ CONST UINT64 Length,
+    _Out_ PUINT64 AllocatedBase,
+    _Out_ PUINT64 AllocatedLength
 )
 /*++
 
 Routine Description:
 
-    Utility function to handle special case of memory range zero.
-    This function has the side effect of initializing PEI memory
-    so the HOB add functions can be used.
+    Utility function to initalize PEI system memory.
 
 Arguments:
 
     Context - The platform init context.
 
-    Length - The size in bytes of the first memory range.
+    Base - The base address of the preferred allocation range.
+
+    Length - The size in bytes of the preferred allocation range.
+
+    AllocatedBase - Returns the base of the reserved allocation, consisting of the firmware image.
+
+    AllocatedLength - Returns the size of the reserved allocation.
 
 Return Value:
 
@@ -232,64 +239,54 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    UINT32 configBlobSize = PcdGet32(PcdConfigBlobSize);
-    UINT64 configBlobBase = (UINT64) GetStartOfConfigBlob();
-    UINT64 peiBase, peiSize;
-
-    //
-    // Round config blob size to 4K page increment.
-    //
-    if (configBlobSize % SIZE_4KB != 0)
-    {
-        configBlobSize = ((configBlobSize / SIZE_4KB) + 1) * SIZE_4KB;
-    }
 
     //
     // Establish PEI memory first so we can create HOBs in the formal PEI heap.
     // Subtract the size used by the config blob, which starts at the beginning
     // of system memory.
     //
-    peiBase = configBlobBase + configBlobSize;
-    peiSize = PcdGet32(PcdSystemMemorySize) - configBlobSize;
-    status = PublishSystemMemory(peiBase, peiSize);
+    status = PublishSystemMemory(Base, Length);
     ASSERT_EFI_ERROR(status);
 
     //
-    // Declare the whole range as system memory.
-    //
-    HobAddMemoryRange(Context, 0, Length);
-
-    //
-    // Mark the firmware image and config blob as allocated, allowing it to
-    // be reclaimed by the guest OS later.
+    // Mark the firmware image as allocated, allowing it to be reclaimed by
+    // the guest OS later.
     // TODO-cho: What about pagetable, stack, heap used in PEI? This seems
     // to boot fine.
     //
-    HobAddAllocatedMemoryRange(0, PcdGet32(PcdFdSize));
-    HobAddAllocatedMemoryRange(configBlobBase, configBlobSize);
+    *AllocatedBase = 0;
+    *AllocatedLength = PcdGet32(PcdFdSize);
 }
 #endif
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 VOID
-AddFirstMemoryRangeIntel(
+InitPeiMemoryIntel(
     _Inout_ PPLATFORM_INIT_CONTEXT Context,
-    _In_ CONST UINT64 Length
+    _In_ CONST UINT64 Base,
+    _In_ CONST UINT64 Length,
+    _Out_ PUINT64 AllocatedBase,
+    _Out_ PUINT64 AllocatedLength
 )
 /*++
 
 Routine Description:
 
-    Utility function to handle special case of memory range zero
-    that is not fully described by the vm worker process memory range.
-    This function has the side effect of initializing PEI memory
-    so the HOB add functions can be used.
+    Utility function to initalize PEI system memory.  This also creates
+    special memory ranges below 1 MB.
 
 Arguments:
 
     Context - The platform init context.
 
-    Length - The size in bytes of the first memory range.
+    Base - The base address of the preferred allocation range.
+
+    Length - The size in bytes of the preferred allocation range.
+
+    AllocatedBase - Returns the base of the reserved allocation, consisting of the firmware image and additional misc
+        pages.
+
+    AllocatedLength - Returns the size of the reserved allocation.
 
 Return Value:
 
@@ -298,46 +295,28 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    UINT64 peiBase, peiSize;
     UINT64 pageTableSize;
-    UINT32 configBlobSize = PcdGet32(PcdConfigBlobSize);
-    UINT64 configBlobBase = (UINT64) GetStartOfConfigBlob();
-    DEBUG((DEBUG_VERBOSE, ">>> AddFirstMemoryRange\n"));
-
-    //
-    // Round config blob size to 4K page increment.
-    //
-    if (configBlobSize % SIZE_4KB != 0)
-    {
-        configBlobSize = ((configBlobSize / SIZE_4KB) + 1) * SIZE_4KB;
-    }
+    UINT64 peiSize;
+    DEBUG((DEBUG_VERBOSE, ">>> InitPeiMemoryIntel \n"));
 
     //
     // Establish PEI memory first so we can create HOBs in the formal PEI heap.
     // This first memory range is, by design, the memory below the MMIO range below 4GB.
-    // The base and size of PEI memory is constrained by several things:
-    // - Avoid the 0-1MB range, so base the PEI memory at 1MB.
-    // - Don't consume more than really necessary, 64MB is sufficient for misc pei allocations
-    // - Try to include a page table on x64 that can be large when cpu address width is large
+    // Try to include a page table on x64 that can be large when cpu address width is large
     //
     // Insufficient room for a large page table is not fatal as the DXE page table creation
     // code has been updated to fall back to a smaller table.  This will still permit really
     // small VMs on machines with lots of address bits.
     //
-    // Exclude the region occupied by the firmware image, along with the the
-    // config blob and other data.
-    //
     pageTableSize = GetPageTableSize(Context->PhysicalAddressWidth);
-    peiBase = configBlobBase + configBlobSize;
-    peiSize = MIN((Length - peiBase), (pageTableSize + SIZE_64MB));
-    DEBUG((DEBUG_VERBOSE, "AddFirstMemoryRange: peiBase %lx peiSize %lx\n", peiBase, peiSize));
-    ASSERT((peiBase + peiSize) <= Length);
-    status = PublishSystemMemory(peiBase, peiSize);
+    peiSize = MIN(Length, (pageTableSize + SIZE_64MB));
+    DEBUG((DEBUG_VERBOSE, "InitPeiMemoryIntel: peiBase %lx peiSize %lx\n", Base, peiSize));
+    status = PublishSystemMemory(Base, peiSize);
     ASSERT_EFI_ERROR(status);
 
     //
-    // The first memory range is special in that we have to account for
-    // two special cases within it.
+    // The sub 1MB region of the address space is special in that we have to account for
+    // two cases within it.
     //
     // 1) Even though the host actually puts memory between GPA 640K and 768K
     //    it can't be declared as existing. Linux fails to boot if memory
@@ -378,22 +357,16 @@ Return Value:
     HobAddReservedMemoryRange(BASE_512KB + SIZE_256KB, SIZE_256KB);
 
     //
-    // Declare System Memory for everything else.
-    //
-    HobAddMemoryRange(Context, BASE_1MB, Length - SIZE_1MB);
-
-    //
     // Mark the region occupied by the firmware, along with the page tables, GDT
-    // entries, free RW pages and config blob as allocated, which should allow
-    // it to be reclaimed by the guest OS.
+    // entries, and free RW pages as allocated, which should allow it to be
+    // reclaimed by the guest OS.
     //
-    UINT64 reservedBlockSize =
+    *AllocatedBase = PcdGet64(PcdFdBaseAddress);
+    *AllocatedLength =
         PcdGet32(PcdFdSize) +
-        SIZE_4KB * MISC_PAGE_COUNT_TOTAL +
-        configBlobSize;
-    HobAddAllocatedMemoryRange(PcdGet64(PcdFdBaseAddress), reservedBlockSize);
+        SIZE_4KB * MISC_PAGE_COUNT_TOTAL;
 
-    DEBUG((DEBUG_VERBOSE, "<<< AddFirstMemoryRange\n"));
+    DEBUG((DEBUG_VERBOSE, "<<< InitPeiMemoryIntel\n"));
 }
 #endif
 
@@ -418,10 +391,35 @@ Return Value:
 
 --*/
 {
+    UINT64 allocationBase;
+    UINT32 configBlobSize = PcdGet32(PcdConfigBlobSize);
+    UINT64 configBlobBase = (UINT64) GetStartOfConfigBlob();
     BOOLEAN legacyMemoryMap = PcdGetBool(PcdLegacyMemoryMap);
     UINT32 memMapSize = PcdGet32(PcdMemoryMapSize);
     VOID* memMap = (VOID*)(UINTN) PcdGet64(PcdMemoryMapPtr);
+    UINT32 pass;
+    UINT64 peiBase;
+    UINT64 peiLength;
+    UINT64 preallocatedBase;
+    UINT64 preallocatedLength;
+    PVM_MEMORY_RANGE range;
+    UINT64 rangeBase;
+    UINT32 rangeFlags;
+    UINT64 rangeLength;
+    PVM_MEMORY_RANGE_V5 rangeV5;
     BOOLEAN suppressMtrrs;
+    UINT64 truncateSize;
+
+    //
+    // Locate the top of the config blob, rounded to a page boundary.  This
+    // will represent the minimum usable allocation address for PEI.
+    //
+    if (configBlobSize % SIZE_4KB != 0)
+    {
+        configBlobSize = ((configBlobSize / SIZE_4KB) + 1) * SIZE_4KB;
+    }
+
+    allocationBase = configBlobBase + configBlobSize;
 
     //
     // If this is a hardware isolated VM with no paravisor, then skip all
@@ -439,80 +437,136 @@ Return Value:
 #endif
 
     //
-    // Process the memory map and create HOBs for memory regions..
+    // Prepare to identify the largest range that could be used for holding
+    // PEI allocations.
     //
-    if (legacyMemoryMap)
+
+    peiBase = 0;
+    peiLength = 0;
+
+    //
+    // Make two passes over the memory map to determine configuration.  In the
+    // first pass, determine which memory block has the greatest amount of
+    // free memory; this will be used for PEI allocations.  In the second
+    // pass, create HOBs for memory regions.
+    //
+    rangeV5 = NULL;
+    for (pass = 0; pass < 2; pass += 1)
     {
-        //
-        // VDev versions 3 & 4
-        //
-        // A memory map range contains only base address and length.
-        //
-        // Loop through the Memory Map and create HOBs for RAM regions.
-        //
         ASSERT(memMap != NULL);
-        PVM_MEMORY_RANGE range = (PVM_MEMORY_RANGE)memMap;
+        range = (PVM_MEMORY_RANGE)memMap;
         do
         {
-            DEBUG((DEBUG_VERBOSE, "Range BaseAddress %lx \n", range->BaseAddress));
-            DEBUG((DEBUG_VERBOSE, "Range Length      %lx \n", range->Length));
-            //
-            // First memory region is a special case that isn't fully
-            // described in the Memory Map.
-            //
-            if (range->BaseAddress == 0)
+            if (legacyMemoryMap)
             {
-                ADDFIRSTMEMORYRANGE(Context, range->Length);
-            }
-            else
-            {
-                HobAddMemoryRange(Context, range->BaseAddress, range->Length);
-            }
+                //
+                // VDev versions 3 & 4
+                //
+                // A memory map range contains only base address and length.
+                //
+                DEBUG((DEBUG_VERBOSE, "Range BaseAddress %lx \n", range->BaseAddress));
+                DEBUG((DEBUG_VERBOSE, "Range Length      %lx \n", range->Length));
 
-            //
-            // Next memory map range.
-            //
-            range++;
-        } while ((UINT8*)range < ((UINT8*)memMap + memMapSize));
-    }
-    else
-    {
-        //
-        // VDev version 5 and up
-        //
-        // A memory map range now contains base address, length, and attribute flags.
-        // The reserved bit allows for support of Intel SGX memory.
-        //
-        // Loop through the Memory Map and create HOBs for RAM regions.
-        //
-        ASSERT(memMap != NULL);
-        PVM_MEMORY_RANGE_V5 rangeV5 = (PVM_MEMORY_RANGE_V5)memMap;
-        do
-        {
-            DEBUG((DEBUG_VERBOSE, "BaseAddress %lx \n", rangeV5->BaseAddress));
-            DEBUG((DEBUG_VERBOSE, "Length      %lx \n", rangeV5->Length));
-            DEBUG((DEBUG_VERBOSE, "Flags       %x \n", rangeV5->Flags));
+                rangeBase = range->BaseAddress;
+                rangeLength = range->Length;
+                rangeFlags = 0;
 
-            //
-            // First memory region is a special case that isn't fully
-            // described in the Memory Map.
-            //
-            if (rangeV5->BaseAddress == 0)
-            {
-                ADDFIRSTMEMORYRANGE(Context, rangeV5->Length);
+                range += 1;
             }
             else
             {
                 //
-                // Report subsequent memory regions directly.
+                // VDev version 5 and up
                 //
-                if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
+                // A memory map range now contains base address, length, and attribute flags.
+                // The reserved bit allows for support of Intel SGX memory.
+                //
+                rangeV5 = (PVM_MEMORY_RANGE_V5)range;
+
+                DEBUG((DEBUG_VERBOSE, "BaseAddress %lx \n", rangeV5->BaseAddress));
+                DEBUG((DEBUG_VERBOSE, "Length      %lx \n", rangeV5->Length));
+                DEBUG((DEBUG_VERBOSE, "Flags       %x \n", rangeV5->Flags));
+
+                rangeBase = rangeV5->BaseAddress;
+                rangeLength = rangeV5->Length;
+                rangeFlags = rangeV5->Flags;
+
+                range = (PVM_MEMORY_RANGE)(rangeV5 + 1);
+            }
+
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+            //
+            // Exclude everything below 1 MB; those ranges will be configured at the end of pass 0.
+            //
+            if (rangeBase < BASE_1MB)
+            {
+                truncateSize = BASE_1MB - rangeBase;
+                rangeBase = BASE_1MB;
+                if (rangeLength < truncateSize)
                 {
-                    HobAddReservedMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
+                    rangeLength = 0;
                 }
-                else if (rangeV5->Flags & VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY)
+                else
                 {
-                    HobAddPersistentMemoryRange(rangeV5->BaseAddress, rangeV5->Length);
+                    rangeLength -= truncateSize;
+                }
+            }
+#endif
+
+            //
+            // Ignore any memory below the top of the config blob.  This is
+            // handled specially at the end of pass 0.
+            //
+            if (rangeBase < allocationBase)
+            {
+                truncateSize = allocationBase - rangeBase;
+                rangeBase = allocationBase;
+                if (rangeLength < truncateSize)
+                {
+                    rangeLength = 0;
+                }
+                else
+                {
+                    rangeLength -= truncateSize;
+                }
+            }
+
+            if (pass == 0)
+            {
+                //
+                // Ignore any memory above 4 GB as a candiate for PEI memory.
+                //
+                if (rangeBase >= 0x100000000)
+                {
+                    rangeLength = 0;
+                }
+                else if (rangeBase + rangeLength > 0x100000000)
+                {
+                    rangeLength = 0x100000000 - rangeBase;
+                }
+
+                //
+                // Capture the largest sized block as a candidate for PEI
+                // allocations.
+                //
+                if (rangeLength > peiLength)
+                {
+                    peiBase = rangeBase;
+                    peiLength = rangeLength;
+                }
+            }
+            else
+            {
+                //
+                // Pass 1: Create a HOB describing this region.
+                //
+                if (rangeFlags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED)
+                {
+                    HobAddReservedMemoryRange(rangeBase, rangeLength);
+                }
+                else if (rangeFlags & VM_MEMORY_RANGE_FLAG_PERSISTENT_MEMORY)
+                {
+                    HobAddPersistentMemoryRange(rangeBase, rangeLength);
                 }
                 else
                 {
@@ -521,26 +575,40 @@ Return Value:
                     // to explode in bad ways due to UINT32 casts. Just mark
                     // regions above 4GB as untested, and use the null memory
                     // test later in BDS to mark them as tested.
-                    if (rangeV5->BaseAddress >= 0x100000000)
+                    if (rangeBase >= 0x100000000)
                     {
-                        HobAddUntestedMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+                        HobAddUntestedMemoryRange(Context, rangeBase, rangeLength);
                     }
                     else
                     {
-                        HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+                        HobAddMemoryRange(Context, rangeBase, rangeLength);
                     }
 #else
                     // On other architectures, just add the memory range like normal.
-                    HobAddMemoryRange(Context, rangeV5->BaseAddress, rangeV5->Length);
+                    HobAddMemoryRange(Context, rangeBase, rangeLength);
 #endif
                 }
             }
+        } while ((UINT8*)range < ((UINT8*)memMap + memMapSize));
+
+        if (pass == 0)
+        {
+            //
+            // Now that the preferred allocation block has been chosen,
+            // configure PEI allocations and any initial memory ranges.
+            //
+            INITPEIMEMORY(Context, peiBase, peiLength, &preallocatedBase, &preallocatedLength);
 
             //
-            // Next memory map range.
+            // Create a memory range for the preallocated region and the
+            // config blob and mark both as allocated.
             //
-            rangeV5++;
-        } while ((UINT8*)rangeV5 < ((UINT8*)memMap + memMapSize));
+            HobAddMemoryRange(Context, preallocatedBase, preallocatedLength);
+            HobAddAllocatedMemoryRange(preallocatedBase, preallocatedLength);
+
+            HobAddMemoryRange(Context, configBlobBase, configBlobSize);
+            HobAddAllocatedMemoryRange(configBlobBase, configBlobSize);
+        }
     }
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
