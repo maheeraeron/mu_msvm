@@ -159,9 +159,9 @@ Return Value:
 
     //
     // |-------------|       <-- TopOfCurrentStack
-    // |   Stack     | 32k
+    // |   Stack     | 64k
     // |-------------|
-    // |    Heap     | 32k
+    // |    Heap     | 64k
     // |-------------|       <-- SecCoreData.TemporaryRamBase
     //
 
@@ -172,7 +172,7 @@ Return Value:
 
     // TemporaryRam is the stack *and* heap
 
-    SecCoreData.TemporaryRamSize       = SIZE_64KB;
+    SecCoreData.TemporaryRamSize       = SIZE_128KB;
     SecCoreData.TemporaryRamBase       =
         (VOID*)((UINT8 *)TopOfCurrentStack - SecCoreData.TemporaryRamSize);
 

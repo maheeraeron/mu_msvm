@@ -346,13 +346,15 @@
   #
   # Static initial memory config - presumes minimum 64MB in VM
   # Page table, stack, and heap are hard-coded in host worker process.
+  # ARM uses 128KB for stack and heap because it uses 4k pages which leads
+  # to more entries in the translation table.
   #
   # Firmware:            0x00000000 to 0x00800000 8MB (Pcds from FDF file)
   # PageTable:           0x00800000 to 0x00804000 4KB (starts on 2MB boundary)
-  # Stack and Heap:      0x00804000 to 0x00814000 64KB
-  # System Memory (PEI): 0x00814000 to 0x04000000 ~59MB
+  # Stack and Heap:      0x00804000 to 0x00824000 128KB
+  # System Memory (PEI): 0x00824000 to 0x04000000 ~55MB
   #
-  gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress|0x00814000
+  gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress|0x00824000
   gMsvmPkgTokenSpaceGuid.PcdSystemMemorySize|0x037EC000
 
   #
@@ -376,7 +378,7 @@
   #
   # See REPORT_STATUS_CODE_PROPERTY_nnnnn in ReportStatusCodeLib.h
   #
-  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
+  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x00000007
 
   # Prevent reboots due to some memory variables being out of sync, seems
   # to only be relevant when supporting S4 (hibernate)
