@@ -336,6 +336,18 @@
   gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xEFFE8000
   gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector|38           # SPI
 
+
+  # Memory protection settings
+  # See MdeModulePkg.dec for more comments and Description
+  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000002              ## Image from firmware volume
+  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy       | 0x00007FD5              ## For all memory except Code.
+  gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask  | 0x03                    ## UEFI and SMM Null Detection
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                 | 0x0000000000000050      ## BsData and RtData
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                 | 0x0000000000000050      ## BsData and RtData
+  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask             | 0x0000000000000003      ## UEFI page guard and pool guard
+  gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                     | TRUE                    ## Enabled to catch stack overflow
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                     | TRUE
+
   # GTDT for AArch64. Currently these aren't exposed to guests, and 0 is a valid
   # value to configure. Linux will attempt to configure them, so assign valid
   # interrupt lines.
