@@ -408,9 +408,6 @@
   # Configure max supported number of Logical Processorss
   gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
 
-  # Publish UEFI PropertiesTable.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|FALSE  # DO NOT TURN THIS ON.  THIS CAUSES BOOT FAILURES ON WIN8.  USE MAT INSTEAD!!!
-
   # Base addresses of memory mapped devices in MMIO space.
   gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress|0xFEE00000
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000
@@ -447,13 +444,14 @@
 
 [PcdsFeatureFlag.common]
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwarePerformanceDataTableS3Support|FALSE
 
+[PcdsDynamicDefault]
+
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
 
-[PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
 
   # UEFI Config information from the Bios VDEV

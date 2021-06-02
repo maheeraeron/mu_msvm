@@ -16,6 +16,42 @@ Abstract:
 
 #include <Library/HvHypercallLib.h>
 
+
+VOID
+TripleFault(
+    __in    UINTN   Rax,
+    __in    UINTN   Rbx,
+    __in    UINTN   Rcx,
+    __in    UINTN   Rdx
+);
+
+#if defined(MDE_CPU_AARCH64)
+#define PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1) \
+    { ASSERT(FALSE); CpuDeadLoop(); }
+#define PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, Info1) \
+    do \
+    { \
+        if (EFI_ERROR(Status)) \
+        { \
+            ASSERT(FALSE); \
+            CpuDeadLoop(); \
+        } \
+    } while(0)
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1) \
+    TripleFault(KERNEL_SECURITY_CHECK_FAILURE, FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR, __LINE__, Info1);
+#define PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, Info1) \
+    do \
+    { \
+        if (EFI_ERROR(Status)) \
+        { \
+            TripleFault(ErrorCode, Status, __LINE__, Info1); \
+        } \
+    } while(0)
+#else
+#error Unsupported Architecture
+#endif
+
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
 //

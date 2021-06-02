@@ -500,8 +500,20 @@ MsLogoLibSetConsoleMode (
                                     //
                                     // Update text mode PCD.
                                     //
-                                    PcdSet32 (PcdConOutColumn, mVgaTextModeColumn);
-                                    PcdSet32 (PcdConOutRow, mVgaTextModeRow);
+                                    Status = PcdSet32S (PcdConOutColumn, mVgaTextModeColumn);
+                                    if (EFI_ERROR(Status))
+                                    {
+                                        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutColumn::0x%x \n", Status));
+                                        FreePool (Info);
+                                        goto CheckDraw;
+                                    }
+                                    Status = PcdSet32S (PcdConOutRow, mVgaTextModeRow);
+                                    if (EFI_ERROR(Status))
+                                    {
+                                        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutRow::0x%x \n", Status));
+                                        FreePool (Info);
+                                        goto CheckDraw;
+                                    }                                   
 
                                     FreePool (Info);
                                     goto CheckDraw;
@@ -545,10 +557,30 @@ MsLogoLibSetConsoleMode (
     // Set PCD to Inform GraphicsConsole to change video resolution.
     // Set PCD to Inform Consplitter to change text mode.
     //
-    PcdSet32 (PcdVideoHorizontalResolution, NewHorizontalResolution);
-    PcdSet32 (PcdVideoVerticalResolution, NewVerticalResolution);
-    PcdSet32 (PcdConOutColumn, NewColumns);
-    PcdSet32 (PcdConOutRow, NewRows);
+    Status = PcdSet32S (PcdVideoHorizontalResolution, NewHorizontalResolution);
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdVideoHorizontalResolution::0x%x \n", Status));
+        goto CheckDraw;
+    } 
+    Status = PcdSet32S (PcdVideoVerticalResolution, NewVerticalResolution);
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdVideoVerticalResolution::0x%x \n", Status));
+        goto CheckDraw;
+    } 
+    Status = PcdSet32S (PcdConOutColumn, NewColumns);
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutColumn::0x%x \n", Status));
+        goto CheckDraw;
+    } 
+    Status = PcdSet32S (PcdConOutRow, NewRows);
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutRow::0x%x \n", Status));
+        goto CheckDraw;
+    } 
 
     //
     // Video mode is changed, so restart graphics console driver and higher level driver.

@@ -735,7 +735,12 @@ InitializeFrontPageUI (VOID)
 
     // Set shared pointer to user input context structure in a PCD so it can be shared.
     //
-    PcdSet64(PcdCurrentPointerState, (UINT64) (UINTN)&mDisplayEngineState);
+    Status = PcdSet64S(PcdCurrentPointerState, (UINT64) (UINTN)&mDisplayEngineState);
+    if (EFI_SUCCESS != Status)
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdCurrentPointerState::0x%x \n", Status));
+        goto Exit;
+    }
 
 Exit:
 

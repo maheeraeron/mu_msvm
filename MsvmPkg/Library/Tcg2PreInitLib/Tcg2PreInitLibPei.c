@@ -136,7 +136,12 @@ HyperVTpm2InitLibConstructor (
   TpmEnabled = PcdGetBool( PcdTpmEnabled );
   if (!TpmEnabled) {
     DEBUG(( DEBUG_INFO, __FUNCTION__" - Detected a disabled TPM. Bypassing init.\n" ));
-    PcdSetPtr( PcdTpmInstanceGuid, &GuidSize, &gEfiTpmDeviceInstanceNoneGuid );
+    Status = PcdSetPtrS( PcdTpmInstanceGuid, &GuidSize, &gEfiTpmDeviceInstanceNoneGuid );
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - Failed to set the PCD PcdTpmInstanceGuid::0x%x \n", Status));
+        ASSERT_EFI_ERROR( Status );
+    } 
   }
 
   //

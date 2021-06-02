@@ -13,7 +13,7 @@
 #
 ##
 
-#Override : 00000001 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | f1d30fbde27ec2704aaaeae2356aa169 | 2020-10-05T23-53-23
+#Override : 00000001 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | b146cdd9e8d4af9e8baba39f5edd437c | 2021-05-17T23-53-23
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -41,7 +41,7 @@
   MdeModulePkg/MdeModulePkg.dec
   CryptoPkg/CryptoPkg.dec
   SecurityPkg/SecurityPkg.dec
-  MsvmPkg/MsvmPkg.dec
+  MsvmPkg/MsvmPkg.dec             # MS_CHANGE
 
 [LibraryClasses]
   MemoryAllocationLib

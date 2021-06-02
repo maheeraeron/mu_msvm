@@ -105,6 +105,7 @@ Return Value:
     UINT32 rangeIndex;
     UINT32 rangeFlags;
     PVOID uefiMemoryMap;
+    EFI_STATUS Status;
 
     memoryMap = GetIgvmData(ParameterInfo, ParameterInfo->MemoryMapOffset);
     maximumIndex = (ParameterInfo->MemoryMapPageCount * EFI_PAGE_SIZE) /
@@ -120,7 +121,12 @@ Return Value:
     maximumRange = (ParameterInfo->UefiMemoryMapPageCount * EFI_PAGE_SIZE) /
                    sizeof(VM_MEMORY_RANGE_V5);
 
-    PcdSetBool(PcdLegacyMemoryMap, FALSE);
+    Status = PcdSetBoolS(PcdLegacyMemoryMap, FALSE);
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdLegacyMemoryMap::0x%x \n", Status));
+        return Status;
+    }
 
     nextPage = 0;
     index = 0;
@@ -213,8 +219,18 @@ Return Value:
         range += 1;
     }
 
-    PcdSet64(PcdMemoryMapPtr, (UINT64)uefiMemoryMap);
-    PcdSet32(PcdMemoryMapSize, (UINT32)((UINT64)range - (UINT64)uefiMemoryMap));
+    Status = PcdSet64S(PcdMemoryMapPtr, (UINT64)uefiMemoryMap);
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdMemoryMapPtr::0x%x \n", Status));
+        return Status;
+    }
+    Status = PcdSet32S(PcdMemoryMapSize, (UINT32)((UINT64)range - (UINT64)uefiMemoryMap));
+    if (EFI_ERROR(Status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdMemoryMapSize::0x%x \n", Status));
+        return Status;
+    }
 
     return EFI_SUCCESS;
 }
@@ -317,7 +333,12 @@ Return Value:
     // Capture the total size of config information.
     //
 
-    PcdSet32(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE);
+    status = PcdSet32S(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE);
+    if (EFI_ERROR(status))
+    {
+        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConfigBlobSize::0x%x \n", status));
+        return status;
+    }
 
     //
     // Assume a single processor until VPR/VPS information can be configured

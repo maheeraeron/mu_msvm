@@ -432,9 +432,6 @@
   # Configure max supported number of Logical Processorss
   #gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
 
-  # DO NOT Publish UEFI PropertiesTable.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPropertiesTableEnable|FALSE
-
   # Disable front page auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
 
@@ -445,12 +442,12 @@
 
 [PcdsFeatureFlag.common]
   #gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
-
-  gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
 
 [PcdsDynamicDefault]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
+
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
 
   # UEFI Config information from the Bios VDEV

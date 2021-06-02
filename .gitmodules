@@ -1,19 +1,25 @@
 [submodule "MU_BASECORE"]
     path = MU_BASECORE
     url = https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore
+    branch = release/202102
 [submodule "Common/MSCORE_INTERNAL"]
     path = Common/MSCORE_INTERNAL
     url = https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal
-
+    branch = release/202102
 [submodule "Common/MU"]
     path = Common/MU
     url = https://github.com/Microsoft/mu_plus.git
+    branch = release/202102
 [submodule "Common/MU_TIANO"]
     path = Common/MU_TIANO
     url = https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus
+    branch = release/202102
 [submodule "Silicon/ARM/MU_TIANO"]
     path = Silicon/ARM/MU_TIANO
     url = https://github.com/Microsoft/mu_silicon_arm_tiano.git
+    branch = release/202102
 [submodule "Common/PRM"]
-	path = Common/PRM
-	url = https://windowspartners.visualstudio.com/MSCoreUEFI/_git/platform_runtime_mechanism
+    path = Common/PRM
+    url = https://github.com/tianocore/edk2-staging.git
+    branch = PlatformRuntimeMechanism
+

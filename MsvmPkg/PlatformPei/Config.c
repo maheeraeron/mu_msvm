@@ -30,13 +30,6 @@ Abstract:
 #include <IsolationTypes.h>
 #include "Config.h"
 
-VOID
-TripleFault(
-    __in    UINTN   Rax,
-    __in    UINTN   Rbx,
-    __in    UINTN   Rcx,
-    __in    UINTN   Rdx
-);
 
 //
 // Values and type used with CPUID to get the physical address width.
@@ -46,15 +39,10 @@ TripleFault(
 
 #define CONFIG 0x434f4e464947 // "CONFIG"
 
-#if defined(MDE_CPU_AARCH64)
-#define CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2) \
-    { ASSERT(FALSE); CpuDeadLoop(); }
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
-#define CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2) \
-    TripleFault(KERNEL_SECURITY_CHECK_FAILURE, FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR, Info1, Info2);
-#else
-#error Unsupported Architecture
-#endif
+#define CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
+    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG);
+#define CONFIG_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
+    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, CONFIG)
 
 typedef union _CPUID_ADDRESS_SPACE_SIZES
 {
@@ -753,24 +741,25 @@ ConfigSetProcessorInfo(
     if (ProcessorInfo->ProcessorCount == 0)
     {
         DEBUG((DEBUG_ERROR, "Processors count was 0.\n"));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     if (ProcessorInfo->ProcessorsPerVirtualSocket == 0)
     {
         DEBUG((DEBUG_ERROR, "Processors per virtual socket was 0.\n"));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     if (ProcessorInfo->ThreadsPerProcessor == 0)
     {
         DEBUG((DEBUG_ERROR, "Threads per processor was 0.\n"));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
-    PcdSet32(PcdProcessorCount, ProcessorInfo->ProcessorCount);
-    PcdSet32(PcdProcessorsPerVirtualSocket, ProcessorInfo->ProcessorsPerVirtualSocket);
-    PcdSet32(PcdThreadsPerProcessor, ProcessorInfo->ThreadsPerProcessor);
+    // Ignore the return value. We do not want to fail fast for these errors.
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdProcessorCount, ProcessorInfo->ProcessorCount), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdProcessorsPerVirtualSocket, ProcessorInfo->ProcessorsPerVirtualSocket), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdThreadsPerProcessor, ProcessorInfo->ThreadsPerProcessor), CRITICAL_INITIALIZATION_FAILURE);
 }
 
 
@@ -779,25 +768,26 @@ ConfigSetUefiConfigFlags(
     UEFI_CONFIG_FLAGS *ConfigFlags
     )
 {
-    PcdSetBool(PcdSerialControllersEnabled, (UINT8) ConfigFlags->Flags.SerialControllersEnabled);
-    PcdSetBool(PcdPauseAfterBootFailure, (UINT8) ConfigFlags->Flags.PauseAfterBootFailure);
-    PcdSetBool(PcdPxeIpV6, (UINT8) ConfigFlags->Flags.PxeIpV6);
-    PcdSetBool(PcdDebuggerEnabled, (UINT8) ConfigFlags->Flags.DebuggerEnabled);
-    PcdSetBool(PcdLoadOempTable, (UINT8) ConfigFlags->Flags.LoadOempTable);
-    PcdSetBool(PcdTpmEnabled, (UINT8) ConfigFlags->Flags.TpmEnabled);
-    PcdSetBool(PcdHibernateEnabled, (UINT8) ConfigFlags->Flags.HibernateEnabled);
-    PcdSet8(PcdConsoleMode, (UINT8) ConfigFlags->Flags.ConsoleMode);
-    PcdSetBool(PcdMemoryAttributesTableEnabled, (UINT8) ConfigFlags->Flags.MemoryAttributesTableEnabled);
-    PcdSetBool(PcdVirtualBatteryEnabled, (UINT8) ConfigFlags->Flags.VirtualBatteryEnabled);
-    PcdSetBool(PcdSgxMemoryEnabled, (UINT8) ConfigFlags->Flags.SgxMemoryEnabled);
-    PcdSetBool(PcdIsVmbfsBoot, (UINT8) ConfigFlags->Flags.IsVmbfsBoot);
-    PcdSetBool(PcdDisableFrontpage, (UINT8) ConfigFlags->Flags.DisableFrontpage);
-    PcdSetBool(PcdDefaultBootAlwaysAttempt, (UINT8) ConfigFlags->Flags.DefaultBootAlwaysAttempt);
-    PcdSetBool(PcdLowPowerS0IdleEnabled, (UINT8)ConfigFlags->Flags.LowPowerS0IdleEnabled);
-    PcdSetBool(PcdVpciBootEnabled, (UINT8)ConfigFlags->Flags.VpciBootEnabled);
-    PcdSetBool(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled);
-    PcdSetBool(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault);
-    PcdSetBool(PcdMemoryProtectionDisabled, (UINT8) ConfigFlags->Flags.MemoryProtectionDisabled);
+    // Ignore the return value. We do not want to fail fast for these errors.
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdSerialControllersEnabled, (UINT8) ConfigFlags->Flags.SerialControllersEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdPauseAfterBootFailure, (UINT8) ConfigFlags->Flags.PauseAfterBootFailure), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdPxeIpV6, (UINT8) ConfigFlags->Flags.PxeIpV6), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdDebuggerEnabled, (UINT8) ConfigFlags->Flags.DebuggerEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdLoadOempTable, (UINT8) ConfigFlags->Flags.LoadOempTable), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdTpmEnabled, (UINT8) ConfigFlags->Flags.TpmEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdHibernateEnabled, (UINT8) ConfigFlags->Flags.HibernateEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSet8S(PcdConsoleMode, (UINT8) ConfigFlags->Flags.ConsoleMode), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMemoryAttributesTableEnabled, (UINT8) ConfigFlags->Flags.MemoryAttributesTableEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdVirtualBatteryEnabled, (UINT8) ConfigFlags->Flags.VirtualBatteryEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdSgxMemoryEnabled, (UINT8) ConfigFlags->Flags.SgxMemoryEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdIsVmbfsBoot, (UINT8) ConfigFlags->Flags.IsVmbfsBoot), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdDisableFrontpage, (UINT8) ConfigFlags->Flags.DisableFrontpage), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdDefaultBootAlwaysAttempt, (UINT8) ConfigFlags->Flags.DefaultBootAlwaysAttempt), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdLowPowerS0IdleEnabled, (UINT8)ConfigFlags->Flags.LowPowerS0IdleEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdVpciBootEnabled, (UINT8)ConfigFlags->Flags.VpciBootEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMemoryProtectionDisabled, (UINT8) ConfigFlags->Flags.MemoryProtectionDisabled), CRITICAL_INITIALIZATION_FAILURE);
 
     //
     // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
@@ -807,8 +797,8 @@ ConfigSetUefiConfigFlags(
     {
         // TODO-cho: no TPM available for AARCH64 yet.
 #if defined (MDE_CPU_X64)
-        PcdSetBool(TcgMeasureBootStringsInPcr4, TRUE);
-        PcdSetBool(PcdExcludeFvMainFromMeasurements, FALSE);
+        CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(TcgMeasureBootStringsInPcr4, TRUE), CRITICAL_INITIALIZATION_FAILURE);
+        CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdExcludeFvMainFromMeasurements, FALSE), CRITICAL_INITIALIZATION_FAILURE);
 #endif
     }
 
@@ -819,7 +809,7 @@ ConfigSetUefiConfigFlags(
     if (ConfigFlags->Flags.DisableSha384Pcr)
     {
 #if defined (MDE_CPU_X64)
-        PcdSet32(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384));
+        CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384)), CRITICAL_INITIALIZATION_FAILURE);
 #endif
     }
 }
@@ -1016,16 +1006,16 @@ Return Value:
         configCount->TotalStructureCount <= 1)
     {
         DEBUG((DEBUG_ERROR, "*** Malformed Header (Structure count) \n"));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     if (EFI_ERROR(VerifyStructureLength(header)))
     {
         DEBUG((DEBUG_ERROR, "*** Malformed Header Length (Structure count) \n"));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
-    PcdSet32(PcdConfigBlobSize, configCount->TotalConfigBlobSize);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdConfigBlobSize, configCount->TotalConfigBlobSize), CRITICAL_INITIALIZATION_FAILURE);
 
     //
     // Advance past initial header to other structures.
@@ -1041,7 +1031,7 @@ Return Value:
         if (EFI_ERROR(VerifyStructureLength(header)))
         {
             DEBUG((DEBUG_ERROR, "*** Malformed Header Length\n"));
-            CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+            CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         if (calculatedConfigSize > configCount->TotalConfigBlobSize)
@@ -1049,7 +1039,7 @@ Return Value:
             DEBUG((DEBUG_ERROR, "Config offset of 0x%x is greater than the actual size of 0x%x\n", 
                 calculatedConfigSize,
                 configCount->TotalConfigBlobSize));
-            CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+            CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         DebugDumpUefiConfigStruct(header);
@@ -1058,7 +1048,7 @@ Return Value:
         {
             case UefiConfigBiosInformation:
                 UEFI_CONFIG_BIOS_INFORMATION *biosInfo = (UEFI_CONFIG_BIOS_INFORMATION*) header;
-                PcdSetBool(PcdLegacyMemoryMap, (UINT8)biosInfo->Flags.LegacyMemoryMap);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdLegacyMemoryMap, (UINT8)biosInfo->Flags.LegacyMemoryMap), CRITICAL_INITIALIZATION_FAILURE);
                 requiredStructures.UefiConfigBiosInformation = 1;
                 break;
 
@@ -1071,11 +1061,11 @@ Return Value:
                     madtHdr->Length >(madtStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed MADT\n"));
-                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
                 }
 
-                PcdSet64(PcdMadtPtr, (UINT64)madtStructure->Madt);
-                PcdSet32(PcdMadtSize, madtHdr->Length);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdMadtPtr, (UINT64)madtStructure->Madt), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdMadtSize, madtHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
 #if defined(MDE_CPU_X64)
                 requiredStructures.UefiConfigMadt = 1;
 #endif
@@ -1095,11 +1085,11 @@ Return Value:
                     sratHdr->Length > (sratStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SRAT\n"));
-                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
                 }
 
-                PcdSet64(PcdSratPtr, (UINT64) sratStructure->Srat);
-                PcdSet32(PcdSratSize, sratHdr->Length);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSratPtr, (UINT64)sratStructure->Srat), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSratSize, sratHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 requiredStructures.UefiConfigSrat = 1;
                 break;
 
@@ -1112,179 +1102,179 @@ Return Value:
                     slitHdr->Length > (slitStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "*** Malformed SLIT\n"));
-                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
                 }
 
-                PcdSet64(PcdSlitPtr, (UINT64)slitStructure->Slit);
-                PcdSet32(PcdSlitSize, slitHdr->Length);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSlitPtr, (UINT64)slitStructure->Slit), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSlitSize, slitHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
             case UefiConfigMemoryMap:
                 UEFI_CONFIG_MEMORY_MAP *memoryMapStructure = (UEFI_CONFIG_MEMORY_MAP*) header;
-                PcdSet64(PcdMemoryMapPtr, (UINT64) memoryMapStructure->MemoryMap);
-                PcdSet32(PcdMemoryMapSize, header->Length - sizeof(UEFI_CONFIG_HEADER));
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdMemoryMapPtr, (UINT64) memoryMapStructure->MemoryMap), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdMemoryMapSize, header->Length - sizeof(UEFI_CONFIG_HEADER)), CRITICAL_INITIALIZATION_FAILURE);
                 requiredStructures.UefiConfigMemoryMap = 1;
                 break;
 
             case UefiConfigEntropy:
                 UEFI_CONFIG_ENTROPY *entropy = (UEFI_CONFIG_ENTROPY*) header;
-                PcdSet64(PcdEntropyPtr, (UINT64) entropy->Entropy);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdEntropyPtr, (UINT64) entropy->Entropy), CRITICAL_INITIALIZATION_FAILURE);
                 requiredStructures.UefiConfigEntropy = 1;
                 break;
 
             case UefiConfigBiosGuid:
                 UEFI_CONFIG_BIOS_GUID *biosGuid = (UEFI_CONFIG_BIOS_GUID*) header;
-                PcdSet64(PcdBiosGuidPtr, (UINT64) biosGuid->BiosGuid);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdBiosGuidPtr, (UINT64) biosGuid->BiosGuid), CRITICAL_INITIALIZATION_FAILURE);
                 requiredStructures.UefiConfigBiosGuid = 1;
                 break;
 
             case UefiConfigSmbiosSystemManufacturer:
                 UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER *systemManufacturer = (UEFI_CONFIG_SMBIOS_SYSTEM_MANUFACTURER*) header;
                 GetSmbiosStructureStringLength(header->Length, systemManufacturer->SystemManufacturer, &stringLength);
-                PcdSet64(PcdSmbiosSystemManufacturerStr, (UINT64)systemManufacturer->SystemManufacturer);
-                PcdSet32(PcdSmbiosSystemManufacturerSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosSystemManufacturerStr, (UINT64)systemManufacturer->SystemManufacturer), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosSystemManufacturerSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosSystemProductName:
                 UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME *systemProductName = (UEFI_CONFIG_SMBIOS_SYSTEM_PRODUCT_NAME*) header;
                 GetSmbiosStructureStringLength(header->Length, systemProductName->SystemProductName, &stringLength);
-                PcdSet64(PcdSmbiosSystemProductNameStr, (UINT64)systemProductName->SystemProductName);
-                PcdSet32(PcdSmbiosSystemProductNameSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosSystemProductNameStr, (UINT64)systemProductName->SystemProductName), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosSystemProductNameSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosSystemVersion:
                 UEFI_CONFIG_SMBIOS_SYSTEM_VERSION *systemVersion = (UEFI_CONFIG_SMBIOS_SYSTEM_VERSION*) header;
                 GetSmbiosStructureStringLength(header->Length, systemVersion->SystemVersion, &stringLength);
-                PcdSet64(PcdSmbiosSystemVersionStr, (UINT64)systemVersion->SystemVersion);
-                PcdSet32(PcdSmbiosSystemVersionSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosSystemVersionStr, (UINT64)systemVersion->SystemVersion), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosSystemVersionSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosSystemSerialNumber:
                 UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER *systemSerialNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SERIAL_NUMBER*) header;
                 GetSmbiosStructureStringLength(header->Length, systemSerialNumber->SystemSerialNumber, &stringLength);
-                PcdSet64(PcdSmbiosSystemSerialNumberStr, (UINT64)systemSerialNumber->SystemSerialNumber);
-                PcdSet32(PcdSmbiosSystemSerialNumberSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosSystemSerialNumberStr, (UINT64)systemSerialNumber->SystemSerialNumber), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosSystemSerialNumberSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosSystemSKUNumber:
                 UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER *systemSKUNumber = (UEFI_CONFIG_SMBIOS_SYSTEM_SKU_NUMBER*) header;
                 GetSmbiosStructureStringLength(header->Length, systemSKUNumber->SystemSKUNumber, &stringLength);
-                PcdSet64(PcdSmbiosSystemSKUNumberStr, (UINT64)systemSKUNumber->SystemSKUNumber);
-                PcdSet32(PcdSmbiosSystemSKUNumberSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosSystemSKUNumberStr, (UINT64)systemSKUNumber->SystemSKUNumber), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosSystemSKUNumberSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosSystemFamily:
                 UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY *systemFamily = (UEFI_CONFIG_SMBIOS_SYSTEM_FAMILY*) header;
                 GetSmbiosStructureStringLength(header->Length, systemFamily->SystemFamily, &stringLength);
-                PcdSet64(PcdSmbiosSystemFamilyStr, (UINT64)systemFamily->SystemFamily);
-                PcdSet32(PcdSmbiosSystemFamilySize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosSystemFamilyStr, (UINT64)systemFamily->SystemFamily), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosSystemFamilySize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosBaseSerialNumber:
                 UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER *baseSerialNumber = (UEFI_CONFIG_SMBIOS_BASE_SERIAL_NUMBER*) header;
                 GetSmbiosStructureStringLength(header->Length, baseSerialNumber->BaseSerialNumber, &stringLength);
-                PcdSet64(PcdSmbiosBaseSerialNumberStr, (UINT64)baseSerialNumber->BaseSerialNumber);
-                PcdSet32(PcdSmbiosBaseSerialNumberSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosBaseSerialNumberStr, (UINT64)baseSerialNumber->BaseSerialNumber), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosBaseSerialNumberSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosChassisSerialNumber:
                 UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER *chassisSerialNumber = (UEFI_CONFIG_SMBIOS_CHASSIS_SERIAL_NUMBER*) header;
                 GetSmbiosStructureStringLength(header->Length, chassisSerialNumber->ChassisSerialNumber, &stringLength);
-                PcdSet64(PcdSmbiosChassisSerialNumberStr, (UINT64)chassisSerialNumber->ChassisSerialNumber);
-                PcdSet32(PcdSmbiosChassisSerialNumberSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisSerialNumberStr, (UINT64)chassisSerialNumber->ChassisSerialNumber), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisSerialNumberSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosChassisAssetTag:
                 UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG *chassisAssetTag = (UEFI_CONFIG_SMBIOS_CHASSIS_ASSET_TAG*) header;
-                PcdSet64(PcdSmbiosChassisAssetTagStr, (UINT64) chassisAssetTag->ChassisAssetTag);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisAssetTagStr, (UINT64) chassisAssetTag->ChassisAssetTag), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, chassisAssetTag->ChassisAssetTag, &stringLength);
-                PcdSet32(PcdSmbiosChassisAssetTagSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisAssetTagSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosBiosLockString:
                 UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING *biosLockString = (UEFI_CONFIG_SMBIOS_BIOS_LOCK_STRING*) header;
                 GetSmbiosStructureStringLength(header->Length, biosLockString->BiosLockString, &stringLength);
-                PcdSet64(PcdSmbiosBiosLockStringStr, (UINT64)biosLockString->BiosLockString);
-                PcdSet32(PcdSmbiosBiosLockStringSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosBiosLockStringStr, (UINT64)biosLockString->BiosLockString), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosBiosLockStringSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosMemoryDeviceSerialNumber:
                 UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER *memoryDeviceSerialNumber = (UEFI_CONFIG_SMBIOS_MEMORY_DEVICE_SERIAL_NUMBER*) header;
                 GetSmbiosStructureStringLength(header->Length, memoryDeviceSerialNumber->MemoryDeviceSerialNumber, &stringLength);
-                PcdSet64(PcdSmbiosMemoryDeviceSerialNumberStr, (UINT64)memoryDeviceSerialNumber->MemoryDeviceSerialNumber);
-                PcdSet32(PcdSmbiosMemoryDeviceSerialNumberSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosMemoryDeviceSerialNumberStr, (UINT64)memoryDeviceSerialNumber->MemoryDeviceSerialNumber), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosMemoryDeviceSerialNumberSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbios31ProcessorInformation:
                 UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION *procInfo = (UEFI_CONFIG_SMBIOS_3_1_PROCESSOR_INFORMATION*) header;
-                PcdSet8(PcdSmbiosProcessorType, procInfo->ProcessorType);
-                PcdSet64(PcdSmbiosProcessorID, procInfo->ProcessorID);
-                PcdSet8(PcdSmbiosProcessorVoltage, procInfo->Voltage);
-                PcdSet16(PcdSmbiosProcessorExternalClock, procInfo->ExternalClock);
-                PcdSet16(PcdSmbiosProcessorMaxSpeed, procInfo->MaxSpeed);
-                PcdSet16(PcdSmbiosProcessorCurrentSpeed, procInfo->CurrentSpeed);
-                PcdSet8(PcdSmbiosProcessorStatus, procInfo->Status);
-                PcdSet8(PcdSmbiosProcessorUpgrade, procInfo->ProcessorUpgrade);
-                PcdSet16(PcdSmbiosProcessorCharacteristics, procInfo->ProcessorCharacteristics);
-                PcdSet16(PcdSmbiosProcessorFamily2, procInfo->ProcessorFamily2);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet8S(PcdSmbiosProcessorType, procInfo->ProcessorType), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorID, procInfo->ProcessorID), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet8S(PcdSmbiosProcessorVoltage, procInfo->Voltage), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet16S(PcdSmbiosProcessorExternalClock, procInfo->ExternalClock), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet16S(PcdSmbiosProcessorMaxSpeed, procInfo->MaxSpeed), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet16S(PcdSmbiosProcessorCurrentSpeed, procInfo->CurrentSpeed), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet8S(PcdSmbiosProcessorStatus, procInfo->Status), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet8S(PcdSmbiosProcessorUpgrade, procInfo->ProcessorUpgrade), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet16S(PcdSmbiosProcessorCharacteristics, procInfo->ProcessorCharacteristics), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet16S(PcdSmbiosProcessorFamily2, procInfo->ProcessorFamily2), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
             case UefiConfigSmbiosSocketDesignation:
                 UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION *socketDesignation = (UEFI_CONFIG_SMBIOS_SOCKET_DESIGNATION*) header;
-                PcdSet64(PcdSmbiosProcessorSocketDesignationStr, (UINT64) socketDesignation->SocketDesignation);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorSocketDesignationStr, (UINT64) socketDesignation->SocketDesignation), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, socketDesignation->SocketDesignation, &stringLength);
-                PcdSet32(PcdSmbiosProcessorSocketDesignationSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosProcessorSocketDesignationSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosProcessorManufacturer:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER *processorManufacturer = (UEFI_CONFIG_SMBIOS_PROCESSOR_MANUFACTURER*) header;
-                PcdSet64(PcdSmbiosProcessorManufacturerStr, (UINT64) processorManufacturer->ProcessorManufacturer);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorManufacturerStr, (UINT64) processorManufacturer->ProcessorManufacturer), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, processorManufacturer->ProcessorManufacturer, &stringLength);
-                PcdSet32(PcdSmbiosProcessorManufacturerSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosProcessorManufacturerSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosProcessorVersion:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION *processorVersion = (UEFI_CONFIG_SMBIOS_PROCESSOR_VERSION*) header;
-                PcdSet64(PcdSmbiosProcessorVersionStr, (UINT64) processorVersion->ProcessorVersion);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorVersionStr, (UINT64) processorVersion->ProcessorVersion), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, processorVersion->ProcessorVersion, &stringLength);
-                PcdSet32(PcdSmbiosProcessorVersionSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosProcessorVersionSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosProcessorSerialNumber:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER *processorSerialNumber = (UEFI_CONFIG_SMBIOS_PROCESSOR_SERIAL_NUMBER*) header;
-                PcdSet64(PcdSmbiosProcessorSerialNumberStr, (UINT64) processorSerialNumber->ProcessorSerialNumber);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorSerialNumberStr, (UINT64) processorSerialNumber->ProcessorSerialNumber), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, processorSerialNumber->ProcessorSerialNumber, &stringLength);
-                PcdSet32(PcdSmbiosProcessorSerialNumberSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosProcessorSerialNumberSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosProcessorAssetTag:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG *processorAssetTag = (UEFI_CONFIG_SMBIOS_PROCESSOR_ASSET_TAG*) header;
-                PcdSet64(PcdSmbiosProcessorAssetTagStr, (UINT64) processorAssetTag->ProcessorAssetTag);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorAssetTagStr, (UINT64) processorAssetTag->ProcessorAssetTag), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, processorAssetTag->ProcessorAssetTag, &stringLength);
-                PcdSet32(PcdSmbiosProcessorAssetTagSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosProcessorAssetTagSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
             case UefiConfigSmbiosProcessorPartNumber:
                 UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER *processorPartNumber = (UEFI_CONFIG_SMBIOS_PROCESSOR_PART_NUMBER*) header;
-                PcdSet64(PcdSmbiosProcessorAssetTagStr, (UINT64) processorPartNumber->ProcessorPartNumber);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosProcessorAssetTagStr, (UINT64) processorPartNumber->ProcessorPartNumber), CRITICAL_INITIALIZATION_FAILURE);
                 GetSmbiosStructureStringLength(header->Length, processorPartNumber->ProcessorPartNumber, &stringLength);
-                PcdSet32(PcdSmbiosProcessorAssetTagSize, stringLength);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosProcessorAssetTagSize, stringLength), CRITICAL_INITIALIZATION_FAILURE);
 
                 break;
 
@@ -1310,7 +1300,7 @@ Return Value:
                 if (header->Length != (sizeof(UEFI_CONFIG_HEADER) + sizeof(UEFI_CONFIG_MMIO) * 2))
                 {
                     DEBUG((DEBUG_ERROR, "***Malformed MMIO range structure\n"));
-                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
                 }
 
                 //
@@ -1327,10 +1317,10 @@ Return Value:
                     highGap = 0;
                 }
 
-                PcdSet64(PcdLowMmioGapBasePageNumber, mmioRanges->Ranges[lowGap].MmioPageNumberStart);
-                PcdSet64(PcdLowMmioGapSizeInPages, mmioRanges->Ranges[lowGap].MmioSizeInPages);
-                PcdSet64(PcdHighMmioGapBasePageNumber, mmioRanges->Ranges[highGap].MmioPageNumberStart);
-                PcdSet64(PcdHighMmioGapSizeInPages, mmioRanges->Ranges[highGap].MmioSizeInPages);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdLowMmioGapBasePageNumber, mmioRanges->Ranges[lowGap].MmioPageNumberStart), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdLowMmioGapSizeInPages, mmioRanges->Ranges[lowGap].MmioSizeInPages), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdHighMmioGapBasePageNumber, mmioRanges->Ranges[highGap].MmioPageNumberStart), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdHighMmioGapSizeInPages, mmioRanges->Ranges[highGap].MmioSizeInPages), CRITICAL_INITIALIZATION_FAILURE);
                 requiredStructures.UefiConfigMmioRanges = 1;
                 break;
 
@@ -1345,21 +1335,21 @@ Return Value:
                     acpiHeader->Length > (acpiTable->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
                 {
                     DEBUG((DEBUG_ERROR, "***ACPI table is not contained within config structure size.\n"));
-                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
                 }
 
-                PcdSet64(PcdAcpiTablePtr, (UINT64) acpiTable->AcpiTableData);
-                PcdSet32(PcdAcpiTableSize, acpiHeader->Length);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdAcpiTablePtr, (UINT64) acpiTable->AcpiTableData), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdAcpiTableSize, acpiHeader->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
             case UefiConfigNvdimmCount:
                 UEFI_CONFIG_NVDIMM_COUNT *cfg = (UEFI_CONFIG_NVDIMM_COUNT*) header;
-                PcdSet16(PcdNvdimmCount, cfg->Count);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet16S(PcdNvdimmCount, cfg->Count), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
             case UefiConfigVpciInstanceFilter:
                 UEFI_CONFIG_VPCI_INSTANCE_FILTER *filter = (UEFI_CONFIG_VPCI_INSTANCE_FILTER*) header;
-                PcdSet64(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid), CRITICAL_INITIALIZATION_FAILURE);
                 break;
         }
 
@@ -1370,13 +1360,13 @@ Return Value:
     if (requiredStructures.AsUINT64 != AllStructuresFound)
     {
         DEBUG((DEBUG_ERROR, "Missing required structures, found structures: 0x%x\n", requiredStructures.AsUINT64));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     if (configCount->TotalConfigBlobSize != calculatedConfigSize)
     {
         DEBUG((DEBUG_ERROR, "Reported config size of 0x%x did not match actual size of 0x%x\n", configCount->TotalConfigBlobSize, calculatedConfigSize));
-        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(CONFIG, __LINE__);
+        CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     return EFI_SUCCESS;
