@@ -1,17 +1,16 @@
-## @file
 #
-#    Component description file for simple CPU driver
+# Copyright (c) Microsoft Corporation
 #
-#  Copyright (c) 2008 - 2012, Intel Corporation. All rights reserved.<BR>
-#  This program and the accompanying materials
-#  are licensed and made available under the terms and conditions of the BSD License
-#  which accompanies this distribution.  The full text of the license may be found at
-#  http://opensource.org/licenses/bsd-license.php
+# Module Name:
 #
-#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#     CpuDxe.inf
 #
-##
+# Abstract:
+#
+#     CPU driver installs CPU Architecture Protocol
+#
+
+#Override : 00000001 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 005aeacbc9f6a2249d9c39a622512dbe | 2021-06-04T05-33-49
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -26,20 +25,16 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
-  MsvmPkg/MsvmPkg.dec
+  MsvmPkg/MsvmPkg.dec   ## MS_CHANGE
 
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
-  CpuExceptionHandlerLib
   CpuLib
   DebugLib
   DxeServicesTableLib
   MemoryAllocationLib
-  MemoryProtectionLib
-  MpInitLib
   MtrrLib
-  ReportStatusCodeLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   LocalApicLib
@@ -49,50 +44,40 @@
   CpuDxe.c
   CpuDxe.h
   CpuGdt.c
-  CpuMp.c
-  CpuMp.h
   CpuPageTable.h
   CpuPageTable.c
 
-  Ia32/IvtAsm.asm | MSFT
-  Ia32/IvtAsm.asm | INTEL
-  Ia32/IvtAsm.S   | GCC
+  Ia32/IvtAsm.asm | MSFT  ## MS_CHANGE
+  Ia32/IvtAsm.asm | INTEL ## MS_CHANGE
+  Ia32/IvtAsm.S   | GCC   ## MS_CHANGE
 
 [Sources.IA32]
-  Ia32/CpuAsm.asm | MSFT
-  Ia32/CpuAsm.asm | INTEL
-  Ia32/CpuAsm.S   | GCC
+  Ia32/CpuAsm.asm | MSFT  ## MS_CHANGE
+  Ia32/CpuAsm.asm | INTEL ## MS_CHANGE
+  Ia32/CpuAsm.S   | GCC   ## MS_CHANGE
 
   Ia32/PagingAttribute.c
 
 [Sources.X64]
-  X64/CpuAsm.asm | MSFT
-  X64/CpuAsm.asm | INTEL
-  X64/CpuAsm.S   | GCC
+  X64/CpuAsm.asm | MSFT   ## MS_CHANGE
+  X64/CpuAsm.asm | INTEL  ## MS_CHANGE
+  X64/CpuAsm.S   | GCC    ## MS_CHANGE
 
   X64/PagingAttribute.c
 
 [Protocols]
-  gEfiCpuArchProtocolGuid
-  gEfiCpu2ProtocolGuid
-  gEfiMpServiceProtocolGuid                     ## PRODUCES
+  gEfiCpuArchProtocolGuid                       ## PRODUCES
+  gEfiCpu2ProtocolGuid                          ## MS_CHANGE
 
 [Guids]
-  gIdleLoopEventGuid                            ## CONSUMES ## GUID
-
-[Ppis]
-  gEfiSecPlatformInformation2PpiGuid            ## UNDEFINED # HOB
-  gEfiSecPlatformInformationPpiGuid             ## UNDEFINED # HOB
+  gIdleLoopEventGuid                            ## CONSUMES ## GUID ## MS_CHANGE
 
 [Depex]
-  TRUE
+  TRUE  # MS_CHANGE
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
-    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture                       ## CONSUMES  ## MS_CHANGE
+    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent                   ## CONSUMES  ## MS_CHANGE
     gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
-    gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
     gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
     gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
-    gUefiCpuPkgTokenSpaceGuid.PcdCpuStackSwitchExceptionList              ## CONSUMES
-    gUefiCpuPkgTokenSpaceGuid.PcdCpuKnownGoodStackSize                    ## CONSUMES

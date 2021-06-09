@@ -1,19 +1,18 @@
-/** @file
-  CPU DXE Module.
+/*++
 
-  Copyright (c) 2008 - 2011, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
+Copyright (c) Microsoft Corporation
 
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+Module Name:
 
-**/
+    CpuDxe.c
+
+Abstract:
+
+    CPU DXE Module to produce CPU ARCH Protocol.
+
+--*/
 
 #include "CpuDxe.h"
-#include "CpuMp.h"
 #include "CpuPageTable.h"
 
 // MSCHANGE BEGIN Copied from MU_BASECORE 1808 since these definitions have been removed from public release
@@ -46,76 +45,76 @@
 #define  MTRR_LIB_CACHE_FIXED_MTRR_ENABLED           0x400
 // MSCHANGE END Copied from MU_BASECORE 1808 since these definitions have been removed from public release
 
-#define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP)
-#define MEMORY_ATTRIBUTE_MASK  (EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO)
+#define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP) // MS_CHANGE
+#define MEMORY_ATTRIBUTE_MASK  (EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO)  // MS_CHANGE
 
 
 //
 // Global Variables
 //
-IA32_IDT_GATE_DESCRIPTOR  gIdtTable[INTERRUPT_VECTOR_NUMBER] = { 0 };
-IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[INTERRUPT_VECTOR_NUMBER] = { 0 };
+IA32_IDT_GATE_DESCRIPTOR  gIdtTable[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_CHANGE
+IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_CHANGE
 
-EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100];
+EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100]; // MS_CHANGE
 EFI_HANDLE                mCpuHandle = NULL;
 BOOLEAN                   mIsFlushingGCD;
-UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;
-UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;
-UINT16                    mOrigIdtEntryCount    = 0;
+UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS; // MS_CHANGE
+UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // MS_CHANGE
+UINT16                    mOrigIdtEntryCount    = 0;  // MS_CHANGE
 
 FIXED_MTRR    mFixedMtrrTable[] = {
   {
-    MTRR_LIB_IA32_MTRR_FIX64K_00000,
+    MTRR_LIB_IA32_MTRR_FIX64K_00000,  // MS_CHANGE
     0,
     0x10000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX16K_80000,
+    MTRR_LIB_IA32_MTRR_FIX16K_80000,  // MS_CHANGE
     0x80000,
     0x4000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX16K_A0000,
+    MTRR_LIB_IA32_MTRR_FIX16K_A0000,  // MS_CHANGE
     0xA0000,
     0x4000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_C0000,
+    MTRR_LIB_IA32_MTRR_FIX4K_C0000, // MS_CHANGE
     0xC0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_C8000,
+    MTRR_LIB_IA32_MTRR_FIX4K_C8000, // MS_CHANGE
     0xC8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_D0000,
+    MTRR_LIB_IA32_MTRR_FIX4K_D0000, // MS_CHANGE
     0xD0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_D8000,
+    MTRR_LIB_IA32_MTRR_FIX4K_D8000, // MS_CHANGE
     0xD8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_E0000,
+    MTRR_LIB_IA32_MTRR_FIX4K_E0000, // MS_CHANGE
     0xE0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_E8000,
+    MTRR_LIB_IA32_MTRR_FIX4K_E8000, // MS_CHANGE
     0xE8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_F0000,
+    MTRR_LIB_IA32_MTRR_FIX4K_F0000, // MS_CHANGE
     0xF0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_F8000,
+    MTRR_LIB_IA32_MTRR_FIX4K_F8000, // MS_CHANGE
     0xF8000,
     0x1000
   },
@@ -135,6 +134,7 @@ EFI_CPU_ARCH_PROTOCOL  gCpu = {
   4                           // DmaBufferAlignment
 };
 
+// MS_CHANGE BEGIN
 EFI_CPU2_PROTOCOL gCpu2 = {
   CpuWaitForAndEnableInterrupt,
 };
@@ -390,7 +390,7 @@ CommonExceptionHandler (
     CpuSleep ();
   };
 }
-
+// MS_CHANGE END
 
 /**
   Flush CPU data cache. If the instruction cache is fully coherent
@@ -489,7 +489,7 @@ CpuGetInterruptState (
     return EFI_INVALID_PARAMETER;
   }
 
-  *State = GetInterruptState ();
+  *State = GetInterruptState ();  // MS_CHANGE
   return EFI_SUCCESS;
 }
 
@@ -545,6 +545,7 @@ CpuRegisterInterruptHandler (
   IN EFI_CPU_INTERRUPT_HANDLER     InterruptHandler
   )
 {
+  // MS_CHANGE BEGIN
   if (InterruptType < 0 || InterruptType > 0xff) {
     return EFI_UNSUPPORTED;
   }
@@ -568,6 +569,7 @@ CpuRegisterInterruptHandler (
 
   ExternalVectorTable[InterruptType] = InterruptHandler;
   return EFI_SUCCESS;
+  // MS_CHANGE END
 }
 
 
@@ -617,7 +619,7 @@ CpuGetTimerValue (
       //
       // BugBug: Hard coded. Don't know how to do this generically
       //
-      *TimerPeriod = 1000000000;
+      *TimerPeriod = 1000000000;  // MS_CHANGE
   }
 
   return EFI_SUCCESS;
@@ -662,6 +664,7 @@ CpuSetMemoryAttributes (
   MTRR_MEMORY_CACHE_TYPE    CacheType;
   UINT64                    CacheAttributes;
   UINT64                    MemoryAttributes;
+  // MS_CHANGE BEGIN
 
   if (!IsMtrrSupported ()) {
     return EFI_UNSUPPORTED;
@@ -727,6 +730,7 @@ CpuSetMemoryAttributes (
       return (EFI_STATUS) Status;
     }
   }
+  // MS_CHANGE END
 
   //
   // Set memory attribute by page table
@@ -734,6 +738,7 @@ CpuSetMemoryAttributes (
   return AssignMemoryPageAttributes (NULL, BaseAddress, Length, MemoryAttributes, NULL);
 }
 
+// MS_CHANGE BEGIN
 /**
   Waits for an interrupt to arrive, then enables CPU interrupts.
 
@@ -752,6 +757,7 @@ CpuWaitForAndEnableInterrupt (
 
   return EFI_SUCCESS;
 }
+// MS_CHANGE END
 
 /**
   Initializes the valid bits mask and valid address mask for MTRRs.
@@ -777,8 +783,8 @@ InitializeMtrrMask (
     mValidMtrrBitsMask    = LShiftU64 (1, PhysicalAddressBits) - 1;
     mValidMtrrAddressMask = mValidMtrrBitsMask & 0xfffffffffffff000ULL;
   } else {
-    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;
-    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;
+    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;    // MS_CHANGE
+    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;   // MS_CHANGE
   }
 }
 
@@ -933,7 +939,7 @@ SetGcdMemorySpaceAttributes (
            RegionStart,
            RegionLength,
            (MemorySpaceMap[Index].Attributes & ~EFI_MEMORY_CACHETYPE_MASK) | (MemorySpaceMap[Index].Capabilities & Attributes)
-           );
+           );   // MS_CHANGE
   }
 
   return EFI_SUCCESS;
@@ -969,13 +975,13 @@ RefreshGcdMemoryAttributes (
   UINT8                               DefaultMemoryType;
 
   if (!IsMtrrSupported ()) {
-    return;
+    return;   // MS_CHANGE
   }
 
   FirmwareVariableMtrrCount = GetFirmwareVariableMtrrCount ();
   ASSERT (FirmwareVariableMtrrCount <= MTRR_NUMBER_OF_VARIABLE_MTRR);
 
-  mIsFlushingGCD = TRUE;
+  mIsFlushingGCD = TRUE;    // MS_CHANGE
   MemorySpaceMap = NULL;
 
   //
@@ -1016,7 +1022,7 @@ RefreshGcdMemoryAttributes (
            MemorySpaceMap[Index].Length,
            (MemorySpaceMap[Index].Attributes & ~EFI_MEMORY_CACHETYPE_MASK) |
            (MemorySpaceMap[Index].Capabilities & DefaultAttributes)
-           );
+           );   // MS_CHANGE
   }
 
   //
@@ -1130,6 +1136,7 @@ RefreshGcdMemoryAttributes (
   mIsFlushingGCD = FALSE;
 }
 
+// MS_CHANGE BEGIN
 /**
   Set Interrupt Descriptor Table Handler Address.
 
@@ -1264,7 +1271,7 @@ InitInterruptDescriptorTable (
     }
   }
 }
-
+// MS_CHANGE END
 
 /**
   Callback function for idle events.
@@ -1305,6 +1312,8 @@ InitializeCpu (
 {
   EFI_STATUS  Status;
   EFI_EVENT   IdleLoopEvent;
+
+  // MS_CHANGE BEGIN
   BOOLEAN     strictIsolation;
 
   //
@@ -1321,6 +1330,7 @@ InitializeCpu (
   {
       strictIsolation = FALSE;
   }
+  // MS_CHANGE END
 
   InitializePageTableLib();
 
@@ -1346,7 +1356,7 @@ InitializeCpu (
   //
   if (!strictIsolation)
   {
-    ProgramVirtualWireMode ();
+    ProgramVirtualWireMode ();  // MS_CHANGE
   }
 
   //
@@ -1355,7 +1365,7 @@ InitializeCpu (
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mCpuHandle,
                   &gEfiCpuArchProtocolGuid, &gCpu,
-                  &gEfiCpu2ProtocolGuid, &gCpu2,
+                  &gEfiCpu2ProtocolGuid, &gCpu2,  // MS_CHANGE
                   NULL
                   );
   ASSERT_EFI_ERROR (Status);
@@ -1363,7 +1373,7 @@ InitializeCpu (
   //
   // Refresh GCD memory space map according to MTRR value.
   //
-  if (!strictIsolation)
+  if (!strictIsolation) // MS_CHANGE
   {
     RefreshGcdMemoryAttributes ();
   }
@@ -1380,8 +1390,6 @@ InitializeCpu (
                   &IdleLoopEvent
                   );
   ASSERT_EFI_ERROR (Status);
-
-  InitializeMpSupport ();
 
   return Status;
 }

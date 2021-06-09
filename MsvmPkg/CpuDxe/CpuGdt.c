@@ -1,21 +1,21 @@
-/** @file
-  C based implemention of IA32 interrupt handling only
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+  CpuGdt.c
+
+Abstract:
+
+  C based implementation of IA32 interrupt handling only
   requiring a minimal assembly interrupt entry point.
 
-  Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
-**/
+--*/
 
 #include "CpuDxe.h"
 
-
+// MS_CHANGE BEGIN
 //
 // Local structure definitions
 //
@@ -65,6 +65,7 @@ struct _GDT_ENTRIES {
 #else
 #error CPU type not supported for CPU GDT initialization!
 #endif
+// MS_CHANGE END
 
 //
 // Global descriptor table (GDT) Template
@@ -85,10 +86,10 @@ STATIC GDT_ENTRIES GdtTemplate = {
   // LINEAR_SEL
   //
   {
-    0x0FFFF,        // limit 0xFFFFF
-    0x0,            // base 0
-    0x0,
-    0x092,          // present, ring 0, data, expand-up, writable
+    0x0FFFF,        // limit 15:0
+    0x0,            // base 15:0
+    0x0,            // base 23:16
+    0x092,          // present, ring 0, data, read/write
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -96,10 +97,10 @@ STATIC GDT_ENTRIES GdtTemplate = {
   // LINEAR_CODE_SEL
   //
   {
-    0x0FFFF,        // limit 0xFFFFF
-    0x0,            // base 0
-    0x0,
-    0x09A,          // present, ring 0, data, expand-up, writable
+    0x0FFFF,        // limit 15:0
+    0x0,            // base 15:0
+    0x0,            // base 23:16
+    0x09A,          // present, ring 0, data, expand-up, writable MS_CHANGE
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -107,10 +108,10 @@ STATIC GDT_ENTRIES GdtTemplate = {
   // SYS_DATA_SEL
   //
   {
-    0x0FFFF,        // limit 0xFFFFF
-    0x0,            // base 0
-    0x0,
-    0x092,          // present, ring 0, data, expand-up, writable
+    0x0FFFF,        // limit 15:0
+    0x0,            // base 15:0
+    0x0,            // base 23:16
+    0x092,          // present, ring 0, data, expand-up, writable MS_CHANGE
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -118,10 +119,10 @@ STATIC GDT_ENTRIES GdtTemplate = {
   // SYS_CODE_SEL
   //
   {
-    0x0FFFF,        // limit 0xFFFFF
-    0x0,            // base 0
-    0x0,
-    0x09A,          // present, ring 0, data, expand-up, writable
+    0x0FFFF,        // limit 15:0
+    0x0,            // base 15:0
+    0x0,            // base 23:16
+    0x09A,          // present, ring 0, data, expand-up, writable MS_CHANGE
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -129,11 +130,11 @@ STATIC GDT_ENTRIES GdtTemplate = {
   // LINEAR_CODE64_SEL
   //
   {
-    0x0FFFF,        // limit 0xFFFFF
-    0x0,            // base 0
-    0x0,
-    0x09B,          // present, ring 0, code, expand-up, writable
-    0x0AF,          // LimitHigh (CS.L=1, CS.D=0)
+    0x0FFFF,        // limit 15:0
+    0x0,            // base 15:0
+    0x0,            // base 23:16
+    0x09B,          // present, ring 0, code, expand-up, writable MS_CHANGE
+    0x0AF,          // LimitHigh (CS.L=1, CS.D=0) MS_CHANGE
     0x0,            // base (high)
   },
   //
@@ -151,12 +152,12 @@ STATIC GDT_ENTRIES GdtTemplate = {
   // SPARE5_SEL
   //
   {
-    0x0,            // limit 0
-    0x0,            // base 0
-    0x0,
-    0x0,            // present, ring 0, data, expand-up, writable
-    0x0,            // page-granular, 32-bit
-    0x0,
+    0x0,            // limit 15:0
+    0x0,            // base 15:0
+    0x0,            // base 23:16
+    0x0,            // type
+    0x0,            // limit 19:16, flags
+    0x0,            // base 31:24
   },
 };
 

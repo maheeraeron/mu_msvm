@@ -1,16 +1,16 @@
-/** @file
-  CPU DXE Module.
+/*++
 
-  Copyright (c) 2008 - 2011, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
+Copyright (c) Microsoft Corporation
 
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+Module Name:
 
-**/
+    CpuDxe.h
+
+Abstract:
+
+    CPU DXE Module to produce CPU ARCH Protocol.
+
+--*/
 
 #ifndef _CPU_DXE_H_
 #define _CPU_DXE_H_
@@ -18,11 +18,7 @@
 #include <PiDxe.h>
 
 #include <Protocol/Cpu.h>
-#include <Protocol/Cpu2.h>
-#include <Protocol/MpService.h>
-
-#include <Ppi/SecPlatformInformation.h>
-#include <Ppi/SecPlatformInformation2.h>
+#include <Protocol/Cpu2.h>    // MS_CHANGE
 
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -35,17 +31,16 @@
 #include <Library/MtrrLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/UefiCpuLib.h>
-#include <Library/CpuExceptionHandlerLib.h>
-#include <Library/HobLib.h>
-#include <Library/ReportStatusCodeLib.h>
-#include <Library/MpInitLib.h>
 #include <Guid/IdleLoopEvent.h>
-#include <IsolationTypes.h>
+#include <IsolationTypes.h>   // MS_CHANGE
 
-//
-//
-//
-#define INTERRUPT_VECTOR_NUMBER   256
+#define INTERRUPT_VECTOR_NUMBER   256 // MS_CHANGE
+
+#define HEAP_GUARD_NONSTOP_MODE       \
+        ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
+
+#define NULL_DETECTION_NONSTOP_MODE   \
+        ((PcdGet8 (PcdNullPointerDetectionPropertyMask) & (BIT6|BIT0)) > BIT6)
 
 #define EFI_MEMORY_CACHETYPE_MASK     (EFI_MEMORY_UC  | \
                                        EFI_MEMORY_WC  | \
@@ -54,17 +49,11 @@
                                        EFI_MEMORY_UCE   \
                                        )
 
+ 
 #define EFI_MEMORY_PAGETYPE_MASK      (EFI_MEMORY_RP  | \
                                        EFI_MEMORY_XP  | \
                                        EFI_MEMORY_RO    \
                                        )
-
-#define HEAP_GUARD_NONSTOP_MODE       \
-        ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
-
-#define NULL_DETECTION_NONSTOP_MODE   \
-        ((PcdGet8 (PcdNullPointerDetectionPropertyMask) & (BIT6|BIT0)) > BIT6)
-
 
 /**
   Flush CPU data cache. If the instruction cache is fully coherent
@@ -241,6 +230,7 @@ CpuSetMemoryAttributes (
   IN UINT64                     Attributes
   );
 
+// MS_CHANGE BEGIN
 /**
   Waits for an interrupt to arrive, then enables CPU interrupts.
 
@@ -266,6 +256,7 @@ EFIAPI
 AsmIdtVector00 (
   VOID
   );
+// MS_CHANGE END
 
 /**
   Initialize Global Descriptor Table.
@@ -300,6 +291,7 @@ SetDataSelectors (
   UINT16 Selector
   );
 
+// MS_CHANGE BEGIN
 /**
   Restore original Interrupt Descriptor Table Handler Address.
 
@@ -310,41 +302,7 @@ VOID
 RestoreInterruptDescriptorTableHandlerAddress (
   IN UINTN       Index
   );
-
-/**
-  Special handler for #DB exception, which will restore the page attributes
-  (not-present). It should work with #PF handler which will set pages to
-  'present'.
-
-  @param ExceptionType  Exception type.
-  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
-
-**/
-VOID
-EFIAPI
-DebugExceptionHandler (
-  IN EFI_EXCEPTION_TYPE   ExceptionType,
-  IN EFI_SYSTEM_CONTEXT   SystemContext
-  );
-
-/**
-  Special handler for #PF exception, which will set the pages which caused
-  #PF to be 'present'. The attribute of those pages should be restored in
-  the subsequent #DB handler.
-
-  @param ExceptionType  Exception type.
-  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
-
-**/
-VOID
-EFIAPI
-PageFaultExceptionHandler (
-  IN EFI_EXCEPTION_TYPE   ExceptionType,
-  IN EFI_SYSTEM_CONTEXT   SystemContext
-  );
-
-
-extern UINTN   mNumberOfProcessors;
+// MS_CHANGE END
 
 #endif
 

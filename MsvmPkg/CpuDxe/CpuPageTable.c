@@ -1,12 +1,16 @@
-/** @file
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Module Name:
+
+  CpuPageTable.c
+
+Abstract:
+
   Page table management support.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
-  Copyright (c) 2017, AMD Incorporated. All rights reserved.<BR>
-
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+--*/
 
 #include <Base.h>
 #include <Uefi.h>
@@ -85,6 +89,7 @@ PAGE_ATTRIBUTE_TABLE mPageAttributeTable[] = {
   {Page1G,  SIZE_1GB, PAGING_1G_ADDRESS_MASK_64},
 };
 
+UINTN                             mNumberOfProcessors = 1;  // MS_CHANGE
 PAGE_TABLE_POOL                   *mPageTablePool = NULL;
 BOOLEAN                           mPageTablePoolLock = FALSE;
 PAGE_TABLE_LIB_PAGING_CONTEXT     mPagingContext;
@@ -119,6 +124,7 @@ IsInSmm (
   VOID
   )
 {
+  // MS_CHANGE
   return FALSE;
 }
 
@@ -453,8 +459,8 @@ ConvertPageEntryAttribute (
   *PageEntry = NewPageEntry;
   if (CurrentPageEntry != NewPageEntry) {
     *IsModified = TRUE;
-    // DEBUG ((DEBUG_VERBOSE, "ConvertPageEntryAttribute 0x%lx", CurrentPageEntry));
-    // DEBUG ((DEBUG_VERBOSE, "->0x%lx\n", NewPageEntry));
+    DEBUG ((DEBUG_VERBOSE, "ConvertPageEntryAttribute 0x%lx", CurrentPageEntry));
+    DEBUG ((DEBUG_VERBOSE, "->0x%lx\n", NewPageEntry));
   } else {
     *IsModified = FALSE;
   }
@@ -699,7 +705,7 @@ ConvertMemoryPageAttributes (
     return RETURN_INVALID_PARAMETER;
   }
 
-  if ((Attributes & ~(EFI_MEMORY_RP | EFI_MEMORY_RO | EFI_MEMORY_XP)) != 0) {
+  if ((Attributes & ~EFI_MEMORY_ATTRIBUTE_MASK) != 0) {
     DEBUG ((DEBUG_ERROR, "Attributes(0x%lx) has unsupported bit\n", Attributes));
     return EFI_UNSUPPORTED;
   }
@@ -1000,9 +1006,9 @@ RefreshGcdMemoryAttributesFromPaging (
 
       Length = MIN (PageLength, MemorySpaceLength);
       if (Attributes != (MemorySpaceMap[Index].Attributes &
-                         EFI_MEMORY_PAGETYPE_MASK)) {
+                         EFI_MEMORY_ATTRIBUTE_MASK)) {
         NewAttributes = (MemorySpaceMap[Index].Attributes &
-                         ~EFI_MEMORY_PAGETYPE_MASK) | Attributes;
+                         ~EFI_MEMORY_ATTRIBUTE_MASK) | Attributes;
         Status = gDS->SetMemorySpaceAttributes (
                         BaseAddress,
                         Length,
@@ -1164,151 +1170,6 @@ AllocatePageTableMemory (
   mPageTablePool->FreePages  -= Pages;
 
   return Buffer;
-}
-
-/**
-  Special handler for #DB exception, which will restore the page attributes
-  (not-present). It should work with #PF handler which will set pages to
-  'present'.
-
-  @param ExceptionType  Exception type.
-  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
-
-**/
-VOID
-EFIAPI
-DebugExceptionHandler (
-  IN EFI_EXCEPTION_TYPE   ExceptionType,
-  IN EFI_SYSTEM_CONTEXT   SystemContext
-  )
-{
-  UINTN     CpuIndex;
-  UINTN     PFEntry;
-  BOOLEAN   IsWpEnabled;
-
-  MpInitLibWhoAmI (&CpuIndex);
-
-  //
-  // Clear last PF entries
-  //
-  IsWpEnabled = IsReadOnlyPageWriteProtected ();
-  if (IsWpEnabled) {
-    DisableReadOnlyPageWriteProtect ();
-  }
-
-  for (PFEntry = 0; PFEntry < mPFEntryCount[CpuIndex]; PFEntry++) {
-    if (mLastPFEntryPointer[CpuIndex][PFEntry] != NULL) {
-      *mLastPFEntryPointer[CpuIndex][PFEntry] &= ~(UINT64)IA32_PG_P;
-    }
-  }
-
-  if (IsWpEnabled) {
-    EnableReadOnlyPageWriteProtect ();
-  }
-
-  //
-  // Reset page fault exception count for next page fault.
-  //
-  mPFEntryCount[CpuIndex] = 0;
-
-  //
-  // Flush TLB
-  //
-  CpuFlushTlb ();
-
-  //
-  // Clear TF in EFLAGS
-  //
-  if (mPagingContext.MachineType == IMAGE_FILE_MACHINE_I386) {
-    SystemContext.SystemContextIa32->Eflags &= (UINT32)~BIT8;
-  } else {
-    SystemContext.SystemContextX64->Rflags &= (UINT64)~BIT8;
-  }
-}
-
-/**
-  Special handler for #PF exception, which will set the pages which caused
-  #PF to be 'present'. The attribute of those pages should be restored in
-  the subsequent #DB handler.
-
-  @param ExceptionType  Exception type.
-  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
-
-**/
-VOID
-EFIAPI
-PageFaultExceptionHandler (
-  IN EFI_EXCEPTION_TYPE   ExceptionType,
-  IN EFI_SYSTEM_CONTEXT   SystemContext
-  )
-{
-  EFI_STATUS                      Status;
-  UINT64                          PFAddress;
-  PAGE_TABLE_LIB_PAGING_CONTEXT   PagingContext;
-  PAGE_ATTRIBUTE                  PageAttribute;
-  UINT64                          Attributes;
-  UINT64                          *PageEntry;
-  UINTN                           Index;
-  UINTN                           CpuIndex;
-  UINTN                           PageNumber;
-  BOOLEAN                         NonStopMode;
-
-  PFAddress = AsmReadCr2 () & ~EFI_PAGE_MASK;
-  if (PFAddress < BASE_4KB) {
-    NonStopMode = NULL_DETECTION_NONSTOP_MODE ? TRUE : FALSE;
-  } else {
-    NonStopMode = HEAP_GUARD_NONSTOP_MODE ? TRUE : FALSE;
-  }
-
-  if (NonStopMode) {
-    MpInitLibWhoAmI (&CpuIndex);
-    GetCurrentPagingContext (&PagingContext);
-    //
-    // Memory operation cross page boundary, like "rep mov" instruction, will
-    // cause infinite loop between this and Debug Trap handler. We have to make
-    // sure that current page and the page followed are both in PRESENT state.
-    //
-    PageNumber = 2;
-    while (PageNumber > 0) {
-      PageEntry = GetPageTableEntry (&PagingContext, PFAddress, &PageAttribute);
-      ASSERT(PageEntry != NULL);
-
-      if (PageEntry != NULL) {
-        Attributes = GetAttributesFromPageEntry (PageEntry);
-        if ((Attributes & EFI_MEMORY_RP) != 0) {
-          Attributes &= ~EFI_MEMORY_RP;
-          Status = AssignMemoryPageAttributes (&PagingContext, PFAddress,
-                                               EFI_PAGE_SIZE, Attributes, NULL);
-          if (!EFI_ERROR(Status)) {
-            Index = mPFEntryCount[CpuIndex];
-            //
-            // Re-retrieve page entry because above calling might update page
-            // table due to table split.
-            //
-            PageEntry = GetPageTableEntry (&PagingContext, PFAddress, &PageAttribute);
-            mLastPFEntryPointer[CpuIndex][Index++] = PageEntry;
-            mPFEntryCount[CpuIndex] = Index;
-          }
-        }
-      }
-
-      PFAddress += EFI_PAGE_SIZE;
-      --PageNumber;
-    }
-  }
-
-  if (NonStopMode) {
-    //
-    // Set TF in EFLAGS
-    //
-    if (mPagingContext.MachineType == IMAGE_FILE_MACHINE_I386) {
-      SystemContext.SystemContextIa32->Eflags |= (UINT32)BIT8;
-    } else {
-      SystemContext.SystemContextX64->Rflags |= (UINT64)BIT8;
-    }
-  } else {
-    CpuDeadLoop ();
-  }
 }
 
 /**
