@@ -16,6 +16,7 @@ Abstract:
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 #include <EfiNt.h>
 #include <hvgdk_mini.h>
 #include <BiosInterface.h>
@@ -299,6 +300,17 @@ SecProcessVirtualMsrRead (
         //
 
         value = SecReadMsrWithGhcb(TrapFrame->Rcx);
+        break;
+
+    case MSR_IA32_MTRRCAP:
+
+        //
+        // CPUID advertises that MTRRs are available, but they are not usable.
+        // Advertise that there are zero variable MTRRs and no fixed MTRRs to
+        // prevent their use.
+        //
+
+        value = 0;
         break;
 
     default:

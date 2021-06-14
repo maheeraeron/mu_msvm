@@ -407,7 +407,7 @@ Return Value:
     UINT32 rangeFlags;
     UINT64 rangeLength;
     PVM_MEMORY_RANGE_V5 rangeV5;
-    BOOLEAN suppressMtrrs;
+    BOOLEAN suppressBiosDevice;
     UINT64 truncateSize;
 
     //
@@ -423,16 +423,16 @@ Return Value:
 
     //
     // If this is a hardware isolated VM with no paravisor, then skip all
-    // MTRR configuration.
+    // communication with the BIOS vDev.
     //
 
-    suppressMtrrs = FALSE;
+    suppressBiosDevice = FALSE;
 
 #if defined(MDE_CPU_X64)
     if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
         !PcdGetBool(PcdIsolationParavisorPresent))
     {
-        suppressMtrrs = TRUE;
+        suppressBiosDevice = TRUE;
     }
 #endif
 
@@ -620,10 +620,7 @@ Return Value:
     // N.B. This call also has the effect of enabling MTRRs. The default
     // MTRR type remains uncached.
     //
-    if (!suppressMtrrs)
-    {
-        MtrrSetMemoryAttribute(0, SIZE_512KB + SIZE_128KB, CacheWriteBack);
-    }
+    MtrrSetMemoryAttribute(0, SIZE_512KB + SIZE_128KB, CacheWriteBack);
 #endif
 
     //
@@ -685,7 +682,7 @@ Return Value:
     //
     // Tell the BiosDevice to set up the variable MTRRs.
     //
-    if (!suppressMtrrs)
+    if (!suppressBiosDevice)
     {
         WriteBiosDevice(BiosConfigBootFinalize, Context->PhysicalAddressWidth);
     }

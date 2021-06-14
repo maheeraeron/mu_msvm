@@ -62,6 +62,8 @@ UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS; 
 UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // MS_CHANGE
 UINT16                    mOrigIdtEntryCount    = 0;  // MS_CHANGE
 
+BOOLEAN                   mStrictIsolation;
+
 FIXED_MTRR    mFixedMtrrTable[] = {
   {
     MTRR_LIB_IA32_MTRR_FIX64K_00000,  // MS_CHANGE
@@ -666,10 +668,6 @@ CpuSetMemoryAttributes (
   UINT64                    MemoryAttributes;
   // MS_CHANGE BEGIN
 
-  if (!IsMtrrSupported ()) {
-    return EFI_UNSUPPORTED;
-  }
-
   CacheAttributes = Attributes & CACHE_ATTRIBUTE_MASK;
   MemoryAttributes = Attributes & MEMORY_ATTRIBUTE_MASK;
 
@@ -717,17 +715,33 @@ CpuSetMemoryAttributes (
       DEBUG ((DEBUG_ERROR, "Invalid cache attributes.\n"));    
       return EFI_INVALID_PARAMETER;
     }
-    //
-    // call MTRR libary function
-    //
-    Status = MtrrSetMemoryAttribute (
-              BaseAddress,
-              Length,
-              CacheType
-              );
 
-    if (EFI_ERROR(Status)) {
-      return (EFI_STATUS) Status;
+    //
+    // If this system enforces hardware isolation with no paravisor, then
+    // cache attribute changes are not possible.  However, this routine may
+    // still be called to adjust memory permissions for addresses that have
+    // writeback attributes.  If the cache type is writeback, then ignore any
+    // attribute changes.
+    //
+
+    if (!mStrictIsolation || CacheType != CacheWriteBack) {
+
+      if (!IsMtrrSupported ()) {
+          return EFI_INVALID_PARAMETER;
+      }
+
+      //
+      // call MTRR libary function
+      //
+      Status = MtrrSetMemoryAttribute (
+                BaseAddress,
+                Length,
+                CacheType
+                );
+
+      if (EFI_ERROR(Status)) {
+        return (EFI_STATUS) Status;
+      }
     }
   }
   // MS_CHANGE END
@@ -1313,9 +1327,6 @@ InitializeCpu (
   EFI_STATUS  Status;
   EFI_EVENT   IdleLoopEvent;
 
-  // MS_CHANGE BEGIN
-  BOOLEAN     strictIsolation;
-
   //
   // Determine whether hardware isolation is being enforced.  If so, then
   // certain aspects of hardware initialization are not supported when no
@@ -1324,11 +1335,7 @@ InitializeCpu (
   if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
       !PcdGetBool(PcdIsolationParavisorPresent))
   {
-      strictIsolation = TRUE;
-  }
-  else
-  {
-      strictIsolation = FALSE;
+      mStrictIsolation = TRUE;
   }
   // MS_CHANGE END
 
@@ -1354,7 +1361,7 @@ InitializeCpu (
   //
   // Enable the local APIC for Virtual Wire Mode.
   //
-  if (!strictIsolation)
+  if (!mStrictIsolation)
   {
     ProgramVirtualWireMode ();  // MS_CHANGE
   }
@@ -1373,10 +1380,7 @@ InitializeCpu (
   //
   // Refresh GCD memory space map according to MTRR value.
   //
-  if (!strictIsolation) // MS_CHANGE
-  {
-    RefreshGcdMemoryAttributes ();
-  }
+  RefreshGcdMemoryAttributes ();
 
   //
   // Setup a callback for idle events
