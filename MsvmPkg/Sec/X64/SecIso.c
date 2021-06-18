@@ -42,7 +42,8 @@ Abstract:
 #define GetGhcbField64(Ghcb, Field) \
     (*(PUINT64)((PUCHAR)(Ghcb) + (Field)))
 
-#define GHCB_INFO_MAP_GHCB              6
+#define GHCB_INFO_REGISTER_REQUEST      0x012
+#define GHCB_INFO_REGISTER_RESPONSE     0x013
 
 #define GHCB_EXITCODE_MSR               0x7C
 
@@ -177,43 +178,22 @@ SecInitializeSnp (
     ghcbAddress = (UINTN)ParameterInfo - EFI_PAGE_SIZE + sharedGpaBoundary;
 
     //
-    // Check to see whether the hypervisor has configured a GHCB.  If not,
-    // configure a GHCB page at the selected address.
+    // Attempt to register the GHCB at the selected address.
     //
 
+    AsmWriteMsr64(MSR_GHCB, ghcbAddress | GHCB_INFO_REGISTER_REQUEST);
+    SecVmgexit();
     ghcbMsr = AsmReadMsr64(MSR_GHCB);
-    if (ghcbMsr == 0)
-    {
-        AsmWriteMsr64(MSR_GHCB, ghcbAddress | GHCB_INFO_MAP_GHCB);
-        SecVmgexit();
-        ghcbMsr = AsmReadMsr64(MSR_GHCB);
-    }
-
-    //
-    // The selected GHCB is usable as long as it is either the selected
-    // address or it is beyond the parameter block and above the shared GPA
-    // boundary.
-    //
-
-    if ((ghcbMsr & 0xFFF) != 0)
+    if (ghcbMsr != (ghcbAddress | GHCB_INFO_REGISTER_RESPONSE))
     {
         return FALSE;
     }
 
-    if (ghcbMsr != ghcbAddress)
-    {
-        ghcbAddress = (UINTN)ParameterInfo +
-                      (ParameterInfo->ParameterPageCount * EFI_PAGE_SIZE) +
-                      sharedGpaBoundary;
+    //
+    // Configure the GHCB for further use.
+    //
 
-        if (ghcbMsr < ghcbAddress)
-        {
-            return FALSE;
-        }
-
-        ghcbAddress = ghcbMsr;
-    }
-
+    AsmWriteMsr64(MSR_GHCB, ghcbAddress);
     Ghcb = (PVOID)ghcbAddress;
 
     //
