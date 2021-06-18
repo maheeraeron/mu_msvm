@@ -356,6 +356,7 @@ Return Value:
 
     ZeroMem(&configFlags, sizeof(configFlags));
     configFlags.Flags.DebuggerEnabled = 1;
+    configFlags.Flags.MemoryProtectionDisabled = 1;
     ConfigSetUefiConfigFlags(&configFlags);
 
     //
