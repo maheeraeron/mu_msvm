@@ -28,6 +28,7 @@ Author:
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/HostVisibilityLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/HvHypercallLib.h>
@@ -75,6 +76,7 @@ typedef struct _EFI_HV_PROTECTION_OBJECT EFI_HV_PROTECTION_OBJECT;
 HV_HYPERCALL_CONTEXT mHvContext;
 HV_HYPERCALL_CONTEXT mHvBypassContext;
 BOOLEAN mUseBypassContext;
+BOOLEAN mBypassOnly;
 PEFI_HV_PAGES mHvPages;
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
@@ -93,6 +95,7 @@ BOOLEAN mAutoEoi;
 BOOLEAN mDirectTimerSupported;
 LIST_ENTRY mHostVisiblePageList;
 UINT64 mSharedGpaBoundary;
+UINT32 mIsolationType;
 
 EFI_HV_SINT_CONFIGURATION mSintConfiguration[HV_SYNIC_SINT_COUNT];
 UINT8 mVectorSint[256];
@@ -266,7 +269,10 @@ Return Value:
         sint.Proxy = 1;
     }
 
-    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
+    if (!mBypassOnly)
+    {
+        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
+    }
 
     // Store the state used by the interrupt handler.
 
@@ -398,7 +404,11 @@ Return Value:
     {
         HvHypercallSetVpRegister64Self(&mHvBypassContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
     }
-    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
+
+    if (!mBypassOnly)
+    {
+        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
+    }
 
     // Unregister the interrupt handler.
 
@@ -562,6 +572,10 @@ Return Value:
 {
     UINT64 refTime;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+
+    // Always use the local hypervisor context, even if only the bypass
+    // context has been configured, since the ref timer MSR is always locally
+    // available.
     refTime = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterTimeRefCount);
     DEBUG((DEBUG_VERBOSE, "<<< %a: reftime 0x%p\n", __FUNCTION__, refTime));
     return refTime;
@@ -591,6 +605,10 @@ Return Value:
 {
     UINT32 vpIndex;
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
+
+    // Always use the local hypervisor context, even if only the bypass
+    // context has been configured, since the VP index MSR is always locally
+    // available.
     vpIndex = (UINT32)HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterVpIndex);
     DEBUG((DEBUG_VERBOSE, "<<< %a: index 0x%x\n", __FUNCTION__, vpIndex));
     return vpIndex;
@@ -630,7 +648,10 @@ Return Value:
 {
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x Expiration 0x%x\n", __FUNCTION__,
         TimerIndex, Expiration));
-    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Count + (2 * TimerIndex), Expiration);
+    HvHypercallSetVpRegister64Self(
+        mBypassOnly ? &mHvBypassContext : &mHvContext,
+        HvRegisterStimer0Count + (2 * TimerIndex),
+        Expiration);
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
@@ -833,7 +854,10 @@ Return Value:
     }
     mTimerConfiguration[TimerIndex] = config;
     mTimerConfiguration[TimerIndex].Enable = 1;
-    HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Config + (2 * TimerIndex), config.AsUINT64);
+    HvHypercallSetVpRegister64Self(
+        mBypassOnly ? &mHvBypassContext : &mHvContext,
+        HvRegisterStimer0Config + (2 * TimerIndex),
+        config.AsUINT64);
 
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
     return EFI_SUCCESS;
@@ -1063,6 +1087,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
     UINT32 gpaPageBaseIndex = 0;
     UINT32 i;
     UINT32 totalPageCountProcessed = 0;
+    BOOLEAN paravisorPresent;
 
     DEBUG((DEBUG_VERBOSE,
         ">>> %a: GpaBase 0x%p PageCount 0x%x MapFlags 0x%x \n",
@@ -1075,6 +1100,56 @@ EfiHvpModifySparseGpaPageHostVisibility(
     {
         *PageCountProcessed = 0;
     }
+
+    paravisorPresent = PcdGetBool(PcdIsolationParavisorPresent);
+
+#if defined(MDE_CPU_X64)
+
+    if (!paravisorPresent)
+    {
+        ASSERT(mIsolationType >= UefiIsolationTypeSnp);
+
+        // If pages are being made host visible, then revoke page acceptance
+        // first.
+        if (MapFlags != 0)
+        {
+            EfiUpdatePageRangeAcceptance(
+                mIsolationType,
+                GpaPageBase,
+                PageCount,
+                FALSE);
+
+            // If the hypervisor connection has not yet been established, then
+            // pages must be made visible without using hypercalls.
+            if (!mHvBypassContext.Connected)
+            {
+                while (PageCount != 0)
+                {
+                    status = EfiMakePageHostVisible(mIsolationType, GpaPageBase);
+                    if (EFI_ERROR(status))
+                    {
+                        // Restore page acceptance for any pages that were not
+                        // processed.
+                        EfiUpdatePageRangeAcceptance(
+                            mIsolationType,
+                            GpaPageBase,
+                            PageCount,
+                            TRUE);
+                        return status;
+                    }
+
+                    GpaPageBase += 1;
+                    PageCount -= 1;
+                }
+
+                return EFI_SUCCESS;
+            }
+        }
+
+        ASSERT(mHvBypassContext.Connected);
+    }
+
+#endif
 
     oldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
@@ -1162,6 +1237,31 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
     gBS->RestoreTPL(oldTpl);
 
+#if defined(MDE_CPU_X64)
+
+    if (!paravisorPresent)
+    {
+        // When no paravisor is present, host-generated failure cannot be
+        // tolerated.  It is certainly not expected.
+        if (EFI_ERROR(status))
+        {
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        }
+
+        // If pages are being made not-visible, then accept the pages in
+        // hardware.
+        if (MapFlags == 0)
+        {
+            EfiUpdatePageRangeAcceptance(
+                mIsolationType,
+                GpaPageBase,
+                PageCount,
+                TRUE);
+        }
+    }
+
+#endif
+
     if (PageCountProcessed)
     {
         *PageCountProcessed = totalPageCountProcessed;
@@ -1181,10 +1281,9 @@ EfiHvMakeAddressRangeHostVisible(
     _In_ VOID *BaseAddress,
     _In_ UINT32 ByteCount,
     _In_ BOOLEAN ZeroPages,
-    _Out_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
+    _Out_opt_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
     )
 {
-    UINT32 isolationType;
     UINT32 pageCountProcessed;
     EFI_HV_PROTECTION_OBJECT *protectionObject;
     EFI_STATUS revertStatus;
@@ -1194,8 +1293,7 @@ EfiHvMakeAddressRangeHostVisible(
     // Visibility changes are only permitted on isolated systems.
     //
 
-    isolationType = PcdGet32(PcdIsolationArchitecture);
-    if (isolationType == UefiIsolationTypeNone)
+    if (mIsolationType == UefiIsolationTypeNone)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -1209,6 +1307,17 @@ EfiHvMakeAddressRangeHostVisible(
         ((ByteCount & (EFI_PAGE_SIZE - 1)) != 0) ||
         ((MapFlags & HV_MAP_GPA_READABLE) == 0) ||
         ((MapFlags & ~(HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE)) != 0))
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    //
+    // Verify that host-read-only is not requested on a system that doesn't
+    // support it.
+    //
+
+    if ((mIsolationType >= UefiIsolationTypeSnp) &&
+        ((MapFlags & (HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE)) == HV_MAP_GPA_READABLE))
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -1234,7 +1343,7 @@ EfiHvMakeAddressRangeHostVisible(
     // visibility change.
     //
 
-    if (isolationType == UefiIsolationTypeVbs)
+    if (mIsolationType == UefiIsolationTypeVbs)
     {
         ZeroMem(BaseAddress, ByteCount);
         ZeroPages = FALSE;
@@ -1285,7 +1394,10 @@ EfiHvMakeAddressRangeHostVisible(
             ZeroMem((PVOID)((UINTN)BaseAddress + mSharedGpaBoundary), ByteCount);
         }
 
-        *ProtectionHandle = protectionObject;
+        if (ProtectionHandle != NULL)
+        {
+            *ProtectionHandle = protectionObject;
+        }
     }
 
     return status;
@@ -1343,46 +1455,36 @@ Return Value:
 
     HV_CPUID_RESULT cpuidResult;
     EFI_PHYSICAL_ADDRESS executableHyperCallPage;
+    BOOLEAN paravisorPresent;
 
-    // Validate that the hypervisor is present, is a Microsoft hypervisor,
-    // and has all the required features.
+    // Determine the isolation type for this system.  If there is any
+    // isolation, then a Microsoft hypervisor can be assumed.
 
-    __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionVersionAndFeatures);
-    if (!cpuidResult.VersionAndFeatures.HypervisorPresent)
+    mIsolationType = PcdGet32(PcdIsolationArchitecture);
+    if (mIsolationType == UefiIsolationTypeNone)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: No Hypervisor Present!\n", __FUNCTION__));
-        status = EFI_UNSUPPORTED;
-        goto Exit;
+        // Validate that the hypervisor is present, is a Microsoft hypervisor,
+        // and has all the required features.
+
+        __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionVersionAndFeatures);
+        if (!cpuidResult.VersionAndFeatures.HypervisorPresent)
+        {
+            DEBUG((DEBUG_VERBOSE, "--- %a: No Hypervisor Present!\n", __FUNCTION__));
+            status = EFI_UNSUPPORTED;
+            goto Exit;
+        }
+
+        __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionHvInterface);
+        if (cpuidResult.HvInterface.Interface != HvMicrosoftHypervisorInterface)
+        {
+            DEBUG((DEBUG_VERBOSE, "--- %a: Not Microsoft Hypervisor!\n", __FUNCTION__));
+            status = EFI_UNSUPPORTED;
+            goto Exit;
+        }
     }
 
-    __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionHvInterface);
-    if (cpuidResult.HvInterface.Interface != HvMicrosoftHypervisorInterface)
-    {
-        DEBUG((DEBUG_VERBOSE, "--- %a: Not Microsoft Hypervisor!\n", __FUNCTION__));
-        status = EFI_UNSUPPORTED;
-        goto Exit;
-    }
-
-    __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionMsHvFeatures);
-    if (!(cpuidResult.MsHvFeatures.PartitionPrivileges.AccessPartitionReferenceCounter &&
-          cpuidResult.MsHvFeatures.PartitionPrivileges.AccessSynicRegs &&
-          cpuidResult.MsHvFeatures.PartitionPrivileges.AccessSyntheticTimerRegs &&
-          cpuidResult.MsHvFeatures.PartitionPrivileges.AccessHypercallMsrs))
-    {
-        DEBUG((DEBUG_VERBOSE, "--- %a: Missing Hypervisor features!\n", __FUNCTION__));
-        status = EFI_UNSUPPORTED;
-        goto Exit;
-    }
-
-    if (cpuidResult.MsHvFeatures.DirectSyntheticTimers)
-    {
-        mDirectTimerSupported = TRUE;
-    }
-
-    if (cpuidResult.MsHvFeatures.PartitionPrivileges.Isolation)
-    {
-        DEBUG((EFI_D_INFO, "--- %a: Partition is Isolated\n", __FUNCTION__));
-    }
+    mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+    paravisorPresent = (BOOLEAN)PcdGetBool(PcdIsolationParavisorPresent);
 
     // Allocate hypervisor communication pages.
     mHypercallPage = NULL;
@@ -1395,39 +1497,55 @@ Return Value:
     }
     DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHvPages));
 
+    // If this is a hardware-isolated system with no paravisor, then only the
+    // direct, untrusted hypervisor connection is required.
 
-    status = gBS->AllocatePages(AllocateAnyPages,
-                                EfiBootServicesCode,
-                                1,
-                                &executableHyperCallPage);
-    if (EFI_ERROR(status))
+    if ((mIsolationType >= UefiIsolationTypeSnp) && !paravisorPresent)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate the hypercall page!\n", __FUNCTION__));
-        goto Exit;
+        // Make all of the pages visible to the host.
+        status = EfiHvMakeAddressRangeHostVisible(
+            NULL,
+            HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+            mHvPages,
+            sizeof(*mHvPages),
+            TRUE,
+            NULL);
+
+        if (EFI_ERROR(status))
+        {
+            goto Exit;
+        }
+
+        mHvPages = (PEFI_HV_PAGES)((UINTN)mHvPages + mSharedGpaBoundary);
     }
-    mHypercallPage = (UCHAR *)(UINTN)executableHyperCallPage;
-    DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHypercallPage));
-
-    // Zero the hypercall page
-    ZeroMem(mHvPages, sizeof(*mHvPages));
-    ZeroMem(mHypercallPage, EFI_PAGE_SIZE);
-
-    HvHypercallConnect(mHypercallPage, NULL, &mHvContext);
-
-    // Check to see if the hypercall page was mapped. If it wasn't, abort here.
-    if (mHypercallPage[0] == 0 &&
-        mHypercallPage[1] == 0 &&
-        mHypercallPage[2] == 0)
+    else
     {
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        status = gBS->AllocatePages(AllocateAnyPages,
+                                    EfiBootServicesCode,
+                                    1,
+                                    &executableHyperCallPage);
+        if (EFI_ERROR(status))
+        {
+            DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate the hypercall page!\n", __FUNCTION__));
+            goto Exit;
+        }
+        mHypercallPage = (UCHAR *)(UINTN)executableHyperCallPage;
+        DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHypercallPage));
+
+        // Zero the hypercall page
+        ZeroMem(mHvPages, sizeof(*mHvPages));
+        ZeroMem(mHypercallPage, EFI_PAGE_SIZE);
+
+        HvHypercallConnect(mHypercallPage, NULL, &mHvContext);
+
+        // Check to see if the hypercall page was mapped. If it wasn't, abort here.
+        if (mHypercallPage[0] == 0 &&
+            mHypercallPage[1] == 0 &&
+            mHypercallPage[2] == 0)
+        {
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        }
     }
-
-    // Cache some enlightenment information.
-
-    __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionMsHvEnlightenmentInformation);
-    mAutoEoi = !cpuidResult.MsHvEnlightenmentInformation.DeprecateAutoEoi;
-    DEBUG((DEBUG_VERBOSE, "--- %a: mAutoEoi 0x%x\n", __FUNCTION__, mAutoEoi));
-
 
 #elif defined(MDE_CPU_AARCH64)
 
@@ -1455,52 +1573,84 @@ Return Value:
 #error Unsupported architecture
 #endif
 
-    mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-
 #if defined(MDE_CPU_X64)
 
     // Determine whether this system uses a hardware isolation architecture
     // that will require a direct connection to the hypervisor that bypasses
     // the paravisor.
 
-    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeSnp)
+    if (mIsolationType >= UefiIsolationTypeSnp)
     {
-        ASSERT(PcdGetBool(PcdIsolationParavisorPresent) != FALSE);
         ASSERT(mSharedGpaBoundary != 0);
 
         //
-        // Allocate a page to use as the hypercall output page.
+        // Allocate a page to use as the hypercall output page if one was not
+        // already allocated.
         //
 
-        mOutputPageBypass = AllocatePages(1);
-        if (mOutputPageBypass == NULL)
+        if (paravisorPresent)
         {
-            status = EFI_OUT_OF_RESOURCES;
-            goto Exit;
+            mOutputPageBypass = AllocatePages(1);
+            if (mOutputPageBypass == NULL)
+            {
+                status = EFI_OUT_OF_RESOURCES;
+                goto Exit;
+            }
+
+            mOutputPageBypass = (PVOID)((UINTN)mOutputPageBypass + mSharedGpaBoundary);
         }
-
-        //
-        // Make this page visible to the hypervisor.  Zero its contents first
-        // to prevent any data leakage.
-        //
-
-        ZeroMem(mOutputPageBypass, EFI_PAGE_SIZE);
-        status = EfiHvpModifySparseGpaPageHostVisibility(
-            HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
-            1,
-            (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
-            NULL);
-
-        if (EFI_ERROR(status))
+        else
         {
-            goto Exit;
+            mOutputPageBypass = mHvPages->HypercallOutputPage;
+            mBypassOnly = TRUE;
         }
 
         HvHypercallConnect(NULL,
-                           (PVOID)((UINTN)mOutputPageBypass + mSharedGpaBoundary),
+                           mOutputPageBypass,
                            &mHvBypassContext);
 
         mUseBypassContext = TRUE;
+    }
+
+#endif
+
+#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+
+    // Cache some enlightenment information.  If this system requires
+    // bypassing the paravisor, then assume a set of features that are present
+    // instead of asking the hypervisor what it supports.
+
+    if (mUseBypassContext)
+    {
+        mAutoEoi = FALSE;
+        mDirectTimerSupported = TRUE;
+    }
+    else
+    {
+        __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionMsHvEnlightenmentInformation);
+        mAutoEoi = !cpuidResult.MsHvEnlightenmentInformation.DeprecateAutoEoi;
+        DEBUG((DEBUG_VERBOSE, "--- %a: mAutoEoi 0x%x\n", __FUNCTION__, mAutoEoi));
+
+        __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionMsHvFeatures);
+        if (!(cpuidResult.MsHvFeatures.PartitionPrivileges.AccessPartitionReferenceCounter &&
+              cpuidResult.MsHvFeatures.PartitionPrivileges.AccessSynicRegs &&
+              cpuidResult.MsHvFeatures.PartitionPrivileges.AccessSyntheticTimerRegs &&
+              cpuidResult.MsHvFeatures.PartitionPrivileges.AccessHypercallMsrs))
+        {
+            DEBUG((DEBUG_VERBOSE, "--- %a: Missing Hypervisor features!\n", __FUNCTION__));
+            status = EFI_UNSUPPORTED;
+            goto Exit;
+        }
+
+        if (cpuidResult.MsHvFeatures.DirectSyntheticTimers)
+        {
+            mDirectTimerSupported = TRUE;
+        }
+    }
+
+    if (mIsolationType != UefiIsolationTypeNone)
+    {
+        DEBUG((EFI_D_INFO, "--- %a: Partition is Isolated\n", __FUNCTION__));
     }
 
 #endif
@@ -1555,8 +1705,10 @@ Return Value:
 
     // Free the bypass output page if required.
 
-    if (mOutputPageBypass != NULL)
+    if ((mOutputPageBypass != NULL) && !mBypassOnly)
     {
+        mOutputPageBypass = (PVOID)((UINTN)mOutputPageBypass - mSharedGpaBoundary);
+
         status = EfiHvpModifySparseGpaPageHostVisibility(
             HV_MAP_GPA_PERMISSIONS_NONE,
             1,
@@ -1574,10 +1726,17 @@ Return Value:
 
     HvHypercallDisconnect(&mHvContext);
 
-    // Free the hypercall communication pages.
+    // Free the hypercall communication pages.  If these pages were originally
+    // made host-visible, then they were made host-not-visible during the
+    // visibility reclaim operation above.
 
     if (mHvPages != NULL)
     {
+        if (mBypassOnly)
+        {
+            mHvPages = (PEFI_HV_PAGES)((UINTN)mHvPages - mSharedGpaBoundary);
+        }
+
         FreePages(mHvPages, sizeof(*mHvPages) / EFI_PAGE_SIZE);
         mHvPages = NULL;
     }
@@ -1633,7 +1792,7 @@ Return Value:
     }
     else
     {
-        ASSERT(mUseBypassContext == FALSE);
+        ASSERT((mUseBypassContext == FALSE) || mBypassOnly);
         mMessagePage = &mHvPages->MessagePage;
         simp.SimpEnabled = 1;
         simp.BaseSimpGpa = (UINTN)mMessagePage / EFI_PAGE_SIZE;
@@ -1654,7 +1813,7 @@ Return Value:
     }
     else
     {
-        ASSERT(mUseBypassContext == FALSE);
+        ASSERT((mUseBypassContext == FALSE) || mBypassOnly);
         mEventFlagsPage = &mHvPages->EventFlagsPage;
         siefp.SiefpEnabled = 1;
         siefp.BaseSiefpGpa = (UINTN)mEventFlagsPage / EFI_PAGE_SIZE;
@@ -1688,6 +1847,7 @@ Return Value:
 
 --*/
 {
+    HV_HYPERCALL_CONTEXT *context;
     HV_SYNIC_SIEFP siefp;
     HV_SYNIC_SIMP simp;
     HV_SYNIC_SINT_INDEX sintIndex;
@@ -1701,10 +1861,11 @@ Return Value:
 
     // Clear all the timers.
 
+    context = mBypassOnly ? &mHvBypassContext : &mHvContext;
     for (timerIndex = 0; timerIndex < HV_SYNIC_STIMER_COUNT; timerIndex += 1)
     {
-        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Count + (2 * timerIndex), 0);
-        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterStimer0Config + (2 * timerIndex), 0);
+        HvHypercallSetVpRegister64Self(context, HvRegisterStimer0Count + (2 * timerIndex), 0);
+        HvHypercallSetVpRegister64Self(context, HvRegisterStimer0Config + (2 * timerIndex), 0);
     }
 
     // Disconnect the SINTs and drain all the message queues.
@@ -1727,21 +1888,21 @@ Return Value:
         }
     }
 
-    if (mUseBypassContext == FALSE)
+    if ((mUseBypassContext == FALSE) || mBypassOnly)
     {
         // Disable the message page.
 
-        simp.AsUINT64 = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterSipp);
+        simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
         simp.SimpEnabled = 0;
         simp.BaseSimpGpa = 0;
-        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSipp, simp.AsUINT64);
+        HvHypercallSetVpRegister64Self(context, HvRegisterSipp, simp.AsUINT64);
 
         // Disable the event page.
 
-        siefp.AsUINT64 = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterSifp);
+        siefp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSifp);
         siefp.SiefpEnabled = 0;
         siefp.BaseSiefpGpa = 0;
-        HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSifp, siefp.AsUINT64);
+        HvHypercallSetVpRegister64Self(context, HvRegisterSifp, siefp.AsUINT64);
     }
 
     mSynicConnected = FALSE;

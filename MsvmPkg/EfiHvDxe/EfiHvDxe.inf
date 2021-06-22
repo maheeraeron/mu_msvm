@@ -27,6 +27,7 @@
     DebugAgentLib
 
 [LibraryClasses.X64]
+    HostVisibilityLib
     LocalApicLib
 
 [Sources]

@@ -170,7 +170,7 @@ EFI_STATUS
     _In_ VOID *BaseAddress,
     _In_ UINT32 ByteCount,
     _In_ BOOLEAN ZeroPages,
-    _Out_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
+    _Out_opt_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
     );
 
 typedef
