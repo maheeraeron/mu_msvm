@@ -282,6 +282,15 @@ SecProcessVirtualMsrRead (
         value = SecReadMsrWithGhcb(TrapFrame->Rcx);
         break;
 
+    case HvSyntheticMsrVpIndex:
+
+        //
+        // UEFI always runs on the BSP only.
+        //
+
+        value = 0;
+        break;
+
     case MSR_IA32_MTRRCAP:
 
         //
