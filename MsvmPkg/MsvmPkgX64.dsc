@@ -211,7 +211,7 @@
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
-  RngLib|MsvmPkg/Library/MsvmRngDxeLib/MsvmRngDxeLib.inf
+  RngLib|MsvmPkg/Library/RngLib/RngLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
@@ -748,7 +748,6 @@
   MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
-  MsvmPkg/SbCryptDxe/SbCryptDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf
   MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
@@ -767,6 +766,7 @@
   # TODO: Currently the PH is locked by the hypervisor.
   #       If this ever changes, will need a driver to lock the PH.
 
+  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {

@@ -211,7 +211,7 @@
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
-  RngLib|MsvmPkg/Library/MsvmRngDxeLib/MsvmRngDxeLib.inf
+  RngLib|MsvmPkg/Library/RngLib/RngLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
@@ -716,7 +716,6 @@
   MsvmPkg/EventLogDxe/EventLogDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
-  MsvmPkg/SbCryptDxe/SbCryptDxe.inf
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf
@@ -736,6 +735,7 @@
   #       If this ever changes, will need a driver to lock the PH.
   # FIXME: no TPM on AARCH64 yet, still need these?
 
+  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {

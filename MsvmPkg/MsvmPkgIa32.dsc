@@ -380,7 +380,6 @@
   MsvmPkg/EventLogDxe/EventLogDxe.inf
 #  MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
-  MsvmPkg/SbCryptDxe/SbCryptDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf
   MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
@@ -395,6 +394,7 @@
 
   # TPM related components
 
+  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
   SecurityPkg/Tcg/TrEEDxe/TrEEDxe.inf {
     <LibraryClasses>

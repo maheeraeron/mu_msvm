@@ -26,6 +26,16 @@
         if (!(cond)) { FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2, Info3) } \
 
 
+#if defined(MDE_CPU_AARCH64)
+#define FAIL_FAST(ErrorCode, Info1, Info2, Info3, Info4) \
+    { ASSERT(FALSE); CpuDeadLoop(); }
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define FAIL_FAST(ErrorCode, Info1, Info2, Info3, Info4) \
+    EfiBugCheck(ErrorCode, Info1, Info2, Info3, Info4);
+#else
+#error Unsupported Architecture
+#endif
+
 /**
   Called to initialize the crash dump agent.
 

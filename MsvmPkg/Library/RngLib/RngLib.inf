@@ -1,0 +1,43 @@
+#
+# Copyright (c) Microsoft Corporation
+#
+# Module Name:
+#
+#     RngLib.inf
+#
+# Abstract:
+#
+#     Random number generator services that uses RdRand instruction access
+#     to provide high-quality random numbers when RdRand is present. Otherwise,
+#     it relies on host emulation for random number generation.
+#     If host emulation is used, it is required to run this lib in memory.
+#
+
+#Override : 00000001 | MdePkg/Library/BaseRngLib/BaseRngLib.inf | 283b696c60f398fa002eb666012ac11f | 2021-06-25T05-36-01
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RngLib
+  FILE_GUID                      = 626440D8-1971-41D9-9AB2-FB25F4AE79BC
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = RngLib | DXE_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR                    = RngLibConstructor
+
+[Sources]
+  Rng.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec ## MS CHANGE
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  DebugAgentLib ## MS CHANGE
+  UefiBootServicesTableLib ## MS CHANGE
+  BiosDeviceLib ## MS CHANGE
+  BaseMemoryLib ## MS CHANGE
+
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture ## MS CHANGE

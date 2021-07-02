@@ -1088,6 +1088,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
     UINT32 i;
     UINT32 totalPageCountProcessed = 0;
     BOOLEAN paravisorPresent;
+    BOOLEAN hardwareIsolatedWithoutParavisor;
 
     DEBUG((DEBUG_VERBOSE,
         ">>> %a: GpaBase 0x%p PageCount 0x%x MapFlags 0x%x \n",
@@ -1102,13 +1103,13 @@ EfiHvpModifySparseGpaPageHostVisibility(
     }
 
     paravisorPresent = PcdGetBool(PcdIsolationParavisorPresent);
+    hardwareIsolatedWithoutParavisor = (mIsolationType >= UefiIsolationTypeSnp) && !paravisorPresent;
 
-#if defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)                    
 
-    if (!paravisorPresent)
+    // Check if we are running hardware isolated but do not have a paravisor.
+    if (hardwareIsolatedWithoutParavisor)
     {
-        ASSERT(mIsolationType >= UefiIsolationTypeSnp);
-
         // If pages are being made host visible, then revoke page acceptance
         // first.
         if (MapFlags != 0)
@@ -1239,7 +1240,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
 #if defined(MDE_CPU_X64)
 
-    if (!paravisorPresent)
+    if (hardwareIsolatedWithoutParavisor)
     {
         // When no paravisor is present, host-generated failure cannot be
         // tolerated.  It is certainly not expected.

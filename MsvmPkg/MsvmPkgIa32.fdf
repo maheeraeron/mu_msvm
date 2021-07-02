@@ -215,7 +215,6 @@ INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF MsvmPkg/StorvscDxe/StorvscDxe.inf
 INF MsvmPkg/SynthKeyDxe/SynthKeyDxe.inf
 INF MsvmPkg/VideoDxe/VideoDxe.inf
-INF MsvmPkg/SbCryptDxe/SbCryptDxe.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf
 INF MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
 INF MsvmPkg/NetvscDxe/NetvscDxe.inf
@@ -236,6 +235,7 @@ INF NetworkPkg/TcpDxe/TcpDxe.inf
 INF MdeModulePkg/Universal/Network/Mtftp4Dxe/Mtftp4Dxe.inf
 INF NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
 INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
+INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
 INF SecurityPkg/Tcg/TrEEDxe/TrEEDxe.inf
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
