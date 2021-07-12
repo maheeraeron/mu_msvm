@@ -1598,6 +1598,21 @@ Return Value:
                 goto Exit;
             }
 
+            //
+            // Make this page visible to the hypervisor.
+            //
+
+            status = EfiHvpModifySparseGpaPageHostVisibility(
+                HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                1,
+                (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
+                NULL);
+
+            if (EFI_ERROR(status))
+            {
+                goto Exit;
+            }
+
             mOutputPageBypass = (PVOID)((UINTN)mOutputPageBypass + mSharedGpaBoundary);
         }
         else
