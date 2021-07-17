@@ -4,11 +4,11 @@
 
 Module Name:
 
-    BiosDeviceBaseLibConstructor.c
+    BiosDeviceBaseLibSetup.c
     
 Abstract:
 
-    Library constructor for Base (Boot & Runtime) version of BiosDeviceLib
+    Library constructor and destructor for Base (Boot & Runtime) version of BiosDeviceLib
 --*/
 
 #include <PiDxe.h>
@@ -72,5 +72,19 @@ BiosDeviceBaseLibConstructor (
     return status;
 }
 
+EFI_STATUS
+EFIAPI
+BiosDeviceBaseLibDestructor(
+  VOID
+  )
+{
+  
+#if _USING_BIOS_MMIO_
 
+  if (mVirtualAddressChangeEvent != NULL) {
+    gBS->CloseEvent (mVirtualAddressChangeEvent);
+  }
+#endif
 
+  return EFI_SUCCESS;
+}

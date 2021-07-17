@@ -1671,8 +1671,7 @@ Returns:
     ASSERT_EFI_ERROR(status);
     if (EFI_ERROR(status))
     {
-
-      return status;
+        goto Cleanup;
     }
 
     //
@@ -1687,7 +1686,7 @@ Returns:
     ASSERT_EFI_ERROR(status);
     if (EFI_ERROR(status))
     {
-        return status;
+        goto Cleanup;
     }
 
     //
@@ -1703,9 +1702,21 @@ Returns:
     ASSERT_EFI_ERROR(status);
     if (EFI_ERROR(status))
     {
-        return status;
+        goto Cleanup;
     }
 
+Cleanup:
+
+    if (EFI_ERROR(status))
+    {
+        if (mVirtualAddressChangeEvent != NULL) {
+            gBS->CloseEvent (mVirtualAddressChangeEvent);
+        }
+
+        if (mExitBootServicesEvent != NULL) {
+            gBS->CloseEvent (mExitBootServicesEvent);
+        }
+    }
 
     return status;
 }

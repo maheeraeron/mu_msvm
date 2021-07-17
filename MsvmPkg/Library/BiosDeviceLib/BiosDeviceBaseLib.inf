@@ -10,10 +10,11 @@
     VERSION_STRING                 = 1.0
     LIBRARY_CLASS                  = BiosDeviceLib
     CONSTRUCTOR                    = BiosDeviceBaseLibConstructor
+    DESTRUCTOR                     = BiosDeviceBaseLibDestructor
 
 [Sources]
     BiosDeviceLibCore.c
-    BiosDeviceBaseLibConstructor.c
+    BiosDeviceBaseLibSetup.c
 
 [LibraryClasses]
     IoLib
