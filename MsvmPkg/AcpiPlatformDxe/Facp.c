@@ -87,7 +87,7 @@ Return Value:
 #if defined(MDE_CPU_X64)
     // If this is a SNP VM, report it as hardware reduced. Zero out any of
     // filled in legacy structures.
-    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeSnp)
+    if (GetIsolationType() == UefiIsolationTypeSnp)
     {
         facp->Flags = EFI_ACPI_6_2_WBINVD |
              EFI_ACPI_6_2_PROC_C1 |

@@ -80,7 +80,6 @@ Return Value:
 
 --*/
 {
-    UINT32 isolationType;
     UINT32 configBlobSize = PcdGet32(PcdConfigBlobSize);
     UINT64 configBlobBase = (UINT64)Context->StartOfConfigBlob;
     HV_GPA_PAGE_NUMBER configBlobPageLimit =
@@ -91,9 +90,7 @@ Return Value:
     // with no paravisor.
     //
 
-    isolationType = PcdGet32(PcdIsolationArchitecture);
-    if ((isolationType < UefiIsolationTypeSnp) ||
-        PcdGetBool(PcdIsolationParavisorPresent))
+    if (!IsHardwareIsolatedNoParavisor())
     {
         return;
     }
@@ -123,9 +120,9 @@ Return Value:
     //
 
 #if defined(MDE_CPU_X64)
-    if (isolationType >= UefiIsolationTypeSnp)
+    if (IsHardwareIsolated())
     {
-        EfiUpdatePageRangeAcceptance(isolationType,
+        EfiUpdatePageRangeAcceptance(GetIsolationType(),
             GpaPageBase,
             PageCount,
             TRUE);

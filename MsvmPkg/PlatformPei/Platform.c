@@ -429,8 +429,7 @@ Return Value:
     suppressBiosDevice = FALSE;
 
 #if defined(MDE_CPU_X64)
-    if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
-        !PcdGetBool(PcdIsolationParavisorPresent))
+    if (IsHardwareIsolatedNoParavisor())
     {
         suppressBiosDevice = TRUE;
     }
@@ -837,8 +836,7 @@ Return Value:
         PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize)));
     HobAddFvMemoryRange(PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize));
 
-    if ((PcdGet32(PcdIsolationArchitecture) < UefiIsolationTypeSnp) ||
-        PcdGetBool(PcdIsolationParavisorPresent))
+    if (!IsHardwareIsolatedNoParavisor())
     {
         //
         // Init the watchdog (available starting with Threshold VDev)

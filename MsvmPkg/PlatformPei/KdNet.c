@@ -501,7 +501,6 @@ Return Value:
 #if defined(MDE_CPU_X64)
     EFI_PHYSICAL_ADDRESS ghcbAddress;
     EFI_PHYSICAL_ADDRESS hostVisibleData;
-    UINT32 isolationType;
 #endif
 
     status = PeiServicesFfsFindSectionData(EFI_SECTION_RAW,
@@ -661,12 +660,10 @@ Return Value:
     // If this is a hardware-isolated partition with no paravisor, then
     // allocate host-visible pages as required.
     //
-    isolationType = PcdGet32(PcdIsolationArchitecture);
-    if ((isolationType >= UefiIsolationTypeSnp) &&
-        !PcdGetBool(PcdIsolationParavisorPresent))
+    if (IsHardwareIsolatedNoParavisor())
     {
         status = AllocateHostVisiblePages(
-            isolationType,
+            GetIsolationType(),
             KdNetParameters.DbgDeviceDescriptor.TransportData.SharedVisibleDataSize,
             &hostVisibleData);
         if (EFI_ERROR(status))

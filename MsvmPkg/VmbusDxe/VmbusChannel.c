@@ -137,7 +137,7 @@ Return Value:
     // Make the entire buffer visible to the host if required.
     //
 
-    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
+    if (IsIsolated())
     {
         status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
                                                      MapFlags,
@@ -506,7 +506,7 @@ Return Value:
     // GPADL has been deleted.
     //
 
-    if ((PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone) &&
+    if (IsIsolated() &&
         !Gpadl->Legacy)
     {
         mHvIvm->MakeAddressRangeNotHostVisible(mHvIvm, Gpadl->ProtectionHandle);

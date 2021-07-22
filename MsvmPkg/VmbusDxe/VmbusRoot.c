@@ -1484,7 +1484,7 @@ Return Value:
         __FUNCTION__,
         __LINE__,
         orphanedGpadlCount,
-        PcdGet32(PcdIsolationArchitecture)));
+        GetIsolationType()));
 
     VmbusRootSendUnload(rootContext);
 }
@@ -1749,14 +1749,12 @@ Return Value:
 {
     int index = 0;
     int allowedGuidCount = 0;
-    UINT32 isolationType = 0;
 
     allowedGuidCount = sizeof(gAllowedGuids) / sizeof(gAllowedGuids[0]);
-    isolationType = PcdGet32(PcdIsolationArchitecture);
 
     for (index = 0; index < allowedGuidCount; index++)
     {
-        if (isolationType != UefiIsolationTypeNone)
+        if (IsIsolated())
         {
             if (gAllowedGuids[index].IsAllowedWhenIsolated == FALSE)
             {
@@ -2342,7 +2340,7 @@ Return Value:
     // isolation behavior of the legacy protocol.
     //
 
-    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
+    if (!IsIsolated())
     {
         mVmbusLegacyProtocolGuid = &gEfiVmbusLegacyProtocolGuid;
     }

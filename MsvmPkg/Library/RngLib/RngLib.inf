@@ -29,15 +29,15 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsvmPkg/MsvmPkg.dec ## MS CHANGE
+  MsvmPkg/MsvmPkg.dec ## MS_CHANGE
 
 [LibraryClasses]
   BaseLib
   DebugLib
-  DebugAgentLib ## MS CHANGE
-  UefiBootServicesTableLib ## MS CHANGE
-  BiosDeviceLib ## MS CHANGE
-  BaseMemoryLib ## MS CHANGE
+  DebugAgentLib ## MS_CHANGE
+  UefiBootServicesTableLib ## MS_CHANGE
+  BiosDeviceLib ## MS_CHANGE
+  BaseMemoryLib ## MS_CHANGE
 
-[Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture ## MS CHANGE
+[LibraryClasses.X64]
+  IsolationLib ## MS_CHANGE

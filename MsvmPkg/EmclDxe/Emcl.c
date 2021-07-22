@@ -26,7 +26,6 @@ Author:
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
-#include <Library/PcdLib.h>
 #include <Library/CrashDumpAgentLib.h>
 
 #include <Protocol/Emcl.h>
@@ -2289,7 +2288,7 @@ Return Value:
     // TODO - Use another PCD flag to enable for non-isolated testing.
     //
 
-    if (PcdGet32(PcdIsolationArchitecture) == UefiIsolationTypeNone)
+    if (!IsIsolated())
     {
         mUseBounceBuffer = FALSE;
     }
@@ -2723,7 +2722,7 @@ Return Value:
     // Make these pages visible to the host
     //
 
-    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
+    if (IsIsolated())
     {
         UINT64 sharedGpaBoundary;
 

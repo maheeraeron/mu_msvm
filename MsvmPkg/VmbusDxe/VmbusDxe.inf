@@ -21,6 +21,7 @@
     DevicePathLib
     MemoryAllocationLib
     DebugAgentLib
+    IsolationLib
 
 [Sources]
     VmbusRoot.c
@@ -45,5 +46,4 @@
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary

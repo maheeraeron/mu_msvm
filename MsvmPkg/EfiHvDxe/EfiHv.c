@@ -1088,7 +1088,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
     UINT32 i;
     UINT32 totalPageCountProcessed = 0;
     BOOLEAN paravisorPresent;
-    BOOLEAN hardwareIsolatedWithoutParavisor;
 
     DEBUG((DEBUG_VERBOSE,
         ">>> %a: GpaBase 0x%p PageCount 0x%x MapFlags 0x%x \n",
@@ -1102,13 +1101,12 @@ EfiHvpModifySparseGpaPageHostVisibility(
         *PageCountProcessed = 0;
     }
 
-    paravisorPresent = PcdGetBool(PcdIsolationParavisorPresent);
-    hardwareIsolatedWithoutParavisor = (mIsolationType >= UefiIsolationTypeSnp) && !paravisorPresent;
+    paravisorPresent = IsParavisorPresent();
 
 #if defined(MDE_CPU_X64)                    
 
     // Check if we are running hardware isolated but do not have a paravisor.
-    if (hardwareIsolatedWithoutParavisor)
+    if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
         // If pages are being made host visible, then revoke page acceptance
         // first.
@@ -1240,7 +1238,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
 #if defined(MDE_CPU_X64)
 
-    if (hardwareIsolatedWithoutParavisor)
+    if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
         // When no paravisor is present, host-generated failure cannot be
         // tolerated.  It is certainly not expected.
@@ -1294,7 +1292,7 @@ EfiHvMakeAddressRangeHostVisible(
     // Visibility changes are only permitted on isolated systems.
     //
 
-    if (mIsolationType == UefiIsolationTypeNone)
+    if (!IsIsolatedEx(mIsolationType))
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -1317,7 +1315,7 @@ EfiHvMakeAddressRangeHostVisible(
     // support it.
     //
 
-    if ((mIsolationType >= UefiIsolationTypeSnp) &&
+    if (IsHardwareIsolatedEx(mIsolationType) &&
         ((MapFlags & (HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE)) == HV_MAP_GPA_READABLE))
     {
         return EFI_INVALID_PARAMETER;
@@ -1344,7 +1342,7 @@ EfiHvMakeAddressRangeHostVisible(
     // visibility change.
     //
 
-    if (mIsolationType == UefiIsolationTypeVbs)
+    if (IsSoftwareIsolatedEx(mIsolationType))
     {
         ZeroMem(BaseAddress, ByteCount);
         ZeroPages = FALSE;
@@ -1461,8 +1459,8 @@ Return Value:
     // Determine the isolation type for this system.  If there is any
     // isolation, then a Microsoft hypervisor can be assumed.
 
-    mIsolationType = PcdGet32(PcdIsolationArchitecture);
-    if (mIsolationType == UefiIsolationTypeNone)
+    mIsolationType = GetIsolationType();
+    if (!IsIsolatedEx(mIsolationType))
     {
         // Validate that the hypervisor is present, is a Microsoft hypervisor,
         // and has all the required features.
@@ -1485,7 +1483,7 @@ Return Value:
     }
 
     mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-    paravisorPresent = (BOOLEAN)PcdGetBool(PcdIsolationParavisorPresent);
+    paravisorPresent = IsParavisorPresent();
 
     // Allocate hypervisor communication pages.
     mHypercallPage = NULL;
@@ -1501,7 +1499,7 @@ Return Value:
     // If this is a hardware-isolated system with no paravisor, then only the
     // direct, untrusted hypervisor connection is required.
 
-    if ((mIsolationType >= UefiIsolationTypeSnp) && !paravisorPresent)
+    if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
         // Make all of the pages visible to the host.
         status = EfiHvMakeAddressRangeHostVisible(
@@ -1580,7 +1578,7 @@ Return Value:
     // that will require a direct connection to the hypervisor that bypasses
     // the paravisor.
 
-    if (mIsolationType >= UefiIsolationTypeSnp)
+    if (IsHardwareIsolatedEx(mIsolationType))
     {
         ASSERT(mSharedGpaBoundary != 0);
 
@@ -1664,7 +1662,7 @@ Return Value:
         }
     }
 
-    if (mIsolationType != UefiIsolationTypeNone)
+    if (IsIsolatedEx(mIsolationType))
     {
         DEBUG((EFI_D_INFO, "--- %a: Partition is Isolated\n", __FUNCTION__));
     }

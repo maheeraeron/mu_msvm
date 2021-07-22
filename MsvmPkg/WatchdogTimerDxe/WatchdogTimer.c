@@ -28,13 +28,15 @@ Abstract:
     Implementation of Watchdog Timer Architectural Protocol
     If available, this driver will use the Hyper-V BIOS device watchdog equivelent to a
     hardware watchdog timer.  If the hardware based timer is not available, a software timer
-    will be used.
+    will be used. There is a similar driver at MdeModulePkg\Universal\WatchdogTimerDxe but
+    there is not enough common code to justify needing an override in this driver.
 
 Author:
 
     Kris Harper (kharp) - 8-Oct-2013
 
 --*/
+
 
 #include <Uefi.h>
 #include <EfiNt.h>
@@ -47,6 +49,7 @@ Author:
 #include <Guid/EventGroup.h>
 #include <Protocol/WatchdogTimer.h>
 #include <BiosInterface.h>
+#include <IsolationTypes.h>
 
 
 EFI_STATUS
@@ -414,19 +417,33 @@ Return Value:
 --*/
 {
     EFI_STATUS  status;
+    BOOLEAN useSoftwareTimer = FALSE;
 
     ASSERT_PROTOCOL_ALREADY_INSTALLED(NULL, &gEfiWatchdogTimerArchProtocolGuid);
-
-    //
-    // Read the hardware timer resolution to determine if it is
-    // available.  Fallback to the software timer if hardware is disabled.
-    //
-    mWatchdogTimerHwResolution = WatchdogGetResolution();
-
-    if ((mWatchdogTimerHwResolution == 0) ||
-        (mWatchdogTimerHwResolution == BIOS_WATCHDOG_NOT_ENABLED))
+    
+    if (IsHardwareIsolatedNoParavisor())
     {
-        DEBUG((EFI_D_INFO, "No watchdog hardware available. Falling back to software.\n"));
+        DEBUG((EFI_D_INFO, "Running on an isolated guest without the BIOS emulator. Falling back to software.\n"));
+        useSoftwareTimer = TRUE;
+    }
+    else
+    {
+        //
+        // Read the hardware timer resolution to determine if it is
+        // available. Fallback to the software timer if hardware is disabled.
+        mWatchdogTimerHwResolution = WatchdogGetResolution();
+
+        if ((mWatchdogTimerHwResolution == 0) ||
+            (mWatchdogTimerHwResolution == BIOS_WATCHDOG_NOT_ENABLED))
+        {
+            DEBUG((EFI_D_INFO, "No watchdog hardware available. Falling back to software.\n"));
+            useSoftwareTimer = TRUE;
+        }
+    }
+
+    if (useSoftwareTimer)
+    {
+        DEBUG((EFI_D_INFO, "Using software timer.\n"));
         mWatchdogTimerHwResolution = BIOS_WATCHDOG_NOT_ENABLED;
         mWatchdogTimer.SetTimerPeriod = WatchdogSoftSetPeriod;
 

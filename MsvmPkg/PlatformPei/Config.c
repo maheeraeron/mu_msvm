@@ -1402,9 +1402,7 @@ Return Value:
     // config blob is present.  Instead, the parameters were inserted in IGVM
     // format and must be parsed as such.
     //
-
-    if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
-        (PcdGetBool(PcdIsolationParavisorPresent) == FALSE))
+    if (IsHardwareIsolatedNoParavisor())
     {
         status = GetIgvmConfigInfo();
     }

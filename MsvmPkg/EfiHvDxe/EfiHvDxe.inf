@@ -25,6 +25,7 @@
     MemoryAllocationLib
     HvHypercallLib
     DebugAgentLib
+    IsolationLib
 
 [LibraryClasses.X64]
     HostVisibilityLib
@@ -53,6 +54,4 @@
     gHardwareInterruptProtocolGuid
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
-    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary

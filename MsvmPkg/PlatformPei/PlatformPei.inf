@@ -63,6 +63,7 @@
     PeiServicesLib
     PeiServicesTablePointerLib
     PcdLib
+    IsolationLib
 
 [LibraryClasses.X64]
     HostVisibilityLib

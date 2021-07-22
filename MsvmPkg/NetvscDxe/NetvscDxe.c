@@ -22,7 +22,6 @@ Author:
 #include <Library/DebugLib.h>
 #include <hvhdk.h>
 #include <IsolationTypes.h>
-#include <Library/PcdLib.h>
 
 //
 // This number is just a random 16 bit number which is used to
@@ -87,8 +86,6 @@ Return Value:
     UINT32 rndisBufferIndex, index;
     NVSP_MESSAGE nvspMessage;
     UINTN eventIndex;
-    UINT32 isolationType;
-
     ASSERT(AdapterInfo != NULL);
 
     //
@@ -96,7 +93,7 @@ Return Value:
     // start up if this VM is isolated.
     //
 
-    if (PcdGet32(PcdIsolationArchitecture) != UefiIsolationTypeNone)
+    if (IsIsolated())
     {
         return EFI_DEVICE_ERROR;
     }
@@ -353,15 +350,13 @@ Return Value:
 
     //
     // SNP hardware does not support read-only pages. But only allow read
-    // access for the VBS isolation case where more restricted access is possible.
+    // access for the software isolation case where more restricted access is possible.
     //
-    isolationType = PcdGet32(PcdIsolationArchitecture);
-
     status = AdapterInfo->Emcl->CreateGpadl(
         AdapterInfo->Emcl,
         AdapterInfo->TxBufferAllocation,
         AdapterInfo->TxBufferPageCount * EFI_PAGE_SIZE,
-        (isolationType == UefiIsolationTypeVbs) ? HV_MAP_GPA_READABLE : HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+        IsSoftwareIsolated() ? HV_MAP_GPA_READABLE : HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
         &AdapterInfo->TxGpadl);
 
     if (EFI_ERROR(status))

@@ -28,6 +28,7 @@
   DebugLib
   IoLib
   WatchdogTimerLib
+  IsolationLib
 
 [Protocols]
   gEfiWatchdogTimerArchProtocolGuid             ## PRODUCES

@@ -1332,8 +1332,8 @@ InitializeCpu (
   // certain aspects of hardware initialization are not supported when no
   // paravisor is present to handle them.
   //
-  if ((PcdGet32(PcdIsolationArchitecture) >= UefiIsolationTypeSnp) &&
-      !PcdGetBool(PcdIsolationParavisorPresent))
+  if (IsHardwareIsolatedNoParavisor())
+
   {
       mStrictIsolation = TRUE;
   }

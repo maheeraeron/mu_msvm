@@ -69,6 +69,7 @@
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   HostVisibilityLib|MsvmPkg/Library/HostVisibilityLib/HostVisibilityLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+  IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
   LocalApicLib|UefiCpuPkg/Library/BaseXApicX2ApicLib/BaseXApicX2ApicLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf

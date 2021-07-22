@@ -65,6 +65,7 @@
   PcdLib
   PrintLib
   UefiDriverEntryPoint
+  IsolationLib
 
 [Guids]
   gEfiEventExitBootServicesGuid                 # CONSUMES
@@ -78,5 +79,4 @@
   gEfiEmclProtocolGuid                          # CONSUMES
 
 [Pcd]
-  gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
   gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault

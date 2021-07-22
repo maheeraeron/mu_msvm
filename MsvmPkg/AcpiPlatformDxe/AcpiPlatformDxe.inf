@@ -46,6 +46,9 @@
     IoLib
     ConfigLib
 
+[LibraryClasses.X64]
+    IsolationLib
+
 [Protocols]
     gEfiAcpiTableProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
 
@@ -87,7 +90,7 @@
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
+
 
 [Depex]
     gEfiAcpiTableProtocolGuid

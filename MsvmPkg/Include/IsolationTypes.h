@@ -20,3 +20,42 @@ enum
     UefiIsolationTypeVbs        = 0x01,
     UefiIsolationTypeSnp        = 0x02,
 };
+
+UINT32
+GetIsolationType();
+
+BOOLEAN
+IsParavisorPresent();
+
+BOOLEAN
+IsIsolatedEx(
+    UINT32 IsolationType
+    );
+
+BOOLEAN 
+IsIsolated();
+
+BOOLEAN
+IsHardwareIsolatedEx(
+    UINT32 IsolationType
+    );
+
+BOOLEAN 
+IsHardwareIsolated();
+
+BOOLEAN
+IsSoftwareIsolatedEx(
+    UINT32 IsolationType
+    );
+
+BOOLEAN 
+IsSoftwareIsolated();
+
+BOOLEAN
+IsHardwareIsolatedNoParavisorEx(
+    UINT32 IsolationType,
+    BOOLEAN IsParavisorPresent
+    );
+
+BOOLEAN 
+IsHardwareIsolatedNoParavisor();

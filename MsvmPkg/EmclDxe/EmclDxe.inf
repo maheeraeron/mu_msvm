@@ -19,6 +19,7 @@
     UefiDriverEntryPoint
     MemoryAllocationLib
     DebugAgentLib
+    IsolationLib
 
 [Sources]
     Emcl.c
@@ -35,5 +36,4 @@
     TRUE
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary

@@ -18,7 +18,7 @@ Abstract:
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 
-// MS CHANGE BEGIN
+// MS_CHANGE BEGIN
 #include <BiosInterface.h>
 #include <Library/BiosDeviceLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -45,7 +45,7 @@ static EFI_PHYSICAL_ADDRESS         mCryptoCommandDescriptorGpa;
 //
 static BOOLEAN mUseHostEmulation;
 
-// MS CHANGE END
+// MS_CHANGE END
 
 
 //
@@ -60,7 +60,7 @@ static BOOLEAN mUseHostEmulation;
 //
 #define RDRAND_RETRY_LIMIT           10
 
-// MS CHANGE BEGIN
+// MS_CHANGE BEGIN
 
 /**
   Generates a random number using host emulation if host emulation is configured.
@@ -112,7 +112,7 @@ ProcessUsingHostEmulation (
 
 }
 
-// MS CHANGE END
+// MS_CHANGE END
 
 /**
   The constructor function checks whether or not to use the RDRAND instruction.
@@ -135,11 +135,10 @@ RngLibConstructor (
   )
   
 {
-  // MS CHANGE BEGIN
+  // MS_CHANGE BEGIN
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
   UINT32  RegEcx;
-  UINT32 isolationType;
 
   //
   // Determine RDRAND support by examining bit 30 of the ECX register returned by
@@ -157,11 +156,10 @@ RngLibConstructor (
     // If we are running isolated, we must use RDRAND for a secure implementation of 
     // random number generation.
     //
-    isolationType = PcdGet32(PcdIsolationArchitecture);
-    if (isolationType >= UefiIsolationTypeSnp) 
+    if (IsHardwareIsolated()) 
     {
       DEBUG((DEBUG_ERROR, "%a: RDRAND is not present on an isolated guest..\n", __FUNCTION__));
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, isolationType, 0);
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, GetIsolationType(), 0);
     }
 
     DEBUG((DEBUG_INFO, "%a: RDRAND is not present. Using host emulation.\n", __FUNCTION__));
@@ -201,7 +199,7 @@ RngLibConstructor (
 
 
   return RETURN_SUCCESS;
-  // MS CHANGE END
+  // MS_CHANGE END
 }
 
 /**

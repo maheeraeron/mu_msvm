@@ -39,7 +39,8 @@
   UefiDriverEntryPoint
   LocalApicLib
   UefiCpuLib
-
+  IsolationLib    ## MS_CHANGE
+  
 [Sources]
   CpuDxe.c
   CpuDxe.h
@@ -76,8 +77,6 @@
   TRUE  # MS_CHANGE
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture                       ## CONSUMES  ## MS_CHANGE
-    gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent                   ## CONSUMES  ## MS_CHANGE
     gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
     gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
     gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
