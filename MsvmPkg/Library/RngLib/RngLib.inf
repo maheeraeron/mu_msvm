@@ -29,15 +29,15 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsvmPkg/MsvmPkg.dec ## MS_CHANGE
+  MsvmPkg/MsvmPkg.dec ## MS_HYP_CHANGE
 
 [LibraryClasses]
   BaseLib
   DebugLib
-  DebugAgentLib ## MS_CHANGE
-  UefiBootServicesTableLib ## MS_CHANGE
-  BiosDeviceLib ## MS_CHANGE
-  BaseMemoryLib ## MS_CHANGE
+  DebugAgentLib ## MS_HYP_CHANGE
+  UefiBootServicesTableLib ## MS_HYP_CHANGE
+  BiosDeviceLib ## MS_HYP_CHANGE
+  BaseMemoryLib ## MS_HYP_CHANGE
 
 [LibraryClasses.X64]
-  IsolationLib ## MS_CHANGE
+  IsolationLib ## MS_HYP_CHANGE

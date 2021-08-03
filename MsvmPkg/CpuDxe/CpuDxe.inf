@@ -25,7 +25,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
-  MsvmPkg/MsvmPkg.dec   ## MS_CHANGE
+  MsvmPkg/MsvmPkg.dec   ## MS_HYP_CHANGE
 
 [LibraryClasses]
   BaseLib
@@ -39,7 +39,7 @@
   UefiDriverEntryPoint
   LocalApicLib
   UefiCpuLib
-  IsolationLib    ## MS_CHANGE
+  IsolationLib    ## MS_HYP_CHANGE
   
 [Sources]
   CpuDxe.c
@@ -48,33 +48,33 @@
   CpuPageTable.h
   CpuPageTable.c
 
-  Ia32/IvtAsm.asm | MSFT  ## MS_CHANGE
-  Ia32/IvtAsm.asm | INTEL ## MS_CHANGE
-  Ia32/IvtAsm.S   | GCC   ## MS_CHANGE
+  Ia32/IvtAsm.asm | MSFT  ## MS_HYP_CHANGE
+  Ia32/IvtAsm.asm | INTEL ## MS_HYP_CHANGE
+  Ia32/IvtAsm.S   | GCC   ## MS_HYP_CHANGE
 
 [Sources.IA32]
-  Ia32/CpuAsm.asm | MSFT  ## MS_CHANGE
-  Ia32/CpuAsm.asm | INTEL ## MS_CHANGE
-  Ia32/CpuAsm.S   | GCC   ## MS_CHANGE
+  Ia32/CpuAsm.asm | MSFT  ## MS_HYP_CHANGE
+  Ia32/CpuAsm.asm | INTEL ## MS_HYP_CHANGE
+  Ia32/CpuAsm.S   | GCC   ## MS_HYP_CHANGE
 
   Ia32/PagingAttribute.c
 
 [Sources.X64]
-  X64/CpuAsm.asm | MSFT   ## MS_CHANGE
-  X64/CpuAsm.asm | INTEL  ## MS_CHANGE
-  X64/CpuAsm.S   | GCC    ## MS_CHANGE
+  X64/CpuAsm.asm | MSFT   ## MS_HYP_CHANGE
+  X64/CpuAsm.asm | INTEL  ## MS_HYP_CHANGE
+  X64/CpuAsm.S   | GCC    ## MS_HYP_CHANGE
 
   X64/PagingAttribute.c
 
 [Protocols]
   gEfiCpuArchProtocolGuid                       ## PRODUCES
-  gEfiCpu2ProtocolGuid                          ## MS_CHANGE
+  gEfiCpu2ProtocolGuid                          ## MS_HYP_CHANGE
 
 [Guids]
-  gIdleLoopEventGuid                            ## CONSUMES ## GUID ## MS_CHANGE
+  gIdleLoopEventGuid                            ## CONSUMES ## GUID ## MS_HYP_CHANGE
 
 [Depex]
-  TRUE  # MS_CHANGE
+  TRUE  # MS_HYP_CHANGE
 
 [Pcd]
     gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES

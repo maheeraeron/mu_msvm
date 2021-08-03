@@ -45,78 +45,78 @@ Abstract:
 #define  MTRR_LIB_CACHE_FIXED_MTRR_ENABLED           0x400
 // MSCHANGE END Copied from MU_BASECORE 1808 since these definitions have been removed from public release
 
-#define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP) // MS_CHANGE
-#define MEMORY_ATTRIBUTE_MASK  (EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO)  // MS_CHANGE
+#define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP) // MS_HYP_CHANGE
+#define MEMORY_ATTRIBUTE_MASK  (EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO)  // MS_HYP_CHANGE
 
 
 //
 // Global Variables
 //
-IA32_IDT_GATE_DESCRIPTOR  gIdtTable[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_CHANGE
-IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_CHANGE
+IA32_IDT_GATE_DESCRIPTOR  gIdtTable[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_HYP_CHANGE
+IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_HYP_CHANGE
 
-EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100]; // MS_CHANGE
+EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100]; // MS_HYP_CHANGE
 EFI_HANDLE                mCpuHandle = NULL;
 BOOLEAN                   mIsFlushingGCD;
-UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS; // MS_CHANGE
-UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // MS_CHANGE
-UINT16                    mOrigIdtEntryCount    = 0;  // MS_CHANGE
+UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS; // MS_HYP_CHANGE
+UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // MS_HYP_CHANGE
+UINT16                    mOrigIdtEntryCount    = 0;  // MS_HYP_CHANGE
 
 BOOLEAN                   mStrictIsolation;
 
 FIXED_MTRR    mFixedMtrrTable[] = {
   {
-    MTRR_LIB_IA32_MTRR_FIX64K_00000,  // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX64K_00000,  // MS_HYP_CHANGE
     0,
     0x10000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX16K_80000,  // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX16K_80000,  // MS_HYP_CHANGE
     0x80000,
     0x4000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX16K_A0000,  // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX16K_A0000,  // MS_HYP_CHANGE
     0xA0000,
     0x4000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_C0000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_C0000, // MS_HYP_CHANGE
     0xC0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_C8000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_C8000, // MS_HYP_CHANGE
     0xC8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_D0000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_D0000, // MS_HYP_CHANGE
     0xD0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_D8000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_D8000, // MS_HYP_CHANGE
     0xD8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_E0000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_E0000, // MS_HYP_CHANGE
     0xE0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_E8000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_E8000, // MS_HYP_CHANGE
     0xE8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_F0000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_F0000, // MS_HYP_CHANGE
     0xF0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_F8000, // MS_CHANGE
+    MTRR_LIB_IA32_MTRR_FIX4K_F8000, // MS_HYP_CHANGE
     0xF8000,
     0x1000
   },
@@ -136,7 +136,7 @@ EFI_CPU_ARCH_PROTOCOL  gCpu = {
   4                           // DmaBufferAlignment
 };
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 EFI_CPU2_PROTOCOL gCpu2 = {
   CpuWaitForAndEnableInterrupt,
 };
@@ -392,7 +392,7 @@ CommonExceptionHandler (
     CpuSleep ();
   };
 }
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 /**
   Flush CPU data cache. If the instruction cache is fully coherent
@@ -491,7 +491,7 @@ CpuGetInterruptState (
     return EFI_INVALID_PARAMETER;
   }
 
-  *State = GetInterruptState ();  // MS_CHANGE
+  *State = GetInterruptState ();  // MS_HYP_CHANGE
   return EFI_SUCCESS;
 }
 
@@ -547,7 +547,7 @@ CpuRegisterInterruptHandler (
   IN EFI_CPU_INTERRUPT_HANDLER     InterruptHandler
   )
 {
-  // MS_CHANGE BEGIN
+  // MS_HYP_CHANGE BEGIN
   if (InterruptType < 0 || InterruptType > 0xff) {
     return EFI_UNSUPPORTED;
   }
@@ -571,7 +571,7 @@ CpuRegisterInterruptHandler (
 
   ExternalVectorTable[InterruptType] = InterruptHandler;
   return EFI_SUCCESS;
-  // MS_CHANGE END
+  // MS_HYP_CHANGE END
 }
 
 
@@ -621,7 +621,7 @@ CpuGetTimerValue (
       //
       // BugBug: Hard coded. Don't know how to do this generically
       //
-      *TimerPeriod = 1000000000;  // MS_CHANGE
+      *TimerPeriod = 1000000000;  // MS_HYP_CHANGE
   }
 
   return EFI_SUCCESS;
@@ -666,7 +666,7 @@ CpuSetMemoryAttributes (
   MTRR_MEMORY_CACHE_TYPE    CacheType;
   UINT64                    CacheAttributes;
   UINT64                    MemoryAttributes;
-  // MS_CHANGE BEGIN
+  // MS_HYP_CHANGE BEGIN
 
   CacheAttributes = Attributes & CACHE_ATTRIBUTE_MASK;
   MemoryAttributes = Attributes & MEMORY_ATTRIBUTE_MASK;
@@ -744,7 +744,7 @@ CpuSetMemoryAttributes (
       }
     }
   }
-  // MS_CHANGE END
+  // MS_HYP_CHANGE END
 
   //
   // Set memory attribute by page table
@@ -752,7 +752,7 @@ CpuSetMemoryAttributes (
   return AssignMemoryPageAttributes (NULL, BaseAddress, Length, MemoryAttributes, NULL);
 }
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 /**
   Waits for an interrupt to arrive, then enables CPU interrupts.
 
@@ -771,7 +771,7 @@ CpuWaitForAndEnableInterrupt (
 
   return EFI_SUCCESS;
 }
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 /**
   Initializes the valid bits mask and valid address mask for MTRRs.
@@ -797,8 +797,8 @@ InitializeMtrrMask (
     mValidMtrrBitsMask    = LShiftU64 (1, PhysicalAddressBits) - 1;
     mValidMtrrAddressMask = mValidMtrrBitsMask & 0xfffffffffffff000ULL;
   } else {
-    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;    // MS_CHANGE
-    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;   // MS_CHANGE
+    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;    // MS_HYP_CHANGE
+    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;   // MS_HYP_CHANGE
   }
 }
 
@@ -953,7 +953,7 @@ SetGcdMemorySpaceAttributes (
            RegionStart,
            RegionLength,
            (MemorySpaceMap[Index].Attributes & ~EFI_MEMORY_CACHETYPE_MASK) | (MemorySpaceMap[Index].Capabilities & Attributes)
-           );   // MS_CHANGE
+           );   // MS_HYP_CHANGE
   }
 
   return EFI_SUCCESS;
@@ -989,13 +989,13 @@ RefreshGcdMemoryAttributes (
   UINT8                               DefaultMemoryType;
 
   if (!IsMtrrSupported ()) {
-    return;   // MS_CHANGE
+    return;   // MS_HYP_CHANGE
   }
 
   FirmwareVariableMtrrCount = GetFirmwareVariableMtrrCount ();
   ASSERT (FirmwareVariableMtrrCount <= MTRR_NUMBER_OF_VARIABLE_MTRR);
 
-  mIsFlushingGCD = TRUE;    // MS_CHANGE
+  mIsFlushingGCD = TRUE;    // MS_HYP_CHANGE
   MemorySpaceMap = NULL;
 
   //
@@ -1036,7 +1036,7 @@ RefreshGcdMemoryAttributes (
            MemorySpaceMap[Index].Length,
            (MemorySpaceMap[Index].Attributes & ~EFI_MEMORY_CACHETYPE_MASK) |
            (MemorySpaceMap[Index].Capabilities & DefaultAttributes)
-           );   // MS_CHANGE
+           );   // MS_HYP_CHANGE
   }
 
   //
@@ -1150,7 +1150,7 @@ RefreshGcdMemoryAttributes (
   mIsFlushingGCD = FALSE;
 }
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 /**
   Set Interrupt Descriptor Table Handler Address.
 
@@ -1285,7 +1285,7 @@ InitInterruptDescriptorTable (
     }
   }
 }
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 /**
   Callback function for idle events.
@@ -1337,7 +1337,7 @@ InitializeCpu (
   {
       mStrictIsolation = TRUE;
   }
-  // MS_CHANGE END
+  // MS_HYP_CHANGE END
 
   InitializePageTableLib();
 
@@ -1363,7 +1363,7 @@ InitializeCpu (
   //
   if (!mStrictIsolation)
   {
-    ProgramVirtualWireMode ();  // MS_CHANGE
+    ProgramVirtualWireMode ();  // MS_HYP_CHANGE
   }
 
   //
@@ -1372,7 +1372,7 @@ InitializeCpu (
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mCpuHandle,
                   &gEfiCpuArchProtocolGuid, &gCpu,
-                  &gEfiCpu2ProtocolGuid, &gCpu2,  // MS_CHANGE
+                  &gEfiCpu2ProtocolGuid, &gCpu2,  // MS_HYP_CHANGE
                   NULL
                   );
   ASSERT_EFI_ERROR (Status);

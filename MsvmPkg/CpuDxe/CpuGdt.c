@@ -15,7 +15,7 @@ Abstract:
 
 #include "CpuDxe.h"
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 //
 // Local structure definitions
 //
@@ -65,7 +65,7 @@ struct _GDT_ENTRIES {
 #else
 #error CPU type not supported for CPU GDT initialization!
 #endif
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 //
 // Global descriptor table (GDT) Template
@@ -100,7 +100,7 @@ STATIC GDT_ENTRIES GdtTemplate = {
     0x0FFFF,        // limit 15:0
     0x0,            // base 15:0
     0x0,            // base 23:16
-    0x09A,          // present, ring 0, data, expand-up, writable MS_CHANGE
+    0x09A,          // present, ring 0, data, expand-up, writable MS_HYP_CHANGE
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -111,7 +111,7 @@ STATIC GDT_ENTRIES GdtTemplate = {
     0x0FFFF,        // limit 15:0
     0x0,            // base 15:0
     0x0,            // base 23:16
-    0x092,          // present, ring 0, data, expand-up, writable MS_CHANGE
+    0x092,          // present, ring 0, data, expand-up, writable MS_HYP_CHANGE
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -122,7 +122,7 @@ STATIC GDT_ENTRIES GdtTemplate = {
     0x0FFFF,        // limit 15:0
     0x0,            // base 15:0
     0x0,            // base 23:16
-    0x09A,          // present, ring 0, data, expand-up, writable MS_CHANGE
+    0x09A,          // present, ring 0, data, expand-up, writable MS_HYP_CHANGE
     0x0CF,          // page-granular, 32-bit
     0x0,
   },
@@ -133,8 +133,8 @@ STATIC GDT_ENTRIES GdtTemplate = {
     0x0FFFF,        // limit 15:0
     0x0,            // base 15:0
     0x0,            // base 23:16
-    0x09B,          // present, ring 0, code, expand-up, writable MS_CHANGE
-    0x0AF,          // LimitHigh (CS.L=1, CS.D=0) MS_CHANGE
+    0x09B,          // present, ring 0, code, expand-up, writable MS_HYP_CHANGE
+    0x0AF,          // LimitHigh (CS.L=1, CS.D=0) MS_HYP_CHANGE
     0x0,            // base (high)
   },
   //

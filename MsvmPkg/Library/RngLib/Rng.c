@@ -18,7 +18,7 @@ Abstract:
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 #include <BiosInterface.h>
 #include <Library/BiosDeviceLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -45,7 +45,7 @@ static EFI_PHYSICAL_ADDRESS         mCryptoCommandDescriptorGpa;
 //
 static BOOLEAN mUseHostEmulation;
 
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 
 //
@@ -60,7 +60,7 @@ static BOOLEAN mUseHostEmulation;
 //
 #define RDRAND_RETRY_LIMIT           10
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 
 /**
   Generates a random number using host emulation if host emulation is configured.
@@ -112,7 +112,7 @@ ProcessUsingHostEmulation (
 
 }
 
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 /**
   The constructor function checks whether or not to use the RDRAND instruction.
@@ -135,7 +135,7 @@ RngLibConstructor (
   )
   
 {
-  // MS_CHANGE BEGIN
+  // MS_HYP_CHANGE BEGIN
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
   UINT32  RegEcx;
@@ -199,7 +199,7 @@ RngLibConstructor (
 
 
   return RETURN_SUCCESS;
-  // MS_CHANGE END
+  // MS_HYP_CHANGE END
 }
 
 /**
@@ -222,7 +222,7 @@ GetRandomNumber16 (
   ASSERT (Rand != NULL);
   if (mUseHostEmulation)
   {
-    return ProcessUsingHostEmulation(2, (UINT8 *)Rand);  // MS_CHANGE    
+    return ProcessUsingHostEmulation(2, (UINT8 *)Rand);  // MS_HYP_CHANGE    
   }
   else
   {
@@ -265,7 +265,7 @@ GetRandomNumber32 (
   ASSERT (Rand != NULL);
   if (mUseHostEmulation)
   {
-    return ProcessUsingHostEmulation(4, (UINT8 *)Rand);  // MS_CHANGE
+    return ProcessUsingHostEmulation(4, (UINT8 *)Rand);  // MS_HYP_CHANGE
   }
   else
   {
@@ -309,7 +309,7 @@ GetRandomNumber64 (
   ASSERT (Rand != NULL);
   if (mUseHostEmulation)
   {
-    return ProcessUsingHostEmulation(8, (UINT8 *)Rand);  // MS_CHANGE
+    return ProcessUsingHostEmulation(8, (UINT8 *)Rand);  // MS_HYP_CHANGE
   }
   else
   {

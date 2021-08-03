@@ -18,7 +18,7 @@ Abstract:
 #include <PiDxe.h>
 
 #include <Protocol/Cpu.h>
-#include <Protocol/Cpu2.h>    // MS_CHANGE
+#include <Protocol/Cpu2.h>    // MS_HYP_CHANGE
 
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -32,9 +32,9 @@ Abstract:
 #include <Library/LocalApicLib.h>
 #include <Library/UefiCpuLib.h>
 #include <Guid/IdleLoopEvent.h>
-#include <IsolationTypes.h>   // MS_CHANGE
+#include <IsolationTypes.h>   // MS_HYP_CHANGE
 
-#define INTERRUPT_VECTOR_NUMBER   256 // MS_CHANGE
+#define INTERRUPT_VECTOR_NUMBER   256 // MS_HYP_CHANGE
 
 #define HEAP_GUARD_NONSTOP_MODE       \
         ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
@@ -230,7 +230,7 @@ CpuSetMemoryAttributes (
   IN UINT64                     Attributes
   );
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 /**
   Waits for an interrupt to arrive, then enables CPU interrupts.
 
@@ -256,7 +256,7 @@ EFIAPI
 AsmIdtVector00 (
   VOID
   );
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 /**
   Initialize Global Descriptor Table.
@@ -291,7 +291,7 @@ SetDataSelectors (
   UINT16 Selector
   );
 
-// MS_CHANGE BEGIN
+// MS_HYP_CHANGE BEGIN
 /**
   Restore original Interrupt Descriptor Table Handler Address.
 
@@ -302,7 +302,7 @@ VOID
 RestoreInterruptDescriptorTableHandlerAddress (
   IN UINTN       Index
   );
-// MS_CHANGE END
+// MS_HYP_CHANGE END
 
 #endif
 
