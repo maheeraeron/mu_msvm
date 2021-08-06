@@ -4,11 +4,11 @@
 
 Module Name:
 
-    BiosDeviceBaseLibSetup.c
+    BiosDeviceRuntimeLibSetup.c
     
 Abstract:
 
-    Library constructor and destructor for Base (Boot & Runtime) version of BiosDeviceLib
+    Library setup for the runtime version of BiosDeviceLib
 --*/
 
 #include <PiDxe.h>
@@ -49,8 +49,9 @@ BiosDeviceLibAddressChangeHandler(
 
 EFI_STATUS
 EFIAPI
-BiosDeviceBaseLibConstructor (
-  VOID
+BiosDeviceRuntimeLibConstructor (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
     EFI_STATUS status = EFI_SUCCESS;
@@ -74,8 +75,9 @@ BiosDeviceBaseLibConstructor (
 
 EFI_STATUS
 EFIAPI
-BiosDeviceBaseLibDestructor(
-  VOID
+BiosDeviceRuntimeLibDestructor(
+  IN EFI_HANDLE         ImageHandle,
+  IN EFI_SYSTEM_TABLE   *SystemTable
   )
 {
   

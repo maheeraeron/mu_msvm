@@ -4,17 +4,17 @@
 
 [Defines]
     INF_VERSION                    = 0x00010005
-    BASE_NAME                      = BiosDeviceBaseLib
-    FILE_GUID                      = c1009b62-fbb0-457f-a919-4b8de5711377
-    MODULE_TYPE                    = BASE
+    BASE_NAME                      = BiosDeviceRuntimeLib
+    FILE_GUID                      = 8bf88f91-c656-4dc0-94f6-ec1119d56a53
+    MODULE_TYPE                    = DXE_RUNTIME_DRIVER
     VERSION_STRING                 = 1.0
-    LIBRARY_CLASS                  = BiosDeviceLib
-    CONSTRUCTOR                    = BiosDeviceBaseLibConstructor
-    DESTRUCTOR                     = BiosDeviceBaseLibDestructor
+    LIBRARY_CLASS                  = BiosDeviceLib | DXE_RUNTIME_DRIVER
+    CONSTRUCTOR                    = BiosDeviceRuntimeLibConstructor
+    DESTRUCTOR                     = BiosDeviceRuntimeLibDestructor
 
 [Sources]
     BiosDeviceLibCore.c
-    BiosDeviceBaseLibSetup.c
+    BiosDeviceRuntimeLibSetup.c
 
 [LibraryClasses]
     IoLib

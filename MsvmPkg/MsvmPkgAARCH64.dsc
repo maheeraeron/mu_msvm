@@ -59,6 +59,7 @@
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
+  BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceLib.inf
   CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
   CpuExceptionHandlerLib|ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
@@ -191,7 +192,6 @@
 # Library instance overrides for DXE
 #
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
-  BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceBaseLib.inf
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
   #DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
@@ -255,6 +255,7 @@
 # Library instance overrides for just DXE Runtime Drivers
 #
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
+  BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceRuntimeLib.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   # runtime drivers shouldn't use UEFI debugging, especially after ExitBootServices()
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
@@ -715,6 +716,7 @@
   MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   MsvmPkg/EmclDxe/EmclDxe.inf
   MsvmPkg/EventLogDxe/EventLogDxe.inf
+  MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
   MsvmPkg/SerialDxe/SerialDxe.inf
@@ -722,7 +724,6 @@
   MsvmPkg/StorvscDxe/StorvscDxe.inf
   MsvmPkg/SynthKeyDxe/SynthKeyDxe.inf
   MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
-  MsvmPkg/TimeRuntimeDxe/TimeRuntimeDxe.inf
   MsvmPkg/VariableDxe/VariableDxe.inf
   MsvmPkg/VideoDxe/VideoDxe.inf
   MsvmPkg/VmbfsDxe/VmbfsDxe.inf

@@ -38,6 +38,7 @@ Author:
 #include "EfiRing.h"
 #include "EventLogger.h"
 #include "BiosInterface.h"
+#include <IsolationTypes.h>
 
 //
 // Information on a currently pending event.
@@ -333,10 +334,6 @@ Return Value:
     UINT32         dataSize  = channel->Ring.Size;
     UINT32         allocSize = dataSize + sizeof(*channelDescriptor);
 
-    // TODO: Don't flush if not enabled
-    // downlevel VM (winblue/8.1) don't support flushing the event log
-    // stop here if the host is downlevel
-
     //
     // Allocate a region below 4GB since the BIOS data port
     // only accepts 32-Bit values.
@@ -369,7 +366,20 @@ Return Value:
     channelDescriptor->EventsLost    = channel->Ring.Stats.LostWrites;
     channelDescriptor->EventsWritten = channel->Stats.Written;
 
-    WriteBiosDevice(BiosConfigEventLogFlush, (UINT32)(UINTN)channelDescriptor);
+    //
+    // Flush the log to a persistent storage. If there is a host BIOS device, that
+    // works like our persistent storage. If not, currently don't do anything. 
+    //
+    if (IsHardwareIsolatedNoParavisor())
+    {
+        //
+        // TODO: Ideally, these would go into some persistent across boot storage like CMOS, Flash or EFI partition.
+        //
+    }
+    else
+    {   
+        WriteBiosDevice(BiosConfigEventLogFlush, (UINT32)(UINTN)channelDescriptor);
+    }    
 
     EventChannelUnlock(channel);
 

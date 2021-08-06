@@ -201,6 +201,7 @@ INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf
 INF MsvmPkg/EventLogDxe/EventLogDxe.inf
+INF MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF MsvmPkg/NetvscDxe/NetvscDxe.inf
 INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf
@@ -239,7 +240,6 @@ INF NetworkPkg/Udp4Dxe/Udp4Dxe.inf
 INF NetworkPkg/Udp6Dxe/Udp6Dxe.inf
 INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
 
-INF PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 
 INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
 INF SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf

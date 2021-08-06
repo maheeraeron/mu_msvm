@@ -49,6 +49,7 @@
   UefiLib
   DevicePathLib                   # MS_CHANGE
   BootEventLogLib                 # MS_CHANGE
+  IsolationLib
 
 [Guids]
   gMemoryStatusCodeRecordGuid                   ## CONSUMES ## HOB

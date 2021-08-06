@@ -1,0 +1,41 @@
+/*++
+
+    Copyright (c) Microsoft Corporation
+
+Module Name:
+
+    BiosDeviceLibSetup.c
+    
+Abstract:
+
+    Library setup for BiosDeviceLib
+--*/
+
+#include <PiDxe.h>
+#include <Library/DebugLib.h>
+#include <Library/IoLib.h>
+
+// Use MMIO access on ARM64 otherwise use IO access
+#if defined(MDE_CPU_AARCH64)
+#define _USING_BIOS_MMIO_ 1
+#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#define _USING_BIOS_MMIO_ 0
+#else
+#error Unsupported Architecture
+#endif
+
+extern UINTN mBiosBaseAddress;
+extern void SetupBaseAddress();
+
+EFI_STATUS
+EFIAPI
+BiosDeviceLibConstructor (
+  VOID
+  )
+{
+    EFI_STATUS status = EFI_SUCCESS;
+    
+    SetupBaseAddress();
+
+    return status;
+}

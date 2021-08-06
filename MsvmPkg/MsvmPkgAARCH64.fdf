@@ -154,6 +154,7 @@ INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf
 INF MsvmPkg/EventLogDxe/EventLogDxe.inf
+INF MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF MsvmPkg/NetvscDxe/NetvscDxe.inf
 INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf
@@ -161,7 +162,6 @@ INF MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
 INF MsvmPkg/StorvscDxe/StorvscDxe.inf
 INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
 INF MsvmPkg/SynthKeyDxe/SynthKeyDxe.inf
-INF MsvmPkg/TimeRuntimeDxe/TimeRuntimeDxe.inf
 INF MsvmPkg/VariableDxe/VariableDxe.inf
 INF MsvmPkg/VideoDxe/VideoDxe.inf
 INF MsvmPkg/VmbfsDxe/VmbfsDxe.inf
