@@ -16,6 +16,7 @@ Abstract:
 #include <EfiNt.h>
 #include <Platform.h>
 #include <BiosInterface.h>
+#include <AcpiTables.h>
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/Tpm20.h>
 #if defined(MDE_CPU_AARCH64)
@@ -931,7 +932,7 @@ GetUefiConfigInfo(
 Routine Description:
 
     Get and parse the config blob that contains information from the Bios VDEV.
-    Note that the information received and parsed here can come from the host 
+    Note that the information received and parsed here can come from the host
     and cannot be trusted. Validate the config information before using it.
 
 Arguments:
@@ -1036,7 +1037,7 @@ Return Value:
 
         if (calculatedConfigSize > configCount->TotalConfigBlobSize)
         {
-            DEBUG((DEBUG_ERROR, "Config offset of 0x%x is greater than the actual size of 0x%x\n", 
+            DEBUG((DEBUG_ERROR, "Config offset of 0x%x is greater than the actual size of 0x%x\n",
                 calculatedConfigSize,
                 configCount->TotalConfigBlobSize));
             CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
@@ -1350,6 +1351,22 @@ Return Value:
             case UefiConfigVpciInstanceFilter:
                 UEFI_CONFIG_VPCI_INSTANCE_FILTER *filter = (UEFI_CONFIG_VPCI_INSTANCE_FILTER*) header;
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid), CRITICAL_INITIALIZATION_FAILURE);
+                break;
+
+            case UefiConfigAspt:
+                UEFI_CONFIG_AMD_ASPT *asptStructure = (UEFI_CONFIG_AMD_ASPT*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *asptHdr = (EFI_ACPI_DESCRIPTION_HEADER*) asptStructure->Aspt;
+
+                if (asptStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    asptHdr->Signature != AMD_ACPI_ASPT_TABLE_SIGNATURE ||
+                    asptHdr->Length > (asptStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "***Malformed ASPT\n"));
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+                }
+
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdAsptPtr, (UINT64)asptStructure->Aspt), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdAsptSize, asptHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
         }
 

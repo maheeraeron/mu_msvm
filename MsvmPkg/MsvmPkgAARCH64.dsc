@@ -608,6 +608,10 @@
   gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary|0x0
 
+  # UEFI_CONFIG_AMD_ASPT
+  gMsvmPkgTokenSpaceGuid.PcdAsptPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdAsptSize|0x0
+
 ################################################################################
 #
 # Components Section - list of all Modules include for this Platform.

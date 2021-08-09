@@ -451,6 +451,60 @@ Return Value:
 
 
 EFI_STATUS
+AcpiInstallAsptTable(
+    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+/*++
+
+Routine Description:
+
+    Retrieves the ASPT table from the worker process and installs it.
+
+Arguments:
+
+    AcpiTable - A pointer to the ACPI table protocol.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table;
+    UINTN tableHandle;
+    UINT32 asptSize;
+
+    //
+    // Get the ASPT from the config blob parsed in PEI.
+    //
+    asptSize = PcdGet32(PcdAsptSize);
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdAsptPtr);
+
+    if (asptSize == 0)
+    {
+        //
+        // The ASPT will not be provided if no compatible AMD Secure Processor
+        // is enabled.
+        //
+        return EFI_SUCCESS;
+    }
+
+    ASSERT(table->Length == asptSize);
+
+    //
+    // Install it into the published tables.
+    //
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
+    return status;
+}
+
+
+EFI_STATUS
 EFIAPI
 AcpiPlatformInitializeAcpiTables(
     __in EFI_HANDLE        ImageHandle,
@@ -601,6 +655,15 @@ Return Value:
     // Add the NFIT table.
     //
     status = AcpiInstallNfitTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // Add the ASPT table.
+    //
+    status = AcpiInstallAsptTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;

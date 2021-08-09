@@ -90,6 +90,8 @@
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
+    gMsvmPkgTokenSpaceGuid.PcdAsptPtr
+    gMsvmPkgTokenSpaceGuid.PcdAsptSize
 
 
 [Depex]

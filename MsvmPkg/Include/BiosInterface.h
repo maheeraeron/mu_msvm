@@ -554,6 +554,7 @@ enum UefiStructureType
     UefiConfigSmbiosSystemFamily             = 0x1E,
     UefiConfigSmbiosMemoryDeviceSerialNumber = 0x1F,
     UefiConfigSlit                           = 0x20,
+    UefiConfigAspt                           = 0x21,
 };
 
 //
@@ -823,6 +824,12 @@ typedef struct _UEFI_CONFIG_VPCI_INSTANCE_FILTER
     UEFI_CONFIG_HEADER Header;
     UINT8 InstanceGuid[sizeof(GUID)];
 } UEFI_CONFIG_VPCI_INSTANCE_FILTER;
+
+typedef struct _UEFI_CONFIG_AMD_ASPT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Aspt[];
+} UEFI_CONFIG_AMD_ASPT;
 
 //
 // UEFI configuration information for direct parsing of IGVM parameters.

@@ -177,6 +177,8 @@
     gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
     gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
+    gMsvmPkgTokenSpaceGuid.PcdAsptPtr
+    gMsvmPkgTokenSpaceGuid.PcdAsptSize
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress

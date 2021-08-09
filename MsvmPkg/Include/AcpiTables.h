@@ -64,5 +64,7 @@ typedef struct _VM_ACPI_ENTROPY_TABLE
 
 #define VM_ACPI_ENTROPY_TABLE_SIGNATURE SIGNATURE_32('O','E','M','0')
 
+#define AMD_ACPI_ASPT_TABLE_SIGNATURE SIGNATURE_32('A', 'S', 'P', 'T')
+
 #pragma pack(pop)
 
