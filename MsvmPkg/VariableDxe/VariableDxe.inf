@@ -34,6 +34,7 @@
     DebugLib
     DxeServicesTableLib
     IoLib
+    IsolationLib
     MemoryAllocationLib
     PrintLib
     UefiBootServicesTableLib

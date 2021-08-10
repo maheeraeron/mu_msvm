@@ -31,7 +31,7 @@ Author:
 #include <Library/PrintLib.h>
 #include <BiosInterface.h>
 #include <NvramVariableDxe.h>
-
+#include <IsolationTypes.h>
 
 #define WITHIN_4_GB_LL (0xFFFFFFFFLL)
 
@@ -49,6 +49,9 @@ static PNVRAM_COMMAND_DESCRIPTOR   mNvramCommandDescriptor      = NULL;
 static EFI_PHYSICAL_ADDRESS        mNvramCommandDataBufferGpa   = 0;
 static UINT8*                      mNvramCommandDataBuffer      = NULL;
 
+// Global representing if this is a system without a bios emulator. This means there is no backing
+// NVRAM implementation, and all calls should fail appropriately.
+static BOOLEAN mNoBiosEmulator = FALSE;
 
 //
 // Private routines
@@ -72,6 +75,11 @@ Returns:
 
 --*/
 {
+    if (mNoBiosEmulator)
+    {
+        return EFI_UNSUPPORTED;
+    }
+
     //
     // Worker process can fail guest state related requests due to
     // storage being temporarily "not ready". Retry until success or
@@ -125,6 +133,14 @@ Return Value:
 --*/
 {
     EFI_STATUS status = EFI_SUCCESS;
+
+    if (IsHardwareIsolatedNoParavisor())
+    {
+        mNoBiosEmulator = TRUE;
+
+        // No allocations needed as there is no need to send NVRAM commands to a non-existent bios emulator.
+        return EFI_SUCCESS;
+    }
 
 #define BELOW_4GB (0xFFFFFFFFULL)
 
@@ -240,6 +256,11 @@ Return Value:
 {
     EFI_STATUS status;
 
+    if (mNoBiosEmulator)
+    {
+        return;
+    }
+
 #if 0
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     DEBUG((DEBUG_VERBOSE, "--- %a mNvramCommandDescriptor %p\n", __FUNCTION__, mNvramCommandDescriptor));
@@ -286,6 +307,11 @@ Returns:
 
 --*/
 {
+    if (mNoBiosEmulator)
+    {
+        return;
+    }
+
     //DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Command = NvramSignalRuntimeCommand;
@@ -337,6 +363,11 @@ Returns:
     ASSERT(MaximumVariableStorageSize);
     ASSERT(RemainingVariableStorageSize);
     ASSERT(MaximumVariableSize);
+
+    if (mNoBiosEmulator)
+    {
+        return EFI_DEVICE_ERROR;
+    }
 
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
@@ -390,6 +421,13 @@ Returns:
 --*/
 {
     UINTN length;
+
+    if (mNoBiosEmulator)
+    {
+        // TODO: BDS currently does not work without returning success on writes. It would be preferable in the
+        //       future to return EFI_UNSUPPORTED instead, but this requires fixing BDS.
+        return EFI_SUCCESS;
+    }
 
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
@@ -474,6 +512,11 @@ Returns:
     ASSERT(VendorGuid != NULL);
     ASSERT(DataSize != NULL);
     ASSERT((Data != NULL) || (*DataSize == 0));
+
+    if (mNoBiosEmulator)
+    {
+        return EFI_NOT_FOUND;
+    }
 
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
@@ -581,6 +624,11 @@ Returns:
     ASSERT(VendorGuid != NULL);
     ASSERT(VariableName != NULL);
 
+    if (mNoBiosEmulator)
+    {
+        return EFI_NOT_FOUND;
+    }
+
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
     mNvramCommandDescriptor->Command = NvramGetFirstVariableNameCommand;
@@ -651,6 +699,11 @@ Returns:
     ASSERT(VendorGuid != NULL);
     ASSERT(VariableName != NULL);
 
+    if (mNoBiosEmulator)
+    {
+        return EFI_NOT_FOUND;
+    }
+
     ZeroMem(mNvramCommandDescriptor, sizeof(NVRAM_COMMAND_DESCRIPTOR));
     mNvramCommandDescriptor->Status = EFI_DEVICE_ERROR;
     mNvramCommandDescriptor->Command = NvramGetNextVariableNameCommand;
@@ -715,12 +768,16 @@ Returns:
 
     ASSERT(sizeof(buffer) < EFI_MAX_VARIABLE_NAME_SIZE);
 
+    if (mNoBiosEmulator)
+    {
+        return;
+    }
+
     //
     // Do nothing if no format string.
     //
     if (Format == NULL)
     {
-
         return;
     }
 
