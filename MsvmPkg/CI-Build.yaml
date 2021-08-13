@@ -3,9 +3,7 @@ resources:
   clean: true
 
 pool:
-  name: Package ES Custom Demands Lab A
-  demands:
-  - ClientAlias -equals sebrogan  # specific string
+  name: Hosted VS2017
 
 strategy:
   maxParallel: 4
