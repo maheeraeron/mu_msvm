@@ -40,7 +40,7 @@ steps:
   clean: true
 
 - powershell: |
-   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://user:$(WP.PAT)@windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
+   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://user:$(WP.PAT)@dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal"
    git config --file=.gitmodules submodule.Common/MU_TIANO.url "https://user:$(OS.PAT)@dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus"
    git config --file=.gitmodules submodule.MU_BASECORE.url "https://user:$(OS.PAT)@dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore"
    git submodule sync
@@ -61,6 +61,10 @@ steps:
     filename: python.exe
     arguments: '-m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir'
 
+- task: NuGetAuthenticate@0
+  inputs:
+    nuGetServiceConnections: WindowsPartnersNugetFeedConnection
+    
 - task: CmdLine@1
   displayName: 'Platform build Setup'
   inputs:
@@ -153,7 +157,7 @@ steps:
 
 
 
-- task: PkgESVPack@10
+- task: PkgESVPack@12
   displayName: PkgESVPack
   inputs:
     versionAs: parts
@@ -165,8 +169,8 @@ steps:
     metadata: '$(Build.CommitHash)'
 
 - powershell: |
-   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/Core_UEFI_Internal"
-   git config --file=.gitmodules submodule.Common/PRM.url "https://windowspartners.visualstudio.com/MSCoreUEFI/_git/platform_runtime_mechanism"
+   git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal"
+   git config --file=.gitmodules submodule.Common/PRM.url "https://dev.azure.com/windowspartners/MSCoreUEFI/_git/platform_runtime_mechanism"
    git config --file=.gitmodules submodule.Common/MU_TIANO.url "https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus"
    git config --file=.gitmodules submodule.MU_BASECORE.url "https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore"
    git submodule sync
