@@ -1,3 +1,5 @@
+name: $(SourceBranchName)_$(Date:yyyyMMdd_HHmmss)$(Rev:.r)
+
 resources:
 - repo: self
   clean: true
@@ -29,6 +31,8 @@ variables:
   PlatformPkg: "MsvmPkg"
   Env.PythonVersion: "3.7.2"
   GIT_TERMINAL_PROMPT: "0"
+
+  BuildIdentifier: $(Build.BuildNumber)
 
   #parameters for vpack publishing
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
@@ -155,8 +159,6 @@ steps:
 
   displayName: 'Compute Hash and Copy firmware to vpack folder'
 
-
-
 - task: PkgESVPack@12
   displayName: PkgESVPack
   inputs:
@@ -167,6 +169,24 @@ steps:
     majorVer: '$(Parameters.vPack.majorVer)'
     minorVer: '$(Parameters.vPack.minorVer)'
     metadata: '$(Build.CommitHash)'
+
+- task: NuGetCommand@2
+  displayName: 'Pack the NuGet package'
+  inputs:
+    command: 'pack'
+    packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
+    packDestination: '$(Build.ArtifactStagingDirectory)'
+    packTimezone: 'utc'
+    buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)_$(BuildIdentifier);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer)'
+
+- task: NuGetCommand@2
+  displayName: 'Push the NuGet package to the HyperVUefi feed'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.StagingDirectory)/**/*.nupkg'
+    feedsToUse: 'config'
+    nugetConfigPath: '$(PlatformPkg)/NuGet.config'
+    publishVstsFeed: 'OS/HyperVUefi'
 
 - powershell: |
    git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal"
