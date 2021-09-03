@@ -239,6 +239,20 @@ Return Value:
 
     if (ghcbMsr.AsUINT64 != GHCB_INFO_PAGE_STATE_UPDATED)
     {
+        //
+        // Restore this page to an accepted state since the visibility was not
+        // modified.
+        //
+
+        while ((_sev_pvalidate((PVOID)(PageNumber * EFI_PAGE_SIZE), 0, TRUE, &errorCode)) ||
+               (errorCode != 0))
+        {
+            //
+            // TODO-19259739: Have a better way of reporting UEFI errors.
+            //
+            ;
+        }
+
         return EFI_SECURITY_VIOLATION;
     }
 

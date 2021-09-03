@@ -1112,12 +1112,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
         // first.
         if (MapFlags != 0)
         {
-            EfiUpdatePageRangeAcceptance(
-                mIsolationType,
-                GpaPageBase,
-                PageCount,
-                FALSE);
-
             // If the hypervisor connection has not yet been established, then
             // pages must be made visible without using hypercalls.
             if (!mHvBypassContext.Connected)
@@ -1127,22 +1121,22 @@ EfiHvpModifySparseGpaPageHostVisibility(
                     status = EfiMakePageHostVisible(mIsolationType, GpaPageBase);
                     if (EFI_ERROR(status))
                     {
-                        // Restore page acceptance for any pages that were not
-                        // processed.
-                        EfiUpdatePageRangeAcceptance(
-                            mIsolationType,
-                            GpaPageBase,
-                            PageCount,
-                            TRUE);
                         return status;
                     }
 
                     GpaPageBase += 1;
                     PageCount -= 1;
+                    *PageCountProcessed += 1;
                 }
 
                 return EFI_SUCCESS;
             }
+
+            EfiUpdatePageRangeAcceptance(
+                mIsolationType,
+                GpaPageBase,
+                PageCount,
+                FALSE);
         }
 
         ASSERT(mHvBypassContext.Connected);
