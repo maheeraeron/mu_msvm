@@ -45,8 +45,6 @@
     UefiDriverEntryPoint
     IoLib
     ConfigLib
-
-[LibraryClasses.X64]
     IsolationLib
 
 [Protocols]

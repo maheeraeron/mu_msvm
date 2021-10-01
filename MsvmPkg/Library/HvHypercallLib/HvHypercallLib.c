@@ -316,13 +316,15 @@ Return Value:
             FirstRegister = 0;
         }
 
-        HvHypercallpIssueGhcbHypercall(Context,
-                                       CallCode,
-                                       (VOID *)FirstRegister,
-                                       CountOfElements,
-                                       ElementsProcessed);
+        callOutput.CallStatus = HvHypercallpIssueGhcbHypercall(Context,
+                                                               CallCode,
+                                                               (VOID *)FirstRegister,
+                                                               CountOfElements,
+                                                               ElementsProcessed);
 
         HvHypercallpEnableInterrupts();
+
+        return callOutput.CallStatus;
     }
     else
     {

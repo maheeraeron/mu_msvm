@@ -18,6 +18,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DeviceStateLib.h>
 #include <Library/PcdLib.h>
+#include <IsolationTypes.h>
 
 #include <Guid/GlobalVariable.h>
 
@@ -34,6 +35,11 @@ IsSecureBootOn()
   EFI_STATUS  Status = EFI_DEVICE_ERROR;
   UINT8      *Value = NULL;
   UINTN       Size = 0;
+
+  // TODO: For now, no hardware isolated platforms with no paravisor support secure boot.
+  if (IsHardwareIsolatedNoParavisor()) {
+    return FALSE;
+  }
 
   Status = GetVariable2(L"SecureBoot", &gEfiGlobalVariableGuid, (VOID **)&Value, &Size);
   if (EFI_ERROR (Status) || (Value == NULL)) {

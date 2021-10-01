@@ -40,3 +40,5 @@ EFI_STATUS
 FacpInitializeTable(
     __inout EFI_ACPI_DESCRIPTION_HEADER* Facp
     );
+
+extern BOOLEAN mHardwareIsolatedNoParavisor;

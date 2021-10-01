@@ -28,6 +28,7 @@ Environment:
 #include <Library/WatchdogTimerLib.h>
 #include <Library/DebugLib.h>
 #include <BiosInterface.h>
+#include <IsolationTypes.h>
 
 VOID
 WatchdogConfigure(
@@ -55,7 +56,15 @@ Return Value:
 --*/
 {
     UINT32  configValue = 0;
-    BOOLEAN interruptState = SaveAndDisableInterrupts();
+    BOOLEAN interruptState;
+
+    if (IsHardwareIsolatedNoParavisor())
+    {
+        // No hardware watchdog when no paravisor.
+        return;
+    }
+
+    interruptState = SaveAndDisableInterrupts();
 
     if (Count != 0)
     {
@@ -89,7 +98,7 @@ WatchdogSetCount(
 
 Routine Description:
 
-    Sets the value of the watchdog count register. 
+    Sets the value of the watchdog count register.
     A value of zero disables the watchdog timer without changing the count value.
 
 Arguments:
@@ -195,7 +204,7 @@ WatchdogResume(
 
 Routine Description:
 
-     Resumes the watchdog timer. 
+     Resumes the watchdog timer.
      If the watchdog timer is not configure this routine has no effect.
 
 Arguments:

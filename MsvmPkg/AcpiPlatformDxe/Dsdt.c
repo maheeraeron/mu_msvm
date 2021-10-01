@@ -131,7 +131,10 @@ Return Value:
         goto Cleanup;
     }
 
-    SetGenerationIdAddress((UINTN)generationId);
+    if (!mHardwareIsolatedNoParavisor)
+    {
+        SetGenerationIdAddress((UINTN)generationId);
+    }
 
     data->GenerationIdAddress = (UINTN)generationId;
 
@@ -143,7 +146,7 @@ Return Value:
     data->TpmEnabled = PcdGetBool(PcdTpmEnabled);
     data->OempEnabled = PcdGetBool(PcdLoadOempTable);
     data->HibernateEnabled = PcdGetBool(PcdHibernateEnabled);
-    data->PmemEnabled = (GetNfitSize() > 0);
+    data->PmemEnabled = mHardwareIsolatedNoParavisor ? 0 : (GetNfitSize() > 0);
     data->VirtualBatteryEnabled = PcdGetBool(PcdVirtualBatteryEnabled);
     data->SgxMemoryEnabled = PcdGetBool(PcdSgxMemoryEnabled);
     data->ProcIdleEnabled = PcdGetBool(PcdProcIdleEnabled);

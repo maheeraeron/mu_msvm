@@ -1103,7 +1103,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
     paravisorPresent = IsParavisorPresent();
 
-#if defined(MDE_CPU_X64)                    
+#if defined(MDE_CPU_X64)
 
     // Check if we are running hardware isolated but do not have a paravisor.
     if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
@@ -1190,7 +1190,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         // Call the hypervisor.
         //
 
-        hvStatus = HvHypercallIssue(&mHvContext,
+        hvStatus = HvHypercallIssue(mUseBypassContext ? &mHvBypassContext : &mHvContext,
                                     HvCallModifySparseGpaPageHostVisibility,
                                     FALSE, // not fast
                                     repsInCurrentCall,
@@ -1205,7 +1205,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         ASSERT(((repsProcessedThisCall == repsInCurrentCall) &&
                 (status == EFI_SUCCESS)) ||
                (status != EFI_SUCCESS));
-            
+
         //
         // Update the count of reps processed.
         //

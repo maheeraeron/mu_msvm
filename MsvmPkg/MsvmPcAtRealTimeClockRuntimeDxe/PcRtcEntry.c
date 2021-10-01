@@ -75,7 +75,7 @@ PcRtcEfiGetTime (
   OUT EFI_TIME_CAPABILITIES   *Capabilities  OPTIONAL
   )
 {
-  
+
   // MS_HYP_CHANGE BEGIN
 
   if (Time == NULL)
@@ -86,7 +86,7 @@ PcRtcEfiGetTime (
   if (mHardwareIsolatedWithNoParavisor)
   {
     //
-    // Hardcode a zero value and return success here because the OS Loader will not 
+    // Hardcode a zero value and return success here because the OS Loader will not
     // initialize if an error code is returned here.
     //
     Time->Second = RTC_INIT_SECOND;
@@ -303,7 +303,7 @@ LibRtcVirtualNotifyEvent (
   // mode.
   EfiConvertPointer (0x0, (VOID**)&mRtcIndexRegister);
   EfiConvertPointer (0x0, (VOID**)&mRtcTargetRegister);
-    
+
   // MS_HYP_CHANGE BEGIN
 
 #if defined(MDE_CPU_AARCH64)
@@ -386,28 +386,32 @@ InitializePcRtc (
     mRtcTargetRegister = (UINTN)PcdGet64 (PcdRtcTargetRegister64);
   }
 
-  Status = PcRtcInit (&mModuleGlobal);
-  ASSERT_EFI_ERROR (Status);
+  // Skip RTC device library init as none is present when isolated with no paravisor.
+  if (!mHardwareIsolatedWithNoParavisor)
+  {
+    Status = PcRtcInit(&mModuleGlobal);
+    ASSERT_EFI_ERROR(Status);
 
-  Status = gBS->CreateEventEx (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
-                  PcRtcAcpiTableChangeCallback,
-                  NULL,
-                  &gEfiAcpi10TableGuid,
-                  &Event
-                  );
-  ASSERT_EFI_ERROR (Status);
+    Status = gBS->CreateEventEx(
+        EVT_NOTIFY_SIGNAL,
+        TPL_CALLBACK,
+        PcRtcAcpiTableChangeCallback,
+        NULL,
+        &gEfiAcpi10TableGuid,
+        &Event);
+    ASSERT_EFI_ERROR(Status);
 
-  Status = gBS->CreateEventEx (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
-                  PcRtcAcpiTableChangeCallback,
-                  NULL,
-                  &gEfiAcpiTableGuid,
-                  &Event
-                  );
-  ASSERT_EFI_ERROR (Status);
+    Status = gBS->CreateEventEx(
+        EVT_NOTIFY_SIGNAL,
+        TPL_CALLBACK,
+        PcRtcAcpiTableChangeCallback,
+        NULL,
+        &gEfiAcpiTableGuid,
+        &Event);
+    ASSERT_EFI_ERROR(Status);
+  }
+
+
 #endif
 
   gRT->GetTime       = PcRtcEfiGetTime;

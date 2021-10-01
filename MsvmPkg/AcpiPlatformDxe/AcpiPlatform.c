@@ -28,6 +28,7 @@ Author:
 #include <Library/IoLib.h>
 #include <Guid/Acpi.h>
 #include <AcpiPlatform.h>
+#include <IsolationTypes.h>
 
 typedef EFI_STATUS (*INIT_ROUTINE)(EFI_ACPI_DESCRIPTION_HEADER*);
 
@@ -51,6 +52,8 @@ INIT_TABLE_ENTRY AcpiInitTable[] =
 };
 
 #define NUM_TABLE_ENTRIES (sizeof(AcpiInitTable) / sizeof(INIT_TABLE_ENTRY))
+
+BOOLEAN mHardwareIsolatedNoParavisor = FALSE;
 
 EFI_STATUS
 RuntimeInitializeTableIfNecessary(
@@ -344,6 +347,14 @@ AcpiInstallNfitTable(
     UINTN tableHandle;
 
     //
+    // Hardware isolated VMs with no paravisor have no PMEM today.
+    //
+    if (mHardwareIsolatedNoParavisor)
+    {
+        return EFI_SUCCESS;
+    }
+
+    //
     // Get the size of the NFIT
     //
     nfitSize = GetNfitSize();
@@ -536,6 +547,8 @@ Return Value:
     UINTN                           size;
     EFI_STATUS                      status;
     UINTN                           tableHandle;
+
+    mHardwareIsolatedNoParavisor = IsHardwareIsolatedNoParavisor();
 
     //
     // Find the AcpiTable protocol.

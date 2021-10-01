@@ -28,6 +28,7 @@ ENTRY_POINT = PlatformDeviceStateHelperInit
   DebugLib
   MemoryAllocationLib
   DeviceStateLib
+  IsolationLib
 
 [Packages]
   MsvmPkg/MsvmPkg.dec
