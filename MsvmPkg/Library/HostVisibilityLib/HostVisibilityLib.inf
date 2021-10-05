@@ -11,6 +11,7 @@
 
 [Sources.X64]
     X64/Snp.asm
+    X64/Tdx.asm
 
 [Packages]
     MdePkg/MdePkg.dec

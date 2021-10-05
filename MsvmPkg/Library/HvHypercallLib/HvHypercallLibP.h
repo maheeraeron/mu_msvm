@@ -36,6 +36,17 @@ HvHypercallpIssueGhcbHypercall(
     _Out_opt_ PUINT32 ElementsProcessed
     );
 
+VOID
+_tdx_vmcall_wrmsr(
+    _In_ UINT32 MsrIndex,
+    _In_ UINT64 MsrValue
+    );
+
+UINT64
+_tdx_vmcall_rdmsr(
+    _In_ UINT32 MsrIndex
+    );
+
 /// Functions that enable and disable interrupts, that are implemented based
 /// on the environment the library is built for.
 

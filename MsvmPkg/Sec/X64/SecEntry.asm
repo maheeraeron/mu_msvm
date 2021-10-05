@@ -22,6 +22,7 @@
 
 EXTERN SecCoreStartupWithStack:PROC
 EXTERN SecProcessVirtualCommunicationException:PROC
+EXTERN SecProcessVirtualizationException:PROC
 
 ;
 ; SecCore Entry Point
@@ -175,6 +176,117 @@ SecVmgexit PROC PUBLIC
             ret
 
 SecVmgexit ENDP
+
+;
+; #VE exception handler
+;
+
+SecVirtualizationExceptionHandler PROC PUBLIC
+
+            BEGIN_TRAP_HANDLER <>
+
+            mov     rcx, rsp                ; load address of trap frame
+            call    SecProcessVirtualizationException ; attempt to handle
+            test    al, al                  ; check return value
+            jnz     @f                      ; if nz, successful
+            int     3                       ; force unrecoverable exception
+@@:
+
+            END_TRAP_HANDLER
+
+SecVirtualizationExceptionHandler ENDP
+
+;
+; SecGetTdxVeInfo
+;
+; Retrieves VE_INFO for the most recent #VE exception.
+;
+; @param[out] RCX The VE info buffer to populate.
+;
+
+SecGetTdxVeInfo PROC PUBLIC
+
+            mov     r11, rcx            ; preserve output argument
+            mov     eax, 3              ; TDG.VP.VEINFO.GET call code
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+            mov     [r11], rcx          ; save output information
+            mov     8[r11], rdx         ;
+            mov     10h[r11], r8        ;
+            mov     18h[r11], r9        ;
+            mov     20h[r11], r10       ;
+            ret
+
+SecGetTdxVeInfo ENDP
+
+;
+; SecTdCallRdmsr
+;
+; Reads a virtual MSR using the TDCALL GHCI interface.
+;
+; @param[in] RCX  The MSR to read.
+;
+; @return         MSR value.
+;
+
+SecTdCallRdmsr PROC PUBLIC
+
+            push    r12                 ; preserve non-volatile register
+            mov     r12d, ecx           ; capture argument register
+            xor     eax, eax            ; TDG.VP.VMCALL call code
+            mov     ecx, 1C00h          ; pass R10-R12
+            xor     r10d, r10d          ; indicate GHCI call
+            mov     r11d, 31            ; indicate RDMSR
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+            test    rax, rax            ; verify successful call
+            jz      Stcr20              ; if z, successful
+Stcr10:     int     3                   ; failure
+Stcr20:     test    r10, r10            ; verify successful read
+            jnz     Stcr10              ; if nz, not successful
+            mov     rax, r11            ; capture return value
+            pop     r12                 ; restore non-volatile register
+            ret
+
+SecTdCallRdmsr ENDP
+
+;
+; SecTdCallWrmsr
+;
+; Writes a virtual MSR using the TDCALL GHCI interface.
+;
+; @param[in] RCX  The MSR to write.
+; @param[in] RDX  MSR value.
+;
+
+SecTdCallWrmsr PROC PUBLIC
+
+            push    r12                 ; preserve non-volatile registers
+            push    r13                 ;
+            mov     r12d, ecx           ; capture argument register
+            mov     r13, rdx            ; capture MSR value
+            xor     eax, eax            ; TDG.VP.VMCALL call code
+            mov     ecx, 3C00h          ; pass R10-R13
+            xor     r10d, r10d          ; indicate GHCI call
+            mov     r11d, 32            ; indicate WRMSR
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+            test    rax, rax            ; verify successful call
+            jz      Stcw20              ; if z, successful
+Stcw10:     int     3                   ; failure
+Stcw20:     test    r10, r10            ; verify successful write
+            jnz     Stcw10              ; if nz, not successful
+            pop     r13                 ; restore non-volatile registers
+            pop     r12                 ;
+            ret
+
+SecTdCallWrmsr ENDP
 
 ;
 ; MulDiv64

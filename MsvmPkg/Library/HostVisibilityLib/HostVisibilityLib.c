@@ -15,6 +15,7 @@ Abstract:
 --*/
 
 #include <EfiNt.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Uefi/UefiBaseType.h>
 #include <hvgdk_mini.h>
@@ -60,6 +61,24 @@ typedef union _GHCB_MSR
 
 #define GHCB_DATA_PAGE_STATE_PRIVATE    0x001
 #define GHCB_DATA_PAGE_STATE_SHARED     0x002
+
+
+#define TDX_SUCCESS                 0
+#define TDX_PAGE_SIZE_INVALID       0x8000000000000002ULL
+
+
+UINT64
+_tdx_tdg_mem_page_accept(
+    _In_ HV_GPA Gpa,
+    _In_ UINT32 PageSize
+    );
+
+UINT64
+_tdx_vmcall_map_gpa(
+    _In_ UINT64 Gpa,
+    _In_ UINT64 Size,
+    _Out_opt_ PUINT64 FailedGpa
+    );
 
 
 VOID
@@ -150,6 +169,77 @@ Return Value:
 
 
 VOID
+EfiUpdatePageRangeAcceptanceTdx(
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount
+    )
+/*++
+
+Routine Description:
+
+    This routine updates hardware page acceptance state on a TDX platform that
+    runs with no paravisor.
+
+Arguments:
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         change.
+
+    PageCount - Supplies the number of pages to change.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    UINT64 errorCode;
+
+    while (PageCount != 0)
+    {
+        //
+        // Attempt to validate a 2 MB page if possible.
+        //
+
+        if (((StartingPageNumber & (SIZE_2MB - 1)) == 0) &&
+            (PageCount >= SIZE_2MB))
+        {
+            errorCode = _tdx_tdg_mem_page_accept(
+                StartingPageNumber * HV_PAGE_SIZE,
+                1);
+            if (errorCode == TDX_SUCCESS)
+            {
+                StartingPageNumber += SIZE_2MB / HV_PAGE_SIZE;
+                PageCount -= SIZE_2MB / HV_PAGE_SIZE;
+                continue;
+            }
+            else if (errorCode != TDX_PAGE_SIZE_INVALID)
+            {
+                //
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                //
+                continue;
+            }
+        }
+
+        errorCode = _tdx_tdg_mem_page_accept(
+            StartingPageNumber * HV_PAGE_SIZE,
+            0);
+        if (errorCode != TDX_SUCCESS)
+        {
+            //
+            // TODO-19259739: Have a better way of reporting UEFI errors.
+            //
+            continue;
+        }
+
+        StartingPageNumber += 1;
+        PageCount -= 1;
+    }
+}
+
+
+VOID
 EfiUpdatePageRangeAcceptance(
     _In_ UINT32 IsolationType,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
@@ -181,27 +271,48 @@ Return Value:
 
 --*/
 {
-    ASSERT(IsolationType == UefiIsolationTypeSnp);
-    UNREFERENCED_PARAMETER(IsolationType);
+    if (IsolationType == UefiIsolationTypeTdx)
+    {
+        //
+        // No action is required when acceptance is being revoked.
+        //
 
-    EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber, PageCount, Accept);
+        if (Accept)
+        {
+            EfiUpdatePageRangeAcceptanceTdx(StartingPageNumber, PageCount);
+        }
+    }
+    else
+    {
+        ASSERT(IsolationType == UefiIsolationTypeSnp);
+        EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber, PageCount, Accept);
+    }
 }
 
 
 EFI_STATUS
-EfiMakePageHostVisibleSnp(
-    _In_ HV_GPA_PAGE_NUMBER PageNumber
+EfiMakePageRangeHostVisibleSnp(
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
     )
 /*++
 
 Routine Description:
 
-    This routine makes a page visible to the host on an SNP platform that runs
-    with no paravisor.
+    This routine makes a range of pages visible to the host on an SNP platform
+    that runs with no paravisor.
 
 Arguments:
 
-    PageNumber - Supplies the GPA page number of the page to make visible.
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         make visible.
+
+    PageCount - Supplies the number of pages to make visible.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
 
 Return Value:
 
@@ -212,48 +323,68 @@ Return Value:
     UINT64 errorCode;
     GHCB_MSR ghcbMsr;
 
-    //
-    // Ensure this page is no longer a valid private address.
-    //
-
-    if (_sev_pvalidate((PVOID)(PageNumber * EFI_PAGE_SIZE), 0, 0, &errorCode))
+    if (ARGUMENT_PRESENT(PagesProcessed))
     {
-        return EFI_SECURITY_VIOLATION;
+        *PagesProcessed = 0;
     }
 
-    if (errorCode != 0)
-    {
-        return EFI_SECURITY_VIOLATION;
-    }
-
-    //
-    // Request a page conversion via the GHCB register protocol.
-    //
-
-    ghcbMsr.AsUINT64 = 0;
-    ghcbMsr.GhcbInfo = GHCB_INFO_PAGE_STATE_CHANGE;
-    ghcbMsr.GpaPageNumber = PageNumber;
-    ghcbMsr.ExtraData = GHCB_DATA_PAGE_STATE_SHARED;
-
-    ghcbMsr.AsUINT64 = SpecialGhcbCall(ghcbMsr.AsUINT64);
-
-    if (ghcbMsr.AsUINT64 != GHCB_INFO_PAGE_STATE_UPDATED)
+    while (PageCount != 0)
     {
         //
-        // Restore this page to an accepted state since the visibility was not
-        // modified.
+        // Ensure this page is no longer a valid private address.
         //
 
-        while ((_sev_pvalidate((PVOID)(PageNumber * EFI_PAGE_SIZE), 0, TRUE, &errorCode)) ||
-               (errorCode != 0))
+        if (_sev_pvalidate((PVOID)(
+            StartingPageNumber * EFI_PAGE_SIZE),
+            0,
+            0,
+            &errorCode))
         {
-            //
-            // TODO-19259739: Have a better way of reporting UEFI errors.
-            //
-            ;
+            return EFI_SECURITY_VIOLATION;
         }
 
-        return EFI_SECURITY_VIOLATION;
+        if (errorCode != 0)
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        //
+        // Request a page conversion via the GHCB register protocol.
+        //
+
+        ghcbMsr.AsUINT64 = 0;
+        ghcbMsr.GhcbInfo = GHCB_INFO_PAGE_STATE_CHANGE;
+        ghcbMsr.GpaPageNumber = StartingPageNumber;
+        ghcbMsr.ExtraData = GHCB_DATA_PAGE_STATE_SHARED;
+
+        ghcbMsr.AsUINT64 = SpecialGhcbCall(ghcbMsr.AsUINT64);
+
+        if (ghcbMsr.AsUINT64 != GHCB_INFO_PAGE_STATE_UPDATED)
+        {
+            //
+            // Restore this page to an accepted state since the visibility was not
+            // modified.
+            //
+
+            while ((_sev_pvalidate((PVOID)(StartingPageNumber * EFI_PAGE_SIZE), 0, TRUE, &errorCode)) ||
+                   (errorCode != 0))
+            {
+                //
+                // TODO-19259739: Have a better way of reporting UEFI errors.
+                //
+                ;
+            }
+
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        if (ARGUMENT_PRESENT(PagesProcessed))
+        {
+            *PagesProcessed += 1;
+        }
+
+        StartingPageNumber += 1;
+        PageCount -= 1;
     }
 
     return EFI_SUCCESS;
@@ -261,9 +392,101 @@ Return Value:
 
 
 EFI_STATUS
-EfiMakePageHostVisible(
+EfiChangePageRangeHostVisibilityTdx(
+    _In_ HV_GPA SharedBoundaryGpa,
+    _In_ HV_GPA StartingGpa,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
+    )
+/*++
+
+Routine Description:
+
+    This routine changes the host visibility of a range of pages on a TDX
+    platform.
+
+Arguments:
+
+    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
+                        platform.
+
+    StartingGpa - Supplies the starting GPA of the range to make visible.
+
+    PageCount - Supplies the number of pages to make visible.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    HV_GPA failedGpa;
+    UINT64 pagesProcessed;
+    EFI_STATUS status;
+
+    //
+    // Request a page conversion via the MapPage GHCI call.
+    //
+
+    if (_tdx_vmcall_map_gpa(
+        StartingGpa,
+        PageCount * HV_PAGE_SIZE,
+        &failedGpa) != 0)
+    {
+        //
+        // If the count of pages processed is not reasonable, then proceed as
+        // if the call failed entirely.
+        //
+
+        if (ARGUMENT_PRESENT(PagesProcessed))
+        {
+            pagesProcessed = (failedGpa - StartingGpa) / HV_PAGE_SIZE;
+            if (pagesProcessed >= PageCount)
+            {
+                pagesProcessed = 0;
+            }
+        }
+
+        status = EFI_SECURITY_VIOLATION;
+    }
+    else
+    {
+        status = EFI_SUCCESS;
+        pagesProcessed = PageCount;
+    }
+
+    //
+    // If pages are being made private, then reaccept any pages that were
+    // successfully processed.
+    //
+
+    if ((pagesProcessed != 0) && (StartingGpa < SharedBoundaryGpa))
+    {
+        EfiUpdatePageRangeAcceptanceTdx(
+            StartingGpa / HV_PAGE_SIZE,
+            pagesProcessed);
+    }
+
+    if (ARGUMENT_PRESENT(PagesProcessed))
+    {
+        *PagesProcessed = PageCount;
+    }
+
+    return EFI_SUCCESS;
+}
+
+
+EFI_STATUS
+EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
-    _In_ HV_GPA_PAGE_NUMBER PageNumber
+    _In_ UINT64 SharedBoundaryGpa,
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
     )
 /*++
 
@@ -276,7 +499,17 @@ Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
 
-    PageNumber - Supplies the GPA page number of the page to make visible.
+    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
+                        platform.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         make visible.
+
+    PageCount - Supplies the number of pages to make visible.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
 
 Return Value:
 
@@ -284,9 +517,20 @@ Return Value:
 
 --*/
 {
-    if (IsolationType == UefiIsolationTypeSnp)
+    switch (IsolationType)
     {
-        return EfiMakePageHostVisibleSnp(PageNumber);
+    case UefiIsolationTypeSnp:
+        return EfiMakePageRangeHostVisibleSnp(
+            StartingPageNumber,
+            PageCount,
+            PagesProcessed);
+
+    case UefiIsolationTypeTdx:
+        return EfiChangePageRangeHostVisibilityTdx(
+            SharedBoundaryGpa,
+            SharedBoundaryGpa + (StartingPageNumber * HV_PAGE_SIZE),
+            PageCount,
+            PagesProcessed);
     }
 
     return EFI_INVALID_PARAMETER;
@@ -294,21 +538,28 @@ Return Value:
 
 
 EFI_STATUS
-EfiMakePageHostNotVisibleSnp(
-    _In_ HV_GPA_PAGE_NUMBER PageNumber
+EfiMakePageRangeHostNotVisibleSnp(
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
     )
 /*++
 
 Routine Description:
 
-    This routine makes a page private to the guest (not visible to the host)
-    on an SNP platform that runs with no paravisor.
+    This routine makes a range of pages private to the guest (not visible to
+    the host) on an SNP platform that runs with no paravisor.
 
 Arguments:
 
-    IsolationType - Supplies the isolation type of the current platform.
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         make private.
 
-    PageNumber - Supplies the GPA page number of the page to make private.
+    PageCount - Supplies the number of pages to make private.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
 
 Return Value:
 
@@ -319,34 +570,54 @@ Return Value:
     UINT64 errorCode;
     GHCB_MSR ghcbMsr;
 
-    //
-    // Request a page conversion via the GHCB register protocol.
-    //
-
-    ghcbMsr.AsUINT64 = 0;
-    ghcbMsr.GhcbInfo = GHCB_INFO_PAGE_STATE_CHANGE;
-    ghcbMsr.GpaPageNumber = PageNumber;
-    ghcbMsr.ExtraData = GHCB_DATA_PAGE_STATE_SHARED;
-
-    ghcbMsr.AsUINT64 = SpecialGhcbCall(ghcbMsr.AsUINT64);
-
-    if (ghcbMsr.AsUINT64 != GHCB_INFO_PAGE_STATE_UPDATED)
+    if (ARGUMENT_PRESENT(PagesProcessed))
     {
-        return EFI_SECURITY_VIOLATION;
+        *PagesProcessed = 0;
     }
 
-    //
-    // Validate this page to make it accessible again.
-    //
-
-    if (_sev_pvalidate((PVOID)(PageNumber * EFI_PAGE_SIZE), 0, 1, &errorCode))
+    while (PageCount != 0)
     {
-        return EFI_SECURITY_VIOLATION;
-    }
+        //
+        // Request a page conversion via the GHCB register protocol.
+        //
 
-    if (errorCode != 0)
-    {
-        return EFI_SECURITY_VIOLATION;
+        ghcbMsr.AsUINT64 = 0;
+        ghcbMsr.GhcbInfo = GHCB_INFO_PAGE_STATE_CHANGE;
+        ghcbMsr.GpaPageNumber = StartingPageNumber;
+        ghcbMsr.ExtraData = GHCB_DATA_PAGE_STATE_SHARED;
+
+        ghcbMsr.AsUINT64 = SpecialGhcbCall(ghcbMsr.AsUINT64);
+
+        if (ghcbMsr.AsUINT64 != GHCB_INFO_PAGE_STATE_UPDATED)
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        //
+        // Validate this page to make it accessible again.
+        //
+
+        if (_sev_pvalidate((PVOID)(
+            StartingPageNumber * EFI_PAGE_SIZE),
+            0,
+            1,
+            &errorCode))
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        if (errorCode != 0)
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        if (ARGUMENT_PRESENT(PagesProcessed))
+        {
+            *PagesProcessed += 1;
+        }
+
+        StartingPageNumber += 1;
+        PageCount -= 1;
     }
 
     return EFI_SUCCESS;
@@ -354,9 +625,12 @@ Return Value:
 
 
 EFI_STATUS
-EfiMakePageHostNotVisible(
+EfiMakePageRangeHostNotVisible(
     _In_ UINT32 IsolationType,
-    _In_ HV_GPA_PAGE_NUMBER PageNumber
+    _In_ UINT64 SharedBoundaryGpa,
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
     )
 /*++
 
@@ -367,9 +641,21 @@ Routine Description:
 
 Arguments:
 
+Arguments:
+
     IsolationType - Supplies the isolation type of the current platform.
 
-    PageNumber - Supplies the GPA page number of the page to make private.
+    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
+                        platform.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         make not visible.
+
+    PageCount - Supplies the number of pages to make not visible.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
 
 Return Value:
 
@@ -377,9 +663,20 @@ Return Value:
 
 --*/
 {
-    if (IsolationType == UefiIsolationTypeSnp)
+    switch (IsolationType)
     {
-        return EfiMakePageHostNotVisibleSnp(PageNumber);
+    case UefiIsolationTypeSnp:
+        return EfiMakePageRangeHostNotVisibleSnp(
+            StartingPageNumber,
+            PageCount,
+            PagesProcessed);
+
+    case UefiIsolationTypeTdx:
+        return EfiChangePageRangeHostVisibilityTdx(
+            SharedBoundaryGpa,
+            StartingPageNumber * HV_PAGE_SIZE,
+            PageCount,
+            PagesProcessed);
     }
 
     return EFI_INVALID_PARAMETER;

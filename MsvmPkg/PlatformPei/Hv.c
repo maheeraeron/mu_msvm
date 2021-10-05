@@ -77,6 +77,9 @@ Return Value:
     case HV_PARTITION_ISOLATION_TYPE_SNP:
         status = PcdSet32S(PcdIsolationArchitecture, UefiIsolationTypeSnp);
         break;
+    case HV_PARTITION_ISOLATION_TYPE_TDX:
+        status = PcdSet32S(PcdIsolationArchitecture, UefiIsolationTypeTdx);
+        break;
     case HV_PARTITION_ISOLATION_TYPE_NONE:
         return;
     default:

@@ -27,6 +27,7 @@
 #include <EfiNt.h>
 #include <hvgdk_mini.h>
 #include <BiosInterface.h>
+#include <IsolationTypes.h>
 #include "SecP.h"
 
 #define SEC_IDT_ENTRY_COUNT 46
@@ -1140,11 +1141,33 @@ Return Value:
         Handler = (UINTN)SecVirtualCommunicationExceptionHandler;
         Vector = 29;
 
-        if (!SecInitializeSnp(UefiIgvmConfigHeader))
+        if (!SecInitializeHardwareIsolation(UefiIsolationTypeSnp, UefiIgvmConfigHeader))
         {
             return;
         }
+    }
+    else if (mIsolationConfiguration.IsolationType == HV_PARTITION_ISOLATION_TYPE_TDX)
+    {
+        //
+        // #VE is exception vector 20.
+        //
 
+        Handler = (UINTN)SecVirtualizationExceptionHandler;
+        Vector = 20;
+
+        if (!SecInitializeHardwareIsolation(UefiIsolationTypeTdx, UefiIgvmConfigHeader))
+        {
+            return;
+        }
+    }
+    else
+    {
+        Handler = 0;
+        Vector = 0;
+    }
+
+    if (Handler != 0)
+    {
         IdtTableInStack.IdtTable[Vector].Uint128.Uint64 = 0;
         IdtTableInStack.IdtTable[Vector].Uint128.Uint64_1 = 0;
         IdtTableInStack.IdtTable[Vector].Bits.OffsetLow = (UINT16)Handler;

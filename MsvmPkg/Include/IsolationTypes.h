@@ -19,6 +19,7 @@ enum
     UefiIsolationTypeNone       = 0x00,
     UefiIsolationTypeVbs        = 0x01,
     UefiIsolationTypeSnp        = 0x02,
+    UefiIsolationTypeTdx        = 0x03,
 };
 
 UINT32

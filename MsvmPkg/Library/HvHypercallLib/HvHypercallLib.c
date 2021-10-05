@@ -17,6 +17,7 @@ Abstract:
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HvHypercallLib.h>
+#include <IsolationTypes.h>
 
 #include <HvHypercallLibP.h>
 
@@ -24,9 +25,18 @@ Abstract:
 
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
+HV_X64_HYPERCALL_OUTPUT
+HvHypercallpIssueTdxHypercall(
+    _In_ HV_X64_HYPERCALL_INPUT Control,
+    _In_ UINT64                 InputPhysicalAddress,
+    _In_ UINT64                 OutputPhysicalAddress
+    );
+
+
 VOID
 HvHypercallConnect(
     _In_ PVOID HypercallPage,
+    _In_ UINT32 IsolationType,
     _In_opt_ PVOID OutputPageForIsolationBypass,
     _Out_ HV_HYPERCALL_CONTEXT *Context
     )
@@ -39,6 +49,11 @@ Routine Description:
 Arguments:
 
     HypercallPage - An address at which to place the hypercall page.
+
+    IsolationType - Supplies an isolation architecture which must be used to
+                    connect to the hypervisor, or UefiIsolationTypeNone for
+                    non-isolated hypercalls (also used for calls to the
+                    paravisor from an isolated VM).
 
     OutputPageForIsolationBypass - If present, indicates that this connection
                                    should bypass isolation protections and go
@@ -80,31 +95,42 @@ Return Value:
         ASSERT(sharedGpaBoundary != 0);
 
         //
-        // Obtain the GHCB address.  If this is not above the shared GPA
-        // boundary, then it must be incorrectly configured.  If the address
-        // is above the shared GPA boundary, then the address can be used
-        // without further validation, since only one of four outcomes is
-        // possible:
-        // 1. The address is non-canonical, which will result in a fatal
-        //    exception when it is used.
-        // 2. The address is canonical but exceeds the physical address width,
-        //    which will result in a fatal exception when it is used.
-        // 3. The address is the shared alias for a valid protected page.
-        //    When it is used as shared, the hypervisor will revoke the
-        //    private copy, resulting in a fatal exception the next time the
-        //    protected memory is accessed.
-        // 4. The address is legitimate.
+        // Determine how the isolation boundary will be penetrated.
         //
-
-        ghcbAddress = AsmReadMsr64(SEV_MSR_GHCB);
-        if ((ghcbAddress < sharedGpaBoundary) || ((ghcbAddress & (EFI_PAGE_SIZE - 1)) != 0))
+        if (IsolationType == UefiIsolationTypeTdx)
         {
-            // If the GHCB is misconfigured, then no further work is possible.
-            ASSERT(FALSE);
-            CpuDeadLoop();
+            Context->IsTdx = TRUE;
+        }
+        else
+        {
+            //
+            // Obtain the GHCB address.  If this is not above the shared GPA
+            // boundary, then it must be incorrectly configured.  If the address
+            // is above the shared GPA boundary, then the address can be used
+            // without further validation, since only one of four outcomes is
+            // possible:
+            // 1. The address is non-canonical, which will result in a fatal
+            //    exception when it is used.
+            // 2. The address is canonical but exceeds the physical address width,
+            //    which will result in a fatal exception when it is used.
+            // 3. The address is the shared alias for a valid protected page.
+            //    When it is used as shared, the hypervisor will revoke the
+            //    private copy, resulting in a fatal exception the next time the
+            //    protected memory is accessed.
+            // 4. The address is legitimate.
+            //
+
+            ghcbAddress = AsmReadMsr64(SEV_MSR_GHCB);
+            if ((ghcbAddress < sharedGpaBoundary) || ((ghcbAddress & (EFI_PAGE_SIZE - 1)) != 0))
+            {
+                // If the GHCB is misconfigured, then no further work is possible.
+                ASSERT(FALSE);
+                CpuDeadLoop();
+            }
+
+            Context->Ghcb = (PVOID)ghcbAddress;
         }
 
-        Context->Ghcb = (PVOID)ghcbAddress;
         Context->OutputPage = OutputPageForIsolationBypass;
 
         //
@@ -113,13 +139,20 @@ Return Value:
         // set.
         //
 
-        HvHypercallpDisableInterrupts();
+        if (Context->IsTdx)
+        {
+            _tdx_vmcall_wrmsr(HV_X64_MSR_GUEST_OS_ID, guestOsId.AsUINT64);
+        }
+        else
+        {
+            HvHypercallpDisableInterrupts();
 
-        HvHypercallpSetMsrWithGhcb(Context,
-                                   HV_X64_MSR_GUEST_OS_ID,
-                                   guestOsId.AsUINT64);
+            HvHypercallpSetMsrWithGhcb(Context,
+                                       HV_X64_MSR_GUEST_OS_ID,
+                                       guestOsId.AsUINT64);
 
-        HvHypercallpEnableInterrupts();
+            HvHypercallpEnableInterrupts();
+        }
 
 #else
 
@@ -222,7 +255,7 @@ Return Value:
 
         HV_X64_MSR_HYPERCALL_CONTENTS hypercallMsr;
 
-        if (Context->Ghcb == NULL)
+        if ((Context->Ghcb == NULL) && !Context->IsTdx)
         {
             hypercallMsr.AsUINT64 = HvHypercallGetVpRegister64Self(Context, HvX64RegisterHypercall);
             hypercallMsr.Enable = 0;
@@ -336,8 +369,15 @@ Return Value:
 
 #pragma warning(disable: 4055)
 
-        HYPERCALL_ROUTINE* hypercallRoutine =
-            (HYPERCALL_ROUTINE *)Context->HypercallPage;
+        HYPERCALL_ROUTINE* hypercallRoutine;
+        if (Context->IsTdx)
+        {
+            hypercallRoutine = HvHypercallpIssueTdxHypercall;
+        }
+        else
+        {
+            hypercallRoutine = (HYPERCALL_ROUTINE *)Context->HypercallPage;
+        }
 
         callOutput = hypercallRoutine(callInput,
                                       FirstRegister,
@@ -726,7 +766,16 @@ Return Value:
         // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
         //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
 
-        registerValue = AsmReadMsr64(msr);
+#if defined(MDE_CPU_X64)
+        if (Context->IsTdx)
+        {
+            registerValue = _tdx_vmcall_rdmsr(msr);
+        }
+        else
+#endif
+        {
+            registerValue = AsmReadMsr64(msr);
+        }
     }
 
 #elif defined(MDE_CPU_AARCH64)
@@ -809,7 +858,16 @@ Return Value:
         // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
         //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
 
-        AsmWriteMsr64(msr, RegisterValue);
+#if defined(MDE_CPU_X64)
+        if (Context->IsTdx)
+        {
+            _tdx_vmcall_wrmsr(msr, RegisterValue);
+        }
+        else
+#endif
+        {
+            AsmWriteMsr64(msr, RegisterValue);
+        }
     }
 
 #elif defined(MDE_CPU_AARCH64)

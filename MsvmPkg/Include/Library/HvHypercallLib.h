@@ -44,6 +44,7 @@ AsmSetVpRegister64(
 typedef struct _HV_HYPERCALL_CONTEXT
 {
     BOOLEAN Connected;
+    BOOLEAN IsTdx;
     PVOID Ghcb;
     PVOID OutputPage;
 
@@ -59,6 +60,7 @@ typedef struct _HV_HYPERCALL_CONTEXT
 VOID
 HvHypercallConnect(
     _In_ PVOID HypercallPage,
+    _In_ UINT32 IsolationType,
     _In_opt_ PVOID OutputPageForIsolationBypass,
     _Out_ HV_HYPERCALL_CONTEXT *Context
     );
@@ -99,4 +101,11 @@ HvHypercallSetVpRegister64Self(
     _In_ HV_HYPERCALL_CONTEXT *Context,
     _In_ HV_REGISTER_NAME RegisterName,
     _In_ UINT64 RegisterValue
+    );
+
+VOID
+HvHypercallRequestHypervisorCpuid(
+    _In_ HV_HYPERCALL_CONTEXT *Context,
+    _In_ UINT32 CpuidLeaf,
+    _Out_ PHV_CPUID_RESULT CpuidResult
     );

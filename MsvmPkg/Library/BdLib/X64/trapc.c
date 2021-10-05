@@ -155,7 +155,7 @@ Return Value:
         //
 
         if ((idtBase[index].Bits.GateType == 0) ||
-            (index != 0x1D))
+            ((index != 0x1D) && (index != 0x14)))
         {
             ArchSetIdtEntry(idtBase,
                             index * sizeof(IA32_IDT_GATE_DESCRIPTOR),

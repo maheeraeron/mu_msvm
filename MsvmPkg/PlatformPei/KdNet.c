@@ -39,8 +39,8 @@ AllocateHostVisiblePages(
     _Out_ EFI_PHYSICAL_ADDRESS *Allocation
     )
 {
-    HV_GPA_PAGE_NUMBER gpaPage;
     UINT32 numberOfPages;
+    UINT64 sharedGpaBoundary;
     EFI_STATUS status;
 
     //
@@ -69,21 +69,21 @@ AllocateHostVisiblePages(
     // be reused, so the indeterminate visibility state is irrelevant.
     //
 
-    gpaPage = *Allocation / EFI_PAGE_SIZE;
+    sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
 
-    while (numberOfPages != 0)
+    status = EfiMakePageRangeHostVisible(
+        IsolationType,
+        sharedGpaBoundary,
+        *Allocation / EFI_PAGE_SIZE,
+        numberOfPages,
+        NULL);
+
+    if (EFI_ERROR(status))
     {
-        status = EfiMakePageHostVisible(IsolationType, gpaPage);
-        if (EFI_ERROR(status))
-        {
-            return status;
-        }
-
-        gpaPage += 1;
-        numberOfPages -= 1;
+        return status;
     }
 
-    *Allocation += PcdGet64(PcdIsolationSharedGpaBoundary);
+    *Allocation += sharedGpaBoundary;
 
     return EFI_SUCCESS;
 }
@@ -501,6 +501,7 @@ Return Value:
 #if defined(MDE_CPU_X64)
     EFI_PHYSICAL_ADDRESS ghcbAddress;
     EFI_PHYSICAL_ADDRESS hostVisibleData;
+    UINT32 isolationType;
 #endif
 
     status = PeiServicesFfsFindSectionData(EFI_SECTION_RAW,
@@ -662,8 +663,9 @@ Return Value:
     //
     if (IsHardwareIsolatedNoParavisor())
     {
+        isolationType = GetIsolationType();
         status = AllocateHostVisiblePages(
-            GetIsolationType(),
+            isolationType,
             KdNetParameters.DbgDeviceDescriptor.TransportData.SharedVisibleDataSize,
             &hostVisibleData);
         if (EFI_ERROR(status))
@@ -674,20 +676,24 @@ Return Value:
         KdNetParameters.DbgDeviceDescriptor.BaseAddress[0].Length = KdNetParameters.DbgDeviceDescriptor.TransportData.SharedVisibleDataSize;
         KdNetParameters.DbgDeviceDescriptor.BaseAddress[0].TranslatedAddress = (VOID *)hostVisibleData;
 
-        //
-        // Obtain the address of the GHCB.  This comes from an untrusted
-        // register, but any page that's above the shared GPA boundary will be
-        // suitable, since all shared pages are assumed to be untrustworthy.
-        //
-
-        ghcbAddress = AsmReadMsr64(MSR_GHCB);
-        if ((ghcbAddress % EFI_PAGE_SIZE != 0) ||
-            (ghcbAddress < PcdGet64(PcdIsolationSharedGpaBoundary)))
+        if (isolationType == UefiIsolationTypeSnp)
         {
-            return;
-        }
+            //
+            // Obtain the address of the GHCB.  This comes from an untrusted
+            // register, but any page that's above the shared GPA boundary
+            // will be suitable, since all shared pages are assumed to be
+            // untrustworthy.
+            //
 
-        KdNetParameters.DbgDeviceDescriptor.BaseAddress[1].TranslatedAddress = (VOID *)ghcbAddress;
+            ghcbAddress = AsmReadMsr64(MSR_GHCB);
+            if ((ghcbAddress % EFI_PAGE_SIZE != 0) ||
+                (ghcbAddress < PcdGet64(PcdIsolationSharedGpaBoundary)))
+            {
+                return;
+            }
+
+            KdNetParameters.DbgDeviceDescriptor.BaseAddress[1].TranslatedAddress = (VOID *)ghcbAddress;
+        }
     }
 
 #endif

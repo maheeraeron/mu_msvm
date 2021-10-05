@@ -13,6 +13,7 @@
 [Sources.X64]
     X64/GhcbCall.c
     X64/SvmSnp.asm | MSFT
+    X64/TdxCall.asm | MSFT
 
 [Sources.AARCH64]
     AArch64/HypercallImpl.masm

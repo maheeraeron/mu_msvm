@@ -20,6 +20,7 @@ Abstract:
 #include <EfiNt.h>
 #include <hvgdk_mini.h>
 #include <BiosInterface.h>
+#include <IsolationTypes.h>
 #include "SecP.h"
 
 #define GHCB_FIELD_INDEX(Field) ((Field) / 8)
@@ -148,8 +149,9 @@ SecInitializeReferenceTime (
 }
 
 BOOLEAN
-SecInitializeSnp (
-    UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+SecInitializeHardwareIsolation (
+    _In_ UINT32 IsolationType,
+    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
     )
 {
     UINT32 clockFrequency;
@@ -161,78 +163,84 @@ SecInitializeSnp (
     UINT32 leafNumber;
     UINT32 leafType;
     UINT64 sharedGpaBoundary;
+    UINT32 tscDenominator;
+    UINT32 tscNumerator;
 
-    //
-    // Select a GHCB address as the first page before the parameter info block.
-    //
-
-    if (mIsolationConfiguration.SharedGpaBoundaryActive)
+    if (IsolationType == UefiIsolationTypeSnp)
     {
-        sharedGpaBoundary = (1UI64 << mIsolationConfiguration.SharedGpaBoundaryBits);
-    }
-    else
-    {
-        sharedGpaBoundary = 0;
-    }
+        //
+        // Select a GHCB address as the first page before the parameter info
+        // block.
+        //
 
-    ghcbAddress = (UINTN)ParameterInfo - EFI_PAGE_SIZE + sharedGpaBoundary;
-
-    //
-    // Attempt to register the GHCB at the selected address.
-    //
-
-    AsmWriteMsr64(MSR_GHCB, ghcbAddress | GHCB_INFO_REGISTER_REQUEST);
-    SecVmgexit();
-    ghcbMsr = AsmReadMsr64(MSR_GHCB);
-    if (ghcbMsr != (ghcbAddress | GHCB_INFO_REGISTER_RESPONSE))
-    {
-        return FALSE;
-    }
-
-    //
-    // Configure the GHCB for further use.
-    //
-
-    AsmWriteMsr64(MSR_GHCB, ghcbAddress);
-    Ghcb = (PVOID)ghcbAddress;
-
-    //
-    // Capture the location of CPUID information.
-    //
-
-    CpuidPage = (HV_PSP_CPUID_PAGE *)((UINTN)ParameterInfo + ParameterInfo->CpuidPagesOffset * EFI_PAGE_SIZE);
-
-    //
-    // Capture the set of CPUID information that is present.
-    //
-
-    CpuidInfo.SupportedLeaves |= 1;
-    ExtendedCpuidInfo.SupportedLeaves |= 1;
-
-    for (index = 0; index < HV_PSP_CPUID_LEAF_COUNT_MAX; index += 1)
-    {
-        leafNumber = CpuidPage->CpuidLeafInfo[index].EaxIn & 0x0FFFFFFF;
-        leafType = (CpuidPage->CpuidLeafInfo[index].EaxIn >> 28);
-        if (leafType == 0)
+        if (mIsolationConfiguration.SharedGpaBoundaryActive)
         {
-            cpuidInfo = &CpuidInfo;
-        }
-        else if (leafType == 8)
-        {
-            cpuidInfo = &ExtendedCpuidInfo;
+            sharedGpaBoundary = (1UI64 << mIsolationConfiguration.SharedGpaBoundaryBits);
         }
         else
         {
-            cpuidInfo = NULL;
+            sharedGpaBoundary = 0;
         }
 
-        if ((cpuidInfo != NULL) && (leafNumber < 0x40))
+        ghcbAddress = (UINTN)ParameterInfo - EFI_PAGE_SIZE + sharedGpaBoundary;
+
+        //
+        // Attempt to register the GHCB at the selected address.
+        //
+
+        AsmWriteMsr64(MSR_GHCB, ghcbAddress | GHCB_INFO_REGISTER_REQUEST);
+        SecVmgexit();
+        ghcbMsr = AsmReadMsr64(MSR_GHCB);
+        if (ghcbMsr != (ghcbAddress | GHCB_INFO_REGISTER_RESPONSE))
         {
-            if (leafNumber > cpuidInfo->MaximumLeafIndex)
+            return FALSE;
+        }
+
+        //
+        // Configure the GHCB for further use.
+        //
+
+        AsmWriteMsr64(MSR_GHCB, ghcbAddress);
+        Ghcb = (PVOID)ghcbAddress;
+
+        //
+        // Capture the location of CPUID information.
+        //
+
+        CpuidPage = (HV_PSP_CPUID_PAGE *)((UINTN)ParameterInfo + ParameterInfo->CpuidPagesOffset * EFI_PAGE_SIZE);
+
+        //
+        // Capture the set of CPUID information that is present.
+        //
+
+        CpuidInfo.SupportedLeaves |= 1;
+        ExtendedCpuidInfo.SupportedLeaves |= 1;
+
+        for (index = 0; index < HV_PSP_CPUID_LEAF_COUNT_MAX; index += 1)
+        {
+            leafNumber = CpuidPage->CpuidLeafInfo[index].EaxIn & 0x0FFFFFFF;
+            leafType = (CpuidPage->CpuidLeafInfo[index].EaxIn >> 28);
+            if (leafType == 0)
             {
-                cpuidInfo->MaximumLeafIndex = leafNumber;
+                cpuidInfo = &CpuidInfo;
             }
-            cpuidInfo->SupportedLeaves |= (1UI64 << leafNumber);
+            else if (leafType == 8)
+            {
+                cpuidInfo = &ExtendedCpuidInfo;
+            }
+            else
+            {
+                cpuidInfo = NULL;
+            }
+
+            if ((cpuidInfo != NULL) && (leafNumber < 0x40))
+            {
+                if (leafNumber > cpuidInfo->MaximumLeafIndex)
+                {
+                    cpuidInfo->MaximumLeafIndex = leafNumber;
+                }
+                cpuidInfo->SupportedLeaves |= (1UI64 << leafNumber);
+            }
         }
     }
 
@@ -240,9 +248,18 @@ SecInitializeSnp (
     // Capture the TSC frequency for scaling.
     //
 
-    clockFrequency = (UINT32)SecReadMsrWithGhcb(HV_X64_MSR_TSC_FREQUENCY);
+    if (IsolationType == UefiIsolationTypeSnp)
+    {
+        clockFrequency = (UINT32)SecReadMsrWithGhcb(HV_X64_MSR_TSC_FREQUENCY);
+        tscNumerator = 1;
+        tscDenominator = 1;
+    }
+    else
+    {
+        AsmCpuid(0x15, &tscDenominator, &tscNumerator, &clockFrequency, NULL);
+    }
 
-    SecInitializeReferenceTime(clockFrequency, 1, 1);
+    SecInitializeReferenceTime(clockFrequency, tscNumerator, tscDenominator);
 
     //
     // Set the guest OS ID so that hypercalls are possible.
@@ -255,7 +272,15 @@ SecInitializeSnp (
     guestOsId.MajorVersion = 1;
     guestOsId.OsId = HvGuestOsMicrosoftUndefined;
     guestOsId.VendorId = HvGuestOsVendorMicrosoft;
-    SecWriteMsrWithGhcb(HV_X64_MSR_GUEST_OS_ID, guestOsId.AsUINT64);
+
+    if (IsolationType == UefiIsolationTypeSnp)
+    {
+        SecWriteMsrWithGhcb(HV_X64_MSR_GUEST_OS_ID, guestOsId.AsUINT64);
+    }
+    else
+    {
+        SecTdCallWrmsr(HV_X64_MSR_GUEST_OS_ID, guestOsId.AsUINT64);
+    }
 
     return TRUE;
 }
@@ -279,7 +304,15 @@ SecProcessVirtualMsrRead (
         // This must be read directly from the hypervisor.
         //
 
-        value = SecReadMsrWithGhcb(TrapFrame->Rcx);
+        if (Ghcb != NULL)
+        {
+            value = SecReadMsrWithGhcb(TrapFrame->Rcx);
+        }
+        else
+        {
+            value = SecTdCallRdmsr(TrapFrame->Rcx);
+        }
+
         break;
 
     case HvSyntheticMsrVpIndex:
@@ -359,7 +392,7 @@ SecProcessVirtualCpuid (
         return FALSE;
     }
 
-    if (cpuidInfo != NULL)
+    if ((cpuidInfo != NULL) && (CpuidPage != NULL))
     {
         //
         // See if the requested leaf can be found in the table.  If not, then fail.
@@ -400,15 +433,19 @@ SecProcessVirtualCpuid (
     case 0:
     case 0x80000000:
 
-        //
-        // These leaves are not normally present in the table, so the value
-        // must be calculated here.
-        //
+        if (CpuidPage != NULL)
+        {
+            //
+            // These leaves are not normally present in the table, so the value
+            // must be calculated here.  Since SNP is the only platform that
+            // uses a CPUID table, the AMD value can be inserted here.
+            //
 
-        cpuidResult.Eax = cpuidInfo->MaximumLeafIndex | (leaf & 0x80000000);
-        cpuidResult.Ebx = 'htuA';
-        cpuidResult.Edx = 'itne';
-        cpuidResult.Ecx = 'DMAc';
+            cpuidResult.Eax = cpuidInfo->MaximumLeafIndex | (leaf & 0x80000000);
+            cpuidResult.Ebx = 'htuA';
+            cpuidResult.Edx = 'itne';
+            cpuidResult.Ecx = 'DMAc';
+        }
         break;
 
     case 1:
@@ -513,6 +550,52 @@ SecProcessVirtualCommunicationException (
     }
 
     TrapFrame->Rip += InstructionLength;
+
+    return TRUE;
+}
+
+BOOLEAN
+SecProcessVirtualizationException (
+    _In_ PTRAP_FRAME TrapFrame
+    )
+{
+    TDX_VE_INFO veInfo;
+
+    //
+    // Attempt to obtain the #VE information.  If this is not possible, then
+    // the exception cannot be handled.
+    //
+
+    if (SecGetTdxVeInfo(&veInfo) < 0)
+    {
+        return FALSE;
+    }
+
+    //
+    // Handle the intercept if possible.
+    //
+
+    switch (veInfo.ExitReason)
+    {
+    case VE_EXIT_CODE_RDMSR:
+        if (!SecProcessVirtualMsrRead(TrapFrame))
+        {
+            return FALSE;
+        }
+        break;
+
+    case VE_EXIT_CODE_CPUID:
+        if (!SecProcessVirtualCpuid(TrapFrame))
+        {
+            return FALSE;
+        }
+        break;
+
+    default:
+        return FALSE;
+    }
+
+    TrapFrame->Rip += veInfo.InstructionLength;
 
     return TRUE;
 }

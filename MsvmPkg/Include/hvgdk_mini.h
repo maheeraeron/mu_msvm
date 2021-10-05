@@ -1506,6 +1506,7 @@ typedef struct _HV_HYPERVISOR_ISOLATION_CONFIGURATION
 #define HV_PARTITION_ISOLATION_TYPE_NONE            0
 #define HV_PARTITION_ISOLATION_TYPE_VBS             1
 #define HV_PARTITION_ISOLATION_TYPE_SNP             2
+#define HV_PARTITION_ISOLATION_TYPE_TDX             3
 
 //
 // Typedefs for CPUID leaves on HvMicrosoftHypercallInterface-supporting

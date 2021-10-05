@@ -29,13 +29,19 @@ EfiUpdatePageRangeAcceptance(
     );
 
 EFI_STATUS
-EfiMakePageHostVisible(
+EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
-    _In_ HV_GPA_PAGE_NUMBER PageNumber
+    _In_ HV_GPA SharedBoundaryGpa,
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
     );
 
 EFI_STATUS
-EfiMakePageHostNotVisible(
+EfiMakePageRangeHostNotVisible(
     _In_ UINT32 IsolationType,
-    _In_ HV_GPA_PAGE_NUMBER PageNumber
+    _In_ HV_GPA SharedBoundaryGpa,
+    _In_ HV_GPA_PAGE_NUMBER PageNumber,
+    _In_ UINT64 PageCount,
+    _Out_opt_ PUINT64 PagesProcessed
     );

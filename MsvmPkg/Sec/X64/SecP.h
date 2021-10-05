@@ -39,8 +39,9 @@ typedef struct _TRAP_FRAME {
 } TRAP_FRAME, *PTRAP_FRAME;
 
 BOOLEAN
-SecInitializeSnp (
-    UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+SecInitializeHardwareIsolation (
+    _In_ UINT32 IsolationType,
+    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
     );
 
 #define MSR_GHCB        0xC0010130
@@ -81,11 +82,46 @@ typedef struct _HV_PSP_CPUID_PAGE
     HV_PSP_CPUID_LEAF CpuidLeafInfo[HV_PSP_CPUID_LEAF_COUNT_MAX];
 } HV_PSP_CPUID_PAGE, *PHV_PSP_CPUID_PAGE;
 
+
 typedef struct _SEC_CPUID_INFO
 {
     UINT64 SupportedLeaves;
     UINT32 MaximumLeafIndex;
 } SEC_CPUID_INFO;
+
+VOID
+SecVirtualizationExceptionHandler (
+    VOID
+    );
+
+typedef struct _TDX_VE_INFO {
+    UINT32 ExitReason;
+    UINT32 Valid;
+    UINT64 ExitQualification;
+    UINT64 GuestLinearAddress;
+    UINT64 GuestPhysicalAddress;
+    UINT32 InstructionLength;
+    UINT32 InstructionInfo;
+} TDX_VE_INFO, *PTDX_VE_INFO;
+
+#define VE_EXIT_CODE_CPUID      10   
+#define VE_EXIT_CODE_RDMSR      31
+
+LONG64
+SecGetTdxVeInfo(
+    _Out_ PTDX_VE_INFO VeInfo
+    );
+
+UINT64
+SecTdCallRdmsr(
+    _In_ UINT64 MsrNumber
+    );
+
+VOID
+SecTdCallWrmsr(
+    _In_ UINT64 MsrNumber,
+    _In_ UINT64 MsrValue
+    );
 
 UINT64
 MulDiv64 (

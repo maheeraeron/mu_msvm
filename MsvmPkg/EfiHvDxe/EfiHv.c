@@ -1116,20 +1116,23 @@ EfiHvpModifySparseGpaPageHostVisibility(
             // pages must be made visible without using hypercalls.
             if (!mHvBypassContext.Connected)
             {
-                while (PageCount != 0)
-                {
-                    status = EfiMakePageHostVisible(mIsolationType, GpaPageBase);
-                    if (EFI_ERROR(status))
-                    {
-                        return status;
-                    }
+                UINT64 pagesProcessed;
 
-                    GpaPageBase += 1;
-                    PageCount -= 1;
-                    *PageCountProcessed += 1;
+                status = EfiMakePageRangeHostVisible(
+                    mIsolationType,
+                    PcdGet64(PcdIsolationSharedGpaBoundary),
+                    GpaPageBase,
+                    PageCount,
+                    &pagesProcessed);
+
+                ASSERT(pagesProcessed <= PageCount);
+
+                if (PageCountProcessed != NULL)
+                {
+                    *PageCountProcessed = (UINT32)pagesProcessed;
                 }
 
-                return EFI_SUCCESS;
+                return status;
             }
 
             EfiUpdatePageRangeAcceptance(
@@ -1529,7 +1532,10 @@ Return Value:
         ZeroMem(mHvPages, sizeof(*mHvPages));
         ZeroMem(mHypercallPage, EFI_PAGE_SIZE);
 
-        HvHypercallConnect(mHypercallPage, NULL, &mHvContext);
+        HvHypercallConnect(mHypercallPage,
+                           UefiIsolationTypeNone,
+                           NULL,
+                           &mHvContext);
 
         // Check to see if the hypercall page was mapped. If it wasn't, abort here.
         if (mHypercallPage[0] == 0 &&
@@ -1614,6 +1620,7 @@ Return Value:
         }
 
         HvHypercallConnect(NULL,
+                           mIsolationType,
                            mOutputPageBypass,
                            &mHvBypassContext);
 
