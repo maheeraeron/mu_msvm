@@ -94,6 +94,11 @@ PlatformDeviceStateHelperInit(
     CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
   }
 
+#if defined(DEBUG_PLATFORM)
+  // Enable debug color bar on DEBUG builds
+  CoreNotifications |= DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED;
+#endif
+
   AddDeviceState(CoreNotifications);
 
   return EFI_SUCCESS;

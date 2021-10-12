@@ -29,6 +29,7 @@
 [BuildOptions]
   # TODO-cho: X64 has this, something similar needed for AARCH64 full debug support?
   *_*_AARCH64_GENFW_FLAGS = --keepexceptiontable
+  DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM
 
 ################################################################################
 #

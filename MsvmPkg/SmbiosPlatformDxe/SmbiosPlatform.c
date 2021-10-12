@@ -44,7 +44,11 @@ Author:
 //
 #define MAJOR_RELEASE_VERSION 4
 #define MINOR_RELEASE_VERSION 1
+#if defined(DEBUG_PLATFORM)
+static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI DEBUG BUILD";
+#else
 static CHAR8 RELEASE_VERSION_STRING[] = "Hyper-V UEFI Release v4.1";
+#endif
 static CHAR8 RELEASE_DATE_STRING[] = "mm/dd/yyyy";
 
 //
