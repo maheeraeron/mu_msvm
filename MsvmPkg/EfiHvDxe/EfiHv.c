@@ -1193,7 +1193,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         // Call the hypervisor.
         //
 
-        hvStatus = HvHypercallIssue(mUseBypassContext ? &mHvBypassContext : &mHvContext,
+        hvStatus = HvHypercallIssue(mBypassOnly ? &mHvBypassContext : &mHvContext,
                                     HvCallModifySparseGpaPageHostVisibility,
                                     FALSE, // not fast
                                     repsInCurrentCall,
