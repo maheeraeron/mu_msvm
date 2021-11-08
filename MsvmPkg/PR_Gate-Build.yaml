@@ -3,7 +3,7 @@ resources:
   clean: true
 
 pool:
-  name: Hosted VS2017
+  vmImage: 'windows-latest'
 
 strategy:
   maxParallel: 4
@@ -25,9 +25,9 @@ workspace:
   clean: all
 
 variables:
-  Build.ToolChainTag: "VS2017"
+  Build.ToolChainTag: "VS2019"
   PlatformPkg: "MsvmPkg"
-  Env.PythonVersion: "3.7.2"
+  Env.PythonVersion: "3.10.0"
   GIT_TERMINAL_PROMPT: "0"
 
 steps:

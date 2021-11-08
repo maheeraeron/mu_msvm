@@ -57,7 +57,7 @@ class PlatformBuilder(UefiBuilder, UpdateSettingsManager, SetupSettingsManager, 
         logging.debug("PlatformBuilder SetPlatformEnv")
 
         self.env.SetValue("PRODUCT_NAME", "Hyper-V", "Platform Hardcoded")
-        self.env.SetValue("TOOL_CHAIN_TAG", "VS2017", "Platform hardcoded")
+        self.env.SetValue("TOOL_CHAIN_TAG", "VS2019", "Platform hardcoded")
         self.env.SetValue("BLD_*_BUILD_UNIT_TESTS", "FALSE", "Unit Test build off by default")
         self.env.SetValue("BLD_*_BUILD_APPS", "FALSE", "App Build off by default")
         self.env.SetValue("CONF_TEMPLATE_DIR", "MsvmPkg", "Add custom conf dir")
