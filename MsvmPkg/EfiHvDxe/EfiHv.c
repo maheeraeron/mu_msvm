@@ -1125,6 +1125,11 @@ EfiHvpModifySparseGpaPageHostVisibility(
                     PageCount,
                     &pagesProcessed);
 
+                if (EFI_ERROR(status))
+                {
+                    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+                }
+
                 ASSERT(pagesProcessed <= PageCount);
 
                 if (PageCountProcessed != NULL)
@@ -1135,11 +1140,15 @@ EfiHvpModifySparseGpaPageHostVisibility(
                 return status;
             }
 
-            EfiUpdatePageRangeAcceptance(
+            status = EfiUpdatePageRangeAcceptance(
                 mIsolationType,
                 GpaPageBase,
                 PageCount,
                 FALSE);
+            if (EFI_ERROR(status))
+            {
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            }
         }
 
         ASSERT(mHvBypassContext.Connected);
@@ -1248,11 +1257,15 @@ EfiHvpModifySparseGpaPageHostVisibility(
         // hardware.
         if (MapFlags == 0)
         {
-            EfiUpdatePageRangeAcceptance(
+            status = EfiUpdatePageRangeAcceptance(
                 mIsolationType,
                 GpaPageBase,
                 PageCount,
                 TRUE);
+            if (EFI_ERROR(status))
+            {
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            }
         }
     }
 

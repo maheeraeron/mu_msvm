@@ -20,7 +20,35 @@ Author:
 
 #pragma once
 
-VOID
+/*++
+
+Routine Description:
+
+    This routine updates hardware page acceptance state on an SNP platform
+    that runs with no paravisor.
+
+Arguments:
+
+    IsolationType - Supplies the isolation type of the current platform.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         change.
+
+    PageCount - Supplies the number of pages to change.
+
+    Accept - Supplies TRUE if the pages are to be accepted, or FALSE if the
+             pages are to be unaccepted.
+
+Return Value:
+
+    EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
+
+--*/
+EFI_STATUS
 EfiUpdatePageRangeAcceptance(
     _In_ UINT32 IsolationType,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
@@ -28,6 +56,39 @@ EfiUpdatePageRangeAcceptance(
     _In_ BOOLEAN Accept
     );
 
+
+/*++
+
+Routine Description:
+
+    This routine makes a page visible to the host on a hardware isolated
+    platform that runs with no paravisor.
+
+Arguments:
+
+    IsolationType - Supplies the isolation type of the current platform.
+
+    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
+                        platform.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         make visible.
+
+    PageCount - Supplies the number of pages to make visible.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
+
+Return Value:
+
+    EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
+
+--*/
 EFI_STATUS
 EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
@@ -37,6 +98,40 @@ EfiMakePageRangeHostVisible(
     _Out_opt_ PUINT64 PagesProcessed
     );
 
+/*++
+
+Routine Description:
+
+    This routine makes a page private to the guest (not visible to the host)
+    on a hardware isolated platform that runs with no paravisor.
+
+Arguments:
+
+Arguments:
+
+    IsolationType - Supplies the isolation type of the current platform.
+
+    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
+                        platform.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         make not visible.
+
+    PageCount - Supplies the number of pages to make not visible.
+
+    PagesProcessed - Supplies an optional pointer to a page that should
+                     receive the number of pages that were successfully
+                     processed.
+
+Return Value:
+
+    EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
+
+--*/
 EFI_STATUS
 EfiMakePageRangeHostNotVisible(
     _In_ UINT32 IsolationType,

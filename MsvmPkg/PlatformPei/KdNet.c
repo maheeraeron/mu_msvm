@@ -24,11 +24,20 @@ Abstract:
 #include <Library/PeCoffLib.h>
 #include <Library/PeiServicesLib.h>
 #include <IsolationTypes.h>
+#include <Library/CrashDumpAgentLib.h>
 
 #define MSR_GHCB        0xC0010130
 
 BOOLEAN UseKdNetDebugger;
 DEBUG_NET_PARAMETERS KdNetParameters;
+
+#define KDNET 0x4B444E4554 // "KDNET"
+
+#define KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
+    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(KDNET);
+#define KDNET_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
+    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, KDNET)
+
 
 #if defined(MDE_CPU_X64)
 
@@ -64,9 +73,8 @@ AllocateHostVisiblePages(
     }
 
     //
-    // Make each page host visible.  If conversion fails, simply return the
-    // failure.  Since the pages were allocated as reserved, they will never
-    // be reused, so the indeterminate visibility state is irrelevant.
+    // Make each page host visible.  If conversion fails, fail fast
+    // because of the contract with the host visibility lib.
     //
 
     sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
@@ -78,10 +86,10 @@ AllocateHostVisiblePages(
         numberOfPages,
         NULL);
 
-    if (EFI_ERROR(status))
-    {
-        return status;
-    }
+        if (EFI_ERROR(status))
+        {
+            KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        }
 
     *Allocation += sharedGpaBoundary;
 

@@ -81,7 +81,7 @@ _tdx_vmcall_map_gpa(
     );
 
 
-VOID
+EFI_STATUS
 EfiUpdatePageRangeAcceptanceSnp(
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
@@ -106,7 +106,9 @@ Arguments:
 
 Return Value:
 
-    None.
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
 
 --*/
 {
@@ -138,10 +140,7 @@ Return Value:
             }
             else if (errorCode != SNP_FAIL_SIZEMISMATCH)
             {
-                //
-                // TODO-19259739: Have a better way of reporting UEFI errors.
-                //
-                continue;
+                return EFI_SECURITY_VIOLATION;
             }
         }
 
@@ -156,19 +155,18 @@ Return Value:
 
         if (errorCode != SNP_SUCCESS)
         {
-            //
-            // TODO-19259739: Have a better way of reporting UEFI errors.
-            //
-            continue;
+            return EFI_SECURITY_VIOLATION;
         }
 
         StartingPageNumber += 1;
         PageCount -= 1;
     }
+
+    return EFI_SUCCESS;
 }
 
 
-VOID
+EFI_STATUS
 EfiUpdatePageRangeAcceptanceTdx(
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount
@@ -189,7 +187,11 @@ Arguments:
 
 Return Value:
 
-    None.
+    EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
 
 --*/
 {
@@ -215,10 +217,7 @@ Return Value:
             }
             else if (errorCode != TDX_PAGE_SIZE_INVALID)
             {
-                //
-                // TODO-19259739: Have a better way of reporting UEFI errors.
-                //
-                continue;
+                return EFI_SECURITY_VIOLATION;
             }
         }
 
@@ -227,19 +226,18 @@ Return Value:
             0);
         if (errorCode != TDX_SUCCESS)
         {
-            //
-            // TODO-19259739: Have a better way of reporting UEFI errors.
-            //
-            continue;
+            return EFI_SECURITY_VIOLATION;
         }
 
         StartingPageNumber += 1;
         PageCount -= 1;
     }
+
+    return EFI_SUCCESS;
 }
 
 
-VOID
+EFI_STATUS
 EfiUpdatePageRangeAcceptance(
     _In_ UINT32 IsolationType,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
@@ -267,7 +265,11 @@ Arguments:
 
 Return Value:
 
-    None.
+    EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
 
 --*/
 {
@@ -279,14 +281,16 @@ Return Value:
 
         if (Accept)
         {
-            EfiUpdatePageRangeAcceptanceTdx(StartingPageNumber, PageCount);
+            return EfiUpdatePageRangeAcceptanceTdx(StartingPageNumber, PageCount);
         }
     }
     else
     {
         ASSERT(IsolationType == UefiIsolationTypeSnp);
-        EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber, PageCount, Accept);
+        return EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber, PageCount, Accept);
     }
+
+    return EFI_SUCCESS;
 }
 
 
@@ -318,6 +322,10 @@ Return Value:
 
     EFI_STATUS.
 
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
+
 --*/
 {
     UINT64 errorCode;
@@ -338,7 +346,7 @@ Return Value:
             StartingPageNumber * EFI_PAGE_SIZE),
             0,
             0,
-            &errorCode))
+            &errorCode) != 0)
         {
             return EFI_SECURITY_VIOLATION;
         }
@@ -366,13 +374,18 @@ Return Value:
             // modified.
             //
 
-            while ((_sev_pvalidate((PVOID)(StartingPageNumber * EFI_PAGE_SIZE), 0, TRUE, &errorCode)) ||
-                   (errorCode != 0))
+            if (_sev_pvalidate((PVOID)(
+                StartingPageNumber * EFI_PAGE_SIZE),
+                0,
+                TRUE,
+                &errorCode) != 0)
             {
-                //
-                // TODO-19259739: Have a better way of reporting UEFI errors.
-                //
-                ;
+                return EFI_SECURITY_VIOLATION;
+            }
+
+            if (errorCode != 0)
+            {
+                return EFI_SECURITY_VIOLATION;
             }
 
             return EFI_SECURITY_VIOLATION;
@@ -422,6 +435,10 @@ Return Value:
 
     EFI_STATUS.
 
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.   
+
 --*/
 {
     HV_GPA failedGpa;
@@ -466,9 +483,14 @@ Return Value:
 
     if ((pagesProcessed != 0) && (StartingGpa < SharedBoundaryGpa))
     {
-        EfiUpdatePageRangeAcceptanceTdx(
+        status = EfiUpdatePageRangeAcceptanceTdx(
             StartingGpa / HV_PAGE_SIZE,
             pagesProcessed);
+
+        if (EFI_ERROR(status))
+        {
+            return status;
+        }
     }
 
     if (ARGUMENT_PRESENT(PagesProcessed))
@@ -514,6 +536,10 @@ Arguments:
 Return Value:
 
     EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
 
 --*/
 {
@@ -565,6 +591,10 @@ Return Value:
 
     EFI_STATUS.
 
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
+
 --*/
 {
     UINT64 errorCode;
@@ -601,7 +631,7 @@ Return Value:
             StartingPageNumber * EFI_PAGE_SIZE),
             0,
             1,
-            &errorCode))
+            &errorCode) != 0)
         {
             return EFI_SECURITY_VIOLATION;
         }
@@ -660,6 +690,10 @@ Arguments:
 Return Value:
 
     EFI_STATUS.
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
 
 --*/
 {

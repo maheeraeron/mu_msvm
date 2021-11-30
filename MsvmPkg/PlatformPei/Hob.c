@@ -25,6 +25,7 @@ Author:
 #include <Hv.h>
 #include <Library/HostVisibilityLib.h>
 #include <IsolationTypes.h>
+#include <Library/CrashDumpAgentLib.h>
 
 
 #define BASIC_FLAGS                                     \
@@ -50,6 +51,12 @@ const char * const gDebugMemoryFormat = "HOB Start % 17lx End %17lx %s\n";
 const char * const gDebugCpuFormat    = "HOB MemWidth %d IOWidth %d Cpu\n";
 const char * const gDebugGuidFormat   = "HOB Base % 17lx Size %17lx GUID Data\n";
 
+#define HOB 0x484F42 // "HOB"
+
+#define HOB_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
+    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(HOB);
+#define HOB_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
+    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, HOB)
 
 static
 VOID
@@ -122,10 +129,10 @@ Return Value:
 #if defined(MDE_CPU_X64)
     if (IsHardwareIsolated())
     {
-        EfiUpdatePageRangeAcceptance(GetIsolationType(),
+        HOB_FAIL_FAST_IF_FAILED (EfiUpdatePageRangeAcceptance(GetIsolationType(),
             GpaPageBase,
             PageCount,
-            TRUE);
+            TRUE), CRITICAL_INITIALIZATION_FAILURE);
     }
 #endif
 }
