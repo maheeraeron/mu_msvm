@@ -39,25 +39,27 @@
 #  - increase the Size variable
 #  - lower the BaseAddress variable to accommodate the Size increase
 #  - increase the size of the MAIN volume
+#  - Update BlockSize or NumBlocks accordingly so their product matches
+#    the size of the MAIN volume. 
 #  - use the size of the MAIN volume as the new offset for the start of
 #    the SECFV volume
 #
 
 [FD.MSVM]
 BaseAddress   = 0x00100000|gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
-Size          = 0x00500000|gMsvmPkgTokenSpaceGuid.PcdFdSize
+Size          = 0x00600000|gMsvmPkgTokenSpaceGuid.PcdFdSize
 
 ErasePolarity = 1
 BlockSize     = 0x1000
-NumBlocks     = 0x500
+NumBlocks     = 0x600
 
 # The MAIN volume (start|size)
-0x00000000|0x004E0000
+0x00000000|0x005E0000
 gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdFvSize
 FV = MAINFV
 
 # The SEC volume (start|size)
-0x004E0000|0x00020000
+0x005E0000|0x00020000
 FV = SECFV
 
 
@@ -226,16 +228,22 @@ INF PrmPkg/PrmLoaderDxe/PrmLoaderDxe.inf
 INF PrmPkg/PrmSsdtInstallDxe/PrmSsdtInstallDxe.inf
 !endif
 
+INF SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
+
 INF NetworkPkg/ArpDxe/ArpDxe.inf
 INF NetworkPkg/Dhcp4Dxe/Dhcp4Dxe.inf
 INF NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf
+INF NetworkPkg/DnsDxe/DnsDxe.inf
 INF NetworkPkg/DpcDxe/DpcDxe.inf
+INF NetworkPkg/HttpDxe/HttpDxe.inf
+INF NetworkPkg/HttpUtilitiesDxe/HttpUtilitiesDxe.inf
 INF NetworkPkg/Ip4Dxe/Ip4Dxe.inf
 INF NetworkPkg/Ip6Dxe/Ip6Dxe.inf
 INF NetworkPkg/MnpDxe/MnpDxe.inf
 INF NetworkPkg/Mtftp4Dxe/Mtftp4Dxe.inf
 INF NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
 INF NetworkPkg/TcpDxe/TcpDxe.inf
+INF NetworkPkg/TlsDxe/TlsDxe.inf
 INF NetworkPkg/Udp4Dxe/Udp4Dxe.inf
 INF NetworkPkg/Udp6Dxe/Udp6Dxe.inf
 INF NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf

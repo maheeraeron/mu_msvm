@@ -207,6 +207,7 @@
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
+  HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
   IpIoLib|NetworkPkg/Library/DxeIpIoLib/DxeIpIoLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf
@@ -215,6 +216,7 @@
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
   RngLib|MsvmPkg/Library/RngLib/RngLib.inf
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
+  TlsLib|CryptoPkg/Library/TlsLib/TlsLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
@@ -320,6 +322,10 @@
 
   # PMEM (NVDIMM)
   gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xFED3D000
+  
+
+  # Networking
+  gEfiNetworkPkgTokenSpaceGuid.PcdAllowHttpConnections|TRUE
 
   # Processor Aggregator Device
   gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xFED3C000
@@ -728,18 +734,25 @@
   MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   MdeModulePkg/Universal/MemoryTest/NullMemoryTestDxe/NullMemoryTestDxe.inf
 
+  # Security components
+  SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
+  
   # Networking components
 
   NetworkPkg/ArpDxe/ArpDxe.inf
   NetworkPkg/Dhcp4Dxe/Dhcp4Dxe.inf
   NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf
+  NetworkPkg/DnsDxe/DnsDxe.inf
   NetworkPkg/DpcDxe/DpcDxe.inf
+  NetworkPkg/HttpDxe/HttpDxe.inf
+  NetworkPkg/HttpUtilitiesDxe/HttpUtilitiesDxe.inf
   NetworkPkg/Ip4Dxe/Ip4Dxe.inf
   NetworkPkg/Ip6Dxe/Ip6Dxe.inf
   NetworkPkg/MnpDxe/MnpDxe.inf
   NetworkPkg/Mtftp4Dxe/Mtftp4Dxe.inf
   NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
-  NetworkPkg/TcpDxe/TcpDxe.inf
+  NetworkPkg/TcpDxe/TcpDxe.inf  
+  NetworkPkg/TlsDxe/TlsDxe.inf
   NetworkPkg/Udp4Dxe/Udp4Dxe.inf
   NetworkPkg/Udp6Dxe/Udp6Dxe.inf
   NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
