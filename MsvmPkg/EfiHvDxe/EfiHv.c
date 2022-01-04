@@ -1463,7 +1463,6 @@ Return Value:
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
     HV_CPUID_RESULT cpuidResult;
-    EFI_PHYSICAL_ADDRESS executableHyperCallPage;
     BOOLEAN paravisorPresent;
 
     // Determine the isolation type for this system.  If there is any
@@ -1504,6 +1503,7 @@ Return Value:
         status =  EFI_OUT_OF_RESOURCES;
         goto Exit;
     }
+    ZeroMem(mHvPages, sizeof(*mHvPages));
     DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHvPages));
 
     // If this is a hardware-isolated system with no paravisor, then only the
@@ -1529,20 +1529,12 @@ Return Value:
     }
     else
     {
-        status = gBS->AllocatePages(AllocateAnyPages,
-                                    EfiBootServicesCode,
-                                    1,
-                                    &executableHyperCallPage);
-        if (EFI_ERROR(status))
+        mHypercallPage = AllocatePages(1);
+        if (mHypercallPage == NULL)
         {
             DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate the hypercall page!\n", __FUNCTION__));
             goto Exit;
         }
-        mHypercallPage = (UCHAR *)(UINTN)executableHyperCallPage;
-        DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHypercallPage));
-
-        // Zero the hypercall page
-        ZeroMem(mHvPages, sizeof(*mHvPages));
         ZeroMem(mHypercallPage, EFI_PAGE_SIZE);
 
         HvHypercallConnect(mHypercallPage,
@@ -1557,6 +1549,15 @@ Return Value:
         {
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
+
+        // Mark the Hypercall page as executable
+        status = mCpu->SetMemoryAttributes (mCpu, (EFI_PHYSICAL_ADDRESS)mHypercallPage, EFI_PAGE_SIZE, EFI_MEMORY_RO);
+        if (EFI_ERROR(status))
+        {
+            DEBUG((DEBUG_VERBOSE, "--- %a: Failed to set the memory attribute the hypercall page!\n", __FUNCTION__));
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        }
+
     }
 
 #elif defined(MDE_CPU_AARCH64)
