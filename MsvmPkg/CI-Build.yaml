@@ -32,7 +32,6 @@ variables:
   Env.PythonVersion: "3.10.0"
   GIT_TERMINAL_PROMPT: "0"
 
-  BuildIdentifier: $(Build.BuildNumber)
 
   #parameters for vpack publishing
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
@@ -177,7 +176,7 @@ steps:
     packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
     packDestination: '$(Build.ArtifactStagingDirectory)'
     packTimezone: 'utc'
-    buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)_$(BuildIdentifier);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer)'
+    buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer).$(Build.CommitHash)'
 
 - task: NuGetCommand@2
   displayName: 'Push the NuGet package to the HyperVUefi feed'
