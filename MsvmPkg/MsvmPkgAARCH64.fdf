@@ -169,6 +169,14 @@ INF MsvmPkg/VmbusDxe/VmbusDxe.inf
 INF MsvmPkg/VpcivscDxe/VpcivscDxe.inf
 INF MsvmPkg/WatchdogTimerDxe/WatchdogTimerDxe.inf
 
+!if $(PRM_ENABLE) == TRUE
+INF PrmPkg/PrmConfigDxe/PrmConfigDxe.inf
+INF PrmPkg/Samples/PrmSampleAcpiParameterBufferModule/PrmSampleAcpiParameterBufferModule.inf
+INF PrmPkg/Samples/PrmSampleContextBufferModule/PrmSampleContextBufferModule.inf
+INF PrmPkg/PrmLoaderDxe/PrmLoaderDxe.inf
+INF PrmPkg/PrmSsdtInstallDxe/PrmSsdtInstallDxe.inf
+!endif
+
 INF NetworkPkg/ArpDxe/ArpDxe.inf
 INF NetworkPkg/Dhcp4Dxe/Dhcp4Dxe.inf
 INF NetworkPkg/Dhcp6Dxe/Dhcp6Dxe.inf
@@ -249,6 +257,8 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
     PE32     PE32                    $(INF_OUTPUT)/$(MODULE_NAME).efi
     UI       STRING="$(MODULE_NAME)" Optional
     VERSION  STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
+    RAW ACPI  Optional               |.acpi
+    RAW ASL   Optional               |.aml
   }
 
 [Rule.Common.DXE_RUNTIME_DRIVER]
