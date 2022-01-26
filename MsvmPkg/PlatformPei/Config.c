@@ -505,6 +505,10 @@ DebugDumpUefiConfigStruct(
             DebugDumpSlit(slit->Slit);
             break;
 
+        case UefiConfigPptt:
+            DEBUG((DEBUG_VERBOSE, "\tPPTT table found.\n"));
+            break;
+
         case UefiConfigMemoryMap:
             UEFI_CONFIG_MEMORY_MAP *memMap = (UEFI_CONFIG_MEMORY_MAP*) Header;
             DebugDumpMemoryMap(memMap->MemoryMap, Header->Length - sizeof(UEFI_CONFIG_HEADER), PcdGetBool(PcdLegacyMemoryMap));
@@ -896,6 +900,7 @@ Return Value:
         0, //UefiConfigSmbiosSystemFamily
         0, //UefiConfigSmbiosMemoryDeviceSerialNumber
         0, //UefiConfigSlit
+        0, //UefiConfigPptt
     };
 
     //
@@ -1108,6 +1113,22 @@ Return Value:
 
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSlitPtr, (UINT64)slitStructure->Slit), CRITICAL_INITIALIZATION_FAILURE);
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSlitSize, slitHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+                break;
+
+            case UefiConfigPptt:
+                UEFI_CONFIG_PPTT *ppttStructure = (UEFI_CONFIG_PPTT*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *ppttHdr = (EFI_ACPI_DESCRIPTION_HEADER*) ppttStructure->Pptt;
+
+                if (ppttStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    ppttHdr->Signature != EFI_ACPI_6_2_PROCESSOR_PROPERTIES_TOPOLOGY_TABLE_STRUCTURE_SIGNATURE ||
+                    ppttHdr->Length > (ppttStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "*** Malformed PPTT\n"));
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+                }
+
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdPpttPtr, (UINT64)ppttStructure->Pptt), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdPpttSize, ppttHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
             case UefiConfigMemoryMap:

@@ -284,6 +284,52 @@ Return Value:
 
 
 EFI_STATUS
+AcpiInstallPpttTable(
+    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+/*++
+
+Routine Description:
+
+    Retrieves the PPTT table from the worker process and installs it.
+
+Arguments:
+
+    AcpiTable - A pointer to the ACPI table protocol.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table;
+    UINTN tableHandle;
+    UINT32 tableSize;
+
+    tableSize = PcdGet32(PcdPpttSize);
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdPpttPtr);
+
+    if (tableSize == 0)
+    {
+        ASSERT(table == NULL);
+        DEBUG((EFI_D_INFO, "PPTT not installed.\n"));
+        return EFI_SUCCESS;
+    }
+
+    ASSERT(table->Length == tableSize);
+
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
+    return status;
+}
+
+
+EFI_STATUS
 AcpiInstallSlitTable(
     EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
@@ -649,6 +695,12 @@ Return Value:
     //
 
     status = AcpiInstallSratTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    status = AcpiInstallPpttTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;

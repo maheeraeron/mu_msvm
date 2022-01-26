@@ -555,6 +555,7 @@ enum UefiStructureType
     UefiConfigSmbiosMemoryDeviceSerialNumber = 0x1F,
     UefiConfigSlit                           = 0x20,
     UefiConfigAspt                           = 0x21,
+    UefiConfigPptt                           = 0x22,
 };
 
 //
@@ -605,6 +606,12 @@ typedef struct _UEFI_CONFIG_SLIT
     UEFI_CONFIG_HEADER Header;
     UINT8 Slit[];
 } UEFI_CONFIG_SLIT;
+
+typedef struct _UEFI_CONFIG_PPTT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Pptt[];
+} UEFI_CONFIG_PPTT;
 
 typedef struct _UEFI_CONFIG_MEMORY_MAP
 {

@@ -322,7 +322,7 @@
 
   # PMEM (NVDIMM)
   gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase|0xFED3D000
-  
+
 
   # Networking
   gEfiNetworkPkgTokenSpaceGuid.PcdAllowHttpConnections|TRUE
@@ -480,6 +480,10 @@
   # UEFI_CONFIG_SLIT
   gMsvmPkgTokenSpaceGuid.PcdSlitPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdSlitSize|0x0
+
+  # UEFI_CONFIG_PPTT
+  gMsvmPkgTokenSpaceGuid.PcdPpttPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdPpttSize|0x0
 
   # UEFI_CONFIG_MEMORY_MAP
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0
@@ -736,7 +740,7 @@
 
   # Security components
   SecurityPkg/Hash2DxeCrypto/Hash2DxeCrypto.inf
-  
+
   # Networking components
 
   NetworkPkg/ArpDxe/ArpDxe.inf
@@ -751,7 +755,7 @@
   NetworkPkg/MnpDxe/MnpDxe.inf
   NetworkPkg/Mtftp4Dxe/Mtftp4Dxe.inf
   NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
-  NetworkPkg/TcpDxe/TcpDxe.inf  
+  NetworkPkg/TcpDxe/TcpDxe.inf
   NetworkPkg/TlsDxe/TlsDxe.inf
   NetworkPkg/Udp4Dxe/Udp4Dxe.inf
   NetworkPkg/Udp6Dxe/Udp6Dxe.inf

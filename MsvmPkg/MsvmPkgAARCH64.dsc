@@ -478,6 +478,10 @@
   gMsvmPkgTokenSpaceGuid.PcdSlitPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdSlitSize|0x0
 
+  # UEFI_CONFIG_PPTT
+  gMsvmPkgTokenSpaceGuid.PcdPpttPtr|0x0
+  gMsvmPkgTokenSpaceGuid.PcdPpttSize|0x0
+
   # UEFI_CONFIG_MEMORY_MAP
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0
