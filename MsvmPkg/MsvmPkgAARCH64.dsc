@@ -97,7 +97,7 @@
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
   UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
-  MemoryProtectionLib|MsvmPkg/Library/MemoryProtectionLib/MemoryProtectionLib.inf
+  VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
 
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
@@ -191,6 +191,7 @@
 # Library instance overrides just for PEIMs
 #
 [LibraryClasses.common.PEIM]
+  PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
 
@@ -217,10 +218,12 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|NetworkPkg/Library/DxeIpIoLib/DxeIpIoLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+  MemoryProtectionHobLib|MdeModulePkg/Library/DxeSmmMemoryProtectionHobLib/DxeSmmMemoryProtectionHobLib.inf
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
   RngLib|MsvmPkg/Library/RngLib/RngLib.inf
+  PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Dxe/PcdDatabaseLoaderLibDxe.inf  # MU_CHANGE
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
@@ -345,18 +348,6 @@
   # Processor Aggregator
   gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xEFFE8000
   gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector|38           # SPI
-
-
-  # Memory protection settings
-  # See MdeModulePkg.dec for more comments and Description
-  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000002              ## Image from firmware volume
-  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy       | 0x00007FD5              ## For all memory except Code.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask  | 0x03                    ## UEFI and SMM Null Detection
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                 | 0x0000000000000050      ## BsData and RtData
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                 | 0x0000000000000050      ## BsData and RtData
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask             | 0x0000000000000003      ## UEFI page guard and pool guard
-  gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                     | TRUE                    ## Enabled to catch stack overflow
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                     | TRUE
 
   # GTDT for AArch64. Currently these aren't exposed to guests, and 0 is a valid
   # value to configure. Linux will attempt to configure them, so assign valid

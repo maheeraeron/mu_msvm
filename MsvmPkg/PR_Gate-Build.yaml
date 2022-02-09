@@ -3,7 +3,7 @@ resources:
   clean: true
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: windows-2022
 
 strategy:
   maxParallel: 4
@@ -25,7 +25,7 @@ workspace:
   clean: all
 
 variables:
-  Build.ToolChainTag: "VS2019"
+  Build.ToolChainTag: "VS2022"
   PlatformPkg: "MsvmPkg"
   Env.PythonVersion: "3.10.0"
   GIT_TERMINAL_PROMPT: "0"

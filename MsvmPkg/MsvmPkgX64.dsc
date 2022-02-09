@@ -103,8 +103,8 @@
   #RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-  MemoryProtectionLib|MsvmPkg/Library/MemoryProtectionLib/MemoryProtectionLib.inf
-  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf
+  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf  
+  VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
 
   ## MS_CHANGE_?
   # MeasuredBoot and Other TPM-Based Security
@@ -185,6 +185,7 @@
   PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/PeiHvHypercallLib.inf
+  PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
   RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
 
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
@@ -210,12 +211,14 @@
   HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
   IpIoLib|NetworkPkg/Library/DxeIpIoLib/DxeIpIoLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+  MemoryProtectionHobLib|MdeModulePkg/Library/DxeSmmMemoryProtectionHobLib/DxeSmmMemoryProtectionHobLib.inf
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
+  PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Dxe/PcdDatabaseLoaderLibDxe.inf  # MU_CHANGE
+  PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
   RngLib|MsvmPkg/Library/RngLib/RngLib.inf
-  PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   TlsLib|CryptoPkg/Library/TlsLib/TlsLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
@@ -225,6 +228,7 @@
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
+  
 
 #
 # Library instances overrides for just DXE CORE
@@ -333,22 +337,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|0x00100032
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Microsoft"
 
-  # Memory protection settings
-  # See MdeModulePkg.dec for more comments and Description
-  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy       | 0x00007FD5              ## For all memory except Code.
-  gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask  | 0x03                    ## UEFI and SMM Null Detection
-
-  # HeapGuard is temporarily disabled for performance reasons and possible implementation
-  # See bug 32592514 and 32704335.
-  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                 | 0x0000000000000050      ## BsData and RtData
-  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                 | 0x0000000000000050      ## BsData and RtData
-  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask             | 0x0000000000000003      ## UEFI page guard and pool guard
-
-  gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                     | TRUE                    ## Enabled to catch stack overflow
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                     | TRUE
-
   # Disable image protection policy so DxeCore does not mess with MTRRs
-  gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000000
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000000
 
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by

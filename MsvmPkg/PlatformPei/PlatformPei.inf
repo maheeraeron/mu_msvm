@@ -79,7 +79,7 @@
     gEfiMemoryTypeInformationGuid
     gMsvmDebuggerEnabledGuid
     gMsvmDebuggerKdnetBinaryGuid
-    gMsvmMemoryProtectionDisabledGuid
+    gMemoryProtectionSettingsGuid
 
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress

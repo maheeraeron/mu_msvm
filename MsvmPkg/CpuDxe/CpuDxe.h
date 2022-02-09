@@ -33,14 +33,33 @@ Abstract:
 #include <Library/UefiCpuLib.h>
 #include <Guid/IdleLoopEvent.h>
 #include <IsolationTypes.h>   // MS_HYP_CHANGE
+#include <Library/MemoryProtectionHobLib.h> // MU_CHANGE
+
 
 #define INTERRUPT_VECTOR_NUMBER   256 // MS_HYP_CHANGE
 
+// MU_CHANGE START Update to use gMPS
+
+MEMORY_PROTECTION_SETTINGS   gMPS;
+
+#define HEAP_GUARD_NONSTOP_MODE (gMPS.HeapGuardPolicy.Fields.NonstopMode && \
+                                  (gMPS.HeapGuardPolicy.Fields.UefiPoolGuard || \
+                                    gMPS.HeapGuardPolicy.Fields.UefiPageGuard || \
+                                    gMPS.HeapGuardPolicy.Fields.UefiFreedMemoryGuard))
+
+/*
 #define HEAP_GUARD_NONSTOP_MODE       \
         ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
+*/
 
+#define NULL_DETECTION_NONSTOP_MODE (gMPS.NullPointerDetectionPolicy.Fields.NonstopMode && \
+                                      gMPS.NullPointerDetectionPolicy.Fields.UefiNullDetection)
+
+/*
 #define NULL_DETECTION_NONSTOP_MODE   \
         ((PcdGet8 (PcdNullPointerDetectionPropertyMask) & (BIT6|BIT0)) > BIT6)
+*/
+
 
 #define EFI_MEMORY_CACHETYPE_MASK     (EFI_MEMORY_UC  | \
                                        EFI_MEMORY_WC  | \
@@ -49,11 +68,13 @@ Abstract:
                                        EFI_MEMORY_UCE   \
                                        )
 
- 
+
 #define EFI_MEMORY_PAGETYPE_MASK      (EFI_MEMORY_RP  | \
                                        EFI_MEMORY_XP  | \
                                        EFI_MEMORY_RO    \
                                        )
+
+// MU_CHANGE END
 
 /**
   Flush CPU data cache. If the instruction cache is fully coherent
@@ -206,7 +227,7 @@ CpuGetTimerValue (
   );
 
 /**
-  Set memory cacheability attributes for given range of memeory.
+  Set memory cacheability attributes for given range of memory.
 
   @param  This                   Protocol instance structure
   @param  BaseAddress            Specifies the start address of the
