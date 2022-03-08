@@ -29,6 +29,7 @@ Abstract:
 #include <Config.h>
 #include <KdNet.h>
 #include <IsolationTypes.h>
+#include <UefiConstants.h>
 
 typedef struct _IGVM_VHS_MEMORY_MAP_ENTRY {
     UINT64 StartingGpaPageNumber;
@@ -356,7 +357,7 @@ Return Value:
 
     ZeroMem(&configFlags, sizeof(configFlags));
     configFlags.Flags.DebuggerEnabled = 1;
-    configFlags.Flags.MemoryProtectionDisabled = 1;
+    configFlags.Flags.MemoryProtectionMode = ConfigLibMemoryProtectionModeDisabled;
     ConfigSetUefiConfigFlags(&configFlags);
 
     //

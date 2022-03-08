@@ -22,3 +22,10 @@ enum
     ConfigLibConsoleModeNone    = 3  // headless
 };
 
+enum
+{
+    ConfigLibMemoryProtectionModeDisabled = 0, // MEMORY_PROTECTION_SETTINGS_OFF
+    ConfigLibMemoryProtectionModeDefault  = 1, // MEMORY_PROTECTION_SETTINGS_SHIP_MODE
+    ConfigLibMemoryProtectionModeStrict   = 2, // MEMORY_PROTECTION_SETTINGS_DEBUG
+    ConfigLibMemoryProtectionModeRelaxed  = 3, // MEMORY_PROTECTION_SETTINGS_SHIP_MODE with fewer checks
+};

@@ -267,7 +267,6 @@
   gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled|FALSE|BOOLEAN|0x6047
   gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled|FALSE|BOOLEAN|0x6048
   gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault|FALSE|BOOLEAN|0x6059
-  gMsvmPkgTokenSpaceGuid.PcdMemoryProtectionDisabled|FALSE|BOOLEAN|0x605C
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0|UINT32|0x6032

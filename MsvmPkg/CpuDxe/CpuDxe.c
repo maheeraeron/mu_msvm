@@ -666,6 +666,7 @@ CpuSetMemoryAttributes (
   MTRR_MEMORY_CACHE_TYPE    CacheType;
   UINT64                    CacheAttributes;
   UINT64                    MemoryAttributes;
+  MTRR_MEMORY_CACHE_TYPE    CurrentCacheType;
   // MS_HYP_CHANGE BEGIN
 
   CacheAttributes = Attributes & CACHE_ATTRIBUTE_MASK;
@@ -686,8 +687,8 @@ CpuSetMemoryAttributes (
   //
   if (mIsFlushingGCD) {
     DEBUG((EFI_D_INFO, "  Flushing GCD\n"));
-      return EFI_SUCCESS;
-    }
+    return EFI_SUCCESS;
+  }
 
   if (CacheAttributes != 0) {
     switch (CacheAttributes) {
@@ -723,8 +724,9 @@ CpuSetMemoryAttributes (
     // writeback attributes.  If the cache type is writeback, then ignore any
     // attribute changes.
     //
+    CurrentCacheType = MtrrGetMemoryAttribute(BaseAddress);
 
-    if (!mStrictIsolation || CacheType != CacheWriteBack) {
+    if (!mStrictIsolation && (CacheType != CacheWriteBack) && (CurrentCacheType != CacheType)) {
 
       if (!IsMtrrSupported ()) {
           return EFI_INVALID_PARAMETER;

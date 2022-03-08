@@ -157,7 +157,6 @@
     gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
     gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled
     gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault
-    gMsvmPkgTokenSpaceGuid.PcdMemoryProtectionDisabled
     gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot
     gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
     gMsvmPkgTokenSpaceGuid.PcdDefaultBootAlwaysAttempt

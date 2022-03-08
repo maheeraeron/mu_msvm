@@ -21,7 +21,6 @@ Abstract:
 #include <KdNet.h>
 #include <Hob.h>
 #include <Hv.h>
-#include <Guid/MemoryProtectionSettings.h>
 #include <Guid/MemoryTypeInformation.h>
 #include <IndustryStandard/Acpi.h>
 #include <Library/BaseMemoryLib.h>
@@ -767,7 +766,6 @@ Return Value:
 {
     PLATFORM_INIT_CONTEXT context;
     EFI_STATUS status;
-    MEMORY_PROTECTION_SETTINGS memoryProtectionSettings;
 
     DEBUG((DEBUG_VERBOSE, ">>> *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));
 
@@ -800,24 +798,6 @@ Return Value:
     HobAddGuidData(&gMsvmDebuggerEnabledGuid,
         &debuggerEnabled,
         sizeof(BOOLEAN));
-
-    //
-    // If memory protections are enabled, used the SHIP mode for now.
-    // Todo : more granular control from the host.
-    //
-    BOOLEAN memoryProtectionDisabled = PcdGetBool(PcdMemoryProtectionDisabled);
-
-    if (memoryProtectionDisabled)
-    {
-        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_OFF;
-    }
-    else
-    {
-        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_SHIP_MODE;
-    }
-    HobAddGuidData(&gMemoryProtectionSettingsGuid,
-        &memoryProtectionSettings,
-        sizeof(memoryProtectionSettings));
 
     //
     // Set the boot mode and installs the boot mode tag PPI.

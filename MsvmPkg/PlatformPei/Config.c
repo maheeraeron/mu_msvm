@@ -30,7 +30,9 @@ Abstract:
 #include <Ppi/ConfigPpi.h>
 #include <IsolationTypes.h>
 #include "Config.h"
-
+#include <Guid/MemoryProtectionSettings.h>
+#include <UefiConstants.h>
+#include <Hob.h>
 
 //
 // Values and type used with CPUID to get the physical address width.
@@ -644,7 +646,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tProcIdleEnabled: %u\n", flags->Flags.ProcIdleEnabled));
             DEBUG((DEBUG_VERBOSE, "\tDisableSha384Pcr: %u\n", flags->Flags.DisableSha384Pcr));
             DEBUG((DEBUG_VERBOSE, "\tMediaPresentEnabledByDefault: %u\n", flags->Flags.MediaPresentEnabledByDefault));
-            DEBUG((DEBUG_VERBOSE, "\tMemoryProtectionDisabled: %u\n", flags->Flags.MemoryProtectionDisabled));
+            DEBUG((DEBUG_VERBOSE, "\tMemoryProtectionMode: %u\n", flags->Flags.MemoryProtectionMode));
             break;
 
         case UefiConfigProcessorInformation:
@@ -773,6 +775,8 @@ ConfigSetUefiConfigFlags(
     UEFI_CONFIG_FLAGS *ConfigFlags
     )
 {
+    MEMORY_PROTECTION_SETTINGS memoryProtectionSettings;
+
     // Ignore the return value. We do not want to fail fast for these errors.
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdSerialControllersEnabled, (UINT8) ConfigFlags->Flags.SerialControllersEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdPauseAfterBootFailure, (UINT8) ConfigFlags->Flags.PauseAfterBootFailure), CRITICAL_INITIALIZATION_FAILURE);
@@ -792,7 +796,39 @@ ConfigSetUefiConfigFlags(
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdVpciBootEnabled, (UINT8)ConfigFlags->Flags.VpciBootEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault), CRITICAL_INITIALIZATION_FAILURE);
-    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMemoryProtectionDisabled, (UINT8) ConfigFlags->Flags.MemoryProtectionDisabled), CRITICAL_INITIALIZATION_FAILURE);
+
+    //
+    // If memory protections are enabled, configure the value into the HOB.
+    //
+    if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeDisabled)
+    {
+        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_OFF;
+    }
+    else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeDefault)
+    {
+        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_SHIP_MODE;            
+    }
+    else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeStrict)
+    {
+        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_DEBUG;   
+        memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;         
+    }
+    else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeRelaxed)
+    {
+        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_SHIP_MODE;   
+        memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;    
+
+        // Linux has some known loader limitations. The following checks needs to be relaxed for Linux
+        // to boot successfully. For more details on these individual fields, look at MemoryProtectionSettings.h
+        memoryProtectionSettings.NullPointerDetectionPolicy.Fields.DisableReadyToBoot = 1; 
+        memoryProtectionSettings.DxeNxProtectionPolicy.Fields.EfiLoaderData = 0;
+        memoryProtectionSettings.DxeNxProtectionPolicy.Fields.EfiBootServicesData = 0;
+        memoryProtectionSettings.DxeNxProtectionPolicy.Fields.EfiConventionalMemory = 0;    
+    }
+
+    HobAddGuidData(&gMemoryProtectionSettingsGuid,
+        &memoryProtectionSettings,
+        sizeof(memoryProtectionSettings));
 
     //
     // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
