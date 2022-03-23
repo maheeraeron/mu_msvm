@@ -21,6 +21,7 @@ Author:
 
 #include <Uefi.h>
 #include <EfiNt.h>
+#include <FailFast.h>
 
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
@@ -35,7 +36,6 @@ Author:
 #include <Library/DebugLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/EmclLib.h>
-#include <Library/CrashDumpAgentLib.h>
 
 #include <VstorageProtocol.h>
 

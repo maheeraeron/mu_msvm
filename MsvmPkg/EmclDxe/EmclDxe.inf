@@ -18,7 +18,7 @@
     DebugLib
     UefiDriverEntryPoint
     MemoryAllocationLib
-    DebugAgentLib
+    DebugLib
     IsolationLib
 
 [Sources]

@@ -28,6 +28,7 @@ Author:
 #include <Library/BdDebugLib.h>
 
 #include <EfiNt.h>
+#include <FailFast.h>
 
 // -------------------------------------------------------------------- Defines
 

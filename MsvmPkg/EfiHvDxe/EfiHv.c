@@ -19,6 +19,7 @@ Author:
 
 #include <PiDxe.h>
 #include <IsolationTypes.h>
+#include <FailFast.h>
 
 #include <Protocol/Cpu.h>
 #include <Protocol/EfiHv.h>
@@ -32,7 +33,6 @@ Author:
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/HvHypercallLib.h>
-#include <Library/CrashDumpAgentLib.h>
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 #include <Library/LocalApicLib.h>

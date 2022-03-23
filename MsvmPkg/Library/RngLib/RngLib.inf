@@ -34,7 +34,7 @@
 [LibraryClasses]
   BaseLib
   DebugLib
-  DebugAgentLib ## MS_HYP_CHANGE
+  DebugLib ## MS_HYP_CHANGE
   UefiBootServicesTableLib ## MS_HYP_CHANGE
   BiosDeviceLib ## MS_HYP_CHANGE
   BaseMemoryLib ## MS_HYP_CHANGE

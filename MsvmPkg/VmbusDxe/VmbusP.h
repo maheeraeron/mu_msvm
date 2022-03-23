@@ -21,7 +21,7 @@ Author:
 #include <Protocol/DevicePath.h>
 #include <Protocol/EfiHv.h>
 #include <Protocol/Vmbus.h>
-#include <Library/CrashDumpAgentLib.h>
+#include <FailFast.h>
 
 //
 // Disable warnings for nameless unions/structs.

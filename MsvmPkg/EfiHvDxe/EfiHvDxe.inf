@@ -24,7 +24,7 @@
     UefiDriverEntryPoint
     MemoryAllocationLib
     HvHypercallLib
-    DebugAgentLib
+    DebugLib
     IsolationLib
 
 [LibraryClasses.X64]

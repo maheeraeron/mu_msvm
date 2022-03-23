@@ -19,6 +19,7 @@ Author:
 #include <PiDxe.h>
 #include <EfiNt.h>
 #include <IsolationTypes.h>
+#include <FailFast.h>
 
 #include <Library/UefiLib.h>
 #include <Library/BaseLib.h>
@@ -26,7 +27,6 @@ Author:
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
-#include <Library/CrashDumpAgentLib.h>
 
 #include <Protocol/Emcl.h>
 #include <Protocol/Vmbus.h>

@@ -30,7 +30,7 @@ Abstract:
 #include <IsolationTypes.h>
 #endif
 
-#include <Library/CrashDumpAgentLib.h>
+#include <FailFast.h>
 
 #define RNG 0x524E47 // "RNG"
 
@@ -159,7 +159,7 @@ RngLibConstructor (
     if (IsHardwareIsolated()) 
     {
       DEBUG((DEBUG_ERROR, "%a: RDRAND is not present on an isolated guest..\n", __FUNCTION__));
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, GetIsolationType(), 0);
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, GetIsolationType());
     }
 
     DEBUG((DEBUG_INFO, "%a: RDRAND is not present. Using host emulation.\n", __FUNCTION__));
@@ -183,7 +183,7 @@ RngLibConstructor (
                                      &address)))
     {
       // Fail fast since there is no way forward from this failure.
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, 0, 0);
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, 0);
     }
 
     mCryptoCommandDescriptor = (PCRYPTO_COMMAND_DESCRIPTOR) address;
@@ -191,7 +191,7 @@ RngLibConstructor (
     if (mCryptoCommandDescriptor == NULL)
     {
       // Fail fast since there is no way forward from this failure.
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, 0, 0);
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, 0);
     }
 
     mCryptoCommandDescriptorGpa = (EFI_PHYSICAL_ADDRESS) mCryptoCommandDescriptor;

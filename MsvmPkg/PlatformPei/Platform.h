@@ -16,6 +16,9 @@ Abstract:
 
 #include <Library/HvHypercallLib.h>
 
+#define CRITICAL_INITIALIZATION_FAILURE 0x13D
+#define KERNEL_SECURITY_CHECK_FAILURE 0x139
+#define FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR 58
 
 VOID
 TripleFault(

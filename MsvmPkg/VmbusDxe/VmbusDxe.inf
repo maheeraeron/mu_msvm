@@ -20,7 +20,7 @@
     UefiDriverEntryPoint
     DevicePathLib
     MemoryAllocationLib
-    DebugAgentLib
+    DebugLib
     IsolationLib
 
 [Sources]

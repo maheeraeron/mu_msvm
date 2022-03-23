@@ -29,7 +29,7 @@
     UefiBootServicesTableLib
     DevicePathLib
     EmclLib
-    DebugAgentLib
+    DebugLib
 
 [Protocols]
     gEfiVmbusProtocolGuid           #CONSUMES

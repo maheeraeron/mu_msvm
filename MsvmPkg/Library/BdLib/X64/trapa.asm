@@ -922,12 +922,16 @@ endif
 
         BL_GENERATE_TRAP_FRAME              ; generate trap frame
 
+        test    ecx, ecx                        ; check if output argument present
+        jnz     nonNullValue                    ; preserve the registers if present
         xor     r10,r10                         ; clear bugcheck parameters
         mov     TrP5[rbp],r10                   ; 
         xor     r9, r9                          ;
         xor     r8, r8                          ;
         xor     edx, edx                        ;
         mov     ecx, MACHINE_CHECK_EXCEPTION    ; Bugcheck code
+
+nonNullValue:
         call    EfiBugCheck
 
         BL_TRAP_END BdMachineCheckAbort
