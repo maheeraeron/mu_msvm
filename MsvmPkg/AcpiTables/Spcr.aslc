@@ -35,7 +35,7 @@ EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
         EFI_ACPI_6_2_SYSTEM_IO, // AddressSpaceId
         8,                      // RegisterBitWidth
         0,                      // RegisterBitOffset
-        0,                      // Reserved
+        1,                      // AccessSize
         0,                      // Address - updated by AcpiPlatformDxe
     },
     3,                      // InterruptType (dual-8259 and IO-APIC)
@@ -72,7 +72,7 @@ EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE SPCR =
         EFI_ACPI_6_2_SYSTEM_MEMORY, // AddressSpaceId
         8,                      // RegisterBitWidth
         0,                      // RegisterBitOffset
-        0,                      // Reserved
+        3,                      // AccessSize
         0,                      // Address - updated by AcpiPlatformDxe
     },
     EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_INTERRUPT_TYPE_GIC, // InterruptType

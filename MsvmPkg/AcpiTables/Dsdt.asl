@@ -276,7 +276,10 @@ DefinitionBlock (
     Device(\_SB.VMOD.VMBS)
     {
         Name(STA, 0xF)
-        Name(_ADR, 0x00)
+        Name(_ADR, 0x00)        
+#if defined(_DSDT_ARM_)
+        Name(_CCA, One)
+#endif
         Name(_DDN, "VMBUS")
         Name(_HID, "VMBus")
         Name(_UID, 0)
@@ -521,7 +524,7 @@ DefinitionBlock (
 
     Device(\_SB.GENC)
     {
-        Name(_CID, "VM_Gen_Counter")
+        Name(_CID, Package (2) { "VM_Gen_Counter", "VMGENCTR" })
         Name(_HID, "Hyper_V_Gen_Counter_V1")
         Name(_UID, 0)
         Name(_DDN, "VM_Gen_Counter")
