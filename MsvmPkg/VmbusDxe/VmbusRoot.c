@@ -30,6 +30,7 @@ Author:
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/SynchronizationLib.h>
+#include <Library/PcdLib.h>
 
 typedef struct _VMBUS_HOT_MESSAGE
 {
@@ -1766,6 +1767,19 @@ Return Value:
         {
             DEBUG((DEBUG_INFO, "%a: Channel allowed during boot (%g).\n", __FUNCTION__, &OfferMessage->InterfaceType));
             return TRUE;
+        }
+    }
+
+    if (IsIsolated())
+    {
+        if (!PcdGetBool(PcdDisableIMCWhenIsolated))
+        {
+            // Decide if this is the IMC channel and if it should be allowed.
+            if (CompareMem(&OfferMessage->InterfaceType, &gVmbfsChannelGuid, sizeof(EFI_GUID)) == 0)
+            {
+                DEBUG((DEBUG_INFO, "%a: IMC Channel allowed during boot (%g).\n", __FUNCTION__, &OfferMessage->InterfaceType));
+                return TRUE;
+            }
         }
     }
 

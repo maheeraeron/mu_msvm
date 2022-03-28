@@ -47,3 +47,4 @@
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
+    gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated

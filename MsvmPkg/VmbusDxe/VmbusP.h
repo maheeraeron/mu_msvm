@@ -111,6 +111,10 @@ VMBUS_ROOT_ALLOWED_GUIDS gAllowedGuids[] =
     {FALSE, { 0xf912ad6d, 0x2b17, 0x48ea, {0xbd, 0x65, 0xf9, 0x27, 0xa6, 0x1c, 0x76, 0x84} }}   // SynthKeyDxe
 };
 
+// IMC is a special channel for now and is controlled using the UEFI flag. Having an IMC channel lets us remove
+// the extra reboot after provisioning for setting the computer name.
+EFI_GUID gVmbfsChannelGuid =  {0xc376c1c3, 0xd276, 0x48d2, {0x90, 0xa9, 0xc0, 0x47, 0x48, 0x07, 0x2c, 0x60}};
+
 typedef struct
 {
     ACPI_EXTENDED_HID_DEVICE_PATH AcpiExtendedNode;
