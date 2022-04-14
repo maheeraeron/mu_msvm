@@ -51,20 +51,36 @@ Abstract:
 //
 // Initial data for Memory Type Information HOB.
 //
-// Initial values here are irrelevant.
-//
 static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformation[] =
 {
     { EfiACPIMemoryNVS,       0x004 },
-    { EfiACPIReclaimMemory,   0x008 },
+    { EfiACPIReclaimMemory,   0x032 },
     { EfiReservedMemoryType,  0x004 },
-    { EfiRuntimeServicesData, 0x024 },
+    { EfiRuntimeServicesData, 0x054 },
     { EfiRuntimeServicesCode, 0x030 },
-    { EfiBootServicesCode,    0x180 },
+    { EfiBootServicesCode,    0x554 },
     { EfiBootServicesData,    0xF00 },
     { EfiMaxMemoryType,       0x000 }
 };
 
+//
+// Initial data for Memory Type Information HOB for hibernate enabled VMs.
+// This accounts for 4 SCSI drives and 2 NICs present during UEFI. 
+// This is not a strict limit since an additional buffer is included in the calculations.
+// If we exceed the memory needed, resume from hibernate could fail due to a changed memory 
+// map during resume.
+//
+static EFI_MEMORY_TYPE_INFORMATION MsvmMemoryTypeInformationHibernateEnabled[] =
+{
+    { EfiACPIMemoryNVS,       0x0004 },
+    { EfiACPIReclaimMemory,   0x0032 },
+    { EfiReservedMemoryType,  0x0004 },
+    { EfiRuntimeServicesData, 0x0054 },
+    { EfiRuntimeServicesCode, 0x0030 },
+    { EfiBootServicesCode,    0x0554 },
+    { EfiBootServicesData,    0x21BE },
+    { EfiMaxMemoryType,       0x0000 }
+};
 
 //
 // Boot Mode PPI.
@@ -667,11 +683,22 @@ Return Value:
     //
     // Memory Type Information HOB
     //
-    HobAddGuidData(
-        &gEfiMemoryTypeInformationGuid,
-        MsvmDefaultMemoryTypeInformation,
-        sizeof(MsvmDefaultMemoryTypeInformation)
-        );
+    if (PcdGetBool(PcdHibernateEnabled))
+    {
+        HobAddGuidData(
+                &gEfiMemoryTypeInformationGuid,
+                MsvmMemoryTypeInformationHibernateEnabled,
+                sizeof(MsvmMemoryTypeInformationHibernateEnabled)
+                );      
+    }   
+    else
+    {
+        HobAddGuidData(
+                &gEfiMemoryTypeInformationGuid,
+                MsvmDefaultMemoryTypeInformation,
+                sizeof(MsvmDefaultMemoryTypeInformation)
+                );          
+    }
 
     //
     // Add CPU HOB with resultant address width and 16-bits of IO space.
