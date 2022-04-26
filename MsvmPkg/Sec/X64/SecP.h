@@ -106,6 +106,7 @@ typedef struct _TDX_VE_INFO {
 
 #define VE_EXIT_CODE_CPUID      10   
 #define VE_EXIT_CODE_RDMSR      31
+#define VE_EXIT_CODE_WRMSR      32
 
 LONG64
 SecGetTdxVeInfo(

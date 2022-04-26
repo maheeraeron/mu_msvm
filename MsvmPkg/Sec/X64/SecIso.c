@@ -345,6 +345,37 @@ SecProcessVirtualMsrRead (
 }
 
 BOOLEAN
+SecProcessVirtualMsrWrite (
+    _In_ PTRAP_FRAME TrapFrame
+    )
+{
+    UINT64 value;
+
+    value = (TrapFrame->Rdx << 32) | (UINT32)TrapFrame->Rax;
+
+    switch (TrapFrame->Rcx)
+    {
+    case MSR_IA32_EFER:
+
+        //
+        // EFER cannot be modified if direct MSR writes cause an intercept, so
+        // simply verify that the requested change has no effect.  If the
+        // value being written is the current EFER value, then ignore the
+        // write.
+        //
+
+        if (value == AsmReadMsr64(MSR_IA32_EFER))
+        {
+            return TRUE;
+        }
+        return FALSE;
+
+    default:
+        return FALSE;
+    }
+}
+
+BOOLEAN
 SecProcessVirtualCpuid (
     _In_ PTRAP_FRAME TrapFrame
     )
@@ -579,6 +610,13 @@ SecProcessVirtualizationException (
     {
     case VE_EXIT_CODE_RDMSR:
         if (!SecProcessVirtualMsrRead(TrapFrame))
+        {
+            return FALSE;
+        }
+        break;
+
+    case VE_EXIT_CODE_WRMSR:
+        if (!SecProcessVirtualMsrWrite(TrapFrame))
         {
             return FALSE;
         }
