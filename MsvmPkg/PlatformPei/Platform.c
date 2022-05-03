@@ -58,7 +58,7 @@ static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformation[] =
     { EfiReservedMemoryType,  0x004 },
     { EfiRuntimeServicesData, 0x054 },
     { EfiRuntimeServicesCode, 0x030 },
-    { EfiBootServicesCode,    0x554 },
+    { EfiBootServicesCode,    0x500 },
     { EfiBootServicesData,    0xF00 },
     { EfiMaxMemoryType,       0x000 }
 };
