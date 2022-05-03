@@ -67,10 +67,18 @@ typedef union _GHCB_MSR
 #define TDX_PAGE_SIZE_INVALID       0x8000000000000002ULL
 
 
+typedef union _TDX_ACCEPT_GPA {
+    UINT64 AsUINT64;
+    struct {
+        UINT64 PageSize : 2;
+        UINT64 ReservedZ : 10;
+        UINT64 GpaPageNumber : 52;
+    };
+} TDX_ACCEPT_GPA, *PTDX_ACCEPT_GPA;
+
 UINT64
 _tdx_tdg_mem_page_accept(
-    _In_ HV_GPA Gpa,
-    _In_ UINT32 PageSize
+    _In_ TDX_ACCEPT_GPA AcceptGpa
     );
 
 UINT64
@@ -195,7 +203,14 @@ Return Value:
 
 --*/
 {
+    TDX_ACCEPT_GPA acceptGpa;
+    HV_GPA_PAGE_NUMBER largePageSize;
     UINT64 errorCode;
+
+    acceptGpa.AsUINT64 = 0;
+    acceptGpa.GpaPageNumber = StartingPageNumber;
+
+    largePageSize = SIZE_2MB / HV_PAGE_SIZE;
 
     while (PageCount != 0)
     {
@@ -203,16 +218,15 @@ Return Value:
         // Attempt to validate a 2 MB page if possible.
         //
 
-        if (((StartingPageNumber & (SIZE_2MB - 1)) == 0) &&
-            (PageCount >= SIZE_2MB))
+        if (((acceptGpa.GpaPageNumber & (largePageSize - 1)) == 0) &&
+            (PageCount >= largePageSize))
         {
-            errorCode = _tdx_tdg_mem_page_accept(
-                StartingPageNumber * HV_PAGE_SIZE,
-                1);
+            acceptGpa.PageSize = 1;
+            errorCode = _tdx_tdg_mem_page_accept(acceptGpa);
             if (errorCode == TDX_SUCCESS)
             {
-                StartingPageNumber += SIZE_2MB / HV_PAGE_SIZE;
-                PageCount -= SIZE_2MB / HV_PAGE_SIZE;
+                acceptGpa.GpaPageNumber += largePageSize;
+                PageCount -= largePageSize;
                 continue;
             }
             else if (errorCode != TDX_PAGE_SIZE_INVALID)
@@ -221,15 +235,14 @@ Return Value:
             }
         }
 
-        errorCode = _tdx_tdg_mem_page_accept(
-            StartingPageNumber * HV_PAGE_SIZE,
-            0);
+        acceptGpa.PageSize = 0;
+        errorCode = _tdx_tdg_mem_page_accept(acceptGpa);
         if (errorCode != TDX_SUCCESS)
         {
             return EFI_SECURITY_VIOLATION;
         }
 
-        StartingPageNumber += 1;
+        acceptGpa.GpaPageNumber += 1;
         PageCount -= 1;
     }
 

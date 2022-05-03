@@ -23,8 +23,7 @@ include macamd64.inc
 ;
 ; UINT64
 ; _tdx_tdg_mem_page_accept(
-;     _In_ HV_GPA Gpa,
-;     _In_ UINT32 PageSize
+;     _In_ TDX_ACCEPT_GPA AcceptGpa
 ;     );
 ;
 ; Routine Description:
@@ -33,9 +32,7 @@ include macamd64.inc
 ;
 ; Arguments:
 ;
-;   Gpa (rcx) - Supplies the GPA to accept.
-;
-;   PageSize (rdx) - Supplies 0 to accept a 4 KB page, or 1 to accept a 2 MB page.
+;   AcceptGpa (rcx) - Supplies the packed GPA information.
 ;
 ; Return Value:
 ;
