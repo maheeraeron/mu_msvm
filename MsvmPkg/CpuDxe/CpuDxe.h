@@ -42,18 +42,14 @@ Abstract:
 
 MEMORY_PROTECTION_SETTINGS   gMPS;
 
-#define HEAP_GUARD_NONSTOP_MODE (gMPS.HeapGuardPolicy.Fields.NonstopMode && \
-                                  (gMPS.HeapGuardPolicy.Fields.UefiPoolGuard || \
-                                    gMPS.HeapGuardPolicy.Fields.UefiPageGuard || \
-                                    gMPS.HeapGuardPolicy.Fields.UefiFreedMemoryGuard))
+#define HEAP_GUARD_NONSTOP_MODE  FALSE
 
 /*
 #define HEAP_GUARD_NONSTOP_MODE       \
         ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
 */
 
-#define NULL_DETECTION_NONSTOP_MODE (gMPS.NullPointerDetectionPolicy.Fields.NonstopMode && \
-                                      gMPS.NullPointerDetectionPolicy.Fields.UefiNullDetection)
+#define NULL_DETECTION_NONSTOP_MODE  FALSE
 
 /*
 #define NULL_DETECTION_NONSTOP_MODE   \
