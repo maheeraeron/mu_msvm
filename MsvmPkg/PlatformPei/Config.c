@@ -30,7 +30,7 @@ Abstract:
 #include <Ppi/ConfigPpi.h>
 #include <IsolationTypes.h>
 #include "Config.h"
-#include <Guid/MemoryProtectionSettings.h>
+#include <Guid/DxeMemoryProtectionSettings.h>
 #include <UefiConstants.h>
 #include <Hob.h>
 
@@ -775,7 +775,7 @@ ConfigSetUefiConfigFlags(
     UEFI_CONFIG_FLAGS *ConfigFlags
     )
 {
-    MEMORY_PROTECTION_SETTINGS memoryProtectionSettings;
+    DXE_MEMORY_PROTECTION_SETTINGS memoryProtectionSettings;
 
     // Ignore the return value. We do not want to fail fast for these errors.
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdSerialControllersEnabled, (UINT8) ConfigFlags->Flags.SerialControllersEnabled), CRITICAL_INITIALIZATION_FAILURE);
@@ -803,31 +803,31 @@ ConfigSetUefiConfigFlags(
     //
     if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeDisabled)
     {
-        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_OFF;
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_OFF;
     }
     else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeDefault)
     {
-        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_SHIP_MODE;            
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_SHIP_MODE;            
     }
     else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeStrict)
     {
-        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_DEBUG;   
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_DEBUG;   
         memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;         
     }
     else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeRelaxed)
     {
-        memoryProtectionSettings = (MEMORY_PROTECTION_SETTINGS) MEMORY_PROTECTION_SETTINGS_SHIP_MODE;   
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_SHIP_MODE;   
         memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;    
 
         // Linux has some known loader limitations. The following checks needs to be relaxed for Linux
-        // to boot successfully. For more details on these individual fields, look at MemoryProtectionSettings.h
+        // to boot successfully. For more details on these individual fields, look at DxeMemoryProtectionSettings.h
         memoryProtectionSettings.NullPointerDetectionPolicy.Fields.DisableReadyToBoot = 1; 
-        memoryProtectionSettings.DxeNxProtectionPolicy.Fields.EfiLoaderData = 0;
-        memoryProtectionSettings.DxeNxProtectionPolicy.Fields.EfiBootServicesData = 0;
-        memoryProtectionSettings.DxeNxProtectionPolicy.Fields.EfiConventionalMemory = 0;    
+        memoryProtectionSettings.NxProtectionPolicy.Fields.EfiLoaderData = 0;
+        memoryProtectionSettings.NxProtectionPolicy.Fields.EfiBootServicesData = 0;
+        memoryProtectionSettings.NxProtectionPolicy.Fields.EfiConventionalMemory = 0;    
     }
 
-    HobAddGuidData(&gMemoryProtectionSettingsGuid,
+    HobAddGuidData(&gDxeMemoryProtectionSettingsGuid,
         &memoryProtectionSettings,
         sizeof(memoryProtectionSettings));
 

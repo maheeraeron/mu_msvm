@@ -10,7 +10,7 @@
 #     CPU driver installs CPU Architecture Protocol
 #
 
-#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 1b5376a818cacb8fed91b66ebf80372f | 2022-05-11T06-54-11 | cec801672cc1c15e5ee96b0c502785dad9c80915
+#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | cfcb4ce963ec7ece70e5fa9e3e4833c5 | 2022-05-13T21-13-32 | 1fe56ccdeb39aa2fb6b85a37f4fb3225f4fa2e2a
 
 [Defines]
   INF_VERSION                    = 0x00010005
