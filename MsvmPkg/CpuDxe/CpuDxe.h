@@ -33,14 +33,11 @@ Abstract:
 #include <Library/UefiCpuLib.h>
 #include <Guid/IdleLoopEvent.h>
 #include <IsolationTypes.h>   // MS_HYP_CHANGE
-#include <Library/DxeMemoryProtectionHobLib.h> // MU_CHANGE
 
 
 #define INTERRUPT_VECTOR_NUMBER   256 // MS_HYP_CHANGE
 
-// MU_CHANGE START Update to use gDxeMps
-
-DXE_MEMORY_PROTECTION_SETTINGS   gDxeMps;
+// MU_CHANGE START 
 
 #define HEAP_GUARD_NONSTOP_MODE  FALSE
 
