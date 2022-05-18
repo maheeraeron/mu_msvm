@@ -1131,39 +1131,39 @@ Return Value:
 
     mIsolationConfiguration = *IsolationConfiguration;
 
-    if ((mIsolationConfiguration.IsolationType == HV_PARTITION_ISOLATION_TYPE_SNP) &&
-        (mIsolationConfiguration.ParavisorPresent == 0))
+    Handler = 0;
+    Vector = 0;
+
+    if (mIsolationConfiguration.ParavisorPresent == 0)
     {
-        //
-        // #VC is exception vector 29.
-        //
-
-        Handler = (UINTN)SecVirtualCommunicationExceptionHandler;
-        Vector = 29;
-
-        if (!SecInitializeHardwareIsolation(UefiIsolationTypeSnp, UefiIgvmConfigHeader))
+        if (mIsolationConfiguration.IsolationType == HV_PARTITION_ISOLATION_TYPE_SNP)
         {
-            return;
+            //
+            // #VC is exception vector 29.
+            //
+
+            Handler = (UINTN)SecVirtualCommunicationExceptionHandler;
+            Vector = 29;
+
+            if (!SecInitializeHardwareIsolation(UefiIsolationTypeSnp, UefiIgvmConfigHeader))
+            {
+                return;
+            }
         }
-    }
-    else if (mIsolationConfiguration.IsolationType == HV_PARTITION_ISOLATION_TYPE_TDX)
-    {
-        //
-        // #VE is exception vector 20.
-        //
-
-        Handler = (UINTN)SecVirtualizationExceptionHandler;
-        Vector = 20;
-
-        if (!SecInitializeHardwareIsolation(UefiIsolationTypeTdx, UefiIgvmConfigHeader))
+        else if (mIsolationConfiguration.IsolationType == HV_PARTITION_ISOLATION_TYPE_TDX)
         {
-            return;
+            //
+            // #VE is exception vector 20.
+            //
+
+            Handler = (UINTN)SecVirtualizationExceptionHandler;
+            Vector = 20;
+
+            if (!SecInitializeHardwareIsolation(UefiIsolationTypeTdx, UefiIgvmConfigHeader))
+            {
+                return;
+            }
         }
-    }
-    else
-    {
-        Handler = 0;
-        Vector = 0;
     }
 
     if (Handler != 0)
