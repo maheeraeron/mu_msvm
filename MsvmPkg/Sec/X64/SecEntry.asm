@@ -222,6 +222,30 @@ SecGetTdxVeInfo PROC PUBLIC
 SecGetTdxVeInfo ENDP
 
 ;
+; SecGetTdInfo
+;
+; Retrieves the TD information from TDG.VP.INFO.
+;
+; @param[out] RCX Variable to receive the shared GPA width.
+;
+
+SecGetTdInfo PROC PUBLIC
+
+            push    r12                 ; preserve non-volatile register
+            mov     r12, rcx            ; capture argument register
+            mov     eax, 1              ; TDG.VP.INFO call code
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+            and     ecx, 3fh            ; mask GPA width
+            mov     [r12], ecx          ; save output parameter
+            pop     r12                 ; restore non-volatile register
+            ret
+
+SecGetTdInfo ENDP
+
+;
 ; SecTdCallRdmsr
 ;
 ; Reads a virtual MSR using the TDCALL GHCI interface.

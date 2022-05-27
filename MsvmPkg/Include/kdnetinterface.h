@@ -384,7 +384,7 @@ typedef struct _DEBUG_NET_PARAMETERS {
     __declspec(align(8))
     UCHAR MachineId[KD_NET_MACHINE_ID_SIZE];
 
-    // 
+    //
     // The legacy serial port number for legacy serial ports
     //
 
@@ -704,4 +704,5 @@ typedef struct _EFI_KDNET_HOB {
     KDNET_RECEIVE_PACKET ReceivePacket;
     KDNET_GET_PACKET_COUNT GetSentPacketCount;
     KDNET_GET_PACKET_COUNT GetReceivedPacketCount;
+    UINT64 CanonicalizationMask;
 } EFI_KDNET_HOB;

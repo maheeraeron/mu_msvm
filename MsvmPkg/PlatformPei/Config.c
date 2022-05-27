@@ -29,6 +29,7 @@ Abstract:
 #include <Library/ResourcePublicationLib.h>
 #include <Ppi/ConfigPpi.h>
 #include <IsolationTypes.h>
+#include "Hv.h"
 #include "Config.h"
 #include <Guid/DxeMemoryProtectionSettings.h>
 #include <UefiConstants.h>
@@ -79,14 +80,22 @@ Return Value:
 
 --*/
 {
+    UINT8 maximumAddressWidth = 48;
+    UINT8 minimumAddressWidth = 36;
     UINT8 physicalAddressWidth = 0;
-    static const UINT8 MinimumAddressWidth = 36;
-    static const UINT8 MaximumAddressWidth = 48;
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
     UINT32 maximumFunction;
     CPUID_ADDRESS_SPACE_SIZES addressSpaceSizes;
+
+    if (mIsolationType == UefiIsolationTypeTdx)
+    {
+        // The shared GPA bit position defines the physical address width.
+        physicalAddressWidth = (UINT8)mSharedGpaBit + 1;
+        DEBUG((DEBUG_VERBOSE, "TDX PhysicalAddressWidth %d\n", physicalAddressWidth));
+        return physicalAddressWidth;
+    }
 
     //
     // Query with CPUID
@@ -107,8 +116,14 @@ Return Value:
         // It is highly unlikely that the CPUID leaf doesn't exist.
         // Regardless just use the minimum as the default.
         DEBUG((DEBUG_WARN, "Can't query CPUID so defaulting address width to %u bits\n",
-            MinimumAddressWidth));
-        physicalAddressWidth = MinimumAddressWidth;
+            minimumAddressWidth));
+        physicalAddressWidth = minimumAddressWidth;
+    }
+
+    if ((mIsolationType == UefiIsolationTypeSnp) && (mSharedGpaBit != 0))
+    {
+        // Ensure the address width is at least wide enough to hold the shared GPA bit.
+        minimumAddressWidth = (UINT8)mSharedGpaBit + 1;
     }
 
 #elif defined(MDE_CPU_AARCH64)
@@ -128,24 +143,24 @@ Return Value:
         // It is highly unlikely for the register to have an invalid value.
         // Regardless just use 36 as the default.
         DEBUG((DEBUG_WARN, "Invalid D_AA64MMFR0_EL1.PARange so defaulting address width to %u bits\n",
-            MinimumAddressWidth));
-        physicalAddressWidth = MinimumAddressWidth;
+            minimumAddressWidth));
+        physicalAddressWidth = minimumAddressWidth;
     }
 
 #endif
 
-    if (physicalAddressWidth < MinimumAddressWidth)
+    if (physicalAddressWidth < minimumAddressWidth)
     {
         DEBUG((DEBUG_WARN, "Increasing address width from %u to %u\n",
-            physicalAddressWidth, MinimumAddressWidth));
-        physicalAddressWidth = MinimumAddressWidth;
+            physicalAddressWidth, minimumAddressWidth));
+        physicalAddressWidth = minimumAddressWidth;
     }
 
-    if (physicalAddressWidth > MaximumAddressWidth)
+    if (physicalAddressWidth > maximumAddressWidth)
     {
         DEBUG((DEBUG_WARN, "Reducing address width from %u to %u\n",
-            physicalAddressWidth, MaximumAddressWidth));
-        physicalAddressWidth = MaximumAddressWidth;
+            physicalAddressWidth, maximumAddressWidth));
+        physicalAddressWidth = maximumAddressWidth;
     }
 
     DEBUG((DEBUG_VERBOSE, "PhysicalAddressWidth %d\n", physicalAddressWidth));

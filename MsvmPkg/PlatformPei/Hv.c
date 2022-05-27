@@ -22,6 +22,10 @@ Abstract:
 
 #define HV 0x4856 // "HV"
 
+BOOLEAN mParavisorPresent = FALSE;
+UINT32 mIsolationType = UefiIsolationTypeNone;
+UINT32 mSharedGpaBit = 0;
+
 VOID
 HvDetectIsolation(
     VOID
@@ -45,7 +49,10 @@ Return Value:
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
     HV_CPUID_RESULT cpuidResult;
+    UINT64 sharedGpaBoundary;
+    UINT64 sharedGpaCanonicalizationBitmask;
     EFI_STATUS status = EFI_SUCCESS;
+    UINT32 virtualAddressBits;
 
     __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionVersionAndFeatures);
     if (!cpuidResult.VersionAndFeatures.HypervisorPresent)
@@ -72,13 +79,13 @@ Return Value:
     switch (cpuidResult.MsHvIsolationConfiguration.IsolationType)
     {
     case HV_PARTITION_ISOLATION_TYPE_VBS:
-        status = PcdSet32S(PcdIsolationArchitecture, UefiIsolationTypeVbs);
+        mIsolationType = UefiIsolationTypeVbs;
         break;
     case HV_PARTITION_ISOLATION_TYPE_SNP:
-        status = PcdSet32S(PcdIsolationArchitecture, UefiIsolationTypeSnp);
+        mIsolationType = UefiIsolationTypeSnp;
         break;
     case HV_PARTITION_ISOLATION_TYPE_TDX:
-        status = PcdSet32S(PcdIsolationArchitecture, UefiIsolationTypeTdx);
+        mIsolationType = UefiIsolationTypeTdx;
         break;
     case HV_PARTITION_ISOLATION_TYPE_NONE:
         return;
@@ -86,14 +93,17 @@ Return Value:
         ASSERT(FALSE);
         return;
     }
+
+    status = PcdSet32S(PcdIsolationArchitecture, mIsolationType);
     if (EFI_ERROR(status))
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdIsolationArchitecture::0x%x \n", status));
         PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
     }
-    
+
     if (cpuidResult.MsHvIsolationConfiguration.ParavisorPresent)
     {
+        mParavisorPresent = TRUE;
         status = PcdSetBoolS(PcdIsolationParavisorPresent, TRUE);
         if (EFI_ERROR(status))
         {
@@ -101,9 +111,35 @@ Return Value:
             PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
         }
     }
+
     if (cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryActive)
     {
-        status = PcdSet64S(PcdIsolationSharedGpaBoundary, 1UI64 << cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits);
+        mSharedGpaBit = cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits;
+        sharedGpaBoundary = 1UI64 << mSharedGpaBit;
+        sharedGpaCanonicalizationBitmask = 0;
+        virtualAddressBits = 48;
+        if (cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits == (virtualAddressBits - 1))
+        {
+            sharedGpaCanonicalizationBitmask = ~((1UI64 << virtualAddressBits) - 1);
+        }
+        else if (cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits > (virtualAddressBits - 1))
+        {
+            PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits);
+        }
+
+        DEBUG((DEBUG_VERBOSE,
+               "%a: SharedGpaBoundary: 0x%lx, CanonicalizationMask 0x%lx\n",
+               __FUNCTION__,
+               sharedGpaBoundary,
+               sharedGpaCanonicalizationBitmask));
+
+        status = PcdSet64S(PcdIsolationSharedGpaBoundary, sharedGpaBoundary);
+        if (!EFI_ERROR(status))
+        {
+            status = PcdSet64S(PcdIsolationSharedGpaCanonicalizationBitmask,
+                               sharedGpaCanonicalizationBitmask);
+        }
+
         if (EFI_ERROR(status))
         {
             DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdIsolationSharedGpaBoundary::0x%x \n", status));

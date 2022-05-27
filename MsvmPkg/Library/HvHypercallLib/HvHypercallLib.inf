@@ -28,3 +28,4 @@
 
 [Pcd.X64]
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask

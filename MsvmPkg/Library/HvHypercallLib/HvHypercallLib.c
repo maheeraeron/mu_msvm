@@ -37,7 +37,7 @@ VOID
 HvHypercallConnect(
     _In_ PVOID HypercallPage,
     _In_ UINT32 IsolationType,
-    _In_opt_ PVOID OutputPageForIsolationBypass,
+    _In_ BOOLEAN ParavisorPresent,
     _Out_ HV_HYPERCALL_CONTEXT *Context
     )
 /*++
@@ -55,10 +55,7 @@ Arguments:
                     non-isolated hypercalls (also used for calls to the
                     paravisor from an isolated VM).
 
-    OutputPageForIsolationBypass - If present, indicates that this connection
-                                   should bypass isolation protections and go
-                                   directly to the hypervisor.  The specified
-                                   address is used for hypercall output.
+    ParavisorPresent - For hardware isolation types, whether a paravisor is present.
 
     Context - Receives the hypercall context.
 
@@ -80,19 +77,21 @@ Return Value:
     guestOsId.AsUINT64 = 0;
     guestOsId.OsId = 1;
 
-    if (OutputPageForIsolationBypass != NULL)
+    if (IsolationType > UefiIsolationTypeVbs)
     {
 #if defined(MDE_CPU_X64)
-
-        UINT64 ghcbAddress;
-        UINT64 sharedGpaBoundary;
 
         //
         // Obtain the shared GPA boundary.  For isolation architectures that
         // require bypass calls, this must be non-zero.
         //
-        sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-        ASSERT(sharedGpaBoundary != 0);
+
+        Context->SharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+        ASSERT(Context->SharedGpaBoundary != 0);
+
+        Context->CanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
+        Context->ParavisorPresent = ParavisorPresent;
+
 
         //
         // Determine how the isolation boundary will be penetrated.
@@ -100,9 +99,12 @@ Return Value:
         if (IsolationType == UefiIsolationTypeTdx)
         {
             Context->IsTdx = TRUE;
+            ASSERT(!Context->ParavisorPresent);
         }
         else
         {
+            UINT64 ghcbAddress;
+
             //
             // Obtain the GHCB address.  If this is not above the shared GPA
             // boundary, then it must be incorrectly configured.  If the address
@@ -121,17 +123,16 @@ Return Value:
             //
 
             ghcbAddress = AsmReadMsr64(SEV_MSR_GHCB);
-            if ((ghcbAddress < sharedGpaBoundary) || ((ghcbAddress & (EFI_PAGE_SIZE - 1)) != 0))
+            if ((ghcbAddress < Context->SharedGpaBoundary) ||
+                ((ghcbAddress & (EFI_PAGE_SIZE - 1)) != 0))
             {
                 // If the GHCB is misconfigured, then no further work is possible.
                 ASSERT(FALSE);
                 CpuDeadLoop();
             }
 
-            Context->Ghcb = (PVOID)ghcbAddress;
+            Context->Ghcb = (PVOID)(ghcbAddress | Context->CanonicalizationMask);
         }
-
-        Context->OutputPage = OutputPageForIsolationBypass;
 
         //
         // Set the guest OS ID via a direct GHCB-based MSR write, since
@@ -299,9 +300,11 @@ Arguments:
     CountOfElements - The number of elements to process, or 0 if not a rep
         hypercall.
 
-    FirstRegister - The first register value for the hypercall.
+    FirstRegister - The first register value for the hypercall. If a slow hypercall, this must refer
+        to the non-shared alias of the GPA.
 
-    SecondRegister - The second register value for the hypercall.
+    SecondRegister - The second register value for the hypercall. If a slow hypercall, this must
+        refer to the non-shared alias of the GPA.
 
     ElementsProcessed - Receives the number of elements that were successfully
         processed.
@@ -348,6 +351,25 @@ Return Value:
 
             FirstRegister = 0;
         }
+        else
+        {
+            ASSERT(SecondRegister == 0);
+
+            if (!Context->ParavisorPresent && FirstRegister != 0)
+            {
+                //
+                // FirstRegister supplies the Input Page PA, below the shared gpa
+                // boundary.
+                // GHCB based calls do not directly specify this page, rather the
+                // data is copied over from it into the GHCB. Convert it to a VA
+                // to make this possible.
+                //
+
+                ASSERT(FirstRegister < Context->SharedGpaBoundary);
+                FirstRegister += Context->SharedGpaBoundary;
+                FirstRegister |= Context->CanonicalizationMask;
+            }
+        }
 
         callOutput.CallStatus = HvHypercallpIssueGhcbHypercall(Context,
                                                                CallCode,
@@ -373,6 +395,26 @@ Return Value:
         if (Context->IsTdx)
         {
             hypercallRoutine = HvHypercallpIssueTdxHypercall;
+
+            if (!Fast)
+            {
+                //
+                // FirstRegister and SecondRegister supply the Input Page and Output Page PAs,
+                // below the shared gpa boundary. Convert them to the shared GPA.
+                //
+
+                if (!Context->ParavisorPresent && FirstRegister != 0)
+                {
+                    ASSERT(FirstRegister < Context->SharedGpaBoundary);
+                    FirstRegister += Context->SharedGpaBoundary;
+                }
+
+                if (!Context->ParavisorPresent && SecondRegister != 0)
+                {
+                    ASSERT(SecondRegister < Context->SharedGpaBoundary);
+                    SecondRegister += Context->SharedGpaBoundary;
+                }
+            }
         }
         else
         {
@@ -723,59 +765,30 @@ Return Value:
     UINT64 registerValue;
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+    UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+
+    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
+    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
 
 #if defined(MDE_CPU_X64)
+
     if (Context->Ghcb != NULL)
     {
-        PHV_INPUT_GET_VP_REGISTERS inputPage;
-        PHV_REGISTER_VALUE outputPage;
-        HV_STATUS status;
-
         HvHypercallpDisableInterrupts();
 
-        inputPage = Context->Ghcb;
-        ZeroMem(inputPage, sizeof *inputPage);
-        inputPage->PartitionId = HV_PARTITION_ID_SELF;
-        inputPage->VpIndex = HV_VP_INDEX_SELF;
-        inputPage->Names[0] = RegisterName;
-
-        status = HvHypercallpIssueGhcbHypercall(Context,
-                                                HvCallGetVpRegisters,
-                                                NULL,
-                                                1,
-                                                NULL);
-
-        //
-        // What to do in case of failure?
-        //
-
-        ASSERT(status == 0);
-
-        outputPage = Context->OutputPage;
-        registerValue = outputPage->Reg64;
+        HvHypercallGetMsrWithGhcb(Context, msr, &registerValue);
 
         HvHypercallpEnableInterrupts();
     }
+    else if (Context->IsTdx)
+    {
+        registerValue = _tdx_vmcall_rdmsr(msr);
+    }
     else
+
 #endif
     {
-        UINT32 msr;
-
-        msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
-
-        // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
-        //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr));
-
-#if defined(MDE_CPU_X64)
-        if (Context->IsTdx)
-        {
-            registerValue = _tdx_vmcall_rdmsr(msr);
-        }
-        else
-#endif
-        {
-            registerValue = AsmReadMsr64(msr);
-        }
+        registerValue = AsmReadMsr64(msr);
     }
 
 #elif defined(MDE_CPU_AARCH64)
@@ -824,50 +837,30 @@ Return Value:
 
 #if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
 
+    UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+
+    // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
+    //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
+
+#if defined(MDE_CPU_X64)
+
     if (Context->Ghcb != NULL)
     {
-        PHV_INPUT_SET_VP_REGISTERS inputPage;
-        HV_STATUS status;
-
         HvHypercallpDisableInterrupts();
 
-        inputPage = Context->Ghcb;
-        ZeroMem(inputPage, sizeof *inputPage);
-        inputPage->PartitionId = HV_PARTITION_ID_SELF;
-        inputPage->VpIndex = HV_VP_INDEX_SELF;
-        inputPage->Elements[0].Name = RegisterName;
-        inputPage->Elements[0].Value.Reg64 = RegisterValue;
-
-        status = HvHypercallpIssueGhcbHypercall(Context,
-                                                HvCallSetVpRegisters,
-                                                NULL,
-                                                1,
-                                                NULL);
-        //
-        // What to do in case of failure?
-        //
-
-        ASSERT(status == 0);
+        HvHypercallpSetMsrWithGhcb(Context, msr, RegisterValue);
 
         HvHypercallpEnableInterrupts();
     }
-    else
+    else if (Context->IsTdx)
     {
-        UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
+        _tdx_vmcall_wrmsr(msr, RegisterValue);
+    }
+    else
 
-        // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x Value 0x%lx\n", __FUNCTION__,
-        //     RegisterName, HvHypercallpRegisterNameToString(RegisterName), msr, RegisterValue));
-
-#if defined(MDE_CPU_X64)
-        if (Context->IsTdx)
-        {
-            _tdx_vmcall_wrmsr(msr, RegisterValue);
-        }
-        else
 #endif
-        {
-            AsmWriteMsr64(msr, RegisterValue);
-        }
+    {
+        AsmWriteMsr64(msr, RegisterValue);
     }
 
 #elif defined(MDE_CPU_AARCH64)

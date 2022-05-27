@@ -91,6 +91,38 @@ HvHypercallpSetMsrWithGhcb(
 }
 
 
+VOID
+HvHypercallGetMsrWithGhcb(
+    _In_ HV_HYPERCALL_CONTEXT *Context,
+    _In_ UINT64 MsrNumber,
+    _Out_ UINT64* RegisterValue
+    )
+{
+    //
+    // Initialize the GHCB page to indicate a request to get the specified
+    // MSR.
+    //
+
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD_VALID_BITMAP0, 0);
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD_VALID_BITMAP1, 0);
+
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD64_EXITCODE, GHCB_EXITCODE_MSR);
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD64_EXITINFO1, 0);
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD64_EXITINFO2, 0);
+    SetGhcbField64(Context->Ghcb, GHCB_FIELD64_RCX, MsrNumber);
+    SetGhcbField32(Context->Ghcb, GHCB_FIELD32_FORMAT, 0);
+    SetGhcbField16(Context->Ghcb, GHCB_FIELD16_VERSION, 1);
+    _sev_vmgexit();
+
+    //
+    // The value is present in EDX:EAX.
+    //
+
+    *RegisterValue = GetGhcbField64(Context->Ghcb, GHCB_FIELD64_RDX) << 32;
+    *RegisterValue |= (UINT32)GetGhcbField64(Context->Ghcb, GHCB_FIELD64_RAX);
+}
+
+
 HV_STATUS
 HvHypercallpIssueGhcbHypercall(
     _In_ HV_HYPERCALL_CONTEXT *Context,
@@ -143,7 +175,6 @@ HvHypercallpIssueGhcbHypercall(
     }
 
     SetGhcbField32(Context->Ghcb, GHCB_FIELD32_FORMAT, 1);
-    SetGhcbField64(Context->Ghcb, GHCB_FIELD64_HYPERCALL_OUTPUT, (UINTN)Context->OutputPage);
 
     hypercallInput.AsUINT64 = 0;
     hypercallInput.CallCode = CallCode;

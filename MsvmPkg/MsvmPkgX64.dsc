@@ -642,6 +642,7 @@
   gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture|0x0
   gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary|0x0
+  gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask|0x0
 
   # UEFI_CONFIG_AMD_ASPT
   gMsvmPkgTokenSpaceGuid.PcdAsptPtr|0x0

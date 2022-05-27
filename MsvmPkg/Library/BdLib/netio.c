@@ -45,7 +45,7 @@ Return Value:
 
 --*/
 {
-    return (ULONG_PTR)Va;
+    return (ULONG_PTR)Va & ~KdnetHob->CanonicalizationMask;
 }
 
 VOID

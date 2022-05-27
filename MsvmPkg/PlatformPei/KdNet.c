@@ -49,7 +49,6 @@ AllocateHostVisiblePages(
     )
 {
     UINT32 numberOfPages;
-    UINT64 sharedGpaBoundary;
     EFI_STATUS status;
 
     //
@@ -77,11 +76,8 @@ AllocateHostVisiblePages(
     // because of the contract with the host visibility lib.
     //
 
-    sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-
     status = EfiMakePageRangeHostVisible(
         IsolationType,
-        sharedGpaBoundary,
         *Allocation / EFI_PAGE_SIZE,
         numberOfPages,
         NULL);
@@ -91,7 +87,8 @@ AllocateHostVisiblePages(
             KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
-    *Allocation += sharedGpaBoundary;
+    *Allocation += PcdGet64(PcdIsolationSharedGpaBoundary);
+    *Allocation |= PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
 
     return EFI_SUCCESS;
 }
@@ -633,6 +630,7 @@ Return Value:
         return;
     }
     hobData.GetReceivedPacketCount = (KDNET_GET_PACKET_COUNT)exportedFunction;
+    hobData.CanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
 
     //
     // Determine the amount of data that will be required to support the

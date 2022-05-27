@@ -18,6 +18,10 @@ Abstract:
 #include <hvhdk.h>
 #include <hvgdk.h>
 
+extern BOOLEAN mParavisorPresent;
+extern UINT32 mIsolationType;
+extern UINT32 mSharedGpaBit;
+
 VOID
 HvDetectIsolation(
     VOID

@@ -113,6 +113,11 @@ SecGetTdxVeInfo(
     _Out_ PTDX_VE_INFO VeInfo
     );
 
+LONG64
+SecGetTdInfo(
+    _Out_ PUINT32 GpaWidth
+    );
+
 UINT64
 SecTdCallRdmsr(
     _In_ UINT64 MsrNumber

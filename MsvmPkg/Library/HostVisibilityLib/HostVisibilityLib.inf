@@ -16,3 +16,9 @@
 [Packages]
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses.X64]
+    PcdLib
+
+[Pcd.X64]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary

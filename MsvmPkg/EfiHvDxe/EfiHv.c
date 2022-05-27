@@ -85,7 +85,6 @@ UCHAR *mHypercallPage;
 
 #endif
 
-PVOID mOutputPageBypass;
 PHV_SYNIC_EVENT_FLAGS_PAGE mEventFlagsPage;
 PHV_MESSAGE_PAGE mMessagePage;
 EFI_HANDLE mHvHandle;
@@ -95,6 +94,7 @@ BOOLEAN mAutoEoi;
 BOOLEAN mDirectTimerSupported;
 LIST_ENTRY mHostVisiblePageList;
 UINT64 mSharedGpaBoundary;
+UINT64 mCanonicalizationMask;
 UINT32 mIsolationType;
 
 EFI_HV_SINT_CONFIGURATION mSintConfiguration[HV_SYNIC_SINT_COUNT];
@@ -115,6 +115,96 @@ EFI_HARDWARE_INTERRUPT_PROTOCOL *mHwInt;
 
 extern EFI_HV_PROTOCOL mHv;
 extern EFI_HV_IVM_PROTOCOL mHvIvm;
+
+UINTN
+EfiHvpSharedPa(
+    PVOID Address
+    )
+/*++
+
+Routine Description:
+
+    Given an address, which may be either a VA or a PA, removes any
+    canonicalization bits and returns the shared GPA corresponding to the
+    address.
+
+Arguments:
+
+    Address - Input address.
+
+Return Value:
+
+    Shared GPA.
+
+--*/
+{
+    UINTN addr;
+
+    addr = (UINTN)Address;
+    addr &= ~mCanonicalizationMask;
+    if (addr < mSharedGpaBoundary)
+    {
+        addr += mSharedGpaBoundary;
+    }
+
+    return addr;
+}
+
+
+PVOID
+EfiHvpSharedVa(
+    PVOID Address
+    )
+/*++
+
+Routine Description:
+
+    Given an address, which may be either a VA or a PA, returns a canonicalized
+    pointer pointing to the shared GPA alias.
+
+Arguments:
+
+    Address - Input address.
+
+Return Value:
+
+    Shared VA pointer.
+
+--*/
+{
+    return (PVOID)(EfiHvpSharedPa(Address) | mCanonicalizationMask);
+}
+
+
+UINTN
+EfiHvpBasePa(
+    UINTN Address
+    )
+/*++
+
+Routine Description:
+
+    Given an address, returns the private alias GPA corresponding to that
+    address.
+
+Arguments:
+
+    Address - Input address.
+
+Return Value:
+
+    Shared GPA.
+
+--*/
+{
+    Address &= ~mCanonicalizationMask;
+    if (Address >= mSharedGpaBoundary)
+    {
+        Address -= mSharedGpaBoundary;
+    }
+
+    return Address;
+}
 
 
 VOID
@@ -883,9 +973,11 @@ Arguments:
 
     Fast - If TRUE, this is a fast hypercall.
 
-    FirstRegister - The first register value for the hypercall.
+    FirstRegister - The first register value for the hypercall. If a slow hypercall, this must refer
+        to the non-shared alias of the GPA.
 
-    SecondRegister - The second register value for the hypercall.
+    SecondRegister - The second register value for the hypercall. If a slow hypercall, this must
+        refer to the non-shared alias of the GPA.
 
 Return Value:
 
@@ -990,7 +1082,7 @@ Return Value:
 
     hvStatus = EfiHvIssueHypercall(HvCallPostMessage,
                                    FALSE,
-                                   (UINTN)input,
+                                   EfiHvpBasePa((UINTN)input),
                                    0);
 
     gBS->RestoreTPL(oldTpl);
@@ -1120,7 +1212,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
                 status = EfiMakePageRangeHostVisible(
                     mIsolationType,
-                    PcdGet64(PcdIsolationSharedGpaBoundary),
                     GpaPageBase,
                     PageCount,
                     &pagesProcessed);
@@ -1206,7 +1297,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
                                     HvCallModifySparseGpaPageHostVisibility,
                                     FALSE, // not fast
                                     repsInCurrentCall,
-                                    (UINTN)pInputBuffer,
+                                    EfiHvpBasePa((UINTN)pInputBuffer),
                                     0, // no output
                                     &repsProcessedThisCall);
         status = EfiHvConvertStatus(hvStatus);
@@ -1400,7 +1491,7 @@ EfiHvMakeAddressRangeHostVisible(
 
         if (ZeroPages)
         {
-            ZeroMem((PVOID)((UINTN)BaseAddress + mSharedGpaBoundary), ByteCount);
+            ZeroMem(EfiHvpSharedVa(BaseAddress), ByteCount);
         }
 
         if (ProtectionHandle != NULL)
@@ -1492,6 +1583,7 @@ Return Value:
     }
 
     mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+    mCanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
     paravisorPresent = IsParavisorPresent();
 
     // Allocate hypervisor communication pages.
@@ -1525,7 +1617,8 @@ Return Value:
             goto Exit;
         }
 
-        mHvPages = (PEFI_HV_PAGES)((UINTN)mHvPages + mSharedGpaBoundary);
+        mHvPages = (PEFI_HV_PAGES)EfiHvpSharedVa(mHvPages);
+        ZeroMem(mHvPages, sizeof(*mHvPages));
     }
     else
     {
@@ -1539,7 +1632,7 @@ Return Value:
 
         HvHypercallConnect(mHypercallPage,
                            UefiIsolationTypeNone,
-                           NULL,
+                           FALSE,
                            &mHvContext);
 
         // Check to see if the hypercall page was mapped. If it wasn't, abort here.
@@ -1557,7 +1650,6 @@ Return Value:
             DEBUG((DEBUG_VERBOSE, "--- %a: Failed to set the memory attribute the hypercall page!\n", __FUNCTION__));
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
-
     }
 
 #elif defined(MDE_CPU_AARCH64)
@@ -1596,46 +1688,11 @@ Return Value:
     {
         ASSERT(mSharedGpaBoundary != 0);
 
-        //
-        // Allocate a page to use as the hypercall output page if one was not
-        // already allocated.
-        //
-
-        if (paravisorPresent)
-        {
-            mOutputPageBypass = AllocatePages(1);
-            if (mOutputPageBypass == NULL)
-            {
-                status = EFI_OUT_OF_RESOURCES;
-                goto Exit;
-            }
-
-            //
-            // Make this page visible to the hypervisor.
-            //
-
-            status = EfiHvpModifySparseGpaPageHostVisibility(
-                HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
-                1,
-                (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
-                NULL);
-
-            if (EFI_ERROR(status))
-            {
-                goto Exit;
-            }
-
-            mOutputPageBypass = (PVOID)((UINTN)mOutputPageBypass + mSharedGpaBoundary);
-        }
-        else
-        {
-            mOutputPageBypass = mHvPages->HypercallOutputPage;
-            mBypassOnly = TRUE;
-        }
+        mBypassOnly = !paravisorPresent;
 
         HvHypercallConnect(NULL,
                            mIsolationType,
-                           mOutputPageBypass,
+                           paravisorPresent,
                            &mHvBypassContext);
 
         mUseBypassContext = TRUE;
@@ -1716,7 +1773,6 @@ Return Value:
 {
     LIST_ENTRY *entry;
     EFI_HV_PROTECTION_OBJECT *protectionObject;
-    EFI_STATUS status;
 
     if (mUseBypassContext)
     {
@@ -1732,27 +1788,6 @@ Return Value:
         EfiHvMakeAddressRangeNotHostVisible(NULL, protectionObject);
     }
 
-    // Free the bypass output page if required.
-
-    if ((mOutputPageBypass != NULL) && !mBypassOnly)
-    {
-        mOutputPageBypass = (PVOID)((UINTN)mOutputPageBypass - mSharedGpaBoundary);
-
-        status = EfiHvpModifySparseGpaPageHostVisibility(
-            HV_MAP_GPA_PERMISSIONS_NONE,
-            1,
-            (UINTN)mOutputPageBypass / EFI_PAGE_SIZE,
-            NULL);
-
-        if (EFI_ERROR(status))
-        {
-            // Failure is not allowed here - need to fail fast.
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
-        }
-
-        FreePages(mOutputPageBypass, 1);
-    }
-
     HvHypercallDisconnect(&mHvContext);
 
     // Free the hypercall communication pages.  If these pages were originally
@@ -1763,7 +1798,7 @@ Return Value:
     {
         if (mBypassOnly)
         {
-            mHvPages = (PEFI_HV_PAGES)((UINTN)mHvPages - mSharedGpaBoundary);
+            mHvPages = (PEFI_HV_PAGES)EfiHvpBasePa((UINTN)mHvPages);
         }
 
         FreePages(mHvPages, sizeof(*mHvPages) / EFI_PAGE_SIZE);
@@ -1800,6 +1835,7 @@ Return Value:
 --*/
 {
     HV_HYPERCALL_CONTEXT *context;
+    UINTN gpa;
     HV_SYNIC_SIEFP siefp;
     HV_SYNIC_SIMP simp;
 
@@ -1812,19 +1848,21 @@ Return Value:
     simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
     if (simp.SimpEnabled != 0)
     {
-        mMessagePage = (PHV_MESSAGE_PAGE)(simp.BaseSimpGpa * EFI_PAGE_SIZE);
-        if ((UINTN)mMessagePage < mSharedGpaBoundary)
+        gpa = simp.BaseSimpGpa * EFI_PAGE_SIZE;
+        if (gpa < mSharedGpaBoundary)
         {
             // Failure is not allowed here - need to fail fast
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
+
+        mMessagePage = (PHV_MESSAGE_PAGE)EfiHvpSharedVa((PVOID)gpa);
     }
     else
     {
         ASSERT((mUseBypassContext == FALSE) || mBypassOnly);
         mMessagePage = &mHvPages->MessagePage;
         simp.SimpEnabled = 1;
-        simp.BaseSimpGpa = (UINTN)mMessagePage / EFI_PAGE_SIZE;
+        simp.BaseSimpGpa = EfiHvpSharedPa(mMessagePage) / EFI_PAGE_SIZE;
         HvHypercallSetVpRegister64Self(context, HvRegisterSipp, simp.AsUINT64);
     }
 
@@ -1833,19 +1871,21 @@ Return Value:
     siefp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSifp);
     if (siefp.SiefpEnabled != 0)
     {
-        mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)(siefp.BaseSiefpGpa * EFI_PAGE_SIZE);
-        if ((UINTN)mEventFlagsPage < mSharedGpaBoundary)
+        gpa = siefp.BaseSiefpGpa * EFI_PAGE_SIZE;
+        if (gpa < mSharedGpaBoundary)
         {
             // Failure is not allowed here - need to fail fast
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
+
+        mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)EfiHvpSharedVa((PVOID)gpa);
     }
     else
     {
         ASSERT((mUseBypassContext == FALSE) || mBypassOnly);
         mEventFlagsPage = &mHvPages->EventFlagsPage;
         siefp.SiefpEnabled = 1;
-        siefp.BaseSiefpGpa = (UINTN)mEventFlagsPage / EFI_PAGE_SIZE;
+        siefp.BaseSiefpGpa = EfiHvpSharedPa(mEventFlagsPage) / EFI_PAGE_SIZE;
         HvHypercallSetVpRegister64Self(context, HvRegisterSifp, siefp.AsUINT64);
     }
 

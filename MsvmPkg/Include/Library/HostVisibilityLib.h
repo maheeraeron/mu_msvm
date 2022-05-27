@@ -92,7 +92,6 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
-    _In_ HV_GPA SharedBoundaryGpa,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -110,9 +109,6 @@ Arguments:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
-
-    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
-                        platform.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make not visible.

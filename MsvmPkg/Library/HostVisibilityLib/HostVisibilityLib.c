@@ -64,8 +64,10 @@ typedef union _GHCB_MSR
 
 
 #define TDX_SUCCESS                 0
-#define TDX_PAGE_SIZE_INVALID       0x8000000000000002ULL
+#define TDX_PAGE_SIZE_MISMATCH      0xC0000B0B
+#define TDX_PAGE_ALREADY_ACCEPTED   0x00000B0A
 
+#define TDX_TDG_STATUS(_status_) ((_status_) >> 32)
 
 typedef union _TDX_ACCEPT_GPA {
     UINT64 AsUINT64;
@@ -223,22 +225,32 @@ Return Value:
         {
             acceptGpa.PageSize = 1;
             errorCode = _tdx_tdg_mem_page_accept(acceptGpa);
-            if (errorCode == TDX_SUCCESS)
+            if (TDX_TDG_STATUS(errorCode) == TDX_SUCCESS)
             {
                 acceptGpa.GpaPageNumber += largePageSize;
                 PageCount -= largePageSize;
                 continue;
             }
-            else if (errorCode != TDX_PAGE_SIZE_INVALID)
+            else if (TDX_TDG_STATUS(errorCode) != TDX_PAGE_SIZE_MISMATCH)
             {
+                DEBUG((DEBUG_VERBOSE,
+                       "Failed to accept (large) page at 0x%lx errorCode 0x%lx\n",
+                       acceptGpa.GpaPageNumber,
+                       errorCode));
+
                 return EFI_SECURITY_VIOLATION;
             }
         }
 
         acceptGpa.PageSize = 0;
         errorCode = _tdx_tdg_mem_page_accept(acceptGpa);
-        if (errorCode != TDX_SUCCESS)
+        if (TDX_TDG_STATUS(errorCode) != TDX_SUCCESS)
         {
+            DEBUG((DEBUG_VERBOSE,
+                   "Failed to accept (small) page at 0x%lx errorCode 0x%lx\n",
+                   acceptGpa.GpaPageNumber,
+                   errorCode));
+
             return EFI_SECURITY_VIOLATION;
         }
 
@@ -419,9 +431,9 @@ Return Value:
 
 EFI_STATUS
 EfiChangePageRangeHostVisibilityTdx(
-    _In_ HV_GPA SharedBoundaryGpa,
     _In_ HV_GPA StartingGpa,
     _In_ UINT64 PageCount,
+    _In_ BOOLEAN Visible,
     _Out_opt_ PUINT64 PagesProcessed
     )
 /*++
@@ -433,12 +445,12 @@ Routine Description:
 
 Arguments:
 
-    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
-                        platform.
-
-    StartingGpa - Supplies the starting GPA of the range to make visible.
+    StartingGpa - Supplies the starting GPA of the range to make visible. This refers to the base
+        (private) GPA alias for the page.
 
     PageCount - Supplies the number of pages to make visible.
+
+    Visible - TRUE if the pages are to be made host visible, FALSE otherwise.
 
     PagesProcessed - Supplies an optional pointer to a page that should
                      receive the number of pages that were successfully
@@ -450,22 +462,34 @@ Return Value:
 
     Note that an error in this call is not recoverable. The caller must take the
     appropriate action to fail fast. This lib can be called from PEI and DXE
-    therefore this lib does not perform phase specific fail fast calls.   
+    therefore this lib does not perform phase specific fail fast calls.
 
 --*/
 {
     HV_GPA failedGpa;
     UINT64 pagesProcessed;
     EFI_STATUS status;
+    UINT64 errorCode;
+    HV_GPA sharedGpaBoundary;
 
     //
     // Request a page conversion via the MapPage GHCI call.
     //
 
-    if (_tdx_vmcall_map_gpa(
+    sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+    ASSERT(StartingGpa < sharedGpaBoundary);
+
+    if (Visible)
+    {
+        StartingGpa += sharedGpaBoundary;
+    }
+
+    errorCode = _tdx_vmcall_map_gpa(
         StartingGpa,
         PageCount * HV_PAGE_SIZE,
-        &failedGpa) != 0)
+        &failedGpa);
+
+    if (errorCode != 0)
     {
         //
         // If the count of pages processed is not reasonable, then proceed as
@@ -481,6 +505,11 @@ Return Value:
             }
         }
 
+        DEBUG((DEBUG_VERBOSE,
+               "MapPage GHCI call failed at GPA = 0x%lx with error code 0x%lx",
+               failedGpa,
+               errorCode));
+
         status = EFI_SECURITY_VIOLATION;
     }
     else
@@ -494,7 +523,7 @@ Return Value:
     // successfully processed.
     //
 
-    if ((pagesProcessed != 0) && (StartingGpa < SharedBoundaryGpa))
+    if ((pagesProcessed != 0) && !Visible)
     {
         status = EfiUpdatePageRangeAcceptanceTdx(
             StartingGpa / HV_PAGE_SIZE,
@@ -518,7 +547,6 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
-    _In_ UINT64 SharedBoundaryGpa,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -533,9 +561,6 @@ Routine Description:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
-
-    SharedBoundaryGpa - Supplies the shared boundary GPA for the current
-                        platform.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make visible.
@@ -566,9 +591,9 @@ Return Value:
 
     case UefiIsolationTypeTdx:
         return EfiChangePageRangeHostVisibilityTdx(
-            SharedBoundaryGpa,
-            SharedBoundaryGpa + (StartingPageNumber * HV_PAGE_SIZE),
+            StartingPageNumber * HV_PAGE_SIZE,
             PageCount,
+            TRUE,
             PagesProcessed);
     }
 
@@ -720,9 +745,9 @@ Return Value:
 
     case UefiIsolationTypeTdx:
         return EfiChangePageRangeHostVisibilityTdx(
-            SharedBoundaryGpa,
             StartingPageNumber * HV_PAGE_SIZE,
             PageCount,
+            FALSE,
             PagesProcessed);
     }
 

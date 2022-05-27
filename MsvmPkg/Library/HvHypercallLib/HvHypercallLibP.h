@@ -27,6 +27,13 @@ HvHypercallpSetMsrWithGhcb(
     _In_ UINT64 RegisterValue
     );
 
+VOID
+HvHypercallGetMsrWithGhcb(
+    _In_ HV_HYPERCALL_CONTEXT *Context,
+    _In_ UINT64 MsrNumber,
+    _Out_ UINT64* RegisterValue
+    );
+
 HV_STATUS
 HvHypercallpIssueGhcbHypercall(
     _In_ HV_HYPERCALL_CONTEXT *Context,

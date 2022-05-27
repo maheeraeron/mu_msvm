@@ -46,11 +46,13 @@ typedef struct _HV_HYPERCALL_CONTEXT
     BOOLEAN Connected;
     BOOLEAN IsTdx;
     PVOID Ghcb;
-    PVOID OutputPage;
 
 #if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
 
+    UINT64 SharedGpaBoundary;
+    UINT64 CanonicalizationMask;
     PVOID HypercallPage;
+    BOOLEAN ParavisorPresent;
 
 #endif
 } HV_HYPERCALL_CONTEXT, *PHV_HYPERCALL_CONTEXT;
@@ -61,7 +63,7 @@ VOID
 HvHypercallConnect(
     _In_ PVOID HypercallPage,
     _In_ UINT32 IsolationType,
-    _In_opt_ PVOID OutputPageForIsolationBypass,
+    _In_ BOOLEAN ParavisorPresent,
     _Out_ HV_HYPERCALL_CONTEXT *Context
     );
 

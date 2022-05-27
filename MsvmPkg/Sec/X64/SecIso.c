@@ -158,6 +158,7 @@ SecInitializeHardwareIsolation (
     SEC_CPUID_INFO *cpuidInfo;
     UINT64 ghcbAddress;
     UINT64 ghcbMsr;
+    UINT32 gpaWidth;
     HV_GUEST_OS_ID_CONTENTS guestOsId;
     UINT32 index;
     UINT32 leafNumber;
@@ -244,6 +245,24 @@ SecInitializeHardwareIsolation (
         }
     }
 
+    if (IsolationType == UefiIsolationTypeTdx)
+    {
+        //
+        // Query the shared GPA boundary from hardware and ensure that it
+        // matches the software configuration.
+        //
+
+        if (SecGetTdInfo(&gpaWidth) != 0)
+        {
+            return FALSE;
+        }
+
+        if (gpaWidth != mIsolationConfiguration.SharedGpaBoundaryBits + 1)
+        {
+            return FALSE;
+        }
+    }
+
     //
     // Capture the TSC frequency for scaling.
     //
@@ -291,6 +310,8 @@ SecProcessVirtualMsrRead (
     )
 {
     UINT64 value;
+
+    DEBUG((DEBUG_VERBOSE, "#VE - MsrRead Index 0x%x\n", TrapFrame->Rcx));
 
     switch (TrapFrame->Rcx)
     {
@@ -352,6 +373,10 @@ SecProcessVirtualMsrWrite (
     UINT64 value;
 
     value = (TrapFrame->Rdx << 32) | (UINT32)TrapFrame->Rax;
+    DEBUG((DEBUG_VERBOSE,
+           "#VE - MsrWrite Index 0x%x, value 0x%lx\n",
+           TrapFrame->Rcx,
+           value));
 
     switch (TrapFrame->Rcx)
     {
@@ -386,6 +411,11 @@ SecProcessVirtualCpuid (
     UINT32 leaf;
     UINT32 leafNumber;
     BOOLEAN matchEcx;
+
+    DEBUG((DEBUG_VERBOSE,
+           "#VE - CPUID leaf 0x%x subleaf 0x%x\n",
+           (UINT32)TrapFrame->Rax,
+           (UINT32)TrapFrame->Rcx));
 
     ZeroMem(&cpuidResult, sizeof(HV_CPUID_RESULT));
 
@@ -599,7 +629,8 @@ SecProcessVirtualizationException (
 
     if (SecGetTdxVeInfo(&veInfo) < 0)
     {
-        return FALSE;
+        DEBUG((DEBUG_VERBOSE, "#VE - Unable to obtain VEInfo\n"));
+        goto FailVe;
     }
 
     //
@@ -611,29 +642,36 @@ SecProcessVirtualizationException (
     case VE_EXIT_CODE_RDMSR:
         if (!SecProcessVirtualMsrRead(TrapFrame))
         {
-            return FALSE;
+            goto FailVe;
         }
         break;
 
     case VE_EXIT_CODE_WRMSR:
         if (!SecProcessVirtualMsrWrite(TrapFrame))
         {
-            return FALSE;
+            goto FailVe;
         }
         break;
 
     case VE_EXIT_CODE_CPUID:
         if (!SecProcessVirtualCpuid(TrapFrame))
         {
-            return FALSE;
+            goto FailVe;
         }
         break;
 
     default:
-        return FALSE;
+        DEBUG((DEBUG_VERBOSE, "#VE - Unknown exit reason 0x%x\n", veInfo.ExitReason));
+        goto FailVe;
     }
 
     TrapFrame->Rip += veInfo.InstructionLength;
 
     return TRUE;
+
+FailVe:
+
+    DEBUG((DEBUG_VERBOSE, "#VE - Handling failed\n"));
+
+    return FALSE;
 }
