@@ -92,14 +92,12 @@ Return Value:
         Context->CanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
         Context->ParavisorPresent = ParavisorPresent;
 
-
         //
         // Determine how the isolation boundary will be penetrated.
         //
         if (IsolationType == UefiIsolationTypeTdx)
         {
             Context->IsTdx = TRUE;
-            ASSERT(!Context->ParavisorPresent);
         }
         else
         {
@@ -403,13 +401,13 @@ Return Value:
                 // below the shared gpa boundary. Convert them to the shared GPA.
                 //
 
-                if (!Context->ParavisorPresent && FirstRegister != 0)
+                if (FirstRegister != 0)
                 {
                     ASSERT(FirstRegister < Context->SharedGpaBoundary);
                     FirstRegister += Context->SharedGpaBoundary;
                 }
 
-                if (!Context->ParavisorPresent && SecondRegister != 0)
+                if (SecondRegister != 0)
                 {
                     ASSERT(SecondRegister < Context->SharedGpaBoundary);
                     SecondRegister += Context->SharedGpaBoundary;
