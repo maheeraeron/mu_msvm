@@ -85,6 +85,7 @@ UCHAR *mHypercallPage;
 
 #endif
 
+PVOID mHvInputPage;
 PHV_SYNIC_EVENT_FLAGS_PAGE mEventFlagsPage;
 PHV_MESSAGE_PAGE mMessagePage;
 EFI_HANDLE mHvHandle;
@@ -1071,7 +1072,7 @@ Return Value:
         __FUNCTION__, ConnectionId, MessageType, Payload, PayloadSize));
 
     oldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
-    input = (PHV_INPUT_POST_MESSAGE)mHvPages->HypercallInputPage;
+    input = (PHV_INPUT_POST_MESSAGE)mHvInputPage;
     input->ConnectionId = ConnectionId;
     input->Reserved = 0;
     input->MessageType = MessageType;
@@ -1688,7 +1689,48 @@ Return Value:
     {
         ASSERT(mSharedGpaBoundary != 0);
 
-        mBypassOnly = !paravisorPresent;
+        //
+        // TDX systems require a host-visible page to use as the hypercall
+        // input page when making hypercalls that bypass the paravisor.
+        // Allocate such a page if required.  SNP systems always copy
+        // hypercall input into the GHCB page so no additional allocation is
+        // required for those systems.
+        //
+
+        if ((mIsolationType != UefiIsolationTypeSnp) && paravisorPresent)
+        {
+            PVOID hvInputPage;
+
+            hvInputPage = AllocatePages(1);
+            if (hvInputPage == NULL)
+            {
+                status = EFI_OUT_OF_RESOURCES;
+                goto Exit;
+            }
+
+            //
+            // Make this page visible to the hypervisor.  It should not be
+            // possible for this to fail.
+            //
+
+            status = EfiHvpModifySparseGpaPageHostVisibility(
+                HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
+                1,
+                (UINTN)hvInputPage / EFI_PAGE_SIZE,
+                NULL);
+
+            if (EFI_ERROR(status))
+            {
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            }
+
+            mHvInputPage = EfiHvpSharedVa(hvInputPage);
+        }
+        else
+        {
+            mHvInputPage = mHvPages->HypercallInputPage;
+            mBypassOnly = !paravisorPresent;
+        }
 
         HvHypercallConnect(NULL,
                            mIsolationType,
@@ -1773,6 +1815,7 @@ Return Value:
 {
     LIST_ENTRY *entry;
     EFI_HV_PROTECTION_OBJECT *protectionObject;
+    EFI_STATUS status;
 
     if (mUseBypassContext)
     {
@@ -1786,6 +1829,27 @@ Return Value:
         entry = GetFirstNode(&mHostVisiblePageList);
         protectionObject = BASE_CR(entry, EFI_HV_PROTECTION_OBJECT, ListEntry);
         EfiHvMakeAddressRangeNotHostVisible(NULL, protectionObject);
+    }
+
+    // Free the bypass input page if required.
+
+    if ((mHvInputPage != mHvPages->HypercallInputPage) && !mBypassOnly)
+    {
+        mHvInputPage = (PVOID)EfiHvpBasePa((UINTN)mHvInputPage);
+
+        status = EfiHvpModifySparseGpaPageHostVisibility(
+            HV_MAP_GPA_PERMISSIONS_NONE,
+            1,
+            (UINTN)mHvInputPage / EFI_PAGE_SIZE,
+            NULL);
+
+        if (EFI_ERROR(status))
+        {
+            // Failure is not allowed here - need to fail fast.
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        }
+
+        FreePages(mHvInputPage, 1);
     }
 
     HvHypercallDisconnect(&mHvContext);
