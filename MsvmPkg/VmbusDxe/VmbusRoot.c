@@ -1071,7 +1071,7 @@ Return Value:
     CopyMem(hotMessage->Message.Data,
             hvMessage->Payload,
             hotMessage->Message.Size);
-    
+
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
         hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel,
         VMBUS,
@@ -1161,7 +1161,7 @@ Return Value:
     {
         hotMessage = BASE_CR(GetFirstNode(&list), VMBUS_HOT_MESSAGE, Link);
 
-        // The offer message is validated before adding it to the list. 
+        // The offer message is validated before adding it to the list.
         ASSERT(hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel);
         ASSERT(hotMessage->Message.Size == sizeof(hotMessage->Message.OfferChannel));
 
@@ -1423,7 +1423,7 @@ Return Value:
 
         for (index = RootContext->MaxInterruptUsed; index > 0; --index)
         {
-            if ((RootContext->Channels[index] != NULL) && 
+            if ((RootContext->Channels[index] != NULL) &&
                 (RootContext->Channels[index]->Interrupt != NULL))
             {
                 break;
@@ -1977,6 +1977,7 @@ Return Value:
     }
 
     mSharedGpaBoundary = (UINTN)PcdGet64(PcdIsolationSharedGpaBoundary);
+    mCanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
 
     status = VmbusRootInitializeContext(&mRootContext);
     if (EFI_ERROR(status))

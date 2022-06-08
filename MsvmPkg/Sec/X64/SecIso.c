@@ -356,6 +356,18 @@ SecProcessVirtualMsrRead (
         value = 0;
         break;
 
+    case MSR_IA32_APIC_BASE:
+
+        //
+        // This register is queried to determine APIC mode. Always return the following:
+        // 1. BSP (0x100)
+        // 2. X2APIC mode (0x400)
+        // 3. Global Enabled (0x800)
+        //
+
+        value = 0xD00;
+        break;
+
     default:
         return FALSE;
     }
@@ -565,6 +577,22 @@ SecProcessVirtualCpuid (
     return TRUE;
 }
 
+
+BOOLEAN
+SecProcessHlt(
+    _In_ PTRAP_FRAME TrapFrame
+    )
+{
+    //
+    // TDX only. This is an automatic exit on SNP.
+    //
+
+    SecTdCallHlt();
+
+    return TRUE;
+}
+
+
 BOOLEAN
 SecProcessVirtualCommunicationException (
     _In_ PTRAP_FRAME TrapFrame
@@ -655,6 +683,13 @@ SecProcessVirtualizationException (
 
     case VE_EXIT_CODE_CPUID:
         if (!SecProcessVirtualCpuid(TrapFrame))
+        {
+            goto FailVe;
+        }
+        break;
+
+    case VE_EXIT_CODE_HLT:
+        if (!SecProcessHlt(TrapFrame))
         {
             goto FailVe;
         }

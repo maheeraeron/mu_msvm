@@ -313,6 +313,34 @@ Stcw20:     test    r10, r10            ; verify successful write
 SecTdCallWrmsr ENDP
 
 ;
+; SecTdCallHlt
+;
+; Issues an enlightened HLT
+;
+
+SecTdCallHlt PROC PUBLIC
+
+            push    r12                 ; preserve non-volatile registers
+            xor     r12d, r12d          ; clear the interrupt blocked flag
+            xor     eax, eax            ; TDG.VP.VMCALL call code
+            mov     ecx, 1C00h          ; pass R10-R12
+            xor     r10d, r10d          ; indicate GHCI call
+            mov     r11d, 12            ; indicate HLT
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+            test    rax, rax            ; verify successful call
+            jz      Stch20              ; if z, successful
+Stch10:     int     3                   ; failure
+Stch20:     test    r10, r10            ; verify successful HLT
+            jnz     Stch10              ; if nz, not successful
+            pop     r12                 ;
+            ret
+
+SecTdCallHlt ENDP
+
+;
 ; MulDiv64
 ;
 ; Multiply two 64-bit numbers and divide by a third.

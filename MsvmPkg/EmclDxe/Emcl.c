@@ -51,7 +51,7 @@ Author:
 typedef struct _EMCL_BOUNCE_BLOCK
 {
     LIST_ENTRY                  BlockListEntry;
-    
+
     struct _EMCL_BOUNCE_PAGE *FreePageListHead;
 
     UINT32                      InUsePageCount;
@@ -67,15 +67,16 @@ typedef struct _EMCL_BOUNCE_BLOCK
 
 
 //
-// EMCL_BOUNCE_PAGE - represents one guest physical page of a block. 
-// Units of pages are allocated to a vmbus packet as required and 
+// EMCL_BOUNCE_PAGE - represents one guest physical page of a block.
+// Units of pages are allocated to a vmbus packet as required and
 // returned to the 'block pool' when not in use.
 //
 typedef struct _EMCL_BOUNCE_PAGE
 {
     struct _EMCL_BOUNCE_PAGE*   NextBouncePage;
     struct _EMCL_BOUNCE_BLOCK*  BounceBlock;
-    PVOID                       PageVA; 
+    PVOID                       PageVA;
+    UINT64                      HostVisiblePA;
 } EMCL_BOUNCE_PAGE, *PEMCL_BOUNCE_PAGE;
 
 
@@ -257,9 +258,9 @@ Return Value:
         Context->IncomingPageCount = 0;
         Context->OutgoingPageCount = 0;
     }
-    
+
     EmclpFreeAllBounceBlocks(Context);
-    
+
 }
 
 
@@ -590,7 +591,7 @@ Return Value:
     {
         ASSERT(bouncePage);
         header->Range->PfnArray[pfnIndex] =
-           (UINT_PTR)bouncePage->PageVA >> EFI_PAGE_SHIFT;
+           (UINT_PTR)bouncePage->HostVisiblePA >> EFI_PAGE_SHIFT;
         bouncePage = bouncePage->NextBouncePage;
     }
     ASSERT(bouncePage == NULL);
@@ -666,7 +667,7 @@ Arguments:
 
     TransactionId - Transaction ID of packet to be sent.
 
-    CompletionEntry - An optional completion entry. When present a completion 
+    CompletionEntry - An optional completion entry. When present a completion
         is requested.
 
     DeferInterrupt - If TRUE, don't send an interrupt with this packet even
@@ -696,8 +697,8 @@ Return Value:
     // If external buffers are used, there must be a completion
     // entry associated with this packet transfer. External buffers are
     // used for the VmbusPacketTypeDataUsingGpaDirect case.
-    ASSERT(((ExternalBufferCount == 0) && 
-                (ExternalBuffers == NULL) && 
+    ASSERT(((ExternalBufferCount == 0) &&
+                (ExternalBuffers == NULL) &&
                 (PacketType != VmbusPacketTypeDataUsingGpaDirect)) ||
             ((ExternalBufferCount != 0) &&
                 (ExternalBuffers != NULL) &&
@@ -833,7 +834,7 @@ Return Value:
                                      TransactionId,
                                      (CompletionEntry != NULL) ? TRUE : FALSE,
                                      packetBuffer);
-            
+
         }
 
         break;
@@ -1054,7 +1055,7 @@ Return Value:
                 FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EMCL, __LINE__, 0);
             }
 
-            expectedRangeCount = 
+            expectedRangeCount =
                 ((Packet->Descriptor.DataOffset8 * 8) - FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges)) /
                     sizeof(VMTRANSFER_PAGE_RANGE);
 
@@ -1447,7 +1448,7 @@ Return Value:
     while (!IsListEmpty(&context->CompletionEntries))
     {
         EMCL_COMPLETION_ENTRY  *completionEntry;
-        
+
         entry = RemoveEntryList(GetFirstNode(&context->CompletionEntries));
 
         completionEntry = BASE_CR(entry, EMCL_COMPLETION_ENTRY, Link);
@@ -2282,9 +2283,9 @@ Return Value:
             status));
         return status;
     }
-    
+
     //
-    // Bounce buffer is required for Isolated partitions. 
+    // Bounce buffer is required for Isolated partitions.
     // TODO - Use another PCD flag to enable for non-isolated testing.
     //
 
@@ -2634,9 +2635,9 @@ EmclpAllocateBounceBlock(
 Routine Description:
 
     Allocate a large block of memory from EFI for I/O. Mark the memory as host-
-    visible. Allocate tracking structures to sub-allocate the block into 
+    visible. Allocate tracking structures to sub-allocate the block into
     individual pages.
-    
+
 Arguments:
 
     Context - Pointer to the EMCL Context.
@@ -2648,13 +2649,15 @@ Return Value:
     EFI_SUCCESS
     EFI_OUT_OF_RESOURCES for memory allocation failures
     other failures from hypervisor page visibility call.
-    
+
 --*/
 {
     EFI_STATUS status = EFI_INVALID_PARAMETER;
     UINT32 pageCount = 0;
     UINT32 i = 0;
     PEMCL_BOUNCE_BLOCK bounceBlock = NULL;
+    UINT8* nextVa;
+    UINT64 nextPa;
 
     DEBUG((EFI_D_VERBOSE,
         "%a(%d) Context=%p ByteCount=0x%x\n",
@@ -2699,24 +2702,10 @@ Return Value:
         status = EFI_OUT_OF_RESOURCES;
         goto Cleanup;
     }
-    
+
     bounceBlock->FreePageListHead = bounceBlock->BouncePageStructureBase;
-    
-    for (i = 0; i < pageCount; i++)
-    {
-        if (i == (pageCount - 1))
-        {
-            bounceBlock->BouncePageStructureBase[i].NextBouncePage = NULL;
-        }
-        else
-        {
-            bounceBlock->BouncePageStructureBase[i].NextBouncePage = 
-                &bounceBlock->BouncePageStructureBase[i+1];
-        }
-        bounceBlock->BouncePageStructureBase[i].BounceBlock = bounceBlock;
-        bounceBlock->BouncePageStructureBase[i].PageVA = (char *)bounceBlock->BlockBase + 
-                                                            (i * EFI_PAGE_SIZE);
-    }
+    nextVa = bounceBlock->BlockBase;
+    nextPa = (UINT64)nextVa;
 
     //
     // Make these pages visible to the host
@@ -2724,8 +2713,6 @@ Return Value:
 
     if (IsIsolated())
     {
-        UINT64 sharedGpaBoundary;
-
         status = mHv->MakeAddressRangeHostVisible(mHv,
                                                   HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
                                                   bounceBlock->BlockBase,
@@ -2742,25 +2729,38 @@ Return Value:
         // Adjust the address above the shared GPA boundary if required.
         //
 
-        sharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
-        if (sharedGpaBoundary != 0)
-        {
-            for (i = 0; i < pageCount; i += 1)
-            {
-                bounceBlock->BouncePageStructureBase[i].PageVA =
-                    (char *)bounceBlock->BouncePageStructureBase[i].PageVA +
-                    sharedGpaBoundary;
-            }
-        }
+        nextPa += PcdGet64(PcdIsolationSharedGpaBoundary);
 
+        //
+        // Canonicalize the VA.
+        //
+
+        nextVa = (PVOID)(PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask) | nextPa);
         bounceBlock->IsHostVisible = TRUE;
     }
 
-    InsertTailList(&Context->BounceBlockListHead,
-                   &bounceBlock->BlockListEntry);
+    for (i = 0; i < pageCount; i++)
+    {
+        if (i == (pageCount - 1))
+        {
+            bounceBlock->BouncePageStructureBase[i].NextBouncePage = NULL;
+        }
+        else
+        {
+            bounceBlock->BouncePageStructureBase[i].NextBouncePage =
+                &bounceBlock->BouncePageStructureBase[i + 1];
+        }
 
-    status = EFI_SUCCESS; 
-    
+        bounceBlock->BouncePageStructureBase[i].BounceBlock = bounceBlock;
+        bounceBlock->BouncePageStructureBase[i].PageVA = nextVa;
+        bounceBlock->BouncePageStructureBase[i].HostVisiblePA = nextPa;
+        nextVa += EFI_PAGE_SIZE;
+        nextPa += EFI_PAGE_SIZE;
+    }
+
+    InsertTailList(&Context->BounceBlockListHead, &bounceBlock->BlockListEntry);
+    status = EFI_SUCCESS;
+
 Cleanup:
     DEBUG((EFI_D_INFO,
         "%a (%d) Context=%p bounceBlock=%p status=0x%x\n",
@@ -2790,9 +2790,9 @@ EmclpFreeBounceBlock(
 
 Routine Description:
 
-    Free the block of memory allocated for I/O. 
+    Free the block of memory allocated for I/O.
     Marks the memory as not host-visible.
-        
+
 Arguments:
 
     Block - Bounce block that needs to be freed.
@@ -2800,7 +2800,7 @@ Arguments:
 Return Value:
 
     none
-    
+
 --*/
 {
     if (Block->IsHostVisible)
@@ -2833,9 +2833,9 @@ EmclpFreeAllBounceBlocks(
 
 Routine Description:
 
-    Free all of the large blocks of memory allocated for I/O. 
+    Free all of the large blocks of memory allocated for I/O.
     Marks the memory as not host-visible. Frees the associated tracking structures.
-        
+
 Arguments:
 
     Context - Pointer to the EMCL Context.
@@ -2843,7 +2843,7 @@ Arguments:
 Return Value:
 
     none
-    
+
 --*/
 {
     PEMCL_BOUNCE_BLOCK block;
@@ -2882,7 +2882,7 @@ EmclpAcquireBouncePages(
 
 Routine Description:
 
-    Remove 'PageCount' pre-allocated EMCL_BOUNCE_PAGE structures from the 
+    Remove 'PageCount' pre-allocated EMCL_BOUNCE_PAGE structures from the
     Context and return them in a linked-list. These PAGE structures will be
     used in an I/O.
 
@@ -2890,7 +2890,7 @@ Arguments:
 
     Context - Pointer to the EMCL Context.
 
-    PageCount - Number of EMCL_BOUNCE_PAGE structures to acquire from the 
+    PageCount - Number of EMCL_BOUNCE_PAGE structures to acquire from the
                 Context structure and return to the caller.
 
 Return Value:
@@ -2912,7 +2912,7 @@ Return Value:
     if (!IsListEmpty(&Context->BounceBlockListHead))
     {
         LIST_ENTRY* blockListEntry;
-        
+
         for (blockListEntry = Context->BounceBlockListHead.ForwardLink;
              blockListEntry != &Context->BounceBlockListHead;
              blockListEntry = blockListEntry->ForwardLink)
@@ -2923,18 +2923,18 @@ Return Value:
             while (bounceBlock->FreePageListHead && pagesToGo)
             {
                 PEMCL_BOUNCE_PAGE bouncePage;
-                
+
                 bouncePage = bounceBlock->FreePageListHead;
                 bounceBlock->FreePageListHead = bouncePage->NextBouncePage;
 
                 bouncePage->NextBouncePage = listHead;
                 listHead = bouncePage;
- 
+
                 bounceBlock->InUsePageCount++;
 
                 pagesToGo--;
             }
-            
+
             if (pagesToGo == 0)
             {
                 break;
@@ -2978,10 +2978,10 @@ EmclpReleaseBouncePages(
 
 Routine Description:
 
-    Return EMCL_BOUNCE_PAGES from a linked list to their 'home' 
-    EMCL_BOUNCE_BLOCK lists. Effectively frees these temporary pages for use 
+    Return EMCL_BOUNCE_PAGES from a linked list to their 'home'
+    EMCL_BOUNCE_BLOCK lists. Effectively frees these temporary pages for use
     by another I/O.
-    
+
 
 Arguments:
 
@@ -3005,7 +3005,7 @@ Return Value:
 
         page->BounceBlock->InUsePageCount--;
         count++;
-        
+
         page->NextBouncePage = page->BounceBlock->FreePageListHead;
         page->BounceBlock->FreePageListHead = page;
     }
@@ -3030,8 +3030,8 @@ EmclpCopyBouncePagesToExternalBuffer(
 
 Routine Description:
 
-    Copy between the memory pages in the bounce buffers and the client's 
-    buffer respecting the page offsets of the client's buffer. This function 
+    Copy between the memory pages in the bounce buffers and the client's
+    buffer respecting the page offsets of the client's buffer. This function
     will zero the partial pages at the beginning and end of the BouncePageList.
 
 Arguments:
@@ -3048,7 +3048,7 @@ Return Value:
     EFI_STATUS.
 
 --*/
-{    
+{
     UINT64 pageOffset;
     PEMCL_BOUNCE_PAGE bouncePage;
     PUCHAR bounceBuffer;
@@ -3095,7 +3095,7 @@ Return Value:
         bounceBuffer += pageOffset;
         copySize = EFI_PAGE_SIZE - (UINT32)pageOffset;
         pageOffset = 0; // no more offsets
-        
+
         copySize = MIN(copySize, transferToGo);
 
         if (CopyToBounce)
@@ -3127,8 +3127,8 @@ Return Value:
         extBuffer += copySize;
 
         // Zero any unused space in buffer we are sharing with the host.
-        if (transferToGo == 0 && 
-            CopyToBounce && 
+        if (transferToGo == 0 &&
+            CopyToBounce &&
             ((UINT64)bounceBuffer % EFI_PAGE_SIZE))
         {
             pageOffset = (UINT64)bounceBuffer % EFI_PAGE_SIZE;
@@ -3155,7 +3155,7 @@ VOID
 EmclpZeroBouncePageList(
     _In_ PEMCL_BOUNCE_PAGE BouncePageList
     )
-{    
+{
     PEMCL_BOUNCE_PAGE bouncePage = BouncePageList;
     UINT32 pageCount = 0;
 

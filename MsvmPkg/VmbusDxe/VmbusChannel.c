@@ -151,11 +151,11 @@ Return Value:
             goto Cleanup;
         }
 
-        gpadl->VisibleBuffer = (PVOID)((UINTN)Buffer + mSharedGpaBoundary);
+        gpadl->VisibleBufferPA = (UINTN)Buffer + mSharedGpaBoundary;
     }
     else
     {
-        gpadl->VisibleBuffer = Buffer;
+        gpadl->VisibleBufferPA = (UINTN)Buffer;
         if (ZeroPages)
         {
             ZeroMem(Buffer, BufferLength);
@@ -263,12 +263,12 @@ Return Value:
 
     sendMessage.GpadlHeader.Range[0].ByteCount = Gpadl->BufferLength;
     sendMessage.GpadlHeader.Range[0].ByteOffset =
-        (UINT32)((UINTN)Gpadl->VisibleBuffer & EFI_PAGE_MASK);
+        (UINT32)((UINTN)Gpadl->VisibleBufferPA & EFI_PAGE_MASK);
 
     for (pfnIndex = 0; pfnIndex < MIN(Gpadl->NumberOfPages, numPfnInHeader); ++pfnIndex)
     {
         sendMessage.GpadlHeader.Range[0].PfnArray[pfnIndex] =
-            ((UINTN)Gpadl->VisibleBuffer >> EFI_PAGE_SHIFT) + pfnIndex;
+            ((UINTN)Gpadl->VisibleBufferPA >> EFI_PAGE_SHIFT) + pfnIndex;
     }
 
     DEBUG((EFI_D_INFO,
@@ -276,7 +276,7 @@ Return Value:
         __FUNCTION__,
         __LINE__,
         Gpadl->NumberOfPages,
-        (UINTN)Gpadl->VisibleBuffer >> EFI_PAGE_SHIFT,
+        (UINTN)Gpadl->VisibleBufferPA >> EFI_PAGE_SHIFT,
         Gpadl->GpadlHandle));
 
     pfnSent = pfnIndex;
@@ -296,7 +296,7 @@ Return Value:
         for (pfnIndex = 0; pfnIndex < MIN(Gpadl->NumberOfPages - pfnSent, numPfnInBody); ++pfnIndex)
         {
             sendMessage.GpadlBody.Pfn[pfnIndex] =
-                ((UINTN)Gpadl->VisibleBuffer >> EFI_PAGE_SHIFT) + pfnSent + pfnIndex;
+                ((UINTN)Gpadl->VisibleBufferPA >> EFI_PAGE_SHIFT) + pfnSent + pfnIndex;
         }
 
         pfnSent += pfnIndex;
@@ -311,9 +311,9 @@ Return Value:
     ASSERT_EFI_ERROR(status);
 
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        receiveMessage->Header.MessageType == ChannelMessageGpadlCreated, 
-        VMBUS, 
-        __LINE__, 
+        receiveMessage->Header.MessageType == ChannelMessageGpadlCreated,
+        VMBUS,
+        __LINE__,
         0);
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
         receiveMessage->Size == sizeof(receiveMessage->GpadlCreated),
@@ -402,7 +402,7 @@ Return Value:
                         VMBUS_CHANNEL_CONTEXT_SIGNATURE);
 
     gpadl.AllocatedBuffer = Buffer;
-    gpadl.VisibleBuffer = Buffer;
+    gpadl.VisibleBufferPA = (UINTN)Buffer;
     gpadl.BufferLength = BufferLength;
     gpadl.NumberOfPages = ((UINT32)((UINTN)Buffer & EFI_PAGE_MASK) + BufferLength +
         EFI_PAGE_SIZE - 1) >> EFI_PAGE_SHIFT;
@@ -563,7 +563,7 @@ Return Value:
                         VMBUS_CHANNEL_CONTEXT_SIGNATURE);
 
     gpadl.AllocatedBuffer = NULL;
-    gpadl.VisibleBuffer = NULL;
+    gpadl.VisibleBufferPA = 0;
     gpadl.BufferLength = 0;
     gpadl.NumberOfPages = 0;
     gpadl.GpadlHandle = GpadlHandle;
@@ -626,7 +626,7 @@ Return Value:
 
 --*/
 {
-    return Gpadl->VisibleBuffer;
+    return (PVOID)(Gpadl->VisibleBufferPA | mCanonicalizationMask);
 }
 
 
@@ -746,7 +746,7 @@ Return Value:
                         VMBUS_CHANNEL_CONTEXT_SIGNATURE);
 
     gpadl.AllocatedBuffer = NULL;
-    gpadl.VisibleBuffer = NULL;
+    gpadl.VisibleBufferPA = 0;
     gpadl.BufferLength = 0;
     gpadl.NumberOfPages = 0;
     gpadl.GpadlHandle = RingBufferGpadlHandle;

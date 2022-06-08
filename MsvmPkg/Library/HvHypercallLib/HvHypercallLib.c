@@ -270,6 +270,18 @@ Return Value:
     }
 }
 
+#ifndef HV_STATUS_TIMEOUT
+
+//
+// MessageId: HV_STATUS_TIMEOUT
+//
+// MessageText:
+//
+// The specified timeout expired before the operation completed.
+//
+#define HV_STATUS_TIMEOUT                ((HV_STATUS)0x0078)
+
+#endif
 
 HV_STATUS
 HvHypercallIssue(
@@ -413,15 +425,51 @@ Return Value:
                     SecondRegister += Context->SharedGpaBoundary;
                 }
             }
+
+            while (TRUE)
+            {
+                callOutput = hypercallRoutine(callInput, FirstRegister, SecondRegister);
+
+                if ((CountOfElements == 0) ||
+                    (callOutput.CallStatus != HV_STATUS_TIMEOUT))
+                {
+                    break;
+                }
+
+                //
+                // Continue processing from wherever the hypervisor left off.  The
+                // rep start index is not checked for validity, since it is only being
+                // used as an input to the untrusted hypervisor.
+                //
+
+                callInput.RepStartIndex = callOutput.ElementsProcessed;
+            }
+
+            if ((callOutput.CallStatus == HV_STATUS_SUCCESS) &&
+                (callOutput.ElementsProcessed == CountOfElements))
+            {
+                // NOTHING
+            }
+            else if ((callOutput.CallStatus != HV_STATUS_SUCCESS) &&
+                     (callOutput.ElementsProcessed < CountOfElements))
+            {
+                // NOTHING
+            }
+            else
+            {
+                ASSERT(FALSE);
+                callOutput.ElementsProcessed = 0;
+                callOutput.CallStatus = 0xFFFF;
+            }
         }
         else
         {
             hypercallRoutine = (HYPERCALL_ROUTINE *)Context->HypercallPage;
+            callOutput = hypercallRoutine(callInput,
+                                          FirstRegister,
+                                          SecondRegister);
         }
 
-        callOutput = hypercallRoutine(callInput,
-                                      FirstRegister,
-                                      SecondRegister);
     }
 
 #elif defined(MDE_CPU_IA32)

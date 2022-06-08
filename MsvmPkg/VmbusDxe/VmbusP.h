@@ -61,6 +61,7 @@ typedef struct _GPA_RANGE
 EFI_HV_PROTOCOL *mHv;
 EFI_HV_IVM_PROTOCOL *mHvIvm;
 UINTN mSharedGpaBoundary;
+UINT64 mCanonicalizationMask;
 
 extern EFI_GUID gEfiVmbusChannelDevicePathGuid;
 
@@ -211,7 +212,7 @@ typedef struct _VMBUS_CHANNEL_CONTEXT
 struct _EFI_VMBUS_GPADL
 {
     PVOID AllocatedBuffer;
-    PVOID VisibleBuffer;
+    UINT64 VisibleBufferPA;
     UINT32 BufferLength;
     UINT32 NumberOfPages;
     UINT32 GpadlHandle;
@@ -256,7 +257,7 @@ VmbusRootReclaimGpadl(
     );
 
 VOID
-VmbusRootSetGpadlPageRange(    
+VmbusRootSetGpadlPageRange(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in UINT32 GpadlHandle,
     __in UINT64 GpaPageBase,

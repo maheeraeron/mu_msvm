@@ -104,7 +104,8 @@ typedef struct _TDX_VE_INFO {
     UINT32 InstructionInfo;
 } TDX_VE_INFO, *PTDX_VE_INFO;
 
-#define VE_EXIT_CODE_CPUID      10   
+#define VE_EXIT_CODE_CPUID      10
+#define VE_EXIT_CODE_HLT        12
 #define VE_EXIT_CODE_RDMSR      31
 #define VE_EXIT_CODE_WRMSR      32
 
@@ -127,6 +128,11 @@ VOID
 SecTdCallWrmsr(
     _In_ UINT64 MsrNumber,
     _In_ UINT64 MsrValue
+    );
+
+VOID
+SecTdCallHlt(
+    VOID
     );
 
 UINT64
