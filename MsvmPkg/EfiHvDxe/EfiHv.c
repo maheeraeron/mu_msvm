@@ -1679,6 +1679,9 @@ Return Value:
 #error Unsupported architecture
 #endif
 
+    // Initialize the hypercall input page.
+    mHvInputPage = mHvPages->HypercallInputPage;
+
 #if defined(MDE_CPU_X64)
 
     // Determine whether this system uses a hardware isolation architecture
@@ -1728,7 +1731,6 @@ Return Value:
         }
         else
         {
-            mHvInputPage = mHvPages->HypercallInputPage;
             mBypassOnly = !paravisorPresent;
         }
 
