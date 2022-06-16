@@ -66,6 +66,7 @@ typedef union _GHCB_MSR
 #define TDX_SUCCESS                 0
 #define TDX_PAGE_SIZE_MISMATCH      0xC0000B0B
 #define TDX_PAGE_ALREADY_ACCEPTED   0x00000B0A
+#define TDX_VMCALL_RETRY            1
 
 #define TDX_TDG_STATUS(_status_) ((_status_) >> 32)
 
@@ -466,7 +467,8 @@ Return Value:
 
 --*/
 {
-    HV_GPA failedGpa;
+    EFI_STATUS acceptStatus;
+    HV_GPA nextGpa;
     UINT64 pagesProcessed;
     EFI_STATUS status;
     UINT64 errorCode;
@@ -484,38 +486,50 @@ Return Value:
         StartingGpa += sharedGpaBoundary;
     }
 
-    errorCode = _tdx_vmcall_map_gpa(
-        StartingGpa,
-        PageCount * HV_PAGE_SIZE,
-        &failedGpa);
-
-    if (errorCode != 0)
+    status = EFI_SUCCESS;
+    pagesProcessed = 0;
+    nextGpa = StartingGpa;
+    while (pagesProcessed < PageCount)
     {
+        errorCode = _tdx_vmcall_map_gpa(
+            nextGpa,
+            (PageCount - pagesProcessed) * HV_PAGE_SIZE,
+            &nextGpa);
+
+        if (TDX_TDG_STATUS(errorCode) != TDX_SUCCESS)
+        {
+            DEBUG((DEBUG_VERBOSE,
+                   "MapPage GHCI call failed at GPA = 0x%lx with error code 0x%lx",
+                   nextGpa,
+                   errorCode));
+            status = EFI_SECURITY_VIOLATION;
+        }
+        else if (errorCode == TDX_SUCCESS)
+        {
+            pagesProcessed = PageCount;
+            break;
+        }
+        else
+        {
+            ASSERT(errorCode == TDX_VMCALL_RETRY);
+        }
+
         //
         // If the count of pages processed is not reasonable, then proceed as
         // if the call failed entirely.
         //
 
-        if (ARGUMENT_PRESENT(PagesProcessed))
+        pagesProcessed = (nextGpa - StartingGpa) / HV_PAGE_SIZE;
+        if ((pagesProcessed > PageCount) || (nextGpa & EFI_PAGE_MASK))
         {
-            pagesProcessed = (failedGpa - StartingGpa) / HV_PAGE_SIZE;
-            if (pagesProcessed >= PageCount)
-            {
-                pagesProcessed = 0;
-            }
+            pagesProcessed = 0;
+            status = EFI_SECURITY_VIOLATION;
         }
 
-        DEBUG((DEBUG_VERBOSE,
-               "MapPage GHCI call failed at GPA = 0x%lx with error code 0x%lx",
-               failedGpa,
-               errorCode));
-
-        status = EFI_SECURITY_VIOLATION;
-    }
-    else
-    {
-        status = EFI_SUCCESS;
-        pagesProcessed = PageCount;
+        if (EFI_ERROR(status))
+        {
+            break;
+        }
     }
 
     //
@@ -525,22 +539,22 @@ Return Value:
 
     if ((pagesProcessed != 0) && !Visible)
     {
-        status = EfiUpdatePageRangeAcceptanceTdx(
+        acceptStatus = EfiUpdatePageRangeAcceptanceTdx(
             StartingGpa / HV_PAGE_SIZE,
             pagesProcessed);
 
-        if (EFI_ERROR(status))
+        if (EFI_ERROR(acceptStatus))
         {
-            return status;
+            status = acceptStatus;
         }
     }
 
     if (ARGUMENT_PRESENT(PagesProcessed))
     {
-        *PagesProcessed = PageCount;
+        *PagesProcessed = pagesProcessed;
     }
 
-    return EFI_SUCCESS;
+    return status;
 }
 
 
