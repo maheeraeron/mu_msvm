@@ -662,6 +662,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tDisableSha384Pcr: %u\n", flags->Flags.DisableSha384Pcr));
             DEBUG((DEBUG_VERBOSE, "\tMediaPresentEnabledByDefault: %u\n", flags->Flags.MediaPresentEnabledByDefault));
             DEBUG((DEBUG_VERBOSE, "\tMemoryProtectionMode: %u\n", flags->Flags.MemoryProtectionMode));
+            DEBUG((DEBUG_VERBOSE, "\tWatchdogEnabled: %u\n", flags->Flags.WatchdogEnabled));
             break;
 
         case UefiConfigProcessorInformation:
@@ -812,6 +813,7 @@ ConfigSetUefiConfigFlags(
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdDisableIMCWhenIsolated, (UINT8) ConfigFlags->Flags.DisableIMCWhenIsolated), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdWatchdogEnabled, (UINT8) ConfigFlags->Flags.WatchdogEnabled), CRITICAL_INITIALIZATION_FAILURE);
 
     //
     // If memory protections are enabled, configure the value into the HOB.

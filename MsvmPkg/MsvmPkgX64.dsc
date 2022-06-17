@@ -590,6 +590,7 @@
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
   gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled|FALSE
   
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION

@@ -494,6 +494,8 @@ typedef struct _CRYPTO_COMMAND_DESCRIPTOR
 #define BIOS_WATCHDOG_CONFIGURED    0x00000001
 #define BIOS_WATCHDOG_ENABLED       0x00000002
 #define BIOS_WATCHDOG_ONE_SHOT      0x00000010
+#define BIOS_WATCHDOG_BOOT_STATUS   0x00000100
+#define BIOS_WATCHDOG_FOR_GUEST     0x00001000
 
 #define BIOS_WATCHDOG_RUNNING       (BIOS_WATCHDOG_CONFIGURED | BIOS_WATCHDOG_ENABLED)
 
@@ -775,7 +777,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 MediaPresentEnabledByDefault : 1;
         UINT64 MemoryProtectionMode: 2;
         UINT64 DisableIMCWhenIsolated: 1;
-        UINT64 Reserved:40;
+        UINT64 WatchdogEnabled : 1;
+        UINT64 Reserved:39;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 

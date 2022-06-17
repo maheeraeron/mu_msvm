@@ -41,4 +41,9 @@ FacpInitializeTable(
     __inout EFI_ACPI_DESCRIPTION_HEADER* Facp
     );
 
+EFI_STATUS
+WdatInitializeTable(
+    __inout EFI_ACPI_DESCRIPTION_HEADER* Wdat
+    );
+
 extern BOOLEAN mHardwareIsolatedNoParavisor;

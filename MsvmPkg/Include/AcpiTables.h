@@ -15,6 +15,7 @@ Abstract:
 
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/SerialPortConsoleRedirectionTable.h>
+#include <IndustryStandard/WatchdogActionTable.h>
 #include <BiosInterface.h>
 
 #define STANDARD_HEADER(sig, length, rev)                   \
@@ -65,6 +66,17 @@ typedef struct _VM_ACPI_ENTROPY_TABLE
 #define VM_ACPI_ENTROPY_TABLE_SIGNATURE SIGNATURE_32('O','E','M','0')
 
 #define AMD_ACPI_ASPT_TABLE_SIGNATURE SIGNATURE_32('A', 'S', 'P', 'T')
+
+//
+// WDAT table.
+//
+
+#define VM_HARDWARE_WATCHDOG_ACTION_COUNT 18
+
+typedef struct {
+    EFI_ACPI_WATCHDOG_ACTION_1_0_TABLE header;
+    EFI_ACPI_WATCHDOG_ACTION_1_0_WATCHDOG_ACTION_INSTRUCTION_ENTRY action[VM_HARDWARE_WATCHDOG_ACTION_COUNT];
+} VM_HARDWARE_WATCHDOG_ACTION_TABLE;
 
 #pragma pack(pop)
 

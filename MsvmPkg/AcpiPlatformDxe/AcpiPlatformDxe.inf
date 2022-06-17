@@ -26,6 +26,7 @@
     Facp.c
     Oem0.c
     spcr.c
+    wdat.c
 
 [Packages]
     MdePkg/MdePkg.dec
@@ -92,6 +93,8 @@
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
     gMsvmPkgTokenSpaceGuid.PcdAsptPtr
     gMsvmPkgTokenSpaceGuid.PcdAsptSize
+    gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled
+    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
 
 
 [Depex]
