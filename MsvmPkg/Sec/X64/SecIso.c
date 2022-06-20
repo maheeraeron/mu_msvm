@@ -592,6 +592,82 @@ SecProcessHlt(
     return TRUE;
 }
 
+BOOLEAN
+SecProcessIoPortRead(
+    _In_ PTRAP_FRAME TrapFrame,
+    _In_ UINT16 PortNumber,
+    _In_ UINT32 AccessSize
+    )
+{
+    UINT64 mask;
+    UINT64 rax;
+    UINT32 value;
+
+    //
+    // Currently TDX-only.
+    //
+
+    if (Ghcb != NULL)
+    {
+        return FALSE;
+    }
+
+    //
+    // Access is allowed only to COM2 registers.
+    //
+
+    if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
+    {
+        return FALSE;
+    }
+
+    value = SecTdCallReadIoPort(PortNumber, AccessSize);
+    rax = TrapFrame->Rax;
+    mask = ((1UI64 << (AccessSize * 8)) - 1);
+    rax = (rax & ~mask) | (value & mask);
+    if (AccessSize == 4)
+    {
+        rax = (UINT32)rax;
+    }
+
+    TrapFrame->Rax = rax;
+    return TRUE;
+}
+
+BOOLEAN
+SecProcessIoPortWrite(
+    _In_ PTRAP_FRAME TrapFrame,
+    _In_ UINT16 PortNumber,
+    _In_ UINT32 AccessSize
+    )
+{
+    UINT64 mask;
+    UINT32 value;
+
+    //
+    // Currently TDX-only.
+    //
+
+    if (Ghcb != NULL)
+    {
+        return FALSE;
+    }
+
+    //
+    // Access is allowed only to COM2 registers.
+    //
+
+    if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
+    {
+        return FALSE;
+    }
+
+    mask = ((1UI64 << (AccessSize * 8)) - 1);
+    value =  (UINT32)(TrapFrame->Rax & mask);
+    SecTdCallWriteIoPort(PortNumber, AccessSize, value);
+
+    return TRUE;
+}
 
 BOOLEAN
 SecProcessVirtualCommunicationException (
@@ -648,6 +724,8 @@ SecProcessVirtualizationException (
     _In_ PTRAP_FRAME TrapFrame
     )
 {
+    UINT32 accessSize;
+    TDX_VE_EXIT_QUALIFICATION_IO ioQual;
     TDX_VE_INFO veInfo;
 
     //
@@ -692,6 +770,30 @@ SecProcessVirtualizationException (
         if (!SecProcessHlt(TrapFrame))
         {
             goto FailVe;
+        }
+        break;
+
+    case VE_EXIT_CODE_IO:
+        ioQual.AsUINT64 = veInfo.ExitQualification;
+        if (ioQual.String)
+        {
+            goto FailVe;
+        }
+
+        accessSize = ioQual.AccessSize + 1;
+        if (ioQual.In)
+        {
+            if (!SecProcessIoPortRead(TrapFrame, (UINT16)ioQual.PortNumber, accessSize))
+            {
+                goto FailVe;
+            }
+        }
+        else
+        {
+            if (!SecProcessIoPortWrite(TrapFrame, (UINT16)ioQual.PortNumber, accessSize))
+            {
+                goto FailVe;
+            }
         }
         break;
 

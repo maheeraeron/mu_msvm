@@ -341,6 +341,84 @@ Stch20:     test    r10, r10            ; verify successful HLT
 SecTdCallHlt ENDP
 
 ;
+; SecTdCallReadIoPort
+;
+; Reads an IO port using the TD call GHCI interface.
+;
+; @param[in] ECX - The port to read.
+; @param[in] EDX - The access size.
+; @return        - Value read.
+;
+
+SecTdCallReadIoPort PROC PUBLIC
+
+            push    r12                 ; preserve non-volatile registers
+            push    r13                 ; preserve non-volatile registers
+            push    r14                 ; preserve non-volatile registers
+            mov     r12d, edx           ; pass access size
+            xor     r13d, r13d          ; indicate a read
+            mov     r14d, ecx           ; pass port number
+            xor     eax, eax            ; TDG.VP.VMCALL call code
+            mov     ecx, 7C00h          ; pass R10-R14
+            xor     r10d, r10d          ; indicate GHCI call
+            mov     r11d, 30            ; indicate IO instruction
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+            test    rax, rax            ; verify successful call
+            mov     eax, 0ffffffffh     ; load eax with the default read value for failures.
+            jnz     exitIoRead          ; if nz, not successful
+            test    r10, r10            ; verify vmcall return code
+            jnz     exitIoRead          ; if nz, not successful
+            mov     eax, r11d           ; get return value
+exitIoRead: pop     r14
+            pop     r13
+            pop     r12
+            ret
+
+SecTdCallReadIoPort ENDP
+
+;
+; SecTdCallWriteIoPort
+;
+; Writes an IO port using the TD call GHCI interface.
+;
+; @param[in] ECX - The port to write.
+; @param[in] EDX - The access size.
+; @param[in] R8d - Value to write.
+;
+
+SecTdCallWriteIoPort PROC PUBLIC
+
+            push    r12                 ; preserve non-volatile registers
+            push    r13                 ; preserve non-volatile registers
+            push    r14                 ; preserve non-volatile registers
+            push    r15                 ; preserve non-volatile registers
+            mov     r12d, edx           ; pass access size
+            mov     r13d, 1             ; indicate a write
+            mov     r14d, ecx           ; pass port number
+            mov     r15d, r8d           ; pass value
+            xor     eax, eax            ; TDG.VP.VMCALL call code
+            mov     ecx, 0fC00h         ; pass R10-R15
+            xor     r10d, r10d          ; indicate GHCI call
+            mov     r11d, 30            ; indicate IO instruction
+            db      66h                 ; TDCALL instruction sequence
+            db      0fh
+            db      01h
+            db      0cch
+
+    ; ignore failures and move on.
+
+            pop     r15
+            pop     r14
+            pop     r13
+            pop     r12
+            ret
+
+SecTdCallWriteIoPort ENDP
+
+;
 ; MulDiv64
 ;
 ; Multiply two 64-bit numbers and divide by a third.

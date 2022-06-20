@@ -106,8 +106,32 @@ typedef struct _TDX_VE_INFO {
 
 #define VE_EXIT_CODE_CPUID      10
 #define VE_EXIT_CODE_HLT        12
+#define VE_EXIT_CODE_IO         30
 #define VE_EXIT_CODE_RDMSR      31
 #define VE_EXIT_CODE_WRMSR      32
+
+//
+// VM Exit qualification for IO instructions and IO SMIs.
+//
+
+typedef union _TDX_VE_EXIT_QUALIFICATION_IO
+{
+    UINT64 AsUINT64;
+    UINT32 AsUINT32;
+
+    struct
+    {
+        UINT32 AccessSize:2;
+        UINT32 Reserved1:1;
+        UINT32 In:1;
+        UINT32 String:1;
+        UINT32 RepPrefix:1;
+        UINT32 ImmediateOperand:1;
+        UINT32 Reserved2:9;
+        UINT32 PortNumber:16;
+    };
+
+} TDX_VE_EXIT_QUALIFICATION_IO, *PTDX_VE_EXIT_QUALIFICATION_IO;
 
 LONG64
 SecGetTdxVeInfo(
@@ -133,6 +157,19 @@ SecTdCallWrmsr(
 VOID
 SecTdCallHlt(
     VOID
+    );
+
+UINT32
+SecTdCallReadIoPort(
+    _In_ UINT32 PortNumber,
+    _In_ UINT32 AccessSize
+    );
+
+VOID
+SecTdCallWriteIoPort(
+    _In_ UINT32 PortNumber,
+    _In_ UINT32 AccessSize,
+    _In_ UINT32 Value
     );
 
 UINT64
