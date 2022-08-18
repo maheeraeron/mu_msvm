@@ -66,6 +66,7 @@ UINT64 TscDivisor;
 HV_PSP_CPUID_PAGE *CpuidPage;
 SEC_CPUID_INFO CpuidInfo;
 SEC_CPUID_INFO ExtendedCpuidInfo;
+BOOLEAN FilterIoPortAccesses;
 
 UINT64
 SecReadMsrWithGhcb(
@@ -612,13 +613,16 @@ SecProcessIoPortRead(
         return FALSE;
     }
 
-    //
-    // Access is allowed only to COM2 registers.
-    //
-
-    if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
+    if (FilterIoPortAccesses)
     {
-        return FALSE;
+        //
+        // Access is allowed only to COM2 registers.
+        //
+
+        if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
+        {
+            return FALSE;
+        }
     }
 
     value = SecTdCallReadIoPort(PortNumber, AccessSize);
@@ -653,13 +657,16 @@ SecProcessIoPortWrite(
         return FALSE;
     }
 
-    //
-    // Access is allowed only to COM2 registers.
-    //
-
-    if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
+    if (FilterIoPortAccesses)
     {
-        return FALSE;
+        //
+        // Access is allowed only to COM2 registers.
+        //
+
+        if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
+        {
+            return FALSE;
+        }
     }
 
     mask = ((1UI64 << (AccessSize * 8)) - 1);

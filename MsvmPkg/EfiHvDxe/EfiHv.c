@@ -1201,37 +1201,48 @@ EfiHvpModifySparseGpaPageHostVisibility(
     // Check if we are running hardware isolated but do not have a paravisor.
     if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
-        // If pages are being made host visible, then revoke page acceptance
-        // first.
-        if (MapFlags != 0)
+        // If the hypervisor connection has not yet been established, then
+        // visibility must be changed without using hypercalls.
+        if (!mHvBypassContext.Connected)
         {
-            // If the hypervisor connection has not yet been established, then
-            // pages must be made visible without using hypercalls.
-            if (!mHvBypassContext.Connected)
-            {
-                UINT64 pagesProcessed;
+            UINT64 pagesProcessed;
 
+            if (MapFlags != 0)
+            {
                 status = EfiMakePageRangeHostVisible(
                     mIsolationType,
                     GpaPageBase,
                     PageCount,
                     &pagesProcessed);
-
-                if (EFI_ERROR(status))
-                {
-                    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
-                }
-
-                ASSERT(pagesProcessed <= PageCount);
-
-                if (PageCountProcessed != NULL)
-                {
-                    *PageCountProcessed = (UINT32)pagesProcessed;
-                }
-
-                return status;
+            }
+            else
+            {
+                status = EfiMakePageRangeHostNotVisible(
+                    mIsolationType,
+                    GpaPageBase,
+                    PageCount,
+                    &pagesProcessed);
             }
 
+            if (EFI_ERROR(status))
+            {
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            }
+
+            ASSERT(pagesProcessed <= PageCount);
+
+            if (PageCountProcessed != NULL)
+            {
+                *PageCountProcessed = (UINT32)pagesProcessed;
+            }
+
+            return status;
+        }
+
+        // If pages are being made host visible, then revoke page acceptance
+        // first.
+        if (MapFlags != 0)
+        {
             status = EfiUpdatePageRangeAcceptance(
                 mIsolationType,
                 GpaPageBase,

@@ -131,7 +131,6 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostNotVisible(
     _In_ UINT32 IsolationType,
-    _In_ HV_GPA SharedBoundaryGpa,
     _In_ HV_GPA_PAGE_NUMBER PageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
