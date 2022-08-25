@@ -159,6 +159,8 @@ steps:
   displayName: 'Compute Hash and Copy firmware to vpack folder'
 
 - task: PkgESVPack@12
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   displayName: PkgESVPack
   inputs:
     versionAs: parts
