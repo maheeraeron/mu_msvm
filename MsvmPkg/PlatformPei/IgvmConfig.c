@@ -13,6 +13,7 @@ Abstract:
 
 --*/
 
+#include <IndustryStandard/Acpi.h>
 #include <PiPei.h>
 #include <EfiNt.h>
 #include <Platform.h>
@@ -46,6 +47,13 @@ enum IGVM_VHS_MEMORY_MAP_ENTRY_TYPES
     IGVM_VHF_MEMORY_MAP_ENTRY_TYPE_PERSISTENT        = 0x2,
     IGVM_VHF_MEMORY_MAP_ENTRY_TYPE_VTL2_PROTECTABLE  = 0x3,
 };
+
+#define IGVM 0x4947564D // "IGVM"
+
+#define IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
+    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(IGVM);
+#define IGVM_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
+    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, IGVM)
 
 PVOID
 GetIgvmData(
@@ -334,14 +342,10 @@ Return Value:
     // Capture the total size of config information.
     //
 
-    status = PcdSet32S(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE);
-    if (EFI_ERROR(status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConfigBlobSize::0x%x \n", status));
-        return status;
-    }
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE), CRITICAL_INITIALIZATION_FAILURE);
 
     //
+    // TODO: use parameters for this
     // Assume a single processor until VPR/VPS information can be configured
     // in the IGVM file.
     //
@@ -352,12 +356,64 @@ Return Value:
     ConfigSetProcessorInfo(&processorInfo);
 
     //
+    // TODO: these need to be used
+    //
+    //UINT32 LoaderBlockOffset;
+    //UINT32 MaximumProcessorCount;
+
+    //
+    // Enable ACPI tables
+    //
+    if (parameterInfo->MadtPageCount == 0)
+    {
+        DEBUG((DEBUG_ERROR, "MadtPageCount was 0.\n"));
+        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+    }
+
+    EFI_ACPI_DESCRIPTION_HEADER *madtHdr = (EFI_ACPI_DESCRIPTION_HEADER*)GetIgvmData(parameterInfo, parameterInfo->MadtOffset);
+    
+    if (madtHdr->Signature != EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE ||
+        madtHdr->Length > (parameterInfo->MadtPageCount * EFI_PAGE_SIZE))
+    {
+        DEBUG((DEBUG_ERROR, "*** Malformed MADT\n"));
+        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+    }
+
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdMadtPtr, (UINT64)madtHdr), CRITICAL_INITIALIZATION_FAILURE);
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdMadtSize, madtHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+
+    if (parameterInfo->SratPageCount == 0)
+    {
+        DEBUG((DEBUG_ERROR, "SratPageCount was 0.\n"));
+        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+    }
+
+    EFI_ACPI_DESCRIPTION_HEADER *sratHdr = (EFI_ACPI_DESCRIPTION_HEADER*)GetIgvmData(parameterInfo, parameterInfo->SratOffset);
+   
+    if (sratHdr->Signature != EFI_ACPI_6_2_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE ||
+        sratHdr->Length > (parameterInfo->SratPageCount * EFI_PAGE_SIZE))
+    {
+        DEBUG((DEBUG_ERROR, "*** Malformed SRAT\n"));
+        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+    }
+
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSratPtr, (UINT64)sratHdr), CRITICAL_INITIALIZATION_FAILURE);
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSratSize, sratHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+    
+    //
     // Build a config structure with a statically defined configuration.
     //
 
     ZeroMem(&configFlags, sizeof(configFlags));
+    // TODO: remove before ship
     configFlags.Flags.DebuggerEnabled = 1;
+    configFlags.Flags.MeasureAdditionalPcrs = 1;
+    configFlags.Flags.DefaultBootAlwaysAttempt = 1;
+    // TODO: allow and harden vpci before ship
+    configFlags.Flags.VpciBootEnabled = 1;
+    // TODO: Address before ship
     configFlags.Flags.MemoryProtectionMode = ConfigLibMemoryProtectionModeDisabled;
+
     ConfigSetUefiConfigFlags(&configFlags);
 
     //
