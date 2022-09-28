@@ -60,6 +60,8 @@
   gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES
   gEfiEventLogProtocolGuid                      ## PRODUCES
   gEfiFirmwareVolume2ProtocolGuid               ## CONSUMES
+  gEfiHvProtocolGuid                            ## CONSUMES
+  gEfiHvIvmProtocolGuid                         ## CONSUMES
   gEfiRscHandlerProtocolGuid                    ## CONSUMES
 
 [Pcd]
@@ -69,6 +71,9 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderLoad                ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderStart               ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile
-
+  gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
+  gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
+  gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated
+  
 [Depex]
   gEfiRscHandlerProtocolGuid

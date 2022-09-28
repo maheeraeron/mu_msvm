@@ -12,10 +12,11 @@ Abstract:
 
 --*/
 
-#include <Library/UefiCpuLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/PcdLib.h>
+#include <Library/UefiCpuLib.h>
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <EfiNt.h>
 #include <hvgdk_mini.h>
@@ -66,7 +67,69 @@ UINT64 TscDivisor;
 HV_PSP_CPUID_PAGE *CpuidPage;
 SEC_CPUID_INFO CpuidInfo;
 SEC_CPUID_INFO ExtendedCpuidInfo;
+//
+// Access to ioports should be restricted in TDX scenario.
+// This is currently not the case for development purposes.
+// TODO (sibhagat) : add ioport filtering before release. 
+//
 BOOLEAN FilterIoPortAccesses;
+
+
+BOOLEAN
+SecIsPortAccessAllowed(
+    _In_ UINT16 PortNumber
+    )
+{
+    BOOLEAN retValue = FALSE;
+    UINT32 com1Register;
+    UINT32 com2Register;
+    UINT32 biosPort;
+
+    if (FilterIoPortAccesses)
+    {
+        //
+        // Access is allowed only to COM1, COM2 registers and BIOS ports.
+        //
+        com1Register = FixedPcdGet32(PcdCom1RegisterBase);
+        com2Register = FixedPcdGet32(PcdCom2RegisterBase);
+        //
+        //
+        // Although, Bios ports are enabled for hardware isolated scenarios,
+        // the BiosWatchdog is not.
+        //
+        // biosPort = port for BiosAddress
+        // biosPort+4 = port for BiosData
+        //
+        biosPort = PcdGet32(PcdBiosBaseAddress); 
+
+        if ((PortNumber >= com1Register) && (PortNumber < (com1Register + 8)))
+        {
+            retValue = TRUE;
+        }
+        else if ((PortNumber >= com2Register) && (PortNumber < (com2Register + 8)))
+        {
+            retValue = TRUE;
+        }
+        else if ((PortNumber == (biosPort)) || (PortNumber == (biosPort + 4)))
+        {
+            retValue = TRUE;
+        }
+        else
+        {
+            retValue = FALSE;
+        }
+    }
+    else
+    {
+        //
+        // TODO (sibhagat) : Should be FALSE before release. Access to ioports should either be filtered 
+        // or not allowed.
+        //
+        retValue = TRUE;
+    }
+
+    return retValue;
+}
 
 UINT64
 SecReadMsrWithGhcb(
@@ -613,16 +676,9 @@ SecProcessIoPortRead(
         return FALSE;
     }
 
-    if (FilterIoPortAccesses)
+    if (!SecIsPortAccessAllowed(PortNumber))
     {
-        //
-        // Access is allowed only to COM2 registers.
-        //
-
-        if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
-        {
-            return FALSE;
-        }
+        return FALSE;
     }
 
     value = SecTdCallReadIoPort(PortNumber, AccessSize);
@@ -657,16 +713,9 @@ SecProcessIoPortWrite(
         return FALSE;
     }
 
-    if (FilterIoPortAccesses)
+    if (!SecIsPortAccessAllowed(PortNumber))
     {
-        //
-        // Access is allowed only to COM2 registers.
-        //
-
-        if (PortNumber < 0x2F8 || PortNumber > 0x2FF)
-        {
-            return FALSE;
-        }
+        return FALSE;
     }
 
     mask = ((1UI64 << (AccessSize * 8)) - 1);

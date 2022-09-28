@@ -863,7 +863,14 @@ typedef struct _UEFI_IGVM_PARAMETER_INFO
     UINT32 MaximumProcessorCount;
     UINT32 UefiMemoryMapOffset;
     UINT32 UefiMemoryMapPageCount;
+    UINT32 UefiIgvmConfigurationFlags;
+    UINT32 Reserved;
 } UEFI_IGVM_PARAMETER_INFO;
+
+//
+// Various flags for UefiIgvmConfigurationFlags
+//
+#define UEFI_IGVM_CONFIGURATION_ENABLE_HOST_EMULATORS 0x00000001
 
 typedef struct _UEFI_IGVM_LOADER_BLOCK
 {

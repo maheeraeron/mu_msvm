@@ -1395,6 +1395,33 @@ EfiHvMakeAddressRangeHostVisible(
     _In_ BOOLEAN ZeroPages,
     _Out_opt_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
     )
+/*++
+
+Routine Description:
+
+    Makes a chunk of memory visible to the host. 
+    Note: Memory visibility changes for hardware-isolated 
+          systems may change the contents of the pages.
+
+Arguments:
+
+    This - A pointer to the EFI_HV_PROTOCOL instance.
+
+    MapFlags - Access permissions provided to the host.
+
+    BaseAddress - Base address of memory range.
+
+    ByteCount - Size of memory block in bytes.
+
+    ZeroPages - If true, memory range is zeroed after making visible to host.
+
+    ProtectionHandle - Object used to track memory range.
+
+Return Value:
+
+    EFI status.
+
+--*/
 {
     UINT32 pageCountProcessed;
     EFI_HV_PROTECTION_OBJECT *protectionObject;

@@ -22,11 +22,12 @@ Author:
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/BootEventLogLib.h>
 #include <Library/DebugLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
-#include <Library/MemoryAllocationLib.h>
 
+#include <Protocol/EfiHv.h>
 #include <Protocol/EventLog.h>
-#include <Library/BootEventLogLib.h>

@@ -426,6 +426,9 @@ Return Value:
     PVM_MEMORY_RANGE_V5 rangeV5;
     BOOLEAN suppressBiosDevice;
     UINT64 truncateSize;
+#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+    BOOLEAN hostEmulatorsWhenHardwareIsolated = PcdGetBool(PcdHostEmulatorsWhenHardwareIsolated);
+#endif
 
     //
     // Locate the top of the config blob, rounded to a page boundary.  This
@@ -446,7 +449,7 @@ Return Value:
     suppressBiosDevice = FALSE;
 
 #if defined(MDE_CPU_X64)
-    if (IsHardwareIsolatedNoParavisor())
+    if (IsHardwareIsolatedNoParavisor() && !hostEmulatorsWhenHardwareIsolated)
     {
         suppressBiosDevice = TRUE;
     }
@@ -709,8 +712,12 @@ Return Value:
     //
     // Tell the BiosDevice to set up the variable MTRRs.
     //
-    if (!suppressBiosDevice)
+    if (!suppressBiosDevice && !hostEmulatorsWhenHardwareIsolated)
     {
+        //
+        // Setting MTRRs for virtual processors is not supported for 
+        // hardware isolated systems.
+        //
         WriteBiosDevice(BiosConfigBootFinalize, Context->PhysicalAddressWidth);
     }
 #endif

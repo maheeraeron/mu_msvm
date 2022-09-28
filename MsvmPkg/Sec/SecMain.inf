@@ -87,4 +87,6 @@
   gMsvmPkgTokenSpaceGuid.PcdFdSize
   gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress
   gMsvmPkgTokenSpaceGuid.PcdFvSize
-
+  gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
+  gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
+  gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

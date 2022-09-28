@@ -105,6 +105,9 @@ C_ASSERT(FIELD_OFFSET(EVENT_CHANNEL,Id) == 0);
 //
 EFI_HANDLE  mEventChannels      = NULL;
 
+EFI_HV_PROTOCOL *mHv;
+EFI_HV_IVM_PROTOCOL *mHvIvm;
+
 
 const EFI_EVENTLOG_PROTOCOL mEfiEventLogProtocol =
 {
@@ -329,23 +332,54 @@ Return Value:
 
 --*/
 {
+    EFI_STATUS status;
+    EFI_HV_PROTECTION_HANDLE protectionHandle;
     BIOS_EVENT_CHANNEL *channelDescriptor;
     EVENT_CHANNEL *channel   = (EVENT_CHANNEL *)Object;
     UINT32         dataSize  = channel->Ring.Size;
     UINT32         allocSize = dataSize + sizeof(*channelDescriptor);
+    UINT64 physicalAddress;
+    UINT64 virtualAddress;
+    BOOLEAN hostEmulatorsPresent = PcdGetBool(PcdHostEmulatorsWhenHardwareIsolated);
 
     //
     // Allocate a region below 4GB since the BIOS data port
     // only accepts 32-Bit values.
     //
     channelDescriptor = EventAllocate32BitMemory(allocSize);
-
     if (channelDescriptor == NULL)
     {
         return EFI_OUT_OF_RESOURCES;
     }
 
     EventChannelLock(channel);
+
+    if (IsHardwareIsolatedNoParavisor() && hostEmulatorsPresent)
+    {
+        //
+        // In a hardware isolated system, making a chunk of guest memory visible to host
+        // scrambles that chunk of memory. Memory block needs to be re-populated with data.
+        //
+        status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
+                                        (HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE),
+                                        (void*)channelDescriptor,
+                                        EFI_SIZE_TO_PAGES(allocSize) * EFI_PAGE_SIZE,
+                                        FALSE,
+                                        &protectionHandle);
+
+        if (EFI_ERROR(status))
+        {
+            goto Exit;
+        }
+
+        //
+        // After making memory chunk host visible, guest needs virtual address to access memory.
+        //
+        physicalAddress = (UINT64)channelDescriptor;
+        physicalAddress += PcdGet64(PcdIsolationSharedGpaBoundary);
+        virtualAddress = (physicalAddress | PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask));
+        channelDescriptor = (BIOS_EVENT_CHANNEL *)virtualAddress;
+    }
 
     //
     // Forcefully commit any pending event before flushing the ring.
@@ -370,23 +404,30 @@ Return Value:
     // Flush the log to a persistent storage. If there is a host BIOS device, that
     // works like our persistent storage. If not, currently don't do anything. 
     //
-    if (IsHardwareIsolatedNoParavisor())
+    if (IsHardwareIsolatedNoParavisor() && !hostEmulatorsPresent)
     {
         //
         // TODO: Ideally, these would go into some persistent across boot storage like CMOS, Flash or EFI partition.
         //
     }
     else
-    {   
+    {
         WriteBiosDevice(BiosConfigEventLogFlush, (UINT32)(UINTN)channelDescriptor);
-    }    
+    }
 
-    EventChannelUnlock(channel);
+    if (IsHardwareIsolatedNoParavisor() && hostEmulatorsPresent)
+    {
+        mHvIvm->MakeAddressRangeNotHostVisible(mHvIvm, protectionHandle);
+    }
 
     channel->Stats.Flush++;
+    status = EFI_SUCCESS;
+
+Exit:
+    EventChannelUnlock(channel);
     FreePages(channelDescriptor, EFI_SIZE_TO_PAGES(allocSize));
 
-    return EFI_SUCCESS;
+    return status;
 }
 
 

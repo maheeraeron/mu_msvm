@@ -183,6 +183,7 @@
     gMsvmPkgTokenSpaceGuid.PcdAsptSize
     gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated
     gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled
+    gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress

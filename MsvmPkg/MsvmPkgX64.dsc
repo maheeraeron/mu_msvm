@@ -591,6 +591,7 @@
   gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated|FALSE
   gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated|FALSE
   
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION

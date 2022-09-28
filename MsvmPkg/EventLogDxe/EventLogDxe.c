@@ -25,6 +25,8 @@ Environment:
 #include "StatusCode.h"
 #include "EventLogger.h"
 
+EFI_HV_PROTOCOL *mHv;
+EFI_HV_IVM_PROTOCOL *mHvIvm;
 
 EFI_STATUS
 EFIAPI
@@ -60,6 +62,20 @@ Return Value:
     // Initialize the event channel management and then the status code protocol
     //
     status = EventLoggerInitialize();
+
+    if (EFI_ERROR(status))
+    {
+        goto Exit;
+    }
+
+    status = gBS->LocateProtocol(&gEfiHvProtocolGuid, NULL, (VOID **)&mHv);
+
+    if (EFI_ERROR(status))
+    {
+        goto Exit;
+    }
+
+    status = gBS->LocateProtocol(&gEfiHvIvmProtocolGuid, NULL, (VOID **)&mHvIvm);
 
     if (EFI_ERROR(status))
     {

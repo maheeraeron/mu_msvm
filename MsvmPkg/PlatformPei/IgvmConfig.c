@@ -344,6 +344,11 @@ Return Value:
 
     IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE), CRITICAL_INITIALIZATION_FAILURE);
 
+    if (parameterInfo->UefiIgvmConfigurationFlags & UEFI_IGVM_CONFIGURATION_ENABLE_HOST_EMULATORS)
+    {
+        IGVM_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdHostEmulatorsWhenHardwareIsolated, TRUE), CRITICAL_INITIALIZATION_FAILURE);
+    }
+
     //
     // TODO: use parameters for this
     // Assume a single processor until VPR/VPS information can be configured

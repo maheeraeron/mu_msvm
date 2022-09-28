@@ -49,9 +49,13 @@ static PNVRAM_COMMAND_DESCRIPTOR   mNvramCommandDescriptor      = NULL;
 static EFI_PHYSICAL_ADDRESS        mNvramCommandDataBufferGpa   = 0;
 static UINT8*                      mNvramCommandDataBuffer      = NULL;
 
-// Global representing if this is a system without a bios emulator. This means there is no backing
-// NVRAM implementation, and all calls should fail appropriately.
-static BOOLEAN mNoBiosEmulator = FALSE;
+//
+// NVRAM is not allowed on Hardware Isolated systems without a paravisor (even if a bios emulator is present). 
+// In a hardware isolated system the host is not part of the TCB thus we should not depend on host for NVRAM 
+// information and all calls should fail appropriately.
+// 
+
+static BOOLEAN mNvramNotAllowed = FALSE;
 
 //
 // Private routines
@@ -75,7 +79,7 @@ Returns:
 
 --*/
 {
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return EFI_UNSUPPORTED;
     }
@@ -136,9 +140,9 @@ Return Value:
 
     if (IsHardwareIsolatedNoParavisor())
     {
-        mNoBiosEmulator = TRUE;
+        mNvramNotAllowed = TRUE;
 
-        // No allocations needed as there is no need to send NVRAM commands to a non-existent bios emulator.
+        // No allocations needed as we are not allowed to send NVRAM commands.
         return EFI_SUCCESS;
     }
 
@@ -256,7 +260,7 @@ Return Value:
 {
     EFI_STATUS status;
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return;
     }
@@ -307,7 +311,7 @@ Returns:
 
 --*/
 {
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return;
     }
@@ -364,7 +368,7 @@ Returns:
     ASSERT(RemainingVariableStorageSize);
     ASSERT(MaximumVariableSize);
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return EFI_DEVICE_ERROR;
     }
@@ -422,7 +426,7 @@ Returns:
 {
     UINTN length;
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         // TODO: BDS currently does not work without returning success on writes. It would be preferable in the
         //       future to return EFI_UNSUPPORTED instead, but this requires fixing BDS.
@@ -513,7 +517,7 @@ Returns:
     ASSERT(DataSize != NULL);
     ASSERT((Data != NULL) || (*DataSize == 0));
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return EFI_NOT_FOUND;
     }
@@ -624,7 +628,7 @@ Returns:
     ASSERT(VendorGuid != NULL);
     ASSERT(VariableName != NULL);
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return EFI_NOT_FOUND;
     }
@@ -699,7 +703,7 @@ Returns:
     ASSERT(VendorGuid != NULL);
     ASSERT(VariableName != NULL);
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return EFI_NOT_FOUND;
     }
@@ -768,7 +772,7 @@ Returns:
 
     ASSERT(sizeof(buffer) < EFI_MAX_VARIABLE_NAME_SIZE);
 
-    if (mNoBiosEmulator)
+    if (mNvramNotAllowed)
     {
         return;
     }
