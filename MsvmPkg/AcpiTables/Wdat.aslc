@@ -87,7 +87,7 @@ read/writes are plumped through the BiosWdatDataPort and operate on BiosWatchdog
 // (os repo) BiosWatchdog.h
 //
 #define VM_HARDWARE_WATCHDOG_MIN_COUNT 0x5
-#define VM_HARDWARE_WATCHDOG_MAX_COUNT 0xFFFFFFFF
+#define VM_HARDWARE_WATCHDOG_MAX_COUNT 0xFFFF
 
 #if defined(MDE_CPU_X64)
 
