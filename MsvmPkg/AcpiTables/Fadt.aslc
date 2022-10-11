@@ -140,19 +140,19 @@ EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE FADT =
         EFI_ACPI_6_2_UNDEFINED,
         0
     },
-    {
-        EFI_ACPI_6_2_SYSTEM_MEMORY, // SLEEP_CONTROL_REG
-        0,
-        0,
-        EFI_ACPI_6_2_UNDEFINED,
-        0
+    { 
+        EFI_ACPI_6_2_SYSTEM_IO, // SLEEP_CONTROL_REG
+        EFI_ACPI_6_2_BYTE * 8,
+        0,                      
+        EFI_ACPI_6_2_BYTE,
+        PowerMgmtDefaultBaseRegister + PowerMgmtControlRegOffset + 1 // Maps to upper byte [15:8] of control reg
     },
     {
-        EFI_ACPI_6_2_SYSTEM_MEMORY, // SLEEP_STATUS_REG
+        EFI_ACPI_6_2_SYSTEM_IO, // SLEEP_STATUS_REG
+        EFI_ACPI_6_2_BYTE * 8,
         0,
-        0,
-        EFI_ACPI_6_2_UNDEFINED,
-        0
+        EFI_ACPI_6_2_BYTE,
+        PowerMgmtDefaultBaseRegister + PowerMgmtStatusRegOffset + 1 // Maps to upper byte [15:8] of status reg
     },
     0 // Hypervisor Vendor Identity - Set via Facp.c
 };

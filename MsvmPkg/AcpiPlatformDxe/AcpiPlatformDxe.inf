@@ -56,45 +56,46 @@
 
 [Pcd]
     gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiTableStorageFile
+    gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
-    gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
-    gMsvmPkgTokenSpaceGuid.PcdMadtPtr
-    gMsvmPkgTokenSpaceGuid.PcdMadtSize
-    gMsvmPkgTokenSpaceGuid.PcdSratPtr
-    gMsvmPkgTokenSpaceGuid.PcdSratSize
-    gMsvmPkgTokenSpaceGuid.PcdSlitPtr
-    gMsvmPkgTokenSpaceGuid.PcdSlitSize
-    gMsvmPkgTokenSpaceGuid.PcdPpttPtr
-    gMsvmPkgTokenSpaceGuid.PcdPpttSize
-    gMsvmPkgTokenSpaceGuid.PcdEntropyPtr
-    gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
-    gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
-    gMsvmPkgTokenSpaceGuid.PcdLoadOempTable
-    gMsvmPkgTokenSpaceGuid.PcdTpmEnabled
-    gMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
-    gMsvmPkgTokenSpaceGuid.PcdConsoleMode
-    gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
-    gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled
-    gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
-    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled
-    gMsvmPkgTokenSpaceGuid.PcdProcessorCount
-    gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
-    gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages
-    gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
-    gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
+    gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
+    gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
+    gMsvmPkgTokenSpaceGuid.PcdAsptPtr
+    gMsvmPkgTokenSpaceGuid.PcdAsptSize
+    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
     gMsvmPkgTokenSpaceGuid.PcdCom1Vector
     gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
     gMsvmPkgTokenSpaceGuid.PcdCom2Vector
-    gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
-    gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
+    gMsvmPkgTokenSpaceGuid.PcdConsoleMode
+    gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+    gMsvmPkgTokenSpaceGuid.PcdEntropyPtr
+    gMsvmPkgTokenSpaceGuid.PcdHibernateEnabled
+    gMsvmPkgTokenSpaceGuid.PcdHighMmioGapBasePageNumber
+    gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages
+    gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated
+    gMsvmPkgTokenSpaceGuid.PcdLoadOempTable
+    gMsvmPkgTokenSpaceGuid.PcdLowMmioGapBasePageNumber
+    gMsvmPkgTokenSpaceGuid.PcdLowMmioGapSizeInPages
+    gMsvmPkgTokenSpaceGuid.PcdLowPowerS0IdleEnabled
+    gMsvmPkgTokenSpaceGuid.PcdMadtPtr
+    gMsvmPkgTokenSpaceGuid.PcdMadtSize
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
-    gMsvmPkgTokenSpaceGuid.PcdAsptPtr
-    gMsvmPkgTokenSpaceGuid.PcdAsptSize
+    gMsvmPkgTokenSpaceGuid.PcdPpttPtr
+    gMsvmPkgTokenSpaceGuid.PcdPpttSize
+    gMsvmPkgTokenSpaceGuid.PcdProcessorCount
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleEnabled
+    gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
+    gMsvmPkgTokenSpaceGuid.PcdSgxMemoryEnabled
+    gMsvmPkgTokenSpaceGuid.PcdSlitPtr
+    gMsvmPkgTokenSpaceGuid.PcdSlitSize
+    gMsvmPkgTokenSpaceGuid.PcdSratPtr
+    gMsvmPkgTokenSpaceGuid.PcdSratSize
+    gMsvmPkgTokenSpaceGuid.PcdTpmEnabled
+    gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled
     gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled
-    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
 
 
 [Depex]

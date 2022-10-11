@@ -84,28 +84,44 @@ Return Value:
         facp->PreferredPmProfile = EFI_ACPI_6_2_PM_PROFILE_MOBILE;
     }
 
-#if defined(MDE_CPU_X64)
-    // If this is a SNP VM, report it as hardware reduced. Zero out any of
+    // If this is a HW-isolated VM, report it as hardware reduced. Zero out any of
     // filled in legacy structures.
-    if (GetIsolationType() == UefiIsolationTypeSnp)
+    if (IsHardwareIsolated())
     {
+        BOOLEAN hostEmulatorsPresent = PcdGetBool(PcdHostEmulatorsWhenHardwareIsolated);
+
         facp->Flags = EFI_ACPI_6_2_WBINVD |
              EFI_ACPI_6_2_PROC_C1 |
              EFI_ACPI_6_2_PWR_BUTTON |
              EFI_ACPI_6_2_SLP_BUTTON |
              EFI_ACPI_6_2_TMR_VAL_EXT |
-             EFI_ACPI_6_2_RESET_REG_SUP |
+             EFI_ACPI_6_2_HEADLESS |
              EFI_ACPI_6_2_HW_REDUCED_ACPI;
-
+             
         // Zero out set fields between offsets 46 - 108
         ZeroMem(&facp->SciInt,
             FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, IaPcBootArch) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, SciInt));
 
-        // Zero out set fields between offsets 148 - 232
-        ZeroMem(&facp->XPm1aEvtBlk,
-            FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, HypervisorVendorIdentity) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
+        if (hostEmulatorsPresent)
+        {
+            // Advertise PM-based reset 
+            facp->Flags |= EFI_ACPI_6_2_RESET_REG_SUP;
+                            
+            // Zero out set fields between offsets 148 - 244
+            ZeroMem(&facp->XPm1aEvtBlk,
+                FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, SleepControlReg) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
+        }
+        else
+        {
+            // Zero out set fields between offsets 116 - 128, no reset registers supported
+            ZeroMem(&facp->ResetReg,
+                FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ArmBootArch) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ResetReg));
+                
+            // Zero out set fields between offsets 148 - 268, no sleep registers supported
+            ZeroMem(&facp->XPm1aEvtBlk,
+                FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, HypervisorVendorIdentity) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
+        }
     }
-#endif
 
     return EFI_SUCCESS;
 }
