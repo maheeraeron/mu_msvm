@@ -341,12 +341,14 @@ Return Value:
     UINT64 physicalAddress;
     UINT64 virtualAddress;
     BOOLEAN hostEmulatorsPresent = PcdGetBool(PcdHostEmulatorsWhenHardwareIsolated);
+    VOID* originalAllocation;
 
     //
     // Allocate a region below 4GB since the BIOS data port
     // only accepts 32-Bit values.
     //
     channelDescriptor = EventAllocate32BitMemory(allocSize);
+    originalAllocation = channelDescriptor;
     if (channelDescriptor == NULL)
     {
         return EFI_OUT_OF_RESOURCES;
@@ -402,7 +404,7 @@ Return Value:
 
     //
     // Flush the log to a persistent storage. If there is a host BIOS device, that
-    // works like our persistent storage. If not, currently don't do anything. 
+    // works like our persistent storage. If not, currently don't do anything.
     //
     if (IsHardwareIsolatedNoParavisor() && !hostEmulatorsPresent)
     {
@@ -425,7 +427,7 @@ Return Value:
 
 Exit:
     EventChannelUnlock(channel);
-    FreePages(channelDescriptor, EFI_SIZE_TO_PAGES(allocSize));
+    FreePages(originalAllocation, EFI_SIZE_TO_PAGES(allocSize));
 
     return status;
 }
