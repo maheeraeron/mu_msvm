@@ -247,8 +247,7 @@ Return Value:
 
 VOID
 ParseIgvmCommandLine(
-    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo,
-    _In_ BOOLEAN DebuggerEnabled
+    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
     )
 /*++
 
@@ -261,8 +260,6 @@ Arguments:
 
     ParameterInfo - Supplies a pointer to the parameter information block.
 
-    DebuggerEnabled - Supplies a flag indicating whether the debugger should be enabled.
-
 Return Value:
 
     None.
@@ -273,36 +270,33 @@ Return Value:
     UINT32 maximumSize;
     UINT32 size;
 
-    if (DebuggerEnabled)
+    //
+    // Verify command line is within parameter page.
+    //
+
+    commandString = GetIgvmData(ParameterInfo, ParameterInfo->CommandLineOffset);
+    size = 0;
+    maximumSize = ParameterInfo->CommandLinePageCount * EFI_PAGE_SIZE;
+
+    while (commandString[size] != '\0')
     {
+        size++;
+
         //
-        // Verify command line is within parameter page.
+        // No null terminator found, can't be valid.
         //
 
-        commandString = GetIgvmData(ParameterInfo, ParameterInfo->CommandLineOffset);
-        size = 0;
-        maximumSize = ParameterInfo->CommandLinePageCount * EFI_PAGE_SIZE;
-
-        while (commandString[size] != '\0')
+        if (size >= maximumSize)
         {
-            size++;
-
-            //
-            // No null terminator found, can't be valid.
-            //
-
-            if (size >= maximumSize)
-            {
-                return;
-            }
+            return;
         }
-
-        //
-        // Extract the KDNET parameters.
-        //
-
-        ParseKdNetParameters(commandString);
     }
+
+    //
+    // Extract the KDNET parameters.
+    //
+
+    ParseKdNetParameters(commandString);
 }
 
 
@@ -406,18 +400,32 @@ Return Value:
     IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSratSize, sratHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
     
     //
+    // Parse the command line to obtain debug parameters.
+    //
+
+    ParseIgvmCommandLine(parameterInfo);
+
+    //
     // Build a config structure with a statically defined configuration.
     //
 
     ZeroMem(&configFlags, sizeof(configFlags));
-    // TODO: remove before ship
-    configFlags.Flags.DebuggerEnabled = 1;
     configFlags.Flags.MeasureAdditionalPcrs = 1;
     configFlags.Flags.DefaultBootAlwaysAttempt = 1;
     // TODO: allow and harden vpci before ship
     configFlags.Flags.VpciBootEnabled = 1;
     // TODO: Address before ship
     configFlags.Flags.MemoryProtectionMode = ConfigLibMemoryProtectionModeDisabled;
+
+    //
+    // IGVM configurations support only KDNET debugging, so only enable
+    // debugging if KDNET was configured.
+    //
+
+    if (UseKdNetDebugger)
+    {
+        configFlags.Flags.DebuggerEnabled = 1;
+    }
 
     ConfigSetUefiConfigFlags(&configFlags);
 
@@ -430,12 +438,6 @@ Return Value:
     {
         return status;
     }
-
-    //
-    // Parse the command line to obtain debug parameters.
-    //
-
-    ParseIgvmCommandLine(parameterInfo, (BOOLEAN)configFlags.Flags.DebuggerEnabled);
 
     return EFI_SUCCESS;
 }
