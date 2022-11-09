@@ -47,10 +47,6 @@ Author:
     (MEMORY_FLAGS |                                     \
      EFI_RESOURCE_ATTRIBUTE_PERSISTENT)
 
-const char * const gDebugMemoryFormat = "HOB Start % 17lx End %17lx %s\n";
-const char * const gDebugCpuFormat    = "HOB MemWidth %d IOWidth %d Cpu\n";
-const char * const gDebugGuidFormat   = "HOB Base % 17lx Size %17lx GUID Data\n";
-
 #define HOB 0x484F42 // "HOB"
 
 #define HOB_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
@@ -166,7 +162,7 @@ Return Value:
                                BaseAddress,
                                Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"MMIO"));
@@ -209,7 +205,7 @@ Return Value:
                                BaseAddress,
                                Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"Memory"));
@@ -244,7 +240,7 @@ Return Value:
                                BaseAddress,
                                Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"Memory"));
@@ -279,7 +275,7 @@ Return Value:
                                BaseAddress,
                                Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"Reserved Memory"));
@@ -320,7 +316,7 @@ Return Value:
                                BaseAddress,
                                Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"Untested Memory"));
@@ -352,7 +348,7 @@ Return Value:
 {
     BuildMemoryAllocationHob(BaseAddress, Size, EfiBootServicesData);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"Allocated Memory"));
@@ -384,7 +380,7 @@ Return Value:
 {
     BuildFvHob(BaseAddress, Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"Firmware Volume"));
@@ -415,7 +411,7 @@ Return Value:
 {
     BuildResourceDescriptorHob(EFI_RESOURCE_IO, BASIC_FLAGS, BaseAddress, Size);
     DEBUG((DEBUG_VERBOSE,
-           gDebugMemoryFormat,
+           "HOB Start % 17lx End %17lx %s\n",
            BaseAddress,
            BaseAddress + Size - 1,
            L"IO Ports"));
@@ -446,7 +442,7 @@ Return Value:
 --*/
 {
     BuildCpuHob(SizeOfMemorySpace, SizeOfIoSpace);
-    DEBUG((DEBUG_VERBOSE, gDebugCpuFormat, SizeOfMemorySpace, SizeOfIoSpace));
+    DEBUG((DEBUG_VERBOSE, "HOB MemWidth %d IOWidth %d Cpu\n", SizeOfMemorySpace, SizeOfIoSpace));
 }
 
 
@@ -478,6 +474,6 @@ Return Value:
 --*/
 {
     BuildGuidDataHob(Guid, Data, DataSize);
-    DEBUG((DEBUG_VERBOSE, gDebugGuidFormat, Data, DataSize));
+    DEBUG((DEBUG_VERBOSE, "HOB Base % 17lx Size %17lx GUID Data\n", Data, DataSize));
 }
 

@@ -17,6 +17,7 @@
 
 [Packages]
     MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
@@ -35,6 +36,7 @@
     gEfiVmbusProtocolGuid           #CONSUMES
     gEfiEmclV2ProtocolGuid          #CONSUMES
     gEfiExtScsiPassThruProtocolGuid #PRODUCES
+    gInternalEventServicesProtocolGuid #CONSUMES
 
 [Guids]
     gEfiVmbusChannelDevicePathGuid  #CONSUMES

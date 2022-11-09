@@ -563,6 +563,7 @@ DeviceBootManagerAfterConsole (
                             &HandleBuffer );
 
     for (Index = 0; Index < HandleCount; Index++) {
+        DEBUG((DEBUG_ERROR, "Connecting controller for handle %d \n", Index));
         gBS->ConnectController(HandleBuffer[Index], NULL, NULL, TRUE);
     }
 

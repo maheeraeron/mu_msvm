@@ -164,8 +164,6 @@ IN  EFI_GUID  *LogoFile
     gST->ConOut->EnableCursor(gST->ConOut, FALSE);
 
     DisplayDeviceState(
-        (UINT8*)((UINTN)GraphicsOutput->Mode->FrameBufferBase),
-        GraphicsOutput->Mode->Info->PixelsPerScanLine,
         (INT32)SizeOfX,
         (INT32)SizeOfY
         );

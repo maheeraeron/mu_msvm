@@ -552,8 +552,6 @@ VpcivscPciIoMap(
     _Out_    VOID                           **Mapping
     )
 {
-    // DEBUG((DEBUG_VPCI_INFO, "VpcivscPciIoMap called with host addr %llx, bytes %llx\n", HostAddress));
-
     // For VPCI, the VSC has DMA access to all pages. So nothing to do here,
     // just return the address of the buffer.
 

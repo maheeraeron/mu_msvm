@@ -267,13 +267,6 @@ PcRtcInit (
   Time.Year   = RtcRead (RTC_ADDRESS_YEAR);
 
   //
-  // Set RTC configuration after get original time
-  // The value of bit AIE should be reserved.
-  //
-  RegisterB.Data = FixedPcdGet8 (PcdInitialValueRtcRegisterB) | (RegisterB.Data & BIT5);
-  RtcWrite (RTC_ADDRESS_REGISTER_B, RegisterB.Data);
-
-  //
   // Release RTC Lock.
   //
   if (!EfiAtRuntime ()) {
@@ -327,6 +320,13 @@ PcRtcInit (
   }
 
   //
+  // Set RTC configuration after get original time
+  // The value of bit AIE should be reserved.
+  //
+  RegisterB.Data = FixedPcdGet8 (PcdInitialValueRtcRegisterB) | (RegisterB.Data & BIT5);
+  RtcWrite (RTC_ADDRESS_REGISTER_B, RegisterB.Data);
+
+  //
   // Reset time value according to new RTC configuration
   //
   Status = PcRtcSetTime (&Time, Global);
@@ -340,7 +340,7 @@ PcRtcInit (
   // so we can use them to get and set wakeup time.
   //
   Status = PcRtcGetWakeupTime (&Enabled, &Pending, &Time, Global);
-  if ((Enabled) || (!EFI_ERROR (Status))) {
+  if ((!EFI_ERROR (Status)) || (Enabled)) {
     return EFI_SUCCESS;
   }
 
@@ -356,7 +356,7 @@ PcRtcInit (
   Time.Year   = PcdGet16 (PcdMinimalValidYear);
   Time.Nanosecond  = 0;
   Time.TimeZone = Global->SavedTimeZone;
-  Time.Daylight = Global->Daylight;;
+  Time.Daylight = Global->Daylight;
 
   //
   // Acquire RTC Lock to make access to RTC atomic
@@ -439,7 +439,7 @@ PcRtcInit (
 EFI_STATUS
 PcRtcGetTime (
   OUT  EFI_TIME               *Time,
-  OUT  EFI_TIME_CAPABILITIES  *Capabilities,  OPTIONAL
+  OUT  EFI_TIME_CAPABILITIES  *Capabilities  OPTIONAL,
   IN   PC_RTC_MODULE_GLOBALS  *Global
   )
 {
@@ -788,7 +788,7 @@ PcRtcGetWakeupTime (
 EFI_STATUS
 PcRtcSetWakeupTime (
   IN BOOLEAN                Enable,
-  IN EFI_TIME               *Time,   OPTIONAL
+  IN EFI_TIME               *Time   OPTIONAL,
   IN PC_RTC_MODULE_GLOBALS  *Global
   )
 {
@@ -814,11 +814,16 @@ PcRtcSetWakeupTime (
     //
     // Just support set alarm time within 24 hours
     //
-    PcRtcGetTime (&RtcTime, &Capabilities, Global);
+    Status = PcRtcGetTime (&RtcTime, &Capabilities, Global);
+    if (EFI_ERROR (Status)) {
+      return EFI_DEVICE_ERROR;
+    }
+
     Status = RtcTimeFieldsValid (&RtcTime);
     if (EFI_ERROR (Status)) {
       return EFI_DEVICE_ERROR;
     }
+
     if (!IsWithinOneDay (&RtcTime, Time)) {
       return EFI_UNSUPPORTED;
     }
@@ -967,13 +972,16 @@ ConvertRtcTimeToEfiTime (
   BOOLEAN IsPM;
   UINT8   Century;
 
-  if ((Time->Hour & 0x80) != 0) {
-    IsPM = TRUE;
-  } else {
-    IsPM = FALSE;
-  }
+  // IsPM only makes sense for 12-hour format.
+  if (RegisterB.Bits.Mil == 0) {
+    if ((Time->Hour & 0x80) != 0) {
+      IsPM = TRUE;
+    } else {
+      IsPM = FALSE;
+    }
 
-  Time->Hour = (UINT8) (Time->Hour & 0x7f);
+    Time->Hour = (UINT8) (Time->Hour & 0x7f);
+  }
 
   if (RegisterB.Bits.Dm == 0) {
     Time->Year    = CheckAndConvertBcd8ToDecimal8 ((UINT8) Time->Year);
@@ -984,8 +992,8 @@ ConvertRtcTimeToEfiTime (
     Time->Second  = CheckAndConvertBcd8ToDecimal8 (Time->Second);
   }
 
-  if (Time->Year == 0xff || Time->Month == 0xff || Time->Day == 0xff ||
-      Time->Hour == 0xff || Time->Minute == 0xff || Time->Second == 0xff) {
+  if ((Time->Year == 0xff) || (Time->Month == 0xff) || (Time->Day == 0xff) ||
+      (Time->Hour == 0xff) || (Time->Minute == 0xff) || (Time->Second == 0xff)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1004,11 +1012,11 @@ ConvertRtcTimeToEfiTime (
   // If time is in 12 hour format, convert it to 24 hour format
   //
   if (RegisterB.Bits.Mil == 0) {
-    if (IsPM && Time->Hour < 12) {
+    if (IsPM && (Time->Hour < 12)) {
       Time->Hour = (UINT8) (Time->Hour + 12);
     }
 
-    if (!IsPM && Time->Hour == 12) {
+    if (!IsPM && (Time->Hour == 12)) {
       Time->Hour = 0;
     }
   }
@@ -1054,7 +1062,7 @@ RtcWaitToUpdate (
   }
 
   RegisterD.Data = RtcRead (RTC_ADDRESS_REGISTER_D);
-  if (Timeout == 0 || RegisterD.Bits.Vrt == 0) {
+  if ((Timeout == 0) || (RegisterD.Bits.Vrt == 0)) {
     return EFI_DEVICE_ERROR;
   }
 

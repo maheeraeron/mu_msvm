@@ -28,6 +28,7 @@ Author:
 
 #include <Protocol/Emcl.h>
 #include <Protocol/Vmbus.h>
+#include <Protocol/InternalEventServices.h>
 
 #include <Library/EmclLib.h>
 
@@ -230,6 +231,8 @@ Return Value:
 
 --*/
 {
+    STATIC INTERNAL_EVENT_SERVICES_PROTOCOL *internalEventServices = NULL;
+
     EFI_STATUS status;
     UINTN signaledEventIndex;
     EMCL_LIB_COMPLETION_CONTEXT context;
@@ -265,7 +268,17 @@ Return Value:
         goto Cleanup;
     }
 
-    gBS->WaitForEvent(1, &context.Event, &signaledEventIndex);
+    if (internalEventServices == NULL) 
+    {
+        status = gBS->LocateProtocol(
+                        &gInternalEventServicesProtocolGuid, 
+                        NULL, 
+                        (VOID **)&internalEventServices
+                        );
+        ASSERT_EFI_ERROR(status);
+    }
+
+    internalEventServices->WaitForEventInternal(1, &context.Event, &signaledEventIndex);
 
     if (context.Packet == NULL)
     {

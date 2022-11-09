@@ -651,6 +651,8 @@ Return Value:
 --*/
 
 {
+    STATIC INTERNAL_EVENT_SERVICES_PROTOCOL *internalEventServices = NULL;
+
     EFI_STATUS status;
     EFI_EVENT event = NULL;
     UINTN signaledEventIndex;
@@ -681,7 +683,17 @@ Return Value:
         goto Cleanup;
     }
 
-    gBS->WaitForEvent(1, &event, &signaledEventIndex);
+    if (internalEventServices == NULL)
+    {
+        status = gBS->LocateProtocol(
+                        &gInternalEventServicesProtocolGuid, 
+                        NULL, 
+                        (VOID **)&internalEventServices
+                        );
+        ASSERT_EFI_ERROR(status);
+    }
+
+    internalEventServices->WaitForEventInternal(1, &event, &signaledEventIndex);
 
 Cleanup:
     if (event != NULL)

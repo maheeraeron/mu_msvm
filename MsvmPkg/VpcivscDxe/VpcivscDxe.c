@@ -254,7 +254,7 @@ VpciChannelSendCompletionCallback(
     // Context is the response buffer info, check if big enough, copy if so
     PVPCIVSC_COMPLETION_CONTEXT completionContext = Context;
 
-    DEBUG((DEBUG_VPCI_INFO, "Got vpci completion packet of size 0x%x\n"));
+    DEBUG((DEBUG_VPCI_INFO, "Got vpci completion packet of size 0x%x\n", BufferLength));
 
     if (completionContext->CompletionPacket != NULL &&
         completionContext->CompletionPacketLength <= BufferLength)

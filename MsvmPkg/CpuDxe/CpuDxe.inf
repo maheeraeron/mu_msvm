@@ -10,7 +10,7 @@
 #     CPU driver installs CPU Architecture Protocol
 #
 
-#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | cfcb4ce963ec7ece70e5fa9e3e4833c5 | 2022-05-13T21-13-32 | 1fe56ccdeb39aa2fb6b85a37f4fb3225f4fa2e2a
+#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 54fbb1a18e0a8cea2526558b5db9594d | 2022-11-03T09-02-08 | 888a61bda6065b4afaedef7caafbd5392b87a5e5
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -79,6 +79,7 @@
     # gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
     # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
     # gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
+    gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                      ## CONSUMES
     # MU_CHANGE END
 
 [Depex]

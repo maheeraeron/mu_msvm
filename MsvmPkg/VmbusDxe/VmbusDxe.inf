@@ -9,6 +9,7 @@
 
 [Packages]
     MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
@@ -39,6 +40,7 @@
     gEfiVmbusProtocolGuid           # PRODUCES
     gEfiVmbusLegacyProtocolGuid     # PRODUCES
     gEfiVmbusLegacyProtocolIvmGuid  # PRODUCES
+    gInternalEventServicesProtocolGuid # CONSUMES
 
 [Depex]
     gEfiHvProtocolGuid

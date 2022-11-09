@@ -21,6 +21,8 @@ Author:
 #include <VmbusP.h>
 #include <IsolationTypes.h>
 
+#include <Protocol/InternalEventServices.h>
+
 #include <Library/DevicePathLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -59,6 +61,8 @@ struct _VMBUS_ROOT_CONTEXT
     VMBUS_CHANNEL_CONTEXT *Channels[VMBUS_MAX_CHANNELS];
     UINT32 MaxInterruptUsed;
 };
+
+INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 
 #if defined(MDE_CPU_IA32)
 
@@ -549,6 +553,7 @@ Return Value:
 --*/
 {   UINTN index;
     HV_MESSAGE *hvMessage;
+    EFI_STATUS status;
 
     //
     // TPL must be less than TPL_NOTIFY, since hot add/remove messages are
@@ -560,7 +565,16 @@ Return Value:
 
     if (!PollForMessage)
     {
-        gBS->WaitForEvent(1, &RootContext->WaitForMessage, &index);
+        if (mInternalEventServices == NULL) 
+        {
+            status = gBS->LocateProtocol(
+                &gInternalEventServicesProtocolGuid, 
+                NULL, 
+                (VOID **)&mInternalEventServices
+                );
+            ASSERT_EFI_ERROR(status);
+        }
+        mInternalEventServices->WaitForEventInternal(1, &RootContext->WaitForMessage, &index);
     }
 
     hvMessage = NULL;
@@ -616,7 +630,16 @@ Return Value:
 
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
 
-    status = gBS->WaitForEvent(1, &ChannelContext->Response.Event, &index);
+    if (mInternalEventServices == NULL) 
+    {
+        status = gBS->LocateProtocol(
+                    &gInternalEventServicesProtocolGuid, 
+                    NULL, 
+                    (VOID **)&mInternalEventServices
+                    );
+        ASSERT_EFI_ERROR(status);
+    }
+    status = mInternalEventServices->WaitForEventInternal(1, &ChannelContext->Response.Event, &index);
 
     ASSERT_EFI_ERROR(status);
 
@@ -667,9 +690,18 @@ Return Value:
         return EFI_INVALID_PARAMETER;
     }
 
-    status = gBS->WaitForEvent(1,
-                               &RootContext->GpadlTable[GpadlHandle].Event,
-                               &index);
+   if (mInternalEventServices == NULL) 
+   {
+        status = gBS->LocateProtocol(
+                    &gInternalEventServicesProtocolGuid, 
+                    NULL, 
+                    (VOID **)&mInternalEventServices);
+        ASSERT_EFI_ERROR(status);
+    }
+    status = mInternalEventServices->WaitForEventInternal(
+                                        1,
+                                        &RootContext->GpadlTable[GpadlHandle].Event,
+                                        &index);
 
     ASSERT_EFI_ERROR(status);
 
