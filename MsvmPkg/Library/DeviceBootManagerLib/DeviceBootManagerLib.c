@@ -115,7 +115,7 @@ BOOLEAN
 (EFIAPI *FILTER_ROUTINE)(
                          IN  EFI_DEVICE_PATH_PROTOCOL *DevicePath);
 
-BOOLEAN CheckDeviceNode(
+BOOLEAN CheckDeviceNodeEx(
     EFI_DEVICE_PATH_PROTOCOL *DevicePath,
     UINT8  Type,
     UINT8  SubType) {
@@ -129,20 +129,40 @@ BOOLEAN CheckDeviceNode(
     return FALSE;
 }
 
+BOOLEAN CheckDeviceNode(
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    UINT8  Type) {
+    while (!IsDevicePathEndType(DevicePath)) {
+        if (DevicePathType(DevicePath) == Type) {
+            return TRUE;
+        }
+        DevicePath = NextDevicePathNode(DevicePath);
+    }
+    return FALSE;
+}
+
 BOOLEAN IsDevicePathUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
-    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_USB_DP);
+    return CheckDeviceNodeEx(DevicePath, MESSAGING_DEVICE_PATH, MSG_USB_DP);
+}
+
+BOOLEAN IsDevicePathMedia(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return CheckDeviceNode(DevicePath, MEDIA_DEVICE_PATH);
 }
 
 BOOLEAN IsDevicePathIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
-    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv4_DP);
+    return CheckDeviceNodeEx(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv4_DP);
 }
 
 BOOLEAN IsDevicePathIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
-    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv6_DP);
+    return CheckDeviceNodeEx(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv6_DP);
 }
 
 BOOLEAN FilterNoUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return (FALSE == IsDevicePathUSB(DevicePath));
+}
+
+BOOLEAN FilterOnlyMedia(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+    return (TRUE == IsDevicePathMedia(DevicePath));
 }
 
 BOOLEAN FilterOnlyIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
@@ -617,7 +637,12 @@ DeviceBootManagerUnableToBoot (
         EfiBootManagerConnectAll();
 
         //Attempt HDD
-        Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
+        if (PcdGetBool(PcdIsVmbfsBoot)) {
+            Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
+        }
+        else {
+            Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterOnlyMedia);
+        }
 
         if(PcdGetBool(PcdDefaultBootAttemptPxe)) {
             // Set to low resolution VGA mode
