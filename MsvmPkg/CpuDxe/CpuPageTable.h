@@ -160,4 +160,18 @@ GetPagingDetails (
   OUT UINT32                             **Attributes        OPTIONAL
   );
 
+#if defined(MDE_CPU_X64)
+
+/*
+  Initialize the page tables for MP support in TDX.
+
+  @param  ApMailbox       The address of the MP wake up mailbox.
+*/
+UINT64
+InitializeMpPageTables (
+  IN UINT64 ApMailbox
+  );
+
+#endif
+
 #endif

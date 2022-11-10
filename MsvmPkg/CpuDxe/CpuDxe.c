@@ -52,6 +52,16 @@ Abstract:
 //
 // Global Variables
 //
+
+#if defined(MDE_CPU_X64)
+
+EFI_HV_PROTOCOL *mHv; // MS_HYP_CHANGE
+EFI_EVENT   mEndOfDxeEvent;
+
+#endif
+
+
+
 IA32_IDT_GATE_DESCRIPTOR  gIdtTable[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_HYP_CHANGE
 IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_HYP_CHANGE
 
@@ -63,6 +73,7 @@ UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // M
 UINT16                    mOrigIdtEntryCount    = 0;  // MS_HYP_CHANGE
 
 BOOLEAN                   mStrictIsolation;
+UINT32                    mIsolationType;
 
 FIXED_MTRR    mFixedMtrrTable[] = {
   {
@@ -1287,6 +1298,133 @@ InitInterruptDescriptorTable (
     }
   }
 }
+
+#if defined(MDE_CPU_X64)
+
+/**
+  Callback function for end of DXE.
+
+  @param  Event                 Event whose notification function is being invoked.
+  @param  Context               The pointer to the notification function's context,
+                                which is implementation-dependent.
+
+**/
+VOID
+EFIAPI
+EndOfDxeCallback (
+  IN EFI_EVENT                Event,
+  IN VOID                     *Context
+  )
+{
+
+  MP_WAKEUP_MAILBOX *ApMailbox;
+  UINT32 ProcessorCount;
+  UINT32 VpIndex;
+  HV_INITIAL_VP_CONTEXT  VpContext;
+  EFI_STATUS  Status;
+  EFI_PHYSICAL_ADDRESS PageTableBase = 0;
+  TDX_CONTEXT *TdxApStartContext;
+  UINT32 ApWaitInMailboxFunctionSize = 0;
+ 
+  ApMailbox = (MP_WAKEUP_MAILBOX *) PcdGet64(PcdAcpiMadtMpMailBoxAddress);
+  ProcessorCount = PcdGet32(PcdProcessorCount);
+
+  ASSERT(ApMailbox != NULL);
+  ASSERT (mIsolationType == UefiIsolationTypeTdx);
+  ASSERT (ProcessorCount > 1);
+
+  ZeroMem(&VpContext, sizeof(HV_INITIAL_VP_CONTEXT));
+  ApMailbox->HasVcpuEnteredMailboxWait = 0;
+
+  Status = gBS->LocateProtocol(&gEfiHvProtocolGuid, NULL, (VOID **)&mHv);
+  if (EFI_ERROR(Status))
+  {
+      DEBUG((EFI_D_ERROR, "%a: Failed to locate the protocol.\n", __FUNCTION__));
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, CPU, __LINE__, Status);
+  }
+
+  //
+  // Setup the wake up code
+  //
+  ApWaitInMailboxFunctionSize = (UINT32)((UINT8 *)ApWaitInMailboxEnd - (UINT8 *)ApWaitInMailbox);
+  ASSERT(ApWaitInMailboxFunctionSize <= AP_WAIT_IN_MAILBOX_CODE_MAX_SIZE);
+
+  //
+  // Set up the pagetables, reset page and the execution environment.
+  //
+  PageTableBase = InitializeMpPageTables((UINT64)ApMailbox);
+  if (PageTableBase == 0)
+  {
+      DEBUG((EFI_D_ERROR, "%a: Failed to initialize the page tables\n", __FUNCTION__));
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, CPU, __LINE__, EFI_OUT_OF_RESOURCES);
+  }
+
+  CopyMem (
+    ApMailbox->ApWaitInMailboxCode,
+    (UINT8 *)ApWaitInMailbox,
+    ApWaitInMailboxFunctionSize
+    );
+
+  TdxApStartContext = (TDX_CONTEXT *)((EFI_PHYSICAL_ADDRESS)(0xFFFFF000));
+  TdxApStartContext->gdtrLimit = 0;
+  TdxApStartContext->idtrLimit = 0;
+  TdxApStartContext->taskSelector = 0;
+  TdxApStartContext->codeSelector = 0;
+
+  TdxApStartContext->cr3 = AsmReadCr3();
+  TdxApStartContext->initialRip = (EFI_PHYSICAL_ADDRESS)ApMailbox->ApWaitInMailboxCode;
+
+  TdxApStartContext->r8 = (EFI_PHYSICAL_ADDRESS)ApMailbox;
+  TdxApStartContext->r10 = PageTableBase;
+
+  //
+  // Setup and start all the APs. VCPU0 is the BSP.
+  //
+  for (VpIndex = 1; VpIndex < ProcessorCount; VpIndex++)
+  {
+
+    //
+    // Once startGate is setup, the Hypervisor could start the VP. All the context setup
+    // should be completed before setting the startGate. After setting the startGate, the 
+    // context should not be modified until the AP has entered the mailbox wait.
+    //
+    TdxApStartContext->r9 = VpIndex;
+    TdxApStartContext->startGate = VpIndex;
+
+
+    //
+    // Wake up the processor so that it can start executing the AP wait loop.
+    //    
+
+    Status = mHv->StartApplicationProcessor(
+                    mHv,
+                    VpIndex,
+                    &VpContext);
+
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((EFI_D_ERROR, "%a: Failed to wakeup AP : %u\n", __FUNCTION__, VpIndex));
+      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, CPU, __LINE__, Status);
+    }
+
+    //
+    // Wait for this AP to enter the wait loop before moving on to the next AP.
+    // 
+
+    DEBUG((EFI_D_INFO, "Waiting for AP(%u) to wait the mailbox. \n", VpIndex));
+
+    while (ApMailbox->HasVcpuEnteredMailboxWait != 1) {
+      CpuPause();
+    }
+    DEBUG((EFI_D_INFO, "AP(%u) is waiting in the mailbox\n", VpIndex));
+    ApMailbox->HasVcpuEnteredMailboxWait = 0;
+  }
+
+  gBS->CloseEvent(mEndOfDxeEvent);
+}
+
+#endif
+
 // MS_HYP_CHANGE END
 
 /**
@@ -1339,6 +1477,9 @@ InitializeCpu (
   {
       mStrictIsolation = TRUE;
   }
+
+  mIsolationType = GetIsolationType();
+
   // MS_HYP_CHANGE END
 
   InitializePageTableLib();
@@ -1377,7 +1518,11 @@ InitializeCpu (
                   &gEfiCpu2ProtocolGuid, &gCpu2,  // MS_HYP_CHANGE
                   NULL
                   );
-  ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((EFI_D_ERROR, "%a: Failed to install protocol.\n", __FUNCTION__));
+    goto Cleanup;
+  }
 
   //
   // Refresh GCD memory space map according to MTRR value.
@@ -1395,7 +1540,38 @@ InitializeCpu (
                   &gIdleLoopEventGuid,
                   &IdleLoopEvent
                   );
-  ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((EFI_D_ERROR, "%a: Failed to create the idle events callback.\n", __FUNCTION__));
+    goto Cleanup;
+  }
+
+#if defined(MDE_CPU_X64)
+  //
+  // Setup a callback for end of DXE if this is a TDX guest with no paravisor.
+  //
+  if (mIsolationType == UefiIsolationTypeTdx && !IsParavisorPresent())
+  {
+    if (PcdGet32(PcdProcessorCount) > 1)
+    {
+      Status = gBS->CreateEventEx(
+                      EVT_NOTIFY_SIGNAL,
+                      TPL_CALLBACK,
+                      EndOfDxeCallback,
+                      NULL,
+                      &gEfiEndOfDxeEventGroupGuid,
+                      &mEndOfDxeEvent);
+      if (EFI_ERROR(Status))
+      {
+          DEBUG((EFI_D_ERROR, "%a: Failed to create the end of DXE callback.\n", __FUNCTION__));
+          goto Cleanup;
+      }
+    }
+  }
+
+#endif
+
+Cleanup:
 
   return Status;
 }

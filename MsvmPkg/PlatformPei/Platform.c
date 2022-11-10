@@ -63,6 +63,26 @@ static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformation[] =
     { EfiMaxMemoryType,       0x000 }
 };
 
+#if defined(MDE_CPU_X64)
+
+//
+// Initial data for Memory Type Information HOB for TDX guests. TDX guests use
+// 5 (4 for page tables and 1 for the MP wake up structure) pages of EfiACPIMemoryNVS.
+//
+static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformationTdxGuest[] =
+{
+    { EfiACPIMemoryNVS,       0x008 },
+    { EfiACPIReclaimMemory,   0x032 },
+    { EfiReservedMemoryType,  0x004 },
+    { EfiRuntimeServicesData, 0x054 },
+    { EfiRuntimeServicesCode, 0x030 },
+    { EfiBootServicesCode,    0x500 },
+    { EfiBootServicesData,    0xF00 },
+    { EfiMaxMemoryType,       0x000 }
+};
+
+#endif
+
 //
 // Initial data for Memory Type Information HOB for hibernate enabled VMs.
 // This accounts for 4 SCSI drives and 2 NICs present during UEFI. 
@@ -686,6 +706,18 @@ Return Value:
     //
     // Memory Type Information HOB
     //
+#if defined(MDE_CPU_X64)
+    if (IsHardwareIsolatedNoParavisor() && GetIsolationType() == UefiIsolationTypeTdx)
+    {
+        HobAddGuidData(
+            &gEfiMemoryTypeInformationGuid,
+            MsvmDefaultMemoryTypeInformationTdxGuest,
+            sizeof(MsvmDefaultMemoryTypeInformationTdxGuest)
+            );   
+    }
+    else 
+#endif
+
     if (PcdGetBool(PcdHibernateEnabled))
     {
         HobAddGuidData(

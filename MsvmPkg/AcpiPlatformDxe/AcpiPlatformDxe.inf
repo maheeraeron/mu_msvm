@@ -62,6 +62,7 @@
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
+    gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress
     gMsvmPkgTokenSpaceGuid.PcdAsptPtr
     gMsvmPkgTokenSpaceGuid.PcdAsptSize
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

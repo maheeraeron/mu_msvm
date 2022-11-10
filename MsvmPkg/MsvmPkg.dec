@@ -285,6 +285,7 @@
   gMsvmPkgTokenSpaceGuid.PcdHighMmioGapSizeInPages|0x0|UINT64|0x6037
 
   # UEFI_CONFIG_ACPI_TABLE
+  gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress|0x0|UINT64|0x603A
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0|UINT64|0x603B
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0|UINT32|0x603C
 

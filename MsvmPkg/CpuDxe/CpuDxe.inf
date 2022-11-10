@@ -60,27 +60,32 @@
   Ia32/PagingAttribute.c
 
 [Sources.X64]
-  X64/CpuAsm.asm | MSFT   ## MS_HYP_CHANGE
-  X64/CpuAsm.asm | INTEL  ## MS_HYP_CHANGE
-  X64/CpuAsm.S   | GCC    ## MS_HYP_CHANGE
+  X64/CpuApWait.asm | MSFT   ## MS_HYP_CHANGE
+  X64/CpuAsm.asm    | MSFT   ## MS_HYP_CHANGE
+  X64/CpuAsm.asm    | INTEL  ## MS_HYP_CHANGE
+  X64/CpuAsm.S      | GCC    ## MS_HYP_CHANGE
 
   X64/PagingAttribute.c
 
 [Protocols]
   gEfiCpuArchProtocolGuid                       ## PRODUCES
   gEfiCpu2ProtocolGuid                          ## MS_HYP_CHANGE
+  gEfiHvProtocolGuid                            ## MS_HYP_CHANGE
 
 [Guids]
   gIdleLoopEventGuid                            ## CONSUMES ## GUID ## MS_HYP_CHANGE
+  gEfiEndOfDxeEventGroupGuid                    ## CONSUMES ## GUID ## MS_HYP_CHANGE
 
 [Pcd]
-    gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
-    # MU_CHANGE START Remove memory protection PCD references
-    # gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
-    # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
-    # gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
-    gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                      ## CONSUMES
-    # MU_CHANGE END
+  gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
+  # MU_CHANGE START Remove memory protection PCD references
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                      ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress                    ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdProcessorCount                              ## CONSUMES
+  # MU_CHANGE END
 
 [Depex]
   TRUE

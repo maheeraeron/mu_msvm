@@ -32,10 +32,8 @@ Abstract:
 // Define maximum number of processors supported by the hypervisor on the
 // AMD64 platform.
 //
-// N.B. Please update HV_TF_MM_TEST_MAXIMUM_PROCESSORS as well, if you ever
-//      update the HV_MAXIMUM_PROCESSORS as both needs to be in sync.
 //
-#define HV_MAXIMUM_PROCESSORS       512
+#define HV_MAXIMUM_PROCESSORS       2048
 
 //
 // Define maximum number of virtual processors per partition supported by the

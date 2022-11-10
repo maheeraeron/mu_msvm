@@ -136,6 +136,14 @@ EFI_STATUS
     __in HV_CONNECTION_ID ConnectionId,
     __in UINT16 FlagNumber
     );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_HV_START_AP)(
+    __in EFI_HV_PROTOCOL *This,
+    __in UINT64 VpIndex,
+    __in PHV_INITIAL_VP_CONTEXT VpContext
+    );
     
 struct _EFI_HV_PROTOCOL
 {
@@ -156,6 +164,8 @@ struct _EFI_HV_PROTOCOL
 
     EFI_HV_POST_MESSAGE PostMessage;
     EFI_HV_SIGNAL_EVENT SignalEvent;
+
+    EFI_HV_START_AP StartApplicationProcessor;
 };
 
 extern GUID gEfiHvProtocolGuid;

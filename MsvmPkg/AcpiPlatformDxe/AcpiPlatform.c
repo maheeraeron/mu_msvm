@@ -219,6 +219,17 @@ Return Value:
     UINTN tableHandle;
     UINT32 madtSize;
 
+#if defined(MDE_CPU_X64)
+
+    UINT32 isolationType;
+    UINT8 *updatedMadtTable = NULL;
+    UINT32 updatedMadtSize;
+    EFI_ACPI_6_4_MULTIPROCESSOR_WAKEUP_STRUCTURE *mpWakeUpStruct;
+    EFI_PHYSICAL_ADDRESS apMailboxAddress = 0;
+
+#endif
+
+
     //
     // Get the MADT from the config blob parsed in PEI.
     //
@@ -227,6 +238,69 @@ Return Value:
 
     ASSERT(table->Length == madtSize);
 
+#if defined(MDE_CPU_X64)
+
+    isolationType = GetIsolationType();
+
+    //
+    // Add the wake up structure and update the table if there are APs present for TDX.
+    //
+    if (isolationType == UefiIsolationTypeTdx && !IsParavisorPresent())
+    {
+        if (PcdGet32(PcdProcessorCount) > 1)
+        {
+            DEBUG((EFI_D_INFO, "Original Madt length : 0x%x\n", madtSize));
+
+            //
+            // Allocate memory for the new table which includes the wake up structure.
+            //
+            updatedMadtSize = madtSize + sizeof(EFI_ACPI_6_4_MULTIPROCESSOR_WAKEUP_STRUCTURE);
+            status = gBS->AllocatePool(EfiACPIReclaimMemory, updatedMadtSize, (VOID**)&updatedMadtTable);
+            if (EFI_ERROR(status))
+            {
+                DEBUG((EFI_D_ERROR, "%a: Failed to allocate memory for the new MADT table.\n", __FUNCTION__));
+                goto Cleanup;
+            }
+
+            status = gBS->AllocatePages(AllocateAnyPages, 
+                                        EfiACPIMemoryNVS, 
+                                        EFI_SIZE_TO_PAGES(SIZE_4KB), 
+                                        (EFI_PHYSICAL_ADDRESS*)&apMailboxAddress);
+            if (EFI_ERROR(status))
+            {
+                DEBUG((EFI_D_ERROR, "%a: Failed to allocate memory for the new MADT wake up structure.\n", __FUNCTION__));
+                goto Cleanup;
+            }
+
+            //
+            // Copy the original table over and update the header fields and the wake up structure in it.
+            //
+            CopyMem(updatedMadtTable, (UINT8 *)table, table->Length);
+
+            table                = (EFI_ACPI_DESCRIPTION_HEADER *)updatedMadtTable;
+            table->Length        = updatedMadtSize;
+
+            mpWakeUpStruct                  = (EFI_ACPI_6_4_MULTIPROCESSOR_WAKEUP_STRUCTURE *)(updatedMadtTable + madtSize);
+            mpWakeUpStruct->Type            = EFI_ACPI_6_4_MULTIPROCESSOR_WAKEUP;
+            mpWakeUpStruct->Length          = sizeof (EFI_ACPI_6_4_MULTIPROCESSOR_WAKEUP_STRUCTURE);
+            mpWakeUpStruct->MailBoxVersion  = 0;
+            mpWakeUpStruct->Reserved        = 0;
+            mpWakeUpStruct->MailBoxAddress  = apMailboxAddress;
+
+            table->Checksum     = CalculateCheckSum8((UINT8*)&table, updatedMadtSize);
+
+
+            status = PcdSet64S(PcdAcpiMadtMpMailBoxAddress, (UINT64) apMailboxAddress);
+            if (EFI_ERROR(status))
+            {
+                DEBUG((EFI_D_ERROR, "%a: Failed to set the mailbox address PCD.\n", __FUNCTION__));
+                goto Cleanup;
+            }
+        }
+    }
+
+#endif
+
     //
     // Install it into the published tables.
     //
@@ -234,6 +308,30 @@ Return Value:
                                          table,
                                          table->Length,
                                          &tableHandle);
+
+#if defined(MDE_CPU_X64)
+
+Cleanup:
+
+    //
+    // Cleanup memory allocated for the new MADT table
+    //
+    if (updatedMadtTable != NULL)
+    {
+        gBS->FreePool(updatedMadtTable);
+        updatedMadtTable = NULL;
+    }
+
+    if (EFI_ERROR(status))
+    {
+        if (apMailboxAddress != 0)
+        {
+            gBS->FreePages(apMailboxAddress, EFI_SIZE_TO_PAGES(SIZE_4KB));
+            apMailboxAddress = 0;
+        }
+    }
+
+#endif
 
     return status;
 }

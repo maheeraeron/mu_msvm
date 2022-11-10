@@ -1161,6 +1161,35 @@ Return Value:
 
 EFI_STATUS
 EFIAPI
+EfiHvStartApplicationProcessor (
+    __in EFI_HV_PROTOCOL            *This,
+    __in UINT64                     VpIndex,
+    __in PHV_INITIAL_VP_CONTEXT     VpContext
+)
+{
+    PHV_INPUT_START_VIRTUAL_PROCESSOR input;
+    HV_STATUS hvStatus;
+
+    input = (PHV_INPUT_START_VIRTUAL_PROCESSOR)mHvPages->HypercallInputPage;
+
+    input->ReservedZ0 = 0;
+    input->ReservedZ1 = 0;
+    input->PartitionId = HV_PARTITION_ID_SELF;
+    input->TargetVtl = 0;
+    CopyMem(&input->VpContext, VpContext, sizeof(HV_INITIAL_VP_CONTEXT));
+    input->VpIndex = (HV_VP_INDEX)VpIndex;
+
+    hvStatus = EfiHvIssueHypercall(HvCallStartVirtualProcessor,
+                                   FALSE,
+                                   EfiHvpBasePa((UINTN)input),
+                                   0);
+
+    DEBUG((DEBUG_VERBOSE, "<<< %a: status %r\n", __FUNCTION__, EfiHvConvertStatus(hvStatus)));
+    return hvStatus;
+}
+
+EFI_STATUS
+EFIAPI
 EfiHvpModifySparseGpaPageHostVisibility(
     _In_ HV_MAP_GPA_FLAGS MapFlags,
     _In_ UINT32 PageCount,
@@ -2126,7 +2155,8 @@ EFI_HV_PROTOCOL mHv =
     EfiHvConfigureTimer,
     EfiHvSetTimer,
     EfiHvPostMessage,
-    EfiHvSignalEvent
+    EfiHvSignalEvent,
+    EfiHvStartApplicationProcessor
 };
 
 EFI_HV_IVM_PROTOCOL mHvIvm =

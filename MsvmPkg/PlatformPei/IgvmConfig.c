@@ -355,10 +355,15 @@ Return Value:
     ConfigSetProcessorInfo(&processorInfo);
 
     //
-    // TODO: these need to be used
+    // Update the processor count.
     //
-    //UINT32 LoaderBlockOffset;
-    //UINT32 MaximumProcessorCount;
+    UEFI_IGVM_LOADER_BLOCK *loaderBlock = (UEFI_IGVM_LOADER_BLOCK*)GetIgvmData(parameterInfo, parameterInfo->LoaderBlockOffset);
+    if (loaderBlock->NumberOfProcessors == 0 || loaderBlock->NumberOfProcessors > HV_MAXIMUM_PROCESSORS)
+    {
+        DEBUG((DEBUG_ERROR, "Invalid processor count %u.\n", loaderBlock->NumberOfProcessors));
+        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+    }
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdProcessorCount, loaderBlock->NumberOfProcessors), CRITICAL_INITIALIZATION_FAILURE);
 
     //
     // Enable ACPI tables

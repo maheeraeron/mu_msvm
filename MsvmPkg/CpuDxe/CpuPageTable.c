@@ -1222,3 +1222,66 @@ InitializePageTableLib (
   return ;
 }
 
+
+#if defined(MDE_CPU_X64)
+
+/*
+  Initialize the page tables for MP support in TDX.
+
+  @param  ApMailbox       The address of the MP wake up mailbox.
+*/
+EFI_PHYSICAL_ADDRESS
+InitializeMpPageTables (
+  IN UINT64 ApMailbox 
+  )
+{
+  EFI_PHYSICAL_ADDRESS PageTables;
+  UINT32 PageTableIndex;
+  UINT32 PteIndex;
+  UINT64 PteValue;
+  UINT32 ShiftAmount;
+  EFI_STATUS Status;
+
+  Status = gBS->AllocatePages(
+                  AllocateAnyPages,
+                  EfiACPIMemoryNVS, 
+                  4, 
+                  (EFI_PHYSICAL_ADDRESS*)&PageTables);
+
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((EFI_D_ERROR, "%a: Failed to allocate memory for the page table\n", __FUNCTION__));
+    return 0;
+  }
+  ZeroMem ((UINT8*)PageTables, EFI_PAGES_TO_SIZE(4));
+
+  // Break the address into its page table offsets to populate the page tables.
+  for (PageTableIndex = 0; PageTableIndex < 4; PageTableIndex += 1)
+  {
+      // Treat the address as four 9-bit PTE offsets plus a 12-bit page offset.
+      ShiftAmount = 39 - (9 * PageTableIndex);
+      PteIndex = (ApMailbox >> ShiftAmount) & 0x1FF;
+
+      PteValue = (IA32_PG_D | IA32_PG_A | IA32_PG_RW | IA32_PG_P);
+
+      // For the last index, include the physical address of the wake page.
+      // For the others, include the next page table page in sequence.
+      if (PageTableIndex == 3)
+      {
+          PteValue |= ApMailbox;
+      }
+      else
+      {
+          PteValue |= PageTables + ((PageTableIndex + 1) * EFI_PAGE_SIZE);
+      }
+
+      // Set the correct page table value.  Since each page table is an
+      // array of 64-bit numbers, this will set the correct PTE.
+      *((UINT64 *)PageTables + PageTableIndex * 512 + PteIndex) = PteValue;   
+  }
+
+  return PageTables;
+  
+}
+
+#endif
