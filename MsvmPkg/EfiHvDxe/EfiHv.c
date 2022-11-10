@@ -1363,7 +1363,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
             status = EfiUpdatePageRangeAcceptance(
                 mIsolationType,
                 GpaPageBase,
-                PageCount,
+                totalPageCountProcessed,
                 TRUE);
             if (EFI_ERROR(status))
             {
@@ -1399,8 +1399,8 @@ EfiHvMakeAddressRangeHostVisible(
 
 Routine Description:
 
-    Makes a chunk of memory visible to the host. 
-    Note: Memory visibility changes for hardware-isolated 
+    Makes a chunk of memory visible to the host.
+    Note: Memory visibility changes for hardware-isolated
           systems may change the contents of the pages.
 
 Arguments:
