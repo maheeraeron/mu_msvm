@@ -69,6 +69,7 @@
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress        ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid       ## CONSUMES # SOMETIMES_PRODUCES
   gMsvmPkgTokenSpaceGuid.PcdTpmEnabled                   ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdTpmLocalityRegsEnabled        ## CONSUMES
 
 [Depex]
   gEfiPeiMasterBootModePpiGuid                           ## This is published by PlatformPei, so this ensures that all config is done first.

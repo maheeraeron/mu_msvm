@@ -353,7 +353,7 @@ DefinitionBlock (
             Name(_DDN, "Microsoft Virtual TPM 2.0")
             Name(_STR, Unicode ("Microsoft Virtual TPM 2.0"))
             Name(_CRS, ResourceTemplate () {
-                Memory32Fixed(ReadWrite, 0xfed40000, 0x1000)   // TODO: Use PCDs
+                Memory32Fixed(ReadWrite, FixedPcdGet32(PcdTpmBaseAddress), 0x1000)
             })
             Method (_STA, 0, NotSerialized)
             {

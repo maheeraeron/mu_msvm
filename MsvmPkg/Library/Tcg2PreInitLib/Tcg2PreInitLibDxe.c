@@ -38,7 +38,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Prototype for function in Tpm2Acpi.c
 EFI_STATUS
 EFIAPI
-IntallTpm2AcpiTable (
+InstallTpm2AcpiTable (
     VOID
     );
 
@@ -61,6 +61,7 @@ HyperVTpm2InitLibConstructor (
 {
   EFI_STATUS    Status = EFI_SUCCESS;
   UINT32        TcgProtocolVersion;
+  UINT64        TpmBaseAddress;
 
   DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
 
@@ -85,8 +86,10 @@ HyperVTpm2InitLibConstructor (
   // If we're good, we need to make sure that our instance of Tpm2DeviceLib
   // can talk with the vDevice.
   if (!EFI_ERROR( Status )) {
-    Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)(UINTN)FixedPcdGet32( PcdTpmBaseAddress ) );
-    Status = IntallTpm2AcpiTable();
+    TpmBaseAddress = FixedPcdGet64( PcdTpmBaseAddress );
+    TpmBaseAddress += PcdGetBool( PcdTpmLocalityRegsEnabled ) ? 0x40 : 0;
+    Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)TpmBaseAddress );
+    Status = InstallTpm2AcpiTable();
   }
 
   // NOTE: This will cause an ASSERT if the TCG protocol version is incorrect.

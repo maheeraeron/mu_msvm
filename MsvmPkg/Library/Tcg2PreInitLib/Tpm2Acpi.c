@@ -45,7 +45,11 @@ Tpm2InitializeAcpiTable()
 
 Routine Description:
 
-    This routine fill in the TPM20 ACPI table entries.
+    This routine fills in the TPM20 ACPI table entries.
+    See "TCG PC Client Platform TPM Profile Specification for TPM 2.0"
+    for details about control and locality register offsets.
+    For compatibility reasons, not all VMs support control registers
+    at spec compliant offsets.
 
 Arguments:
 
@@ -57,6 +61,9 @@ Return Value:
 
 --*/
 {
+    UINT64 TpmBaseAddress = FixedPcdGet64(PcdTpmBaseAddress);
+    TpmBaseAddress += PcdGetBool(PcdTpmLocalityRegsEnabled) ? 0x40 : 0;
+
     ZeroMem(&mTpm20AcpiTable, sizeof(EFI_TPM2_ACPI_TABLE));
 
     mTpm20AcpiTable.Header.Signature = 0x324D5054;          // 'TPM2'
@@ -67,10 +74,8 @@ Return Value:
     mTpm20AcpiTable.Header.OemRevision = 0x1;
     mTpm20AcpiTable.Header.CreatorId = 0x5446534D;          // 'MSFT'
     mTpm20AcpiTable.Header.CreatorRevision = 0x00000001;
-
     mTpm20AcpiTable.StartMethod = EFI_TPM2_ACPI_TABLE_START_METHOD_COMMAND_RESPONSE_BUFFER_INTERFACE;
-
-    mTpm20AcpiTable.AddressOfControlArea = (UINT64)FixedPcdGet32(PcdTpmBaseAddress);
+    mTpm20AcpiTable.AddressOfControlArea = TpmBaseAddress;
 
     mTpm20AcpiTable.Header.Checksum = CalculateCheckSum8((UINT8*)&mTpm20AcpiTable, sizeof(EFI_TPM2_ACPI_TABLE));
 }
@@ -78,7 +83,7 @@ Return Value:
 
 /*++
 
-    This routine initialize and install TPM2 ACPI table.
+    This routine initializes and installs TPM2 ACPI table.
 
 Arguments:
 
@@ -91,7 +96,7 @@ Return Value:
 --*/
 EFI_STATUS
 EFIAPI
-IntallTpm2AcpiTable (
+InstallTpm2AcpiTable (
     VOID
     )
 {

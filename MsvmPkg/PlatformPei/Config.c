@@ -814,6 +814,7 @@ ConfigSetUefiConfigFlags(
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdDisableIMCWhenIsolated, (UINT8) ConfigFlags->Flags.DisableIMCWhenIsolated), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdWatchdogEnabled, (UINT8) ConfigFlags->Flags.WatchdogEnabled), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdTpmLocalityRegsEnabled, (UINT8) ConfigFlags->Flags.TpmLocalityRegsEnabled), CRITICAL_INITIALIZATION_FAILURE);
 
     //
     // If memory protections are enabled, configure the value into the HOB.

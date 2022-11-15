@@ -595,6 +595,7 @@
   gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated|FALSE
   gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdTpmLocalityRegsEnabled|FALSE
   
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION

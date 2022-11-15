@@ -53,6 +53,7 @@ HyperVTpmDeviceInitEarlyBoot (
   EFI_STATUS            Status = EFI_SUCCESS;
   EFI_PHYSICAL_ADDRESS  CrBuffer = 0;
   UINT32                TpmIoEstablishedResponse;
+  UINT64                TpmBaseAddress;
 
   Status = PeiServicesAllocatePages( EfiRuntimeServicesData, 2, &CrBuffer );
   if (EFI_ERROR (Status)) {
@@ -94,7 +95,9 @@ HyperVTpmDeviceInitEarlyBoot (
   }
 
   if (!EFI_ERROR( Status )) {
-    Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)(UINTN)FixedPcdGet32( PcdTpmBaseAddress ) );
+    TpmBaseAddress = FixedPcdGet64( PcdTpmBaseAddress );
+    TpmBaseAddress += PcdGetBool( PcdTpmLocalityRegsEnabled ) ? 0x40 : 0;
+    Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)TpmBaseAddress );
   }
 
   return Status;

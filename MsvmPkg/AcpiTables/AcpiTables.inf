@@ -37,15 +37,16 @@
     Waet.aslc
 
 [Pcd]
+    gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdBatteryBase
     gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
     gMsvmPkgTokenSpaceGuid.PcdCom1Vector
     gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
     gMsvmPkgTokenSpaceGuid.PcdCom2Vector
-    gMsvmPkgTokenSpaceGuid.PcdVmbusVector
     gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase
     gMsvmPkgTokenSpaceGuid.PcdProcIdleBase
+    gMsvmPkgTokenSpaceGuid.PcdVmbusVector
 
 [Pcd.AARCH64]
     gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector
@@ -66,6 +67,7 @@
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
     MdeModulePkg/MdeModulePkg.dec
+    SecurityPkg/SecurityPkg.dec
 
 [Packages.AARCH64]
     ArmPkg/ArmPkg.dec

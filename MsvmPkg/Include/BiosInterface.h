@@ -778,7 +778,8 @@ typedef struct _UEFI_CONFIG_FLAGS
         UINT64 MemoryProtectionMode: 2;
         UINT64 DisableIMCWhenIsolated: 1;
         UINT64 WatchdogEnabled : 1;
-        UINT64 Reserved:39;
+        UINT64 TpmLocalityRegsEnabled : 1;
+        UINT64 Reserved:38;
     } Flags;
 } UEFI_CONFIG_FLAGS;
 
