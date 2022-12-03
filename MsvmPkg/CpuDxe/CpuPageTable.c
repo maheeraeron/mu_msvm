@@ -1232,20 +1232,36 @@ InitializePageTableLib (
 */
 EFI_PHYSICAL_ADDRESS
 InitializeMpPageTables (
-  IN UINT64 ApMailbox 
+  IN UINT64 ApMailbox
   )
 {
+  UINT32 CurrentTableIndex;
+  UINT32 ExtraPageCount;
+  UINT32 Level;
+  UINT64 MailboxPfn;
   EFI_PHYSICAL_ADDRESS PageTables;
   UINT32 PageTableIndex;
   UINT32 PteIndex;
   UINT64 PteValue;
+  UINT32 SharedLevel;
   UINT32 ShiftAmount;
   EFI_STATUS Status;
 
+  // Determine how many extra page table pages are required to identity map the entire low 1MB
+  // region. There can be at most 3 since the PML4 will always be shared.
+  MailboxPfn = ApMailbox >> EFI_PAGE_SHIFT;
+  for (ExtraPageCount = 0; ExtraPageCount < 3; ExtraPageCount++)
+  {
+    if ((MailboxPfn >> (9 * (ExtraPageCount + 1))) == 0)
+    {
+      break;
+    }
+  }
+
   Status = gBS->AllocatePages(
                   AllocateAnyPages,
-                  EfiACPIMemoryNVS, 
-                  4, 
+                  EfiACPIMemoryNVS,
+                  4 + ExtraPageCount,
                   (EFI_PHYSICAL_ADDRESS*)&PageTables);
 
   if (EFI_ERROR(Status))
@@ -1253,7 +1269,7 @@ InitializeMpPageTables (
     DEBUG((EFI_D_ERROR, "%a: Failed to allocate memory for the page table\n", __FUNCTION__));
     return 0;
   }
-  ZeroMem ((UINT8*)PageTables, EFI_PAGES_TO_SIZE(4));
+  ZeroMem ((UINT8*)PageTables, EFI_PAGES_TO_SIZE(4 + ExtraPageCount));
 
   // Break the address into its page table offsets to populate the page tables.
   for (PageTableIndex = 0; PageTableIndex < 4; PageTableIndex += 1)
@@ -1277,11 +1293,43 @@ InitializeMpPageTables (
 
       // Set the correct page table value.  Since each page table is an
       // array of 64-bit numbers, this will set the correct PTE.
-      *((UINT64 *)PageTables + PageTableIndex * 512 + PteIndex) = PteValue;   
+      *((UINT64 *)PageTables + PageTableIndex * 512 + PteIndex) = PteValue;
+  }
+
+  // Map in the extra page tables required to identity map the low 1MB region.
+  SharedLevel = 3 - ExtraPageCount;
+  CurrentTableIndex = SharedLevel;
+  PageTableIndex--;
+  for (Level = SharedLevel; Level < 3; Level++)
+  {
+    PteIndex = 0;
+    PteValue = (IA32_PG_D | IA32_PG_A | IA32_PG_RW | IA32_PG_P);
+    PteValue |= PageTables + ((PageTableIndex + 1) * EFI_PAGE_SIZE);
+
+    // Set the correct page table value.  Since each page table is an
+    // array of 64-bit numbers, this will set the correct PTE.
+    *((UINT64 *)PageTables + CurrentTableIndex * 512 + PteIndex) = PteValue;
+    PageTableIndex++;
+    CurrentTableIndex = PageTableIndex;
+  }
+
+  ASSERT(PageTableIndex == 4 + ExtraPageCount - 1);
+
+  // The last page table is now the terminal page table that corresponds to the
+  // low 2MB of VA. Identity map only the first 1MB of that. Mapping only the
+  // low 1MB region lowers the odds of cache type conflicts with the OS.
+  for (PteIndex = 0; PteIndex < 256; PteIndex++)
+  {
+    PteValue = (IA32_PG_D | IA32_PG_A | IA32_PG_RW | IA32_PG_P);
+    PteValue |= PteIndex << EFI_PAGE_SHIFT;
+
+    // Set the correct page table value.  Since each page table is an
+    // array of 64-bit numbers, this will set the correct PTE.
+    *((UINT64 *)PageTables + PageTableIndex * 512 + PteIndex) = PteValue;
   }
 
   return PageTables;
-  
+
 }
 
 #endif
