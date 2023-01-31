@@ -1,3 +1,3 @@
-edk2-pytool-library
-edk2-pytool-extensions
+edk2-pytool-library~=0.12.1
+edk2-pytool-extensions~=0.20.0
 regex
