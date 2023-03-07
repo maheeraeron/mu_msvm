@@ -14,6 +14,7 @@
 #include <Uefi.h>
 #include <PiDxe.h>
 #include <EfiNt.h>
+#include <FailFast.h>
 
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
@@ -95,6 +96,10 @@ typedef struct _VPCIVSC_CONTEXT
 
 #define TPL_VPCIVSC_CALLBACK TPL_CALLBACK
 #define DEBUG_VPCI_INFO DEBUG_INFO
+
+#define VPCIVSC 0x56504349565343 // "VPCIVSC"
+
+#define VPCIVSC_WAIT_FOR_HOST_TIMEOUT  EFI_TIMER_PERIOD_SECONDS(60)
 
 extern EFI_DRIVER_BINDING_PROTOCOL gVpcivscDriverBinding;
 extern EFI_COMPONENT_NAME_PROTOCOL gVpcivscComponentName;
