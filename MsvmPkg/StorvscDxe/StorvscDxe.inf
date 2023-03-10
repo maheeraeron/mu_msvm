@@ -16,8 +16,8 @@
     StorvscDxe.c
 
 [Packages]
-    MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
+    MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]

@@ -55,6 +55,7 @@ const STOR_CHANNEL_PROTOCOL_VERSION g_StorChannelSupportedVersions[] =
 
 #define EFI_SCSI_OP_REPORT_LUNS 0xA0
 
+INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 
 FORCEINLINE
 BOOLEAN
@@ -651,13 +652,20 @@ Return Value:
 --*/
 
 {
-    STATIC INTERNAL_EVENT_SERVICES_PROTOCOL *internalEventServices = NULL;
-
     EFI_STATUS status;
     EFI_EVENT event = NULL;
     UINTN signaledEventIndex;
 
     ASSERT(*Target <= VMSTOR_MAX_TARGETS);
+
+    if (mInternalEventServices == NULL)
+    {
+        status = gBS->LocateProtocol(
+                        &gInternalEventServicesProtocolGuid, 
+                        NULL, 
+                        (VOID **)&mInternalEventServices);
+        ASSERT_EFI_ERROR(status);
+    }
 
     status = gBS->CreateEvent(
         0,
@@ -683,17 +691,14 @@ Return Value:
         goto Cleanup;
     }
 
-    if (internalEventServices == NULL)
-    {
-        status = gBS->LocateProtocol(
-                        &gInternalEventServicesProtocolGuid, 
-                        NULL, 
-                        (VOID **)&internalEventServices
-                        );
-        ASSERT_EFI_ERROR(status);
-    }
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
+    status = mInternalEventServices->WaitForEventInternal(1, &event, &signaledEventIndex);
 
-    internalEventServices->WaitForEventInternal(1, &event, &signaledEventIndex);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
 
 Cleanup:
     if (event != NULL)

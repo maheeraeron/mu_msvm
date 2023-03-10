@@ -44,6 +44,8 @@ typedef struct _EMCL_LIB_COMPLETION_CONTEXT
 extern EFI_GUID gEfiEmclTagProtocolGuid;
 extern EFI_GUID gEfiVmbusChannelDevicePathGuid;
 
+INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
+
 
 EFI_STATUS
 EFIAPI
@@ -231,13 +233,20 @@ Return Value:
 
 --*/
 {
-    STATIC INTERNAL_EVENT_SERVICES_PROTOCOL *internalEventServices = NULL;
-
     EFI_STATUS status;
     UINTN signaledEventIndex;
     EMCL_LIB_COMPLETION_CONTEXT context;
 
     ZeroMem(&context, sizeof(EMCL_LIB_COMPLETION_CONTEXT));
+
+    if (mInternalEventServices == NULL) 
+    {
+        status = gBS->LocateProtocol(
+                        &gInternalEventServicesProtocolGuid, 
+                        NULL, 
+                        (VOID **)&mInternalEventServices);
+        ASSERT_EFI_ERROR(status);
+    }
 
     status = gBS->CreateEvent(
         0,
@@ -268,17 +277,14 @@ Return Value:
         goto Cleanup;
     }
 
-    if (internalEventServices == NULL) 
-    {
-        status = gBS->LocateProtocol(
-                        &gInternalEventServicesProtocolGuid, 
-                        NULL, 
-                        (VOID **)&internalEventServices
-                        );
-        ASSERT_EFI_ERROR(status);
-    }
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
+    status = mInternalEventServices->WaitForEventInternal(1, &context.Event, &signaledEventIndex);
 
-    internalEventServices->WaitForEventInternal(1, &context.Event, &signaledEventIndex);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
 
     if (context.Packet == NULL)
     {

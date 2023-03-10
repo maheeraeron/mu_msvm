@@ -370,7 +370,11 @@ VpciChannelSendPacketSync(
     waitList[0] = completionContext.WaitForCompletion;
     waitList[1] = timerEvent;
     status = gBS->WaitForEvent(2, waitList, &signaledEventIndex);
-    ASSERT_EFI_ERROR(status);
+    if (EFI_ERROR(status))
+    {
+        DEBUG((DEBUG_ERROR, "vpci WaitForEvent failed!\n"));
+        goto Cleanup;
+    }
     
     // If the timer expired, fail fast.
     if (signaledEventIndex == 1)
@@ -1244,7 +1248,11 @@ VpcivscDriverBindingStart (
     waitList[0] = instance->WaitForBusRelationsMessage;
     waitList[1] = timerEvent;
     status = gBS->WaitForEvent(2, waitList, &index);
-    ASSERT_EFI_ERROR(status);
+    if (EFI_ERROR(status))
+    {
+        DEBUG((DEBUG_ERROR, "vpci WaitForEvent failed!\n"));
+        goto Cleanup;
+    }
     
     // If the timer expired, fail fast.
     if (index == 1)

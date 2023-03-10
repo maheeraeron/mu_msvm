@@ -22,6 +22,7 @@ Author:
 #include <Library/DebugLib.h>
 #include <hvhdk.h>
 #include <IsolationTypes.h>
+#include <Protocol/InternalEventServices.h>
 
 //
 // This number is just a random 16 bit number which is used to
@@ -53,6 +54,8 @@ Author:
 #define NDIS_STATUS_NETWORK_CHANGE              ((NDIS_STATUS)0x40010018L)
 
 #define TPL_NETVSC_CALLBACK                (TPL_CALLBACK + 2)
+
+INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 
 
 EFI_STATUS
@@ -119,6 +122,16 @@ Return Value:
     // When the host has disabled media present notifications, NetvscDxe
     // must default to TRUE or PXE won't work
     AdapterInfo->MediaPresent = PcdGetBool(PcdMediaPresentEnabledByDefault);
+
+    // Locate the protocol for waiting for events without the TPL restrictions.
+    if (mInternalEventServices == NULL)
+    {
+        status = gBS->LocateProtocol(
+                        &gInternalEventServicesProtocolGuid, 
+                        NULL, 
+                        (VOID **)&mInternalEventServices);
+        ASSERT_EFI_ERROR(status);
+    }
 
     NetvscResetStatistics(AdapterInfo);
 
@@ -506,7 +519,9 @@ Return Value:
         goto Cleanup;
     }
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->InitRndisEvt, &eventIndex);
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
+    status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->InitRndisEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -576,7 +591,9 @@ Return Value:
         goto Cleanup;
     }
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->StnAddrEvt, &eventIndex);
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
+    status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->StnAddrEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -643,7 +660,9 @@ Return Value:
         goto Cleanup;
     }
 
-    status = gBS->WaitForEvent(1, &AdapterInfo->StnAddrEvt, &eventIndex);
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
+    status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->StnAddrEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
@@ -812,8 +831,9 @@ Returns:
         goto Exit;
     }
 
-
-    status = gBS->WaitForEvent(1, &AdapterInfo->RxFilterEvt, &eventIndex);
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
+    status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->RxFilterEvt, &eventIndex);
 
     if (EFI_ERROR(status))
     {

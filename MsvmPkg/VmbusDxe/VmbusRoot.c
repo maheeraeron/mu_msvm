@@ -570,11 +570,12 @@ Return Value:
             status = gBS->LocateProtocol(
                 &gInternalEventServicesProtocolGuid, 
                 NULL, 
-                (VOID **)&mInternalEventServices
-                );
+                (VOID **)&mInternalEventServices);
             ASSERT_EFI_ERROR(status);
         }
-        mInternalEventServices->WaitForEventInternal(1, &RootContext->WaitForMessage, &index);
+
+        status = mInternalEventServices->WaitForEventInternal(1, &RootContext->WaitForMessage, &index);
+        ASSERT_EFI_ERROR(status);
     }
 
     hvMessage = NULL;
@@ -635,10 +636,12 @@ Return Value:
         status = gBS->LocateProtocol(
                     &gInternalEventServicesProtocolGuid, 
                     NULL, 
-                    (VOID **)&mInternalEventServices
-                    );
+                    (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }
+
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
     status = mInternalEventServices->WaitForEventInternal(1, &ChannelContext->Response.Event, &index);
 
     ASSERT_EFI_ERROR(status);
@@ -698,6 +701,9 @@ Return Value:
                     (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }
+
+    // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
+    // which enforces a TPL check for TPL_APPLICATION.
     status = mInternalEventServices->WaitForEventInternal(
                                         1,
                                         &RootContext->GpadlTable[GpadlHandle].Event,

@@ -322,7 +322,7 @@ Return Value:
 --*/
 {
     HK_MESSAGE_PROTOCOL_REQUEST request;
-    UINTN      signaledEventIndex;
+    UINTN signaledEventIndex;
     EFI_STATUS status;
 
     SynthKeyChannelInitMessage((PHK_MESSAGE_HEADER)&request, HkMessageProtocolRequest, sizeof(request));
@@ -347,10 +347,19 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG ((EFI_D_ERROR,
+            "SynthKey:EstablishCommunications - Failed to Send Message. Status 0x%x\n", status));
         goto Exit;
     }
 
-    gBS->WaitForEvent(1, &pDevice->InitCompleteEvent, &signaledEventIndex);
+    status = gBS->WaitForEvent(1, &pDevice->InitCompleteEvent, &signaledEventIndex);
+
+    if (EFI_ERROR(status))
+    {
+        DEBUG ((EFI_D_ERROR,
+            "SynthKey:EstablishCommunications - Failed to Wait For Event. Status 0x%x\n", status));
+        goto Exit;
+    }
 
     if (!pDevice->State.ChannelConnected)
     {

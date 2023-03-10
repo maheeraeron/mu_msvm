@@ -525,7 +525,8 @@ Return Value:
                               0,
                               NULL,
                               NULL,
-                              &Context->InitCompleteEvent);
+                              &
+Context->InitCompleteEvent);
 
     if (EFI_ERROR(status))
     {
@@ -584,7 +585,16 @@ Return Value:
     //
     // Wait for event to be signalled that indicates initialization finished.
     //
-    gBS->WaitForEvent(1, &Context->InitCompleteEvent, &signaledEventIndex);
+    status = gBS->WaitForEvent(1, &Context->InitCompleteEvent, &signaledEventIndex);
+
+    if (EFI_ERROR(status))
+    {
+        DEBUG ((EFI_D_ERROR, 
+                "VideoChannelOpen - WaitForEvent failed. Status %x\n", 
+                status));
+        goto Cleanup;
+    }
+
     status = Context->InitStatus;
 
     if (EFI_ERROR(status))
