@@ -324,6 +324,8 @@ Return Value:
     UEFI_IGVM_PARAMETER_INFO *parameterInfo;
     UEFI_CONFIG_PROCESSOR_INFORMATION processorInfo;
     EFI_STATUS status;
+    PUINT64 freeParameterMemory;
+
 
     //
     // Locate the parameter layout description at the base of the parameter
@@ -342,6 +344,22 @@ Return Value:
     {
         IGVM_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdHostEmulatorsWhenHardwareIsolated, TRUE), CRITICAL_INITIALIZATION_FAILURE);
     }
+
+    //
+    // TODO: Find some way of avoiding hardcode of necessary host information
+    //
+    freeParameterMemory = (PUINT64)(parameterInfo) + sizeof(UEFI_IGVM_PARAMETER_INFO);
+
+    // set BIOS GUID
+    freeParameterMemory[0] = 0x7464782d7464782d;
+    freeParameterMemory[1] = 0x7464782d7464782d;
+    // set chassis asset tag
+    freeParameterMemory[2] = 0x736168632d786474;
+    freeParameterMemory[3] = 0x736168632d786474;
+    freeParameterMemory[4] = 0x00;
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdBiosGuidPtr, (UINT64)freeParameterMemory), CRITICAL_INITIALIZATION_FAILURE);
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisAssetTagStr, (UINT64)freeParameterMemory + sizeof(GUID)), CRITICAL_INITIALIZATION_FAILURE);
+    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisAssetTagSize, 17), CRITICAL_INITIALIZATION_FAILURE);
 
     //
     // TODO: use parameters for this
