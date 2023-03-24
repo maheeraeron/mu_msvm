@@ -46,6 +46,7 @@
 [Packages]
     MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
+    NetworkPkg/NetworkPkg.dec
     SecurityPkg/SecurityPkg.dec
     UefiCpuPkg/UefiCpuPkg.dec
     MsvmPkg/MsvmPkg.dec
@@ -82,6 +83,7 @@
     gDxeMemoryProtectionSettingsGuid
 
 [Pcd]
+    gEfiNetworkPkgTokenSpaceGuid.PcdDhcp6UidType
     gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdFdSize
     gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress

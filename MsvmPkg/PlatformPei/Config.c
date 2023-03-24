@@ -644,6 +644,7 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tSerialControllersEnabled: %u\n", flags->Flags.SerialControllersEnabled));
             DEBUG((DEBUG_VERBOSE, "\tPauseAfterBootFailure: %u\n", flags->Flags.PauseAfterBootFailure));
             DEBUG((DEBUG_VERBOSE, "\tPxeIpV6: %u\n", flags->Flags.PxeIpV6));
+            DEBUG((DEBUG_VERBOSE, "\tDhcp6DuidTypeLlt: %u\n", flags->Flags.Dhcp6DuidTypeLlt));
             DEBUG((DEBUG_VERBOSE, "\tDebuggerEnabled: %u\n", flags->Flags.DebuggerEnabled));
             DEBUG((DEBUG_VERBOSE, "\tLoadOempTable: %u\n", flags->Flags.LoadOempTable));
             DEBUG((DEBUG_VERBOSE, "\tTpmEnabled: %u\n", flags->Flags.TpmEnabled));
@@ -871,6 +872,12 @@ ConfigSetUefiConfigFlags(
 #if defined (MDE_CPU_X64)
         CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384)), CRITICAL_INITIALIZATION_FAILURE);
 #endif
+    }
+    
+    if (ConfigFlags->Flags.Dhcp6DuidTypeLlt)
+    {
+        // Set to Dhcp6DuidTypeLlt
+        CONFIG_FAIL_FAST_IF_FAILED(PcdSet8S(PcdDhcp6UidType, 1), CRITICAL_INITIALIZATION_FAILURE);
     }
 }
 

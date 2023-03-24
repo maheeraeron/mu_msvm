@@ -456,6 +456,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
 
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
+  
+  gEfiNetworkPkgTokenSpaceGuid.PcdDhcp6UidType|4              # 04 = UUID-Based DHCPv6 Unique Identifier (DUID-UUID)
 
   # UEFI Config information from the Bios VDEV
   # UEFI_CONFIG_STRUCTURE_COUNT
