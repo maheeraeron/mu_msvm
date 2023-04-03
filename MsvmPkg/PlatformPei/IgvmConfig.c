@@ -435,10 +435,8 @@ Return Value:
     ZeroMem(&configFlags, sizeof(configFlags));
     configFlags.Flags.MeasureAdditionalPcrs = 1;
     configFlags.Flags.DefaultBootAlwaysAttempt = 1;
-    // TODO: allow and harden vpci before ship
     configFlags.Flags.VpciBootEnabled = 1;
-    // TODO: Address before ship
-    configFlags.Flags.MemoryProtectionMode = ConfigLibMemoryProtectionModeDisabled;
+    configFlags.Flags.MemoryProtectionMode = ConfigLibMemoryProtectionModeDefault;
 
     //
     // IGVM configurations support only KDNET debugging, so only enable
