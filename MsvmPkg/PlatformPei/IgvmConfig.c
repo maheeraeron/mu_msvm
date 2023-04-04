@@ -324,7 +324,6 @@ Return Value:
     UEFI_IGVM_PARAMETER_INFO *parameterInfo;
     UEFI_CONFIG_PROCESSOR_INFORMATION processorInfo;
     EFI_STATUS status;
-    PUINT64 freeParameterMemory;
 
 
     //
@@ -345,21 +344,30 @@ Return Value:
         IGVM_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdHostEmulatorsWhenHardwareIsolated, TRUE), CRITICAL_INITIALIZATION_FAILURE);
     }
 
-    //
-    // TODO: Find some way of avoiding hardcode of necessary host information
-    //
-    freeParameterMemory = (PUINT64)(parameterInfo) + sizeof(UEFI_IGVM_PARAMETER_INFO);
+    {
+        //
+        // TODO: Find some way of avoiding hardcode of necessary host information
+        //
+        UINT32 i;
+        PUINT8 azureAssetTag = "7783-7084-3265-9085-8269-3286-77";
+        PUINT8 freeParameterMemory = (PUINT8)(parameterInfo) + sizeof(UEFI_IGVM_PARAMETER_INFO);
+        PUINT8 smbiosAssetTag = freeParameterMemory + sizeof(GUID);
+        PUINT64 smbiosGuid = (PUINT64)freeParameterMemory;
 
-    // set BIOS GUID
-    freeParameterMemory[0] = 0x7464782d7464782d;
-    freeParameterMemory[1] = 0x7464782d7464782d;
-    // set chassis asset tag
-    freeParameterMemory[2] = 0x736168632d786474;
-    freeParameterMemory[3] = 0x736168632d786474;
-    freeParameterMemory[4] = 0x00;
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdBiosGuidPtr, (UINT64)freeParameterMemory), CRITICAL_INITIALIZATION_FAILURE);
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisAssetTagStr, (UINT64)freeParameterMemory + sizeof(GUID)), CRITICAL_INITIALIZATION_FAILURE);
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisAssetTagSize, 17), CRITICAL_INITIALIZATION_FAILURE);
+        // set BIOS GUID
+        smbiosGuid[0] = 0x7464782d7464782d;
+        smbiosGuid[1] = 0x7464782d7464782d;
+
+        // set chassis asset tag to 7783-7084-3265-9085-8269-3286-77
+        for (i = 0; i < 33; i++)
+        {
+            smbiosAssetTag[i] = azureAssetTag[i];
+        }
+
+        IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdBiosGuidPtr, (UINT64)smbiosGuid), CRITICAL_INITIALIZATION_FAILURE);
+        IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisAssetTagStr, (UINT64)smbiosAssetTag), CRITICAL_INITIALIZATION_FAILURE);
+        IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisAssetTagSize, 33), CRITICAL_INITIALIZATION_FAILURE);
+    }
 
     //
     // TODO: use parameters for this
