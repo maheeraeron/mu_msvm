@@ -22,7 +22,7 @@ Abstract:
 #if defined(MDE_CPU_AARCH64)
 #define FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2, Info3) \
     { ASSERT(FALSE); CpuDeadLoop(); }
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
 #define FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1, Info2, Info3) \
     GenerateDumpAndFailFast(FAST_FAIL_UNEXPECTED_HOST_BEHAVIOR, Info1, Info2, Info3, 0);
 #else
@@ -37,7 +37,7 @@ Abstract:
 #if defined(MDE_CPU_AARCH64)
 #define FAIL_FAST(ErrorCode, Info1, Info2, Info3) \
     { ASSERT(FALSE); CpuDeadLoop(); }
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
 #define FAIL_FAST(ErrorCode, Info1, Info2, Info3) \
     GenerateDumpAndFailFast(ErrorCode, Info1, Info2, Info3, 0);
 #else

@@ -15,7 +15,7 @@ Abstract:
 #pragma once
 
 
-#if !defined(_X86_) && !defined(_AMD64_) && !defined(_ARM64_)
+#if !defined(_AMD64_) && !defined(_ARM64_)
 #error unsupported architecture
 #endif
 
@@ -181,14 +181,8 @@ typedef struct _DBGKD_ANY_CONTROL_REPORT {
     };
 } DBGKD_ANY_CONTROL_REPORT, *PDBGKD_ANY_CONTROL_REPORT;
 
-#if defined(_X86_)
 
-#define PROGRAM_COUNTER(_context)   ((LONG)(_context)->Eip)
-
-typedef X86_DBGKD_CONTROL_REPORT DBGKD_CONTROL_REPORT;
-typedef X86_DBGKD_CONTROL_SET DBGKD_CONTROL_SET;
-
-#elif defined(_AMD64_)
+#if defined(_AMD64_)
 
 #define PROGRAM_COUNTER(_context)   ((UINT_PTR)(_context)->Rip)
 
@@ -1939,13 +1933,8 @@ typedef struct _ARM64_VFP_STATE
 
 #define ARM64_KTRAP_FRAME_ARGUMENTS (10 * 8)       // up to 16 in-memory syscall args
 
-#if defined(_X86_)
 
-typedef X86_NT5_CONTEXT CONTEXT, *PCONTEXT;
-
-typedef X86_KPROCESSOR_STATE KPROCESSOR_STATE, *PKPROCESSOR_STATE;
-
-#elif defined(_AMD64_)
+#if defined(_AMD64_)
 
 typedef AMD64_CONTEXT CONTEXT, *PCONTEXT;
 
@@ -3623,15 +3612,7 @@ typedef struct _ARM64_KTRAP_FRAME {
 
 
 
-#if defined(_X86_)
-
-typedef X86_NT5_CONTEXT CONTEXT, *PCONTEXT;
-typedef X86_KPROCESSOR_STATE KPROCESSOR_STATE, *PKPROCESSOR_STATE;
-typedef X86_KTRAP_FRAME _KTRAP_FRAME, *PKTRAP_FRAME;
-typedef X86_KTRAP_FRAME KEXCEPTION_FRAME, *PKEXCEPTION_FRAME;
-typedef X86_KSPECIAL_REGISTERS KSPECIAL_REGISTERS;
-
-#elif defined(_AMD64_)
+#if defined(_AMD64_)
 
 typedef AMD64_CONTEXT CONTEXT, *PCONTEXT;
 typedef AMD64_KPROCESSOR_STATE KPROCESSOR_STATE, *PKPROCESSOR_STATE;
@@ -3839,21 +3820,7 @@ typedef enum {
     ContinueNextProcessor
 } KCONTINUE_STATUS;
 
-#if defined(_X86_)
-
-#define CONTEXT_TO_PROGRAM_COUNTER(Context) ((Context)->Eip)
-
-#define CONTEXT_X86             0x00010000L
-
-#define CONTEXT_CONTROL         (CONTEXT_X86 | 0x00000001L)
-#define CONTEXT_INTEGER         (CONTEXT_X86 | 0x00000002L)
-#define CONTEXT_SEGMENTS        (CONTEXT_X86 | 0x00000004L)
-#define CONTEXT_FLOATING_POINT  (CONTEXT_X86 | 0x00000008L)
-#define CONTEXT_DEBUG_REGISTERS (CONTEXT_X86 | 0x00000010L)
-
-#define CONTEXT_FULL            (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT)
-
-#elif defined(_AMD64_)
+#if defined(_AMD64_)
 
 #define CONTEXT_TO_PROGRAM_COUNTER(Context) ((Context)->Rip)
 

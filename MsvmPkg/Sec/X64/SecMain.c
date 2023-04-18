@@ -1299,12 +1299,7 @@ Return Value:
     //
     if (SetJump (&JumpBuffer) == 0)
     {
-#if defined (MDE_CPU_IA32)
-        JumpBuffer.Esp = JumpBuffer.Esp + DebugAgentContext.StackMigrateOffset;
-#endif
-#if defined (MDE_CPU_X64)
         JumpBuffer.Rsp = JumpBuffer.Rsp + DebugAgentContext.StackMigrateOffset;
-#endif
         LongJump(&JumpBuffer, (UINTN)-1);
     }
 

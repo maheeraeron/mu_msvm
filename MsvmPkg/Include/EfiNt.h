@@ -30,9 +30,6 @@ Author:
 //
 
 #include <ProcessorBind.h>
-#if defined MDE_CPU_IA32
-#define _X86_
-#endif
 #if defined MDE_CPU_X64
 #define _AMD64_
 #endif
@@ -105,7 +102,7 @@ typedef struct _STRING
 // General defines.
 //
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
 #if defined(MDE_CPU_X64)
 
@@ -119,19 +116,6 @@ __cpuid(
     int InfoType
     );
 
-#elif defined(MDE_CPU_IA32)
-
-FORCEINLINE
-VOID
-MemoryBarrier (
-    VOID
-    )
-{
-    LONG Barrier;
-    __asm {
-        xchg Barrier, eax
-    }
-}
 #endif
 
 FORCEINLINE

@@ -299,7 +299,7 @@ typedef UINT64 HV_DEVICE_VA, *PHV_DEVICE_VA;
 //
 #define HV_ARM64_ENABLE_SRE             2
 
-#elif defined(_AMD64_) || defined(_X86_)
+#elif defined(_AMD64_)
 
 #define HV_X64_PAGE_SIZE                4096
 #define HV_X64_LARGE_PAGE_SIZE          0x200000
@@ -334,7 +334,7 @@ typedef UINT64 HV_NANO100_DURATION, *PHV_NANO100_DURATION;
 //
 // Declare the type for hardware ID of a processor.
 //
-#if defined(_AMD64_) || defined(_X86_) || defined(_ARM_)
+#if defined(_AMD64_) || defined(_ARM_)
 
 typedef UINT32 HV_APIC_ID, *PHV_APIC_ID;
 
@@ -443,7 +443,7 @@ typedef enum _HV_GUEST_OS_OPENSOURCE_IDS
 
 } HV_GUEST_OS_OPENSOURCE_IDS, *PHV_GUEST_OS_OPENSOURCE_IDS;
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 
 //
@@ -642,7 +642,7 @@ typedef enum _HV_ARM64_SYNTHETIC_MSR
 
 #endif
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 //
 // Declare the MSR used to identify the guest OS.
@@ -820,7 +820,7 @@ typedef union _HV_PARTITION_PRIVILEGE_MASK
 #define HV_PARTITION_PRIVILEGE_START_VIRTUAL_PROCESSOR                  0x0020000000000000
 #define HV_PARTITION_PRIVILEGE_ISOLATION                                0x0040000000000000
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 typedef union _HV_X64_PLATFORM_CAPABILITIES {
     UINT64 AsUINT64[2];
@@ -1052,7 +1052,7 @@ typedef struct _HV_HYPERVISOR_INTERFACE_INFO
 // Hypervisor Feature Information
 //
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 // CPUID Information - HvCpuIdFunctionMsHvFeatures Leaf
 
@@ -1158,7 +1158,7 @@ typedef struct _HV_ARM64_HYPERVISOR_FEATURES
 // Enlightenment Info
 //
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 // CPUID Information - HvCpuIdFunctionMsHvEnlightenmentInformation Leaf
 
@@ -1265,7 +1265,7 @@ typedef struct _HV_IMPLEMENTATION_LIMITS
 } HV_IMPLEMENTATION_LIMITS, *PHV_IMPLEMENTATION_LIMITS;
 
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 //
 // Hypervisor Hardware Features Info - HvCpuIdFunctionMsHvHardwareFeatures Leaf
@@ -1447,7 +1447,7 @@ typedef struct _HV_HYPERVISOR_SVM_FEATURES
 } HV_HYPERVISOR_SVM_FEATURES, *PHV_HYPERVISOR_SVM_FEATURES;
 
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 //
 // Nested virtualization features (Vmx) -
@@ -1519,7 +1519,7 @@ typedef union _HV_CPUID_RESULT
 
     UINT32 AsUINT32[4];
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     struct
     {
@@ -1652,7 +1652,7 @@ typedef union _HV_ARM64_MSR_RESET_CONTENTS
 #define HV_MSR_RESET_CONTENTS  HV_ARM64_MSR_RESET_CONTENTS
 #define PHV_MSR_RESET_CONTENTS PHV_ARM64_MSR_RESET_CONTENTS
 
-#elif defined(_AMD64_) || defined(_X86_)
+#elif defined(_AMD64_)
 
 //
 // Declare the MSR for determining the current VP index.
@@ -3612,7 +3612,7 @@ typedef enum _HV_MESSAGE_TYPE
     HvMessageTypeExceptionIntercept = 0x80010003,
     HvMessageTypeRegisterIntercept = 0x80010006,
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     //
     // (AMD64/X86).
@@ -4338,7 +4338,7 @@ typedef union _HV_REGISTER_VSM_VINA
 //   This is a read-only partition-wide register.
 //
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 typedef union _HV_X64_REGISTER_VSM_CAPABILITIES
 {
@@ -4830,7 +4830,7 @@ typedef enum _HV_REGISTER_NAME
 
     HvRegisterIsolationCapabilities  = 0x000D0100,
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     // Interruptible notification register
     HvX64RegisterDeliverabilityNotifications = 0x00010006,
@@ -5737,7 +5737,7 @@ typedef union _HV_REGISTER_VALUE
     UINT16                                      Reg16;
     UINT8                                       Reg8;
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     HV_X64_FP_REGISTER                          Fp;
     HV_X64_FP_CONTROL_STATUS_REGISTER           FpControlStatus;
@@ -5751,7 +5751,7 @@ typedef union _HV_REGISTER_VALUE
     HV_INTERCEPT_SUSPEND_REGISTER               InterceptSuspend;
     HV_DISPATCH_SUSPEND_REGISTER                DispatchSuspend;
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     HV_X64_INTERRUPT_STATE_REGISTER             InterruptState;
     HV_X64_PENDING_INTERRUPTION_REGISTER        PendingInterruption;
@@ -5848,7 +5848,7 @@ typedef union _HV_REGISTER_CR_INTERCEPT_CONTROL
 // This sets the values provided in VpContext and makes the said Vp runnable.
 //
 
-#if defined(_AMD64_) || defined(_X86_) || defined(_ARM64_)
+#if defined(_AMD64_) || defined(_ARM64_)
 
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_START_VIRTUAL_PROCESSOR
 {
@@ -6241,7 +6241,7 @@ typedef union _HV_MSI_DATA_REGISTER
 {
     UINT32 AsUINT32;
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     struct
     {
@@ -6264,7 +6264,7 @@ typedef union _HV_MSI_DATA_REGISTER
 typedef union _HV_MSI_ENTRY
 {
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     UINT64 AsUINT64;
 
@@ -6289,7 +6289,7 @@ typedef union _HV_MSI_ENTRY
 
 } HV_MSI_ENTRY, *PHV_MSI_ENTRY;
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 #define HV_MSI_ENTRY_IS_ADDRESS_EQUAL(_MsiEntry1_, _MsiEntry2_) \
     ((_MsiEntry1_).Address.AsUINT32 == (_MsiEntry2_).Address.AsUINT32)
@@ -6344,7 +6344,7 @@ typedef struct _HV_INTERRUPT_ENTRY
     union
     {
         HV_MSI_ENTRY MsiEntry;
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
         HV_IOAPIC_RTE IoApicEntry;
         UINT64 Data;
 #else
@@ -6355,7 +6355,7 @@ typedef struct _HV_INTERRUPT_ENTRY
 
 } HV_INTERRUPT_ENTRY, *PHV_INTERRUPT_ENTRY;
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 #define HV_INTERRUPT_ENTRY_IS_DATA_EQUAL(_Entry1_, _Entry2_) \
     ((_Entry1_)->Data == (_Entry2_)->Data)

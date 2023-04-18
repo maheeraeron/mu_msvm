@@ -162,7 +162,7 @@ Return Value:
     if (gBdDebugTable != NULL &&
         *gBdDebugTable->DebuggerNotPresent == FALSE)
     {
-#if defined(_X86_) || defined(_AMD64_)
+#if defined(_AMD64_)
         __int2c();
 #elif defined(_ARM64_)
         __break(0xf001);

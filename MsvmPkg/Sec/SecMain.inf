@@ -24,15 +24,10 @@
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC AARCH64
+#  VALID_ARCHITECTURES           = X64 IPF EBC AARCH64
 #
 
 [Sources]
-
-[Sources.IA32]
-  Ia32/SecMain.c
-  Ia32/SecEntry.asm | MSFT
-  Ia32/SecEntry.asm | INTEL
 
 [Sources.X64]
   X64/SecMain.c
@@ -49,9 +44,6 @@
   MdeModulePkg/MdeModulePkg.dec
   MsvmPkg/MsvmPkg.dec
 
-[Packages.IA32]
-  UefiCpuPkg/UefiCpuPkg.dec
-
 [Packages.X64]
   UefiCpuPkg/UefiCpuPkg.dec
 
@@ -63,12 +55,6 @@
   DebugLib
   BaseMemoryLib
   DebugAgentLib
-
-[LibraryClasses.IA32]
-  PeCoffExtraActionLib
-  PeCoffGetEntryPointLib
-  PeCoffLib
-  UefiCpuLib
 
 [LibraryClasses.X64]
   PeCoffExtraActionLib

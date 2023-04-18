@@ -16,9 +16,6 @@
 [Sources]
     DebugLib.c
 
-[Sources.Ia32]
-    Ia32/debug.c       | MSFT
-
 [Sources.X64]
     X64/debugstb.asm   | MSFT
 

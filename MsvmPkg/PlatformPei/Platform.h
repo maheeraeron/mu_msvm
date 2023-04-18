@@ -40,7 +40,7 @@ TripleFault(
             CpuDeadLoop(); \
         } \
     } while(0)
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
 #define PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(Info1) \
     do \
     { \
@@ -63,7 +63,7 @@ TripleFault(
 #error Unsupported Architecture
 #endif
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
 //
 // On X64, the config blob starts after the end of the firmware, and after
@@ -91,7 +91,7 @@ typedef struct _PLATFORM_INIT_CONTEXT
     HV_HYPERCALL_CONTEXT HvHypercallContext;
     UINT8 PhysicalAddressWidth;
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 
     struct _HV_PAGES *HvPages;
 

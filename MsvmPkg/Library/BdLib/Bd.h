@@ -1054,13 +1054,6 @@ extern BOOLEAN BdpContextSent;
 extern EFI_UNLOADED_MODULE BdUnloadedModules[];
 extern ULONG BdLastUnloadedModule;
 
-#if defined(MDE_CPU_IA32)
-
-// This points to the BdTrap procedure and is being called from trapa.asm for Ia32.
-extern UINT32 BdTrapRoutine;
-
-#endif
-
 VOID
 BdSerialPrint (
   IN  CONST CHAR8  *Format,

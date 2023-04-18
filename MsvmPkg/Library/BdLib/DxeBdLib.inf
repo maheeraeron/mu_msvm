@@ -59,16 +59,6 @@
     netio.c
     image.c
 
-[Sources.Ia32]
-    cpPcUart.c          | MSFT
-    Ia32/trapa.asm      | MSFT
-    Ia32/debugstb.asm   | MSFT
-    Ia32/state.asm      | MSFT
-    Ia32/debug.c        | MSFT
-    Ia32/cpuapi.c       | MSFT
-    Ia32/trapc.c        | MSFT
-
-
 [Sources.X64]
     cpPcUart.c          | MSFT
     CrashDumpAgent.c    | MSFT

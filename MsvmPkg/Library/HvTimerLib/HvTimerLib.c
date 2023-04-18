@@ -140,7 +140,7 @@ Return Value:
 
 --*/
 {
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 
     return AsmReadMsr64(HV_X64_MSR_TIME_REF_COUNT);
 

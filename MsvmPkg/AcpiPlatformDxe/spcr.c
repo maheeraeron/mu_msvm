@@ -26,7 +26,7 @@ Author:
 
 // Establish local define for architecture
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 #define _SPCR_INTEL_
 #elif defined(MDE_CPU_AARCH64)
 #define _SPCR_ARM_

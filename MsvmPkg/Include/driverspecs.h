@@ -84,7 +84,6 @@
 *
 * Architecture kinds:
 *     __WIN64 (#define symbols)
-*     _X86_
 *     _AMD64_
 *     _IA64_
 *

@@ -2839,7 +2839,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UNLOCK_SPARSE_GPA_PAGE_MAPPING
 
 #define HV_MESSAGE_TYPE_HYPERVISOR_MASK (0x80000000)
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 //
 // Define APIC EOI message.
@@ -4879,7 +4879,7 @@ typedef struct _HV_GPA_ATTRIBUTE_INTERCEPT_COMPLETION_DATA
 // Definition of the HvCallUpdateHvProcessorFeatures input structures.
 //
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
 typedef union _HV_DETECT_X64_PROCESSOR_FEATURE_LIST
 {

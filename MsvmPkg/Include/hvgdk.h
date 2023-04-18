@@ -695,7 +695,7 @@ typedef const HV_REGISTER_VALUE *PCHV_REGISTER_VALUE;
 typedef enum _HV_INTERCEPT_TYPE
 {
 
-#if defined(_AMD64_) || defined(_X86_)
+#if defined(_AMD64_)
 
     //
     // Platform-specific intercept types.

@@ -47,7 +47,7 @@ typedef struct _HV_HYPERCALL_CONTEXT
     BOOLEAN IsTdx;
     PVOID Ghcb;
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
     UINT64 SharedGpaBoundary;
     UINT64 CanonicalizationMask;
@@ -57,7 +57,7 @@ typedef struct _HV_HYPERCALL_CONTEXT
 #endif
 } HV_HYPERCALL_CONTEXT, *PHV_HYPERCALL_CONTEXT;
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
 VOID
 HvHypercallConnect(

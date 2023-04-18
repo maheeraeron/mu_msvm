@@ -116,12 +116,6 @@ Return Value:
     //m->u.GetVersion64.KeUserCallbackDispatcher = 0;
     //m->u.GetVersion64.NextCallback = 0;
 
-#if defined(_X86_)
-
-    //m->u.GetVersion64.FramePointer = 0;
-
-#endif
-
     m->u.GetVersion64.DebuggerDataList = (UINTN)&BdDebuggerDataListHead;
 
     //

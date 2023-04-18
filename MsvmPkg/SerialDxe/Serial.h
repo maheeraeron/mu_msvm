@@ -31,7 +31,7 @@ Author:
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/PcdLib.h>
 #include <UefiConstants.h>
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 #include <Library/PCUart.h>
 #elif defined(MDE_CPU_AARCH64)
 #include <Library/PL011UartLib.h>

@@ -77,7 +77,7 @@ SERIAL_DEVICE gSerialDeviceTempate =
     },
     0,    //BaseAddress
     FALSE,
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
     Uart16550A,
 #elif defined(MDE_CPU_AARCH64)
     UartPL011,
@@ -89,7 +89,7 @@ SERIAL_DEVICE gSerialDeviceTempate =
 //
 // Starting templates for the Serial Port protocol instances.
 //
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 SERIAL_DEVICE_PROPERTIES gSerialProperties[] =
 {
     // COM1
@@ -123,7 +123,7 @@ SERIAL_DEVICE_PROPERTIES gSerialProperties[] =
 };
 #endif
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 #define UARTINITIALIZEPORT  PCUartInitializePort
 #define UARTGETCONTROL      PCUartGetControl
 #define UARTSETCONTROL      PCUartSetControl
@@ -141,7 +141,7 @@ SERIAL_DEVICE_PROPERTIES gSerialProperties[] =
 // Pcd config value
 //
 UINT32 gUartClkInHz =
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
                       FixedPcdGet32(PcdSerialClockRate);
 #elif defined(MDE_CPU_AARCH64)
                       FixedPcdGet32(PL011UartClkInHz);

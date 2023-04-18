@@ -29,7 +29,7 @@ Author:
 
 #include "Bd.h"
 
-#if defined(_X86_) || defined(_AMD64_)
+#if defined(_AMD64_)
 #include <Library/ResetSystemLib.h>
 #elif defined(_ARM64_)
 #include <Library/EfiResetSystemLib.h>
@@ -225,7 +225,7 @@ ResendPacket:
             break;
 
         case DbgKdRebootApi:
-#if defined(_X86_) || defined(_AMD64_)
+#if defined(_AMD64_)
             ResetWarm();
 #elif defined(_ARM64_)
             LibResetSystem(EfiResetWarm, 0, 0, NULL);

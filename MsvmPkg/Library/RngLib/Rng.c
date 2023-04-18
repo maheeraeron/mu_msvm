@@ -26,7 +26,7 @@ Abstract:
 #include <Uefi/UefiBaseType.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 #include <IsolationTypes.h>
 #endif
 
@@ -136,7 +136,7 @@ RngLibConstructor (
   
 {
   // MS_HYP_CHANGE BEGIN
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
   UINT32  RegEcx;
 
@@ -226,7 +226,7 @@ GetRandomNumber16 (
   }
   else
   {
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
     UINT32  Index;
     //
     // A loop to fetch a 16 bit random value with a retry count limit.
@@ -269,7 +269,7 @@ GetRandomNumber32 (
   }
   else
   {
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
     UINT32  Index;
 
     //
@@ -313,7 +313,7 @@ GetRandomNumber64 (
   }
   else
   {
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
     UINT32  Index;
 
     //

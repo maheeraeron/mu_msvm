@@ -84,7 +84,7 @@ Return Value:
     UINT8 minimumAddressWidth = 36;
     UINT8 physicalAddressWidth = 0;
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
     UINT32 maximumFunction;
     CPUID_ADDRESS_SPACE_SIZES addressSpaceSizes;
@@ -465,7 +465,7 @@ Return Value:
 
 --*/
 {
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
     //
     // On X64, the config blob starts after the end of the firmware, and after
     // some misc. pages (including space for the pagetables and GDT entries).

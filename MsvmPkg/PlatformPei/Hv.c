@@ -46,7 +46,7 @@ Return Value:
 
 --*/
 {
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
     HV_CPUID_RESULT cpuidResult;
     UINT64 sharedGpaBoundary;

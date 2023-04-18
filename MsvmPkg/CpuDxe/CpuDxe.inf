@@ -48,17 +48,6 @@
   CpuPageTable.h
   CpuPageTable.c
 
-  Ia32/IvtAsm.asm | MSFT  ## MS_HYP_CHANGE
-  Ia32/IvtAsm.asm | INTEL ## MS_HYP_CHANGE
-  Ia32/IvtAsm.S   | GCC   ## MS_HYP_CHANGE
-
-[Sources.IA32]
-  Ia32/CpuAsm.asm | MSFT  ## MS_HYP_CHANGE
-  Ia32/CpuAsm.asm | INTEL ## MS_HYP_CHANGE
-  Ia32/CpuAsm.S   | GCC   ## MS_HYP_CHANGE
-
-  Ia32/PagingAttribute.c
-
 [Sources.X64]
   X64/CpuApWait.asm | MSFT   ## MS_HYP_CHANGE
   X64/CpuAsm.asm    | MSFT   ## MS_HYP_CHANGE

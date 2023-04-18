@@ -31,7 +31,7 @@ Abstract:
 #if defined(MDE_CPU_AARCH64)
 #include <Mmu.h>
 #endif
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 #include <Library/MtrrLib.h>
 #endif
 #include <Library/PeiServicesLib.h>
@@ -40,7 +40,7 @@ Abstract:
 #include <Ppi/ConfigPpi.h>
 #include <IsolationTypes.h>
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 #define INITPEIMEMORY InitPeiMemoryIntel
 #elif defined(MDE_CPU_AARCH64)
 #define INITPEIMEMORY InitPeiMemoryArm
@@ -133,7 +133,7 @@ WriteBiosDevice(
 #if defined(MDE_CPU_AARCH64)
     MmioWrite32(biosBaseAddress, AddressRegisterValue);
     MmioWrite32(biosBaseAddress + 4, DataRegisterValue);
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
     IoWrite32(biosBaseAddress, AddressRegisterValue);
     IoWrite32(biosBaseAddress + 4, DataRegisterValue);
 #endif
@@ -149,13 +149,13 @@ ReadBiosDevice(
 #if defined(MDE_CPU_AARCH64)
     MmioWrite32(biosBaseAddress, AddressRegisterValue);
     return MmioRead32(biosBaseAddress + 4);
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
     IoWrite32(biosBaseAddress, AddressRegisterValue);
     return IoRead32(biosBaseAddress + 4);
 #endif
 }
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 UINTN
 GetPageTableSize(
     _In_ CONST UINT8 PhysicalAddressWidth
@@ -185,16 +185,6 @@ Return Value:
     UINTN   totalPages;
 
     DEBUG((DEBUG_VERBOSE, ">>> GetPageTableSize(%d)\n", PhysicalAddressWidth));
-
-    //
-    // If IA32 and PcdDxeIplSwitchToLongMode is false return zero.
-    //
-#if defined(MDE_CPU_IA32)
-    if (!FeaturePcdGet(PcdDxeIplSwitchToLongMode))
-    {
-        return 0;
-    }
-#endif
 
     //
     // The code below is based on CreateIdentityMappingPageTables() in
@@ -296,7 +286,7 @@ Return Value:
 }
 #endif
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 VOID
 InitPeiMemoryIntel(
     _Inout_ PPLATFORM_INIT_CONTEXT Context,
@@ -446,7 +436,7 @@ Return Value:
     PVM_MEMORY_RANGE_V5 rangeV5;
     BOOLEAN suppressBiosDevice;
     UINT64 truncateSize;
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     BOOLEAN hostEmulatorsWhenHardwareIsolated = PcdGetBool(PcdHostEmulatorsWhenHardwareIsolated);
 #endif
 
@@ -533,7 +523,7 @@ Return Value:
                 range = (PVM_MEMORY_RANGE)(rangeV5 + 1);
             }
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
             //
             // Exclude everything below 1 MB; those ranges will be configured at the end of pass 0.
             //
@@ -650,7 +640,7 @@ Return Value:
         }
     }
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     //
     // Initialize the fixed MTRR for low memory.
     // The variable MTRRs are set later in this function with a trigger to
@@ -665,7 +655,7 @@ Return Value:
     //
     // Low and high MMIO range
     //
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     HobAddMmioRange(
         PcdGet64(PcdLowMmioGapBasePageNumber) * SIZE_4KB,
         PcdGet64(PcdLowMmioGapSizeInPages) * SIZE_4KB
@@ -740,7 +730,7 @@ Return Value:
     //
     HobAddCpu(Context->PhysicalAddressWidth, 16);
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     //
     // Tell the BiosDevice to set up the variable MTRRs.
     //

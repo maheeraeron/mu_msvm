@@ -50,7 +50,7 @@ WriteBiosDevice(
 #if defined(MDE_CPU_AARCH64)
     MmioWrite32(biosBaseAddress, AddressRegisterValue);
     MmioWrite32(biosBaseAddress + 4, DataRegisterValue);
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
     IoWrite32(biosBaseAddress, AddressRegisterValue);
     IoWrite32(biosBaseAddress + 4, DataRegisterValue);
 #endif
@@ -66,7 +66,7 @@ ReadBiosDevice(
 #if defined(MDE_CPU_AARCH64)
     MmioWrite32(biosBaseAddress, AddressRegisterValue);
     return MmioRead32(biosBaseAddress + 4);
-#elif defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#elif defined(MDE_CPU_X64)
     IoWrite32(biosBaseAddress, AddressRegisterValue);
     return IoRead32(biosBaseAddress + 4);
 #endif

@@ -34,7 +34,7 @@ Author:
 #include <Library/MemoryAllocationLib.h>
 #include <Library/HvHypercallLib.h>
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 #include <Library/LocalApicLib.h>
 #endif
 #if defined(MDE_CPU_AARCH64)
@@ -79,7 +79,7 @@ BOOLEAN mUseBypassContext;
 BOOLEAN mBypassOnly;
 PEFI_HV_PAGES mHvPages;
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
 UCHAR *mHypercallPage;
 
@@ -104,7 +104,7 @@ UINT8 mVectorSint[256];
 EFI_HV_INTERRUPT_HANDLER mDirectTimerInterruptHandlers[256];
 HV_X64_MSR_STIMER_CONFIG_CONTENTS mTimerConfiguration[HV_SYNIC_STIMER_COUNT];
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
 EFI_CPU_ARCH_PROTOCOL *mCpu;
 
@@ -211,7 +211,7 @@ Return Value:
 VOID
 EFIAPI
 EfiHvInterruptHandler (
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
     __in EFI_EXCEPTION_TYPE InterruptType,
 #elif defined(MDE_CPU_AARCH64)
     __in HARDWARE_INTERRUPT_SOURCE InterruptType,
@@ -246,7 +246,7 @@ Return Value:
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
     if (!mAutoEoi)
     {
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
         SendApicEoi();
 
@@ -328,7 +328,7 @@ Return Value:
 
     // Register the interrupt handler.
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
     status = mCpu->RegisterInterruptHandler(mCpu, Vector, EfiHvInterruptHandler);
 
@@ -506,7 +506,7 @@ Return Value:
     sintConfiguration = &mSintConfiguration[SintIndex];
     if (sintConfiguration->Vector != 0)
     {
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
         mCpu->RegisterInterruptHandler(mCpu, sintConfiguration->Vector, NULL);
 
@@ -775,7 +775,7 @@ Return Value:
 VOID
 EFIAPI
 EfiHvDirectTimerInterruptHandler (
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
     __in EFI_EXCEPTION_TYPE InterruptType,
 #elif defined(MDE_CPU_AARCH64)
     __in HARDWARE_INTERRUPT_SOURCE InterruptType,
@@ -808,7 +808,7 @@ Return Value:
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
     SendApicEoi();
 
@@ -898,7 +898,7 @@ Return Value:
         {
             // Configure the interrupt handler for this timer.
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
             status = mCpu->RegisterInterruptHandler(mCpu, Vector, EfiHvDirectTimerInterruptHandler);
 
@@ -1619,7 +1619,7 @@ Return Value:
 
     DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
     HV_CPUID_RESULT cpuidResult;
     BOOLEAN paravisorPresent;
@@ -1811,7 +1811,7 @@ Return Value:
 
 #endif
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
     // Cache some enlightenment information.  If this system requires
     // bypassing the paravisor, then assume a set of features that are present
@@ -1937,7 +1937,7 @@ Return Value:
         FreePages(mHvPages, sizeof(*mHvPages) / EFI_PAGE_SIZE);
         mHvPages = NULL;
     }
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     if (mHypercallPage != NULL)
     {
         FreePages(mHypercallPage, 1);
@@ -2195,7 +2195,7 @@ Return Value:
 
     InitializeListHead(&mHostVisiblePageList);
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 
     // For Intel find the CPU protocol.
 

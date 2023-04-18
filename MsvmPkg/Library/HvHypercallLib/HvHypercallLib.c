@@ -23,7 +23,7 @@ Abstract:
 
 #define SEV_MSR_GHCB                    0xC0010130
 
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
 HV_X64_HYPERCALL_OUTPUT
 HvHypercallpIssueTdxHypercall(
@@ -250,7 +250,7 @@ Return Value:
 {
     if (Context->Connected)
     {
-#if defined(MDE_CPU_X64) || defined(MDE_CPU_IA32)
+#if defined(MDE_CPU_X64)
 
         HV_X64_MSR_HYPERCALL_CONTENTS hypercallMsr;
 
@@ -472,35 +472,6 @@ Return Value:
 
     }
 
-#elif defined(MDE_CPU_IA32)
-
-    {
-        ULARGE_INTEGER packed;
-        ULARGE_INTEGER first;
-        ULARGE_INTEGER second;
-
-        packed.QuadPart = callInput.AsUINT64;
-        first.QuadPart = FirstRegister;
-        second.QuadPart = SecondRegister;
-
-        __asm
-        {
-            mov edi, second.HighPart;
-            mov esi, second.LowPart;
-            mov ebx, first.HighPart;
-            mov ecx, first.LowPart;
-            mov edx, packed.HighPart;
-            mov eax, packed.LowPart;
-
-            call Context->HypercallPage;
-
-            mov packed.LowPart, eax;
-            mov packed.HighPart, edx;
-        }
-
-        callOutput.AsUINT64 = packed.QuadPart;
-    }
-
 #elif defined(MDE_CPU_AARCH64)
 
     callOutput = AsmHyperCall(callInput, FirstRegister, SecondRegister);
@@ -645,7 +616,7 @@ HvHypercallpRegisterNameToString(
     case HvRegisterStimer3Count:
         return L"HvRegisterStimer3Count";
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     case HvX64RegisterHypercall:
         return L"HvX64RegisterHypercall";
 #endif
@@ -657,7 +628,7 @@ HvHypercallpRegisterNameToString(
 #endif
 
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 static
 UINT32
 HvHypercallpGetMsrNameFromRegisterName(
@@ -810,7 +781,7 @@ Return Value:
 {
     UINT64 registerValue;
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
     UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
 
     // DEBUG((DEBUG_VERBOSE, ">>> %a: Name 0x%x %s MSR 0x%x\n", __FUNCTION__,
@@ -881,7 +852,7 @@ Return Value:
 --*/
 {
 
-#if defined(MDE_CPU_IA32) || defined(MDE_CPU_X64)
+#if defined (MDE_CPU_X64)
 
     UINT32 msr = HvHypercallpGetMsrNameFromRegisterName(RegisterName);
 

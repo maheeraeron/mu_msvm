@@ -160,24 +160,7 @@ EfiBugCheckWithContext(
     // give the debugger one last chance to take a look.
     BdBreakPointWithStatus(0);
 
-#if defined(MDE_CPU_IA32)
-
-    if (EFI_ERROR(status))
-    {
-        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE_HIGH_DWORD,
-                    0,
-                    0,
-                    GUESTDUMP_TRIPLEFAULT_SIGNATURE_LOW_DWORD);
-    }
-    else
-    {
-        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE_HIGH_DWORD,
-                    (UINT64)BdDumpBuffer.Buffer,
-                    BdDumpBuffer.Offset,
-                    GUESTDUMP_TRIPLEFAULT_SIGNATURE_LOW_DWORD);
-    }
-
-#elif defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64)
 
     if (EFI_ERROR(status))
     {

@@ -94,7 +94,7 @@ static const CP_STATUS CpStatusNotReady = 3;
 //
 // Include device specific header based on architecture
 //
-#if defined(_X86_) || defined(_AMD64_)
+#if defined(_AMD64_)
 
 #include "cpPcUart.h"
 

@@ -138,7 +138,7 @@ Return Value:
 
     status = STATUS_SUCCESS;
     ZeroMem(&CpPort, sizeof(CP_PORT));
-#if defined(_X86_) || defined(_AMD64_)
+#if defined(_AMD64_)
     portAddress.Type = CpPortTypeIoPort;
     portAddress.IoPort = (UINT16)Parameters->SerialPort.AlternatePortNumber;
 #elif defined(_ARM64_)

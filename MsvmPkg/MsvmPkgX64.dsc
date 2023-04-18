@@ -148,8 +148,6 @@
   PrmModuleDiscoveryLib|PrmPkg/Library/DxePrmModuleDiscoveryLib/DxePrmModuleDiscoveryLib.inf
   PrmPeCoffLib|PrmPkg/Library/DxePrmPeCoffLib/DxePrmPeCoffLib.inf
 
-[LibraryClasses.IA32]
-
 #
 # Library instance overrides for SEC and PEI
 #
