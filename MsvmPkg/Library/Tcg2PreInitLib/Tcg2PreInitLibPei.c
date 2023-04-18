@@ -36,6 +36,17 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TpmInterface.h>           // Definitions specific to Hyper-V VDev.
 
 
+VOID
+WriteTpmPort(
+    IN UINT32 AddressRegisterValue,
+    IN UINT32 DataRegisterValue
+);
+
+UINT32
+ReadTpmPort(
+    IN UINT32 AddressRegisterValue
+);
+
 /**
   Performs basic, one-time initialization for the Hyper-V TPM vDevice.
   Will allocate a CRB buffer and configure that buffer with the device.
@@ -46,61 +57,61 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 EFI_STATUS
 EFIAPI
-HyperVTpmDeviceInitEarlyBoot (
-  VOID
+HyperVTpmDeviceInitEarlyBoot(
+	VOID
   )
 {
-  EFI_STATUS            Status = EFI_SUCCESS;
-  EFI_PHYSICAL_ADDRESS  CrBuffer = 0;
-  UINT32                TpmIoEstablishedResponse;
-  UINT64                TpmBaseAddress;
+    EFI_STATUS            Status = EFI_SUCCESS;
+    EFI_PHYSICAL_ADDRESS  CrBuffer = 0;
+    UINT32                TpmIoEstablishedResponse;
+    UINT64                TpmBaseAddress;
 
-  Status = PeiServicesAllocatePages( EfiRuntimeServicesData, 2, &CrBuffer );
-  if (EFI_ERROR (Status)) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Failed to allocate CRB for TPM VDev!\n" ));
-  }
-  else if (CrBuffer > 0xFFFFFFFFULL) {
-      // PEI memory was published as - Base at 1MB, size max 64MB.
-      // It is guaranteed that physical address is below 4 GB.
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - CRB allocation for TPM VDev is incorrect!\n" ));
-      ASSERT( FALSE );
-      Status = EFI_DEVICE_ERROR;
-  }
+    Status = PeiServicesAllocatePages(EfiRuntimeServicesData, 2, &CrBuffer);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - Failed to allocate CRB for TPM VDev!\n"));
+        return Status;
+    }
 
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - CrBuffer == 0x%016lX\n", CrBuffer ));
+    if (CrBuffer > 0xFFFFFFFFULL) {
+        // PEI memory was published as - Base at 1MB, size max 64MB.
+        // It is guaranteed that physical address is below 4 GB.
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - CRB allocation for TPM VDev is incorrect!\n"));
+        ASSERT(FALSE);
+        return EFI_DEVICE_ERROR;
+    }
 
-  if (!EFI_ERROR( Status )) {
-    ZeroMem( (UINT8*)CrBuffer, 2 * EFI_PAGE_SIZE );
+    DEBUG((DEBUG_VERBOSE, __FUNCTION__" - CrBuffer == 0x%016lX\n", CrBuffer));
+
+    ZeroMem((UINT8*)CrBuffer, 2 * EFI_PAGE_SIZE);
+
+    TpmBaseAddress = FixedPcdGet64(PcdTpmBaseAddress);
+    TpmBaseAddress += PcdGetBool(PcdTpmLocalityRegsEnabled) ? 0x40 : 0;
+
+    DEBUG((DEBUG_VERBOSE, __FUNCTION__" - TpmBaseAddress == 0x%016lX\n", TpmBaseAddress));
 
     //
     // Send the request to the TPM VDev.
     // Cast of command buffer GPA is safe as it was allocated below 4GB.
     //
-    IoWrite32( TpmControlPort, TpmIoMapSharedMemory );
-    IoWrite32( TpmDataPort, (UINT32)CrBuffer );
+    WriteTpmPort(TpmIoMapSharedMemory, (UINT32)CrBuffer);
 
     //
     // Query vDev the mapping result
     //
-    IoWrite32( TpmControlPort, TpmIoEstablished );
-    TpmIoEstablishedResponse = IoRead32( TpmDataPort );
-    DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - TpmIoEstablishedResponse == 0x%08X\n", TpmIoEstablishedResponse ));
+    TpmIoEstablishedResponse = ReadTpmPort(TpmIoEstablished);
     if (TpmIoEstablishedResponse == 0) {
         //
         // Couldn't establish memory mapping with vDev.
         //
-        DEBUG(( DEBUG_ERROR, __FUNCTION__" - Couldn't establish memory mapping with vDev!\n" ));
-        Status = EFI_NO_MAPPING;
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - Couldn't establish memory mapping with vDev!\n"));
+        return EFI_NO_MAPPING;
     }
-  }
 
-  if (!EFI_ERROR( Status )) {
-    TpmBaseAddress = FixedPcdGet64( PcdTpmBaseAddress );
-    TpmBaseAddress += PcdGetBool( PcdTpmLocalityRegsEnabled ) ? 0x40 : 0;
-    Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)TpmBaseAddress );
-  }
+    DEBUG((DEBUG_VERBOSE, __FUNCTION__" - TpmIoEstablishedResponse == 0x%08X\n", TpmIoEstablishedResponse));
 
-  return Status;
+    Tpm2RegisterTpm2DeviceLib((TPM2_DEVICE_INTERFACE*)TpmBaseAddress);
+
+    return Status;
 } // HyperVTpmDeviceInitEarlyBoot()
 
 
@@ -119,7 +130,7 @@ HyperVTpmDeviceInitEarlyBoot (
 **/
 EFI_STATUS
 EFIAPI
-HyperVTpm2InitLibConstructor (
+HyperVTpm2InitLibConstructorPei (
   IN       EFI_PEI_FILE_HANDLE       FileHandle,
   IN CONST EFI_PEI_SERVICES          **PeiServices
   )

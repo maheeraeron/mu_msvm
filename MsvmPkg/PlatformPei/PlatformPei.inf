@@ -191,6 +191,8 @@
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdSystemMemorySize
+    gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4
+    gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask
 
 [Pcd.X64]
     gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable

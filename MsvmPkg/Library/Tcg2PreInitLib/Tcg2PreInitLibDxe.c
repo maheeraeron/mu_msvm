@@ -42,6 +42,10 @@ InstallTpm2AcpiTable (
     VOID
     );
 
+UINT32
+ReadTpmPort(
+    IN UINT32 AddressRegisterValue
+);
 
 /**
   Constructor for the lib.
@@ -54,14 +58,14 @@ InstallTpm2AcpiTable (
 **/
 EFI_STATUS
 EFIAPI
-HyperVTpm2InitLibConstructor (
+HyperVTpm2InitLibConstructorDxe (
   IN    EFI_HANDLE                  ImageHandle,
   IN    EFI_SYSTEM_TABLE            *SystemTable
   )
 {
   EFI_STATUS    Status = EFI_SUCCESS;
-  UINT32        TcgProtocolVersion;
   UINT64        TpmBaseAddress;
+  UINT32        TcgProtocolVersion;
 
   DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
 
@@ -74,25 +78,24 @@ HyperVTpm2InitLibConstructor (
     return EFI_SUCCESS;
   }
 
+  TpmBaseAddress = FixedPcdGet64(PcdTpmBaseAddress);
+  TpmBaseAddress += PcdGetBool(PcdTpmLocalityRegsEnabled) ? 0x40 : 0;
+
   //
   // Query vDev the Tcg protocol version
-  IoWrite32( TpmControlPort, TpmIoGetTcgProtocolVersion );
-  TcgProtocolVersion = IoRead32( TpmDataPort );
+  TcgProtocolVersion = ReadTpmPort(TpmIoGetTcgProtocolVersion);
+
   if ((TcgProtocolVersion != TcgProtocolTrEE) && (TcgProtocolVersion != TcgProtocolTcg2)) {
     DEBUG(( DEBUG_ERROR, __FUNCTION__" - TPM vDev reports bad version! 0x%X\n", TcgProtocolVersion ));
-    Status = EFI_DEVICE_ERROR;
+    return EFI_DEVICE_ERROR;
   }
 
   // If we're good, we need to make sure that our instance of Tpm2DeviceLib
   // can talk with the vDevice.
-  if (!EFI_ERROR( Status )) {
-    TpmBaseAddress = FixedPcdGet64( PcdTpmBaseAddress );
-    TpmBaseAddress += PcdGetBool( PcdTpmLocalityRegsEnabled ) ? 0x40 : 0;
-    Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)TpmBaseAddress );
-    Status = InstallTpm2AcpiTable();
-  }
+  Tpm2RegisterTpm2DeviceLib( (TPM2_DEVICE_INTERFACE*)TpmBaseAddress );
+  Status = InstallTpm2AcpiTable();
 
   // NOTE: This will cause an ASSERT if the TCG protocol version is incorrect.
   //       It is assumed this would indicate a software misconfiguration.
   return Status;
-} // HyperVTpm2InitLibConstructor()
+} // HyperVTpm2InitLibConstructorDxe()

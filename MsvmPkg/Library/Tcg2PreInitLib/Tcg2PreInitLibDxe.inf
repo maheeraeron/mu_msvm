@@ -33,12 +33,12 @@
   VERSION_STRING      = 1.0
   MODULE_TYPE         = DXE_DRIVER
   LIBRARY_CLASS       = NULL|DXE_DRIVER
-  CONSTRUCTOR         = HyperVTpm2InitLibConstructor
+  CONSTRUCTOR         = HyperVTpm2InitLibConstructorDxe
 
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
 

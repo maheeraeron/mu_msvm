@@ -47,6 +47,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   SecurityPkg/SecurityPkg.dec
+  MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -54,3 +55,6 @@
   DebugLib
   TimerLib
   Tpm2DebugLib
+
+[Pcd]
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress        ## CONSUMES

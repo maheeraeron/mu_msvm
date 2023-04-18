@@ -856,11 +856,8 @@ ConfigSetUefiConfigFlags(
     //
     if (ConfigFlags->Flags.MeasureAdditionalPcrs)
     {
-        // TODO-cho: no TPM available for AARCH64 yet.
-#if defined (MDE_CPU_X64)
         CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(TcgMeasureBootStringsInPcr4, TRUE), CRITICAL_INITIALIZATION_FAILURE);
         CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdExcludeFvMainFromMeasurements, FALSE), CRITICAL_INITIALIZATION_FAILURE);
-#endif
     }
 
     //
@@ -869,9 +866,7 @@ ConfigSetUefiConfigFlags(
     //
     if (ConfigFlags->Flags.DisableSha384Pcr)
     {
-#if defined (MDE_CPU_X64)
         CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384)), CRITICAL_INITIALIZATION_FAILURE);
-#endif
     }
     
     if (ConfigFlags->Flags.Dhcp6DuidTypeLlt)

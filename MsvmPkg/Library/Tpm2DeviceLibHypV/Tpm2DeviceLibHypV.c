@@ -31,15 +31,124 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DebugLib.h>
 #include <Library/Tpm2DeviceLib.h>
 #include <Library/TimerLib.h>
+#include <Library/IoLib.h>
+#include <Library/PcdLib.h>
 #include <IndustryStandard/Tpm20.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 
 #include <Library/Tpm2DebugLib.h>         // MS_CHANGE
+#include <TpmInterface.h>           // Definitions specific to Hyper-V VDev.
 
-EFI_TPM2_ACPI_CONTROL_AREA  *mTpm2ControlArea = NULL;
+#pragma pack(push,1)
+typedef struct _FTPM_CONTROL_AREA
+{
+    //
+    // This used to a Reserved field. This is the Miscellaneous field for the Command/Response interface.
+    // 
+    volatile UINT32  Miscellaneous;
+    
+    //
+    // The Status field of the Control area.
+    //
+    volatile UINT32  Status;
+    
+    //
+    // The Cancel field of the Control area. TPM does not modify this field, hence it is not declared volatile.
+    //
+    UINT32  Cancel;
+    
+    //
+    // The Start field of the Control area.
+    //
+    volatile UINT32  Start;
+
+    //
+    // The control area is in device memory. Device memory
+    // often only supports word sized access. Split all
+    // 64bit fields into High and Low parts.
+    //
+    volatile UINT32 InterruptEnable;
+    volatile UINT32 InterruptStatus;
+
+    //
+    // Command buffer size.
+    //
+    UINT32 CommandBufferSize;
+
+    //
+    // The control area is in device memory. Device memory
+    // often only supports word sized access. Split all
+    // 64bit fields into High and Low parts.
+    //
+    // Command buffer physical address.
+    //
+    UINT32 CommandPALow;
+    UINT32 CommandPAHigh;
+
+    //
+    // Response Buffer size.
+    //
+    UINT32 ResponseBufferSize;
+
+    //
+    // The control area is in device memory. Device memory
+    // often only supports word sized access. Split all
+    // 64bit fields into High and Low parts.
+    //
+    // Response buffer physical address.
+    //
+    UINT32 ResponsePALow;
+    UINT32 ResponsePAHigh;
+
+} FTPM_CONTROL_AREA;
+#pragma pack(pop)
+
+static_assert(sizeof(EFI_TPM2_ACPI_CONTROL_AREA) == sizeof(FTPM_CONTROL_AREA), "Invalid structure!");
+
+typedef union _LARGE_INTEGER {
+    struct {
+        UINT32 LowPart;
+        INT32 HighPart;
+    } u;
+    UINT64 QuadPart;
+} LARGE_INTEGER;
+
+FTPM_CONTROL_AREA *mTpm2ControlArea = NULL;
 UINT8*   mCommandBuffer = NULL;
 UINT8*   mResponseBuffer = NULL;
 UINT32   mResponseSize = 0;
+
+
+VOID
+WriteTpmPort(
+    IN UINT32 AddressRegisterValue,
+    IN UINT32 DataRegisterValue
+)
+{
+#if defined(MDE_CPU_AARCH64)
+    UINT64 Port = FixedPcdGet64(PcdTpmBaseAddress) + 0x80;
+    MmioWrite32(Port, AddressRegisterValue);
+    MmioWrite32(Port + 4, DataRegisterValue);
+#elif defined(MDE_CPU_X64)
+    IoWrite32(TpmControlPort, AddressRegisterValue);
+    IoWrite32(TpmDataPort, DataRegisterValue);
+#endif
+}
+
+UINT32
+ReadTpmPort(
+    IN UINT32 AddressRegisterValue
+)
+{
+#if defined(MDE_CPU_AARCH64)
+    UINT64 Port = FixedPcdGet64(PcdTpmBaseAddress) + 0x80;
+    MmioWrite32(Port, AddressRegisterValue);
+    return MmioRead32(Port + 4);
+#elif defined(MDE_CPU_X64)
+    IoWrite32(TpmControlPort, AddressRegisterValue);
+    return IoRead32(TpmDataPort);
+#endif
+}
 
 EFI_STATUS
 EFIAPI
@@ -88,7 +197,7 @@ Return Value:
         goto Cleanup;
     }
 
-    if (mTpm2ControlArea->Error != 0)
+    if (mTpm2ControlArea->Status != 0)
     {
         // device in error state.
         status = EFI_DEVICE_ERROR;
@@ -96,7 +205,7 @@ Return Value:
     }
 
     // Check if command fits into command buffer.
-    if (mTpm2ControlArea->CommandSize < InputParameterBlockSize)
+    if (mTpm2ControlArea->CommandBufferSize < InputParameterBlockSize)
     {
         status = EFI_INVALID_PARAMETER;
         goto Cleanup;
@@ -125,7 +234,7 @@ Return Value:
             continue;
         }
 
-        if (mTpm2ControlArea->Error != 0)
+        if (mTpm2ControlArea->Status != 0)
         {
             status = EFI_DEVICE_ERROR;
             goto Cleanup;
@@ -157,7 +266,6 @@ Cleanup:
 
     return status;
 }
-
 
 /**
   This service enables the sending of commands to the TPM2.
@@ -246,18 +354,31 @@ Tpm2RegisterTpm2DeviceLib (
   IN TPM2_DEVICE_INTERFACE   *Tpm2Device
   )
 {
-    mTpm2ControlArea = (EFI_TPM2_ACPI_CONTROL_AREA*)Tpm2Device;
+    mTpm2ControlArea = (FTPM_CONTROL_AREA*)Tpm2Device;
+
+    DEBUG((DEBUG_VERBOSE, __FUNCTION__" - TpmBaseAddress == 0x%016lX\n", mTpm2ControlArea));
 
     // If any of these values are bad, we've failed to register this library.
-    if ((mTpm2ControlArea->Command == (UINT64)-1) ||
-        (mTpm2ControlArea->Response == (UINT64)-1) ||
-        (mTpm2ControlArea->ResponseSize == (UINT32)-1)) {
+    if ((mTpm2ControlArea->CommandPALow == (UINT32)-1) ||
+        (mTpm2ControlArea->ResponsePALow == (UINT32)-1) ||
+        (mTpm2ControlArea->ResponseBufferSize == (UINT32)-1)) {
       DEBUG(( DEBUG_ERROR, __FUNCTION__" - TPM MMIO Space at 0x%08X is not decoding!\tCannot register interface!\n", mTpm2ControlArea ));
       return EFI_DEVICE_ERROR;
     }
-    mCommandBuffer = (UINT8*)(UINTN)mTpm2ControlArea->Command;
-    mResponseBuffer = (UINT8*)(UINTN)mTpm2ControlArea->Response;
-    mResponseSize = (UINTN)mTpm2ControlArea->ResponseSize;
+
+    LARGE_INTEGER commandBufferPA;
+    commandBufferPA.u.LowPart = mTpm2ControlArea->CommandPALow;
+    commandBufferPA.u.HighPart = mTpm2ControlArea->CommandPAHigh;
+
+    LARGE_INTEGER responseBufferPA;
+    responseBufferPA.u.LowPart = mTpm2ControlArea->ResponsePALow;
+    responseBufferPA.u.HighPart = mTpm2ControlArea->ResponsePAHigh;
+
+    mCommandBuffer = (UINT8*)(UINTN)commandBufferPA.QuadPart;
+    mResponseBuffer = (UINT8*)(UINTN)responseBufferPA.QuadPart;
+    mResponseSize = (UINTN)mTpm2ControlArea->ResponseBufferSize;
+
+    DEBUG((DEBUG_VERBOSE, __FUNCTION__" - TPM MMIO Space at 0x%016lX, Command=0x%016lX, Response=0x%016lX, Size=0x%08X\n", mTpm2ControlArea, mCommandBuffer, mResponseBuffer, mResponseSize));
 
     return EFI_SUCCESS;
 }

@@ -101,13 +101,12 @@ APRIORI DXE {
 #
 INF MsvmPkg/Sec/SecMain.inf
 INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
 INF MdeModulePkg/Core/Pei/PeiMain.inf
 INF MsvmPkg/PlatformPei/PlatformPei.inf
 INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
-!ifdef INCLUDE_TPM
 INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
-!endif
 
 #
 # DXE Components

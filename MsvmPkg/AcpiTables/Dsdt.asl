@@ -276,7 +276,7 @@ DefinitionBlock (
     Device(\_SB.VMOD.VMBS)
     {
         Name(STA, 0xF)
-        Name(_ADR, 0x00)        
+        Name(_ADR, 0x00)
 #if defined(_DSDT_ARM_)
         Name(_CCA, One)
 #endif
@@ -340,8 +340,6 @@ DefinitionBlock (
 
     // TPM ====================================================================
 
-#if defined(_DSDT_INTEL_)
-
     If(LGreater(TCFG, 0))
     {
         Device(\_SB.VMOD.TPM2)
@@ -360,14 +358,27 @@ DefinitionBlock (
                 Return (0x0F)
             }
 
+#if defined(_DSDT_INTEL_)
+
             // Operational region for TPM general IO port access
-            // TODO: Need MMIO for ARM
             OperationRegion (GIO, SystemIO, 0x1040, 8)
             Field (GIO, DWordAcc, NoLock, Preserve)
             {
                 CTLP, 32,      // 32-bit control port
                 DATP, 32,      // 32-bit data port
             }
+
+#elif defined(_DSDT_ARM_)
+
+            // MMIO region for Virtual TPM
+            OperationRegion(GIO, SystemMemory, FixedPcdGet32(PcdTpmBaseAddress) + 0x80, 8)
+            Field(GIO, DWordAcc, NoLock, WriteAsZeros)
+            {
+                CTLP, 32,      // 32-bit control port
+                DATP, 32,      // 32-bit data port
+            }
+
+#endif
 
             // TCG Physical Presence Interface
             Method (TPPI, 2, Serialized)
@@ -485,10 +496,9 @@ DefinitionBlock (
                 // with bit 0 set to 0 indicating no functions supported.
                 Return (Buffer () {0})
             }
+
         }
     }
-
-#endif
 
     // SGX ====================================================================
 

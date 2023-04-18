@@ -101,7 +101,7 @@
   UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
   RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
-  MmuLib|MdePkg/Library/BaseMmuLibNull/BaseMmuLibNull.inf 
+  MmuLib|ArmPkg/Library/MmuLib/BaseMmuLib.inf
 
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
@@ -164,7 +164,6 @@
 [LibraryClasses.common.SEC, LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
   ArmMmuLib|ArmPkg/Library/ArmMmuLib/ArmMmuPeiLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/BaseExtractGuidedSectionLib/BaseExtractGuidedSectionLib.inf
-  HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
   PeiServicesTablePointerLib|ArmPkg/Library/PeiServicesTablePointerLib/PeiServicesTablePointerLib.inf
@@ -179,6 +178,7 @@
 #
 [LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/PeiHvHypercallLib.inf
+  HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
   PcdLib|MdePkg/Library/PeiPcdLib/PeiPcdLib.inf
@@ -195,9 +195,11 @@
 # Library instance overrides just for PEIMs
 #
 [LibraryClasses.common.PEIM]
-  PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+  PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
+  RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
 
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
 
@@ -278,6 +280,7 @@
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/RuntimeCryptLib.inf
   ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
 
 # PERF MODULES START
@@ -437,6 +440,12 @@
 
   # Configure max supported number of Logical Processorss
   #gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
+
+  # Base addresses of memory mapped devices in MMIO space.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000
+
+  # COM port used for pre-DXE debugging
+  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8
 
   # Disable front page auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
@@ -615,6 +624,29 @@
   gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr|0x0
   gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize|0x0
 
+  # PcdTpm2HashMask
+  # This mask is used to indicate which PCRs are intended to be supported by the *platform* (not UEFI software).
+  # If a PCR is allocated that isn't in this mask, it will be deallocated by Tcg2Pei.
+  # If a PCR is supported in this mask, but isn't supported by the TPM, the mask will be updated by Tcg2Pei.
+  # This mask is adjusted for legacy VM versions for compatibility reasons.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|0x00000007               # HASH_ALG_SHA[384 | 256 | 1]
+
+  # PcdTcg2HashAlgorithmBitmap
+  # This bitmap is updated at runtime by HashLibBaseCryptoRouter.
+  # It indicates the UEFI at boot with the current FW support for TPM PCR hashing algorithms.
+  # For this implementation, we promise no support beyond what is provided by the HashLib instances.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTcg2HashAlgorithmBitmap|0x00000000
+
+  # Default TCG2 stack will try to autodect TPM at startup.
+  # Fix this to dTPM 2.0 and skip the autodetection.
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x5a, 0xf2, 0x6b, 0x28, 0xc3, 0xc2, 0x8c, 0x40, 0xb3, 0xb4, 0x25, 0xe6, 0x75, 0x8b, 0x73, 0x17}
+
+  # As a test disable PCR4 measurements
+  # future change should be to have worker process pass config for this value
+  #  This should only be used to support upgrades/existing VMs
+  gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
+
   # UEFI_CONFIG_NVDIMM_COUNT
   gMsvmPkgTokenSpaceGuid.PcdNvdimmCount|0x0
 
@@ -635,22 +667,20 @@
 ################################################################################
 
 [Components]
+  #
+  # SEC Phase modules
+  #
+  MsvmPkg/Sec/SecMain.inf
 
   #
   # PEI Phase modules
   #
-  MsvmPkg/Sec/SecMain.inf
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
   MdeModulePkg/Core/Pei/PeiMain.inf
+  MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   MsvmPkg/PlatformPei/PlatformPei.inf
   MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
-
-  #SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
-  #  <LibraryClasses>
-  #    HashLibTpm2|SecurityPkg/Library/HashLibTpm2/HashLibTpm2.inf
-  #    Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTrEE/Tpm2DeviceLibTrEE.inf
-  #}
 
   #
   # DXE Phase modules
@@ -755,7 +785,6 @@
   # TPM related components
   # TODO: Currently the PH is locked by the hypervisor.
   #       If this ever changes, will need a driver to lock the PH.
-  # FIXME: no TPM on AARCH64 yet, still need these?
 
   SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
@@ -766,6 +795,18 @@
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
+  }
+
+  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
+    <LibraryClasses>
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
+      NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
+      #special library For HyperV so that boot doesn't measure Main FV
+      NULL|MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.inf
   }
 
   MsKdDebugPkg2/KdDxe/KdDxe.inf {
