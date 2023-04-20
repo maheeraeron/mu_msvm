@@ -56,6 +56,7 @@ class PlatformBuilder(UefiBuilder, UpdateSettingsManager, SetupSettingsManager, 
         logging.debug("PlatformBuilder SetPlatformEnv")
 
         self.env.SetValue("PRODUCT_NAME", "Hyper-V", "Platform Hardcoded")
+        self.env.SetValue("TOOL_CHAIN_TAG", "VS2022", "Platform hardcoded")
         self.env.SetValue("BLD_*_BUILD_UNIT_TESTS", "FALSE", "Unit Test build off by default")
         self.env.SetValue("BLD_*_BUILD_APPS", "FALSE", "App Build off by default")
         self.env.SetValue("CONF_TEMPLATE_DIR", "MsvmPkg", "Add custom conf dir")
@@ -68,14 +69,11 @@ class PlatformBuilder(UefiBuilder, UpdateSettingsManager, SetupSettingsManager, 
             self.env.SetValue("ACTIVE_PLATFORM", "MsvmPkg/MsvmPkgAARCH64.dsc", "Platform Hardcoded")
             self.env.SetValue("TARGET_ARCH", "AARCH64", "Platform Hardcoded")
             self.env.SetValue("ARCH", "AARCH64", "Platform hardcoded")
-            #Temporary, until VS2022 tooling issue for aarch64 are understood
-            self.env.SetValue("TOOL_CHAIN_TAG", "VS2019", "Platform hardcoded")
         else:
             logging.debug("PlatformBuilder building X64")
             self.env.SetValue("ACTIVE_PLATFORM", "MsvmPkg/MsvmPkgX64.dsc", "Platform Hardcoded")
             self.env.SetValue("TARGET_ARCH", "X64", "Platform Hardcoded")
             self.env.SetValue("ARCH", "X64", "Platform hardcoded")
-            self.env.SetValue("TOOL_CHAIN_TAG", "VS2022", "Platform hardcoded")
 
         #self.env.SetValue("BLD_*_BUILDID", "72932128", "hardcoded for easy build file")
         self.env.SetValue("BLD_*_BUILDID_STRING", "17.1590.800", "hardcoded for easy build file")    # hack to make FdReport
