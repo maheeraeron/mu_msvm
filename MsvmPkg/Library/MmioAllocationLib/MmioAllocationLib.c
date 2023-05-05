@@ -48,9 +48,11 @@ AllocateMmioPages(
     // But for now, it doesn't need to be.
     UINT64 spaceToAllocate = NumberOfPages * EFI_PAGE_SIZE;
     VOID* baseAddress = NULL;
+    UINT64 alignedAllocationBase = ALIGN_VALUE(mMmioFreeBaseAddress, spaceToAllocate);
+    UINT64 totalAllocationSize = (alignedAllocationBase - mMmioFreeBaseAddress) + spaceToAllocate;
 
-    if (spaceToAllocate > mMmioFreeSpaceRemaining ||
-        spaceToAllocate == 0)
+    if (totalAllocationSize > mMmioFreeSpaceRemaining ||
+        totalAllocationSize == 0)
     {
         // Not enough free space.
         return NULL;
@@ -59,10 +61,10 @@ AllocateMmioPages(
     // TODO-cho: This is a static lib for now and the VPCI vsc does not need thread safety,
     //           but if it ever becomes a full DXE driver, it will need to raise/lower
     //           TPL to synchronize across different callers.
-    baseAddress = (VOID*) mMmioFreeBaseAddress;
-    mMmioFreeBaseAddress += spaceToAllocate;
-    mMmioAllocatedSpace += spaceToAllocate;
-    mMmioFreeSpaceRemaining -= spaceToAllocate;
+    baseAddress = (VOID*) alignedAllocationBase;
+    mMmioFreeBaseAddress += totalAllocationSize;
+    mMmioAllocatedSpace += totalAllocationSize;
+    mMmioFreeSpaceRemaining -= totalAllocationSize;
 
     return baseAddress;
 }
