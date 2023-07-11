@@ -251,6 +251,12 @@ DefinitionBlock (
                 Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom1Vector)}
             })
+            Name(_DSD, Package() {
+                ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+                Package() {
+                    Package(2) {"SerCx-FriendlyName", "UART1"}
+                }
+            })
         }
 
         // COM2 (PL011Device.cpp)
@@ -264,6 +270,12 @@ DefinitionBlock (
                 Memory32Fixed(ReadWrite, FixedPcdGet32(PcdCom2RegisterBase), 0x1000)
                 Interrupt(ResourceConsumer, Level, ActiveHigh, Exclusive)
                     {FixedPcdGet8(PcdCom2Vector)}
+            })
+            Name(_DSD, Package() {
+                ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+                Package() {
+                    Package(2) {"SerCx-FriendlyName", "UART2"}
+                }
             })
         }
 
