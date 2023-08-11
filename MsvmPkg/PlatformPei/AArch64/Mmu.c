@@ -29,6 +29,8 @@
 #include <BiosInterface.h>
 #include <Config.h>
 
+#include "Extra.h"
+
 // We use this index definition to define an invalid block entry
 #define TT_ATTR_INDX_INVALID    ((UINT32)~0)
 
@@ -593,15 +595,13 @@ ConfigureMmu(
     ASSERT(TranslationTableAttribute == ARM_MEMORY_REGION_ATTRIBUTE_WRITE_BACK ||
         TranslationTableAttribute == ARM_MEMORY_REGION_ATTRIBUTE_NONSECURE_WRITE_BACK);
 
-    ArmDisableCachesAndMmu();
-    ArmSetTTBR0(TranslationTable);
-    ArmSetTCR(TCR);
-    ArmSetMAIR(MAIR_ATTR(TT_ATTR_INDX_DEVICE_MEMORY, MAIR_ATTR_DEVICE_MEMORY) |                      // mapped to EFI_MEMORY_UC
-               MAIR_ATTR(TT_ATTR_INDX_MEMORY_NON_CACHEABLE, MAIR_ATTR_NORMAL_MEMORY_NON_CACHEABLE) | // mapped to EFI_MEMORY_WC
-               MAIR_ATTR(TT_ATTR_INDX_MEMORY_WRITE_THROUGH, MAIR_ATTR_NORMAL_MEMORY_WRITE_THROUGH) | // mapped to EFI_MEMORY_WT
-               MAIR_ATTR(TT_ATTR_INDX_MEMORY_WRITE_BACK, MAIR_ATTR_NORMAL_MEMORY_WRITE_BACK));       // mapped to EFI_MEMORY_WB
-    ArmInvalidateTlb();
-    ArmEnableCachesAndMmu();
+    ConfigureCachesAndMmu(
+        TranslationTable,
+        TCR, 
+        MAIR_ATTR(TT_ATTR_INDX_DEVICE_MEMORY, MAIR_ATTR_DEVICE_MEMORY) |                      // mapped to EFI_MEMORY_UC
+        MAIR_ATTR(TT_ATTR_INDX_MEMORY_NON_CACHEABLE, MAIR_ATTR_NORMAL_MEMORY_NON_CACHEABLE) | // mapped to EFI_MEMORY_WC
+        MAIR_ATTR(TT_ATTR_INDX_MEMORY_WRITE_THROUGH, MAIR_ATTR_NORMAL_MEMORY_WRITE_THROUGH) | // mapped to EFI_MEMORY_WT
+        MAIR_ATTR(TT_ATTR_INDX_MEMORY_WRITE_BACK, MAIR_ATTR_NORMAL_MEMORY_WRITE_BACK));
 
     return EFI_SUCCESS;
 
