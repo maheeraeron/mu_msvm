@@ -13,15 +13,19 @@ strategy:
     TARGET_DEBUG_X64:
       Build.Target: 'DEBUG'
       Build.Arch: 'x64'
+      Build.Extra: 'BLD_*_DEBUG_NOISY=1 BLD_*_DEBUGLIB_SERIAL=1'
     TARGET_RELEASE_x64:
       Build.Target: 'RELEASE'
       Build.Arch: 'x64'
+      Build.Extra: ''
     TARGET_DEBUG_AARCH64:
       Build.Target: 'DEBUG'
       Build.Arch: 'AARCH64'
+      Build.Extra: 'BLD_*_DEBUG_NOISY=1 BLD_*_DEBUGLIB_SERIAL=1'
     TARGET_RELEASE_AARCH64:
       Build.Target: 'RELEASE'
       Build.Arch: 'AARCH64'
+      Build.Extra: ''
 
 workspace:
   clean: all
@@ -67,7 +71,7 @@ steps:
 - task: NuGetAuthenticate@0
   inputs:
     nuGetServiceConnections: WindowsPartners_NugetFeedConnection
-    
+
 - task: CmdLine@1
   displayName: 'Platform build Setup'
   inputs:
@@ -84,7 +88,7 @@ steps:
   displayName: 'Run Build '
   inputs:
     filename: python.exe
-    arguments: '$(PlatformPkg)/PlatformBuild.py  tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE'
+    arguments: '$(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE'
 
 # Copy the build logs to the artifact staging directory
 - task: CopyFiles@2

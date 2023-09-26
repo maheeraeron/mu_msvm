@@ -15,5 +15,6 @@
   <files>
     <file src="..\Build\**\FV\Msvm.fd"/>
     <file src="..\Build\**\PDB\*" target="symbols"/>
+    <file src="..\Build\**\MAP\*" target="map"/>
   </files>
 </package>

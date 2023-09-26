@@ -105,7 +105,7 @@
   #RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf  
+  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
   RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
   Hash2CryptoLib|SecurityPkg/Library/DxeHash2CryptoLib/DxeHash2CryptoLib.inf
@@ -230,7 +230,7 @@
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
-  
+
 
 #
 # Library instances overrides for just DXE CORE
@@ -348,10 +348,7 @@
   # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
-  # Turns on DEBUG_INFO and DEBUG_VERBOSE
-  # gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400042
-  # Turns on DEBUG_INFO
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000042
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEF4B
 !else
   # This default turns on errors and warnings
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000002
@@ -456,7 +453,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
 
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
-  
+
   gEfiNetworkPkgTokenSpaceGuid.PcdDhcp6UidType|4              # 04 = UUID-Based DHCPv6 Unique Identifier (DUID-UUID)
 
   # UEFI Config information from the Bios VDEV
@@ -597,7 +594,7 @@
   gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated|FALSE
   gMsvmPkgTokenSpaceGuid.PcdTpmLocalityRegsEnabled|FALSE
-  
+
 
   # UEFI_CONFIG_PROCESSOR_INFORMATION
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount|0x0
