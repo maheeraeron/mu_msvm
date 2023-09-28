@@ -19,7 +19,7 @@ strategy:
     TARGET_DEBUG_AARCH64:
       Build.Target: 'DEBUG'
       Build.Arch: 'AARCH64'
-      Build.Extra: 'BLD_*_DEBUG_NOISY=1 BLD_*_DEBUGLIB_SERIAL=1'
+      Build.Extra: ''
     TARGET_RELEASE_AARCH64:
       Build.Target: 'RELEASE'
       Build.Arch: 'AARCH64'
