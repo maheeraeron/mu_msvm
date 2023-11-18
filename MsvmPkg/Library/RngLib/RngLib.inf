@@ -13,7 +13,7 @@
 #     If host emulation is used, it is required to run this lib in memory.
 #
 
-#Override : 00000002 | MdePkg/Library/BaseRngLib/BaseRngLib.inf | 96b87d06dd53bffe040834d31108291c | 2022-05-11T06-57-37 | cec801672cc1c15e5ee96b0c502785dad9c80915
+#Override : 00000002 | MdePkg/Library/BaseRngLib/BaseRngLib.inf | 752a58a9042740ebf256b4f64e4fd356 | 2023-11-14T22-35-48 | 11fc03bfa5afe10509e0e31d46136384b8714e42
 
 [Defines]
   INF_VERSION                    = 0x00010005

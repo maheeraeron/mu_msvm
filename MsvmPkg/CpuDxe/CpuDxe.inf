@@ -10,7 +10,7 @@
 #     CPU driver installs CPU Architecture Protocol
 #
 
-#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 136776f7d84ac62c4dec70112e5f7bfb | 2023-01-31T22-02-37 | e81e1dfd55b260a367f5e38ae985dc757a308ccc
+#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | ca79c8f3eb73a661774f4982b7b63d0b | 2023-11-14T22-33-04 | 11fc03bfa5afe10509e0e31d46136384b8714e42
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -38,7 +38,6 @@
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   LocalApicLib
-  UefiCpuLib
   IsolationLib    ## MS_HYP_CHANGE
   
 [Sources]

@@ -59,13 +59,13 @@
     DebugLib
     HobLib
     IoLib
+    IsolationLib
     PeCoffLib
     PeimEntryPoint
-    PeiResourcePublicationLib
     PeiServicesLib
     PeiServicesTablePointerLib
     PcdLib
-    IsolationLib
+    ResourcePublicationLib
 
 [LibraryClasses.X64]
     HostVisibilityLib

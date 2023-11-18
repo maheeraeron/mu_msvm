@@ -7,7 +7,7 @@
 #
 ##
 
-#Override : 00000002 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | fc40c612b005c875de88806ed97823f2 | 2022-11-03T09-05-54 | d9775374c89af7252cad99265195baaa6abc69c6
+#Override : 00000002 | MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf | 7a6749b79b81dea58385ae7444f99f86 | 2023-11-14T22-34-38 | fdf2231211791ac47dfbd40b2b0540e3c3107f2a
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -33,7 +33,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  ## HyperV Override: Need internal package for libs.
+  ## MS_HYP_CHANGE: Need internal package for libs.
   MsvmPkg/MsvmPkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
 

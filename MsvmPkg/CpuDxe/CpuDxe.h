@@ -30,7 +30,6 @@ Abstract:
 #include <Library/DebugLib.h>
 #include <Library/MtrrLib.h>
 #include <Library/LocalApicLib.h>
-#include <Library/UefiCpuLib.h>
 #include <Guid/IdleLoopEvent.h>
 #include <IsolationTypes.h>   // MS_HYP_CHANGE
 #include <FailFast.h>  // MS_HYP_CHANGE

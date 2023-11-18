@@ -83,6 +83,7 @@
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
   MemoryInitPeiLib|ArmVirtPkg/Library/ArmVirtMemoryInitPeiLib/ArmVirtMemoryInitPeiLib.inf
   MsBootPolicyLib|MsvmPkg/Library/MsBootPolicyLib/MsBootPolicyLib.inf
+  PanicLib|MdePkg/Library/BasePanicLibNull/BasePanicLibNull.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
@@ -93,6 +94,7 @@
   ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
   SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
+  SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
   TimerLib|MsvmPkg/Library/HvTimerLib/HvTimerLib.inf
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
@@ -196,7 +198,7 @@
 #
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
-  PeiResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
+  ResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
   RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
@@ -771,6 +773,7 @@
   MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
+  MsvmPkg/RngDxe/RngDxe.inf
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf
@@ -788,7 +791,6 @@
   # TODO: Currently the PH is locked by the hypervisor.
   #       If this ever changes, will need a driver to lock the PH.
 
-  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {

@@ -16,7 +16,7 @@ Abstract:
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
-#include <Library/UefiCpuLib.h>
+#include <Library/CpuLib.h>
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <EfiNt.h>
 #include <hvgdk_mini.h>

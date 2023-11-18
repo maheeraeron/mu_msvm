@@ -160,6 +160,7 @@ GetPagingDetails (
   OUT UINT32                             **Attributes        OPTIONAL
   );
 
+// MS_HYP_CHANGE BEGIN
 #if defined(MDE_CPU_X64)
 
 /*
@@ -173,5 +174,8 @@ InitializeMpPageTables (
   );
 
 #endif
+
+// MS_HYP_CHANGE END
+
 
 #endif

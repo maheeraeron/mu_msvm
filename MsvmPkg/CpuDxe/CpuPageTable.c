@@ -1222,7 +1222,7 @@ InitializePageTableLib (
   return ;
 }
 
-
+// MS_HYP_CHANGE BEGIN
 #if defined(MDE_CPU_X64)
 
 /*
@@ -1333,3 +1333,5 @@ InitializeMpPageTables (
 }
 
 #endif
+
+// MS_HYP_CHANGE END

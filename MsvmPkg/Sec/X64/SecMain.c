@@ -18,7 +18,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/UefiCpuLib.h>
+#include <Library/CpuLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/PeCoffLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>

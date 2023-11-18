@@ -60,7 +60,7 @@
   PeCoffExtraActionLib
   PeCoffGetEntryPointLib
   PeCoffLib
-  UefiCpuLib
+  CpuLib
 
 [LibraryClasses.AARCH64]
   ArmLib
