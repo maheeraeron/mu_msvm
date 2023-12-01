@@ -877,7 +877,7 @@
 
 [BuildOptions]
   # Generate PDBs on release builds with full debugging, with linker and CC flags
-  MSFT:*_*_*_DLINK_FLAGS = /DEBUG:FULL /PDB:$(MODULE_NAME).pdb /PDBALTPATH:$(MODULE_NAME).pdb
+  MSFT:*_*_*_DLINK_FLAGS = /DEBUG:FULL
   MSFT:*_*_*_CC_FLAGS = /Zi
 
 [BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER]
