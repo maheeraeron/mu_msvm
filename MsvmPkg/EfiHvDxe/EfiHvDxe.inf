@@ -56,3 +56,4 @@
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
+    gMsvmPkgTokenSpaceGuid.PcdSvsmCallingArea

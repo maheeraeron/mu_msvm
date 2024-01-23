@@ -179,6 +179,7 @@
     gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
+    gMsvmPkgTokenSpaceGuid.PcdSvsmCallingArea
     gMsvmPkgTokenSpaceGuid.PcdAsptPtr
     gMsvmPkgTokenSpaceGuid.PcdAsptSize
     gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated

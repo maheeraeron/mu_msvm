@@ -27,6 +27,7 @@ Abstract:
 #include <Library/PeiServicesLib.h>
 #include <Library/ResourcePublicationLib.h>
 #include <Ppi/ConfigPpi.h>
+#include <Hv.h>
 #include <Config.h>
 #include <KdNet.h>
 #include <IsolationTypes.h>
@@ -84,7 +85,9 @@ Return Value:
 
 EFI_STATUS
 ParseIgvmMemoryMap(
-    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo,
+    _In_ UINT64 SvsmBase,
+    _In_ UINT64 SvsmSize
     )
 /*++
 
@@ -96,6 +99,10 @@ Routine Description:
 Arguments:
 
     ParameterInfo - Supplies a pointer to the parameter information block.
+
+    SvsmBase - Supplies the base of any SVSM region.
+
+    SvsmSize - Supplies the size of any SVSM region.
 
 Return Value:
 
@@ -113,12 +120,28 @@ Return Value:
     PVM_MEMORY_RANGE_V5 range;
     UINT32 rangeIndex;
     UINT32 rangeFlags;
+    UINT64 reservedBase;
+    UINT64 reservedEnd;
+    UINT64 svsmEnd;
     PVOID uefiMemoryMap;
     EFI_STATUS Status;
 
     memoryMap = GetIgvmData(ParameterInfo, ParameterInfo->MemoryMapOffset);
     maximumIndex = (ParameterInfo->MemoryMapPageCount * EFI_PAGE_SIZE) /
                    sizeof(IGVM_VHS_MEMORY_MAP_ENTRY);
+
+    //
+    // Make sure any SVSM region is sane.
+    //
+
+    svsmEnd = SvsmBase + SvsmSize;
+    if (svsmEnd < SvsmBase)
+    {
+        return EFI_DEVICE_ERROR;
+    }
+    SvsmBase /= SIZE_4KB;
+    SvsmSize /= SIZE_4KB;
+    svsmEnd /= SIZE_4KB;
 
     //
     // Convert the memory map to the format expected by UEFI.
@@ -135,6 +158,18 @@ Return Value:
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdLegacyMemoryMap::0x%x \n", Status));
         return Status;
+    }
+
+    //
+    // Determine the address of the next reserved area.
+    //
+
+    reservedBase = ParameterInfo->VpContextPageNumber;
+    reservedEnd = reservedBase + 1;
+    if ((SvsmSize != 0) && (SvsmBase < reservedBase))
+    {
+        reservedBase = SvsmBase;
+        reservedEnd = svsmEnd;
     }
 
     nextPage = 0;
@@ -177,47 +212,95 @@ Return Value:
 
         //
         // Determine whether this range can be consumed in its entirety.  It
-        // must be split if it crosses the VP context page.
+        // must be split if it crosses the VP context page or the SVSM region.
         //
 
         if ((rangeFlags & VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED) == 0)
         {
-            if (basePage == ParameterInfo->VpContextPageNumber)
-            {
-                //
-                // Generate a single reserved page and process the remainder
-                // of the range (if any) in the next pass.
-                //
+            //
+            // Ensure that the location of the next reserved range is correct.
+            //
 
-                memoryMap[index].StartingGpaPageNumber += 1;
-                memoryMap[index].NumberOfPages -= 1;
-                if (memoryMap[index].NumberOfPages == 0)
+            if (basePage >= reservedEnd)
+            {
+                reservedEnd = 0;
+                reservedBase = reservedEnd - 1;
+                if (basePage <= ParameterInfo->VpContextPageNumber)
                 {
-                    index += 1;
+                    reservedBase = ParameterInfo->VpContextPageNumber;
+                    reservedEnd = reservedBase + 1;
+                }
+                if ((SvsmSize != 0) &&
+                    (SvsmBase < reservedBase) &&
+                    (basePage < svsmEnd))
+                {
+                    reservedBase = SvsmBase;
+                    reservedEnd = svsmEnd;
                 }
 
-                pageCount = 1;
-                nextPage = basePage + pageCount;
-                rangeFlags = VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED;
+                if (reservedEnd == 0)
+                {
+                    reservedEnd -= 1;
+                    reservedBase = reservedEnd - 1;
+                }
             }
-            else if ((basePage < ParameterInfo->VpContextPageNumber) &&
-                     (nextPage > ParameterInfo->VpContextPageNumber))
-            {
-                //
-                // If this range straddles the VP context page, then split off
-                // the portion before the page and process the remainder in
-                // the next pass.
-                //
 
-                pageCount = ParameterInfo->VpContextPageNumber - basePage;
-                memoryMap[index].StartingGpaPageNumber = ParameterInfo->VpContextPageNumber;
-                memoryMap[index].NumberOfPages -= pageCount;
-                nextPage = basePage + pageCount;
+            //
+            // Check for overlap with any reserved range.
+            //
+
+            if ((basePage < reservedEnd) && (nextPage > reservedBase))
+            {
+                if (basePage < reservedBase)
+                {
+                    //
+                    // Generate a free range to describe that portion that
+                    // lies before the reserved range, and split the current
+                    // range so it can be processed again in the next pass.
+                    //
+
+                    memoryMap[index].StartingGpaPageNumber = reservedBase;
+                    memoryMap[index].NumberOfPages = nextPage - reservedBase;
+                    pageCount = reservedBase - basePage;
+                    nextPage = basePage;
+                }
+                else
+                {
+                    //
+                    // Generate a reserved range to describe that portion that
+                    // overlaps the reserved range.  If the current range lies
+                    // entirely within the reserved range, then move past it,
+                    // otherwise truncate it so the remainder can be processed
+                    // again in the next pass.
+                    //
+
+                    rangeFlags = VM_MEMORY_RANGE_FLAG_PLATFORM_RESERVED;
+                    if (nextPage < reservedEnd)
+                    {
+                        index += 1;
+                    }
+                    else
+                    {
+                        pageCount = reservedEnd - basePage;
+                        memoryMap[index].StartingGpaPageNumber = reservedEnd;
+                        memoryMap[index].NumberOfPages = nextPage - reservedEnd;
+                        nextPage = reservedEnd;
+                    }
+                }
             }
             else
             {
+                //
+                // This range does not overlap the reserved range, so consume
+                // it in its entirety.
+                //
+
                 index += 1;
             }
+        }
+        else
+        {
+            index += 1;
         }
 
         range->BaseAddress = basePage * SIZE_4KB;
@@ -323,8 +406,10 @@ Return Value:
     UEFI_CONFIG_FLAGS configFlags;
     UEFI_IGVM_PARAMETER_INFO *parameterInfo;
     UEFI_CONFIG_PROCESSOR_INFORMATION processorInfo;
+    PVOID secretsPage;
     EFI_STATUS status;
-
+    UINT64 svsmBase;
+    UINT64 svsmSize;
 
     //
     // Locate the parameter layout description at the base of the parameter
@@ -459,10 +544,21 @@ Return Value:
     ConfigSetUefiConfigFlags(&configFlags);
 
     //
+    // If a secrets page is present, then check to see whether an SVSM is
+    // present.
+    //
+
+    if (parameterInfo->SecretsPageOffset != 0)
+    {
+        secretsPage = GetIgvmData(parameterInfo, parameterInfo->SecretsPageOffset);
+        HvDetectSvsm(secretsPage, &svsmBase, &svsmSize);
+    }
+
+    //
     // Convert the memory map to UEFI format.
     //
 
-    status = ParseIgvmMemoryMap(parameterInfo);
+    status = ParseIgvmMemoryMap(parameterInfo, svsmBase, svsmSize);
     if (EFI_ERROR(status))
     {
         return status;

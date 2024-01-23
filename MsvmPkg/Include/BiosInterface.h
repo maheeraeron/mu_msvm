@@ -866,7 +866,7 @@ typedef struct _UEFI_IGVM_PARAMETER_INFO
     UINT32 UefiMemoryMapOffset;
     UINT32 UefiMemoryMapPageCount;
     UINT32 UefiIgvmConfigurationFlags;
-    UINT32 Reserved;
+    UINT32 SecretsPageOffset;
 } UEFI_IGVM_PARAMETER_INFO;
 
 //

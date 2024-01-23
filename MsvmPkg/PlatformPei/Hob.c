@@ -125,7 +125,9 @@ Return Value:
 #if defined(MDE_CPU_X64)
     if (IsHardwareIsolated())
     {
-        HOB_FAIL_FAST_IF_FAILED (EfiUpdatePageRangeAcceptance(GetIsolationType(),
+        HOB_FAIL_FAST_IF_FAILED (EfiUpdatePageRangeAcceptance(
+            GetIsolationType(),
+            (PVOID)PcdGet64(PcdSvsmCallingArea),
             GpaPageBase,
             PageCount,
             TRUE), CRITICAL_INITIALIZATION_FAILURE);

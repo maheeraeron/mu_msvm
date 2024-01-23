@@ -29,6 +29,12 @@ _sev_pvalidate(
     _Out_ PUINT64 ErrorCode
     );
 
+UINT64
+VispCallSvsm(
+    _In_ UINT64 CallCode,
+    _In_ UINT64 Parameter
+    );
+
 #define SNP_SUCCESS             0
 #define SNP_FAIL_INPUT          1
 #define SNP_FAIL_SIZEMISMATCH   6
@@ -62,6 +68,24 @@ typedef union _GHCB_MSR
 #define GHCB_DATA_PAGE_STATE_PRIVATE    0x001
 #define GHCB_DATA_PAGE_STATE_SHARED     0x002
 
+typedef struct _SVSM_PVALIDATE {
+    UINT8 CallPending;
+    UINT8 Reserved1[7];
+    UINT16 NumberOfEntries;
+    UINT16 NextEntryIndex;
+    UINT32 Reserved2;
+} SVSM_PVALIDATE, *PSVSM_PVALIDATE;
+
+#define SVSM_PVALIDATE_SIZE_MASK        0x0001
+#define SVSM_PVALIDATE_VALIDATE_MASK    0x0004
+
+#define SVSM_CORE_PVALIDATE         0x00000001
+
+#define SVSM_SUCCESS                0
+#define SVSM_ERR_INCOMPLETE         0x80000000
+#define SVSM_ERR_PVALIDATE          0x80001000
+#define SVSM_ERR_PVALIDATE_SIZE_MISMATCH \
+    (SVSM_ERR_PVALIDATE + SNP_FAIL_SIZEMISMATCH)
 
 #define TDX_SUCCESS                 0
 #define TDX_PAGE_SIZE_MISMATCH      0xC0000B0B
@@ -178,6 +202,161 @@ Return Value:
 
 
 EFI_STATUS
+EfiUpdatePageRangeAcceptanceSnpSvsm(
+    _In_ PVOID SvsmCallingArea,
+    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
+    _In_ UINT64 PageCount,
+    _In_ BOOLEAN Accept
+    )
+/*++
+
+Routine Description:
+
+    This routine updates hardware page acceptance state on an SNP platform
+    that uses an SVSM.
+
+Arguments:
+
+    SvsmCallingArea - Supplies a pointer to the SVSM calling area.
+
+    StartingPageNumber - Supplies the starting GPA page number of the range to
+                         change.
+
+    PageCount - Supplies the number of pages to change.
+
+    Accept - Supplies TRUE if the pages are to be accepted, or FALSE if the
+             pages are to be unaccepted.
+
+Return Value:
+
+    Note that an error in this call is not recoverable. The caller must take the
+    appropriate action to fail fast. This lib can be called from PEI and DXE
+    therefore this lib does not perform phase specific fail fast calls.
+
+--*/
+{
+    UINT64 errorCode;
+    UINT32 index;
+    HV_GPA_PAGE_NUMBER largePageSize;
+    UINT32 maximumEntries;
+    UINT32 numberOfEntries;
+    PUINT64 pageArray;
+    UINT32 pageIndex;
+    HV_GPA_PAGE_NUMBER pageNumber;
+    UINT64 pagesRemaining;
+    PSVSM_PVALIDATE pvalidate;
+
+    //
+    // Locate the SVSM calling area.  This page will be used as the parameter page.
+    //
+
+    pvalidate = SvsmCallingArea;
+
+    maximumEntries = (EFI_PAGE_SIZE - ((UINTN)pvalidate & (EFI_PAGE_SIZE - 1))) / sizeof(UINTN);
+    numberOfEntries = sizeof(SVSM_PVALIDATE) / sizeof(UINTN);
+    if (maximumEntries <= numberOfEntries)
+    {
+        return EFI_SECURITY_VIOLATION;
+    }
+    maximumEntries -= numberOfEntries;
+    pageArray = (PUINT64)(pvalidate + 1);
+
+    largePageSize = SIZE_2MB / HV_PAGE_SIZE;
+
+    while (PageCount != 0)
+    {
+        //
+        // Fill the parameter page with as many entries as will fit.
+        //
+
+        errorCode = SVSM_SUCCESS;
+        pageIndex = 0;
+        pageNumber = StartingPageNumber;
+        pagesRemaining = PageCount;
+        numberOfEntries = 0;
+        while ((pagesRemaining != 0) && (numberOfEntries < maximumEntries))
+        {
+            pageArray[numberOfEntries] = pageNumber * EFI_PAGE_SIZE;
+            pageArray[numberOfEntries] |= SVSM_PVALIDATE_VALIDATE_MASK;
+
+            //
+            // Insert a large page entry if possible, but only if the last
+            // call did not fail with a size mismatch error.
+            //
+
+            if (((StartingPageNumber & (largePageSize - 1)) == 0) &&
+                (pagesRemaining >= largePageSize) &&
+                (errorCode != SVSM_ERR_PVALIDATE_SIZE_MISMATCH))
+            {
+                pageArray[numberOfEntries] |= SVSM_PVALIDATE_SIZE_MASK;
+                pageNumber += largePageSize;
+                pagesRemaining -= largePageSize;
+            }
+            else
+            {
+                pageNumber += 1;
+                pagesRemaining -= 1;
+            }
+
+            numberOfEntries += 1;
+        }
+
+        //
+        // Call the SVSM to process as many pages as possible.
+        //
+
+        pvalidate->NumberOfEntries = (UINT16)numberOfEntries;
+        pvalidate->NextEntryIndex = 0;
+        pvalidate->CallPending = 1;
+        while (pvalidate->CallPending)
+        {
+            errorCode = VispCallSvsm(SVSM_CORE_PVALIDATE,
+                                     (UINTN)&pvalidate->NumberOfEntries);
+        }
+
+        //
+        // If the call failed and the failure was not due to a size mismatch,
+        // then fail immediately.
+        //
+
+        if ((errorCode != SVSM_SUCCESS) &&
+            (errorCode != SVSM_ERR_INCOMPLETE) &&
+            (errorCode != SVSM_ERR_PVALIDATE_SIZE_MISMATCH))
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        //
+        // Consume as many entries as were successful.
+        //
+
+        if (errorCode == SVSM_ERR_INCOMPLETE)
+        {
+            numberOfEntries = pvalidate->NextEntryIndex;
+        }
+
+        for (index = 0; index < pvalidate->NextEntryIndex; index += 1)
+        {
+            if (pageArray[index] & SVSM_PVALIDATE_SIZE_MASK)
+            {
+                ASSERT(((pageArray[index] / EFI_PAGE_SIZE) & (largePageSize - 1)) == 0);
+                ASSERT(PageCount >= largePageSize);
+                StartingPageNumber += largePageSize;
+                PageCount -= largePageSize;
+            }
+            else
+            {
+                StartingPageNumber += 1;
+                PageCount -= 1;
+            }
+        }
+    }
+
+    return EFI_SUCCESS;
+}
+
+
+EFI_STATUS
 EfiUpdatePageRangeAcceptanceTdx(
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount
@@ -266,6 +445,7 @@ Return Value:
 EFI_STATUS
 EfiUpdatePageRangeAcceptance(
     _In_ UINT32 IsolationType,
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _In_ BOOLEAN Accept
@@ -280,6 +460,9 @@ Routine Description:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          change.
@@ -313,7 +496,97 @@ Return Value:
     else
     {
         ASSERT(IsolationType == UefiIsolationTypeSnp);
-        return EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber, PageCount, Accept);
+
+        if (SvsmCallingArea != NULL)
+        {
+            return EfiUpdatePageRangeAcceptanceSnpSvsm(SvsmCallingArea,
+                                                       StartingPageNumber,
+                                                       PageCount,
+                                                       Accept);
+        }
+        else
+        {
+            return EfiUpdatePageRangeAcceptanceSnp(StartingPageNumber,
+                                                   PageCount,
+                                                   Accept);
+        }
+    }
+
+    return EFI_SUCCESS;
+}
+
+
+EFI_STATUS
+VispPvalidateSinglePage(
+    _In_opt_ PVOID SvsmCallingArea,
+    _In_ HV_GPA_PAGE_NUMBER PageNumber,
+    _In_ BOOLEAN Validate
+    )
+/*++
+
+Routine Description:
+
+    This routine executes PVALIDATE for a single page, either directly or via
+    a call to the SVSM.
+
+Arguments:
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
+
+    PageNumber - Supplies the GPA page number to process.
+
+    Validate - Supplies the validation argument for PVALIDATE.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    UINT64 errorCode;
+    PUINT64 pageArray;
+    SVSM_PVALIDATE *pvalidate;
+
+    if (SvsmCallingArea != NULL)
+    {
+        //
+        // Locate the SVSM calling area.  This page will be used as the parameter page.
+        //
+
+        pvalidate = SvsmCallingArea;
+        pageArray = (PUINT64)(pvalidate + 1);
+        *pageArray = PageNumber * EFI_PAGE_SIZE;
+        if (Validate)
+        {
+            *pageArray |= SVSM_PVALIDATE_VALIDATE_MASK;
+        }
+
+        pvalidate->NumberOfEntries = 1;
+        pvalidate->NextEntryIndex = 0;
+        pvalidate->CallPending = 1;
+        while (pvalidate->CallPending)
+        {
+            errorCode = VispCallSvsm(SVSM_CORE_PVALIDATE,
+                                     (UINTN)&pvalidate->NumberOfEntries);
+        }
+
+        if (errorCode != SVSM_SUCCESS)
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+    }
+    else
+    {
+        if (_sev_pvalidate((PVOID)(PageNumber * EFI_PAGE_SIZE), 0, 0, &errorCode) != 0)
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
+
+        if (errorCode != 0)
+        {
+            return EFI_SECURITY_VIOLATION;
+        }
     }
 
     return EFI_SUCCESS;
@@ -322,6 +595,7 @@ Return Value:
 
 EFI_STATUS
 EfiMakePageRangeHostVisibleSnp(
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -334,6 +608,9 @@ Routine Description:
     that runs with no paravisor.
 
 Arguments:
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make visible.
@@ -354,8 +631,8 @@ Return Value:
 
 --*/
 {
-    UINT64 errorCode;
     GHCB_MSR ghcbMsr;
+    EFI_STATUS status;
 
     if (ARGUMENT_PRESENT(PagesProcessed))
     {
@@ -368,18 +645,10 @@ Return Value:
         // Ensure this page is no longer a valid private address.
         //
 
-        if (_sev_pvalidate((PVOID)(
-            StartingPageNumber * EFI_PAGE_SIZE),
-            0,
-            0,
-            &errorCode) != 0)
+        status = VispPvalidateSinglePage(SvsmCallingArea, StartingPageNumber, FALSE);
+        if (EFI_ERROR(status))
         {
-            return EFI_SECURITY_VIOLATION;
-        }
-
-        if (errorCode != 0)
-        {
-            return EFI_SECURITY_VIOLATION;
+            return status;
         }
 
         //
@@ -400,20 +669,7 @@ Return Value:
             // modified.
             //
 
-            if (_sev_pvalidate((PVOID)(
-                StartingPageNumber * EFI_PAGE_SIZE),
-                0,
-                TRUE,
-                &errorCode) != 0)
-            {
-                return EFI_SECURITY_VIOLATION;
-            }
-
-            if (errorCode != 0)
-            {
-                return EFI_SECURITY_VIOLATION;
-            }
-
+            VispPvalidateSinglePage(SvsmCallingArea, StartingPageNumber, TRUE);
             return EFI_SECURITY_VIOLATION;
         }
 
@@ -561,6 +817,7 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -575,6 +832,9 @@ Routine Description:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make visible.
@@ -599,6 +859,7 @@ Return Value:
     {
     case UefiIsolationTypeSnp:
         return EfiMakePageRangeHostVisibleSnp(
+            SvsmCallingArea,
             StartingPageNumber,
             PageCount,
             PagesProcessed);
@@ -617,6 +878,7 @@ Return Value:
 
 EFI_STATUS
 EfiMakePageRangeHostNotVisibleSnp(
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -629,6 +891,9 @@ Routine Description:
     the host) on an SNP platform that runs with no paravisor.
 
 Arguments:
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make private.
@@ -649,8 +914,8 @@ Return Value:
 
 --*/
 {
-    UINT64 errorCode;
     GHCB_MSR ghcbMsr;
+    EFI_STATUS status;
 
     if (ARGUMENT_PRESENT(PagesProcessed))
     {
@@ -679,18 +944,10 @@ Return Value:
         // Validate this page to make it accessible again.
         //
 
-        if (_sev_pvalidate((PVOID)(
-            StartingPageNumber * EFI_PAGE_SIZE),
-            0,
-            1,
-            &errorCode) != 0)
+        status = VispPvalidateSinglePage(SvsmCallingArea, StartingPageNumber, TRUE);
+        if (EFI_ERROR(status))
         {
-            return EFI_SECURITY_VIOLATION;
-        }
-
-        if (errorCode != 0)
-        {
-            return EFI_SECURITY_VIOLATION;
+            return status;
         }
 
         if (ARGUMENT_PRESENT(PagesProcessed))
@@ -709,6 +966,7 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostNotVisible(
     _In_ UINT32 IsolationType,
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -725,6 +983,9 @@ Arguments:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make not visible.
@@ -749,6 +1010,7 @@ Return Value:
     {
     case UefiIsolationTypeSnp:
         return EfiMakePageRangeHostNotVisibleSnp(
+            SvsmCallingArea,
             StartingPageNumber,
             PageCount,
             PagesProcessed);

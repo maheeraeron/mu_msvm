@@ -150,3 +150,55 @@ Return Value:
 #endif
     return;
 }
+
+VOID
+HvDetectSvsm(
+    IN PSNP_SECRETS SecretsPage,
+    OUT PUINT64 SvsmBase,
+    OUT PUINT64 SvsmSize
+    )
+/*++
+
+Routine Description:
+
+    Determines whether an SVSM is present.
+
+Arguments:
+
+    SecretsPage - A pointer to the SNP secrets page, if this is a no-paravisor
+                  SNP system.
+
+    SvsmBase - Receives the base of the SVSM area.
+
+    SvsmSize - Receives the size of the SVSM area.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    EFI_STATUS status;
+
+    //
+    // Examine the secrets page to determine whether any SVSM has declared its
+    // presence.
+    //
+
+    if (SecretsPage->SvsmSize != 0)
+    {
+        *SvsmBase = SecretsPage->SvsmBase;
+        *SvsmSize = SecretsPage->SvsmSize;
+        status = PcdSet64S(PcdSvsmCallingArea, SecretsPage->SvsmCallingArea);
+        if (EFI_ERROR(status))
+        {
+            DEBUG((DEBUG_ERROR, "Failed to set the SVSM calling area address::0x%x \n", status));
+            PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
+        }
+    }
+    else
+    {
+        *SvsmBase = 0;
+        *SvsmSize = 0;
+    }
+}

@@ -78,14 +78,15 @@ AllocateHostVisiblePages(
 
     status = EfiMakePageRangeHostVisible(
         IsolationType,
+        (PVOID)PcdGet64(PcdSvsmCallingArea),
         *Allocation / EFI_PAGE_SIZE,
         numberOfPages,
         NULL);
 
-        if (EFI_ERROR(status))
-        {
-            KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
-        }
+    if (EFI_ERROR(status))
+    {
+        KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+    }
 
     *Allocation += PcdGet64(PcdIsolationSharedGpaBoundary);
     *Allocation |= PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);

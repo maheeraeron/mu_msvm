@@ -97,6 +97,7 @@ LIST_ENTRY mHostVisiblePageList;
 UINT64 mSharedGpaBoundary;
 UINT64 mCanonicalizationMask;
 UINT32 mIsolationType;
+PVOID mSvsmCallingArea;
 
 EFI_HV_SINT_CONFIGURATION mSintConfiguration[HV_SYNIC_SINT_COUNT];
 UINT8 mVectorSint[256];
@@ -1240,6 +1241,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
             {
                 status = EfiMakePageRangeHostVisible(
                     mIsolationType,
+                    mSvsmCallingArea,
                     GpaPageBase,
                     PageCount,
                     &pagesProcessed);
@@ -1248,6 +1250,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
             {
                 status = EfiMakePageRangeHostNotVisible(
                     mIsolationType,
+                    mSvsmCallingArea,
                     GpaPageBase,
                     PageCount,
                     &pagesProcessed);
@@ -1274,6 +1277,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         {
             status = EfiUpdatePageRangeAcceptance(
                 mIsolationType,
+                mSvsmCallingArea,
                 GpaPageBase,
                 PageCount,
                 FALSE);
@@ -1391,6 +1395,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         {
             status = EfiUpdatePageRangeAcceptance(
                 mIsolationType,
+                mSvsmCallingArea,
                 GpaPageBase,
                 totalPageCountProcessed,
                 TRUE);
@@ -1653,6 +1658,11 @@ Return Value:
     mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
     mCanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
     paravisorPresent = IsParavisorPresent();
+
+    if ((mIsolationType == UefiIsolationTypeSnp) && !paravisorPresent)
+    {
+        mSvsmCallingArea = (PVOID)PcdGet64(PcdSvsmCallingArea);
+    }
 
     // Allocate hypervisor communication pages.
     mHypercallPage = NULL;

@@ -51,6 +51,7 @@ Return Value:
 EFI_STATUS
 EfiUpdatePageRangeAcceptance(
     _In_ UINT32 IsolationType,
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _In_ BOOLEAN Accept
@@ -67,6 +68,9 @@ Routine Description:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     SharedBoundaryGpa - Supplies the shared boundary GPA for the current
                         platform.
@@ -92,6 +96,7 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostVisible(
     _In_ UINT32 IsolationType,
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
@@ -109,6 +114,9 @@ Arguments:
 Arguments:
 
     IsolationType - Supplies the isolation type of the current platform.
+
+    SvsmCallingArea - If an SVSM is present, supplies a pointer to the SVSM
+                      calling area, otherwise supplies NULL.
 
     StartingPageNumber - Supplies the starting GPA page number of the range to
                          make not visible.
@@ -131,6 +139,7 @@ Return Value:
 EFI_STATUS
 EfiMakePageRangeHostNotVisible(
     _In_ UINT32 IsolationType,
+    _In_opt_ PVOID SvsmCallingArea,
     _In_ HV_GPA_PAGE_NUMBER PageNumber,
     _In_ UINT64 PageCount,
     _Out_opt_ PUINT64 PagesProcessed
