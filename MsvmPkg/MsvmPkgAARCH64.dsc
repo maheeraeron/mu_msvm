@@ -75,7 +75,6 @@
   FdtLib|EmbeddedPkg/Library/FdtLib/FdtLib.inf
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
-  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLib.inf
   HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsicArmVirt.inf
@@ -179,6 +178,7 @@
 # Library instance overrides for PEI
 #
 [LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
+  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibPei.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/PeiHvHypercallLib.inf
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
@@ -222,6 +222,7 @@
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
   EventLogLib|MsvmPkg/Library/EventLogLib/EventLogLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
+  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibDxe.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|NetworkPkg/Library/DxeIpIoLib/DxeIpIoLib.inf

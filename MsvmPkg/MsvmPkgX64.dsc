@@ -70,7 +70,6 @@
   DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
-  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLib.inf
   HostVisibilityLib|MsvmPkg/Library/HostVisibilityLib/HostVisibilityLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
@@ -166,6 +165,7 @@
 # Library instance overrides for PEI
 #
 [LibraryClasses.common.PEI_CORE, LibraryClasses.common.PEIM]
+  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibPei.inf
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
@@ -208,6 +208,7 @@
   EventLogLib|MsvmPkg/Library/EventLogLib/EventLogLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
+  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibDxe.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
