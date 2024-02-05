@@ -28,11 +28,18 @@ strategy:
 workspace:
   clean: all
 
+parameters:
+- name: PublishPRNuget
+  displayName: Publish Nuget Pkg for this PR for testing?
+  type: boolean
+  default: false
+
 variables:
   Build.ToolChainTag: "VS2022"
   PlatformPkg: "MsvmPkg"
   Env.PythonVersion: "3.10.0"
   GIT_TERMINAL_PROMPT: "0"
+
 
 steps:
 - checkout: self
@@ -141,6 +148,26 @@ steps:
     SymbolServerType: 'TeamServices'
     SymbolsProduct: 'Hyper-V UEFI'
   continueOnError: true
+
+- task: NuGetCommand@2
+  displayName: 'Pack the NuGet package'
+  inputs:
+    command: 'pack'
+    packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
+    packDestination: '$(Build.ArtifactStagingDirectory)'
+    packTimezone: 'utc'
+    buildProperties: 'id=$(Build.Repository.Name).HyperVPRGate.$(Build.BuildNumber).$(Build.Arch).$(Build.Target);version=$(Build.BuildId)'
+  condition: and(succeeded(), eq(${{parameters.PublishPRNuget}}, true))
+
+- task: NuGetCommand@2
+  displayName: 'Push the NuGet package to the HyperVUefi feed'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.StagingDirectory)/**/*.nupkg'
+    feedsToUse: 'config'
+    nugetConfigPath: '$(PlatformPkg)/NuGet.config'
+    publishVstsFeed: 'OS/HyperVUefi'
+  condition: and(succeeded(), eq(${{parameters.PublishPRNuget}}, true))
 
 - powershell: |
    git config --file=.gitmodules submodule.Common/MSCORE_INTERNAL.url "https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal"
