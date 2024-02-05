@@ -18,6 +18,9 @@
 
 #include <IndustryStandard/Pci.h>
 
+const UINT16 DEFAULT_PCI_VENDOR_ID              = 0x1414; // Microsoft
+const UINT16 DEFAULT_PCI_DEVICE_ID              = 0xb111;
+
 /// \brief      PciIo Protocol Poll mem. Unimplemented.
 ///
 /// \param      This      The this
@@ -461,24 +464,56 @@ VpcivscPciIoConfigRead(
         return EFI_INVALID_PARAMETER;
     }
 
-    // Check for the parameters used by the NVMe driver.
-    if (Offset != PCI_CLASSCODE_OFFSET ||
-        Count != 3 ||
-        Width != EfiPciIoWidthUint8 )
-    {
-        return EFI_DEVICE_ERROR;
-    }
-
     context = VPCI_DEVICE_CONTEXT_FROM_PCI_IO(This);
 
     // TODO-cho: The device would need to have a VPCI_DEVICE_DESCRIPTION for if
     //           we ever want to support more than just NVMe. But we don't,
     //           so just return the spec values for an NVMe device.
 
-    UINT8* classCode = (UINT8*) Buffer;
-    classCode[0] = 0x2; //ProgIf
-    classCode[1] = 0x8; //SubClass
-    classCode[2] = 0x1; //BaseClass
+    switch (Offset)
+    {
+        case PCI_CLASSCODE_OFFSET:
+            if (!((Count == 3) && (Width == EfiPciIoWidthUint8)))
+            {
+                ASSERT(FALSE);
+                return EFI_DEVICE_ERROR;
+            }
+
+            UINT8* classCode = (UINT8*) Buffer;
+            classCode[0] = 0x2; //ProgIf
+            classCode[1] = 0x8; //SubClass
+            classCode[2] = 0x1; //BaseClass
+            break;
+        case PCI_VENDOR_ID_OFFSET:
+            // PCI_VENDOR_ID_OFFSET and PCI_DEVICE_ID_OFFSET can be read together with a count of 2 at offset PCI_VENDOR_ID_OFFSET
+            if (!(((Count == 1) || (Count == 2)) && (Width == EfiPciIoWidthUint16))) 
+            {
+                ASSERT(FALSE);
+                return EFI_DEVICE_ERROR;
+            }
+
+            UINT16* id = (UINT16*) Buffer;
+            id[0] = DEFAULT_PCI_VENDOR_ID;
+            if (Count == 2) 
+            {
+                // Read the PCI_DEVICE_ID_OFFSET too
+                id[1] = DEFAULT_PCI_DEVICE_ID;
+            }
+            break;
+        case PCI_DEVICE_ID_OFFSET:
+            if (!((Count == 1) && (Width == EfiPciIoWidthUint16)))
+            {
+                ASSERT(FALSE);
+                return EFI_DEVICE_ERROR;
+            }
+            UINT16* deviceId = (UINT16*) Buffer;
+            *deviceId = DEFAULT_PCI_DEVICE_ID;
+            break;
+        default:
+            ASSERT(FALSE);
+            return EFI_DEVICE_ERROR;
+
+    }
 
     return EFI_SUCCESS;
 }
