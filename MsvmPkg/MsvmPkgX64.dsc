@@ -819,17 +819,6 @@
  !endif
   }
 
-  !ifdef BUILD_HAVOC
-  MsvmPkg/Havoc/Havoc.inf {
-    <LibraryClasses>
-      ShellCEntryLib|ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf
-      ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-      FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
-      SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
-      UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
-  }
-  !endif
-
   # UI Theme Protocol
   MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf
 
