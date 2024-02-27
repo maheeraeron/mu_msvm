@@ -148,7 +148,6 @@ INF MsKdDebugPkg2/KdDxe/KdDxe.inf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
-INF MsvmPkg/ConNullDxe/ConNullDxe.inf
 INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf

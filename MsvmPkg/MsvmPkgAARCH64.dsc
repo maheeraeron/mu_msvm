@@ -767,7 +767,6 @@
 
   MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
   MsvmPkg/AcpiTables/AcpiTables.inf
-  MsvmPkg/ConNullDxe/ConNullDxe.inf
   MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   MsvmPkg/EmclDxe/EmclDxe.inf
   MsvmPkg/EventLogDxe/EventLogDxe.inf

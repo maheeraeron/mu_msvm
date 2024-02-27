@@ -784,7 +784,6 @@
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/VmbfsDxe/VmbfsDxe.inf
   MsvmPkg/VmMeasurementDxe/VmMeasurementDxe.inf
-  MsvmPkg/ConNullDxe/ConNullDxe.inf
 
   # TPM related components
   # TODO: Currently the PH is locked by the hypervisor.

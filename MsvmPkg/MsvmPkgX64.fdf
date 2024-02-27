@@ -197,7 +197,6 @@ INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
-INF MsvmPkg/ConNullDxe/ConNullDxe.inf
 INF MsvmPkg/CpuDxe/CpuDxe.inf
 INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
