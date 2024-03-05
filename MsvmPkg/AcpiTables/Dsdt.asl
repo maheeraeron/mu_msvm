@@ -87,6 +87,8 @@ DefinitionBlock (
 
     Name(\_S5, Package(2){0, 0})
 
+#endif
+
     // Define the S4 hibernate state only if configured.
 
     If(LGreater(HCFG, 0))
@@ -94,7 +96,67 @@ DefinitionBlock (
         Name(\_S4, Package(2){1, 0})
     }
 
+#if defined(_DSDT_ARM_)
+
+    Scope(\_SB)
+    {
+        // ARM needs to use the strict check to determine if the hibernate state is present.
+
+        Method(_DSM, 4, NotSerialized)
+        {
+            // DSM UUID
+            switch(ToBuffer(Arg0))
+            {
+                // ACPI DSM UUID for S4 toggle (STRICT_S4_CHECK_DSM_UUID)
+                case(ToUUID("713E539D-E06E-4AE9-A75D-21EB34112B7E"))
+                {
+                    // DSM Function
+                    switch(ToInteger(Arg2))
+                    {
+                        // Function 0: Query function, return based on revision
+                        case(0)
+                        {
+                            // DSM Revision
+                            switch(ToInteger(Arg1))
+                            {
+                                // Revision 0: Function 1 supported
+                                case(0)
+                                {
+                                    Return (Buffer () {0x03})
+                                }
+
+                                default
+                                {
+                                    // no functions supported
+                                    Return (Buffer () {0x00})
+                                }
+                            }
+                        }
+
+                        // Function 1 : Strict S4 enforcement toggle function
+                        case(1)
+                        {
+                            // 0x1 == Opt into strict S4 enforcement
+                            Return(0x0001)
+                        }
+                        default
+                        {
+                            // Functions 2+: not supported
+                        }
+                    }
+                }
+                default
+                {
+                    // No other GUIDs supported
+                    Return (Buffer () {0x00})
+                }
+            }
+        }
+    }
+    
 #endif
+
+
 
     // VMOD ==================================================================
 
