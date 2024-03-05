@@ -796,7 +796,8 @@ Returns:
     {
         if ((StrCmp(VariableName, EFI_SETUP_MODE_NAME) == 0) ||
             (StrCmp(VariableName, EFI_SIGNATURE_SUPPORT_NAME) == 0) ||
-            (StrCmp(VariableName, EFI_SECURE_BOOT_MODE_NAME) == 0))
+            (StrCmp(VariableName, EFI_SECURE_BOOT_MODE_NAME) == 0) ||
+            (StrCmp(VariableName, EFI_DB_DEFAULT_VARIABLE_NAME) == 0))
         {
             return TRUE;
         }
