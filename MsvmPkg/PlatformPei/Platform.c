@@ -884,6 +884,17 @@ Return Value:
         PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize)));
     HobAddFvMemoryRange(PcdGet64(PcdFvBaseAddress), PcdGet32(PcdFvSize));
 
+#if defined(MDE_CPU_AARCH64)
+    //
+    // ARM64 has a separate FV for DXE to support a UEFI spec requirement to
+    // align EfiRuntimeServicesCode to be 64k aligned
+    //
+    if (PcdGet32 (PcdDxeFvSize != 0)) {
+        HobAddFvMemoryRange(PcdGet64(PcdDxeFvBaseAddress), PcdGet32(PcdDxeFvSize));
+    }
+
+#endif // ARM64 FV publishing
+
     if (!IsHardwareIsolatedNoParavisor())
     {
         //

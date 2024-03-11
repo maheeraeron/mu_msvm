@@ -46,13 +46,27 @@ DATA = {
 }
 
 # MAIN volume (start|size)
-0x00001000|0x007FF000
+0x00001000|0x001FF000
 gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdFvSize
 FV = MAIN
 
+# DXE volume that is not force rebased so that the section alignment and
+# file alignment do not need to match
+0x00200000|0x00600000
+gMsvmPkgTokenSpaceGuid.PcdDxeFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdDxeFvSize
+FV = DXE
+
 ################################################################################
 #
-# This FV section describes the MAIN volume contents.
+# This FV section describes the MAIN volume contents. It contains SEC and PEI
+# modules. This section gets forced rebased by the basetools, as it contains
+# some XIP modules. DxeMain is in this FV also so that DxeIpl can find and
+# load it. However, the DXE modules are in a separate FV so that they can
+# not be force rebased, as they are non-XIP and the DXE_RUNTIME_DRIVERs
+# do not meet the requirement for force rebasing (that they have section
+# alignment and file alignment equivalent). There is an added benefit here
+# that PeiCore does not have to spend time enumerating the DXE drivers to
+# determine if it needs to launch them or not.
 #
 [FV.MAIN]
 BlockSize          = 0x1000
@@ -81,6 +95,43 @@ APRIORI PEI {
 }
 
 #
+# SEC and PEI components
+#
+INF MsvmPkg/Sec/SecMain.inf
+INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
+INF MdeModulePkg/Core/Pei/PeiMain.inf
+INF MsvmPkg/PlatformPei/PlatformPei.inf
+INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
+INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+
+#
+# DXE Components
+#
+INF MdeModulePkg/Core/Dxe/DxeMain.inf
+
+[FV.DXE]
+BlockSize          = 0x1000
+FvAlignment        = 4K
+FvForceRebase      = FALSE
+ERASE_POLARITY     = 1
+MEMORY_MAPPED      = TRUE
+STICKY_WRITE       = TRUE
+LOCK_CAP           = TRUE
+LOCK_STATUS        = TRUE
+WRITE_DISABLED_CAP = TRUE
+WRITE_ENABLED_CAP  = TRUE
+WRITE_STATUS       = TRUE
+WRITE_LOCK_CAP     = TRUE
+WRITE_LOCK_STATUS  = TRUE
+READ_DISABLED_CAP  = TRUE
+READ_ENABLED_CAP   = TRUE
+READ_STATUS        = TRUE
+READ_LOCK_CAP      = TRUE
+READ_LOCK_STATUS   = TRUE
+
+#
 # Dispatch these components first in DXE
 #
 APRIORI DXE {
@@ -96,21 +147,6 @@ APRIORI DXE {
   INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 }
 
-#
-# SEC and PEI components
-#
-INF MsvmPkg/Sec/SecMain.inf
-INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
-INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
-INF MdeModulePkg/Core/Pei/PeiMain.inf
-INF MsvmPkg/PlatformPei/PlatformPei.inf
-INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
-INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
-INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
-
-#
-# DXE Components
-#
 INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
 INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
 
@@ -119,7 +155,6 @@ INF FatPkg/EnhancedFatDxe/Fat.inf
 INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
-INF MdeModulePkg/Core/Dxe/DxeMain.inf
 INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
 INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf

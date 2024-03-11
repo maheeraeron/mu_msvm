@@ -847,6 +847,19 @@ ConfigSetUefiConfigFlags(
         memoryProtectionSettings.NxProtectionPolicy.Fields.EfiConventionalMemory = 0;    
     }
 
+    // for architectures like ARM64, the UEFI spec declares that 64k runtime granularity must be supported
+    // and the heap guard system does not support 64k guard pages, so we cannot guard these regions
+    if (RUNTIME_PAGE_ALLOCATION_GRANULARITY != EFI_PAGE_SIZE) {
+        memoryProtectionSettings.HeapGuardPageType.Fields.EfiACPIMemoryNVS = 0;
+        memoryProtectionSettings.HeapGuardPageType.Fields.EfiReservedMemoryType = 0;
+        memoryProtectionSettings.HeapGuardPageType.Fields.EfiRuntimeServicesCode = 0;
+        memoryProtectionSettings.HeapGuardPageType.Fields.EfiRuntimeServicesData = 0;
+        memoryProtectionSettings.HeapGuardPoolType.Fields.EfiACPIMemoryNVS = 0;
+        memoryProtectionSettings.HeapGuardPoolType.Fields.EfiReservedMemoryType = 0;
+        memoryProtectionSettings.HeapGuardPoolType.Fields.EfiRuntimeServicesCode = 0;
+        memoryProtectionSettings.HeapGuardPoolType.Fields.EfiRuntimeServicesData = 0;
+    }
+
     HobAddGuidData(&gDxeMemoryProtectionSettingsGuid,
         &memoryProtectionSettings,
         sizeof(memoryProtectionSettings));

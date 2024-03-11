@@ -31,6 +31,10 @@
   *_*_AARCH64_GENFW_FLAGS = --keepexceptiontable
   DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM
 
+# ARM64 has a UEFI spec requirement that RuntimeServiceCode/Data is 64k aligned
+[BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER]
+  MSFT:*_*_AARCH64_DLINK_FLAGS = /ALIGN:0x10000
+
 ################################################################################
 #
 # SKU Identification section - list of all SKU IDs supported by this Platform.
