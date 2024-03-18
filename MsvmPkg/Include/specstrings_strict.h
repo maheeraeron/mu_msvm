@@ -597,7 +597,7 @@
 *  void myfree(__deallocate_opt(Mem) void *p) : Memory is freed, no longer
 *  usable upon return, and p may be null.
 *
-*  void free(__post_invalid void* x): Mark memory as untouchable when 
+*  void free(__post_invalid void* x): Mark memory as invalid when 
 *  function returns.
 *
 *  ----------------------------------------------------------------------------
