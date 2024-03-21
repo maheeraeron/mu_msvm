@@ -1,3 +1,13 @@
+## @file
+#   Provides an implementation of the EFI_HV_PROTOCOL protocol, which provides
+#   UEFI access to the Hyper-V hypervisor.
+#
+#   Copyright - TODO 48874838
+#
+#   License -  TODO 48874838
+#
+##
+
 [Defines]
     INF_VERSION                    = 0x00010005
     BASE_NAME                      = EfiHvDxe
@@ -6,6 +16,10 @@
     VERSION_STRING                 = 1.0
 
     ENTRY_POINT                    = EfiHvInitialize
+
+
+[Sources]
+    EfiHv.c
 
 [Packages]
     MdePkg/MdePkg.dec
@@ -18,34 +32,35 @@
     EmbeddedPkg/EmbeddedPkg.dec
 
 [LibraryClasses]
-    UefiBootServicesTableLib
     BaseLib
     DebugLib
-    UefiDriverEntryPoint
-    MemoryAllocationLib
     HvHypercallLib
-    DebugLib
     IsolationLib
+    MemoryAllocationLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
 
 [LibraryClasses.X64]
     HostVisibilityLib
     LocalApicLib
 
-[Sources]
-    EfiHv.c
-
 [Guids]
-    gEfiEventExitBootServicesGuid
+    gEfiEventExitBootServicesGuid                                               ## CONSUMES
 
 [Protocols]
-    gEfiHvProtocolGuid      #PRODUCES
-    gEfiHvIvmProtocolGuid   #PRODUCES
+    gEfiHvProtocolGuid                                                          ## PRODUCES
+    gEfiHvIvmProtocolGuid                                                       ## PRODUCES
 
 [Protocols.X64]
-    gEfiCpuArchProtocolGuid
+    gEfiCpuArchProtocolGuid                                                     ## CONSUMES
 
 [Protocols.AARCH64]
-    gHardwareInterruptProtocolGuid
+    gHardwareInterruptProtocolGuid                                              ## CONSUMES
+
+[Pcd.X64]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary                        ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask         ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdSvsmCallingArea                                   ## SOMETIMES_CONSUMES
 
 [Depex.X64]
     gEfiCpuArchProtocolGuid
@@ -53,7 +68,3 @@
 [Depex.AARCH64]
     gHardwareInterruptProtocolGuid
 
-[Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
-    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
-    gMsvmPkgTokenSpaceGuid.PcdSvsmCallingArea

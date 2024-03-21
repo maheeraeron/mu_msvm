@@ -1,21 +1,10 @@
-/*++
+/** @file
+  Provides an implementation of the EFI_HV_PROTOCOL protocol, which provides
+  UEFI access to the Hyper-V hypervisor.P initialize support functions for DXE phase.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    EfiHv.c
-
-Abstract:
-
-    Provides an implementation of the EFI_HV_PROTOCOL protocol, which provides
-    UEFI access to the Hyper-V hypervisor.
-
-Author:
-
-    John Starks (jostarks) - 2-Jul-2012
-
---*/
+  Copyright - TODO 48874838
+  License -  TODO 48874838
+**/
 
 #include <PiDxe.h>
 #include <IsolationTypes.h>
@@ -45,9 +34,6 @@ Author:
 
 #define EFI 0x454649 // "EFI"
 
-// Turn off DEBUG output by default as it can be really noisy
-#undef DEBUG
-#define DEBUG(arg)
 
 typedef struct _EFI_HV_SINT_CONFIGURATION
 {
@@ -64,14 +50,12 @@ typedef struct _EFI_HV_PAGES
     HV_MESSAGE_PAGE MessagePage;
 } EFI_HV_PAGES, *PEFI_HV_PAGES;
 
-struct _EFI_HV_PROTECTION_OBJECT
+typedef struct _EFI_HV_PROTECTION_OBJECT
 {
     LIST_ENTRY ListEntry;
     UINT64 GpaPageBase;
     UINT32 NumberOfPages;
-};
-
-typedef struct _EFI_HV_PROTECTION_OBJECT EFI_HV_PROTECTION_OBJECT;
+} EFI_HV_PROTECTION_OBJECT, *PEFI_HV_PROTECTION_OBJECT;
 
 HV_HYPERCALL_CONTEXT mHvContext;
 HV_HYPERCALL_CONTEXT mHvBypassContext;
@@ -118,27 +102,21 @@ EFI_HARDWARE_INTERRUPT_PROTOCOL *mHwInt;
 extern EFI_HV_PROTOCOL mHv;
 extern EFI_HV_IVM_PROTOCOL mHvIvm;
 
+
 UINTN
 EfiHvpSharedPa(
     PVOID Address
     )
-/*++
-
-Routine Description:
-
+/**
     Given an address, which may be either a VA or a PA, removes any
     canonicalization bits and returns the shared GPA corresponding to the
     address.
 
-Arguments:
+    @param Address Input address.
 
-    Address - Input address.
+    @returns Shared GPA.
 
-Return Value:
-
-    Shared GPA.
-
---*/
+**/
 {
     UINTN addr;
 
@@ -157,22 +135,15 @@ PVOID
 EfiHvpSharedVa(
     PVOID Address
     )
-/*++
-
-Routine Description:
-
+/**
     Given an address, which may be either a VA or a PA, returns a canonicalized
     pointer pointing to the shared GPA alias.
 
-Arguments:
+    @param Address Input address.
 
-    Address - Input address.
+    @returns Shared VA pointer.
 
-Return Value:
-
-    Shared VA pointer.
-
---*/
+**/
 {
     return (PVOID)(EfiHvpSharedPa(Address) | mCanonicalizationMask);
 }
@@ -182,22 +153,15 @@ UINTN
 EfiHvpBasePa(
     UINTN Address
     )
-/*++
-
-Routine Description:
-
+/**
     Given an address, returns the private alias GPA corresponding to that
     address.
 
-Arguments:
+    @param Address Input address.
 
-    Address - Input address.
+    @returns Shared GPA.
 
-Return Value:
-
-    Shared GPA.
-
---*/
+**/
 {
     Address &= ~mCanonicalizationMask;
     if (Address >= mSharedGpaBoundary)
@@ -220,29 +184,19 @@ EfiHvInterruptHandler (
     __in EFI_SYSTEM_CONTEXT SystemContext
     )
 /*++
-
-Routine Description:
-
     The interrupt handler for SINT interrupts. Raises to high level and
     calls out to the connected handler.
 
-Arguments:
+    @param  InterruptType The interrupt vector of the arriving interrupt.
 
-    InterruptType - The interrupt vector of the arriving interrupt.
-
-    SystemContext - A pointer to a structure containing the processor context
+    @param  SystemContext A pointer to a structure containing the processor context
         when the processor was interrupted.
 
-Return Value:
-
-    None.
-
+    @returns nothing
 --*/
 {
     EFI_TPL tpl;
     PEFI_HV_SINT_CONFIGURATION sintConfiguration;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
     if (!mAutoEoi)
@@ -267,8 +221,6 @@ Return Value:
     }
 
     gBS->RestoreTPL(tpl);
-
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -282,28 +234,20 @@ EfiHvConnectSint (
     __in VOID *Context
     )
 /*++
-
-Routine Description:
-
     Enables a SINT and provides an interrupt routine to be called at
     TPL_HIGH_LEVEL when the interrupt arrives.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param SintIndex The SINT to connect.
 
-    SintIndex - The SINT to connect.
+    @param Vector The vector to use for the SINT interrupt.
 
-    Vector - The vector to use for the SINT interrupt.
+    @param InterruptHandler A pointer to the interrupt handler for the SINT.
 
-    InterruptHandler - A pointer to the interrupt handler for the SINT.
+    @param Context An opaque context to pass to the interrupt handler.
 
-    Context - An opaque context to pass to the interrupt handler.
-
-Return Value:
-
-    EFI status.
-
+    @returns EFI STATUS
 --*/
 {
     HV_SYNIC_SINT sint;
@@ -314,21 +258,25 @@ Return Value:
     DEBUG((DEBUG_VERBOSE, ">>> %a: Index %lx Vector 0x%x Handler 0x%p Context 0x%p\n",
         __FUNCTION__, SintIndex, Vector, InterruptHandler, Context));
 
+    //
     // Disable interrupts while manipulating interrupts.
-
+    //
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
+    //
     // Ensure the SINT is not already registered.
-
+    //
     sintConfiguration = &mSintConfiguration[SintIndex];
     if (sintConfiguration->Vector != 0)
     {
         status = EFI_ALREADY_STARTED;
+        DEBUG((DEBUG_ERROR, "--- %a: SINT is already registered - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
+    //
     // Register the interrupt handler.
-
+    //
 #if defined(MDE_CPU_X64)
 
     status = mCpu->RegisterInterruptHandler(mCpu, Vector, EfiHvInterruptHandler);
@@ -338,15 +286,16 @@ Return Value:
     status = mHwInt->RegisterInterruptSource(mHwInt, (UINTN)Vector, EfiHvInterruptHandler);
 
 #endif
-    DEBUG((DEBUG_VERBOSE, "--- %a: RegisterInterruptSource: %r\n", __FUNCTION__, status));
 
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to register the interrupt handler - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
+    //
     // Register the SINT with the hypervisor.
-
+    //
     sint.AsUINT64 = 0;
     sint.Vector = Vector;
     sint.Masked = FALSE;
@@ -354,10 +303,11 @@ Return Value:
 
     if (mUseBypassContext)
     {
+
+        //
         // Register the SINT with the host hypervisor before registering it with the paravisor as a proxy interrupt.
-
+        //
         HvHypercallSetVpRegister64Self(&mHvBypassContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
-
         sint.Proxy = 1;
     }
 
@@ -366,8 +316,9 @@ Return Value:
         HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
     }
 
+    //
     // Store the state used by the interrupt handler.
-
+    //
     sintConfiguration->InterruptHandler = InterruptHandler;
     sintConfiguration->Context = Context;
     sintConfiguration->Vector = Vector;
@@ -375,8 +326,9 @@ Return Value:
     status = EFI_SUCCESS;
 
 Cleanup:
+
     gBS->RestoreTPL(tpl);
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
+
     return status;
 }
 
@@ -387,18 +339,11 @@ EfiHvEventInterruptHandler (
     VOID *Context
     )
 /*++
-
-Routine Description:
-
     An interrupt handler for a SINT interrupt that just signals an event.
 
-Arguments:
+    @param Context A pointer to the interrupt handler context.
 
-    Context - A pointer to the interrupt handler context.
-
-Return Value:
-
-    None.
+    @returns nothing
 
 --*/
 {
@@ -420,36 +365,35 @@ EfiHvConnectSintToEvent (
     __in EFI_EVENT Event
     )
 /*++
-
-Routine Description:
-
     Enables a SINT and provides an event to be signaled when the interrupt
     arrives.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param SintIndex The SINT to connect.
 
-    SintIndex - The SINT to connect.
+    @param Vector The vector to use for the SINT interrupt.
 
-    Vector - The vector to use for the SINT interrupt.
+    @param Event An EFI event to signal when the interrupt arrives.
 
-    Event - An EFI event to signal when the interrupt arrives.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
     EFI_STATUS status;
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-    status = EfiHvConnectSint(This,
-                              SintIndex,
-                              Vector,
-                              EfiHvEventInterruptHandler,
-                              Event);
+
+    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
+    
+    status = 
+        EfiHvConnectSint(
+            This,
+            SintIndex,
+            Vector,
+            EfiHvEventInterruptHandler,
+            Event);
+
     DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
+    
     return status;
 }
 
@@ -461,21 +405,14 @@ EfiHvDisconnectSint (
     __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
-
-Routine Description:
-
     Disables a SINT that was previously enabled with EfiHvConnectSint
     or EfiHvConnectSintToEvent.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param SintIndex The SINT to disconnect.
 
-    SintIndex - The SINT to disconnect.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
@@ -487,8 +424,9 @@ Return Value:
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
+    //
     // Unregister the SINT with the hypervisor.
-
+    //
     sint.AsUINT64 = 0;
     sint.Masked = 1;
 
@@ -502,8 +440,9 @@ Return Value:
         HvHypercallSetVpRegister64Self(&mHvContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
     }
 
+    //
     // Unregister the interrupt handler.
-
+    //
     sintConfiguration = &mSintConfiguration[SintIndex];
     if (sintConfiguration->Vector != 0)
     {
@@ -518,11 +457,13 @@ Return Value:
 #endif
         mVectorSint[sintConfiguration->Vector] = 0;
     }
+
     sintConfiguration->Vector = 0;
     sintConfiguration->InterruptHandler = NULL;
     sintConfiguration->Context = NULL;
 
     gBS->RestoreTPL(tpl);
+
     DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
@@ -534,26 +475,17 @@ EfiHvGetSintMessage (
     __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
-
-Routine Description:
-
     Retrieves the next message from the SINT message queue.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param SintIndex The index of the SINT.
 
-    SintIndex - The index of the SINT.
-
-Return Value:
-
-    A pointer to the next message, or NULL if there is currently no message.
+    @returns A pointer to the next message, or NULL if there is currently no message.
 
 --*/
 {
     volatile HV_MESSAGE *message;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
     message = &mMessagePage->SintMessage[SintIndex];
     if (message->Header.MessageType == HvMessageTypeNone)
@@ -562,7 +494,6 @@ Return Value:
         return NULL;
     }
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: message @ 0x%p\n", __FUNCTION__, message));
     return (HV_MESSAGE *)message;
 }
 
@@ -574,21 +505,14 @@ EfiHvCompleteSintMessage (
     __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
-
-Routine Description:
-
     Marks the current message in the SINT message queue as complete so
     that the next message can be processed.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param SintIndex The index of the SINT.
 
-    SintIndex - The index of the SINT.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
@@ -614,20 +538,13 @@ EfiHvGetSintEventFlags (
     __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
-
-Routine Description:
-
     Retrieves a pointer to the event flags for a SINT.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param SintIndex The index of the SINT.
 
-    SintIndex - The index of the SINT.
-
-Return Value:
-
-    A pointer to the event flags.
+    @returns A pointer to the event flags.
 
 --*/
 {
@@ -647,29 +564,22 @@ EfiHvGetReferenceTime (
     __in EFI_HV_PROTOCOL *This
     )
 /*++
-
-Routine Description:
-
     Retrieves the current hypervisor reference time, in 100ns units.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
-
-Return Value:
-
-    The time, in 100ns units.
+    @returns The time, in 100ns units.
 
 --*/
 {
     UINT64 refTime;
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
+    //
     // Always use the local hypervisor context, even if only the bypass
     // context has been configured, since the ref timer MSR is always locally
     // available.
+    //
     refTime = HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterTimeRefCount);
-    DEBUG((DEBUG_VERBOSE, "<<< %a: reftime 0x%p\n", __FUNCTION__, refTime));
     return refTime;
 }
 
@@ -680,29 +590,22 @@ EfiHvGetCurrentVpIndex (
     __in EFI_HV_PROTOCOL *This
     )
 /*++
-
-Routine Description:
-
     Retrieves the current virtual processor index.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
-
-Return Value:
-
-    The VP index.
+    @returns The VP index.
 
 --*/
 {
     UINT32 vpIndex;
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
+    //
     // Always use the local hypervisor context, even if only the bypass
     // context has been configured, since the VP index MSR is always locally
     // available.
+    //
     vpIndex = (UINT32)HvHypercallGetVpRegister64Self(&mHvContext, HvRegisterVpIndex);
-    DEBUG((DEBUG_VERBOSE, "<<< %a: index 0x%x\n", __FUNCTION__, vpIndex));
     return vpIndex;
 }
 
@@ -715,36 +618,25 @@ EfiHvSetTimer (
     __in UINT64 Expiration
     )
 /*++
-
-Routine Description:
-
     Sets a hypervisor timer to expire.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param TimerIndex The index of the timer.
 
-    TimerIndex - The index of the timer.
+    @param Expiration The time to expire. If the timer is periodic, then this
+                        is the period. Otherwise, this is an absolute time, based on the
+                        reference time base.
+                        If 0, then the timer is cancelled.
 
-    Expiration - The time to expire. If the timer is periodic, then this
-        is the period. Otherwise, this is an absolute time, based on the
-        reference time base.
-
-        If 0, then the timer is cancelled.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x Expiration 0x%x\n", __FUNCTION__,
-        TimerIndex, Expiration));
     HvHypercallSetVpRegister64Self(
         mBypassOnly ? &mHvBypassContext : &mHvContext,
         HvRegisterStimer0Count + (2 * TimerIndex),
         Expiration);
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -754,18 +646,11 @@ EfiHvDirectTimerSupported (
     VOID
     )
 /*++
-
-Routine Description:
-
     Indicates whether the hypervisor supports direct-mode timers.
 
-Arguments:
+    @param None.
 
-    None.
-
-Return Value:
-
-    TRUE if direct mode timers are supported.
+    @returns TRUE if direct mode timers are supported.
 
 --*/
 {
@@ -784,28 +669,19 @@ EfiHvDirectTimerInterruptHandler (
     __in EFI_SYSTEM_CONTEXT SystemContext
     )
 /*++
-
-Routine Description:
-
     The interrupt handler for direct-mode timers. Raises to high level and
     calls out to the connected handler.
 
-Arguments:
+    @param InterruptType The interrupt vector of the arriving interrupt.
 
-    InterruptType - The interrupt vector of the arriving interrupt.
+    @param SystemContext A pointer to a structure containing the processor context
+                            when the processor was interrupted.
 
-    SystemContext - A pointer to a structure containing the processor context
-        when the processor was interrupted.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
     EFI_TPL tpl;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
@@ -827,8 +703,6 @@ Return Value:
     }
 
     gBS->RestoreTPL(tpl);
-
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -844,30 +718,23 @@ EfiHvConfigureTimer (
     __in_opt EFI_HV_INTERRUPT_HANDLER InterruptHandler
     )
 /*++
-
-Routine Description:
-
     Configures a timer for use. Start it with EfiHvSetTimer.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param TimerIndex The index of the timer.
 
-    TimerIndex - The index of the timer.
+    @param SintIndex The SINT to deliver a message to when the timer expires.
 
-    SintIndex - The SINT to deliver a message to when the timer expires.
+    @param Periodic TRUE if this is a periodic timer.
 
-    Periodic - TRUE if this is a periodic timer.
+    @param DirectMode TRUE if direct mode.
 
-    DirectMode - TRUE if direct mode.
+    @param Vector Interrupt vector/number.
 
-    Vector - Interrupt vector/number.
+    @param InterruptHandler A pointer to the interrupt handler for the timer.
 
-    InterruptHandler - A pointer to the interrupt handler for the timer.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
@@ -879,11 +746,14 @@ Return Value:
 
     if (TimerIndex >= HV_SYNIC_STIMER_COUNT)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((DEBUG_ERROR, "--- %a: invalid timer index - %r \n", __FUNCTION__, status));
+        return status;
     }
 
+    //
     // Verify that an existing timer is not being reconfigured with an incompatible configuration.
-
+    //
     if (DirectMode)
     {
         if (mTimerConfiguration[TimerIndex].Enable)
@@ -892,13 +762,17 @@ Return Value:
                 (mTimerConfiguration[TimerIndex].ApicVector != Vector) ||
                 (mDirectTimerInterruptHandlers[Vector] != InterruptHandler))
             {
-                return EFI_INVALID_PARAMETER;
+                status = EFI_INVALID_PARAMETER;
+                DEBUG((DEBUG_ERROR, "--- %a: invalid timer configuration - %r \n", __FUNCTION__, status));
+                return status;
             }
         }
         else
         {
-            // Configure the interrupt handler for this timer.
 
+            //
+            // Configure the interrupt handler for this timer.
+            //
 #if defined(MDE_CPU_X64)
 
             status = mCpu->RegisterInterruptHandler(mCpu, Vector, EfiHvDirectTimerInterruptHandler);
@@ -911,6 +785,7 @@ Return Value:
 
             if (EFI_ERROR(status))
             {
+                DEBUG((DEBUG_ERROR, "--- %a: failed to register the interrupt handler - %r \n", __FUNCTION__, status));
                 return status;
             }
 
@@ -921,16 +796,20 @@ Return Value:
     {
         if (mTimerConfiguration[TimerIndex].DirectMode)
         {
-            return EFI_INVALID_PARAMETER;
+            status = EFI_INVALID_PARAMETER;
+            DEBUG((DEBUG_ERROR, "--- %a: invalid timer configuration (DirectMode) - %r \n", __FUNCTION__, status));
+            return status;
         }
     }
 
+    //
     // Stop the timer if it's already running.
-
+    //
     EfiHvSetTimer(&mHv, TimerIndex, 0);
 
+    //
     // Configure the timer. Always use lazy mode if the timer is periodic.
-
+    //
     config.AsUINT64 = 0;
     config.Periodic = (Periodic != FALSE);
     config.Lazy = (Periodic != FALSE);
@@ -951,7 +830,6 @@ Return Value:
         HvRegisterStimer0Config + (2 * TimerIndex),
         config.AsUINT64);
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
     return EFI_SUCCESS;
 }
 
@@ -964,36 +842,31 @@ EfiHvIssueHypercall (
     _In_ UINT64 SecondRegister
     )
 /*++
-
-Routine Description:
-
     Issues a hypercall.
 
-Arguments:
+    @param CallCode The hypercall code.
 
-    CallCode - The hypercall code.
+    @param Fast If TRUE, this is a fast hypercall.
 
-    Fast - If TRUE, this is a fast hypercall.
-
-    FirstRegister - The first register value for the hypercall. If a slow hypercall, this must refer
+    @param FirstRegister The first register value for the hypercall. If a slow hypercall, this must refer
         to the non-shared alias of the GPA.
 
-    SecondRegister - The second register value for the hypercall. If a slow hypercall, this must
+    @param SecondRegister The second register value for the hypercall. If a slow hypercall, this must
         refer to the non-shared alias of the GPA.
 
-Return Value:
-
-    The hypercall status.
+    @returns The hypercall status.
 
 --*/
 {
-    return HvHypercallIssue(mUseBypassContext ? &mHvBypassContext : &mHvContext,
-                            CallCode,
-                            Fast,
-                            0,
-                            FirstRegister,
-                            SecondRegister,
-                            NULL);
+    return 
+        HvHypercallIssue(
+            mUseBypassContext ? &mHvBypassContext : &mHvContext,
+            CallCode,
+            Fast,
+            0,
+            FirstRegister,
+            SecondRegister,
+            NULL);
 }
 
 
@@ -1002,18 +875,11 @@ EfiHvConvertStatus (
     __in HV_STATUS Status
     )
 /*++
-
-Routine Description:
-
     Converts a hypervisor status code into an EFI status code.
 
-Arguments:
+    @param Status The hypervisor status code.
 
-    Status - The hypervisor status code.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
@@ -1041,26 +907,19 @@ EfiHvPostMessage (
     __in_range(0, HV_MESSAGE_PAYLOAD_BYTE_COUNT) UINT32 PayloadSize
     )
 /*++
-
-Routine Description:
-
     Posts a message to a hypervisor message port.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param ConnectionId The connection ID of the message port.
 
-    ConnectionId - The connection ID of the message port.
+    @param MessageType The type of the message.
 
-    MessageType - The type of the message.
+    @param Payload A pointer to the payload buffer.
 
-    Payload - A pointer to the payload buffer.
+    @param PayloadSize The length of the payload buffer, in bytes.
 
-    PayloadSize - The length of the payload buffer, in bytes.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
@@ -1082,10 +941,12 @@ Return Value:
     ZeroMem((UINT8 *)input->Payload + PayloadSize,
             sizeof(input->Payload) - PayloadSize);
 
-    hvStatus = EfiHvIssueHypercall(HvCallPostMessage,
-                                   FALSE,
-                                   EfiHvpBasePa((UINTN)input),
-                                   0);
+    hvStatus = 
+        EfiHvIssueHypercall(
+            HvCallPostMessage,
+            FALSE,
+            EfiHvpBasePa((UINTN)input),
+            0);
 
     gBS->RestoreTPL(oldTpl);
     switch (hvStatus)
@@ -1099,13 +960,11 @@ Return Value:
     // or if the VM has been throttled. Convert this to EFI_NOT_READY so
     // that the caller can retry later.
     //
-
     case HV_STATUS_INVALID_CONNECTION_ID:
     case HV_STATUS_INSUFFICIENT_BUFFERS:
         status = EFI_NOT_READY;
     }
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
     return status;
 }
 
@@ -1118,22 +977,15 @@ EfiHvSignalEvent (
     __in UINT16 FlagNumber
     )
 /*++
-
-Routine Description:
-
     Signals a hypervisor event port.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param ConnectionId The connection ID of the port.
 
-    ConnectionId - The connection ID of the port.
+    @param FlagNumber The flag number offset.
 
-    FlagNumber - The flag number offset.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
@@ -1163,10 +1015,22 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EfiHvStartApplicationProcessor (
-    __in EFI_HV_PROTOCOL            *This,
-    __in UINT64                     VpIndex,
-    __in PHV_INITIAL_VP_CONTEXT     VpContext
-)
+    __in EFI_HV_PROTOCOL *This,
+    __in UINT64 VpIndex,
+    __in PHV_INITIAL_VP_CONTEXT VpContext
+    )
+/*++
+    Start an application processor.
+
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
+
+    @param VpIndex The VP Index on which the application processor will start.
+
+    @param VpContext The initial context for the VP.
+
+    @returns EFI status.
+
+--*/
 {
     PHV_INPUT_START_VIRTUAL_PROCESSOR input;
     HV_STATUS hvStatus;
@@ -1180,10 +1044,12 @@ EfiHvStartApplicationProcessor (
     CopyMem(&input->VpContext, VpContext, sizeof(HV_INITIAL_VP_CONTEXT));
     input->VpIndex = (HV_VP_INDEX)VpIndex;
 
-    hvStatus = EfiHvIssueHypercall(HvCallStartVirtualProcessor,
-                                   FALSE,
-                                   EfiHvpBasePa((UINTN)input),
-                                   0);
+    hvStatus = 
+        EfiHvIssueHypercall(
+            HvCallStartVirtualProcessor,
+            FALSE,
+            EfiHvpBasePa((UINTN)input),
+            0);
 
     DEBUG((DEBUG_VERBOSE, "<<< %a: status %r\n", __FUNCTION__, EfiHvConvertStatus(hvStatus)));
     return hvStatus;
@@ -1197,7 +1063,25 @@ EfiHvpModifySparseGpaPageHostVisibility(
     _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
     _Out_opt_ UINT32* PageCountProcessed
     )
+/*++
+    Handles the ModifySparseGpaPageHostVisibility hypercall.
+
+    @param MapFlags Access permissions provided to the host.
+
+    @param PageCount The number of pages to modify.
+
+    @param GpaPageBase Supplies the address of the first target GPA to accept. The
+                            remaining pages will be modified sequentially from this GPA.
+
+    @param PageCountProcessed If present, the number of pages that are successfully processed
+                                will be returned in this.
+
+    @returns EFI status.
+
+--*/
 {
+
+    //
     // For this rep call, it's easier to treat the input page as a pointer
     // to this structure.
     PHV_INPUT_MODIFY_SPARSE_GPA_PAGE_HOST_VISIBILITY pInputBuffer;
@@ -1212,13 +1096,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
     UINT32 totalPageCountProcessed = 0;
     BOOLEAN paravisorPresent;
 
-    DEBUG((DEBUG_VERBOSE,
-        ">>> %a: GpaBase 0x%p PageCount 0x%x MapFlags 0x%x \n",
-        __FUNCTION__,
-        GpaPageBase,
-        PageCount,
-        MapFlags));
-
     if (PageCountProcessed)
     {
         *PageCountProcessed = 0;
@@ -1228,11 +1105,16 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
 #if defined(MDE_CPU_X64)
 
+    //
     // Check if we are running hardware isolated but do not have a paravisor.
+    //
     if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
+
+        //
         // If the hypervisor connection has not yet been established, then
         // visibility must be changed without using hypercalls.
+        //
         if (!mHvBypassContext.Connected)
         {
             UINT64 pagesProcessed;
@@ -1271,8 +1153,10 @@ EfiHvpModifySparseGpaPageHostVisibility(
             return status;
         }
 
+        //
         // If pages are being made host visible, then revoke page acceptance
         // first.
+        //
         if (MapFlags != 0)
         {
             status = EfiUpdatePageRangeAcceptance(
@@ -1297,7 +1181,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
     //
     // Simplified version of WinHvpSpecialListRepHypercall with no output parameters
     //
-
     possibleRepsPerCall = (HV_PAGE_SIZE - sizeof(*pInputBuffer)) / sizeof(HV_GPA_PAGE_NUMBER);
 
     ASSERT(possibleRepsPerCall <= WINHVP_MAX_REPS_PER_HYPERCALL);
@@ -1319,7 +1202,9 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
         ASSERT(repsInCurrentCall <= WINHVP_MAX_REPS_PER_HYPERCALL);
 
+        //
         // Fill header
+        //
         pInputBuffer->TargetPartitionId = HV_PARTITION_ID_SELF;
         pInputBuffer->HostVisibility = MapFlags;
 
@@ -1328,7 +1213,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
         // N.B. instead of copying from an existing list of page numbers, we
         // generate a list of consecutive numbers from GpaPageBase.
         //
-
         for (i = 0; i < repsInCurrentCall; i++, gpaPageBaseIndex++)
         {
             pInputBuffer->GpaPageList[i] = GpaPageBase + gpaPageBaseIndex;
@@ -1337,14 +1221,15 @@ EfiHvpModifySparseGpaPageHostVisibility(
         //
         // Call the hypervisor.
         //
-
-        hvStatus = HvHypercallIssue(mBypassOnly ? &mHvBypassContext : &mHvContext,
-                                    HvCallModifySparseGpaPageHostVisibility,
-                                    FALSE, // not fast
-                                    repsInCurrentCall,
-                                    EfiHvpBasePa((UINTN)pInputBuffer),
-                                    0, // no output
-                                    &repsProcessedThisCall);
+        hvStatus = 
+            HvHypercallIssue(
+                mBypassOnly ? &mHvBypassContext : &mHvContext,
+                HvCallModifySparseGpaPageHostVisibility,
+                FALSE, // not fast
+                repsInCurrentCall,
+                EfiHvpBasePa((UINTN)pInputBuffer),
+                0, // no output
+                &repsProcessedThisCall);
         status = EfiHvConvertStatus(hvStatus);
 
         ASSERT(repsProcessedThisCall <= repsInCurrentCall);
@@ -1362,7 +1247,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
         //
         // Check that we haven't overflowed.
         //
-
         if (repsProcessedThisCall > PageCount)
         {
             status = EFI_BAD_BUFFER_SIZE;
@@ -1382,15 +1266,19 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
     if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
+        //
         // When no paravisor is present, host-generated failure cannot be
-        // tolerated.  It is certainly not expected.
+        // tolerated.  Fail fast here.
+        //
         if (EFI_ERROR(status))
         {
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
+        //
         // If pages are being made not-visible, then accept the pages in
         // hardware.
+        //
         if (MapFlags == 0)
         {
             status = EfiUpdatePageRangeAcceptance(
@@ -1413,8 +1301,6 @@ EfiHvpModifySparseGpaPageHostVisibility(
         *PageCountProcessed = totalPageCountProcessed;
     }
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
-
     return status;
 }
 
@@ -1430,30 +1316,23 @@ EfiHvMakeAddressRangeHostVisible(
     _Out_opt_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
     )
 /*++
-
-Routine Description:
-
     Makes a chunk of memory visible to the host.
     Note: Memory visibility changes for hardware-isolated
           systems may change the contents of the pages.
 
-Arguments:
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
 
-    This - A pointer to the EFI_HV_PROTOCOL instance.
+    @param MapFlags Access permissions provided to the host.
 
-    MapFlags - Access permissions provided to the host.
+    @param BaseAddress Base address of memory range.
 
-    BaseAddress - Base address of memory range.
+    @param ByteCount Size of memory block in bytes.
 
-    ByteCount - Size of memory block in bytes.
+    @param ZeroPages If true, memory range is zeroed after making visible to host.
 
-    ZeroPages - If true, memory range is zeroed after making visible to host.
+    @param ProtectionHandle Object used to track memory range.
 
-    ProtectionHandle - Object used to track memory range.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
@@ -1462,47 +1341,48 @@ Return Value:
     EFI_STATUS revertStatus;
     EFI_STATUS status;
 
-    //
-    // Visibility changes are only permitted on isolated systems.
-    //
-
     if (!IsIsolatedEx(mIsolationType))
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((DEBUG_ERROR, "--- %a: visibility changes are only permitted on isolated systems - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     //
     // All arguments must be page aligned, and the access must imply host
     // visibility.
     //
-
     if ((((UINTN)BaseAddress & (EFI_PAGE_SIZE - 1)) != 0) ||
         ((ByteCount & (EFI_PAGE_SIZE - 1)) != 0) ||
         ((MapFlags & HV_MAP_GPA_READABLE) == 0) ||
         ((MapFlags & ~(HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE)) != 0))
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((DEBUG_ERROR, "--- %a: incorrect alignment or access - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     //
     // Verify that host-read-only is not requested on a system that doesn't
     // support it.
     //
-
     if (IsHardwareIsolatedEx(mIsolationType) &&
         ((MapFlags & (HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE)) == HV_MAP_GPA_READABLE))
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((DEBUG_ERROR, "--- %a: invalid host read only request - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     //
     // Allocate memory to use as a tracking object.
     //
-
     protectionObject = AllocatePool(sizeof(*protectionObject));
     if (protectionObject == NULL)
     {
-        return EFI_OUT_OF_RESOURCES;
+        status = EFI_OUT_OF_RESOURCES;
+        DEBUG((DEBUG_ERROR, "--- %a: failed to allocate memory - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     protectionObject->GpaPageBase = (UINTN)BaseAddress / EFI_PAGE_SIZE;
@@ -1515,7 +1395,6 @@ Return Value:
     // encryption differences will obscure the original contents following the
     // visibility change.
     //
-
     if (IsSoftwareIsolatedEx(mIsolationType))
     {
         ZeroMem(BaseAddress, ByteCount);
@@ -1525,28 +1404,34 @@ Return Value:
     //
     // Update the visibility as requested.
     //
-
-    status = EfiHvpModifySparseGpaPageHostVisibility(MapFlags,
-                                                     protectionObject->NumberOfPages,
-                                                     protectionObject->GpaPageBase,
-                                                     &pageCountProcessed);
+    status = 
+        EfiHvpModifySparseGpaPageHostVisibility(
+            MapFlags,
+            protectionObject->NumberOfPages,
+            protectionObject->GpaPageBase,
+            &pageCountProcessed);
 
     if (EFI_ERROR(status))
     {
+
         //
         // If the protection change was partially made, then undo whatever
         // was done.
         //
-
         if (pageCountProcessed != 0)
         {
-            revertStatus = EfiHvpModifySparseGpaPageHostVisibility(HV_MAP_GPA_PERMISSIONS_NONE,
-                                                                   pageCountProcessed,
-                                                                   protectionObject->GpaPageBase,
-                                                                   &pageCountProcessed);
+            revertStatus = 
+                EfiHvpModifySparseGpaPageHostVisibility(
+                    HV_MAP_GPA_PERMISSIONS_NONE,
+                    pageCountProcessed,
+                    protectionObject->GpaPageBase,
+                    &pageCountProcessed);
             if (EFI_ERROR(revertStatus))
             {
-                // this is not allowed to fail - need to fail fast
+
+                //
+                // This is not allowed to fail - need to fail fast
+                //
                 FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
             }
         }
@@ -1561,7 +1446,6 @@ Return Value:
         // If zeroing was requested and has not already been performed, then
         // zero the buffer now.
         //
-
         if (ZeroPages)
         {
             ZeroMem(EfiHvpSharedVa(BaseAddress), ByteCount);
@@ -1583,18 +1467,35 @@ EfiHvMakeAddressRangeNotHostVisible(
     _In_ EFI_HV_IVM_PROTOCOL *This,
     _In_ EFI_HV_PROTECTION_HANDLE ProtectionHandle
     )
+/*++
+    Makes a chunk of memory not visible to the host.
+    Note: Memory visibility changes for hardware-isolated
+          systems may change the contents of the pages.
+
+    @param This A pointer to the EFI_HV_PROTOCOL instance.
+
+    @param ProtectionHandle Object used to track memory range.
+
+    @returns EFI status.
+
+--*/
 {
     EFI_STATUS status;
 
     RemoveEntryList(&ProtectionHandle->ListEntry);
 
-    status = EfiHvpModifySparseGpaPageHostVisibility(HV_MAP_GPA_PERMISSIONS_NONE,
-                                                     ProtectionHandle->NumberOfPages,
-                                                     ProtectionHandle->GpaPageBase,
-                                                     NULL);
+    status = 
+        EfiHvpModifySparseGpaPageHostVisibility(
+            HV_MAP_GPA_PERMISSIONS_NONE,
+            ProtectionHandle->NumberOfPages,
+            ProtectionHandle->GpaPageBase,
+            NULL);
     if (EFI_ERROR(status))
     {
-        // this is not allowed to fail - need to fail fast
+
+        //
+        // This is not allowed to fail - need to fail fast
+        //
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
     }
 }
@@ -1605,52 +1506,46 @@ EfiHvConnectToHypervisor (
     VOID
     )
 /*++
-
-Routine Description:
-
     Initializes a connection to the hypervisor.
 
-Arguments:
+    @param None.
 
-    None.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
     EFI_STATUS status;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
 #if defined(MDE_CPU_X64)
 
     HV_CPUID_RESULT cpuidResult;
     BOOLEAN paravisorPresent;
 
+    //
     // Determine the isolation type for this system.  If there is any
     // isolation, then a Microsoft hypervisor can be assumed.
-
+    //
     mIsolationType = GetIsolationType();
     if (!IsIsolatedEx(mIsolationType))
     {
+
+        //
         // Validate that the hypervisor is present, is a Microsoft hypervisor,
         // and has all the required features.
-
+        //
         __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionVersionAndFeatures);
         if (!cpuidResult.VersionAndFeatures.HypervisorPresent)
         {
-            DEBUG((DEBUG_VERBOSE, "--- %a: No Hypervisor Present!\n", __FUNCTION__));
             status = EFI_UNSUPPORTED;
+            DEBUG((DEBUG_ERROR, "--- %a: no hypervisor present - %r \n", __FUNCTION__, status));
             goto Exit;
         }
 
         __cpuid(cpuidResult.AsUINT32, HvCpuIdFunctionHvInterface);
         if (cpuidResult.HvInterface.Interface != HvMicrosoftHypervisorInterface)
         {
-            DEBUG((DEBUG_VERBOSE, "--- %a: Not Microsoft Hypervisor!\n", __FUNCTION__));
             status = EFI_UNSUPPORTED;
+            DEBUG((DEBUG_ERROR, "--- %a: hypervisor present is not a Microsoft hypervisor - %r \n", __FUNCTION__, status));
             goto Exit;
         }
     }
@@ -1664,24 +1559,29 @@ Return Value:
         mSvsmCallingArea = (PVOID)PcdGet64(PcdSvsmCallingArea);
     }
 
+    //
     // Allocate hypervisor communication pages.
+    //
     mHypercallPage = NULL;
     mHvPages = AllocatePages(sizeof(*mHvPages) / EFI_PAGE_SIZE);
     if (mHvPages == NULL)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate HV pages!\n", __FUNCTION__));
         status =  EFI_OUT_OF_RESOURCES;
+        DEBUG((DEBUG_ERROR, "--- %a: failed to allcoate HV pages - %r \n", __FUNCTION__, status));
         goto Exit;
     }
     ZeroMem(mHvPages, sizeof(*mHvPages));
-    DEBUG((DEBUG_VERBOSE, "--- %a: pages @ 0x%p\n", __FUNCTION__, (UINTN)mHvPages));
 
+    //
     // If this is a hardware-isolated system with no paravisor, then only the
     // direct, untrusted hypervisor connection is required.
-
+    //
     if (IsHardwareIsolatedNoParavisorEx(mIsolationType, paravisorPresent))
     {
+
+        //
         // Make all of the pages visible to the host.
+        //
         status = EfiHvMakeAddressRangeHostVisible(
             NULL,
             HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
@@ -1692,6 +1592,7 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
+            DEBUG((DEBUG_ERROR, "--- %a: failed to make pages host visible - %r \n", __FUNCTION__, status));
             goto Exit;
         }
 
@@ -1703,17 +1604,22 @@ Return Value:
         mHypercallPage = AllocatePages(1);
         if (mHypercallPage == NULL)
         {
-            DEBUG((DEBUG_VERBOSE, "--- %a: Failed to allocate the hypercall page!\n", __FUNCTION__));
+            status = EFI_OUT_OF_RESOURCES;
+            DEBUG((DEBUG_ERROR, "--- %a: failed to allcoate the hypercall page - %r \n", __FUNCTION__, status));
             goto Exit;
         }
+
         ZeroMem(mHypercallPage, EFI_PAGE_SIZE);
 
-        HvHypercallConnect(mHypercallPage,
-                           UefiIsolationTypeNone,
-                           FALSE,
-                           &mHvContext);
+        HvHypercallConnect(
+            mHypercallPage,
+            UefiIsolationTypeNone,
+            FALSE,
+            &mHvContext);
 
+        //
         // Check to see if the hypercall page was mapped. If it wasn't, abort here.
+        //
         if (mHypercallPage[0] == 0 &&
             mHypercallPage[1] == 0 &&
             mHypercallPage[2] == 0)
@@ -1721,19 +1627,21 @@ Return Value:
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
-        // Mark the Hypercall page as executable
+        //
+        // Mark the Hypercall page as executable.
+        //
         status = mCpu->SetMemoryAttributes (mCpu, (EFI_PHYSICAL_ADDRESS)mHypercallPage, EFI_PAGE_SIZE, EFI_MEMORY_RO);
         if (EFI_ERROR(status))
         {
-            DEBUG((DEBUG_VERBOSE, "--- %a: Failed to set the memory attribute the hypercall page!\n", __FUNCTION__));
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
     }
 
 #elif defined(MDE_CPU_AARCH64)
 
+    //
     // Direct timers are always supported on ARM64.
-
+    //
     mDirectTimerSupported = TRUE;
 
     //
@@ -1743,28 +1651,33 @@ Return Value:
     if (mHvPages == NULL)
     {
         status =  EFI_OUT_OF_RESOURCES;
+        DEBUG((DEBUG_ERROR, "--- %a: failed to allcoate HV pages - %r \n", __FUNCTION__, status));
         goto Exit;
     }
 
     HvHypercallConnect(&mHvContext);
 
+    //
     // AutoEoi is not possible on ARM.
-
+    //
     mAutoEoi = FALSE;
 
 #else
 #error Unsupported architecture
 #endif
 
+    //
     // Initialize the hypercall input page.
+    //
     mHvInputPage = mHvPages->HypercallInputPage;
 
 #if defined(MDE_CPU_X64)
 
+    //
     // Determine whether this system uses a hardware isolation architecture
     // that will require a direct connection to the hypervisor that bypasses
     // the paravisor.
-
+    //
     if (IsHardwareIsolatedEx(mIsolationType))
     {
         ASSERT(mSharedGpaBoundary != 0);
@@ -1776,7 +1689,6 @@ Return Value:
         // hypercall input into the GHCB page so no additional allocation is
         // required for those systems.
         //
-
         if ((mIsolationType != UefiIsolationTypeSnp) && paravisorPresent)
         {
             PVOID hvInputPage;
@@ -1785,6 +1697,7 @@ Return Value:
             if (hvInputPage == NULL)
             {
                 status = EFI_OUT_OF_RESOURCES;
+                DEBUG((DEBUG_ERROR, "--- %a: failed to allcoate HV input page - %r \n", __FUNCTION__, status));
                 goto Exit;
             }
 
@@ -1792,7 +1705,6 @@ Return Value:
             // Make this page visible to the hypervisor.  It should not be
             // possible for this to fail.
             //
-
             status = EfiHvpModifySparseGpaPageHostVisibility(
                 HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
                 1,
@@ -1819,14 +1731,11 @@ Return Value:
         mUseBypassContext = TRUE;
     }
 
-#endif
-
-#if defined(MDE_CPU_X64)
-
+    //
     // Cache some enlightenment information.  If this system requires
     // bypassing the paravisor, then assume a set of features that are present
     // instead of asking the hypervisor what it supports.
-
+    //
     if (mUseBypassContext)
     {
         mAutoEoi = FALSE;
@@ -1844,8 +1753,8 @@ Return Value:
               cpuidResult.MsHvFeatures.PartitionPrivileges.AccessSyntheticTimerRegs &&
               cpuidResult.MsHvFeatures.PartitionPrivileges.AccessHypercallMsrs))
         {
-            DEBUG((DEBUG_VERBOSE, "--- %a: Missing Hypervisor features!\n", __FUNCTION__));
             status = EFI_UNSUPPORTED;
+            DEBUG((DEBUG_ERROR, "--- %a: missing hypervisor features - %r \n", __FUNCTION__, status));
             goto Exit;
         }
 
@@ -1877,18 +1786,11 @@ EfiHvDisconnectFromHypervisor (
     VOID
     )
 /*++
-
-Routine Description:
-
     Tears down a connection to the hypervisor.
 
-Arguments:
+    @param None.
 
-    None.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
@@ -1901,8 +1803,9 @@ Return Value:
         HvHypercallDisconnect(&mHvBypassContext);
     }
 
+    //
     // Revoke host visibility for any pages that were made visible.
-
+    //
     while (!IsListEmpty(&mHostVisiblePageList))
     {
         entry = GetFirstNode(&mHostVisiblePageList);
@@ -1910,8 +1813,9 @@ Return Value:
         EfiHvMakeAddressRangeNotHostVisible(NULL, protectionObject);
     }
 
+    //
     // Free the bypass input page if required.
-
+    //
     if ((mHvInputPage != mHvPages->HypercallInputPage) && !mBypassOnly)
     {
         mHvInputPage = (PVOID)EfiHvpBasePa((UINTN)mHvInputPage);
@@ -1924,7 +1828,9 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
+            //
             // Failure is not allowed here - need to fail fast.
+            //
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
@@ -1933,10 +1839,11 @@ Return Value:
 
     HvHypercallDisconnect(&mHvContext);
 
+    //
     // Free the hypercall communication pages.  If these pages were originally
     // made host-visible, then they were made host-not-visible during the
     // visibility reclaim operation above.
-
+    //
     if (mHvPages != NULL)
     {
         if (mBypassOnly)
@@ -1947,6 +1854,7 @@ Return Value:
         FreePages(mHvPages, sizeof(*mHvPages) / EFI_PAGE_SIZE);
         mHvPages = NULL;
     }
+
 #if defined (MDE_CPU_X64)
     if (mHypercallPage != NULL)
     {
@@ -1962,18 +1870,11 @@ EfiHvConnectToSynic (
     VOID
     )
 /*++
-
-Routine Description:
-
     Initializes a connection to the synthetic interrupt controller.
 
-Arguments:
+    @param None.
 
-    None.
-
-Return Value:
-
-    EFI status.
+    @returns EFI status.
 
 --*/
 {
@@ -1982,19 +1883,21 @@ Return Value:
     HV_SYNIC_SIEFP siefp;
     HV_SYNIC_SIMP simp;
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-
     context = mUseBypassContext ? &mHvBypassContext : &mHvContext;
 
+    //
     // Enable the message page.
-
+    //
     simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
     if (simp.SimpEnabled != 0)
     {
         gpa = simp.BaseSimpGpa * EFI_PAGE_SIZE;
         if (gpa < mSharedGpaBoundary)
         {
+
+            //
             // Failure is not allowed here - need to fail fast
+            //
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
@@ -2009,15 +1912,19 @@ Return Value:
         HvHypercallSetVpRegister64Self(context, HvRegisterSipp, simp.AsUINT64);
     }
 
+    //
     // Enable the event page.
-
+    //
     siefp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSifp);
     if (siefp.SiefpEnabled != 0)
     {
         gpa = siefp.BaseSiefpGpa * EFI_PAGE_SIZE;
         if (gpa < mSharedGpaBoundary)
         {
+
+            //
             // Failure is not allowed here - need to fail fast
+            //
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
@@ -2034,7 +1941,6 @@ Return Value:
 
     mSynicConnected = TRUE;
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, EFI_SUCCESS));
     return EFI_SUCCESS;
 }
 
@@ -2044,18 +1950,11 @@ EfiHvDisconnectFromSynic (
     VOID
     )
 /*++
-
-Routine Description:
-
     Tears down the connection to the synthetic interrupt controller.
 
-Arguments:
+    @param None.
 
-    None.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
@@ -2071,8 +1970,9 @@ Return Value:
         return;
     }
 
+    //
     // Clear all the timers.
-
+    //
     context = mBypassOnly ? &mHvBypassContext : &mHvContext;
     for (timerIndex = 0; timerIndex < HV_SYNIC_STIMER_COUNT; timerIndex += 1)
     {
@@ -2080,8 +1980,9 @@ Return Value:
         HvHypercallSetVpRegister64Self(context, HvRegisterStimer0Config + (2 * timerIndex), 0);
     }
 
+    //
     // Disconnect the SINTs and drain all the message queues.
-
+    //
     for (sintIndex = 0; sintIndex < HV_SYNIC_SINT_COUNT; sintIndex += 1)
     {
         EfiHvDisconnectSint(&mHv, sintIndex);
@@ -2090,8 +1991,9 @@ Return Value:
             EfiHvCompleteSintMessage(&mHv, sintIndex);
         }
 
+        //
         // Zero the event flags for this SINT.
-
+        //
         volatile HV_SYNIC_EVENT_FLAGS* flags = EfiHvGetSintEventFlags(&mHv, sintIndex);
 
         for (flagsIndex = 0; flagsIndex < HV_EVENT_FLAGS_DWORD_COUNT; flagsIndex++)
@@ -2102,8 +2004,10 @@ Return Value:
 
     if ((mUseBypassContext == FALSE) || mBypassOnly)
     {
-        // Disable the message page.
 
+        //
+        // Disable the message page.
+        //
         simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
         simp.SimpEnabled = 0;
         simp.BaseSimpGpa = 0;
@@ -2128,28 +2032,20 @@ EfiHvExitBootServices (
     __in VOID *Context
     )
 /*++
-
-Routine Description:
-
     Called when ExitBootServices() is called. Tears down the hypervisor
     connection so that the new OS sees a clean state.
 
-Arguments:
+    @param Event An EFI event.
 
-    Event - An EFI event.
+    @param Context A pointer to the context.
 
-    Context - A pointer to the context.
-
-Return Value:
-
-    None.
+    @returns nothing.
 
 --*/
 {
     EfiHvDisconnectFromSynic();
     EfiHvDisconnectFromHypervisor();
 }
-
 
 EFI_HV_PROTOCOL mHv =
 {
@@ -2183,51 +2079,46 @@ EfiHvInitialize (
     __in EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
-
-Routine Description:
-
     Entrypoint. Initializes the EfiHv driver.
 
-Arguments:
+    @param ImageHandle The handle of the loaded image.
 
-    ImageHandle - The handle of the loaded image.
-
-    SystemTable - A pointer to the system table.
-
-Return Value:
-
-    EFI status.
+    @param SystemTable A pointer to the system table.
+    
+    @returns EFI status.
 
 --*/
 {
     EFI_STATUS status;
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
 
     InitializeListHead(&mHostVisiblePageList);
 
 #if defined (MDE_CPU_X64)
 
+    //
     // For Intel find the CPU protocol.
-
+    //
     status = gBS->LocateProtocol(&gEfiCpuArchProtocolGuid, NULL, (VOID **)&mCpu);
 
 
 #elif defined(MDE_CPU_AARCH64)
 
+    //
     // For ARM find the hardware interrupt protocol.
-
+    //
     status = gBS->LocateProtocol(&gHardwareInterruptProtocolGuid, NULL, (VOID **)&mHwInt);
 
 #endif
 
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to locate protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
-    DEBUG((DEBUG_VERBOSE, "--- %a: after LocateProtocol\n", __FUNCTION__));
 
+    //
     // Register notify function for EVT_SIGNAL_EXIT_BOOT_SERVICES.
-
+    //
     status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
                                 TPL_CALLBACK,
                                 EfiHvExitBootServices,
@@ -2236,28 +2127,30 @@ Return Value:
                                 &mExitBootServicesEvent);
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to create event - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
-    DEBUG((DEBUG_VERBOSE, "--- %a: after CreateEventEx\n", __FUNCTION__));
 
+    //
     // Connect to the hypervisor and synic.
-
+    //
     status = EfiHvConnectToHypervisor();
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to connect to the hypervisor - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
-    DEBUG((DEBUG_VERBOSE, "--- %a: after EfiHvConnectToHypervisor\n", __FUNCTION__));
 
     status = EfiHvConnectToSynic();
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to connect to Synic - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
-    DEBUG((DEBUG_VERBOSE, "--- %a: after EfiHvConnectToSynic\n", __FUNCTION__));
 
+    //
     // Register the HV protocols.
-
+    //
     status = gBS->InstallMultipleProtocolInterfaces(
                     &mHvHandle,
                     &gEfiHvProtocolGuid, &mHv,
@@ -2266,9 +2159,9 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to install the protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
-    DEBUG((DEBUG_VERBOSE, "--- %a: after InstallMultipleProtocolInterfaces\n", __FUNCTION__));
 
 Cleanup:
     if (EFI_ERROR(status))
@@ -2282,7 +2175,7 @@ Cleanup:
         EfiHvDisconnectFromSynic();
         EfiHvDisconnectFromHypervisor();
     }
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, EFI_SUCCESS));
+
     return EFI_SUCCESS;
 }
 
