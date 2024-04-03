@@ -1,12 +1,9 @@
-/** @file PlatformDeviceStateHelper.c
-
-  Copyright (C) Microsoft Corporation. All rights reserved.
-
+/** @file
   Sets up the device state variable for use on displaying the device state
 
- @par Specification Reference:
-
- **/
+  Copyright - TODO 48874838
+  License -  TODO 48874838
+**/
 
 #include <Uefi.h>
 #include <Library/BaseLib.h>
@@ -24,82 +21,82 @@
 
 
 /**
-  Check if secure boot is enabled
+    Check if secure boot is enabled
 
-  @retval     TRUE  Secure boot is enabled
-              FALSE Secure boot is disabled
+    @retval     TRUE  Secure boot is enabled
+                FALSE Secure boot is disabled
 **/
 BOOLEAN
 IsSecureBootOn()
 {
-  EFI_STATUS  Status = EFI_DEVICE_ERROR;
-  UINT8      *Value = NULL;
-  UINTN       Size = 0;
+    EFI_STATUS  Status = EFI_DEVICE_ERROR;
+    UINT8      *Value = NULL;
+    UINTN       Size = 0;
 
-  // TODO: For now, no hardware isolated platforms with no paravisor support secure boot.
-  if (IsHardwareIsolatedNoParavisor()) {
-    return FALSE;
-  }
+    //
+    // For now, no hardware isolated platforms with no paravisor support secure boot.
+    //
+    if (IsHardwareIsolatedNoParavisor()) {
+        return FALSE;
+    }
 
-  Status = GetVariable2(L"SecureBoot", &gEfiGlobalVariableGuid, (VOID **)&Value, &Size);
-  if (EFI_ERROR (Status) || (Value == NULL)) {
-    DEBUG ((DEBUG_ERROR, "%a - Failed to read SecureBoot variable.  Status = %r\n", __FUNCTION__, Status));
-    ASSERT(FALSE);
-    return FALSE;
-  }
+    Status = GetVariable2(L"SecureBoot", &gEfiGlobalVariableGuid, (VOID **)&Value, &Size);
+    if (EFI_ERROR (Status) || (Value == NULL)) {
+        DEBUG ((DEBUG_ERROR, "%a - Failed to read SecureBoot variable.  Status = %r\n", __FUNCTION__, Status));
+        return FALSE;
+    }
 
-  ASSERT(Size == 1);
+    ASSERT(Size == 1);
 
-  if(*Value == 1) {
-    DEBUG((DEBUG_INFO, "%a - Secure boot on\n", __FUNCTION__));
+    if(*Value == 1) {
+        DEBUG((DEBUG_INFO, "%a - Secure boot on\n", __FUNCTION__));
+        FreePool (Value);
+        return TRUE;
+    }
+
+    DEBUG((DEBUG_INFO, "%a - Secure boot off\n", __FUNCTION__));
     FreePool (Value);
-    return TRUE;
-  }
-
-  DEBUG((DEBUG_INFO, "%a - Secure boot off\n", __FUNCTION__));
-  FreePool (Value);
-  return FALSE;
+    return FALSE;
 }
 
 /**
-  Set up the device state variable for use later in displaying the device state
+    Set up the device state variable for use later in displaying the device state
 
-  @param[in]  FileHandle   Handle of the file being invoked.
+    @param[in]  FileHandle   Handle of the file being invoked.
 
-  @param[in]  PeiServices  General purpose services available to every PEIM.
+    @param[in]  PeiServices  General purpose services available to every PEIM.
 
-  @retval     EFI_SUCCESS  Always returns success.
+    @retval     EFI_SUCCESS  Always returns success.
 **/
 EFI_STATUS
 EFIAPI
 PlatformDeviceStateHelperInit(
-  IN EFI_HANDLE                   ImageHandle,
-  IN EFI_SYSTEM_TABLE             *SystemTable
+    IN EFI_HANDLE                   ImageHandle,
+    IN EFI_SYSTEM_TABLE             *SystemTable
   )
 {
-  DEVICE_STATE                        CoreNotifications = 0;
+    DEVICE_STATE CoreNotifications = 0;
 
-  DEBUG((DEBUG_INFO, "Starting %a \n", __FUNCTION__));
+    DEBUG((DEBUG_INFO, "Starting %a \n", __FUNCTION__));
 
-  //
-  //Handle checking for "Common" On screen notifications
-  //
-  if (!IsSecureBootOn())
-  {
-    CoreNotifications |= DEVICE_STATE_SECUREBOOT_OFF;
-  }
+    //
+    //Handle checking for "Common" On screen notifications
+    //
+    if (!IsSecureBootOn())
+    {
+        CoreNotifications |= DEVICE_STATE_SECUREBOOT_OFF;
+    }
 
-  if (PcdGetBool(PcdDebuggerEnabled) != FALSE)
-  {
-    CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
-  }
+    if (PcdGetBool(PcdDebuggerEnabled) != FALSE)
+    {
+        CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
+    }
 
 #if defined(DEBUG_PLATFORM)
-  // Enable debug color bar on DEBUG builds
-  CoreNotifications |= DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED;
+    CoreNotifications |= DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED;
 #endif
 
-  AddDeviceState(CoreNotifications);
+    AddDeviceState(CoreNotifications);
 
-  return EFI_SUCCESS;
+    return EFI_SUCCESS;
 }

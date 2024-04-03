@@ -1,34 +1,34 @@
-## @file PlatformDeviceStateHelper.inf
+## @file
+#  This component sets up the device state information during PEI.
 #
-#  Copyright (C) Microsoft Corporation. All rights reserved.
+#   Copyright - TODO 48874838
 #
-#  This component sets up the device state information during PEI
-#
-# @par Specification Reference:
-#
+#   License -  TODO 48874838
 ##
 
 
 [Defines]
-INF_VERSION = 0x00010017
-BASE_NAME = PlatformDeviceStateHelper
-FILE_GUID = 40935bea-b500-45cf-8d74-92c09296bb62
-VERSION_STRING = 1.0
-MODULE_TYPE = DXE_DRIVER
-ENTRY_POINT = PlatformDeviceStateHelperInit
+INF_VERSION         = 0x00010017
+BASE_NAME           = PlatformDeviceStateHelper
+FILE_GUID           = 40935bea-b500-45cf-8d74-92c09296bb62
+VERSION_STRING      = 1.0
+MODULE_TYPE         = DXE_DRIVER
+ENTRY_POINT         = PlatformDeviceStateHelperInit
 
+[Sources]
+  PlatformDeviceStateHelper.c
 
 [LibraryClasses]
   BaseLib
-  UefiBootServicesTableLib
-  UefiDriverEntryPoint
-  UefiRuntimeServicesTableLib
-  UefiLib
-  PcdLib
   DebugLib
-  MemoryAllocationLib
   DeviceStateLib
   IsolationLib
+  MemoryAllocationLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+  UefiRuntimeServicesTableLib
 
 [Packages]
   MsvmPkg/MsvmPkg.dec
@@ -36,14 +36,11 @@ ENTRY_POINT = PlatformDeviceStateHelperInit
   MdeModulePkg/MdeModulePkg.dec
   MsCorePkg/MsCorePkg.dec
 
-[Sources]
-  PlatformDeviceStateHelper.c
-
 [Guids]
-  gEfiGlobalVariableGuid
+  gEfiGlobalVariableGuid                                  ## CONSUMES
 
 [Pcd]
-  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
+  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled               ## CONSUMES
 
 [Depex]
   gEfiVariableArchProtocolGuid AND
