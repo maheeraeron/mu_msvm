@@ -1,3 +1,12 @@
+## @file
+#   Provides an implementation of the EFI_TIMER_ARCH_PROTOCOL architectural
+#   protocol with a Hyper-V synthetic timer. This is more efficient than using
+#   the 8254 timer (PIT).
+#
+#   Copyright (c) Microsoft Corporation.
+#   SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
 [Defines]
     INF_VERSION                    = 0x00010005
     BASE_NAME                      = SynicTimerDxe
@@ -12,24 +21,24 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
-    UefiBootServicesTableLib
     BaseLib
     DebugLib
+    UefiBootServicesTableLib
     UefiDriverEntryPoint
 
 [Sources]
     SynicTimer.c
 
 [Protocols]
-    gEfiTimerArchProtocolGuid
-    gEfiHvProtocolGuid
+    gEfiTimerArchProtocolGuid       ## PRODUCES
+    gEfiHvProtocolGuid              ## CONSUMES
 
 [Depex]
     gEfiHvProtocolGuid
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex
-    gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex
-    gMsvmPkgTokenSpaceGuid.PcdSynicTimerDefaultPeriod
-    gMsvmPkgTokenSpaceGuid.PcdSynicTimerVector
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex               ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex              ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerDefaultPeriod           ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdSynicTimerVector                  ## CONSUMES
 

@@ -1,22 +1,12 @@
-/*++
+/** @file
+  Provides an implementation of the EFI_TIMER_ARCH_PROTOCOL architectural
+  protocol with a Hyper-V synthetic timer. This is more efficient than using
+  the 8254 timer (PIT).
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
 
-Module Name:
-
-    SynicTimer.c
-
-Abstract:
-
-    Provides an implementation of the EFI_TIMER_ARCH_PROTOCOL architectural
-    protocol with a Hyper-V synthetic timer. This is more efficient than using
-    the 8254 timer (PIT).
-
-Author:
-
-    John Starks (jostarks) - 2-Jul-2012
-
---*/
 
 #include <PiDxe.h>
 
@@ -30,10 +20,6 @@ Author:
 #if defined(MDE_CPU_X64)
 #include <Library/BdDebugLib.h>
 #endif
-
-// Turn off DEBUG output by default as it can be really noisy
-#undef DEBUG
-#define DEBUG(arg)
 
 EFI_STATUS
 EFIAPI
@@ -100,21 +86,18 @@ Return Value:
 
 --*/
 {
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     UINT64 time;
 
     time = mHv->GetReferenceTime(mHv);
 
     ASSERT(time > mLastTime);
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: calling 0x%p\n", __FUNCTION__, mTimerNotifyFunction));
     if (mTimerNotifyFunction != NULL)
     {
         mTimerNotifyFunction(time - mLastTime);
     }
 
     mLastTime = time;
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -142,14 +125,19 @@ Return Value:
 
 --*/
 {
+    EFI_STATUS status;
     if (NotifyFunction == NULL && mTimerNotifyFunction == NULL)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     if (NotifyFunction != NULL && mTimerNotifyFunction != NULL)
     {
-        return EFI_ALREADY_STARTED;
+        status = EFI_ALREADY_STARTED;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     mTimerNotifyFunction = NotifyFunction;
@@ -213,9 +201,13 @@ Return Value:
 
 --*/
 {
+    EFI_STATUS status; 
+
     if (TimerPeriod == NULL)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     *TimerPeriod = mTimerPeriod;
@@ -277,11 +269,6 @@ Return Value:
     HV_MESSAGE *message;
     HV_MESSAGE_TYPE messageType;
 
-    DEBUG((DEBUG_VERBOSE, ">>> SynicTimerInterruptHandler\n"));
-
-// Only poll the debugger on the old debug stubs.
-//
-// TODO-cho: Should we poll the debugger more for KdDxe as well?
 #if defined(MDE_CPU_X64)
     DebugPollDebugger();
 #endif
@@ -301,8 +288,6 @@ Return Value:
     }
 
     SynicTimerCallNotifyFunction();
-
-    DEBUG((DEBUG_VERBOSE, "<<< SynicTimerInterruptHandler\n"));
 }
 
 EFI_STATUS
@@ -334,27 +319,23 @@ Return Value:
     mSintIndex = PcdGet8(PcdSynicTimerSintIndex);
     mTimerIndex = PcdGet8(PcdSynicTimerTimerIndex);
 
+    //
     // Make sure the Timer Architectural Protocol is not already installed in
     // the system
-
+    //
     ASSERT_PROTOCOL_ALREADY_INSTALLED(NULL, &gEfiTimerArchProtocolGuid);
-
-    // Find the HV protocol.
 
     status = gBS->LocateProtocol(&gEfiHvProtocolGuid, NULL, (VOID **)&mHv);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to locate the HV protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
-
-    // Determine whether direct timers are supported.
 
     mUseDirectTimer = mHv->DirectTimerSupported();
 
     if (!mUseDirectTimer)
     {
-        // Connect the SINT interrupt.
-
         status = mHv->ConnectSint(mHv,
                                   mSintIndex,
                                   PcdGet8(PcdSynicTimerVector),
@@ -363,14 +344,16 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
+            DEBUG((EFI_D_ERROR, "--- %a: failed to connect the SINT - %r \n", __FUNCTION__, status));
             goto Cleanup;
         }
 
         mSintConnected = TRUE;
     }
 
+    //
     // Enable the timer.
-
+    //
     status = mHv->ConfigureTimer(mHv,
                                  mTimerIndex,
                                  mSintIndex,
@@ -380,6 +363,7 @@ Return Value:
                                  SynicTimerInterruptHandler);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to configure the timer - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -388,11 +372,13 @@ Return Value:
     status = SynicTimerSetTimerPeriod(&mTimer, PcdGet64(PcdSynicTimerDefaultPeriod));
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to set the timer period - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
+    //
     // Install the Timer Architectural Protocol onto a new handle.
-
+    //
     status = gBS->InstallMultipleProtocolInterfaces(
                     &mTimerHandle,
                     &gEfiTimerArchProtocolGuid, &mTimer,
@@ -400,6 +386,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to install the protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
