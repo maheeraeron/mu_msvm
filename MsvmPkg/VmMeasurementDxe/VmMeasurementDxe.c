@@ -1,23 +1,16 @@
-/*++
-
-Copyright (c) 2020, Microsoft Corporation
-
-ModuleName:
-
-  VmMeasurementDxe.c
-
-Abstract:
-
+/** @file
   Measure VM specific data to TPM using PCR[06]
 
---*/
+  Copyright - TODO 48874838
+  License -  TODO 48874838
+
+**/
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PrintLib.h>
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include <Library/TpmMeasurementLib.h>
-#include <EfiNt.h>
 
 EFI_STATUS
 EFIAPI
@@ -42,7 +35,6 @@ Routine Description:
   //
   // Include the UUID in the event log, and hash the entire event log
   //
-
   EventSize = (UINT32)AsciiSPrint(EventLog, sizeof(EventLog), "UUID: %g", (EFI_GUID *)PcdGet64(PcdBiosGuidPtr));
 
   Status = TpmMeasureAndLogData (

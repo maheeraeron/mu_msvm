@@ -1,14 +1,10 @@
+## @file
+# Measure VM specific data to TPM using PCR[06]
 #
-# Copyright (c) 2020, Microsoft Corporation
+# Copyright - TODO 48874838
 #
-# Module Name:
-#
-#   VmMeasurementDxe.inf
-#
-# Abstract:
-#
-#   Measure VM specific data to TPM using PCR[06]
-#
+# License -  TODO 48874838
+##
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -34,14 +30,14 @@
   MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
-  UefiLib
   BaseLib
   DebugLib
   UefiDriverEntryPoint
+  UefiLib
   TpmMeasurementLib
 
 [Pcd]
   gMsvmPkgTokenSpaceGuid.PcdBiosGuidPtr   ## CONSUMES
 
 [Depex]
-  gEfiTcg2ProtocolGuid                    ## CONSUMES
+  gEfiTcg2ProtocolGuid
