@@ -1,8 +1,8 @@
 /** @file
   Measure VM specific data to TPM using PCR[06]
 
-  Copyright - TODO 48874838
-  License -  TODO 48874838
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

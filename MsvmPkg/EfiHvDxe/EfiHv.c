@@ -2,8 +2,8 @@
   Provides an implementation of the EFI_HV_PROTOCOL protocol, which provides
   UEFI access to the Hyper-V hypervisor.P initialize support functions for DXE phase.
 
-  Copyright - TODO 48874838
-  License -  TODO 48874838
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>

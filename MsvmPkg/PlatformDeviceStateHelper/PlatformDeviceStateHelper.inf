@@ -1,9 +1,8 @@
 ## @file
 #  This component sets up the device state information during PEI.
 #
-#   Copyright - TODO 48874838
-#
-#   License -  TODO 48874838
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 

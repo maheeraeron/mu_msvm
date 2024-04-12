@@ -1,8 +1,8 @@
 /** @file
   Sets up the device state variable for use on displaying the device state
 
-  Copyright - TODO 48874838
-  License -  TODO 48874838
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>

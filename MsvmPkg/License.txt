@@ -1,5 +1,4 @@
-TODO 48874838 - Review with CELA
-
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 Redistribution and use in source and binary forms, with or without
