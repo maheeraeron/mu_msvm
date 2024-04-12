@@ -1,38 +1,25 @@
-/*++
+/** @file
+  Provides the root controller and bus implementation for the VMBus driver.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-Module Name:
+**/
 
-    VmbusRoot.c
-
-Abstract:
-
-    Provides the root controller and bus implementation for the VMBus driver.
-
-Author:
-
-    Arseney Romanenko (arseneyr) - 7-Jul-2012
-
---*/
-
-
-#include <PiDxe.h>
-#include <VmbusP.h>
 #include <IsolationTypes.h>
-
-#include <Protocol/InternalEventServices.h>
-
-#include <Library/DevicePathLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DevicePathLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
+#include <Library/SynchronizationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/SynchronizationLib.h>
-#include <Library/PcdLib.h>
+#include <Library/UefiLib.h>
+#include <PiDxe.h>
+#include <Protocol/InternalEventServices.h>
+#include <VmbusP.h>
 
 typedef struct _VMBUS_HOT_MESSAGE
 {
@@ -170,6 +157,7 @@ VmbusComponentNameGetControllerName(
     __out CHAR16 **ControllerName
     );
 
+
 VMBUS_ROOT_CONTEXT mRootContext;
 
 EFI_HANDLE mRootDevice;
@@ -178,6 +166,7 @@ HV_CONNECTION_ID gVmbusConnectionId = {VMBUS_MESSAGE_CONNECTION_ID};
 EFI_GUID *mVmbusLegacyProtocolGuid;
 
 VMBUS_ROOT_DEVICE_PATH gVmbusRootDevicePath;
+
 VMBUS_ROOT_NODE gVmbusRootNode =
 {
     {
@@ -213,21 +202,14 @@ EFI_STATUS
 VmbusRootInitializeContext(
     __in VMBUS_ROOT_CONTEXT *RootContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine initializes a root context.
 
-Arguments:
+    @param RootContext Pointer to the root context to initialize.
 
-    RootContext - Pointer to the root context to initialize.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
 
@@ -238,14 +220,17 @@ Return Value:
     RootContext->ContactInitiated = FALSE;
     RootContext->OffersDelivered = FALSE;
 
-    status = gBS->CreateEvent(0,
-                              0,
-                              NULL,
-                              NULL,
-                              &RootContext->WaitForMessage);
+    status = 
+        gBS->CreateEvent(
+            0,
+            0,
+            NULL,
+            NULL,
+            &RootContext->WaitForMessage);
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create event for WaitForMessage - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -253,15 +238,17 @@ Return Value:
     // Set the hot event to the lowest TPL possible so any driver unbindings
     // triggered by hot-remove can safely stop the EMCL channel.
     //
-
-    status = gBS->CreateEvent(EVT_NOTIFY_SIGNAL,
-                              TPL_APPLICATION + 1,
-                              VmbusRootHotAdd,
-                              (VOID*) RootContext,
-                              &RootContext->HotEvent);
+    status = 
+        gBS->CreateEvent(
+            EVT_NOTIFY_SIGNAL,
+            TPL_APPLICATION + 1,
+            VmbusRootHotAdd,
+            (VOID*) RootContext,
+            &RootContext->HotEvent);
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create event for HotEvent - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -270,14 +257,17 @@ Return Value:
     // allocate memory for the hot message.
     //
 
-    status = gBS->CreateEvent(EVT_NOTIFY_SIGNAL,
-                              TPL_NOTIFY,
-                              VmbusRootHotAddAllocation,
-                              (VOID*) RootContext,
-                              &RootContext->HotAllocationEvent);
+    status = 
+        gBS->CreateEvent(
+            EVT_NOTIFY_SIGNAL,
+            TPL_NOTIFY,
+            VmbusRootHotAddAllocation,
+            (VOID*) RootContext,
+            &RootContext->HotAllocationEvent);
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create event for hot allocation event - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -297,22 +287,15 @@ EFI_STATUS
 VmbusRootDestroyChannel(
     __in VMBUS_CHANNEL_CONTEXT *ChannelContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine destroys a channel handle by uninstalling the VMBus and Device
     Path protocols and then destroying the channel context.
 
-Arguments:
+    @param ChannelContext Pointer to the channel context to destroy.
 
-    ChannelContext - Pointer to the channel context to destroy.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+*/
 {
     EFI_STATUS status;
 
@@ -332,7 +315,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "Could not uninstall VMBus protocol\n"));
+        DEBUG((EFI_D_ERROR, "--- %a: could not uninstall VmBus protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -344,7 +327,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "Could not uninstall legacy VMBus protocol\n"));
+        DEBUG((EFI_D_ERROR, "--- %a: could not uninstall legacy VmBus protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -366,21 +349,14 @@ EFI_STATUS
 VmbusRootDestroyContext (
     __in VMBUS_ROOT_CONTEXT *RootContext
     )
-/*++
+/**
+    This routine destroys a root context.
 
-Routine Description:
+    @param RootContext Pointer to the root context to destroy.
 
-    This routine destroyes a root context.
+    @returns  EFI_STATUS.
 
-Arguments:
-
-    RootContext - Pointer to the root context to destroy.
-
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     UINT32 index;
@@ -411,6 +387,7 @@ Return Value:
             status = VmbusRootDestroyChannel(RootContext->Channels[index]);
             if (EFI_ERROR(status))
             {
+                DEBUG((EFI_D_ERROR, "--- %a: failed to destroy channel - %r \n", __FUNCTION__, status));
                 return status;
             }
             ASSERT(RootContext->Channels[index] == NULL);
@@ -452,10 +429,10 @@ Return Value:
 
     for (index = 0; index < VMBUS_MAX_GPADLS; ++index)
     {
+
         //
         // All drivers above should have released all GPADLs by now.
         //
-
         ASSERT(!VmbusRootValidateGpadl(RootContext, index));
 
         VmbusRootReclaimGpadl(RootContext, index);
@@ -471,27 +448,19 @@ VmbusRootWaitForMessage(
     __in BOOLEAN PollForMessage,
     __out VMBUS_MESSAGE *Message
     )
-/*++
-
-Routine Description:
-
+/**
     This routine waits for a message targeted at the root device.
-
     This routine must be called at TPL < TPL_NOTIFY.
 
-Arguments:
+    @params RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @params PollForMessage poll for a message instead of waiting for event
 
-    PollForMessage - poll for a message instead of waiting for event
+    @params Message Returns the message received.
 
-    Message - Returns the message received.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {   UINTN index;
     HV_MESSAGE *hvMessage;
     EFI_STATUS status;
@@ -500,7 +469,6 @@ Return Value:
     // TPL must be less than TPL_NOTIFY, since hot add/remove messages are
     // processed in events at that TPL and will block all other messages.
     //
-
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
     ASSERT(RootContext->SintConnected);
 
@@ -525,8 +493,10 @@ Return Value:
         hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
     }
 
+    //
     // Read the message size and store it before validation to avoid
     // double fetch.
+    //
     Message->Size = hvMessage->Header.PayloadSize;
 
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
@@ -544,23 +514,15 @@ VMBUS_MESSAGE*
 VmbusRootWaitForChannelResponse(
     __in VMBUS_CHANNEL_CONTEXT *ChannelContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine waits for a message targeted at a specific channel.
-
     This routine must be called at TPL < TPL_NOTIFY.
 
-Arguments:
+    @param ChannelContext The channel to which the message is targeted to.
 
-    ChannelContext - The channel to which the message is targeted to.
+    @returns The message received.
 
-Return Value:
-
-    The message received.
-
---*/
+**/
 {
     EFI_STATUS status;
     UINTN index;
@@ -569,7 +531,6 @@ Return Value:
     // TPL must be less than TPL_NOTIFY, since hot add/remove messages are
     // processed in events at that TPL and will block all other messages.
     //
-
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
 
     if (mInternalEventServices == NULL) 
@@ -581,8 +542,10 @@ Return Value:
         ASSERT_EFI_ERROR(status);
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(1, &ChannelContext->Response.Event, &index);
 
     ASSERT_EFI_ERROR(status);
@@ -597,27 +560,19 @@ VmbusRootWaitForGpadlResponse(
     __in UINT32 GpadlHandle,
     __out VMBUS_MESSAGE **Message
     )
-/*++
-
-Routine Description:
-
+/**
     This routine waits for a message targeted at a specific GPADL.
-
     This routine must be called at TPL < TPL_NOTIFY.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param GpadlHandle GPADL handle to wait on.
 
-    GpadlHandle - GPADL handle to wait on.
+    @param Message Returns the message.
 
-    Message - Returns the message.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     UINTN index;
@@ -626,12 +581,13 @@ Return Value:
     // TPL must be less than TPL_NOTIFY, since hot add/remove messages are
     // processed in events at that TPL and will block all other messages.
     //
-
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
 
     if (RootContext->GpadlTable[GpadlHandle].Event == NULL)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: invalid handle event for the GPADL - %r \n", __FUNCTION__, status));
+        return status;
     }
 
    if (mInternalEventServices == NULL) 
@@ -643,8 +599,10 @@ Return Value:
         ASSERT_EFI_ERROR(status);
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(
                                         1,
                                         &RootContext->GpadlTable[GpadlHandle].Event,
@@ -663,25 +621,18 @@ VmbusRootInitializeMessage(
     __in VMBUS_CHANNEL_MESSAGE_TYPE Type,
     __in UINT32 Size
     )
-/*++
-
-Routine Description:
-
+/**
     This routine initializes a VMBus message.
 
-Arguments:
+    @param Message Pointer to the VMBus message to initialize.
 
-    Message - Pointer to the VMBus message to initialize.
+    @param Type Type of the message.
 
-    Type - Type of the message.
+    @param Size Size of the message.
 
-    Size - Size of the message.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     ZeroMem(Message, sizeof(*Message));
     Message->Size = Size;
@@ -693,21 +644,14 @@ VOID
 VmbusRootSendMessage(
     __in VMBUS_MESSAGE *Message
     )
-/*++
-
-Routine Description:
-
+/**
     This routine synchronously sends a VMBus message to the opposite endpoint.
 
-Arguments:
+    @param Message VMBus message to send.
 
-    Message - VMBus message to send.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     EFI_STATUS status;
 
@@ -733,23 +677,16 @@ EFIAPI
 VmbusRootSintNotify (
     __in VOID *Context
     )
-/*++
-
-Routine Description:
-
+/**
     This interrupt callback scans event flags and dispatches VMBus messages when
     a VMBus SINT is received.
 
-Arguments:
-
-    Context - Pointer to the interrupt context, which is a pointer to the root
+    @param Context Pointer to the interrupt context, which is a pointer to the root
     context.
 
-Return Value:
+    @returns nothing.
 
-    None.
-
---*/
+**/
 {
     VMBUS_ROOT_CONTEXT *rootContext;
     HV_MESSAGE *hvMessage;
@@ -776,26 +713,19 @@ VmbusRootScanEventFlags(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in volatile HV_SYNIC_EVENT_FLAGS *Flags
     )
-/*++
-
-Routine Description:
-
+/**
     This routine scans the hypervisor event flags and signals interrupt events
     that channels have registered.
 
     This routine must be called at TPL == TPL_HIGH_LEVEL.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param Flags Hypervisor flags to scan.
 
-    Flags - Hypervisor flags to scan.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     UINT64 *flags;
     UINT32 wordIndex;
@@ -809,7 +739,6 @@ Return Value:
     // Scan through all the words up to and including largest interrupt flag
     // used.
     //
-
     wordCount = RootContext->MaxInterruptUsed / 64 + 1;
     for (wordIndex = 0; wordIndex < wordCount; ++wordIndex)
     {
@@ -829,10 +758,7 @@ VmbusRootDispatchMessage(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in HV_MESSAGE *HvMessage
     )
-/*++
-
-Routine Description:
-
+/**
     This routine dispatches a hypervisor message based on its type, notifying
     either the root device, a channel device, or a GPADL handle.
 
@@ -841,17 +767,13 @@ Routine Description:
     This routine receives a message from the host and therefore
     must validate this message before using it.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param HvMessage Hypervisor message to dispatch.
 
-    HvMessage - Hypervisor message to dispatch.
+    @returns TRUE if hypervisor message should be completed, FALSE otherwise.
 
-Return Value:
-
-    TRUE if hypervisor message should be completed, FALSE otherwise.
-
---*/
+**/
 {
     VMBUS_MESSAGE *message;
     VMBUS_MESSAGE_RESPONSE *response;
@@ -876,6 +798,7 @@ Return Value:
     switch (message->Header.MessageType)
     {
     case ChannelMessageOfferChannel:
+
         //
         // Hot add events need to drop TPL to allocate memory and should queue
         // up messages behind them, so don't complete this message.
@@ -902,14 +825,15 @@ Return Value:
         // synchronously during initialization and are not channel or GPADL-
         // specific.
         //
-
         gBS->SignalEvent(RootContext->WaitForMessage);
         completeMessage = FALSE;
         break;
 
     case ChannelMessageOpenChannelResult:
-
+        
+        //
         // Store the channel ID before validating to avoid a double fetch.
+        //
         childId = message->OpenResult.ChildRelId;
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
             childId < VMBUS_MAX_CHANNELS,
@@ -922,7 +846,9 @@ Return Value:
 
     case ChannelMessageGpadlTorndown:
 
+        //
         // Store the GPADL before validating to avoid a double fetch.
+        //
         gpadl = message->GpadlTorndown.Gpadl;
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
             gpadl < VMBUS_MAX_GPADLS,
@@ -940,7 +866,9 @@ Return Value:
 
     case ChannelMessageGpadlCreated:
 
+        //
         // Store the GPADL before validating to avoid a double fetch.
+        //
         gpadl = message->GpadlCreated.Gpadl;
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
             gpadl < VMBUS_MAX_GPADLS,
@@ -963,7 +891,6 @@ Return Value:
         // guarantee a channel will not be used once it is gone. Silently accept
         // rescind messages but never send a RelIdReleased in response.
         //
-
         break;
 
     default:
@@ -1000,27 +927,20 @@ VmbusRootHotAddAllocation(
     _In_ EFI_EVENT Event,
     _In_ VOID * Context
     )
-/*++
-
-Routine Description:
-
+/**
     This routine allocates space for hot add messages and copies the message
     from the SINT queue, to be processed by VmbusRootHotAdd.
 
     This routine receives a message from the host and therefore
     must validate this message before using it.
 
-Arguments:
+    @param Event The event that was signalled.
 
-    Event - The event that was signalled.
+    @param Context A pointer to the event context, which is the root context.
 
-    Context - A pointer to the event context, which is the root context.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     VMBUS_ROOT_CONTEXT *context;
     HV_MESSAGE *hvMessage;
@@ -1034,6 +954,7 @@ Return Value:
     hotMessage = AllocatePool(sizeof(*hotMessage));
     if (hotMessage == NULL)
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to allocate hot message - %r \n", __FUNCTION__, EFI_OUT_OF_RESOURCES));
         goto Cleanup;
     }
 
@@ -1062,16 +983,18 @@ Return Value:
         VMBUS,
         __LINE__,
         0);
+
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
         context->Channels[hotMessage->Message.OfferChannel.ChildRelId] == NULL,
         VMBUS,
         __LINE__,
         0);
 
+    //
     // Do not proceed if this channel is not allowed during UEFI boot.
+    //
     if (!VmbusRootIsChannelAllowed(&hotMessage->Message.OfferChannel))
     {
-        // Do nothing for this channel creation.
         FreePool(hotMessage);
         goto Cleanup;
     }
@@ -1090,25 +1013,18 @@ VmbusRootHotAdd(
     __in EFI_EVENT Event,
     __in VOID *Context
     )
-/*++
-
-Routine Description:
-
-    This routine processes hot-add messages. Hot-remove is tricky under UEFI,
+/**
+    This routine processes hot-add messages. Hot-remove is not supported under UEFI,
     as we cannot guarantee that a channel isn't being used (or block on it) when
     it's being removed.
 
-Arguments:
+    @param Event The event that was signalled.
 
-    Event - The event that was signalled.
+    @param Context A pointer to the event context, which is the root context.
 
-    Context - A pointer to the event context, which is the root context.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     EFI_STATUS status;
     EFI_TPL tpl;
@@ -1126,7 +1042,6 @@ Return Value:
     //
     // While TPL is raised, copy list of messages locally.
     //
-
     if (!IsListEmpty(&context->HotMessageList))
     {
         list = context->HotMessageList;
@@ -1140,7 +1055,9 @@ Return Value:
     {
         hotMessage = BASE_CR(GetFirstNode(&list), VMBUS_HOT_MESSAGE, Link);
 
+        //
         // The offer message is validated before adding it to the list.
+        //
         ASSERT(hotMessage->Message.Header.MessageType == ChannelMessageOfferChannel);
         ASSERT(hotMessage->Message.Size == sizeof(hotMessage->Message.OfferChannel));
 
@@ -1150,15 +1067,15 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
-            DEBUG((EFI_D_ERROR, "Hot add returned %r\n", status));
+            DEBUG((EFI_D_ERROR, "--- %a: failed to create the channel - %r \n", __FUNCTION__, status));
         }
         else
         {
+
             //
             // ConnectController must be manually called to hook this channel up to
             // any drivers that can manage it.
             //
-
             gBS->ConnectController(channelContext->Handle,
                                    NULL,
                                    NULL,
@@ -1176,25 +1093,18 @@ VmbusRootGetFreeGpadl(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __out UINT32 *GpadlHandle
     )
-/*++
-
-Routine Description:
-
+/**
     This routine allocates a new GPADL and returns its handle.
 
     This routine must be called at TPL <= TPL_VMBUS.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param GpadlHandle Handle of the GPADL that was created.
 
-    GpadlHandle - Handle of the GPADL that was created.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     EFI_TPL tpl;
@@ -1211,6 +1121,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create event - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -1218,9 +1129,8 @@ Return Value:
 
     //
     // The whole GPADL array is scanned for a free entry.
-    // FUTURE-arseneyr-20120731: Make this more efficient.
+    // TODO: Make this more efficient.
     //
-
     for (index = 1; index < VMBUS_MAX_GPADLS; ++index)
     {
         if (RootContext->GpadlTable[index].Event == NULL)
@@ -1230,7 +1140,6 @@ Return Value:
             //
             // Create a new event to mark it as taken.
             //
-
             RootContext->GpadlTable[index].Event = event;
             break;
         }
@@ -1241,6 +1150,7 @@ Return Value:
     if (index == VMBUS_MAX_GPADLS)
     {
         status = EFI_OUT_OF_RESOURCES;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to find an available GPADL - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -1264,24 +1174,16 @@ VmbusRootReclaimGpadl(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in UINT32 GpadlHandle
     )
-/*++
+/**
+    This routine releases a GPADL to be reused.
 
-Routine Description:
+    @param RootContext Pointer to the root context.
 
-    This routine releases a GPADL to be reused. The routine revokes host
-    visibility.
+    @param GpadlHandle GPADL handle to release.
 
-Arguments:
+    @returns nothing.
 
-    RootContext - Pointer to the root context.
-
-    GpadlHandle - GPADL handle to release.
-
-Return Value:
-
-    None.
-
---*/
+**/
 {
     VMBUS_MESSAGE_RESPONSE *gpadlEntry;
 
@@ -1298,27 +1200,19 @@ VmbusRootValidateGpadl(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in UINT32 GpadlHandle
     )
-/*++
-
-Routine Description:
-
+/**
     This routine verifies if the provided GPADL handle is valid.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param GpadlHandle GPADL handle to verify.
 
-    GpadlHandle - GPADL handle to verify.
+    @returns TRUE if the GPADL has been created previously, FALSE otherwise.
 
-Return Value:
-
-    TRUE if the GPADL has been created previously, FALSE otherwise.
-
---*/
+**/
 {
     return RootContext->GpadlTable[GpadlHandle].Event != NULL;
 }
-
 
 VOID
 VmbusRootSetInterruptEntry(
@@ -1327,25 +1221,18 @@ VmbusRootSetInterruptEntry(
     __in EFI_EVENT Event
     )
 
-/*++
-
-Routine Description:
-
+/**
     This routine registers an interrupt event for a channel.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param ChannelId Index of the interrupt to set.
 
-    ChannelId - Index of the interrupt to set.
+    @param Event The event to signal when the interrupt occurs.
 
-    Event - The event to signal when the interrupt occurs.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 
 {
     EFI_TPL tpl;
@@ -1368,23 +1255,16 @@ VmbusRootClearInterruptEntry(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in UINT32 ChannelId
     )
-/*++
-
-Routine Description:
-
+/**
     This routine unregisters an interrupt for a channel.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param ChannelId Index of the interrupt to clear.
 
-    ChannelId - Index of the interrupt to clear.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     EFI_TPL tpl;
     UINT32 index;
@@ -1422,24 +1302,17 @@ VmbusRootExitBootServices(
     __in EFI_EVENT Event,
     __in VOID *Context
     )
-/*++
-
-Routine Description:
-
+/**
     This event notification sends an unload message when ExitBootServices is
     called.
 
-Arguments:
+    @param Event The event that was signalled.
 
-    Event - The event that was signalled.
+    @param Context A pointer to the event context, which is the root context.
 
-    Context - A pointer to the event context, which is the root context.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     VMBUS_ROOT_CONTEXT *rootContext;
     int i;
@@ -1474,10 +1347,7 @@ EFI_STATUS
 VmbusRootInitiateContact(
     __in VMBUS_ROOT_CONTEXT *RootContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine initiates contact with the host endpoint and negotiates the
     VMBus version.
 
@@ -1486,15 +1356,11 @@ Routine Description:
     This routine receives a message from the host and therefore
     must validate this message before using it.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     VMBUS_MESSAGE message;
     EFI_STATUS status;
@@ -1543,10 +1409,7 @@ VOID
 VmbusRootSendUnload(
     __in VMBUS_ROOT_CONTEXT *RootContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine sends an unload message and synchronously waits for a response
     from the root.
 
@@ -1555,15 +1418,11 @@ Routine Description:
     This routine receives a message from the host and therefore
     must validate this message before using it.
 
-Arguments:
+    @param RootContext  Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @returns nothing.
 
-Return Value:
-
-    None.
-
---*/
+**/
 {
     VMBUS_MESSAGE message;
 
@@ -1576,7 +1435,6 @@ Return Value:
     //
     // Ignore all messages until the unload response comes back.
     //
-
     do
     {
         VmbusRootWaitForMessage(RootContext, TRUE, &message);
@@ -1596,26 +1454,19 @@ VmbusRootCreateChannel(
     __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage,
     __out_opt VMBUS_CHANNEL_CONTEXT **ChannelContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine constructs a channel from an offer message.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @param OfferMessage The offer message received.
 
-    OfferMessage - The offer message received.
+    @param ChannelContext Optionally returns a pointer to the newly constructed
+                            channel context.
 
-    ChannelContext - Optionally returns a pointer to the newly constructed
-        channel context.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     VMBUS_CHANNEL_CONTEXT *channelContext;
@@ -1625,7 +1476,8 @@ Return Value:
     channelContext = AllocatePool(sizeof(VMBUS_CHANNEL_CONTEXT));
     if (channelContext == NULL)
     {
-        status = EFI_OUT_OF_RESOURCES;
+        status = EFI_OUT_OF_RESOURCES;        
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create event for WaitForMessage - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -1653,7 +1505,6 @@ Return Value:
     //
     // Install the Device Path and VMBus protocols onto a new child handle.
     //
-
     status = gBS->InstallMultipleProtocolInterfaces(&channelContext->Handle,
                                                     &gEfiDevicePathProtocolGuid,
                                                     &channelContext->DevicePath,
@@ -1674,7 +1525,6 @@ Return Value:
     // Open the root VMBus tag protocol BY_CHILD_CONTROLLER so EFI can track
     // this relation.
     //
-
     status = gBS->OpenProtocol(mRootDevice,
                                &gEfiVmbusRootProtocolGuid,
                                &protocol,
@@ -1684,6 +1534,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the VmBus protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -1711,21 +1562,14 @@ BOOLEAN
 VmbusRootIsChannelAllowed(
     __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
 )
-/*++
-
-Routine Description:
-
+/**
     This routine determines if a VmBus channel is allowed or not.
 
-Arguments:
+    @param OfferMessage The offer message received that contains the channel details.
 
-    OfferMessage - The offer message received that contains the channel details.
+    @returns TRUE if the channel is allowed, FALSE otherwise.
 
-Return Value:
-
-    TRUE if the channel is allowed, FALSE otherwise.
-
---*/
+**/
 {
     int index = 0;
     int allowedGuidCount = 0;
@@ -1753,7 +1597,10 @@ Return Value:
     {
         if (!PcdGetBool(PcdDisableIMCWhenIsolated))
         {
+
+            //
             // Decide if this is the IMC channel and if it should be allowed.
+            //
             if (CompareMem(&OfferMessage->InterfaceType, &gVmbfsChannelGuid, sizeof(EFI_GUID)) == 0)
             {
                 DEBUG((DEBUG_INFO, "%a: IMC Channel allowed during boot (%g).\n", __FUNCTION__, &OfferMessage->InterfaceType));
@@ -1772,28 +1619,21 @@ EFI_STATUS
 VmbusRootEnumerateChildren(
     __in VMBUS_ROOT_CONTEXT *RootContext
     )
-/*++
-
-Routine Description:
-
+/**
     This routine receives all VMBus offers from the root, creates a child
     handle for each one, and installs the VMBus and Device Path protocols onto
-    the it.
+    them.
 
     This function must be called at TPL < TPL_HIGH_LEVEL.
 
     This routine receives a message from the host and therefore
     must validate this message before using it.
 
-Arguments:
+    @param RootContext Pointer to the root context.
 
-    RootContext - Pointer to the root context.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     VMBUS_MESSAGE message;
@@ -1816,8 +1656,9 @@ Return Value:
         if (message.Size != sizeof(message.OfferChannel) ||
             message.Header.MessageType != ChannelMessageOfferChannel)
         {
-            ASSERT(!"Unexpected VMBus message received from root");
-            return EFI_PROTOCOL_ERROR;
+            status = EFI_PROTOCOL_ERROR;
+            DEBUG((EFI_D_ERROR, "--- %a: unexpected VMBus message received from root - %r \n", __FUNCTION__, status));
+            return status;
         }
 
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
@@ -1831,10 +1672,15 @@ Return Value:
             __LINE__,
             0);
 
+        //
         // Do not proceed if this channel is not allowed during UEFI boot.
+        //
         if (!VmbusRootIsChannelAllowed(&message.OfferChannel))
         {
+
+            //
             // Do nothing for this channel creation.
+            //
             continue;
         }
 
@@ -1844,6 +1690,7 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
+            DEBUG((EFI_D_ERROR, "--- %a: failed to create the channel - %r \n", __FUNCTION__, status));
             return status;
         }
     }
@@ -1859,25 +1706,18 @@ VmbusRootDriverSupported (
     __in EFI_HANDLE ControllerHandle,
     __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
     )
-/*++
-
-Routine Description:
-
+/**
     Supported routine for VMBus driver binding protocol.
 
-Arguments:
+    @param This Pointer to the driver binding protocol.
 
-    This - Pointer to the driver binding protocol.
+    @param ControllerHandle Device handle to check if supported.
 
-    ControllerHandle - Device handle to check if supported.
+    @param RemainingDevicePath Device path of child to start.
 
-    RemainingDevicePath - Device path of child to start.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     VOID *protocol;
@@ -1886,7 +1726,6 @@ Return Value:
     // Check for the root controller tag GUID and make sure this driver is not
     // already managing this device.
     //
-
     status = gBS->OpenProtocol(ControllerHandle,
                                &gEfiVmbusRootProtocolGuid,
                                &protocol,
@@ -1896,6 +1735,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the VMBus protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -1915,25 +1755,18 @@ VmbusRootDriverStart (
     __in EFI_HANDLE ControllerHandle,
     __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
     )
-/*++
-
-Routine Description:
-
+/**
     Start routine for VMBus driver binding protocol.
 
-Arguments:
+    @param This Pointer to the driver binding protocol.
 
-    This - Pointer to the driver binding protocol.
+    @param ControllerHandle Device handle on which to start.
 
-    ControllerHandle - Device handle on which to start.
+    @param RemainingDevicePath Device path of device being started.
 
-    RemainingDevicePath - Device path of device being started.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     VOID *protocol;
@@ -1945,6 +1778,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to locate the EfiHv protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -1952,6 +1786,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to locate the EfiHvIvm protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -1961,6 +1796,7 @@ Return Value:
     status = VmbusRootInitializeContext(&mRootContext);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to initialize context - %r \n", __FUNCTION__, status));
         return status;
     }
     DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitializeContext\n", __FUNCTION__));
@@ -1973,6 +1809,7 @@ Return Value:
     DEBUG((DEBUG_VERBOSE, "--- %a after ConnectSint status %r\n", __FUNCTION__, status));
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to connect SINT - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -1981,6 +1818,7 @@ Return Value:
     status = VmbusRootInitiateContact(&mRootContext);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to initiate contact - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
     DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitiateContact status %r\n", __FUNCTION__, status));
@@ -1994,12 +1832,14 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create the exit boot services event - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
     status = VmbusRootEnumerateChildren(&mRootContext);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to enumerate children - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
     DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootEnumerateChildren status %r\n", __FUNCTION__, status));
@@ -2012,6 +1852,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the VMBus protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -2036,28 +1877,21 @@ VmbusRootDriverStop (
     __in UINTN NumberOfChildren,
     __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
     )
-/*++
-
-Routine Description:
-
+/**
     Stop routine for VMBus driver binding protocol.
 
-Arguments:
+    @param This - Pointer to the driver binding protocol.
 
-    This - Pointer to the driver binding protocol.
+    @param ControllerHandle Pointer to the device handle which needs to be stopped.
 
-    ControllerHandle - Pointer to the device handle which needs to be stopped.
-
-    NumberOfChildren - If 0, stop the root controller. Otherwise, the number of
+    @param NumberOfChildren If 0, stop the root controller. Otherwise, the number of
         children in ChildHandleBuffer to be stopped.
 
-    ChildHandleBuffer - An array of child handles to stop.
+    @param ChildHandleBuffer An array of child handles to stop.
 
-Return Value:
+    @returns EFI_STATUS.
 
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
     UINTN childIndex;
@@ -2076,6 +1910,7 @@ Return Value:
         status = VmbusRootDestroyContext(&mRootContext);
         if (EFI_ERROR(status))
         {
+            DEBUG((EFI_D_ERROR, "--- %a: failed to destroy the context - %r \n", __FUNCTION__, status));
             return status;
         }
     }
@@ -2094,6 +1929,7 @@ Return Value:
                     status = VmbusRootDestroyChannel(channelContext);
                     if (EFI_ERROR(status))
                     {
+                        DEBUG((EFI_D_ERROR, "--- %a: failed to destroy the channel - %r \n", __FUNCTION__, status));
                         return status;
                     }
 
@@ -2172,10 +2008,7 @@ VmbusComponentNameGetDriverName (
     __in CHAR8 *Language,
     __out CHAR16 **DriverName
     )
-/*++
-
-Routine Description:
-
+/**
     Retrieves a Unicode string that is the user readable name of the EFI Driver.
 
     This function retrieves the user readable name of a driver in the form of a
@@ -2185,19 +2018,15 @@ Routine Description:
     by This does not support the language specified by Language,
     then EFI_UNSUPPORTED is returned.
 
-Arguments:
+    @param This A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
 
-    This - A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
+    @param Language A pointer to a Null-terminated ASCII string array indicating the language.
 
-    Language - A pointer to a Null-terminated ASCII string array indicating the language.
+    @param DriverName A pointer to the string to return.
 
-    DriverName - A pointer to the string to return.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     return LookupUnicodeString2(
         Language,
@@ -2217,13 +2046,9 @@ VmbusComponentNameGetControllerName(
     __in CHAR8 *Language,
     __out CHAR16 **ControllerName
     )
-/*++
-
-Routine Description:
-
+/**
     Retrieves a Unicode string that is the user readable name of the controller
     that is being managed by a Driver.
-
 
     This function retrieves the user readable name of the controller specified by
     ControllerHandle and ChildHandle in the form of a Unicode string. If the
@@ -2234,35 +2059,29 @@ Routine Description:
     then EFI_UNSUPPORTED is returned.  If the driver specified by This does not
     support the language specified by Language, then EFI_UNSUPPORTED is returned.
 
-Arguments:
+    @param This A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
 
-    This - A pointer to the EFI_COMPONENT_NAME2_PROTOCOL or EFI_COMPONENT_NAME_PROTOCOL instance.
-
-    ControllerHandle - The handle of a controller that the driver specified by This
+    @param ControllerHandle The handle of a controller that the driver specified by This
            is managing.  This handle specifies the controller whose name is to be returned.
 
-    ChildHandle - The handle of the child controller to retrieve the name of. This is an
+    @param ChildHandle The handle of the child controller to retrieve the name of. This is an
         optional parameter that may be NULL.  It will be NULL for device drivers.  It will
         also be NULL for a bus drivers that wish to retrieve the name of the bus controller.
         It will not be NULL for a bus  driver that wishes to retrieve the name of a
         child controller.
 
-    Language - A pointer to a Null-terminated ASCII string array indicating the language.
+    @param Language A pointer to a Null-terminated ASCII string array indicating the language.
         This is the language of the driver name that the caller is requesting, and it
         must match one of the languages specified in SupportedLanguages. The number of
         languages supported by a driver is up to the driver writer. Language is specified in
         RFC 4646 or ISO 639-2 language code format.
 
-    ControllerName - A pointer to the Unicode string to return. This Unicode string is the
+    @param ControllerName A pointer to the Unicode string to return. This Unicode string is the
         name of the controller specified by ControllerHandle and ChildHandle in the language
         specified by Language from the point of view of the driver specified by This.
 
-Return Value:
-
-    EFI_STATUS.
-
-
---*/
+    @returns EFI_STATUS.
+**/
 {
     EFI_STATUS status;
 
@@ -2276,6 +2095,7 @@ Return Value:
         );
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to get the managing controller - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -2284,7 +2104,9 @@ Return Value:
     //
     if (ChildHandle != NULL)
     {
-        return EFI_UNSUPPORTED;
+        status = EFI_UNSUPPORTED;
+        DEBUG((EFI_D_ERROR, "--- %a: invalid child handle - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     return LookupUnicodeString2(
@@ -2302,23 +2124,16 @@ VmbusDriverInitialize (
     __in EFI_HANDLE ImageHandle,
     __in EFI_SYSTEM_TABLE *SystemTable
     )
-/*++
-
-Routine Description:
-
+/**
     Entry point into VMBus driver.
 
-Arguments:
+    @param ImageHandle Handle of the driver image.
 
-    ImageHandle - Handle of the driver image.
+    @param SystemTable EFI system table.
 
-    SystemTable - EFI system table.
+    @returns EFI_STATUS.
 
-Return Value:
-
-    EFI_STATUS.
-
---*/
+**/
 {
     EFI_STATUS status;
 
@@ -2333,7 +2148,6 @@ Return Value:
     // ensure that isolated VMs are correclty opting into the required
     // isolation behavior of the legacy protocol.
     //
-
     if (!IsIsolated())
     {
         mVmbusLegacyProtocolGuid = &gEfiVmbusLegacyProtocolGuid;
@@ -2358,6 +2172,7 @@ Return Value:
                                                     NULL);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to install the VMBus protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -2373,6 +2188,7 @@ Return Value:
                                                       );
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the driver binding protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 

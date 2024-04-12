@@ -1,3 +1,12 @@
+## @file
+#  Provides an implementation of the VmBus channel and root driver.
+#
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
 [Defines]
     INF_VERSION                    = 0x00010005
     BASE_NAME                      = VmbusDxe
@@ -7,47 +16,47 @@
 
     ENTRY_POINT                    = VmbusDriverInitialize
 
+
+[Sources]
+    VmbusChannel.c
+    VmbusRoot.c
+
 [Packages]
-    MdePkg/MdePkg.dec
     MdeModulePkg/MdeModulePkg.dec
+    MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
-    UefiBootServicesTableLib
     BaseLib
     BaseMemoryLib
-    UefiLib
     DebugLib
-    UefiDriverEntryPoint
     DevicePathLib
-    MemoryAllocationLib
-    DebugLib
     IsolationLib
-
-[Sources]
-    VmbusRoot.c
-    VmbusChannel.c
+    MemoryAllocationLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
+    UefiLib
 
 [Guids]
     gEfiEventExitBootServicesGuid
     gEfiVmbusChannelDevicePathGuid
 
 [Protocols]
-    gEfiHvProtocolGuid              # CONSUMES
-    gEfiHvIvmProtocolGuid           # CONSUMES
-    gEfiDevicePathProtocolGuid      # PRODUCES
-    gEfiVmbusRootProtocolGuid       # PRODUCES
-    gEfiVmbusProtocolGuid           # PRODUCES
-    gEfiVmbusLegacyProtocolGuid     # PRODUCES
-    gEfiVmbusLegacyProtocolIvmGuid  # PRODUCES
-    gInternalEventServicesProtocolGuid # CONSUMES
+    gEfiHvProtocolGuid                  ## CONSUMES
+    gEfiHvIvmProtocolGuid               ## CONSUMES
+    gEfiDevicePathProtocolGuid          ## PRODUCES
+    gEfiVmbusRootProtocolGuid           ## PRODUCES
+    gEfiVmbusProtocolGuid               ## PRODUCES
+    gEfiVmbusLegacyProtocolGuid         ## PRODUCES
+    gEfiVmbusLegacyProtocolIvmGuid      ## PRODUCES
+    gInternalEventServicesProtocolGuid  ## CONSUMES
+
+[Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector                               ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex                                ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary                    ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask     ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated                        ## SOMETIMES_CONSUMES
 
 [Depex]
     gEfiHvProtocolGuid
-
-[Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdVmbusSintVector
-    gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex
-    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
-    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
-    gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated

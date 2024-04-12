@@ -1,22 +1,12 @@
-/*++
-
-Copyright (c) 2006 Microsoft Corporation. All Rights Reserved.
-
-Module Name:
-
-    ChannelMessages.h
-
-Abstract:
-
+/** @file
     This files contains definitions for messages that are sent between
     instances of the Channel Management Library in separate partitions, or
     in some cases, back to itself.
 
-Author:
+    Copyright (c) Microsoft Corporation.
+    SPDX-License-Identifier: BSD-2-Clause-Patent
 
-    Jake Oshins (jakeo) 23-Jun-2004
-
---*/
+**/
 
 #pragma once
 
@@ -40,7 +30,6 @@ Author:
 //
 // Version 1 messages
 //
-
 typedef enum _VMBUS_CHANNEL_MESSAGE_TYPE
 {
     ChannelMessageInvalid                   =  0,
@@ -64,9 +53,6 @@ typedef enum _VMBUS_CHANNEL_MESSAGE_TYPE
     ChannelMessageCount
 } VMBUS_CHANNEL_MESSAGE_TYPE, *PVMBUS_CHANNEL_MESSAGE_TYPE;
 
-// begin_wpp config
-// CUSTOM_TYPE(ChannelMessageType, ItemEnum(_VMBUS_CHANNEL_MESSAGE_TYPE));
-// end_wpp
 
 typedef struct _VMBUS_CHANNEL_MESSAGE_HEADER
 {
@@ -79,7 +65,6 @@ typedef struct _VMBUS_CHANNEL_MESSAGE_HEADER
 // available, since bits that were not defined are masked out when using an
 // older protocol version.
 //
-
 #define VMBUS_OFFER_FLAG_ENUMERATE_DEVICE_INTERFACE     1
 #define VMBUS_OFFER_FLAG_NAMED_PIPE_MODE                0x10
 
@@ -88,8 +73,9 @@ typedef struct _VMBUS_CHANNEL_MESSAGE_HEADER
 
 #define VMBUS_OFFER_FLAGS_WIN8 VMBUS_OFFER_FLAGS_WIN6
 
+//
 // Offer Channel parameters
-
+//
 typedef struct _VMBUS_CHANNEL_OFFER_CHANNEL
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
@@ -100,7 +86,6 @@ typedef struct _VMBUS_CHANNEL_OFFER_CHANNEL
     //
     // These reserved fields may be non-zero before Windows 8.
     //
-
     UINT64 Reserved;
     UINT64 Reserved2;
 
@@ -120,7 +105,6 @@ typedef struct _VMBUS_CHANNEL_OFFER_CHANNEL
     //
     // The following fields are only available in Windows 7 and later.
     //
-
     union
     {
         struct
@@ -140,14 +124,12 @@ static_assert(sizeof(VMBUS_CHANNEL_OFFER_CHANNEL) <= MAXIMUM_SYNIC_MESSAGE_BYTES
 
 #define VMBUS_CHANNEL_OFFER_CHANNEL_SIZE_WIN6 FIELD_OFFSET(VMBUS_CHANNEL_OFFER_CHANNEL, Windows6Offset)
 
-// Rescind Offer parameters
 typedef struct _VMBUS_CHANNEL_RESCIND_OFFER
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
     UINT32          ChildRelId;
 } VMBUS_CHANNEL_RESCIND_OFFER, *PVMBUS_CHANNEL_RESCIND_OFFER;
 
-// Open Channel parameters
 typedef struct _VMBUS_CHANNEL_OPEN_CHANNEL
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
@@ -186,7 +168,6 @@ typedef struct _VMBUS_CHANNEL_OPEN_CHANNEL
 
 } VMBUS_CHANNEL_OPEN_CHANNEL, *PVMBUS_CHANNEL_OPEN_CHANNEL;
 
-// Open Channel Result parameters
 typedef struct _VMBUS_CHANNEL_OPEN_RESULT
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
@@ -195,7 +176,6 @@ typedef struct _VMBUS_CHANNEL_OPEN_RESULT
     UINT32      Status;
 } VMBUS_CHANNEL_OPEN_RESULT, *PVMBUS_CHANNEL_OPEN_RESULT;
 
-// Close channel parameters;
 typedef struct _VMBUS_CHANNEL_CLOSE_CHANNEL
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
@@ -208,7 +188,6 @@ typedef struct _VMBUS_CHANNEL_CLOSE_CHANNEL
 // of PFNs won't fit in this packet, there will be a follow-up packet that
 // contains more.
 //
-
 typedef struct _VMBUS_CHANNEL_GPADL_HEADER
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
@@ -222,7 +201,6 @@ typedef struct _VMBUS_CHANNEL_GPADL_HEADER
 //
 // This is the followup packet that contains more PFNs.
 //
-
 typedef struct _VMBUS_CHANNEL_GPADL_BODY
 {
     VMBUS_CHANNEL_MESSAGE_HEADER;
@@ -291,7 +269,6 @@ typedef struct _VMBUS_CHANNEL_VERSION_RESPONSE
 // are merely used to better provide information to the guest about the cause
 // of the failure.
 //
-
 enum
 {
     VmbusChannelConnectionSuccessful = 0,

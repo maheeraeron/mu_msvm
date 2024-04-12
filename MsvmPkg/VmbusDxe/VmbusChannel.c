@@ -1,20 +1,11 @@
-/*++
+/** @file
+  Provides the implementation of the VMBus EFI protocol.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-Module Name:
+**/
 
-    VmbusChannel.c
-
-Abstract:
-
-    Provides the implementation of the VMBus EFI protocol.
-
-Author:
-
-    Arseney Romanenko (arseneyr) - 7-Jul-2012
-
---*/
 
 #include <VmbusP.h>
 #include <IsolationTypes.h>
@@ -97,18 +88,21 @@ Return Value:
 
     if (BufferLength == 0)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: invalid buffer length - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     //
     // GPADLs that could be subject to isolation restrictions must be aligned
     // to page boundaries.
     //
-
     if ((((UINTN)Buffer & (EFI_PAGE_SIZE - 1)) != 0) ||
         ((BufferLength & (EFI_PAGE_SIZE - 1)) != 0))
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: Gpadls are not aligned - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     channelContext = CR(This,
@@ -119,11 +113,11 @@ Return Value:
     //
     // Allocate a structure to track the state of the GPADL.
     //
-
     gpadl = AllocatePool(sizeof(*gpadl));
     if (gpadl == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to allocate memory - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -136,7 +130,6 @@ Return Value:
     //
     // Make the entire buffer visible to the host if required.
     //
-
     if (IsIsolated())
     {
         status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
@@ -148,6 +141,7 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
+            DEBUG((EFI_D_ERROR, "--- %a: failed to make the buffer host visible - %r \n", __FUNCTION__, status));
             goto Cleanup;
         }
 
@@ -220,7 +214,9 @@ Return Value:
 
     if (Gpadl->GpadlHandle != 0)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: invalid GPADL handle - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     channelContext = CR(This,
@@ -232,6 +228,7 @@ Return Value:
                                    &Gpadl->GpadlHandle);
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to free the GPADL - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -239,7 +236,6 @@ Return Value:
     // Calculate how many pages the buffer spans and how many PFNs can fit in a
     // header and body packet.
     //
-
     numPfnInHeader = (MAXIMUM_SYNIC_MESSAGE_BYTES -
                       OFFSET_OF(VMBUS_CHANNEL_GPADL_HEADER, Range) -
                       OFFSET_OF(GPA_RANGE, PfnArray)) / sizeof(UINT64);
@@ -250,7 +246,6 @@ Return Value:
     //
     // Create the GPADL header.
     //
-
     VmbusRootInitializeMessage(&sendMessage,
                                ChannelMessageGpadlHeader,
                                MAXIMUM_SYNIC_MESSAGE_BYTES);
@@ -285,7 +280,6 @@ Return Value:
     //
     // Keep sending GPADL body packets until we run out of PFNs to send.
     //
-
     while (Gpadl->NumberOfPages - pfnSent > 0)
     {
         VmbusRootInitializeMessage(&sendMessage,
@@ -335,6 +329,7 @@ Return Value:
     if (receiveMessage->GpadlCreated.CreationStatus != 0)
     {
         status = EFI_OUT_OF_RESOURCES;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to create GPADL - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -352,7 +347,6 @@ Cleanup:
 
     return status;
 }
-
 
 EFI_STATUS
 EFIAPI
@@ -393,7 +387,9 @@ Return Value:
     ZeroMem(&gpadl, sizeof(gpadl));
     if (BufferLength == 0)
     {
-        return EFI_INVALID_PARAMETER;
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: invalid buffer length - %r \n", __FUNCTION__, status));
+        return status;
     }
 
     channelContext = CR(This,
@@ -465,7 +461,9 @@ Return Value:
     {
         if (!VmbusRootValidateGpadl(channelContext->RootContext, Gpadl->GpadlHandle))
         {
-            return EFI_INVALID_PARAMETER;
+            status = EFI_INVALID_PARAMETER;
+            DEBUG((EFI_D_ERROR, "--- %a: invalid GPADL - %r \n", __FUNCTION__, status));
+            return status;
         }
 
         VmbusRootInitializeMessage(&sendMessage,
@@ -505,7 +503,6 @@ Return Value:
     // Revoke host visibility on these pages as they may be reused once the
     // GPADL has been deleted.
     //
-
     if (IsIsolated() &&
         !Gpadl->Legacy)
     {
@@ -518,7 +515,6 @@ Return Value:
     // GPADL objects were allocated by PrepareGpadl and therefore should be
     // freed here.
     //
-
     if (!Gpadl->Legacy)
     {
         FreePool(Gpadl);
@@ -700,6 +696,7 @@ Return Value:
 
     if (receiveMessage->OpenResult.Status != 0)
     {
+        DEBUG((EFI_D_ERROR, "--- %a: could not open the channel - %r \n", __FUNCTION__, EFI_OUT_OF_RESOURCES));
         return EFI_OUT_OF_RESOURCES;
     }
 
