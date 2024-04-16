@@ -768,7 +768,6 @@
   MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   MsvmPkg/EmclDxe/EmclDxe.inf
   MsvmPkg/EventLogDxe/EventLogDxe.inf
-  MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
   MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf

@@ -57,8 +57,6 @@
   gMsvmPkgTokenSpaceGuid.PcdDxeFvBaseAddress|0x0|UINT64|0x6
   gMsvmPkgTokenSpaceGuid.PcdDxeFvSize|0x0|UINT32|0x7
 
-  gMsvmPkgTokenSpaceGuid.PcdExdiSupportVersionAddress|0x80000|UINT64|0x1000
-
   # Synthetic Timer Configuration
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1|UINT8|0x2000
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex|0x0|UINT8|0x2001

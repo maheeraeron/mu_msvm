@@ -133,7 +133,6 @@ APRIORI PEI {
 #
 APRIORI DXE {
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
-  INF MsvmPkg/ExdiSupportDxe/ExdiSupportDxe.inf
   INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
   INF MsvmPkg/CpuDxe/CpuDxe.inf
   INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
