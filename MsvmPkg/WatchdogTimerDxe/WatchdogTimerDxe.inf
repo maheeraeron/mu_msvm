@@ -1,7 +1,8 @@
 ## @file
-#  Generic watchdog timer driver produceing Watchdog Timer Architectural Protocol using UEFI APIs.
+#  Watchdog timer driver producing the Watchdog Timer Architectural Protocol.
 #
-#  Copyright (c) Microsoft Corporation.
+#   Copyright (c) Microsoft Corporation.
+#   Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -13,28 +14,28 @@
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = WatchdogInitialize
 
+[Sources]
+  WatchdogTimer.c
+
 [Packages]
   MdePkg/MdePkg.dec
   MsvmPkg/MsvmPkg.dec
 
-[Sources]
-  WatchdogTimer.c
-
 [LibraryClasses]
-  UefiRuntimeServicesTableLib
-  UefiBootServicesTableLib
-  ReportStatusCodeLib
-  UefiDriverEntryPoint
   DebugLib
   IoLib
-  WatchdogTimerLib
   IsolationLib
+  ReportStatusCodeLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  WatchdogTimerLib
 
 [Protocols]
   gEfiWatchdogTimerArchProtocolGuid             ## PRODUCES
 
 [Guids]
-  gEfiEventExitBootServicesGuid
+  gEfiEventExitBootServicesGuid                 ## CONSUMES
 
 [depex]
   gEfiTimerArchProtocolGuid

@@ -1,42 +1,19 @@
-/*++
+/** @file
+  Implementation of Watchdog Timer Architectural Protocol
+  If available, this driver will use the Hyper-V BIOS device watchdog equivelent to a
+  hardware watchdog timer.  If the hardware based timer is not available, a software timer
+  will be used.
 
-    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
-        Derivative of:
+  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+
+  This code is not similar enough to justify an override but it is loosely derived
+  from the following:
             MdeModulePkg\Universal\WatchdogTimerDxe\WatchdogTimer.c
 
-    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-    IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-    TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
 
-    Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-    This program and the accompanying materials
-    are licensed and made available under the terms and conditions of the BSD License
-    which accompanies this distribution.  The full text of the license may be found at
-    http://opensource.org/licenses/bsd-license.php
-
-    THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-    WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    WatchdogTimer.c
-
-Abstract:
-
-    Implementation of Watchdog Timer Architectural Protocol
-    If available, this driver will use the Hyper-V BIOS device watchdog equivelent to a
-    hardware watchdog timer.  If the hardware based timer is not available, a software timer
-    will be used. There is a similar driver at MdeModulePkg\Universal\WatchdogTimerDxe but
-    there is not enough common code to justify needing an override in this driver.
-
-Author:
-
-    Kris Harper (kharp) - 8-Oct-2013
-
---*/
-
+**/
 
 #include <Uefi.h>
 #include <EfiNt.h>
@@ -51,14 +28,12 @@ Author:
 #include <BiosInterface.h>
 #include <IsolationTypes.h>
 
-
 EFI_STATUS
 EFIAPI
 WatchdogSoftSetPeriod (
     _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *This,
     _In_    UINT64                            TimerPeriod
     );
-
 
 EFI_STATUS
 EFIAPI
@@ -67,14 +42,12 @@ WatchdogHwSetPeriod (
     _In_    UINT64                            TimerPeriod
     );
 
-
 EFI_STATUS
 EFIAPI
 WatchdogRegisterHandler (
     _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *This,
     _In_    EFI_WATCHDOG_TIMER_NOTIFY         NotifyFunction
     );
-
 
 EFI_STATUS
 EFIAPI
@@ -83,10 +56,9 @@ WatchdogGetTimerPeriod (
     _In_    UINT64                            *TimerPeriod
     );
 
-
 //
 // The Watchdog Timer Architectural Protocol instance produced by this driver
-// The SetTimerPeriod handler will be filled in in WatchdogInitialize.
+// The SetTimerPeriod handler will be updated in WatchdogInitialize.
 //
 EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  mWatchdogTimer =
 {
@@ -120,9 +92,10 @@ UINT64      mWatchdogTimerPeriod = 0;
 //
 UINT32      mWatchdogTimerHwResolution = 0;
 
+//
 // Notification for when ExitBootServices is called.
+//
 static EFI_EVENT    mExitBootServicesEvent = NULL;
-
 
 VOID
 EFIAPI
@@ -161,7 +134,6 @@ Return Value:
     gRT->ResetSystem (EfiResetCold, EFI_TIMEOUT, 0, NULL);
 }
 
-
 EFI_STATUS
 EFIAPI
 WatchdogSoftSetPeriod (
@@ -193,7 +165,6 @@ Return Value:
 
     EFI_INVALID_PARAMETER   The given period is less than 1 second.
 
-
 --*/
 {
   mWatchdogTimerPeriod = TimerPeriod;
@@ -202,7 +173,6 @@ Return Value:
                 (mWatchdogTimerPeriod == 0) ? TimerCancel : TimerRelative,
                 mWatchdogTimerPeriod);
 }
-
 
 EFI_STATUS
 EFIAPI
@@ -234,7 +204,6 @@ Return Value:
 
     EFI_INVALID_PARAMETER   The given period is less than the watchdog timer's resolution.
 
-
 --*/
 {
     UINT32 timerPeriodSeconds;
@@ -260,6 +229,7 @@ Return Value:
 
     if (TimerPeriod != 0)
     {
+
         //
         // Convert the desired expiration into the timer's native format.
         //
@@ -275,7 +245,6 @@ Return Value:
 
     return EFI_SUCCESS;
 }
-
 
 EFI_STATUS
 EFIAPI
@@ -316,7 +285,6 @@ Return Value:
 
     return EFI_SUCCESS;
 }
-
 
 EFI_STATUS
 EFIAPI
@@ -372,7 +340,6 @@ Return Value:
     return EFI_SUCCESS;
 }
 
-
 /// \brief      Called when the Exit Boot Services event is signaled.
 ///
 /// \param[in]  Event    The event
@@ -385,11 +352,13 @@ ExitBootServicesHandler(
     __in void*     Context
     )
 {
+
+    //
     // Disable the watchdog as ExitBootServices is about to relinquish control
     // of the system to the bootloader.
+    //
     WatchdogConfigure(0, WatchdogDisabled);
 }
-
 
 EFI_STATUS
 EFIAPI
@@ -428,9 +397,11 @@ Return Value:
     }
     else
     {
+
         //
         // Read the hardware timer resolution to determine if it is
         // available. Fallback to the software timer if hardware is disabled.
+        //
         mWatchdogTimerHwResolution = WatchdogGetResolution();
 
         if ((mWatchdogTimerHwResolution == 0) ||
@@ -461,6 +432,7 @@ Return Value:
     {
         DEBUG((EFI_D_INFO, "Using Hyper-V watchdog timer.\n"));
         mWatchdogTimer.SetTimerPeriod = WatchdogHwSetPeriod;
+
         //
         // No Periodic timer is needed when using the HW timer.
         // This driver will use it in one-shot mode.
@@ -479,6 +451,7 @@ Return Value:
     ASSERT_EFI_ERROR(status);
     if (EFI_ERROR(status))
     {
+        DEBUG((DEBUG_ERROR, "--- %a: failed to create the exit boot services event - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -495,3 +468,5 @@ Return Value:
 
     return EFI_SUCCESS;
 }
+
+
