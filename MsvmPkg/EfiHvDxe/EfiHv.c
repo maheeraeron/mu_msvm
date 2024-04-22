@@ -215,8 +215,6 @@ EfiHvInterruptHandler (
     sintConfiguration = &mSintConfiguration[mVectorSint[InterruptType]];
     if (sintConfiguration->InterruptHandler != NULL)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: calling 0x%p\n", __FUNCTION__,
-            sintConfiguration->InterruptHandler));
         sintConfiguration->InterruptHandler(sintConfiguration->Context);
     }
 
@@ -254,9 +252,6 @@ EfiHvConnectSint (
     PEFI_HV_SINT_CONFIGURATION sintConfiguration;
     EFI_STATUS status;
     EFI_TPL tpl;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index %lx Vector 0x%x Handler 0x%p Context 0x%p\n",
-        __FUNCTION__, SintIndex, Vector, InterruptHandler, Context));
 
     //
     // Disable interrupts while manipulating interrupts.
@@ -349,10 +344,8 @@ EfiHvEventInterruptHandler (
 {
     EFI_EVENT *event;
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
     event = Context;
     gBS->SignalEvent(event);
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -382,8 +375,6 @@ EfiHvConnectSintToEvent (
 {
     EFI_STATUS status;
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
-    
     status = 
         EfiHvConnectSint(
             This,
@@ -392,8 +383,6 @@ EfiHvConnectSintToEvent (
             EfiHvEventInterruptHandler,
             Event);
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
-    
     return status;
 }
 
@@ -419,8 +408,6 @@ EfiHvDisconnectSint (
     HV_SYNIC_SINT sint;
     PEFI_HV_SINT_CONFIGURATION sintConfiguration;
     EFI_TPL tpl;
-
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
@@ -464,7 +451,6 @@ EfiHvDisconnectSint (
 
     gBS->RestoreTPL(tpl);
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -490,7 +476,6 @@ EfiHvGetSintMessage (
     message = &mMessagePage->SintMessage[SintIndex];
     if (message->Header.MessageType == HvMessageTypeNone)
     {
-        DEBUG((DEBUG_VERBOSE, "<<< %a: message is NULL\n", __FUNCTION__));
         return NULL;
     }
 
@@ -518,8 +503,6 @@ EfiHvCompleteSintMessage (
 {
     volatile HV_MESSAGE *message;
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
-
     message = &mMessagePage->SintMessage[SintIndex];
     message->Header.MessageType = HvMessageTypeNone;
     MemoryBarrier();
@@ -527,7 +510,6 @@ EfiHvCompleteSintMessage (
     {
         HvHypercallSetVpRegister64Self(mUseBypassContext ? &mHvBypassContext : &mHvContext, HvRegisterEom, 0);
     }
-    DEBUG((DEBUG_VERBOSE, "<<< %a\n", __FUNCTION__));
 }
 
 
@@ -549,11 +531,9 @@ EfiHvGetSintEventFlags (
 --*/
 {
     volatile HV_SYNIC_EVENT_FLAGS *pFlags;
-    DEBUG((DEBUG_VERBOSE, ">>> %a: Index 0x%x\n", __FUNCTION__, SintIndex));
 
     pFlags = &mEventFlagsPage->SintEventFlags[SintIndex];
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: flags @ 0x%p\n", __FUNCTION__, pFlags));
     return pFlags;
 }
 
@@ -697,8 +677,6 @@ EfiHvDirectTimerInterruptHandler (
 
     if (mDirectTimerInterruptHandlers[InterruptType] != NULL)
     {
-        DEBUG((DEBUG_VERBOSE, "--- %a: calling 0x%p\n", __FUNCTION__,
-            mDirectTimerInterruptHandlers[InterruptType]));
         mDirectTimerInterruptHandlers[InterruptType](NULL);
     }
 
@@ -995,9 +973,6 @@ EfiHvSignalEvent (
 
     ZeroMem(registers, sizeof(registers));
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a: ConnectionId 0x%x FlagNumber 0x%x\n", __FUNCTION__,
-        ConnectionId, FlagNumber));
-
     input = (PHV_INPUT_SIGNAL_EVENT)registers;
     input->ConnectionId = ConnectionId;
     input->FlagNumber = FlagNumber;
@@ -1007,7 +982,6 @@ EfiHvSignalEvent (
                                    registers[0],
                                    registers[1]);
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: status %r\n", __FUNCTION__, EfiHvConvertStatus(hvStatus)));
     return EfiHvConvertStatus(hvStatus);
 }
 
@@ -1051,7 +1025,6 @@ EfiHvStartApplicationProcessor (
             EfiHvpBasePa((UINTN)input),
             0);
 
-    DEBUG((DEBUG_VERBOSE, "<<< %a: status %r\n", __FUNCTION__, EfiHvConvertStatus(hvStatus)));
     return hvStatus;
 }
 
@@ -1774,8 +1747,6 @@ EfiHvConnectToHypervisor (
     status = EFI_SUCCESS;
 
 Exit:
-
-    DEBUG((DEBUG_VERBOSE, "<<< %a: %r\n", __FUNCTION__, status));
 
     return status;
 }

@@ -1735,7 +1735,6 @@ VmbusRootDriverSupported (
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to open the VMBus protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
