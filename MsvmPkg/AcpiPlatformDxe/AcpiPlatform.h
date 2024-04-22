@@ -1,23 +1,16 @@
 /*++
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    AcpiPlatform.h
-
-Abstract:
-
     This file contains declarations and definitions used globally in the
-    MsvmAcpiPlatformDxe driver.
+    MsvmPkg AcpiPlatformDxe driver.
 
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #pragma once
 
 #include <IndustryStandard/Acpi.h>
 
-#include <EfiNt.h>
 #include <AcpiTables.h>
 #include <Library/ConfigLib.h>
 

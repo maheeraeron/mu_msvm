@@ -2,7 +2,7 @@
   Provides the implementation of the VMBus EFI protocol.
 
   Copyright (c) Microsoft Corporation.
-  SPDX-License-Identifier: BSD-2-Clause-Patent
+  Licensed under the BSD-2-Clause-Patent license.
 
 **/
 

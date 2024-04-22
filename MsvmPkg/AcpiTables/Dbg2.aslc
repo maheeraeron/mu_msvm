@@ -1,19 +1,10 @@
 /*++
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Dbg.aslc
-
-Abstract:
-
     The DBG2 Port Table information that exposes the PL011 device as a serial
     debug device for Windows.
 
-Author:
-
-    Chris Oo (cho) 7-Dec-2016
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
 --*/
 
@@ -80,7 +71,7 @@ VM_ACPI_DEBUG_PORT_2_IMPL DBG2 =
             EFI_ACPI_6_2_SYSTEM_MEMORY,
             32, // Register Bit Width
             0, // Register Bit offset
-            EFI_ACPI_6_2_DWORD, // Access Size - On Seattle machines, set to DWORD
+            EFI_ACPI_6_2_DWORD, // Access Size
             0xEFFEC000 // addr of pl011 dev (COM1)
         },
         0x00001000, // Address size corresponding to above

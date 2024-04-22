@@ -3,7 +3,7 @@
 #   UEFI access to the Hyper-V hypervisor.
 #
 #   Copyright (c) Microsoft Corporation.
-#   SPDX-License-Identifier: BSD-2-Clause-Patent
+#   Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 

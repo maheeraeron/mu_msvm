@@ -1,19 +1,8 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Gtdt.aslc
-
-Abstract:
-
     Defines the Generic Timer Description Table for ARM64.
 
-Author:
-
-    Chris Oo (cho) 7-Dec-2016
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>

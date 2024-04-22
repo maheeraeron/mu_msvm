@@ -1,20 +1,9 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Spcr.c
-
-Abstract:
-
     This module is responsible for runtime initialization of the SPCR APCI
     table.
 
-Author:
-
-    Larry Cleeton (lcleeton) 14-Oct-2014
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
@@ -24,7 +13,6 @@ Author:
 #include <Protocol/SerialIo.h>
 #include "AcpiPlatform.h"
 
-// Establish local define for architecture
 
 #if defined(MDE_CPU_X64)
 #define _SPCR_INTEL_
@@ -43,11 +31,11 @@ SpcrInitializeTable(
 
 Routine Description:
 
-    Initializes the Spcr table based on configuration data.
+    Initializes the SPCR table based on configuration data.
 
 Arguments:
 
-    Table - The Spcr Table, expressed as an EFI_ACPI_DESCRIPTION_HEADER*.
+    Table - The SPCR Table, expressed as an EFI_ACPI_DESCRIPTION_HEADER*.
 
 Return Value:
 

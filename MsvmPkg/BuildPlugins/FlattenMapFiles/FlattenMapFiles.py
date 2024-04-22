@@ -4,7 +4,7 @@
 #
 ##
 # Copyright (c) Microsoft Corporation. All rights reserved.
-# SPDX-License-Identifier: BSD-2-Clause-Patent
+# Licensed under the BSD-2-Clause-Patent license.
 #
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without

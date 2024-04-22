@@ -2,7 +2,7 @@
     Private includes for Vmbus EFI driver.
 
     Copyright (c) Microsoft Corporation.
-    SPDX-License-Identifier: BSD-2-Clause-Patent
+    Licensed under the BSD-2-Clause-Patent license.
 
 **/
 

@@ -1,19 +1,8 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Dsdt.c
-
-Abstract:
-
     This module is responsible for runtime initialization of the DSDT acpi table.
 
-Author:
-
-    Rich Yampell (richyam) 16-Jul-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
@@ -87,8 +76,6 @@ Return Value:
     VOID *generationId;
     EFI_STATUS status;
 
-    DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));
-
     generationId = NULL;
     dataPages = 0;
     nvdimmBuffer = 0;
@@ -98,7 +85,6 @@ Return Value:
     // is necessary because the DSDT uses a 32-bit physical address to
     // find the data.
     //
-
     dataPages = (EFI_PHYSICAL_ADDRESS)(UINT32)-1;
     status = gBS->AllocatePages(AllocateMaxAddress,
                                 EfiRuntimeServicesData,
@@ -123,7 +109,6 @@ Return Value:
     // Allocate space for the generation ID and inform both
     // the worker process and DSDT of its address.
     //
-
     generationId = AllocateRuntimeZeroPool(BiosInterfaceGenerationIdSize);
     if (generationId == NULL)
     {

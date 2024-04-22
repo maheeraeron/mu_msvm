@@ -1,15 +1,8 @@
 /*++
-
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Dsdt.asl
-
-Abstract:
-
     ACPI DSDT table source
 
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 // Establish local define for architecture
@@ -181,10 +174,6 @@ DefinitionBlock (
             ResourceTemplate()
             {
                 // MMIO space below 4GB.
-                // TODO-cho: Technically this is now a lie on AARCH64 since we have a
-                // tiny 1 page gap for the bios device. Should we be instead publishing
-                // 3 MMIO regions then? Or is it okay since we have an ACPI device that
-                // claims the bios device region?
                 DWORDMemory(ResourceProducer, PosDecode, MinFixed, MaxFixed, Cacheable, ReadWrite,
                 // Granularity Min Max Translation Range (Length = Max-Min+1)
                    0,          0,  0,  0,          0,,,
@@ -366,7 +355,7 @@ DefinitionBlock (
 
         Name(_PS3, 0)
 
-        // TODO-cho: SPIs are not available to the guest on AARCH64, which is what
+        // TODO: SPIs are not available to the guest on AARCH64, which is what
         // PcdVmbusVector is currently defined as. Supposedly it should use a PPI,
         // but those are strange because they're reserved for hypervisor devices.
         //

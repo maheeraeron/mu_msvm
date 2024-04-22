@@ -4,6 +4,9 @@
 #  ACPI table data and ASL sources required to boot the platform.
 #
 #  Copyright (c) 2008 - 2010, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
 #  which accompanies this distribution.  The full text of the license may be found at
@@ -37,31 +40,29 @@
     Waet.aslc
 
 [Pcd]
-    gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress
-    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
-    gMsvmPkgTokenSpaceGuid.PcdBatteryBase
-    gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
-    gMsvmPkgTokenSpaceGuid.PcdCom1Vector
-    gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
-    gMsvmPkgTokenSpaceGuid.PcdCom2Vector
-    gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase
-    gMsvmPkgTokenSpaceGuid.PcdProcIdleBase
-    gMsvmPkgTokenSpaceGuid.PcdVmbusVector
+    gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress     ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress           ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdBatteryBase               ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase          ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdCom1Vector                ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase          ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdCom2Vector                ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdPmemRegisterBase          ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleBase              ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdVmbusVector               ## CONSUMES
 
 [Pcd.AARCH64]
-    gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector
-    gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector
-    gMsvmPkgTokenSpaceGuid.PcdPmemEventVector
-    gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector
-    gMsvmPkgTokenSpaceGuid.PcdNonSecureEL1TimerGSIV
-    gMsvmPkgTokenSpaceGuid.PcdVirtualEL1TimerGSIV
-    gMsvmPkgTokenSpaceGuid.PcdNonSecureEL2TimerGSIV
+    gMsvmPkgTokenSpaceGuid.PcdBatteryEventVector        ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdGenCountEventVector       ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdPmemEventVector           ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector       ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdNonSecureEL1TimerGSIV     ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdVirtualEL1TimerGSIV       ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdNonSecureEL2TimerGSIV     ## CONSUMES
 
 [Pcd.X64]
-    gMsvmPkgTokenSpaceGuid.PcdRtcRegisterBase
-    gMsvmPkgTokenSpaceGuid.PcdRtcVector
-    gPcAtChipsetPkgTokenSpaceGuid.PcdIoApicBaseAddress
-    gUefiCpuPkgTokenSpaceGuid.PcdCpuLocalApicBaseAddress
+    gMsvmPkgTokenSpaceGuid.PcdRtcRegisterBase           ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdRtcVector                 ## CONSUMES
 
 [Packages]
     MdePkg/MdePkg.dec

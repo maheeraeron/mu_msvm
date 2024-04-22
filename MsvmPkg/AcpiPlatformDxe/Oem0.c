@@ -1,20 +1,9 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Oem0.c
-
-Abstract:
-
     This module is responsible for runtime initialization of the entropy
     table.
 
-Author:
-
-    Rich Yampell (richyam) 9-Jul-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>

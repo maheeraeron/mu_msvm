@@ -1,20 +1,9 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    AcpiPlatform.c
-
-Abstract:
-
     This file contains routines to locate ACPI tables in the firmware volume,
     update them appropriately, and install them via the AcpiTable protocol.
 
-Author:
-
-    Rich Yampell (richyam) 9-Jul-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
@@ -64,11 +53,11 @@ RuntimeInitializeTableIfNecessary(
 
 Routine Description:
 
-    Performs any runtime initialization required by a given acpi table.
+    Performs any runtime initialization required by a given ACPI table.
 
 Arguments:
 
-    Table - The acpi table which may require runtime initialization.
+    Table - The ACPI table which may require runtime initialization.
 
 Return Value:
 
@@ -146,7 +135,6 @@ Return Value:
     //
     // Looking for FV with ACPI storage file
     //
-
     status = EFI_NOT_FOUND;
     for (index = 0; index < numberOfHandles; index++)
     {
@@ -154,7 +142,6 @@ Return Value:
         // Get the protocol on this handle
         // This should not fail because of LocatehandleBuffer
         //
-
         status = gBS->HandleProtocol(handleBuffer[index],
                                      &gEfiFirmwareVolume2ProtocolGuid,
                                      (VOID **)&fvInstance);
@@ -188,7 +175,6 @@ Return Value:
     // Our exit status is determined by the success of the previous operations
     // If the protocol was found, Instance already points to it.
     //
-
     gBS->FreePool(handleBuffer);
     return status;
 }
@@ -705,7 +691,6 @@ Return Value:
     //
     // Locate the firmware volume protocol.
     //
-
     status = LocateFvInstanceWithTables(&fwVol);
     if (EFI_ERROR(status))
     {
@@ -715,7 +700,6 @@ Return Value:
     //
     // Read tables from the storage file.
     //
-
     for (instance = 0; ; instance += 1)
     {
         currentTable = NULL;
@@ -740,7 +724,6 @@ Return Value:
         //
         // Add the table.
         //
-
         ASSERT(size >= currentTable->Length);
 
         status = RuntimeInitializeTableIfNecessary(currentTable);
@@ -770,7 +753,6 @@ Return Value:
         //
         // Free memory allocated by ReadSection.
         //
-
         gBS->FreePool(currentTable);
 
         if (EFI_ERROR(status))
@@ -782,7 +764,6 @@ Return Value:
     //
     // Add the MADT table.
     //
-
     status = AcpiInstallMadtTable(acpiTable);
     if (EFI_ERROR(status))
     {
@@ -792,13 +773,15 @@ Return Value:
     //
     // Add the SRAT table.
     //
-
     status = AcpiInstallSratTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
     }
 
+    //
+    // Add the PPTT table.
+    //
     status = AcpiInstallPpttTable(acpiTable);
     if (EFI_ERROR(status))
     {
@@ -808,7 +791,6 @@ Return Value:
     //
     // Add the SLIT table.
     //
-
     status = AcpiInstallSlitTable(acpiTable);
     if (EFI_ERROR(status))
     {

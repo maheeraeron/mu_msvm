@@ -2,7 +2,7 @@
 #  Provides an implementation of the VmBus channel and root driver.
 #
 #  Copyright (c) Microsoft Corporation.
-#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 

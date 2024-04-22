@@ -1,19 +1,8 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Spcr.c
-
-Abstract:
-
     This module is responsible for runtime initialization of the WDAT APCI table.
 
-Author:
-
-    Siddhant Bhagat (sibhagat) 7-Apr-2022
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
@@ -29,11 +18,11 @@ WdatInitializeTable(
 
 Routine Description:
 
-    Initializes the Wdat table based on configuration data.
+    Initializes the WDAT table based on configuration data.
 
 Arguments:
 
-    Table - The Wdat Table, expressed as an EFI_ACPI_DESCRIPTION_HEADER*.
+    Table - The WDAT Table, expressed as an EFI_ACPI_DESCRIPTION_HEADER*.
 
 Return Value:
 

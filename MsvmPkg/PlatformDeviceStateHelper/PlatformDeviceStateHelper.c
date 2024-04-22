@@ -2,7 +2,7 @@
   Sets up the device state variable for use on displaying the device state
 
   Copyright (c) Microsoft Corporation.
-  SPDX-License-Identifier: BSD-2-Clause-Patent
+  Licensed under the BSD-2-Clause-Patent license.
 **/
 
 #include <Uefi.h>

@@ -1,34 +1,22 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    wdat.aslc
-
-Abstract:
-
     Defines the Microsoft Hardware Watchdog Action Table. This table informs the OS that
     hardware support for a watchdog is provided.
 
-Author:
-
-    Siddhant Bhagat (sibhagat) 23-March-2022
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 /*++
 
 Each WDAT instruction is exposed as two entires in the WDAT table (for compatibility with VMWP 
 architecure). The first entry informs the VMWP the IoPort/MMIO hole to operate on. The second
-instruction is peforms a read/write on the requested register (IoPort/MMIO hole). These 
-read/writes are plumped through the BiosWdatDataPort and operate on BiosWatchdog registers 
+instruction performs a read/write on the requested register (IoPort/MMIO hole). These 
+read/writes are plumbed through the BiosWdatDataPort and operate on BiosWatchdog registers 
 (BiosConfigWatchdogConfig & BiosConfigWatchdogCount). 
 
 //
 // Values for the BiosConfigWatchdogConfig DWORD.
 // Update BIOS_WATCHDOG_VALID_CONFIG_BITS as new values are added.
-// Comment mirrored in BiosInterface.h (os repo).
 //
 #define BIOS_WATCHDOG_CONFIGURED    0x00000001
 #define BIOS_WATCHDOG_ENABLED       0x00000002
@@ -37,35 +25,35 @@ read/writes are plumped through the BiosWdatDataPort and operate on BiosWatchdog
 #define BIOS_WATCHDOG_FOR_GUEST     0x00001000
 
 //
-//The WDAT instructions exposed to the guest are:
+// The WDAT instructions exposed to the guest are:
 //
-1. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_RESET - Set 'configured' and 'enabled' bit for register 
+1. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_RESET - Set 'configured' and 'enabled' bit for the register 
         BiosConfigWatchdogConfig. Setting 'enabled' bit restarts watchdog timer.
 
 2. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_COUNTDOWN_PERIOD - Value in BiosConfigWatchdogCount 
-        register is read by guest.
+        register is read by the guest.
 
-3. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_COUNTDOWN_PERIOD - Value provided by guest is assigned to
-        BiosConfigWatchdogCount register.
+3. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_COUNTDOWN_PERIOD - Value provided by the guest is assigned to
+        the BiosConfigWatchdogCount register.
 
-4. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_RUNNING_STATE - Value in BiosConfigWatchdogConfig 
-        register is read by guest. Watchdog is enabled if 'configured' and 'enabled' bit are set.
+4. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_RUNNING_STATE - Value in the BiosConfigWatchdogConfig 
+        register is read by the guest. Watchdog is enabled if 'configured' and 'enabled' bits are set.
 
-5. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_RUNNING_STATE - 'configured' and 'enabled' bit of
-        BiosConfigWatchdogConfig register are set. This enabled watchdog and starts timer.
+5. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_RUNNING_STATE - 'configured' and 'enabled' bits of the
+        BiosConfigWatchdogConfig register are set. This enables the watchdog and starts the timer.
 
-6. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_STOPPED_STATE - Value in BiosConfigWatchdogConfig 
-        register is read by guest. Watchdog is in stopped state if 'configured' bit is set 
+6. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_STOPPED_STATE - Value in the BiosConfigWatchdogConfig 
+        register is read by the guest. Watchdog is in the stopped state if 'configured' bit is set 
         and 'enabled' bit is not set.
 
 7. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_STOPPED_STATE - 'configured' bit of BiosConfigWatchdogConfig 
-        register is set and 'enabled' bit is cleared. This stopped watchdog and timer.
+        register is set and 'enabled' bit is cleared. This stops the watchdog and the timer.
 
-8. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_WATCHDOG_STATUS - Value in BiosConfigWatchdogConfig 
-        register is read by guest. Previous guest reset was a result of the watchdog if the 
-        'boot status' bit is et. 
+8. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_WATCHDOG_STATUS - Value in the BiosConfigWatchdogConfig 
+        register is read by the guest. Previous guest reset was a result of the watchdog if the 
+        'boot status' bit is set. 
 
-9. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_WATCHDOG_STATUS - 'boot status' bit of 
+9. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_WATCHDOG_STATUS - 'boot status' bit of the
         BiosConfigWatchdogConfig register is set. This is the protocol to clear the bit.
 
 --*/
@@ -83,8 +71,8 @@ read/writes are plumped through the BiosWdatDataPort and operate on BiosWatchdog
 #define VM_HARDWARE_TIMERPERIOD 0x3E8
 
 //
-// Any changes to VM_HARDWARE_WATCHDOG_MIN_COUNT should also be reflected in 
-// (os repo) BiosWatchdog.h
+// Any changes to VM_HARDWARE_WATCHDOG_MIN_COUNT should also be reflected 
+// on the host side.
 //
 #define VM_HARDWARE_WATCHDOG_MIN_COUNT 0x5
 #define VM_HARDWARE_WATCHDOG_MAX_COUNT 0xFFFF

@@ -1,20 +1,9 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    spcr.aslc
-
-Abstract:
-
     Defines the Serial Port Redirection Table. This table informs the OS that
     there is a port to be used for a serial console.
 
-Author:
-
-    Larry Cleeton (lcleeton) 14-Oct-2014
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>

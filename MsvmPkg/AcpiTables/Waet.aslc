@@ -1,13 +1,4 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Waet.aslc
-
-Abstract:
-
     Defines the WAET fixed ACPI table. This table informs the OS that the
     RTC and ACPI PM timer are implemented correctly. This dramatically
     improves performance on operating systems that access these devices
@@ -23,10 +14,8 @@ Abstract:
     is not set. This is despite the fact though Windows 8 does not use the PM
     timer when running on a Hyper-V VM.
 
-Author:
-
-    Rich Yampell (richyam) 5-Jul-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>

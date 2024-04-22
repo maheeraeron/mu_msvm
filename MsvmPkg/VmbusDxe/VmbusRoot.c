@@ -2,7 +2,7 @@
   Provides the root controller and bus implementation for the VMBus driver.
 
   Copyright (c) Microsoft Corporation.
-  SPDX-License-Identifier: BSD-2-Clause-Patent
+  Licensed under the BSD-2-Clause-Patent license.
 
 **/
 

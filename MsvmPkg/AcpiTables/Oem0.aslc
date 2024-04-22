@@ -1,21 +1,10 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Oem0.aslc
-
-Abstract:
-
     Defines the OEM0 fixed ACPI table. This table is used to provide initial
     entropy to the VM during boot for the random number generator. It is
     initialized in the worker process with random data.
 
-Author:
-
-    Rich Yampell (richyam) 9-Jul-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>

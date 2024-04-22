@@ -1,19 +1,8 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Fadt.aslc
-
-Abstract:
-
     Defines the Fixed ACPI Description Table.
 
-Author:
-
-    Chris Oo (cho) 7-Dec-2016
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>
@@ -86,7 +75,7 @@ EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE FADT =
     0, // XDsdt
     {
         EFI_ACPI_6_2_SYSTEM_IO, // X_PM1a_EVT_BLK - Windows if it detects FADT ACPI 5.0 or greater always uses the extended fields, ignoring address in legacy fields...
-        EFI_ACPI_6_2_QWORD * 8, // However, windows still requires the size fields to be present, even though the GAS structure has the size information as well
+        EFI_ACPI_6_2_QWORD * 8, // However, Windows still requires the size fields to be present, even though the GAS structure has the size information as well
         0,
         EFI_ACPI_6_2_QWORD,
         PowerMgmtDefaultBaseRegister + PowerMgmtStatusRegOffset

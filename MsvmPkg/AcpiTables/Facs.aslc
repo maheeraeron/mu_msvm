@@ -1,24 +1,10 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Facs.aslc
-
-Abstract:
-
     Defines the FACS fixed ACPI table. This table is mandatory when
     running with fixed ACPI hardware, as it provides storage for the global
     lock.
 
-    It also has fields for implementing hibernate support, but these are
-    unused since Hyper-V VMs do not support any sleep states.
-
-Author:
-
-    Rich Yampell (richyam) 24-Jul-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>
