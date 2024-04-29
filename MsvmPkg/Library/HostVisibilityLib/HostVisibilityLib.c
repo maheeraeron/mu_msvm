@@ -284,7 +284,7 @@ Return Value:
             // call did not fail with a size mismatch error.
             //
 
-            if (((StartingPageNumber & (largePageSize - 1)) == 0) &&
+            if (((pageNumber & (largePageSize - 1)) == 0) &&
                 (pagesRemaining >= largePageSize) &&
                 (errorCode != SVSM_ERR_PVALIDATE_SIZE_MISMATCH))
             {
@@ -296,6 +296,7 @@ Return Value:
             {
                 pageNumber += 1;
                 pagesRemaining -= 1;
+                errorCode = SVSM_SUCCESS;
             }
 
             numberOfEntries += 1;
@@ -329,11 +330,6 @@ Return Value:
         //
         // Consume as many entries as were successful.
         //
-
-        if (errorCode == SVSM_ERR_INCOMPLETE)
-        {
-            numberOfEntries = pvalidate->NextEntryIndex;
-        }
 
         for (index = 0; index < pvalidate->NextEntryIndex; index += 1)
         {
