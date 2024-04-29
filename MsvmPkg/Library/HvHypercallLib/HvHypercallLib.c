@@ -17,6 +17,7 @@ Abstract:
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HvHypercallLib.h>
+#include <Library/GhcbLib.h>
 #include <IsolationTypes.h>
 
 #include <HvHypercallLibP.h>
@@ -101,35 +102,7 @@ Return Value:
         }
         else
         {
-            UINT64 ghcbAddress;
-
-            //
-            // Obtain the GHCB address.  If this is not above the shared GPA
-            // boundary, then it must be incorrectly configured.  If the address
-            // is above the shared GPA boundary, then the address can be used
-            // without further validation, since only one of four outcomes is
-            // possible:
-            // 1. The address is non-canonical, which will result in a fatal
-            //    exception when it is used.
-            // 2. The address is canonical but exceeds the physical address width,
-            //    which will result in a fatal exception when it is used.
-            // 3. The address is the shared alias for a valid protected page.
-            //    When it is used as shared, the hypervisor will revoke the
-            //    private copy, resulting in a fatal exception the next time the
-            //    protected memory is accessed.
-            // 4. The address is legitimate.
-            //
-
-            ghcbAddress = AsmReadMsr64(SEV_MSR_GHCB);
-            if ((ghcbAddress < Context->SharedGpaBoundary) ||
-                ((ghcbAddress & (EFI_PAGE_SIZE - 1)) != 0))
-            {
-                // If the GHCB is misconfigured, then no further work is possible.
-                ASSERT(FALSE);
-                CpuDeadLoop();
-            }
-
-            Context->Ghcb = (PVOID)(ghcbAddress | Context->CanonicalizationMask);
+            Context->Ghcb = GhcbInitializeGhcb();
         }
 
         //
@@ -144,13 +117,7 @@ Return Value:
         }
         else
         {
-            HvHypercallpDisableInterrupts();
-
-            HvHypercallpSetMsrWithGhcb(Context,
-                                       HV_X64_MSR_GUEST_OS_ID,
-                                       guestOsId.AsUINT64);
-
-            HvHypercallpEnableInterrupts();
+            GhcbWriteMsr(Context->Ghcb, HV_X64_MSR_GUEST_OS_ID, guestOsId.AsUINT64);
         }
 
 #else
@@ -791,11 +758,7 @@ Return Value:
 
     if (Context->Ghcb != NULL)
     {
-        HvHypercallpDisableInterrupts();
-
-        HvHypercallGetMsrWithGhcb(Context, msr, &registerValue);
-
-        HvHypercallpEnableInterrupts();
+        GhcbReadMsr(Context->Ghcb, msr, &registerValue);
     }
     else if (Context->IsTdx)
     {
@@ -863,11 +826,7 @@ Return Value:
 
     if (Context->Ghcb != NULL)
     {
-        HvHypercallpDisableInterrupts();
-
-        HvHypercallpSetMsrWithGhcb(Context, msr, RegisterValue);
-
-        HvHypercallpEnableInterrupts();
+        GhcbWriteMsr(Context->Ghcb, msr, RegisterValue);
     }
     else if (Context->IsTdx)
     {

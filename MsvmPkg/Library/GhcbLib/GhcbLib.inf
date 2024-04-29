@@ -1,21 +1,17 @@
 [Defines]
     INF_VERSION                    = 0x00010005
-    BASE_NAME                      = HvHypercallLib
-    FILE_GUID                      = a4b0a0bd-9462-48de-b9fb-35336e38768e
+    BASE_NAME                      = GhcbLib
+    FILE_GUID                      = 50c4ccb1-a610-47d6-ae29-9e8368091796
     MODULE_TYPE                    = DXE_DRIVER
     VERSION_STRING                 = 1.0
-    LIBRARY_CLASS                  = HvHypercallLib|DXE_DRIVER UEFI_DRIVER DXE_RUNTIME_DRIVER
+    LIBRARY_CLASS                  = GhcbLib|DXE_DRIVER UEFI_DRIVER DXE_RUNTIME_DRIVER
 
 [Sources]
-    HvHypercallLib.c
-    DxeHvHypercallLibSupport.c
+    DxeGhcbLibSupport.c
 
 [Sources.X64]
-    X64/GhcbHypercall.c
-    X64/TdxCall.asm | MSFT
-
-[Sources.AARCH64]
-    AArch64/HypercallImpl.masm
+    X64/GhcbCall.c
+    X64/SvmSnp.asm | MSFT
 
 [Packages]
     MdePkg/MdePkg.dec

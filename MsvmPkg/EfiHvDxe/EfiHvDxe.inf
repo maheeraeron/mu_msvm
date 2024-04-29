@@ -40,6 +40,7 @@
     UefiDriverEntryPoint
 
 [LibraryClasses.X64]
+    GhcbLib
     HostVisibilityLib
     LocalApicLib
 
