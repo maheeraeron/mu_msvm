@@ -1,35 +1,13 @@
-/*++ @file
-Copyright (c) Microsoft Corporation
+/** @file
+  Basic driver entry points for Hyper-V synthetic keyboard devices.
 
-Module Name:
-
-    SynthKeyDxe.c
-
-Abstract:
-
-    Basic driver entry points for Hyper-V synthetic keyboard devices. 
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE: 
+  This code is derived from:
     IntelFrameworkModulePkg\Bus\Isa\Ps2KeyboardDxe\Ps2Keyboard.c
 
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
---*/
 #include "SynthKeyDxe.h"
 #include "SynthKeyChannel.h"
 #include "SynthSimpleTextIn.h"
@@ -74,7 +52,6 @@ SynthKeyDriverCleanup(
 // and if the device returns EFI_SUCCESS
 // EFI_DRIVER_BINDING_START and finally EFI_DRIVER_BINDING_STOP.
 // 
-//
 EFI_DRIVER_BINDING_PROTOCOL gSynthKeyDriverBinding = 
 {
     SynthKeyDriverSupported,
@@ -139,7 +116,7 @@ SynthKeyDriverSupported(
 
 Routine Description:
 
-    Test if the device is a Hyper-V synthetic Keyboard Controller.
+    Test if the device is a Hyper-V supported synthetic Keyboard Controller.
 
 Arguments:
 
@@ -174,6 +151,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -183,7 +161,7 @@ Return Value:
 
     if (!(EFI_ERROR(status)))
     {
-        DEBUG((EFI_D_VERBOSE, "Synthetic Keyboard Device Found - Handle %p\n", DeviceCandidate));
+        DEBUG((EFI_D_VERBOSE, "--- %a: synthetic keyboard device found - handle %p \n", __FUNCTION__, DeviceCandidate));
     }
 
     return status;
@@ -205,7 +183,7 @@ Routine Description:
 
 Arguments:
 
-    This                Pointer of EFI_DRIVER_BINDING_PROTOCOL register by the
+    This                Pointer of EFI_DRIVER_BINDING_PROTOCOL registered by the
                         keyboard driver at start up.
 
     Controller          Driver controller handle of the device to start
@@ -225,7 +203,7 @@ Return Value:
 
     ASSERT(This == &gSynthKeyDriverBinding);
 
-    DEBUG((EFI_D_VERBOSE, "Synthetic Keyboard Starting - Handle %p\n", Controller));
+    DEBUG((EFI_D_VERBOSE, "--- %a: synthetic keyboard starting - handle %p \n", __FUNCTION__, Controller));
 
     //
     // Install and open the EMCL protocol. This will be used for vmbus communication.
@@ -236,6 +214,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to install the Emcl protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -250,6 +229,7 @@ Return Value:
     if (pDevice == NULL) 
     {
         status = EFI_OUT_OF_RESOURCES;
+        DEBUG((EFI_D_ERROR, "--- %a: failed to allocate memory - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -269,6 +249,7 @@ Return Value:
 
     if (EFI_ERROR(status)) 
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -283,6 +264,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the Emcl protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -301,6 +283,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to initialize SimpleTextIn - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -308,7 +291,7 @@ Return Value:
 
 Cleanup:
 
-    DEBUG((EFI_D_ERROR, "Synthetic Keyboard Failed to Start. status %x\n", status));
+    DEBUG((EFI_D_ERROR, "--- %a: failed to start the synthetic keyboard - %r \n", __FUNCTION__, status));
 
     if (pDevice)
     {
@@ -357,7 +340,7 @@ Return Value:
     ASSERT(pDevice);
 
     //
-    // SimpleTextInCleanup can be called blindly and will
+    // SimpleTextInCleanup can be called always and will
     // handle partial or no-initialization.
     //
     SimpleTextInCleanup(pDevice);
@@ -421,7 +404,7 @@ Return Value:
 
     ASSERT(This == &gSynthKeyDriverBinding);
 
-    DEBUG((EFI_D_VERBOSE, "Synthetic Keyboard Stopping - Handle %p\n", Controller));
+    DEBUG((EFI_D_VERBOSE, "--- %a: synthetic keyboard stopping - handle %p \n", __FUNCTION__, Controller));
 
     // ------------------- Device Specific
 
@@ -438,6 +421,7 @@ Return Value:
 
     if (EFI_ERROR(status)) 
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the SimpleTextIn protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -451,6 +435,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to open the SimpleTextInEx protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 

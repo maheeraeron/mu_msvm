@@ -1,21 +1,11 @@
-/*++
+/** @file
+  VMBUS Keyboard Channel implementation for EFI.  This contains the VMBUS
+  specific implementation of the synthetic keyboard driver.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    SynthKeyChannel.h
-
-Abstract:
-
-    VMBUS Keyboard Channel implementation for EFI.  This contains the VMBUS
-    specific implementation of the synthetic keyboard driver.
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
---*/
+**/
 
 #pragma once
 

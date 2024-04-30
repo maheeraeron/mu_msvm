@@ -1,37 +1,13 @@
-/*++
+/** @file
+  Implementation of ComponentName protocol for SynthKeyDxe.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    ComponentName.c
-
-Abstract:
-
-    Implementation of ComponentName protocol for SynthKeyDxe.
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
+  This code is derived from:
     IntelFrameworkModulePkg\Bus\Isa\Ps2KeyboardDxe\ComponentName.c
 
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-
-Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
---*/
+**/
 
 #include "SynthKeyDxe.h"
 
@@ -110,6 +86,7 @@ Returns:
 
 --*/
 {
+
     //
     // This function handles both the EFI_COMPONENT_NAME_PROTOCOL and
     // EFI_COMPONENT_NAME2_PROTOCOL interfaces.  The main difference between the two
@@ -123,7 +100,6 @@ Returns:
     // Here use the protocol instance pointer to determine which interface is actually
     // being used and therefore which language description format should be used.
     //
-
     return LookupUnicodeString2(Language,
                                 This->SupportedLanguages,
                                 gSynthKeyDriverNameTable,

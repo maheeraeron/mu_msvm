@@ -1,43 +1,17 @@
-/*++
+/** @file
+  VMBUS Keyboard Layout. Handles the translation of key press messages from the 
+  synthetic keyboard vdev to EFI_KEYs based on the UEFI keyboard layout.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    SynthKeyLayout.c
-
-Abstract:
-
-    VMBUS Keyboard Layout. Handles the translation of key press messages from the 
-    synthetic keyboard vdev to EFI_KEYs based on the UEFI keyboard layout.
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE: 
-    IntelFrameworkModulePkg\Bus\Isa\Ps2KeyboardDxe\Ps2Keyboard.c
-
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
-
-Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include "SynthKeyDxe.h"
 #include <hyperkbdprotocol.h>
 #include "SynthKeyLayout.h"
 
 
+//
 // TODO: Use UEFI HII Keyboard layouts to do the translation instead of our own table.
 //
 // Layout for standard en-us keyboards.
@@ -627,8 +601,11 @@ Return Value:
         }
         else if (RawKey->IsE1)
         {
+
+            //
             // Pause Key sequence starts with E1 1D,
             // which is shared with CTRL.
+            //
             KeyState->PauseSequence = TRUE;
         }
         else
@@ -650,6 +627,7 @@ Return Value:
         break;
 
     case SCANCODE_LEFT_SHIFT_MAKE:
+
         //
         // PRNT_SCRN and Left Shift share a scan code,
         // except Left Shift does not have the E0 prefix.
@@ -677,6 +655,7 @@ Return Value:
         break;
 
     case SCANCODE_SYS_REQ_MAKE:
+
         //
         // SysReq is shared with Keypad-*
         //
@@ -687,6 +666,7 @@ Return Value:
         break;
 
     case SCANCODE_SYS_REQ_MAKE_WITH_ALT:
+
         //
         // Treat SysReq and Alt-SysReq as the same
         //
@@ -698,6 +678,7 @@ Return Value:
         break;
 
     case SCANCODE_NUM_LOCK_MAKE:
+
         //
         // Num lock is shared with the pause sequence
         //
@@ -708,6 +689,7 @@ Return Value:
         break;
 
     case SCANCODE_SCROLL_LOCK_MAKE:
+
         //
         // Scroll lock scan code is shared with CTRL-BREAK
         // (Ctrl-break uses the E0 prefix).
@@ -720,9 +702,8 @@ Return Value:
 
     }
 
-
     //
-    // If there are any state changes actually record them now
+    // If there are any state changes, actually record them now
     // for shift states, look at the make/break flag and
     // set/clear the state accordingly.
     //
@@ -731,16 +712,17 @@ Return Value:
 
         if (RawKey->IsBreak)
         {
+
             //
-            // Make sure the shift state is set before processing a break key
+            // Make sure the shift state is set before processing a break key.
             // This serves to handle the RDP client which will send various key breaks
-            // when the RDP control receives focus.  When the VM first starts no shift
-            // states are recorded.  If these unneeded break keys are not filtered out
+            // when the RDP control receives focus.  When the VM first starts, no shift
+            // states are recorded.  If these unneeded break keys are not filtered out,
             // they will cause issues with the windows boot loader's
-            // "Press a key to boot...." handling. Since the boot loader sets EFI_KEY_STATE_EXPOSED 
+            // "Press a key to boot...." handling. Since the boot loader sets EFI_KEY_STATE_EXPOSED,
             // these key breaks will be queued and then ignored.
             // Because the boot loader only processes a small number of keystrokes 
-            // before giving up a legitimate key press gets stuck behind these unneeded breaks 
+            // before giving up, a legitimate key press gets stuck behind these unneeded breaks 
             // and the user misses the chance to boot from CD.
             //
             if (KeyState->KeyState.KeyShiftState & newShiftState)
@@ -756,6 +738,7 @@ Return Value:
         }
 
     }
+
     //
     // For toggle states, just toggle it.
     // Note that break keys are ignored and the state
@@ -790,7 +773,7 @@ Arguments:
 
     RawKey          The raw, untranslated keystroke from the vdev.
     KeyState        Keyboard state to use when translating the key.
-    TranslatedKey   On output will contain the translated UEFI key data and associated
+    TranslatedKey   On output, will contain the translated UEFI key data and associated
                     key state.
 
 Return Value:
@@ -826,14 +809,15 @@ Return Value:
         TranslatedKey->Key.ScanCode    = SCAN_NULL;
         TranslatedKey->Key.UnicodeChar = RawKey->MakeCode;
 
+        //
         // Leave key states zero for Unicode input 
         // as the vdev doesn't provide this information
-
+        //
         return status;
     }
 
     //
-    // Special case handling
+    // Special case handling.
     // These cases handle keys that share scan codes but have different prefixes
     // to indicate different keys.
     //
@@ -856,6 +840,7 @@ Return Value:
         TranslatedKey->Key.UnicodeChar = CHAR_NULL;
         TranslatedKey->Key.ScanCode    = SCAN_PAUSE;
     }
+
     //
     // PAUSE shares the same scancode as Scroll Lock except PAUSE (CTRL pressed) has E0 prefix
     //
@@ -864,6 +849,7 @@ Return Value:
         TranslatedKey->Key.UnicodeChar = CHAR_NULL;
         TranslatedKey->Key.ScanCode    = SCAN_PAUSE;
     }
+
     //
     // PRNT_SCRN shares the same scancode as that of Key Pad "*" except PRNT_SCRN has E0 prefix
     //
@@ -875,6 +861,7 @@ Return Value:
     else
     {
         int index;
+
         //
         // Conversion table can handle the rest.
         //
@@ -886,8 +873,8 @@ Return Value:
                 TranslatedKey->Key.UnicodeChar = ScanCodeToEfiKey_En_Us[index].UnicodeChar;
 
                 //
-                // If a shift key is active and the translation table has a different shift state
-                // apply it now
+                // If a shift key is active and the translation table has a different shift state,
+                // apply it now.
                 //
                 if ((EFI_KEY_SHIFT_ACTIVE(KeyState->KeyState.KeyShiftState)) &&
                     (ScanCodeToEfiKey_En_Us[index].UnicodeChar != ScanCodeToEfiKey_En_Us[index].ShiftUnicodeChar)) 
@@ -901,7 +888,7 @@ Return Value:
                 }
 
                 //
-                // alphabetic key is affected by CapsLock State
+                // Alphabetic key is affected by CapsLock State.
                 //
                 // TODO: try to combine with the shift check.
                 // Shift toggles the Caps Lock state (shiftState = CapsState ^ ShiftState)
@@ -928,8 +915,6 @@ Return Value:
         // Translate the CTRL-Alpha characters to their corresponding control value
         // (ctrl-A = 0x0001 through ctrl-Z = 0x001A)
         // TODO: this won't work with key layouts that don't translate to English characters, is that OK?
-        // FWIW I don't find this tranlation specified in UEFI anywhere but both the PS2 and USB keyboards
-        // do this.
         //
         if (EFI_KEY_CTRL_ACTIVE(KeyState->KeyState.KeyShiftState))
         {
@@ -956,13 +941,13 @@ Return Value:
     {
 
         //
-        // if numlock is active we want to use the number values.
+        // If numlock is active, we want to use the number values.
         //
         // Special cases:
         //  E0 prefixed keys share the same scan codes but are not from the number pad.
         //  Shift overrides the numlock state.
         //
-        // we'll signify this by clearing the scan code leaving only the unicode value.
+        // We'll signify this by clearing the scan code, leaving only the unicode value.
         //
         if ((KeyState->KeyState.KeyToggleState & EFI_NUM_LOCK_ACTIVE) && 
             !(EFI_KEY_SHIFT_ACTIVE(KeyState->KeyState.KeyShiftState)) && 
@@ -970,9 +955,10 @@ Return Value:
         {
             TranslatedKey->Key.ScanCode = SCAN_NULL;
         }
+
         //
-        // Otherwise we want to use the control key (up arrow, etc.)
-        // we'll signify this by clearing the Unicode value leaving the scan code.
+        // Otherwise, we want to use the control key (up arrow, etc.)
+        // We'll signify this by clearing the Unicode value leaving the scan code.
         //
         // Special Cases:
         //      These keys are exempt from num lock and shift modification

@@ -1,36 +1,13 @@
-/*++
+/** @file
+  EFI driver for Hyper-V synthetic keyboard.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    SynthKeyDxe.h
-
-Abstract:
-
-    EFI driver for Hyper-V synthetic keyboard.
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE: 
+  This code is derived from:
     IntelFrameworkModulePkg\Bus\Isa\Ps2KeyboardDxe\Ps2Keyboard.h
 
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
---*/
+**/
 
 #pragma once
 
@@ -136,7 +113,9 @@ typedef struct _SYNTH_KEYBOARD_DEVICE
 
     EFI_KEY_BUFFER                      EfiKeyQueue;
 
+    //
     // Notification Function List
+    //
     LIST_ENTRY                          NotifyList;
 
 } SYNTH_KEYBOARD_DEVICE, *PSYNTH_KEYBOARD_DEVICE;

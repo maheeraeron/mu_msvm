@@ -1,23 +1,12 @@
-/*++
+/** @file
+  VMBUS Keyboard Channel implementation for UEFI.  This contains the VMBUS 
+  specific layer of the synthetic keyboard driver. It will manage the VMBUS
+  channel and process keystroke messages, translate and then queue them.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    SynthKeyChannel.c
-
-Abstract:
-
-    VMBUS Keyboard Channel implementation for UEFI.  This contains the VMBUS
-    specific layer of the synthetic keyboard driver. It will manage the VMBUS
-    channel and process keystroke messages, translate and then queue them.
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
---*/
-
+**/
 
 #include "SynthKeyDxe.h"
 #include "SynthKeyChannel.h"
@@ -99,7 +88,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, "SynthKey:ChannelOpen - Failed to set channel callback. Status %x\n", status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to set channel callback - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -109,13 +98,18 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, "SynthKey:ChannelOpen - Failed to start Channel. Status %x\n", status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to start channel - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
     pDevice->State.ChannelOpen = TRUE;
 
     status = SynthKeyChannelEstablishCommunications(pDevice);
+    if (EFI_ERROR(status))
+    {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to establish communication - %r \n", __FUNCTION__, status));
+        goto Cleanup;
+    }
 
 Cleanup:
 
@@ -157,7 +151,6 @@ Return Value:
         pDevice->Emcl->StopChannel(pDevice->Emcl);
         pDevice->State.ChannelOpen = FALSE;
         pDevice->State.ChannelConnected = FALSE;
-        DEBUG((EFI_D_VERBOSE, "SynthKey:ChannelClose - Closed\n"));
     }
 
     if (pDevice->InitCompleteEvent != NULL)
@@ -214,8 +207,8 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_WARN, "SynthKey:ChannelSend - FAILED - Type %d, Size %d, Status %x\n",
-            Message->MessageType, MessageSize, status));
+        DEBUG ((EFI_D_WARN, "--- %a: failed to send the message (type %d, size %d) --%r \n",
+            __FUNCTION__, Message->MessageType, MessageSize, status));
     }
 
     return status;
@@ -287,7 +280,8 @@ Return Value:
         break;
 
     default:
-        DEBUG ((EFI_D_WARN, "SyntheKey: Unknown Message. Type %d, size %d\n", message->MessageType, BufferLength));
+        DEBUG ((EFI_D_WARN, "--- %a: unknown message type (type %d, size %d) \n",
+            __FUNCTION__, message->MessageType, BufferLength));
         ASSERT(FALSE);
         break;
     }
@@ -329,7 +323,7 @@ Return Value:
 
     request.Version = HK_VERSION_WIN8;
 
-    DEBUG ((EFI_D_VERBOSE, "SynthKey:EstablishCommunications - Protocol Version Requested 0x%x\n", request.Version));
+    DEBUG ((EFI_D_VERBOSE, "--- %a protocol version requested 0x%x\n", __FUNCTION__, request.Version));
 
     //
     // Create an event to wait for the negotiation to complete
@@ -339,7 +333,7 @@ Return Value:
     if (EFI_ERROR(status))
     {
         DEBUG ((EFI_D_ERROR,
-            "SynthKey:EstablishCommunications - Failed to Create Event. Status 0x%x\n", status));
+            "--- %a:failed to create event - %r \n", __FUNCTION__, status));
         goto Exit;
     }
 
@@ -348,7 +342,7 @@ Return Value:
     if (EFI_ERROR(status))
     {
         DEBUG ((EFI_D_ERROR,
-            "SynthKey:EstablishCommunications - Failed to Send Message. Status 0x%x\n", status));
+            "--- %a: failed to send message - %r \n", __FUNCTION__, status));
         goto Exit;
     }
 
@@ -357,13 +351,15 @@ Return Value:
     if (EFI_ERROR(status))
     {
         DEBUG ((EFI_D_ERROR,
-            "SynthKey:EstablishCommunications - Failed to Wait For Event. Status 0x%x\n", status));
+            "--- %a: failed to wait For event - %r \n", __FUNCTION__, status));
         goto Exit;
     }
 
     if (!pDevice->State.ChannelConnected)
     {
         status = EFI_NOT_READY;
+        DEBUG ((EFI_D_ERROR,
+            "--- %a: failed to connect the channel - %r \n", __FUNCTION__, status));
     }
 
 Exit:
@@ -408,7 +404,7 @@ Return Value:
     indicatorsState.LedFlags = (pDevice->State.KeyState.KeyToggleState &
                                 (EFI_SCROLL_LOCK_ACTIVE | EFI_NUM_LOCK_ACTIVE | EFI_CAPS_LOCK_ACTIVE));
 
-    DEBUG((EFI_D_VERBOSE, "SynthKey:SetIndicators - State: 0x%02x\n", indicatorsState.LedFlags));
+    DEBUG((EFI_D_VERBOSE, "--- %a: set indicators state: 0x%02x\n", __FUNCTION__, indicatorsState.LedFlags));
 
     status = SynthKeyChannelSendMessage(pDevice, (PHK_MESSAGE_HEADER)&indicatorsState, sizeof(indicatorsState));
 
@@ -498,9 +494,6 @@ Return Value:
 
     ASSERT(pKeyMessage->Header.MessageType == HkMessageEvent);
 
-    // DEBUG ((EFI_D_VERBOSE, "SynthKey:OnMessageEvent - Key %x, IsBreak:%d, IsUnicode:%d, IsE0:%d, IsE1:%d\n",
-    //    pKeyMessage->MakeCode, pKeyMessage->IsBreak, pKeyMessage->IsUnicode, pKeyMessage->IsE0, pKeyMessage->IsE1));
-
     ZeroMem(&keyData, sizeof(keyData));
 
     //
@@ -528,7 +521,7 @@ Return Value:
             // Should it be the actual scan code or just the State.KeyState with a NULL scan code?
             // For now we'll follow the behavior of other UEFI drivers (PS2 & USB) which is to
             // only return shift and toggle key states with no scan code.
-            // The windows boot environment also expectes this.
+            // The windows boot environment also expects this.
             //
             keyData.KeyState = pDevice->State.KeyState;
             queueKey = TRUE;

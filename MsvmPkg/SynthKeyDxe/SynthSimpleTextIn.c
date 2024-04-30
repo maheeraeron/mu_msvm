@@ -1,40 +1,15 @@
-/*++
+/** @file
+  UEFI SIMPLE_TEXT_INPUT_PROTOCOL and SIMPLE_TEXT_INPUT_PROTOCOL_EX implementation for 
+  Hyper-V synthetic keyboard. This contains hardware agnostic functionality for interacting
+  with UEFI applications. It also provides a simple API for a connectivity/hardware
+  layer (e.g. vmbus) to queue keystrokes.
 
-Copyright (c) Microsoft Corporation
+  This code is derived from:
+    IntelFrameworkModulePkg\Bus\Isa\Ps2KeyboardDxe\Ps2Keyboard.h
 
-Module Name:
-
-    SynthSimpleTextIn.c
-
-Abstract:
-
-    UEFI SIMPLE_TEXT_INPUT_PROTOCOL and SIMPLE_TEXT_INPUT_PROTOCOL_EX implementation for 
-    Hyper-V synthetic keyboard. This contains hardware agnostic functionality for interacting
-    with UEFI applications. It also provides a simple API for a connectivity/hardware
-    layer (e.g. vmbus) to queue keystrokes.
-
-Author:
-
-    Kris Harper (kharp) - 15-Oct-2012
-
-
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE: 
-    IntelFrameworkModulePkg\Bus\Isa\Ps2KeyboardDxe\Ps2KbdTextIn.c
-
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
-
-Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 
 #include "SynthKeyDxe.h"
@@ -131,9 +106,10 @@ Return Value:
 
 --*/
 {
+
     //
     // Reset on Ctrl-Alt-Del
-    // Note the scan code here is the UEFI defined scan code *not*
+    // Note that the scan code here is the UEFI defined scan code and *not*
     // the value from the PS2 keyboard.
     //
     if ((EFI_KEY_CTRL_ACTIVE(pDevice->State.KeyState.KeyShiftState)) &&
@@ -157,7 +133,7 @@ SimpleTextInDequeueKey(
 
 Routine Description:
 
-    Returns the next available key stroke (if any) with proper synchronization
+    Returns the next available key stroke (if any) with proper synchronization.
 
 Arguments:
 
@@ -227,7 +203,7 @@ Return Value:
 
     oldTpl = gBS->RaiseTPL(TPL_KEYBOARD_NOTIFY);
 
-    if (!pDevice->State.ChannelConnected) 
+    if (!pDevice->State.ChannelConnected)
     {
         status = EFI_DEVICE_ERROR;
     }
@@ -263,7 +239,7 @@ SimpleTextInResetEx(
 Routine Description:
 
     SIMPLE_TEXT_INPUT_EX_PROTOCOL Reset implementation.
-    Reset's the input device and optionaly run diagnostics
+    Reset's the input device and optionaly run diagnostics.
 
 Arguments:
 
@@ -296,13 +272,13 @@ SimpleTextInReadKeyStroke(
 Routine Description:
 
     SIMPLE_TEXT_INPUT_PROTOCOL ReadKeyStroke Implementation.
-    Returns the next available keystroke if any
+    Returns the next available keystroke, if any.
 
 Arguments:
 
     This        EFI_SIMPLE_TEXT_INPUT_PROTOCOL for this device instance.
 
-    Key         On success will contain the returned keystroke.
+    Key         On success, will contain the returned keystroke.
 
 
 Return Value:
@@ -320,7 +296,7 @@ Return Value:
     //
     // Get the next keystroke, looping to drop partial keystrokes.
     // Partial keystrokes (signified by ScanCode and UnicodeChar both being NULL)
-    // are not returned by EFI_SIMPLE_TEXT_INPUT_PROTOCOL. If they are desired
+    // are not returned by EFI_SIMPLE_TEXT_INPUT_PROTOCOL. If they are desired,
     // EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL should be used.
     //
     while (TRUE)
@@ -338,8 +314,9 @@ Return Value:
             break;
         }
 
+        //
         // Partial keystroke, drop it and try again.
-
+        //
     }
 
     return status;
@@ -398,7 +375,7 @@ SimpleTextInWaitForKey(
 
 Routine Description:
 
-    Event notification function for SIMPLE_TEXT_INPUT_PROTOCOL.WaitForKey event
+    Event notification function for SIMPLE_TEXT_INPUT_PROTOCOL.WaitForKey event.
     Called when an application issues a WaitForEvent on the WaitForKey event
     and the event is not signalled. If a key is available signal the event.
 
@@ -444,7 +421,9 @@ Return Value:
             break;
         }
 
-        // drop the partial key.
+        //
+        // Drop the partial key.
+        //
         KeyBufferRemove(&pDevice->EfiKeyQueue, NULL);
 
     }
@@ -463,7 +442,7 @@ SimpleTextInWaitForKeyEx(
 
 Routine Description:
 
-    Event notification function for SIMPLE_TEXT_INPUT_PROTOCOL_EX.WaitForKeyEx event
+    Event notification function for SIMPLE_TEXT_INPUT_PROTOCOL_EX.WaitForKeyEx event.
     Called when an application issues a WaitForEvent on the WaitForKeyEx event
     and the event is not signalled. If a key is available the event will be signaled.
 
@@ -576,13 +555,13 @@ Arguments:
     This                        Protocol instance instance for the device.
 
     KeyData                     Keystroke to be notified about including shift and toggle state.
-                                Either KeyShiftState or KeyToggleState can be 0 in which case
+                                Either KeyShiftState or KeyToggleState can be 0, in which case
                                 the associated state is ignored. Non-zero values must match exactly
                                 for the notification to be called.
 
     KeyNotificationFunction     Function to be called when the key sequence in KeyData is received.
 
-    NotifyHandle                On return contains the unique handle identifying the registered 
+    NotifyHandle                On return, contains the unique handle identifying the registered 
                                 notification. This must be unregistered using the 
                                 SIMPLE_TEXT_INPUT_EX_PROTOCOL UnregisterKeyNotify API.
 
@@ -767,7 +746,6 @@ Return Value:
 {
     EFI_STATUS  status;
 
-    // Simple Text In and Simple Text In Ex Init.
     InitializeListHead (&pDevice->NotifyList);
 
     pDevice->ConIn.Reset                 = SimpleTextInReset;
@@ -801,12 +779,14 @@ Return Value:
         goto ErrorExit;
     }
 
+    //
     // TODO: Rethink this, it could make adding to Reset() harder.
     // e.g. If Reset needs to perform some action that requires the channel to be open.
     //
     // Use the reset handler to get things to their initial
     // state. Ignore the return since this call will always fail
-    // with EFI_DEVICE_ERROR as the channel is not up yet.
+    // with EFI_DEVICE_ERROR as the channel is not up yet but we want to perform the rest of the 
+    // initialization.
     //
     SimpleTextInReset(&pDevice->ConIn, FALSE);
 
@@ -869,7 +849,9 @@ Return Value:
     EFI_STATUS  status; 
     EFI_TPL     oldTpl;
 
-    // raise TPL so we don't race with the key press handler.
+    //
+    // Raise TPL so we don't race with the key press handler.
+    //
     oldTpl = gBS->RaiseTPL(TPL_KEYBOARD_NOTIFY);
 
     //
@@ -1015,7 +997,7 @@ KeyNotifyIsPartialKey(
 Routine Description:
 
     Helper to determine if a given EFI_KEY_DATA is a partial keystrok. Partial keystrokes are
-    ones with no scancode or unicode data but do contain shift and toggle state.
+    the ones with no scancode or unicode data but do contain shift and toggle state.
 
 Arguments:
 
