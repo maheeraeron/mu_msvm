@@ -639,6 +639,12 @@
   #  This should only be used to support upgrades/existing VMs
   gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
   gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
+  
+  ## This PCD defines minimum length(in bytes) of the system preboot TCG event log area(LAML).
+  #  For PC Client Implementation spec up to and including 1.2 the minimum log size is 64KB.
+  #  Increase to 128KB since Linux is measuring more information causing the 64KB buffer to run out.
+  # @Prompt Minimum length(in bytes) of the system preboot TCG event log area(LAML).
+  #gEfiSecurityPkgTokenSpaceGuid.PcdTcgLogAreaMinLen|0x20000
 
   # UEFI_CONFIG_NVDIMM_COUNT
   gMsvmPkgTokenSpaceGuid.PcdNvdimmCount|0x0
