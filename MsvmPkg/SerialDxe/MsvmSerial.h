@@ -1,22 +1,13 @@
-/*++
+/** @file
+  Provides the protocol definition for MSVM_SERIAL_BUS_PROTOCOL.
 
-Copyright (c) Microsoft Corporation
+  This is a tag protocol used privately in the SerialDxe driver.
 
-Module Name:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    MsvmSerial.h
 
-Abstract:
-
-    Provides the protocol definition for MSVM_SERIAL_BUS_PROTOCOL.
-
-    This is a tag protocol used privately in the SerialDxe driver.
-
-Author:
-
-    Larry Cleeton (lcleeton) - 08-Oct-2014
-
---*/
+**/
 
 #pragma once
 

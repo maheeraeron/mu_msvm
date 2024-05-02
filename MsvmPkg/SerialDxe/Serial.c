@@ -1,18 +1,12 @@
-/*++
+/** @file
 
-Module Name:
+  Provides the implementation for Hyper-V serial ports.
 
-    Serial.c
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Abstract:
 
-    Provides the implementation for Hyper-V serial ports.
-
-Author:
-
-    Larry Cleeton (lcleeton) - 08-Aug-2014
-
---*/
+**/
 
 #include "Serial.h"
 

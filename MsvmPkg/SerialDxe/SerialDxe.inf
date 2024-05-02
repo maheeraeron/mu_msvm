@@ -1,21 +1,11 @@
 ## @file
-# Serial driver for standard UARTS on an ISA bus.
+# Serial driver for standard UARTs on an ISA bus.
 #
+# Copyright (c) Microsoft Corporation.
+# Licensed under the BSD-2-Clause-Patent license.
 #
-# Copyright (c) Microsoft Corporation
-#
-# Module Name:
-#
-#     SerialBusDxe.inf
-#
-# Abstract:
-#
-#     This is the inf file for the SerialsDxe driver
-#
-# Author:
-#
-#     Larry Cleeton (lcleeton) 07-Oct-2014
-#
+##
+
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = SerialDxe
@@ -57,7 +47,7 @@
   PL011UartLib
 
 [Guids]
-  gEfiUartDevicePathGuid
+  gEfiUartDevicePathGuid                        ## CONSUMES
 
 [Protocols]
   gEfiSerialIoProtocolGuid                      ## PRODUCES
@@ -67,18 +57,18 @@
 
 
 [FixedPcd.X64]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate
-  
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialClockRate     ## SOMETIMES_CONSUMES
+
 [FixedPcd.AARCH64]
-  gArmPlatformTokenSpaceGuid.PL011UartClkInHz
+  gArmPlatformTokenSpaceGuid.PL011UartClkInHz           ## SOMETIMES_CONSUMES
 
 [FixedPcd]
-  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate
-  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
-  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
-  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate       ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits       ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity         ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits       ## CONSUMES
 
 [Pcd]
-  gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled
-  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled
-  gMsvmPkgTokenSpaceGuid.PcdConsoleMode
+  gMsvmPkgTokenSpaceGuid.PcdSerialControllersEnabled    ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled             ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdConsoleMode                 ## CONSUMES

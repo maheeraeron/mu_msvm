@@ -1,19 +1,12 @@
-/*++
+/** @file
 
-Module Name:
+  Provides the header for the Hyper-V serial ports.
 
-    Serial.h
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Abstract:
 
-    Provides the header for the Hyper-V serial ports.
-
-Author:
-
-    Larry Cleeton (lcleeton) - 08-Aug-2014
-
---*/
-
+**/
 
 #pragma once
 

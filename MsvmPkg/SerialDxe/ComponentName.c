@@ -1,24 +1,16 @@
-/*++
+/** @file
 
-ATTENTION - THIS FILE IS DERIVED FROM THIRD PARTY OPEN SOURCE CODE:
-           IntelFrameworkModulePackage\Bus\Isa\IsaSerialDxe\ComponentName.c
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE
-WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE
-MICROSOFT OPEN SOURCE  SOFTWARE APPROVAL POLICY.
+  Provides the UEFI Component Name and Name2 protocol for the Hyper-V serial driver.
 
-Module Name:
+  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    ComponentName.c
+  This code is derived from the following:
+            IntelFrameworkModulePackage\Bus\Isa\IsaSerialDxe\ComponentName.c
 
-Abstract:
 
-    Provides the UEFI Component Name and Name2 protocol for the Hyper-V serial driver.
-
-Author:
-
-    Larry Cleeton (lcleeton) - 08-Aug-2014
-
---*/
+**/
 
 #include "Serial.h"
 
@@ -49,7 +41,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gSerialComponentName2
 //
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE gSerialControllerNameTable[] =
 {
-    { "eng;en", (CHAR16 *)L"Hyper-V Serial Bus Controller"},
+    { "eng;en", (CHAR16 *)L"Hyper-V Serial Bus Controller" },
     { NULL, NULL }
 };
 
@@ -58,14 +50,8 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE gSerialControllerNameTabl
 //
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mSerialDriverNameTable[] =
 {
-    {
-        "eng;en",
-        L"Hyper-V Serial Driver"
-    },
-    {
-        NULL,
-        NULL
-    }
+    { "eng;en", L"Hyper-V Serial Driver" },
+    { NULL, NULL }
 };
 
 
