@@ -1,27 +1,11 @@
 /*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    SmbiosPlatform.c
-
-Abstract:
-
-    This is the Hyper-V specific platform code that creates the SMBIOS table.
-
+    This module is responsible for creating the SMBIOS table.
     This driver will make a best effort to add all the SMBIOS v3.1 required
     structures. Failure is not fatal and may result in some of the required
-    structures to not be installed.  Most operating systems can operate
-    without the table or an incomplete table.
+    structures to not be installed.
 
-    The driver is an "initialization driver" and will return an
-    artificial error from the entry point so it doesn't stay resident.
-
-Author:
-
-    Larry Cleeton (lcleeton) 26-Nov-2012
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
@@ -37,11 +21,6 @@ Author:
 #include <IndustryStandard/SmBios.h>
 #include <IndustryStandard/Acpi.h>
 
-#include <EfiNt.h>
-
-//
-// TODO: Could we automate the release version from current UEFI version?
-//
 #define MAJOR_RELEASE_VERSION 4
 #define MINOR_RELEASE_VERSION 1
 #if defined(DEBUG_PLATFORM)
@@ -210,7 +189,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The Smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
     Structure - The base or complete structure to add.
 
@@ -251,7 +230,7 @@ Return Value:
 
         //
         // Finalize structure terminator.  The last string has a null byte so
-        // this addtional one results in two null bytes at the end of the structure.
+        // this additional one results in two null bytes at the end of the structure.
         //
         *destination++ = '\0';
     }
@@ -412,7 +391,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
 Return Value:
 
@@ -507,7 +486,9 @@ Return Value:
     };
 
 
+    //
     // Fill in build date as release date.
+    //
     DateToSmbiosDate(__DATE__, sizeof(__DATE__), strings[2], sizeof(RELEASE_DATE_STRING));
 
     //
@@ -529,7 +510,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
 Return Value:
 
@@ -684,7 +665,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
     ChassisHandle - Returns the handle of the newly added structure.
 
@@ -779,9 +760,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
-
-    BiosConfigPage - Contains system information provided by the BiosDevice.
+    Smbios - The DXE Smbios protocol.
 
     ChassisHandle - The handle of SystemEnclosure structure in which this
         baseboard resides.
@@ -869,9 +848,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
-
-    BiosConfigPage - Contains system information provided by the BiosDevice.
+    Smbios - The DXE Smbios protocol.
 
 Return Value:
 
@@ -936,7 +913,7 @@ Return Value:
         }
     };
 
-    // Set values and strings read in PEI via PCDs from Bios VDEV.
+    // Set values and strings read in PEI via PCDs.
     cpuInfo.Formatted.ProcessorType            = PcdGet8(PcdSmbiosProcessorType);
     cpuInfo.Formatted.ExternalClock            = PcdGet16(PcdSmbiosProcessorExternalClock);
     cpuInfo.Formatted.MaxSpeed                 = PcdGet16(PcdSmbiosProcessorMaxSpeed);
@@ -1030,9 +1007,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
-
-    BiosConfigPage - Contains system information provided by the BiosDevice.
+    Smbios - The DXE Smbios protocol.
 
 Return Value:
 
@@ -1102,11 +1077,11 @@ AddPhysicalMemoryArray(
 
 Routine Description:
 
-    Adds a Physical Memory Array structure (type 16) to the SMBIOS table SMBIOS table.
+    Adds a Physical Memory Array structure (type 16) to the SMBIOS table.
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
     MemoryErrorHandle - The handle of the error information structure for this
         array.
@@ -1176,7 +1151,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
     BaseAddress - The address where this memory array is mapped.
 
@@ -1276,11 +1251,11 @@ AddMemoryDevice(
 
 Routine Description:
 
-    Adds a MemoryDevice structure to the SMBIOS table.
+    Adds a MemoryDevice structure (type 17) to the SMBIOS table.
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
     Size - The amount of memory in the device (in bytes).
 
@@ -1393,7 +1368,7 @@ Return Value:
         else
         {
             //
-            // Size is too big to be represented, report as unknown
+            // Size is too big to be represented, report as unknown.
             //
             memoryDevice.Formatted.Size = 0xffff;
         }
@@ -1455,11 +1430,11 @@ AddMemoryDeviceMappedAddress(
 
 Routine Description:
 
-    Adds a MemoryDeviceMappedAddress structure to the SMBIOS table.
+    Adds a MemoryDeviceMappedAddress structure (type 20) to the SMBIOS table.
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
     BaseAddress - The address where this memory array is mapped.
 
@@ -1556,11 +1531,11 @@ AddSystemBootInformation(
 
 Routine Description:
 
-    Adds the SystemBootInformation structure to the SMBIOS table.
+    Adds the SystemBootInformation structure (type 32) to the SMBIOS table.
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
 Return Value:
 
@@ -1603,7 +1578,7 @@ AddMemoryRegion(
     _In_ UINT64 Length,
     _In_ UINT32 MemoryFlags,
     _In_ CHAR8* LocationString,
-    _In_ EFI_SMBIOS_HANDLE PhyscialMemoryArrayHandle,
+    _In_ EFI_SMBIOS_HANDLE PhysicalMemoryArrayHandle,
     _In_ EFI_SMBIOS_HANDLE MemoryErrorHandle
     )
 /*++
@@ -1619,17 +1594,17 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
-    BaseAddress - the base physical address where the memory device is mapped.
+    BaseAddress - The base physical address where the memory device is mapped.
 
-    Length - the length of the memory device.
+    Length - The length of the memory device.
 
     MemoryFlags - Flags indicating special properties of the memory region.
 
-    LocationString - the identifying string for the device.
+    LocationString - The identifying string for the device.
 
-    PhysicalMemoryArrayHandle - the handle of the existing Physical Memory Array structure.
+    PhysicalMemoryArrayHandle - The handle of the existing Physical Memory Array structure.
 
     MemoryErrorHandle
 
@@ -1648,7 +1623,7 @@ Return Value:
     if (AddMemoryDevice(Smbios,
                         Length,
                         MemoryFlags,
-                        PhyscialMemoryArrayHandle,
+                        PhysicalMemoryArrayHandle,
                         MemoryErrorHandle,
                         LocationString,
                         &memoryDeviceHandle))
@@ -1664,7 +1639,7 @@ Return Value:
             if (AddMemoryArrayMappedAddress(Smbios,
                                             BaseAddress,
                                             Length,
-                                            PhyscialMemoryArrayHandle,
+                                            PhysicalMemoryArrayHandle,
                                             &memoryArrayMappedAddressHandle))
             {
                 AddMemoryDeviceMappedAddress(Smbios,
@@ -1947,7 +1922,7 @@ Routine Description:
 
 Arguments:
 
-    Smbios - The smbios dxe protocol.
+    Smbios - The DXE Smbios protocol.
 
 Return Value:
 
@@ -1982,8 +1957,7 @@ Routine Description:
 
     Entrypoint of platform SMBIOS driver.
 
-    This entry point adds the SMBIOS structures and returns an error
-    so it is immediately unloaded.
+    This entry point adds the SMBIOS structures.
 
 Arguments:
 
@@ -2007,7 +1981,7 @@ Return Value:
     }
 
     //
-    // Check if verion matches.
+    // Check if version matches.
     //
     if ((smbios->MajorVersion != TARGETTED_SMBIOS_MAJOR_VERSION) ||
         (smbios->MinorVersion != TARGETTED_SMBIOS_MINOR_VERSION))
@@ -2020,12 +1994,6 @@ Return Value:
     //
     AddAllStructures(smbios);
 
-    //
-    // Return success and leave this driver resident even though it is unnecessary.
-    // There is currently no graceful way for drivers to exit with success and not stay loaded.
-    // A driver failure can confuse anyone debugging the firmware. Since this is a boot services
-    // driver the memory will be reclaimed by the OS.
-    //
     return EFI_SUCCESS;
 }
 
