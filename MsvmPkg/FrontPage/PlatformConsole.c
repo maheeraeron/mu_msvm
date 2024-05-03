@@ -1,20 +1,9 @@
-/*++
+/** @file
+  Platform Console routines for showing the Hyper-V diagnostic console
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    PlatformConsole.c
-
-Abstract:
-
-    Platform Console routines for showing the Hyper-V diagnostic console
-
-Author:
-
-    Kris Harper (kharp) - 26-Dec-2013
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
@@ -32,7 +21,7 @@ Author:
 #include "String.h"
 
 //
-// Conveinient utility function implemented in BdsConsole.c
+// Convenient utility function implemented in BdsConsole.c
 //
 EFI_STATUS
 ConvertBmpToGopBlt (
@@ -78,7 +67,7 @@ UINTN                           mImageHeight;
 UINTN                           mImageWidth;
 INT32                           mSavedConsoleMode;
 BOOLEAN                         OutOfSpace = FALSE;
-EFI_STRING_ID                   BootSummaryStringIds[] = {                              // Max 4 error entries
+EFI_STRING_ID                   BootSummaryStringIds[] = {                              // Max 4 error entries, plus 1 reserved
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_1), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_1),
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_2), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_2),
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_3), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_3),
@@ -86,7 +75,7 @@ EFI_STRING_ID                   BootSummaryStringIds[] = {                      
     STRING_TOKEN(STR_BOOT_SUMMARY_DEVICE_5), STRING_TOKEN(STR_BOOT_SUMMARY_ERROR_5),    // Reserved
 };
 UINT32                          BootSummaryEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID));
-UINT32                          MaxAllowedErrorEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID)) - 1;  // Last 1 Boot Summary entries are reserved
+UINT32                          MaxAllowedErrorEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID)) - 1;  // Last Boot Summary entry is reserved
 
 _Ret_maybenull_z_
 CHAR16*
@@ -223,7 +212,7 @@ Return Value:
     }
 
     //
-    // Hyper-V NIC device path do not contain the MAC address so
+    // Hyper-V NIC device paths do not contain the MAC address, so
     // get the SNP protocol to get the current MAC. Fallback to the
     // device path if any error occurs.
     //
@@ -250,7 +239,7 @@ Return Value:
     // IfType of 0 or 1 indicate a 6 byte MAC address
     // (unfortunately this isn't defined in a header file).
     // Hyper-V doesn't support other types of MAC addresses
-    // so this should always be the IfType
+    // so this should always be the IfType.
     // Either way only six bytes are printed.
     //
     ASSERT(MacPath->IfType < 2);
@@ -519,7 +508,7 @@ Return Value:
 {
     CHAR16  *friendlyName = NULL;
     CHAR16  *statusString = NULL;
-    UINT32  *entryNumber = ((UINT32 *)Context);     // *entryNumber is 1-based counter
+    UINT32  *entryNumber = ((UINT32 *)Context);     // *entryNumber is a 1-based counter
 
     if (*entryNumber > MaxAllowedErrorEntries)
     {

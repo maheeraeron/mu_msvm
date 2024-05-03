@@ -1,15 +1,13 @@
 /** @file
   User interaction functions for the Hyper-V FrontPage.
 
-  Copyright (c) 2015, Microsoft Corporation. All rights reserved.
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 **/
 
 #ifndef _FRONT_PAGE_UI_H_
 #define _FRONT_PAGE_UI_H_
 
-// Maximum string length
-//
 #define MAX_STRING_LENGTH               1024
 
 

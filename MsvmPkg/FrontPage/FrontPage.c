@@ -1,14 +1,12 @@
 /** @file
-
   Implements the Hyper-V UEFI Front Page (Settings Menu).
 
-  Copyright (c) 2018, Microsoft Corporation. All rights reserved.<BR>
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 **/
 
 
 #include "FrontPage.h"
-#include "Language.h"
 #include "FrontPageUi.h"
 #include "FrontPageConfigAccess.h"
 
@@ -57,19 +55,25 @@ UINTN       mCallbackKey;
 CHAR8       *mLanguageString;
 EFI_HANDLE  mImageHandle;
 
+//
 // Protocols.
 //
 EFI_GRAPHICS_OUTPUT_PROTOCOL        *mGop;
 EFI_HII_FONT_PROTOCOL               *mFont;
 
+//
 // UI Elements.
 //
 UINT32  mTitleBarWidth, mTitleBarHeight;
 UINT32  mMasterFrameWidth, mMasterFrameHeight;
 BOOLEAN mShowFullMenu = FALSE;      // By default we won't show the full FrontPage menu (requires validation if there's a system password).
-// About Menu is only needed if there is a about bitmap.
+
+//
+// About Menu is only needed if there is an about bitmap.
+//
 BOOLEAN mEnableAboutMenu;
 
+//
 // Master Frame - Form Notifications.
 //
 UINT32                            mCurrentFormIndex;
@@ -89,6 +93,7 @@ UINT32    mBootHorizontalResolution    = 0;
 UINT32    mBootVerticalResolution      = 0;
 UINT32    mBootTextModeColumn          = 0;
 UINT32    mBootTextModeRow             = 0;
+
 //
 // BIOS setup video resolution and text mode.
 //
@@ -101,6 +106,7 @@ EFI_FORM_BROWSER2_PROTOCOL          *mFormBrowser2;
 MS_ONSCREEN_KEYBOARD_PROTOCOL       *mOSKProtocol;
 MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *mSWMProtocol;
 
+//
 // Map Top Menu entries to HII Form IDs.
 //
 #define UNUSED_INDEX    (UINT16)-1
@@ -114,20 +120,22 @@ struct
 
 } mFormMap[] =
 {
+//
 //    Index (Full)  Index (Limited)     String                                      Formset Guid                       Form ID
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
     { 0,            0,                  STRING_TOKEN(STR_MF_MENU_OP_BOOT_SUMMARY),  FRONT_PAGE_CONFIG_FORMSET_GUID,    FRONT_PAGE_FORM_ID_BOOT_SUMMARY     },  // Boot Summary
 };
 
+//
 // Frontpage form set GUID
 //
 EFI_GUID gMsFrontPageConfigFormSetGuid = FRONT_PAGE_CONFIG_FORMSET_GUID;
 
 #pragma pack(1)
 
-///
-/// HII specific Vendor Device Path definition.
-///
+//
+// HII specific Vendor Device Path definition.
+//
 typedef struct
 {
     VENDOR_DEVICE_PATH             VendorDevicePath;
@@ -274,6 +282,7 @@ UninitializeFrontPage (
                                                       NULL
                                                       );
     ASSERT_EFI_ERROR (Status);
+
     //
     // Remove our published HII data
     //
@@ -316,6 +325,7 @@ CallFrontPage (IN UINT32    FormIndex)
 
     ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
 
+    //
     // Search through the form mapping table to find the form set GUID and ID corresponding to the selected index.
     //
     for (Count=0 ; Count < (sizeof(mFormMap) / sizeof(mFormMap[0])); Count++)
@@ -328,6 +338,7 @@ CallFrontPage (IN UINT32    FormIndex)
         }
     }
 
+    //
     // If we didn't find it, exit with an error.
     //
     if (Index != FormIndex)
@@ -336,6 +347,7 @@ CallFrontPage (IN UINT32    FormIndex)
         goto Exit;
     }
 
+    //
     // Call the browser to display the selected form.
     //
     Status = mFormBrowser2->SendForm (mFormBrowser2,
@@ -347,6 +359,7 @@ CallFrontPage (IN UINT32    FormIndex)
                                       &ActionRequest
                                      );
 
+    //
     // If the user selected the "Restart now" button to exit the Frontpage, set the exit flag.
     //
     if (ActionRequest == EFI_BROWSER_ACTION_REQUEST_EXIT)
@@ -354,6 +367,7 @@ CallFrontPage (IN UINT32    FormIndex)
         mTerminateFrontPage = TRUE;
     }
 
+    //
     // Check whether user change any option setting which needs a reset to be effective
     //
     if (ActionRequest == EFI_BROWSER_ACTION_REQUEST_RESET)
@@ -405,7 +419,7 @@ VOID RemoveMenuFromList (UINT16 MenuId) {
 /**
   Creates the top-level menu in the Master Frame for selecting amongst the various HII forms.
 
-  NOTE: Selectable menu options is dependent on whether there is a System firmware password and on whether the user knows it.
+  NOTE: Selectable menu options are dependent on whether there is a System firmware password and on whether the user knows it.
 
 
   @param OrigX          Menu's origin (x-axis).
@@ -428,10 +442,10 @@ CreateTopMenu(IN UINT32 OrigX,
 {
     EFI_FONT_INFO   FontInfo;
 
+    //
     // Create a listbox with menu options.  The contents of the menu depend on whether a system password is
     // set and whether the user entered the password correctly or not.  If the user cancels the password dialog
     // then only a limited menu is available.
-    //
     //
     UINT16  Count, Index;
     UINT16  MenuOptionCount  = (sizeof(mFormMap) / sizeof(mFormMap[0]));
@@ -453,6 +467,7 @@ CreateTopMenu(IN UINT32 OrigX,
         }
     }
 
+    //
     // Create the ListBox that encapsulates the top-level menu.
     //
     FontInfo.FontSize    = FP_MFRAME_MENU_TEXT_FONT_HEIGHT;
@@ -472,6 +487,8 @@ CreateTopMenu(IN UINT32 OrigX,
                                    MenuOptions,
                                    NULL
                                   );
+
+    //
     // Free HII string buffer.
     //
     if (NULL != MenuOptions)
@@ -505,6 +522,7 @@ RenderTitlebar(VOID)
     UINTN                     DataSize;
     CHAR8                     RebootReason[MSP_REBOOT_REASON_LENGTH];
 
+    //
     // Draw the titlebar background.
     //
     mGop->Blt(mGop,
@@ -572,6 +590,7 @@ RenderTitlebar(VOID)
         GetAndDisplayBitmap(IconFile, (mTitleBarWidth * FP_TBAR_ENTRY_INDICATOR_X_PERCENT) / 100, TRUE);
     }
 
+    //
     // Prepare string blitting buffer.
     //
     pBltBuffer = (EFI_IMAGE_OUTPUT *) AllocateZeroPool (sizeof (EFI_IMAGE_OUTPUT));
@@ -596,6 +615,7 @@ RenderTitlebar(VOID)
     CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.TitleBarTextColor,       sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.TitleBarBackgroundColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
+    //
     // Determine the size the TitleBar text string will occupy on the screen.
     //
     UINT32      MaxDescent;
@@ -611,6 +631,7 @@ RenderTitlebar(VOID)
                              &MaxDescent
                             );
 
+    //
     // Render the string to the screen, vertically centered.
     //
     mSWMProtocol->StringToWindow (mSWMProtocol,
@@ -653,6 +674,7 @@ RenderMasterFrame(VOID)
 {
     EFI_STATUS  Status      = EFI_SUCCESS;
 
+    //
     // Draw the master frame background.
     //
     mGop->Blt(mGop,
@@ -708,14 +730,17 @@ InitializeFrontPageUI (VOID)
     DEBUG((DEBUG_INFO, "INFO [FP]: FP Dimensions: %d, %d, %d, %d, %d, %d\r\n", \
            mBootHorizontalResolution, mBootVerticalResolution, mTitleBarWidth, mTitleBarHeight, mMasterFrameWidth, mMasterFrameHeight));
 
+    //
     // Render the TitleBar at the top of the screen.
     //
     RenderTitlebar();
 
+    //
     // Render the Master Frame and its Top-Level menu contents.
     //
     RenderMasterFrame();
 
+    //
     // Create the Master Frame notification event.  This event is signalled by the display engine to note that
     // there is a user input event outside the form area to consider.
     //
@@ -762,7 +787,9 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
     EFI_STATUS  Status  = EFI_SUCCESS;
     UINT32      OSKMode = 0;
 
-    //Delete BootNext if entry to BootManager.
+    //
+    // Delete BootNext if entry to BootManager.
+    //
     Status = gRT->SetVariable(
         L"BootNext",
         &gEfiGlobalVariableGuid,
@@ -771,28 +798,35 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         NULL
         );
 
+    //
     // Save image handle for later.
     //
     mImageHandle = ImageHandle;
 
+    //
     // Disable the watchdog timer
     //
     gBS->SetWatchdogTimer (0, 0, 0, (CHAR16 *)NULL);
 
     mResetRequired = FALSE;
 
+    //
     // Force-connect all controllers.
     //
     EfiBootManagerConnectAll();
 
+    //
     // Set console mode: *not* VGA, no splashscreen logo.
-    // Insure Gop is in Big Display mode prior to accessing GOP.
+    // Ensure Gop is in Big Display mode prior to accessing GOP.
+    //
     MsLogoLibSetConsoleMode (FALSE, FALSE);
 
     GenerateBootSummary();
 
+    //
     // Check if the frontpage interface should be disabled, which will result in the
     // VM being shutdown.
+    //
     if (PcdGetBool(PcdDisableFrontpage))
     {
         DEBUG((DEBUG_INFO, "[FP] PcdDisableFrontpage set, skipping frontpage display.\n"));
@@ -801,7 +835,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     //
     // After the console is ready, get current video resolution
-    // and text mode before launching setup at first time.
+    // and text mode before launching setup for the first time.
     //
     Status = gBS->HandleProtocol (gST->ConsoleOutHandle,
                                   &gEfiGraphicsOutputProtocolGuid,
@@ -814,6 +848,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         goto Exit;
     }
 
+    //
     // Determine if the Font Protocol is available
     //
     Status = gBS->LocateProtocol (&gEfiHiiFontProtocolGuid,
@@ -830,6 +865,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         goto Exit;
     }
 
+    //
     // Locate the Simple Window Manager protocol.
     //
     Status = gBS->LocateProtocol (&gMsSWMProtocolGuid,
@@ -845,6 +881,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         goto Exit;
     }
 
+    //
     // Locate the on-screen keyboard (OSK) protocol.
     //
     Status = gBS->LocateProtocol (&gMsOSKProtocolGuid,
@@ -860,10 +897,12 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
     else
     {
 
+        //
         // Set default on-screen keyboard size and position.  Disable icon auto-activation (set by BDS) since
         // we'll display the OSK ourselves when appropriate.
         //
 
+        //
         // Disable OSK icon auto-activation and self-refresh, and ensure keyboard is disabled.
         //
         mOSKProtocol->GetKeyboardMode(mOSKProtocol, &OSKMode);
@@ -872,6 +911,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         mOSKProtocol->ShowKeyboardIcon(mOSKProtocol,FALSE);
         mOSKProtocol->SetKeyboardMode(mOSKProtocol, OSKMode);
 
+        //
         // Set keyboard size and position (75% of screen width, bottom-right corner, docked).
         //
         mOSKProtocol->SetKeyboardSize(mOSKProtocol, FP_OSK_WIDTH_PERCENT);
@@ -887,11 +927,13 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         mBootVerticalResolution   = mGop->Mode->Info->VerticalResolution;
     }
 
+    //
     // Ensure screen is clear when switch Console from Graphics mode to Text mode
     //
     gST->ConOut->EnableCursor (gST->ConOut, FALSE);
     gST->ConOut->ClearScreen (gST->ConOut);
 
+    //
     // Initialize the Simple UI ToolKit.
     //
     Status = InitializeUIToolKit(ImageHandle);
@@ -902,20 +944,17 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
         goto Exit;
     }
 
+    //
     // Register Front Page strings with the HII database.
     //
     InitializeStringSupport();
 
-
-    // Initialize Front Page language support.
     //
-    InitializeLanguage(TRUE);
-
-
     // Initialize HII data (ex: register strings, etc.).
     //
     InitializeFrontPage(TRUE);
 
+    //
     // Initialize the FrontPage User Interface.
     //
     Status = InitializeFrontPageUI();
@@ -928,11 +967,13 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     DisplayBootSummary();
 
+    //
     // Set the default form ID to show on the canvas.
     //
     mCurrentFormIndex   = 0;
     Status              = EFI_SUCCESS;
 
+    //
     // Display the specified FrontPage form.
     //
     do
@@ -958,6 +999,7 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
     //ProcessBootNext ();
 
+    //
     // Clean-up
     //
     UninitializeFrontPage();
@@ -966,10 +1008,11 @@ UefiMain(IN EFI_HANDLE        ImageHandle,
 
 Exit:
 
+    //
     // If unable to enter front page, either hang the system or shutdown. We
     // should have already flushed the reason why we didn't boot to the host
     // event log.
-
+    //
     if (PcdGetBool(PcdDisableFrontpage))
     {
         DEBUG((DEBUG_INFO, "[FP] Configured to shutdown instead of displaying frontpage.\n"));
@@ -995,6 +1038,7 @@ EFI_STATUS  GetAndDisplayBitmap (EFI_GUID *FileGuid, UINTN XCoord, BOOLEAN XCoor
     UINTN                            BitmapHeight;
     UINTN                            BitmapWidth;
 
+    //
     // Get the specified image from FV.
     //
     Status = GetSectionFromAnyFv(FileGuid,
@@ -1009,6 +1053,7 @@ EFI_STATUS  GetAndDisplayBitmap (EFI_GUID *FileGuid, UINTN XCoord, BOOLEAN XCoor
         return Status;
     }
 
+    //
     // Convert the bitmap from BMP format to a GOP framebuffer-compatible form.
     //
     Status = TranslateBmpToGopBlt(BMPData,

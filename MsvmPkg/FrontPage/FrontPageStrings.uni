@@ -1,85 +1,59 @@
 // *++
-//
 // Strings for Hyper-V FrontPage
 //
-// Copyright (c) 2018, Microsoft Corporation. All rights reserved.<BR>
-//
+// Copyright (c) Microsoft Corporation.
+// Licensed under the BSD-2-Clause-Patent license.
 // --*/
 
 #langdef   en-US " English "
-#langdef   fr-FR " Français "
-#langdef   ja-JP "\wide 日本語 "
 
 #langdef   en    " Standard English "
-#langdef   fr    " Standard Français "
-#langdef   ja    "\wide 日本語 "
 
 #string STR_FRONT_PAGE_TITLE      #language en-US  "Microsoft Hyper-V UEFI"
-                                  #language ja-JP  "Microsoft Hyper-V UEFI"
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Master Frame Menu Strings
 //
 #string STR_MF_MENU_TITLE         #language en-US    "Settings"
-                                  #language ja-JP    "Settings"
 
 #string STR_MF_MENU_OP_SECURITY   #language en-US    "Security"
-                                  #language ja-JP    "Security"
 
 #string STR_MF_MENU_OP_DEVICES    #language en-US    "Devices"
-                                  #language ja-JP    "Devices"
 
 #string STR_MF_MENU_OP_PCINFO     #language en-US    "PC information"
-                                  #language ja-JP    "PC information"
 
 #string STR_MF_MENU_OP_BOOTORDER  #language en-US    "Boot configuration"
-                                  #language ja-JP    "Boot configuration"
 
 #string STR_MF_MENU_OP_SEMM       #language en-US    "Enterprise Management"
-                                  #language ja-JP    "Enterprise Management"
 
 #string STR_MF_MENU_OP_SETTIME    #language en-US    "Date and Time"
-                                  #language ja-JP    "Date and Time"
 
 #string STR_MF_MENU_OP_ABOUT      #language en-US    "About"
-                                  #language ja-JP    "About"
 
 #string STR_MF_MENU_OP_EXIT       #language en-US    "Exit"
-                                  #language ja-JP    "Exit"
 
 #string STR_MF_MENU_OP_BOOT_SUMMARY       #language en-US    "Boot Summary"
-                                          #language ja-JP    "Boot Summary"
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Generic Strings
 //
 #string STR_NULL_STRING             #language en-US  ""
-                                    #language ja-JP  ""
 
 #string STR_GENERIC_TEXT_NONE       #language en-US  "None"
-                                    #language ja-JP  "None"
 
 #string STR_GENERIC_TEXT_OK         #language en-US  "Ok"
-                                    #language ja-JP  "Ok"
 
 #string STR_GENERIC_TEXT_CANCEL     #language en-US  "Cancel"
-                                    #language ja-JP  "Cancel"
 
 #string STR_GENERIC_TEXT_ON         #language en-US  "On"
-                                    #language ja-JP  "\wide許可"
 
 #string STR_GENERIC_TEXT_OFF        #language en-US  "Off"
-                                    #language ja-JP  "\wide許可しない"
 
 #string STR_GENERIC_TEXT_CONTINUE   #language en-US  "Continue"
-                                    #language ja-JP  "\wide次へ"
 
 #string STR_GENERIC_TEXT_RECOMMEND  #language en-US  "recommended"
-                                    #language ja-JP  "recommended"  ## TODO
 
 #string STR_MISSING_STRING          #language en-US  "Missing String"
-                                    #language fr-FR  "Missing String"
-                                    #language ja-JP  "Missing String"
 
 #string STR_RESTRICTED_STRING       #language en-US "\fc!Red!Some settings are managed by your organization."
 
@@ -87,28 +61,23 @@
 // Form ID 5: About
 //
 #string STR_FP_ABOUT_HEADER         #language en-US  "\fh!48!Regulatory information"
-                                    #language ja-JP  "\fh!48!Regulatory information"  // TODO
 
 /////////////////////////////////////////////////////////////////////////////
 // Form ID 6: Exit
 //
 #string STR_FP_EXIT_HEADER          #language en-US  "\fh!48!Exit settings and restart your Virtual Machine"
-                                    #language ja-JP  "\fh!48!Exit settings and restart your Virtual Machine"  // TODO
 
 #string STR_FP_EXIT_DESCRIPTION_OLD #language en-US  "\fh!28!All changes to the settings on this PC have been saved. Restart your PC to exit settings."
-                                    #language ja-JP  "\fh!28!All changes to the settings on this PC have been saved. Restart your PC to exit settings."  // TODO
 
 #string STR_FP_EXIT_DESCRIPTION     #language en-US  "\fh!28!Restart your Virtual Machine to exit settings."
-                                    #language ja-JP  "\fh!28!Restart your Virtual Machine to exit settings."  // TODO
 
 #string STR_FP_RESTART_NOW_BUTTON   #language en-US  "Restart now"
-                                    #language ja-JP  "Restart now"
 
 /////////////////////////////////////////////////////////////////////////////
 // Form ID 7: Boot Summary
 //
 #string STR_BOOT_SUMMARY_MENU_TITLE                   #language en-US  "Boot Summary Menu"
-#string STR_BOOT_SUMMARY_HEADER                       #language en-US  "\fh!48!Virtual Machine Boot Summary"
+#string STR_BOOT_SUMMARY_HEADER                       #language en-US  "Virtual Machine Boot Summary"
 #string STR_BOOT_SUMMARY_DEVICE_1                     #language en-US  ""
 #string STR_BOOT_SUMMARY_DEVICE_2                     #language en-US  ""
 #string STR_BOOT_SUMMARY_DEVICE_3                     #language en-US  ""

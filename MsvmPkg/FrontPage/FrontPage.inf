@@ -1,8 +1,8 @@
 ## @file
 #  Application that presents & manages the Hyper-V Setup Front Page.
 #
-#  Copyright (c) 2014-2015, Microsoft Corporation. All rights reserved.<BR>
-#
+#  Copyright (c) Microsoft Corporation. 
+#  Licensed under the BSD-2-Clause-Patent license. 
 ##
 
 [Defines]
@@ -22,14 +22,12 @@
 [Sources]
   FrontPage.c
   FrontPageConfigAccess.c
-  FrontPageUi.c
   FrontPageStrings.uni
+  FrontPageUi.c
   FrontPageVfr.Vfr
-  Language.c
-  String.c
   PlatformConsole.c
-  PlatformConsole.h
   PlatformString.c
+  String.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -38,58 +36,53 @@
   MsGraphicsPkg/MsGraphicsPkg.dec
 
 [LibraryClasses]
+  BmpSupportLib
+  BootEventLogLib
   CpuLib
   DebugLib
-  PrintLib
+  DxeServicesLib
   HiiLib
-  UefiApplicationEntryPoint
+  MsColorTableLib
+  MsLogoLib
+  MsUiThemeLib    
   PcdLib
+  PrintLib
+  ResetSystemLib
+  UefiApplicationEntryPoint
   UefiBootManagerLib
   UIToolKitLib
-  DxeServicesLib
-  BmpSupportLib
-  MsUiThemeLib
-  ResetSystemLib
-  MsLogoLib
-  BootEventLogLib
-  MsColorTableLib
 
 [Guids]
-  gEfiGlobalVariableGuid                        ## SOMETIMES_PRODUCES ## Variable:L"BootNext" (The number of next boot option)
-  gEfiImageSecurityDatabaseGuid                 ## CONSUMES
+  gEfiGlobalVariableGuid                        ## PRODUCES ## Variable:L"BootNext" (The number of next boot option)
   gEfiIfrTianoGuid                              ## CONSUMES ## GUID (Extended IFR Guid Opcode)
-  gMsEventMasterFrameNotifyGroupGuid            ## CONSUMES
+  gEfiImageSecurityDatabaseGuid                 ## CONSUMES
   gFrontPageNVVarGuid                           ## CONSUMES
+  gMsEventMasterFrameNotifyGroupGuid            ## CONSUMES
 
 [Protocols]
-  gEfiSmbiosProtocolGuid                        ## PROTOCOL CONSUMES
-  gEfiGraphicsOutputProtocolGuid                ## PROTOCOL SOMETIMES_CONSUMES
-  gEfiHiiConfigAccessProtocolGuid               ## PROTOCOL CONSUMES
-  gEfiFormBrowser2ProtocolGuid                  ## PROTOCOL CONSUMES
-  gEfiDevicePathProtocolGuid                    ## PROTOCOL CONSUMES
-  gEfiFirmwareVolume2ProtocolGuid               ## PROTOCOL CONSUMES
-  gMsOSKProtocolGuid                            ## PROTOCOL CONSUMES
-  gMsSWMProtocolGuid
-  gEfiHiiConfigRoutingProtocolGuid              ## PROTOCOL CONSUMES
-  gEdkiiFormBrowserEx2ProtocolGuid
+  gEfiDevicePathProtocolGuid                    ## CONSUMES
+  gEfiFirmwareVolume2ProtocolGuid               ## CONSUMES
+  gEfiFormBrowser2ProtocolGuid                  ## CONSUMES
+  gEfiGraphicsOutputProtocolGuid                ## CONSUMES
+  gEfiHiiConfigAccessProtocolGuid               ## CONSUMES
+  gEfiHiiConfigRoutingProtocolGuid              ## CONSUMES
+  gEfiSmbiosProtocolGuid                        ## CONSUMES
+  gMsOSKProtocolGuid                            ## CONSUMES
+  gMsSWMProtocolGuid                            ## CONSUMES
 
 [FeaturePcd]
-  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate
+  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate        ## CONSUMES
 
 [Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangCodes
-  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLang
-  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes
-  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLang
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
-  gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile
-  gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState
-  gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile
-  gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize
-  gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage
+  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLang                 ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangCodes            ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLang         ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes    ## CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState                 ## PRODUCES
+  gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile                     ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage                          ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile                              ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize                  ## CONSUMES
 
 [Depex]
   TRUE

@@ -1,8 +1,8 @@
 /** @file
   HiiConfigAccess definitions for Hyper-V FrontPage.
 
-  Copyright (c) 2015, Microsoft Corporation. All rights reserved.
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 **/
 
 #include "FrontPageConfigAccess.h"
@@ -64,7 +64,7 @@ IsPostReadyToBoot (
                          first name/value pair) if the request was not successful.
   @param Results         A null-terminated Unicode string in <ConfigAltResp> format which
                          has all values filled in for the names in the Request string.
-                         String to be allocated by the called function.
+                         This string will be allocated by the called function.
 
   @retval  EFI_SUCCESS            The Results is filled with the requested values.
   @retval  EFI_OUT_OF_RESOURCES   Not enough memory to store the results.
@@ -93,9 +93,9 @@ ExtractConfig (
   @param Progress        A pointer to a string filled in with the offset of the most
                          recent '&' before the first failing name/value pair (or the
                          beginning of the string if the failure is in the first
-                         name/value pair) or the terminating NULL if all was successful.
+                         name/value pair), or the terminating NULL if all was successful.
 
-  @retval  EFI_SUCCESS            The Results is processed successfully.
+  @retval  EFI_SUCCESS            The results are processed successfully.
   @retval  EFI_INVALID_PARAMETER  Configuration is NULL.
   @retval  EFI_NOT_FOUND          Routing data doesn't match any storage in this driver.
 

@@ -1,39 +1,16 @@
 /*++
+    This module will provide the fonts used in the  UI
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-    THE POSSIBILITY OF SUCH DAMAGE.
-
-
-    Copyright (C) 2016 Microsoft Corporation. All Rights Reserved.
-
-Module Name:
-
-    MsUiPlatformThemeLib.c
-
-Abstract:
-
-    This module will provide the fonts used in the Hyper-V UI
-
-Environment:
-
-    UEFI
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
-#include <Uefi.h>                                     // UEFI base types
+#include <Uefi.h>
 
 #include <Protocol/MsUiThemeProtocol.h>
 #include <Library/PlatformThemeLib.h>
 
+#define FILLED_AT_RUNTIME  0
 
 #define FONT_DECL(TABLE, NAME )                       \
                                                       \
@@ -43,51 +20,74 @@ Environment:
         MS_UI_CUSTOM_FONT_ ## NAME ## _MAX_ADVANCE,   \
         sizeof (mMsUiFontPackageHdr_ ## NAME ## ),    \
         sizeof (mMsUiFontPackageGlyphs_ ## NAME ## ), \
-        FONT_PTR_SET &mMsUiFontPackageHdr_ ## NAME ## ,            \
-        GLYPH_PTR_SET &mMsUiFontPackageGlyphs_ ## NAME ## \
+        FILLED_AT_RUNTIME, \
+        FILLED_AT_RUNTIME \
     };
-
-// The fonts for this platform are:
 
 #define SCALE 75
 
-#include <Resources/FontPackage_Lucidia_Console_18pt.h>
-FONT_DECL(FixedFont,            Lucidia_Console_18pt)
+// The fonts for this platform are:
+#include <Resources/FontPackage_Selawik_Regular_8pt_Fixed.h>
+FONT_DECL (FixedFont, Selawik_Regular_8pt_Fixed)
 
-#include <Resources/FontPackage_MS_Gothic_Regular_10pt.h>
-FONT_DECL(SmallOSKFont,         MS_Gothic_Regular_10pt)
+#include <Resources/FontPackage_Selawik_Regular_9pt.h>
+FONT_DECL (SmallOSKFont, Selawik_Regular_9pt)
 
-#include <Resources/FontPackage_Segoe_UI_24pt.h>
-FONT_DECL(SmallFont,            Segoe_UI_24pt)
+#include <Resources/FontPackage_Selawik_Regular_10pt.h>
+FONT_DECL (SmallFont, Selawik_Regular_10pt)
 
-#include <Resources/FontPackage_Segoe_UI_18pt.h>
-FONT_DECL(StandardFont,         Segoe_UI_18pt)
+#include <Resources/FontPackage_Selawik_Regular_18pt.h>
+FONT_DECL (StandardFont, Selawik_Regular_18pt)
 
-#include <Resources/FontPackage_Segoe_UI_20pt.h>
-FONT_DECL(MediumFont,           Segoe_UI_20pt)
+#include <Resources/FontPackage_Selawik_Regular_22pt.h>
+FONT_DECL (MediumFont, Selawik_Regular_22pt)
 
-#include <Resources/FontPackage_Segoe_UI_22pt.h>
-FONT_DECL(LargeFont,            Segoe_UI_22pt)
+#include <Resources/FontPackage_Selawik_Regular_24pt.h>
+FONT_DECL (LargeFont, Selawik_Regular_24pt)
 
 static  MS_UI_THEME_DESCRIPTION gMsUiPlatformTheme = {
-    MS_UI_THEME_PROTOCOL_SIGNATURE,
-    MS_UI_THEME_PROTOCOL_VERSION,
-    SCALE,
-    0,
-    FONT_PTR_SET &FixedFont,
-    FONT_PTR_SET &SmallOSKFont,
-    FONT_PTR_SET &SmallFont,
-    FONT_PTR_SET &StandardFont,
-    FONT_PTR_SET &MediumFont,
-    FONT_PTR_SET &LargeFont
+  MS_UI_THEME_PROTOCOL_SIGNATURE,
+  MS_UI_THEME_PROTOCOL_VERSION,
+  SCALE,
+  0,
+  FILLED_AT_RUNTIME,
+  FILLED_AT_RUNTIME,
+  FILLED_AT_RUNTIME,
+  FILLED_AT_RUNTIME,
+  FILLED_AT_RUNTIME,
+  FILLED_AT_RUNTIME
 };
 
 MS_UI_THEME_DESCRIPTION *
 EFIAPI
-PlatformThemeGet ( VOID ) {
+PlatformThemeGet (
+  VOID
+  )
+{
+  FixedFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_8pt_Fixed;
+  FixedFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_8pt_Fixed;
 
-    return &gMsUiPlatformTheme;
+  SmallOSKFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_9pt;
+  SmallOSKFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_9pt;
+
+  SmallFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_10pt;
+  SmallFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_10pt;
+
+  StandardFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_18pt;
+  StandardFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_18pt;
+
+  MediumFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_22pt;
+  MediumFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_22pt;
+
+  LargeFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_24pt;
+  LargeFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_24pt;
+
+  gMsUiPlatformTheme.FixedFont    = FONT_PTR_SET &FixedFont;
+  gMsUiPlatformTheme.SmallOSKFont = FONT_PTR_SET &SmallOSKFont;
+  gMsUiPlatformTheme.SmallFont    = FONT_PTR_SET &SmallFont;
+  gMsUiPlatformTheme.StandardFont = FONT_PTR_SET &StandardFont;
+  gMsUiPlatformTheme.MediumFont   = FONT_PTR_SET &MediumFont;
+  gMsUiPlatformTheme.LargeFont    = FONT_PTR_SET &LargeFont;
+
+  return &gMsUiPlatformTheme;
 }
-
-
-

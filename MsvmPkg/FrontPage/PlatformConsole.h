@@ -1,20 +1,9 @@
-/*++
+/** @file
+  Platform Console routines for showing the Hyper-V diagnostic console
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    PlatformConsole.h
-
-Abstract:
-
-    Platform Console routines for showing the Hyper-V diagnostic console
-
-Author:
-
-    Kris Harper (kharp) - 26-Dec-2013
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 #pragma once
 
 EFI_STATUS

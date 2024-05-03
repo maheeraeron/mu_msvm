@@ -1,14 +1,14 @@
 /** @file
   User interaction functions for the Hyper-V FrontPage.
 
-  Copyright (c) 2015, Microsoft Corporation. All rights reserved.
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 **/
 
 #include "FrontPage.h"        // TODO: Perhaps wrap the keys in their own .h file.
 #include "FrontPageUi.h"
 
-#include <PiDxe.h>          // This has to be here so Protocol/FirmwareVolume2.h doesn't puke errors.
+#include <PiDxe.h>          // This has to be here so Protocol/FirmwareVolume2.h doesn't throw errors.
 
 #include <Guid/FrontPageEventDataStruct.h>
 #include <Guid/GlobalVariable.h>
@@ -67,6 +67,7 @@ UiCallback (
 
     //
     // Sanitize input values.
+    //
     if (Value == NULL || ActionRequest == NULL)
     {
         DEBUG ((DEBUG_INFO, "FrontPage:UiCallback - Bailing from invalid input.\n"));
@@ -76,6 +77,7 @@ UiCallback (
     //
     // Filter responses.
     // NOTE: For now, let's only consider elements that have CHANGED.
+    //
     if (Action != EFI_BROWSER_ACTION_CHANGED)
     {
         DEBUG ((DEBUG_INFO, "FrontPage:UiCallback - Bailing from unimportant input.\n"));
@@ -84,20 +86,26 @@ UiCallback (
 
     //
     // Set a default action request.
+    //
     *ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
 
     //
     // Handle the specific callback.
     // We'll record the callback event as mCallbackKey so that other processes can make decisions
     // on how we exited the run loop (if that occurs).
+    //
     mCallbackKey = QuestionId;
     switch (mCallbackKey)
     {
+    //
     // FRONT_PAGE_KEY_CONTINUE is the "Exit Menu" option.
+    //
     case FRONT_PAGE_ACTION_CONTINUE:
         *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
+        //
         // mCallbackKey set to FRONT_PAGE_KEY_CONTINUE will cause the main run loop to exit
         // once the form browser exits.
+        //
         break;
     case FRONT_PAGE_ACTION_EXIT_FRONTPAGE:
         *ActionRequest = EFI_BROWSER_ACTION_REQUEST_EXIT;
@@ -138,6 +146,7 @@ HandleRebootToFrontPage (
 
     //
     // Step 1: Read the current OS indications variable.
+    //
     DataSize = sizeof( OsIndications );
     Status = gRT->GetVariable( L"OsIndications",
                                &gEfiGlobalVariableGuid,
@@ -148,6 +157,7 @@ HandleRebootToFrontPage (
 
     //
     // Step 2: Update OS indications variable to enable the boot to FrontPage.
+    //
     if (!EFI_ERROR( Status ) || Status == EFI_NOT_FOUND)
     {
         OsIndications[0] |= EFI_OS_INDICATIONS_BOOT_TO_FW_UI;   // Flag is located in the lowest byte.
@@ -161,6 +171,7 @@ HandleRebootToFrontPage (
 
     //
     // Step 3: Reboot!
+    //
     if (!EFI_ERROR( Status ))
     {
         DEBUG(( DEBUG_INFO, "INFO [SFP] %a - Requesting reboot...\n", __FUNCTION__ ));

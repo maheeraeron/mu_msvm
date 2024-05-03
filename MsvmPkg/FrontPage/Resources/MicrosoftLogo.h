@@ -1,9 +1,8 @@
 /** @file
-
   FrontPage Microsoft logo.
 
-  Copyright (c) 2015,  Microsoft Corporation. All rights reserved.<BR>
-
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 //  Microsoft Logo (55 x 55 x 32bpp)

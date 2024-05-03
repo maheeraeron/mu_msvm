@@ -1,21 +1,10 @@
-/*++
+/** @file
+  Functions to help with loading and string formating using HII resource strings.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
 
-Module Name:
-
-    PlatformString.c
-
-Abstract:
-
-    BDS Platform Lib String Helpers
-    Functions to help with loading and string formating using HII resource strings.
-
-Author:
-
-    Kris Harper (kharp) - 27-Dec-2013
-
---*/
 #include <EfiNt.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>

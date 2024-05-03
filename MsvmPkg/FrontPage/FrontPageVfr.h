@@ -1,3 +1,10 @@
+/** @file
+  Shared definitions for Hyper-V FrontPage VFR and C code.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
+
 //
 // THIS FILE MUST ONLY CONTAIN DEFINTIONS THAT CAN BE INTERPRETED 
 // BY BOTH THE VFR AND C COMPILERS.
@@ -20,6 +27,7 @@
 //
 #define PRINTABLE_LANGUAGE_NAME_STRING_ID               0x0001
 
+//
 // Hyper-V Front Page exposes the following forms
 //
 // NOTE: Form ID order and values must align with VFR code.
@@ -33,6 +41,7 @@
 #define FRONT_PAGE_FORM_ID_EXIT                         0x0006
 #define FRONT_PAGE_FORM_ID_BOOT_SUMMARY                 0x0007
 
+//
 // Hyper-V Front Page triggers the following actions
 //
 // NOTE: Form ID order and values must align with VFR code.
@@ -45,6 +54,7 @@
 #define LABEL_ABOUT_COMPLIANCE_LABLEL_TAG_START           0x2004
 #define LABEL_ABOUT_COMPLIANCE_LABLEL_TAG_END             0x2005
 
+//
 // Grid class Start delimeter (GUID opcode).
 //
 #define SURFACE_GRID_START_OPCODE_GUID                                             \
@@ -52,6 +62,7 @@
     0xc0b6e247, 0xe140, 0x4b4d, { 0xa6, 0x4, 0xc3, 0xae, 0x1f, 0xa6, 0xcc, 0x12 }  \
   }
 
+//
 // Grid class End delimeter (GUID opcode).
 //  
 #define SURFACE_GRID_END_OPCODE_GUID                                               \
@@ -59,13 +70,15 @@
     0x30879de9, 0x7e69, 0x4f1b, { 0xb5, 0xa5, 0xda, 0x15, 0xbf, 0x6, 0x25, 0xce }  \
   }
 
+//
 // Grid class select cell location (GUID opcode).
 //  
 #define SURFACE_GRID_SELECT_CELL_OPCODE_GUID                                       \
   {                                                                                \
     0x3147b040, 0xeac3, 0x4b9f, { 0xb5, 0xec, 0xc2, 0xe2, 0x88, 0x45, 0x17, 0x4e } \
   }
-  
+
+//
 // Bitmap class definition (GUID opcode).
 //  
 #define SURFACE_BITMAP_OPCODE_GUID                                                 \
@@ -73,8 +86,9 @@
     0xefbdb196, 0x91d7, 0x4e04, { 0xb7, 0xef, 0xa4, 0x4c, 0x5f, 0xba, 0x2e, 0xb5 } \
   }
 
+//
 // Compliance Label Bitmap File GUID - Expanded.
-// NOTE: This is gross but it has to be done until VFR recognizes GUID as a data type for guided opcodes.
+// NOTE: This is unfortunate but it has to be done until VFR recognizes GUID as a data type for guided opcodes.
 // 
 typedef struct {
   UINT32  Data1;
@@ -84,7 +98,7 @@ typedef struct {
 } VFR_EFI_GUID;
 
 typedef struct{
-    UINT64  PlatformDeviceDisableSupportedMask;  // This allows platform to control UI elements for what device disable they support 
+    UINT64  PlatformDeviceDisableSupportedMask;  // This allows the platform to control UI elements for what device support they disable
     BOOLEAN PostReadyToBoot;
 }FRONT_PAGE_HACK;
 
