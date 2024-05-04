@@ -151,7 +151,6 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to open protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -214,7 +213,6 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to install the Emcl protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -249,7 +247,6 @@ Return Value:
 
     if (EFI_ERROR(status)) 
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to open protocol - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -283,7 +280,6 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to initialize SimpleTextIn - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 
@@ -421,7 +417,6 @@ Return Value:
 
     if (EFI_ERROR(status)) 
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to open the SimpleTextIn protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -435,7 +430,6 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to open the SimpleTextInEx protocol - %r \n", __FUNCTION__, status));
         return status;
     }
 
