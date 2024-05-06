@@ -1,21 +1,11 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    StorvscDxe.h
-
-Abstract:
+/** @file
 
     EFI Driver for Synthetic SCSI Controller.
 
-Author:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
-    Marius Buleandra (mariub) - 20-Jul-2012
-
---*/
-
+**/
 
 #pragma once
 
@@ -40,7 +30,6 @@ Author:
 
 #include <VstorageProtocol.h>
 
-
 #define STORVSC_VERSION 1
 #define STORVSC_ADAPTER_CONTEXT_SIGNATURE SIGNATURE_32 ('S','V','s','c')
 
@@ -48,11 +37,9 @@ Author:
 #define TPL_STORVSC_CALLBACK (TPL_CALLBACK + 1)
 #define TPL_STORVSC_NOTIFY TPL_NOTIFY
 
-
 #define STORVSC_MAX_LUN_TRANSFER_LENGTH (sizeof(UCHAR) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET)
 
 #define STORVSC 0x53544f52565343 // "STORVSC"
-
 
 typedef struct _STORVSC_CHANNEL_CONTEXT
 {
@@ -104,7 +91,6 @@ typedef struct _TARGET_LUN
 extern EFI_DRIVER_BINDING_PROTOCOL gStorvscDriverBinding;
 extern EFI_COMPONENT_NAME2_PROTOCOL gStorvscComponentName2;
 extern EFI_COMPONENT_NAME_PROTOCOL gStorvscComponentName;
-
 
 EFI_STATUS
 EFIAPI
@@ -169,48 +155,48 @@ StorvscExtScsiPassThruPassThru (
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetNextTargetLun (
-    IN EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    IN OUT UINT8 **Target,
-    IN OUT UINT64 *Lun
+    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    __inout UINT8 **Target,
+    __inout UINT64 *Lun
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruBuildDevicePath (
-    IN EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    IN UINT8 *Target,
-    IN UINT64 Lun,
-    IN OUT EFI_DEVICE_PATH_PROTOCOL **DevicePath
+    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    __in UINT8 *Target,
+    __in UINT64 Lun,
+    __inout EFI_DEVICE_PATH_PROTOCOL **DevicePath
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetTargetLun (
-    IN EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    IN EFI_DEVICE_PATH_PROTOCOL *DevicePath,
-    OUT UINT8 **Target,
-    OUT UINT64 *Lun
+    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    __in EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    __out UINT8 **Target,
+    __out UINT64 *Lun
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruResetChannel (
-    IN EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This
+    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruResetTargetLun (
-    IN EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    IN UINT8 *Target,
-    IN UINT64 Lun
+    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    __in UINT8 *Target,
+    __in UINT64 Lun
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetNextTarget (
-    IN EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    IN OUT UINT8 **Target
+    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    __inout UINT8 **Target
     );
 
 EFI_STATUS

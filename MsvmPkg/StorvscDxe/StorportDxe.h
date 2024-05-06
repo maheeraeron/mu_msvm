@@ -1,28 +1,17 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    StorportDxe.h
-
-Abstract:
+/** @file
 
     Necessary definitions from Storport.h
-    
-Author:
 
-    Marius Buleandra (mariub) - 31-Jul-2012
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
---*/
-
+**/
 
 #define SCSI_MAXIMUM_LUNS_PER_TARGET 255
 
 //
 // Command Descriptor Block constants.
 //
-
 #define CDB6GENERIC_LENGTH                   6
 #define CDB10GENERIC_LENGTH                  10
 #define CDB12GENERIC_LENGTH                  12
@@ -35,14 +24,13 @@ Author:
 //
 //      if (RTL_CONTAINS_FIELD(pBlock, pBlock->cbSize, dwMumble)) { // safe to use pBlock->dwMumble
 //
-
 #ifndef RTL_CONTAINS_FIELD
 #define RTL_CONTAINS_FIELD(Struct, Size, Field) \
     ( (((PCHAR)(&(Struct)->Field)) + sizeof((Struct)->Field)) <= (((PCHAR)(Struct))+(Size)) )
 #endif
 
-
-typedef struct _SENSE_DATA {
+typedef struct _SENSE_DATA
+{
     UCHAR ErrorCode:7;
     UCHAR Valid:1;
     UCHAR SegmentNumber;
@@ -72,7 +60,8 @@ typedef struct _SENSE_DATA FIXED_SENSE_DATA, *PFIXED_SENSE_DATA;
 //
 // Descriptor Sense Data Format
 //
-typedef struct _DESCRIPTOR_SENSE_DATA {
+typedef struct _DESCRIPTOR_SENSE_DATA
+{
     UCHAR ErrorCode:7;
     UCHAR Reserved1:1;
     UCHAR SenseKey:4;
@@ -94,8 +83,8 @@ typedef struct _DESCRIPTOR_SENSE_DATA {
 #define SCSI_SENSE_ERRORCODE_DESCRIPTOR_CURRENT   0x72
 #define SCSI_SENSE_ERRORCODE_DESCRIPTOR_DEFERRED  0x73
 
-
-typedef struct _LUN_LIST {
+typedef struct _LUN_LIST
+{
     UCHAR LunListLength[4]; // sizeof LunSize * 8
     UCHAR Reserved[4];
     UCHAR Lun[1][8];        // 4 level of addressing.  2 bytes each.
@@ -104,7 +93,6 @@ typedef struct _LUN_LIST {
 //
 // Maximum request sense buffer size
 //
-
 #define MAX_SENSE_BUFFER_SIZE 255
 
 
@@ -156,23 +144,20 @@ Description:
 
 Arguments:
 
-    SenseInfoBuffer
-      - A pointer to sense info buffer
+    SenseInfoBuffer - A pointer to sense info buffer
 
-    SenseInfoBufferLength
-      - Size of the buffer SenseInfoBuffer points to.
+    SenseInfoBufferLength - Size of the buffer SenseInfoBuffer points to.
 
-    TotalByteCountIndicated
-      - On output, it contains total byte counts of available sense data
+    TotalByteCountIndicated - On output, it contains total byte counts of available sense data
 
 Returns:
 
-    TRUE if the function is able to determine size of available sense data
+    TRUE if the function is able to determine size of available sense data.
 
-    Otherwise, FALSE
+    Otherwise, FALSE.
 
     Note: The routine returns FALSE when available sense data amount is
-          greater than MAX_SENSE_BUFFER_SIZE
+          greater than MAX_SENSE_BUFFER_SIZE.
 
 --*/
 {
@@ -182,11 +167,10 @@ Returns:
 
     if (SenseInfoBuffer == NULL ||
         SenseInfoBufferLength == 0 ||
-        TotalByteCountIndicated == NULL) {
-
+        TotalByteCountIndicated == NULL)
+    {
         return FALSE;
     }
-
 
     //
     // Offset to AdditionalSenseLength field is same between
@@ -196,11 +180,11 @@ Returns:
 
     if (RTL_CONTAINS_FIELD(senseInfoBuffer,
                            SenseInfoBufferLength,
-                           AdditionalSenseLength)) {
-
+                           AdditionalSenseLength))
+    {
         if (senseInfoBuffer->AdditionalSenseLength <=
-            (MAX_SENSE_BUFFER_SIZE - RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength))) {
-
+            (MAX_SENSE_BUFFER_SIZE - RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength)))
+        {
             byteCount = senseInfoBuffer->AdditionalSenseLength
                         + RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
 
@@ -239,22 +223,17 @@ Description:
 
 Arguments:
 
-    SenseInfoBuffer
-      - A pointer to sense info buffer
+    SenseInfoBuffer - A pointer to sense info buffer
 
-    SenseInfoBufferLength
-      - Size of the buffer SenseInfoBuffer points to.
+    SenseInfoBufferLength - Size of the buffer SenseInfoBuffer points to.
 
-    SenseKey
-      - On output, buffer contains the sense key.
+    SenseKey - On output, buffer contains the sense key.
         If null is specified, the function will not retrieve the sense key
 
-    AdditionalSenseCode
-      - On output, buffer contains the additional sense code.
+    AdditionalSenseCode - On output, buffer contains the additional sense code.
         If null is specified, the function will not retrieve the additional sense code.
 
-    AdditionalSenseCodeQualifier
-      - On output, buffer contains the additional sense code qualifier.
+    AdditionalSenseCodeQualifier - On output, buffer contains the additional sense code qualifier.
         If null is specified, the function will not retrieve the additional sense code qualifier.
 
 Returns:
@@ -269,28 +248,33 @@ Returns:
     BOOLEAN succeed = FALSE;
     ULONG dataLength = 0;
 
-    if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0) {
+    if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0)
+    {
         return FALSE;
     }
 
-    if (RTL_CONTAINS_FIELD(fixedSenseData, SenseInfoBufferLength, AdditionalSenseLength)) {
-
+    if (RTL_CONTAINS_FIELD(fixedSenseData, SenseInfoBufferLength, AdditionalSenseLength))
+    {
         dataLength = fixedSenseData->AdditionalSenseLength + RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
 
-        if (dataLength > SenseInfoBufferLength) {
+        if (dataLength > SenseInfoBufferLength)
+        {
             dataLength = SenseInfoBufferLength;
         }
 
-        if (SenseKey != NULL) {
+        if (SenseKey != NULL)
+        {
            *SenseKey = fixedSenseData->SenseKey;
         }
 
-        if (AdditionalSenseCode != NULL) {
+        if (AdditionalSenseCode != NULL)
+        {
            *AdditionalSenseCode = RTL_CONTAINS_FIELD(fixedSenseData, dataLength, AdditionalSenseCode) ?
                                   fixedSenseData->AdditionalSenseCode : 0;
         }
 
-        if (AdditionalSenseCodeQualifier != NULL) {
+        if (AdditionalSenseCodeQualifier != NULL)
+        {
            *AdditionalSenseCodeQualifier = RTL_CONTAINS_FIELD(fixedSenseData, dataLength, AdditionalSenseCodeQualifier) ?
                                            fixedSenseData->AdditionalSenseCodeQualifier : 0;
         }
@@ -324,22 +308,17 @@ Description:
 
 Arguments:
 
-    SenseInfoBuffer
-      - A pointer to sense info buffer
+    SenseInfoBuffer - A pointer to sense info buffer
 
-    SenseInfoBufferLength
-      - Size of the buffer SenseInfoBuffer points to.
+    SenseInfoBufferLength - Size of the buffer SenseInfoBuffer points to.
 
-    SenseKey
-      - On output, buffer contains the sense key.
+    SenseKey - On output, buffer contains the sense key.
         Note: If null is specified, the function will not retrieve the sense key
 
-    AdditionalSenseCode
-      - On output, buffer contains the additional sense code.
+    AdditionalSenseCode - On output, buffer contains the additional sense code.
         Note: If null is specified, the function will not retrieve the additional sense code.
 
-    AdditionalSenseCodeQualifier
-      - On output, buffer contains the additional sense code qualifier.
+    AdditionalSenseCodeQualifier - On output, buffer contains the additional sense code qualifier.
         Note: If null is specified, the function will not retrieve the additional sense code qualifier.
 
 Returns:
@@ -353,20 +332,25 @@ Returns:
     PDESCRIPTOR_SENSE_DATA descriptorSenseData = (PDESCRIPTOR_SENSE_DATA)SenseInfoBuffer;
     BOOLEAN succeed = FALSE;
 
-    if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0) {
+    if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0)
+    {
         return FALSE;
     }
-    if (RTL_CONTAINS_FIELD(descriptorSenseData, SenseInfoBufferLength, AdditionalSenseLength)) {
 
-        if (SenseKey) {
+    if (RTL_CONTAINS_FIELD(descriptorSenseData, SenseInfoBufferLength, AdditionalSenseLength))
+    {
+        if (SenseKey)
+        {
             *SenseKey = descriptorSenseData->SenseKey;
         }
 
-        if (AdditionalSenseCode != NULL) {
+        if (AdditionalSenseCode != NULL)
+        {
             *AdditionalSenseCode = descriptorSenseData->AdditionalSenseCode;
         }
 
-        if (AdditionalSenseCodeQualifier != NULL) {
+        if (AdditionalSenseCodeQualifier != NULL)
+        {
             *AdditionalSenseCodeQualifier = descriptorSenseData->AdditionalSenseCodeQualifier;
         }
 
@@ -379,11 +363,10 @@ Returns:
 //
 // SCSI_SENSE_OPTIONS
 //
-
 typedef ULONG SCSI_SENSE_OPTIONS;
 
 //
-// No options is specified
+// No options are specified
 //
 #define SCSI_SENSE_OPTIONS_NONE                                      ((SCSI_SENSE_OPTIONS)0x00000000)
 
@@ -418,26 +401,20 @@ Description:
 
 Arguments:
 
-    SenseInfoBuffer
-      - A pointer to sense info buffer
+    SenseInfoBuffer - A pointer to sense info buffer
 
-    SenseInfoBufferLength
-      - Size of the buffer SenseInfoBuffer points to.
+    SenseInfoBufferLength - Size of the buffer SenseInfoBuffer points to.
 
-    Options
-      - Options used by this routine. It is a bit-field value. See defintions
+    Options - Options used by this routine. It is a bit-field value. See defintions
         of list of #define SCSI_SENSE_OPTIONS above in this file.
 
-    SenseKey
-      - On output, buffer contains the sense key.
+    SenseKey - On output, buffer contains the sense key.
         Note: If null is specified, the function will not retrieve the sense key
 
-    AdditionalSenseCode
-      - On output, buffer contains the additional sense code.
+    AdditionalSenseCode - On output, buffer contains the additional sense code.
         Note: If null is specified, the function will not retrieve the additional sense code.
 
-    AdditionalSenseCodeQualifier
-      - On output, buffer contains the additional sense code qualifier.
+    AdditionalSenseCodeQualifier - On output, buffer contains the additional sense code qualifier.
         Note: If null is specified, the function will not retrieve the additional sense code qualifier.
 
 Returns:
@@ -450,27 +427,29 @@ Returns:
 {
     BOOLEAN succeed = FALSE;
 
-    if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0) {
+    if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0)
+    {
         return FALSE;
     }
 
-    if (IsDescriptorSenseDataFormat(SenseInfoBuffer)) {
-
-        succeed = ScsiGetDescriptorSenseKeyAndCodes( SenseInfoBuffer,
-                                                     SenseInfoBufferLength,
-                                                     SenseKey,
-                                                     AdditionalSenseCode,
-                                                     AdditionalSenseCodeQualifier );
-    } else {
-
-        if ((Options & SCSI_SENSE_OPTIONS_FIXED_FORMAT_IF_UNKNOWN_FORMAT_INDICATED) ||
-            IsFixedSenseDataFormat(SenseInfoBuffer)) {
-
-            succeed = ScsiGetFixedSenseKeyAndCodes( SenseInfoBuffer,
+    if (IsDescriptorSenseDataFormat(SenseInfoBuffer))
+    {
+        succeed = ScsiGetDescriptorSenseKeyAndCodes(SenseInfoBuffer,
                                                     SenseInfoBufferLength,
                                                     SenseKey,
                                                     AdditionalSenseCode,
-                                                    AdditionalSenseCodeQualifier );
+                                                    AdditionalSenseCodeQualifier);
+    }
+    else
+    {
+        if ((Options & SCSI_SENSE_OPTIONS_FIXED_FORMAT_IF_UNKNOWN_FORMAT_INDICATED) ||
+            IsFixedSenseDataFormat(SenseInfoBuffer))
+        {
+            succeed = ScsiGetFixedSenseKeyAndCodes(SenseInfoBuffer,
+                                                   SenseInfoBufferLength,
+                                                   SenseKey,
+                                                   AdditionalSenseCode,
+                                                   AdditionalSenseCodeQualifier);
         }
     }
 
@@ -497,17 +476,13 @@ Description:
 
 Arguments:
 
-    SenseInfoBuffer
-      - A pointer to sense data buffer
+    SenseInfoBuffer - A pointer to sense data buffer
 
-    SenseInfoBufferLength
-      - Size of the buffer SenseInfoBuffer points to.
+    SenseInfoBufferLength - Size of the buffer SenseInfoBuffer points to.
 
-    OutBuffer
-      - On output, OutBuffer contains the fixed sense data as result of conversion.
+    OutBuffer - On output, OutBuffer contains the fixed sense data as result of conversion.
 
-    OutBufferLength
-      - Size of the buffer that OutBuffer points to.
+    OutBufferLength - Size of the buffer that OutBuffer points to.
 
 Returns:
 
@@ -527,12 +502,13 @@ Returns:
     if (SenseInfoBuffer == NULL ||
         SenseInfoBufferLength == 0 ||
         OutBuffer == NULL ||
-        OutBufferLength < sizeof(FIXED_SENSE_DATA)) {
+        OutBufferLength < sizeof(FIXED_SENSE_DATA))
+    {
         return FALSE;
     }
 
-    if (IsDescriptorSenseDataFormat(SenseInfoBuffer)) {
-
+    if (IsDescriptorSenseDataFormat(SenseInfoBuffer))
+    {
         ZeroMem(OutBuffer, OutBufferLength);
 
         validSense = ScsiGetSenseKeyAndCodes(SenseInfoBuffer,
@@ -541,13 +517,17 @@ Returns:
                                              &senseKey,
                                              &additionalSenseCode,
                                              &additionalSenseCodeQualifier);
-        if (validSense) {
-
-            if (IsSenseDataCurrentError(SenseInfoBuffer)) {
+        if (validSense)
+        {
+            if (IsSenseDataCurrentError(SenseInfoBuffer))
+            {
                 outBuffer->ErrorCode = SCSI_SENSE_ERRORCODE_FIXED_CURRENT;
-            } else {
+            }
+            else
+            {
                 outBuffer->ErrorCode = SCSI_SENSE_ERRORCODE_FIXED_DEFERRED;
             }
+
             outBuffer->AdditionalSenseLength = sizeof(FIXED_SENSE_DATA) - RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
             outBuffer->SenseKey = senseKey;
             outBuffer->AdditionalSenseCode = additionalSenseCode;

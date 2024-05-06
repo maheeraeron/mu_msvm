@@ -1,21 +1,12 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    VstorageProtocol.h
-
-Abstract:
+/** @file
 
     Header file for public definitions shared between kernel and user mode.
-    The definitions are used for communication between storvsp and storvsc.
+    The definitions are used for communication between StorVSP and StorVSC.
 
-Environment:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
-    Both
-
---*/
+**/
 
 #pragma once
 
@@ -24,13 +15,12 @@ Environment:
 #pragma warning(disable: 4214) // bit field types other than int
 
 //
-//  public interface to the server
+//  Public interface to the server
 //
 
 //
-//  Storvsp device interface guid
+//  StorVSP device interface guid
 //
-
 DEFINE_GUID(GUID_STORVSP, \
     0x66cbde6f, 0x1828, 0x47de, 0x8f, 0x3d, 0xe4, 0x15, 0xb3, 0x12, 0x91, 0xb9);
 
@@ -38,7 +28,6 @@ DEFINE_GUID(GUID_STORVSP, \
 //  VMBUS guid for channel and hardware id for the client
 //  ba6163d9-04a1-4d29-b605-72e2ffb1dc7f
 //
-
 DEFINE_GUID(GUID_STORAGE_CHANNEL_TYPE, \
     0xba6163d9, 0x04a1, 0x4d29, 0xb6, 0x05, 0x72, 0xe2, 0xff, 0xb1, 0xdc, 0x7f);
 
@@ -46,7 +35,6 @@ DEFINE_GUID(GUID_STORAGE_CHANNEL_TYPE, \
 // VMBUS guid for emulated channel and hardware id for the client
 // 32412632-86cb-44a2-9b5c-50d1417354f5
 //
-
 DEFINE_GUID(GUID_EMULATED_STORAGE_CHANNEL_TYPE, \
     0x32412632, 0x86cb, 0x44a2, 0x9b, 0x5c, 0x50, 0xd1, 0x41, 0x73, 0x54, 0xf5);
 
@@ -54,7 +42,6 @@ DEFINE_GUID(GUID_EMULATED_STORAGE_CHANNEL_TYPE, \
 // VMBUS guid for channel and hardware id for the synthetic fibre channel
 // 2f9bcc4a-0069-4af3-b76b-6fd0be528cda
 //
-
 DEFINE_GUID(GUID_SYNTHETIC_FIBRE_CHANNEL_TYPE, \
     0x2f9bcc4a, 0x0069, 0x4af3, 0xb7, 0x6b, 0x6f, 0xd0, 0xbe, 0x52, 0x8c, 0xda);
 
@@ -77,7 +64,6 @@ DEFINE_GUID(GUID_SYNTHETIC_FIBRE_CHANNEL_TYPE, \
 //
 // Invalid version.
 //
-
 #define VMSTOR_INVALID_PROTOCOL_VERSION  -1
 
 //
@@ -110,22 +96,19 @@ DEFINE_GUID(GUID_SYNTHETIC_FIBRE_CHANNEL_TYPE, \
 
 //
 //  The max transfer length will be published when we offer a vmbus channel.
-//  Max transfer bytes - this determines the reserved mdl size and how large
-//  requests clients will forward.
+//  Max transfer bytes - this determines the reserved MDL size and how large
+//  requests can be that the clients will forward.
 //
-
 #define MAX_TRANSFER_LENGTH (8*1024*1024)
 
 //
 // Indicates that the device supports Asynchronous Notifications (AN)
 //
-
 #define VMSTOR_PROPERTY_AN_CAPABLE 0x1
 
 //
 //  Packet structure describing virtual storage requests.
 //
-
 typedef enum
 {
     VStorOperationCompleteIo            = 1,
@@ -143,15 +126,12 @@ typedef enum
     VStorOperationCreateSubChannels     = 13,
     VStorOperationEventNotification     = 14,
     VStorOperationMaximum               = 14,
-
-
 } VSTOR_PACKET_OPERATION;
 
 
 //
-//  Platform neutral description of a scsi request
+//  Platform neutral description of a SCSI request
 //
-
 #pragma pack(push,1)
 
 #define CDB16GENERIC_LENGTH 0x10
@@ -191,7 +171,6 @@ typedef struct _VMSCSI_REQUEST
     //
     // The following were added in Windows 8
     //
-
     USHORT  Reserve;
     UCHAR   QueueTag;
     UCHAR   QueueAction;
@@ -218,7 +197,6 @@ C_ASSERT(VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2 == 0x34);
 // The reserved properties are not guaranteed to be zero before protocol version
 // 5.1.
 //
-
 typedef struct _VMSTORAGE_CHANNEL_PROPERTIES
 {
     ULONG Reserved;
@@ -244,7 +222,6 @@ C_ASSERT((sizeof(VMSTORAGE_CHANNEL_PROPERTIES) % 4) == 0);
 //
 // The reserved properties are not guaranteed to be zero.
 //
-
 typedef struct _VMSTORAGE_OFFER_PROPERTIES
 {
     USHORT Reserved;
@@ -260,20 +237,16 @@ typedef struct _VMSTORAGE_OFFER_PROPERTIES
 //
 //  This structure is sent during the storage protocol negotiations.
 //
-
 typedef struct _VMSTORAGE_PROTOCOL_VERSION
 {
     //
     // Major (MSW) and minor (LSW) version numbers.
     //
-
     USHORT MajorMinor;
-
 
     //
     // Windows build number. Purely informative.
     //
-
     USHORT Build;
 
 } VMSTORAGE_PROTOCOL_VERSION, *PVMSTORAGE_PROTOCOL_VERSION;
@@ -283,7 +256,6 @@ C_ASSERT((sizeof(VMSTORAGE_PROTOCOL_VERSION) % 4) == 0);
 //
 //  This structure is for fibre channel Wwn Packets.
 //
-
 typedef struct _VMFC_WWN_PACKET
 {
     BOOLEAN PrimaryWwnActive;
@@ -294,7 +266,6 @@ typedef struct _VMFC_WWN_PACKET
     CHAR    PrimaryNodeWwn[8];
     CHAR    SecondaryPortWwn[8];
     CHAR    SecondaryNodeWwn[8];
-
 } VMFC_WWN_PACKET, *PVMFC_WWN_PACKET;
 
 C_ASSERT((sizeof(VMFC_WWN_PACKET) % 4) == 0);
@@ -302,7 +273,6 @@ C_ASSERT((sizeof(VMFC_WWN_PACKET) % 4) == 0);
 //
 // Used to register or unregister Asynchronous Media Event Notification to the client
 //
-
 typedef struct _VSTOR_CLIENT_PROPERTIES
 {
     ULONG AsyncNotifyCapable : 1;
@@ -318,7 +288,6 @@ typedef struct _VSTOR_ASYNC_REGISTER_PACKET
     UCHAR      Target;
     UCHAR      Path;
     BOOLEAN    Register;
-
 } VSTOR_ASYNC_REGISTER_PACKET, *PVSTOR_ASYNC_REGISTER_PACKET;
 
 C_ASSERT((sizeof(VSTOR_ASYNC_REGISTER_PACKET) % 4) == 0);
@@ -326,61 +295,51 @@ C_ASSERT((sizeof(VSTOR_ASYNC_REGISTER_PACKET) % 4) == 0);
 //
 // Used to send notifications to StorVsc about media change events
 //
-
 typedef struct _VSTOR_NOTIFICATION_PACKET
 {
     UCHAR    Lun;
     UCHAR    Target;
     UCHAR    Path;
     UCHAR    Flags;
-
 } VSTOR_NOTIFICATION_PACKET, *PVSTOR_NOTIFICATION_PACKET;
 
 C_ASSERT((sizeof(VSTOR_NOTIFICATION_PACKET) % 4) == 0);
-
 
 typedef struct _VSTOR_PACKET
 {
     //
     // Requested operation type
     //
-
     VSTOR_PACKET_OPERATION Operation;
 
     //
     //  Flags - see below for values
     //
-
     ULONG     Flags;
 
     //
     // Status of the request returned from the server side.
     //
-
     ULONG     Status;
 
     //
     // Data payload area
     //
-
     union
     {
         //
         //  Structure used to forward SCSI commands from the client to the server.
         //  0x34 bytes
-
         VMSCSI_REQUEST      VmSrb;
 
         //
         // Structure used to query channel properties.
         //
-
         VMSTORAGE_CHANNEL_PROPERTIES StorageChannelProperties;
 
         //
         // Used during version negotiations.
         //
-
         VMSTORAGE_PROTOCOL_VERSION Version;
 
         //
@@ -391,7 +350,6 @@ typedef struct _VSTOR_PACKET
         //
         // Number of subchannels to create via VStorOperationCreateSubChannel.
         //
-
         UINT16 SubChannelCount;
 
         //
@@ -428,18 +386,15 @@ C_ASSERT(VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_2 == 0x40);
 //  This flag indicates that the server should send back a completion for this
 //  packet.
 //
-
 #define REQUEST_COMPLETION_FLAG 0x1
 
 //
-//  This is the set of flags that the vsc can set in any packets it sends
+//  This is the set of flags that the VSC can set in any packets it sends
 //
-
 #define VSC_LEGAL_FLAGS (REQUEST_COMPLETION_FLAG)
 
 
 #pragma pack(pop)
-
 
 typedef struct _ADAPTER_ADDRESS
 {
@@ -458,7 +413,6 @@ typedef struct _ADAPTER_ADDRESS
     //
     //  Flags
     //
-
     ULONG Flags;
 
     //
@@ -475,7 +429,6 @@ typedef struct _ADAPTER_ADDRESS
 //
 //  Flags for ADAPTER_ADDRESS
 //
-
 #define ADAPTER_ADDRESS_EMULATED_DEVICE            0x1
 #define ADAPTER_ADDRESS_SYNTHFC_DEVICE             0x2
 
@@ -483,9 +436,7 @@ typedef struct _ADAPTER_ADDRESS
 //
 // Alignment information
 //
-
 #define VSTORAGE_ALIGNMENT_MASK 0x01
-
 
 #pragma warning(pop)
 

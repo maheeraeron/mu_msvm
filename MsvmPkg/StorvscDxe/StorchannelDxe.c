@@ -1,27 +1,16 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    StorchannelDxe.c
-
-Abstract:
+/** @file
 
     VMBUS storage channel implementation for EFI.
 
-Author:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
-    Marius Buleandra (mariub) - 20-Jul-2012
-
---*/
-
+**/
 
 #include "StorvscDxe.h"
 
 #include <Industrystandard/Scsi.h>
 #include "StorportDxe.h"
-
 
 typedef struct _STOR_CHANNEL_PROTOCOL_VERSION
 {
@@ -34,7 +23,6 @@ typedef struct _STOR_CHANNEL_PROTOCOL_VERSION
 //
 // Array of supported protocol versions. Ordered by preference.
 //
-
 const STOR_CHANNEL_PROTOCOL_VERSION g_StorChannelSupportedVersions[] =
 {
     {
@@ -48,11 +36,9 @@ const STOR_CHANNEL_PROTOCOL_VERSION g_StorChannelSupportedVersions[] =
 #define RING_OUTGOING_PAGE_COUNT 10
 #define RING_INCOMING_PAGE_COUNT 10
 
-
 //
 // This operation is missing from Industrystandard/Scsi.h
 //
-
 #define EFI_SCSI_OP_REPORT_LUNS 0xA0
 
 INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
@@ -108,7 +94,7 @@ Routine Description:
 Arguments:
 
     EmclProtocol - The instance of Emcl protocol on top of which
-        we open the channel.
+        the channel is opened.
 
     ChannelContext - The context created as a result of opening the channel.
 
@@ -150,7 +136,6 @@ Return Value:
     //
     // Initialize the channel context.
     //
-
     context->MaxPacketSize = VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1;
     context->MaxSrbLength = VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1;
     context->MaxSrbSenseDataLength = VMSCSI_SENSE_BUFFER_SIZE_REVISION_1;
@@ -225,9 +210,9 @@ Arguments:
 
     ScsiRequest - The request used to initialize the packet.
 
-    Target - The target id of the scsi device where the packet will be sent.
+    Target - The target id of the SCSI device where the packet will be sent.
 
-    Lun - The LUN of the scsi device where the packet will be sent.
+    Lun - The LUN of the SCSI device where the packet will be sent.
 
     Packet - Caller allocated vstor packet to be initialized.
 
@@ -321,14 +306,14 @@ StorChannelCopyPacketDataToRequest (
 Routine Description:
 
     Copies the various status and related fields from the VmSrb field
-    in a VSTOR_PACKET into a scsi request. Used to get the results
+    in a VSTOR_PACKET into a SCSI request. Used to get the results
     from the VSP's reply.
 
 Arguments:
 
     Packet - The packet to copy from.
 
-    ScsiRequest - The scsi request to copy into.
+    ScsiRequest - The SCSI request to copy into.
 
 Return Value:
 
@@ -353,7 +338,6 @@ Return Value:
     // EFI_EXT_SCSI_STATUS_HOST_ADAPTER_OK. The rest of the SRB statuses
     // have one to one mapping with efi host adapter statuses.
     //
-
     if (Packet->VmSrb.SrbStatus == SRB_STATUS_SUCCESS ||
         Packet->VmSrb.SrbStatus == SRB_STATUS_PENDING)
     {
@@ -397,7 +381,7 @@ StorChannelCompletionRoutine (
 /*++
 Routine Description:
 
-    This is the routine called when an scsi request has been completed.
+    This is the routine called when a SCSI request has been completed.
 
     This routine receives/processes a message from the host and therefore
     must validate this information before using it.
@@ -426,42 +410,42 @@ Return Value:
     // Validate the response received from the host before proceeding.
     //
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        BufferLength >= VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1, 
-        STORVSC, 
-        __LINE__, 
+        BufferLength >= VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1,
+        STORVSC,
+        __LINE__,
         0);
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        packet->Operation == VStorOperationCompleteIo, 
-        STORVSC, 
-        __LINE__, 
+        packet->Operation == VStorOperationCompleteIo,
+        STORVSC,
+        __LINE__,
         0);
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        packet->VmSrb.SenseInfoExLength <= VMSCSI_SENSE_BUFFER_SIZE, 
-        STORVSC, 
-        __LINE__, 
+        packet->VmSrb.SenseInfoExLength <= VMSCSI_SENSE_BUFFER_SIZE,
+        STORVSC,
+        __LINE__,
         0);
 
     switch (request->ScsiRequest->DataDirection)
     {
     case EFI_EXT_SCSI_DATA_DIRECTION_READ:
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-            packet->VmSrb.DataTransferLength <= request->ScsiRequest->InTransferLength, 
-            STORVSC, 
-            __LINE__, 
+            packet->VmSrb.DataTransferLength <= request->ScsiRequest->InTransferLength,
+            STORVSC,
+            __LINE__,
             0);
         break;
 
     case EFI_EXT_SCSI_DATA_DIRECTION_WRITE:
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-            packet->VmSrb.DataTransferLength <= request->ScsiRequest->OutTransferLength, 
-            STORVSC, 
-            __LINE__, 
+            packet->VmSrb.DataTransferLength <= request->ScsiRequest->OutTransferLength,
+            STORVSC,
+            __LINE__,
             0)
         break;
 
     case EFI_EXT_SCSI_DATA_DIRECTION_BIDIRECTIONAL:
         // Bidirectional data transfer is not supported.
-    default: 
+    default:
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(STORVSC, __LINE__, 0);
 
     }
@@ -500,9 +484,9 @@ Arguments:
 
     ScsiRequest - The request to send.
 
-    Target - The target id of the scsi device where the packet will be sent.
+    Target - The target id of the SCSI device where the packet will be sent.
 
-    Lun - The LUN of the scsi device where the packet will be sent.
+    Lun - The LUN of the SCSI device where the packet will be sent.
 
     Event - The event to be signaled when the request is completed.
 
@@ -632,7 +616,7 @@ StorChannelSendScsiRequestSync (
 
 Routine Description:
 
-    This routine sends an synchronous SCSI request. It returns when
+    This routine sends a synchronous SCSI request. It returns when
     the request has completed.
 
 Arguments:
@@ -641,16 +625,15 @@ Arguments:
 
     ScsiRequest - The request to send.
 
-    Target - The target id of the scsi device where the packet will be sent.
+    Target - The target id of the SCSI device where the packet will be sent.
 
-    Lun - The LUN of the scsi device where the packet will be sent.
+    Lun - The LUN of the SCSI device where the packet will be sent.
 
 Return Value:
 
     EFI_STATUS.
 
 --*/
-
 {
     EFI_STATUS status;
     EFI_EVENT event = NULL;
@@ -661,8 +644,8 @@ Return Value:
     if (mInternalEventServices == NULL)
     {
         status = gBS->LocateProtocol(
-                        &gInternalEventServicesProtocolGuid, 
-                        NULL, 
+                        &gInternalEventServicesProtocolGuid,
+                        NULL,
                         (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }
@@ -691,8 +674,10 @@ Return Value:
         goto Cleanup;
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(1, &event, &signaledEventIndex);
 
     if (EFI_ERROR(status))
@@ -756,7 +741,6 @@ Return Value:
     //
     // Nothing to do here. Just complete the packet.
     //
-
     context->Emcl->CompletePacket(
         (EFI_EMCL_PROTOCOL*)context->Emcl,
         PacketContext,
@@ -801,14 +785,14 @@ StorChannelSendSyntheticVstorPacket (
 Routine Description:
 
     This function sends a synthetic VSTOR_PACKET and returns when it receives
-    the completion packet from the vsp side.
+    the completion packet from the VSP side.
 
 Arguments:
 
     ChannelContext - The context of the storage VMBUS channel.
 
     Packet - The synthetic VSTOR_PACKET that is to be sent synchronously and
-        also receives the data from the vsp side.
+        also receives the data from the VSP side.
 
 Return Value:
 
@@ -864,7 +848,7 @@ StorChannelEstablishCommunications (
 
 Routine Description:
 
-    Negotiate the version and channel properties with the storage vsp.
+    Negotiate the version and channel properties with the storage VSP.
 
 Arguments:
 
@@ -894,7 +878,6 @@ Return Value:
     //
     // Loop through the available versions until one is accepted by the VSP.
     //
-
     for (index = 0;
         index < sizeof(g_StorChannelSupportedVersions) / sizeof(g_StorChannelSupportedVersions[0]);
         index++)
@@ -903,10 +886,6 @@ Return Value:
 
         StorChannelInitSyntheticVstorPacket(&packet);
         packet.Operation = VStorOperationQueryProtocolVersion;
-
-        //
-        // Fill in the major/minor version and build number.
-        //
 
         packet.Version.MajorMinor = majorMinor;
         status = StorChannelSendSyntheticVstorPacket(ChannelContext, &packet);
@@ -937,7 +916,6 @@ Return Value:
     //
     //  Send a packet to query channel property information.
     //
-
     StorChannelInitSyntheticVstorPacket(&packet);
     packet.Operation = VStorOperationQueryProperties;
     status = StorChannelSendSyntheticVstorPacket(ChannelContext, &packet);
@@ -1145,7 +1123,6 @@ Return Value:
     status = EFI_SUCCESS;
 
 Cleanup:
-
     return status;
 }
 

@@ -1,24 +1,13 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    StorvscDxe.c
-
-Abstract:
+/** @file
 
     EFI Driver for Synthetic SCSI Controller.
 
-Author:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
-    Marius Buleandra (mariub) - 20-Jul-2012
-
---*/
-
+**/
 
 #include "StorvscDxe.h"
-
 
 EFI_DRIVER_BINDING_PROTOCOL gStorvscDriverBinding =
 {
@@ -29,7 +18,6 @@ EFI_DRIVER_BINDING_PROTOCOL gStorvscDriverBinding =
     NULL,
     NULL
 };
-
 
 STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate =
 {
@@ -48,9 +36,10 @@ STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate =
         StorvscExtScsiPassThruResetTargetLun,
         StorvscExtScsiPassThruGetNextTarget
     },
+
     {   // ExtScsiPassThruMode
         //
-        // AdapterId. Storvsp does not have a reserved LUN for the adapter, so this
+        // AdapterId. StorVSP does not have a reserved LUN for the adapter, so this
         // must be set this to an invalid LUN.
         //
         0xFFFFFFFF,
@@ -68,7 +57,9 @@ STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate =
         //
         VSTORAGE_ALIGNMENT_MASK + 1
     },
+
     NULL, // ChannelContext
+
     {   // LunList
         NULL,
         NULL
@@ -106,7 +97,6 @@ Return Value:
     //
     // Install UEFI Driver Model protocols.
     //
-
     status = EfiLibInstallDriverBindingComponentName2(
         ImageHandle,
         SystemTable,
@@ -253,7 +243,6 @@ Return Value:
     // ExtScsiPassThruProtocol is not yet installed, so the list is not
     // accessed by any other caller.
     //
-
     status = StorChannelBuildLunList(instance->ChannelContext, &instance->LunList);
 
     if (EFI_ERROR(status))
@@ -274,7 +263,6 @@ Return Value:
     driverStarted = TRUE;
 
 Cleanup:
-
     if (!driverStarted)
     {
         if (instance != NULL)

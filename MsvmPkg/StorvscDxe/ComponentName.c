@@ -1,24 +1,13 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    ComponentName.c
-
-Abstract:
+/** @file
 
     Implementation of ComponentName protocol for StorvscDxe.
 
-Author:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 
-    Marius Buleandra (mariub) - 20-Jul-2012
-
---*/
-
+**/
 
 #include "StorvscDxe.h"
-
 
 EFI_COMPONENT_NAME2_PROTOCOL gStorvscComponentName2 =
 {
@@ -120,7 +109,6 @@ Arguments:
     //
     // ChildHandle must be NULL for a Device Driver
     //
-
     if (ChildHandle != NULL)
     {
         return EFI_UNSUPPORTED;
@@ -129,7 +117,6 @@ Arguments:
     //
     // Make sure this driver is currently managing ControllerHandle
     //
-
     status = EfiTestManagedDevice(
         ControllerHandle,
         gStorvscDriverBinding.DriverBindingHandle,

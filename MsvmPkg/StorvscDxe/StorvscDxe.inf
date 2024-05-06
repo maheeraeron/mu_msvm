@@ -1,3 +1,11 @@
+## @file
+#  Provides an implementation of the Synthetic SCSI Controller driver.
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
+##
+
 [Defines]
     INF_VERSION = 0x00010005
     BASE_NAME = StorvscDxe
@@ -21,22 +29,21 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
-    UefiDriverEntryPoint
-    DebugLib
-    UefiLib
     BaseLib
     BaseMemoryLib
-    MemoryAllocationLib
-    UefiBootServicesTableLib
+    DebugLib
     DevicePathLib
     EmclLib
-    DebugLib
+    MemoryAllocationLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
+    UefiLib
 
 [Protocols]
-    gEfiVmbusProtocolGuid           #CONSUMES
-    gEfiEmclV2ProtocolGuid          #CONSUMES
-    gEfiExtScsiPassThruProtocolGuid #PRODUCES
-    gInternalEventServicesProtocolGuid #CONSUMES
+    gEfiVmbusProtocolGuid               ## CONSUMES
+    gEfiEmclV2ProtocolGuid              ## CONSUMES
+    gEfiExtScsiPassThruProtocolGuid     ## PRODUCES
+    gInternalEventServicesProtocolGuid  ## CONSUMES
 
 [Guids]
-    gEfiVmbusChannelDevicePathGuid  #CONSUMES
+    gEfiVmbusChannelDevicePathGuid      ## CONSUMES
