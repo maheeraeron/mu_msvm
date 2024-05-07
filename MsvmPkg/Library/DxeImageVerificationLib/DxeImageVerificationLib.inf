@@ -52,6 +52,7 @@
   BaseMemoryLib
   DebugLib
   DevicePathLib
+  BaseCryptLib
   SecurityManagementLib
   PeCoffLib
   TpmMeasurementLib
