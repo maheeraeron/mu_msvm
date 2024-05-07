@@ -548,7 +548,7 @@ Routine Description:
 
     SIMPLE_TEXT_INPUT_EX_PROTOCOL RegisterKeyNotify implementation.
     Register a notification function to be called when a particular keystroke
-    is recieved.
+    is received.
 
 Arguments:
 

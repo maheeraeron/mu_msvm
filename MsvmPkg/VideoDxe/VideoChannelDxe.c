@@ -1,20 +1,9 @@
-/*++
+/** @file
+  VMBUS Video channel implementation for EFI.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    VideoChannelDxe.c
-
-Abstract:
-
-    VMBUS Video channel implementation for EFI.
-
-Author:
-
-    Bhanu Gogineni (bhanug) - 20-Sep-2012
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 
 #include "VideoDxe.h"
@@ -77,7 +66,6 @@ Return Value:
     //
     // Nothing interesting in ACK message.
     //
-
     if (EFI_ERROR(status))
     {
         DEBUG ((EFI_D_ERROR, 
@@ -99,7 +87,7 @@ VideoChannelOnSituatioUpdateAck(
 
 Routine Description:
 
-    This function is called when a Situation Update Ack response message is recieved.
+    This function is called when a Situation Update Ack response message is received.
 
     Results are communicated in the context.
 
@@ -194,7 +182,7 @@ VideoChannelOnVramLocationAck(
 
 Routine Description:
 
-    This function is called when a VRAM Location Ack response message is recieved.
+    This function is called when a VRAM Location Ack response message is received.
 
     Results are communicated in the context.
 
@@ -298,7 +286,7 @@ VideoChannelOnVersionResponse(
 
 Routine Description:
 
-    This function is called when a version response message is recieved.
+    This function is called when a version response message is received.
 
     Results are communicated in the context.
 
@@ -525,8 +513,7 @@ Return Value:
                               0,
                               NULL,
                               NULL,
-                              &
-Context->InitCompleteEvent);
+                              &Context->InitCompleteEvent);
 
     if (EFI_ERROR(status))
     {

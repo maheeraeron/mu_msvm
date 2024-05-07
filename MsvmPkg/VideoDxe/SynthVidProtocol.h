@@ -1,35 +1,19 @@
-/*++
+/** @file
+  This file contains the definitions for the Hyper-V synthetic video protocol.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    SynthVidProtocol.h
-
-Abstract:
-
-    This file contains the definitions for the Viridian synthetic video
-    protocol.
-
-Author:
-
-    Christopher Eck (chriseck) 29-Sep-2005
-
-Environment:
-
-    Kernel Mode & User Mode
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 
 //
-// Maximum packet payload to VMBus is currently 16 k.
+// Maximum packet payload to VMBus is currently 16k.
 //
 #define MAX_VMBUS_PACKET_SIZE 0x4000
 
 //
-// The maximum amount of data we'll send for a cursor in one packet is 8 k.
+// The maximum amount of data we'll send for a cursor in one packet is 8k.
 //
 #define CURSOR_MAX_PAYLOAD_SIZE (MAX_VMBUS_PACKET_SIZE / 2)
 
@@ -82,51 +66,43 @@ Environment:
 //
 // Mask to be applied to the minor version to determine feature support.
 //
-
 #define SynthVidFeatureMinorMask 0xff
 
 //
 // SynthVid features by version.
 //
-
 typedef enum
 {
 
     //
     // Win7 RTM.
     //
-
     SynthVidFeatureWin7Rtm = SYNTHVID_FEATURE_LEVEL(3, 0),
     SynthVidFeatureBasic = SynthVidFeatureWin7Rtm,
 
     //
     // Win8 RTM.
     //
-
     SynthVidFeatureWin8Rtm = SYNTHVID_FEATURE_LEVEL(3, 2),
 
     //
     // Support for resolutions above 1600W or 1200H.
     //
-
     SynthVidFeatureHighResolutions = SynthVidFeatureWin8Rtm,
 
     //
     // Support for 32bpp color depth.
     //
-
     SynthVidFeatureSupports32bpp = SynthVidFeatureWin8Rtm,
 
     //
     // Support for protocol version reinitialization.
     //
-
     SynthVidFeatureSupportsReinit = SynthVidFeatureWin8Rtm,
 
     //
     // Win BLUE
     //
-
     SynthVidFeatureWinBlue = SYNTHVID_FEATURE_LEVEL(3, 3),
     SynthVidFeatureQueryBiosInfo = SynthVidFeatureWinBlue,
 
@@ -136,7 +112,6 @@ typedef enum
 //
 // SynthVid Message Types
 //
-
 typedef enum
 {
     SynthvidError                  = 0,
@@ -199,7 +174,6 @@ typedef struct
 } SYNTHVID_VERSION_REQUEST_MESSAGE, *PSYNTHVID_VERSION_REQUEST_MESSAGE;
 
 // VSP to VSC /////////////////////////////////////////////////////
-
 typedef struct
 {
     SYNTHVID_MESSAGE_HEADER Header;
@@ -219,9 +193,9 @@ typedef struct
 
 
 // VSP to VSC ////////////////////////////////////////////////////
-// This is called "acknowledge", but in addition it indicates to the VSC
+// This is called "acknowledge", but in addition, it indicates to the VSC
 // that the new physical address location is backed with a memory block
-// that the guest can safely write to knowing that the writes will actually
+// that the guest can safely write to, knowing that the writes will actually
 // be reflected in the VRAM memory block.
 typedef struct
 {
@@ -236,7 +210,6 @@ typedef struct
 // These messages are used to communicate "situation updates" or changes
 // in the layout of the primary surface.
 //
-
 typedef struct
 {
     BOOLEAN Active;
@@ -266,7 +239,6 @@ typedef struct
 //
 // These messages are used to communicate the BIOS Information of the VM.
 //
-
 // VSC to VSP /////////////////////////////////////////////////////
 typedef struct
 {
@@ -274,7 +246,6 @@ typedef struct
 } SYNTHVID_BIOS_INFO_REQUEST_MESSAGE, *PSYNTHVID_BIOS_INFO_REQUEST_MESSAGE;
 
 // VSP to VSC /////////////////////////////////////////////////////
-
 typedef struct
 {
     SYNTHVID_MESSAGE_HEADER Header;
@@ -288,7 +259,6 @@ typedef struct
 // These messages are used to communicate changes in the pointer position or
 // shape.
 //
-
 // VSC to VSP ////////////////////////////////////////////////////
 // This message is ignored unless we're in relative mouse mode.
 typedef struct
@@ -318,7 +288,7 @@ typedef struct
     // it is split up.  This 0-based index indicates which portion
     // of the cursor payload is in this message.  -1 means final
     // portion.  If the cursor is not split, this field contains
-    // -1 as the completion sentinal value.
+    // -1 as the completion sentinel value.
     //
     UINT8   PartialIndex;
 

@@ -1,3 +1,10 @@
+## @file
+#  EFI Driver for Synthetic Video Controller.
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+##
+
 [Defines]
     INF_VERSION = 0x00010005
     BASE_NAME = VideoDxe
@@ -18,26 +25,22 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
-    UefiDriverEntryPoint
-    DebugLib
-    UefiLib
     BaseLib
     BaseMemoryLib
+    DebugLib
+    DevicePathLib
+    DxeServicesTableLib
+    EmclLib
     MemoryAllocationLib
     UefiBootServicesTableLib
-    DevicePathLib
-    EmclLib
-    DxeServicesTableLib
+    UefiDriverEntryPoint
+    UefiLib
 
 [Protocols]
-    gEfiVmbusProtocolGuid           #CONSUMES
-    gEfiEmclProtocolGuid            #CONSUMES
-    gEfiDevicePathProtocolGuid      #PRODUCES
-    mMsGopOverrideProtocolGuid      #PRODUCES
-    gEfiDriverBindingProtocolGuid   #PRODUCES
-    gEfiComponentNameProtocolGuid   #PRODUCES
-    gEfiComponentName2ProtocolGuid  #PRODUCES
+    gEfiVmbusProtocolGuid           ## CONSUMES
+    gEfiEmclProtocolGuid            ## CONSUMES
+    gEfiDevicePathProtocolGuid      ## CONSUMES
+    mMsGopOverrideProtocolGuid      ## PRODUCES
 
 [Guids]
-    gEfiEventExitBootServicesGuid   #CONSUMES
-    gEfiVmbusChannelDevicePathGuid  #CONSUMES
+    gEfiVmbusChannelDevicePathGuid  ## CONSUMES

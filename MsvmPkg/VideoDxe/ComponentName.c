@@ -1,20 +1,9 @@
-/*++
+/** @file
+  Implementation of ComponentName and ComponentName2 protocol for VideoDxe.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    ComponentName.c
-
-Abstract:
-
-    Implementation of ComponentName and ComponentName2 protocol for VideoDxe.
-
-Author:
-
-    Bhanu Gogineni (bhanug) - 04-Sep-2012
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 
 #include "VideoDxe.h"

@@ -1,21 +1,9 @@
-/*++
+/** @file
+  EFI GOP Driver for Hyper-V Synthetic Video
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    VideoDxe.c
-
-Abstract:
-
-    EFI GOP Driver for Hyper-V Synthetic Video
-
-Author:
-
-    Bhanu Gogineni (bhanug)  - 04-Sep-2012
-    Larry Cleeton (lcleeton) - 07-Dec-2012
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include "VideoDxe.h"
 #include <VirtualDeviceId.h>
@@ -230,7 +218,7 @@ Return Value:
     context->Mode.MaxMode         = 1;
 
     // Set Mode to the current and only supported mode.
-    // FUTURE: 01-25-2013 Kharp - If more modes are added, use a PCD to specify a default.
+    // FUTURE: If more modes are added, use a PCD to specify a default.
     context->Mode.Mode            = 0;
     context->Mode.Info            = &context->ModeInfo;
     context->Mode.SizeOfInfo      = sizeof (context->ModeInfo);
@@ -522,7 +510,7 @@ VideoGraphicsOutputBlt (
 Routine Description:
 
       Graphics Output protocol instance to block transfer for VBE device. Writing to the
-      framebuffer (VRAM) will be caught and send to the Synth Video Device.
+      framebuffer (VRAM) will be caught and sent to the Synth Video Device.
 
 Arguments:
 

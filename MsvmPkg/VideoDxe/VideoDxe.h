@@ -1,20 +1,9 @@
-/*++
+/** @file
+  EFI Driver for Synthetic Video Controller.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    VideoDxe.h
-
-Abstract:
-
-    EFI Driver for Synthetic Video Controller.
-
-Author:
-
-    Bhanu Gogineni (bhanug) - 20-Sep-2012
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 
 #pragma once
@@ -109,7 +98,6 @@ VideoDxeDriverEntryPoint (
 // EFI_DRIVER_BINDING_PROTOCOL functions, used to determine if this driver supports the controller,
 // to start and stop the controller.
 //
-
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingSupported(
@@ -139,7 +127,6 @@ VideoDxeDriverBindingStop(
 // EFI_COMPONENT_NAME_PROTOCOL and EFI_COMPONENT_NAME2_PROTOCOL functions.
 // Used to get a user friendly string.
 //
-
 EFI_STATUS
 EFIAPI
 VideoDxeComponentNameGetDriverName(
@@ -161,7 +148,6 @@ VideoDxeComponentNameGetControllerName(
 //
 // Video Channel Functions.
 //
-
 EFI_STATUS
 VideoChannelOpen(
     __in PVIDEODXE_CONTEXT Context
@@ -180,7 +166,6 @@ VideoChannelStartInitialize(
 //
 // EFI_GRAPHICS_OUTPUT_PROTOCOL Protocol functions.
 //
-
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputQueryMode(
