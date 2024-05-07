@@ -28,10 +28,9 @@
 #          | Reset vector code (raw)
 #  SEC FV  | SEC modules
 #          +-------------------------
-#          |        +----------------
-#          | DXE FV | DXE modules
-#          |        +----------------
 #  MAIN FV | PEI modules
+#          +-------------------------
+#  DXE FV  | DXE modules
 #          +------------------------- low mem
 #
 #
@@ -53,8 +52,14 @@ ErasePolarity = 1
 BlockSize     = 0x1000
 NumBlocks     = 0x600
 
+# DXE volume that is not force rebased so that the section alignment and
+# file alignment do not need to match
+0x00000000|0x004E0000
+gMsvmPkgTokenSpaceGuid.PcdDxeFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdDxeFvSize
+FV = DXE
+
 # The MAIN volume (start|size)
-0x00000000|0x005E0000
+0x004E0000|0x100000
 gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress|gMsvmPkgTokenSpaceGuid.PcdFvSize
 FV = MAINFV
 
@@ -96,9 +101,15 @@ INF  RuleOverride=RESET_VECTOR UefiCpuPkg/ResetVector/Vtf0/Bin/ResetVector.inf
 
 ################################################################################
 #
-#  This FV section describes the MAIN volume contents.
-#  This consists of the PEI phase modules followed by an embedded DXE volume
-#  containing the DXE phase modules.
+# This FV section describes the MAIN volume contents. It contains PEI
+# modules. This section gets forced rebased by the basetools, as it contains
+# some XIP modules. DxeMain is in this FV also so that DxeIpl can find and
+# load it. However, the DXE modules are in a separate FV because non-XIP 
+# drivers do not have a requirement for the file alignment and section 
+# alignment to match and to support smaller file sizes, the force rebasing 
+# is removed from the DXE FV. There is an added benefit here
+# that PeiCore does not have to spend time enumerating the DXE drivers to
+# determine if it needs to launch them or not.
 #
 [FV.MAINFV]
 BlockSize          = 0x10000
@@ -127,13 +138,51 @@ APRIORI PEI {
 }
 
 #
+# PEI components
+#
+INF MdeModulePkg/Core/Pei/PeiMain.inf
+INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
+INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
+INF RuleOverride = PLATFORM_PEI MsvmPkg/PlatformPei/PlatformPei.inf
+INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
+INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
+
+!include CryptoPkg/Driver/Bin/CryptoDriver.PEI.inc.fdf
+
+#
+# DXE components.
+#
+INF MdeModulePkg/Core/Dxe/DxeMain.inf
+
+[FV.DXE]
+BlockSize          = 0x1000
+FvAlignment        = 16
+FvForceRebase      = FALSE
+ERASE_POLARITY     = 1
+MEMORY_MAPPED      = TRUE
+STICKY_WRITE       = TRUE
+LOCK_CAP           = TRUE
+LOCK_STATUS        = TRUE
+WRITE_DISABLED_CAP = TRUE
+WRITE_ENABLED_CAP  = TRUE
+WRITE_STATUS       = TRUE
+WRITE_LOCK_CAP     = TRUE
+WRITE_LOCK_STATUS  = TRUE
+READ_DISABLED_CAP  = TRUE
+READ_ENABLED_CAP   = TRUE
+READ_STATUS        = TRUE
+READ_LOCK_CAP      = TRUE
+READ_LOCK_STATUS   = TRUE
+
+#
 # Dispatch these components first in DXE.
 # TODO-cho: What exactly are KdDxe's required dependencies?
 # Can we hoist KdDxe even earlier?
 #
 APRIORI DXE {
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
-  INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
   INF MsvmPkg/CpuDxe/CpuDxe.inf
   INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
   INF MdeModulePkg/Universal/Metronome/Metronome.inf
@@ -147,28 +196,11 @@ APRIORI DXE {
   INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 }
 
-#
-# PEI components
-#
-INF MdeModulePkg/Core/Pei/PeiMain.inf
-INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
-INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
-INF RuleOverride = PLATFORM_PEI MsvmPkg/PlatformPei/PlatformPei.inf
-INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
-INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
-INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
-INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
-
-#
-# DXE components.
-#
-
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
 INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
-INF MdeModulePkg/Core/Dxe/DxeMain.inf
 INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
 INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
@@ -193,6 +225,8 @@ INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
 INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+
+!include CryptoPkg/Driver/Bin/CryptoDriver.DXE.inc.fdf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
@@ -307,6 +341,14 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
      VERSION  STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
   }
 
+[Rule.Common.PEIM.BINARY]
+  FILE PEIM = $(NAMED_GUID) {
+    PEI_DEPEX PEI_DEPEX Optional      |.depex
+    PE32      PE32     Align = Auto   |.efi
+    UI        STRING="$(MODULE_NAME)" Optional
+    VERSION   STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
+  }
+
 [Rule.Common.PEIM.PLATFORM_PEI]
   FILE PEIM = $(NAMED_GUID) {
      RAW       BIN                       kduefi.efi
@@ -331,6 +373,14 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
     VERSION  STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
     RAW ACPI  Optional               |.acpi
     RAW ASL   Optional               |.aml
+  }
+
+[Rule.Common.DXE_DRIVER.BINARY]
+  FILE DRIVER = $(NAMED_GUID) {
+    DXE_DEPEX DXE_DEPEX Optional      |.depex
+    PE32      PE32                    |.efi
+    UI        STRING="$(MODULE_NAME)" Optional
+    VERSION   STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
   }
 
 [Rule.Common.DXE_RUNTIME_DRIVER]

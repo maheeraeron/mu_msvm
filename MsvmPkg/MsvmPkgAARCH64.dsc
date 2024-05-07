@@ -21,6 +21,16 @@
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = MsvmPkg/MsvmPkgAARCH64.fdf
 
+  PEI_CRYPTO_SERVICES           = TINY_SHA
+  DXE_CRYPTO_SERVICES           = STANDARD
+  RUNTIMEDXE_CRYPTO_SERVICES    = NONE
+  STANDALONEMM_CRYPTO_SERVICES  = NONE
+  PEI_CRYPTO_ARCH               = AARCH64
+  DXE_CRYPTO_ARCH               = AARCH64
+  STANDALONEMM_CRYPTO_ARCH      = NONE
+  SMM_CRYPTO_SERVICES           = NONE
+
+
 ################################################################################
 #
 # BuildOptions Section - extra build flags
@@ -80,7 +90,6 @@
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
   HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
-  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsicArmVirt.inf
   IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
@@ -96,6 +105,7 @@
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
   SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
+  StackCheckFailureHookLib|MdePkg/Library/StackCheckFailureHookLibNull/StackCheckFailureHookLibNull.inf
   SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
@@ -116,9 +126,6 @@
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
 !endif
-
-  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
-  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
 
   # KdDxe Libs
   SourceDebugEnabledLib|MsvmPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
@@ -203,7 +210,6 @@
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   ResourcePublicationLib|MdePkg/Library/PeiResourcePublicationLib/PeiResourcePublicationLib.inf
-  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
   RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
 
@@ -260,7 +266,6 @@
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
 
 ##MSChange Begin
-  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
   MemoryBinOverrideLib|MdeModulePkg/Library/MemoryBinOverrideLibNull/MemoryBinOverrideLibNull.inf
 
 [LibraryClasses.common.DXE_DRIVER]
@@ -287,7 +292,6 @@
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
-  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/RuntimeCryptLib.inf
   ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
 
 # PERF MODULES START
@@ -363,6 +367,9 @@
   # Processor Aggregator
   gMsvmPkgTokenSpaceGuid.PcdProcIdleBase|0xEFFE8000
   gMsvmPkgTokenSpaceGuid.PcdProcIdleEventVector|38           # SPI
+
+  # Networking
+  gEfiNetworkPkgTokenSpaceGuid.PcdEnforceSecureRngAlgorithms|FALSE    #Opt out of secure RNG until ARM64 has a way of doing TRNG.
 
   # GTDT for AArch64. Currently these aren't exposed to guests, and 0 is a valid
   # value to configure. Linux will attempt to configure them, so assign valid
@@ -678,6 +685,8 @@
 # Components Section - list of all Modules include for this Platform.
 #
 ################################################################################
+
+!include CryptoPkg/Driver/Bin/CryptoDriver.inc.dsc
 
 [Components]
   #
