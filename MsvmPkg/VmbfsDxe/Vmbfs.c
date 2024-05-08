@@ -1,24 +1,11 @@
-/*++
+/** @file
 
-Copyright (c) 1990-2014  Microsoft Corporation
+  Implementation EFI simple file system protocol over vmbus.
 
-Module Name:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    Vmbfs.c
-
-Abstract:
-
-    Implementation EFI simple file system protocol over vmbus.
-
-Author:
-
-    Xinnuo Zhang (xinnuoz) 21-Nov-2014
-
-Environment:
-
-    EFI
-
---*/
+**/
 
 #include "VmbfsEfi.h"
 
@@ -146,7 +133,6 @@ Return Value:
     //
     // Allocate and initialize datastructures.
     //
-
     status = gBS->CreateEvent(0,
                               0,
                               NULL,
@@ -188,7 +174,6 @@ Return Value:
     //
     // Start the VMBus channel.
     //
-
     status = fileSystemInformation->EmclProtocol->SetReceiveCallback(
                  fileSystemInformation->EmclProtocol,
                  VmbfsReceivePacketCallback,
@@ -217,7 +202,6 @@ Return Value:
     //
     // Negotiate protocol with the host.
     //
-
     VersionRequestMessage.Header.Type = VmbfsMessageTypeVersionRequest;
     VersionRequestMessage.RequestedVersion = VMBFS_VERSION_WIN10;
 

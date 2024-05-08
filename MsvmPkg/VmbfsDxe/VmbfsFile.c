@@ -1,24 +1,11 @@
-/*++
+/** @file
 
-Copyright (c) 1990-2014  Microsoft Corporation
+  Implementation EFI file protocol over vmbus.
 
-Module Name:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    VmbfsFile.c
-
-Abstract:
-
-    Implementation EFI file protocol over vmbus.
-
-Author:
-
-    Arseney Romanenko (arseneyr) 10-Oct-2014
-
-Environment:
-
-    EFI
-
---*/
+**/
 
 #include "VmbfsEfi.h"
 
@@ -299,7 +286,6 @@ Return Value:
     //
     // VMBFS does not support write.
     //
-
     if (parentFileInformation == NULL || OpenMode & EFI_FILE_MODE_WRITE || OpenMode & EFI_FILE_MODE_CREATE)
     {
         status = EFI_INVALID_PARAMETER;
@@ -315,7 +301,6 @@ Return Value:
         // Include space for the separating backslash iff the parent is not
         // the root.
         //
-
         filePathLength += 1;
     }
 
@@ -345,7 +330,6 @@ Return Value:
     //
     // File path in VMBus message does not require a terminating NULL.
     //
-
     filePathLengthInBytes -= sizeof(WCHAR);
 
     getFileInfoMessageSize = sizeof(*getFileInfoMessage) + filePathLengthInBytes;
@@ -376,7 +360,6 @@ Return Value:
     //
     // Build a GetFileInfo message.
     //
-
     getFileInfoMessage = GetPacketBuffer(parentFileInformation, VMBFS_MESSAGE_GET_FILE_INFO);
     ZeroMem(getFileInfoMessage, sizeof(*getFileInfoMessage));
     getFileInfoMessage->Header.Type = VmbfsMessageTypeGetFileInfo;
@@ -580,7 +563,6 @@ Return Value:
     //
     // Ensure the path will fit in the request message.
     //
-
     if (File->FileInformation.FilePathLength * sizeof(WCHAR) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
     {
         status = EFI_BUFFER_TOO_SMALL;
@@ -691,7 +673,6 @@ Return Value:
     //
     // Ensure the path will fit in the request message.
     //
-
     if (File->FileInformation.FilePathLength * sizeof(WCHAR) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
     {
         status = EFI_BUFFER_TOO_SMALL;

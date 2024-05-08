@@ -1,25 +1,12 @@
-/*++
+/** @file
 
-Copyright (c) 1990-2014  Microsoft Corporation
+  EFI simple file system protocol over vmbus driver entry and
+  driver binding protocol implementation.
 
-Module Name:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    VmbfsDxe.c
-
-Abstract:
-
-    EFI simple file system protocol over vmbus driver entry and
-    driver binding protocol implementation.
-
-Author:
-
-    Xinnuo Zhang (xinnuoz) 21-Nov-2014
-
-Environment:
-
-    EFI
-
---*/
+**/
 
 #include "VmbfsEfi.h"
 
@@ -173,7 +160,6 @@ Return Value:
     //
     // Check if device already running.
     //
-
     status = gBS->OpenProtocol(
         ControllerHandle,
         &gEfiSimpleFileSystemProtocolGuid,

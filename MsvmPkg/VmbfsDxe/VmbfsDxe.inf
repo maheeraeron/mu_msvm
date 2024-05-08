@@ -1,14 +1,8 @@
 ## @file
-#    Component description file for SNP module.
 #
-# Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-# This program and the accompanying materials are licensed 
-# and made available under the terms and conditions of the BSD License which 
-# accompanies this distribution. The full text of the license may be found at 
-# http://opensource.org/licenses/bsd-license.php 
-#
-# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -25,7 +19,7 @@
 #
 #  VALID_ARCHITECTURES           = X64 IPF EBC
 #
-#  DRIVER_BINDING                =  gVmbfsDriverBindingProtocol             
+#  DRIVER_BINDING                = gVmbfsDriverBindingProtocol
 #
 
 [Sources]
@@ -34,33 +28,29 @@
   VmbfsFile.c
   VmbfsEfi.h
 
-
 [Packages]
   MdePkg/MdePkg.dec
   MsvmPkg/MsvmPkg.dec
   MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
-    MemoryAllocationLib
-    DebugLib
-    UefiBootServicesTableLib
-    UefiLib
-    UefiDriverEntryPoint
-    BaseLib
-    BaseMemoryLib
-    SynchronizationLib
-    PcdLib
-    EmclLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  EmclLib
+  MemoryAllocationLib
+  SynchronizationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
 
 [Guids]
-  gEfiVmbusChannelDevicePathGuid                # CONSUMES
-  gEfiFileInfoGuid                            # CONSUMES
-  gEfiFileSystemInfoGuid                        # CONSUMES
-
+  gEfiVmbusChannelDevicePathGuid                ## CONSUMES
+  gEfiFileInfoGuid                              ## CONSUMES
+  gEfiFileSystemInfoGuid                        ## CONSUMES
 
 [Protocols]
-  gEfiSimpleFileSystemProtocolGuid              # PRODUCES
-  gEfiDevicePathProtocolGuid                    # CONSUMES
-  gEfiVmbusProtocolGuid                         # CONSUMES
-  gEfiEmclProtocolGuid                          # CONSUMES
-  gEfiDriverBindingProtocolGuid                 # PRODUCES
+  gEfiDevicePathProtocolGuid                    ## CONSUMES
+  gEfiEmclProtocolGuid                          ## CONSUMES
+  gEfiSimpleFileSystemProtocolGuid              ## PRODUCES
+  gEfiVmbusProtocolGuid                         ## CONSUMES

@@ -1,24 +1,11 @@
-/*++
+/** @file
 
-Copyright (c) 1990-2014  Microsoft Corporation
+  EFI simple file system protocol over vmbus.
 
-Module Name:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    VmbfsEfi.h
-
-Abstract:
-
-    EFI simple file system protocol over vmbus.
-
-Author:
-
-    Xinnuo Zhang (xinnuoz) 21-Nov-2014
-
-Environment:
-
-    EFI
-
---*/
+**/
 
 #include <Uefi.h>
 #include <EfiNt.h>
@@ -43,6 +30,7 @@ Environment:
 #include <VmbusFileSystem.h>
 
 #define VMBFS_BAD_HOST ASSERT(FALSE)
+
 #define GetPacketBuffer(fileInformation, Type) ((Type*)((fileInformation)->FileSystem->FileSystemInformation.PacketBuffer))
 #define GetPacketSize(fileInformation) (((fileInformation)->FileSystem->FileSystemInformation.PacketSize))
 #define GetFileSystemInformation(fileInformation) (&((fileInformation)->FileSystem->FileSystemInformation))
@@ -52,7 +40,9 @@ Environment:
 #define GetThisFileInformation(EfiFileProtocol) (&(((PVMBFS_FILE)(EfiFileProtocol))->FileInformation))
 #define GetThisEfiFileInfo(EfiFileProtocol) (&(((PVMBFS_FILE)(EfiFileProtocol))->EfiFileInfo))
 
+//
 // Choose a maximum size that is known to fit in a VMBus pipe message.
+//
 #define VMBFS_MAXIMUM_RDMA_SIZE (7 * 1024 * 1024)
 
 typedef struct _FILESYSTEM_INFORMATION {
@@ -95,7 +85,6 @@ UINTN gEventIndexDiscarded;
 //
 // Driver protocol implementation.
 //
-
 EFI_STATUS
 EFIAPI
 VmbfsStart (
@@ -107,7 +96,6 @@ VmbfsStart (
 //
 // File System protocol implementation.
 //
-
 EFI_STATUS
 EFIAPI
 VmbfsOpenVolume (
@@ -124,7 +112,6 @@ VmbfsCloseVolume (
 //
 // File protocol implementation.
 //
-
 VOID
 VmbfsReceivePacketCallback (
     __in VOID *ReceiveContext,
