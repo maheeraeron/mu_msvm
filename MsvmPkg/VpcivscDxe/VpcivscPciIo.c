@@ -694,7 +694,11 @@ VpcivscPciIoFreeBuffer(
     DEBUG((DEBUG_VPCI_INFO, "VpcivscPciIoFreeBuffer called with addr %llx pages %x\n", HostAddress, Pages));
 
     // Free the buffer allocated with AllocatePages
-    FreePages(HostAddress, Pages);
+    // FreePages(HostAddress, Pages);
+    // NOTE: To workaround a bug with ND2 on the host registering write
+    // notifications for pages resulting in the VM hanging, do not put
+    // pages used for NVMe queues back onto the free list. Instead, 
+    // leak these pages as they will be reclaimed later at ExitBootServices.
 
     return EFI_SUCCESS;
 }
