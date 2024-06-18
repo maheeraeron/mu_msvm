@@ -39,7 +39,7 @@
 #  - lower the BaseAddress variable to accommodate the Size increase
 #  - increase the size of the MAIN volume
 #  - Update BlockSize or NumBlocks accordingly so their product matches
-#    the size of the MAIN volume. 
+#    the size of the MAIN volume.
 #  - use the size of the MAIN volume as the new offset for the start of
 #    the SECFV volume
 #
@@ -104,9 +104,9 @@ INF  RuleOverride=RESET_VECTOR UefiCpuPkg/ResetVector/Vtf0/Bin/ResetVector.inf
 # This FV section describes the MAIN volume contents. It contains PEI
 # modules. This section gets forced rebased by the basetools, as it contains
 # some XIP modules. DxeMain is in this FV also so that DxeIpl can find and
-# load it. However, the DXE modules are in a separate FV because non-XIP 
-# drivers do not have a requirement for the file alignment and section 
-# alignment to match and to support smaller file sizes, the force rebasing 
+# load it. However, the DXE modules are in a separate FV because non-XIP
+# drivers do not have a requirement for the file alignment and section
+# alignment to match and to support smaller file sizes, the force rebasing
 # is removed from the DXE FV. There is an added benefit here
 # that PeiCore does not have to spend time enumerating the DXE drivers to
 # determine if it needs to launch them or not.
@@ -143,13 +143,14 @@ APRIORI PEI {
 INF MdeModulePkg/Core/Pei/PeiMain.inf
 INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
+INF SecurityPkg/RandomNumberGenerator/RngPei/RngPei.inf
 INF RuleOverride = PLATFORM_PEI MsvmPkg/PlatformPei/PlatformPei.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
 INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 INF MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTablePei/FirmwarePerformancePei.inf
 
-!include CryptoPkg/Driver/Bin/CryptoDriver.PEI.inc.fdf
+!include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.PEI.inc.fdf
 
 #
 # DXE components.
@@ -226,7 +227,7 @@ INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 
-!include CryptoPkg/Driver/Bin/CryptoDriver.DXE.inc.fdf
+!include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.DXE.inc.fdf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf

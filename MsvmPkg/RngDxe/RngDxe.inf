@@ -14,7 +14,7 @@
 #
 ##
 
-#Override : 00000002 | SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf | 00d65e305095a9a664e2fb10e424492d | 2023-11-18T00-23-19 | b603713498151146d14ffa8ab779fa2ae56b8076
+#Override : 00000002 | SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf | 9bee9e833daa493649cdb2d6be4abb7c | 2024-06-18T15-17-48 | 17de49a00327ff0132987dcd922c4f6f850b13b5
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -63,7 +63,7 @@
   gEfiRngProtocolGuid                ## PRODUCES
 
 [Pcd]
-  gEfiSecurityPkgTokenSpaceGuid.PcdCpuRngSupportedAlgorithm      ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdCpuRngSupportedAlgorithm      ## CONSUMES
 
 [Depex]
   TRUE

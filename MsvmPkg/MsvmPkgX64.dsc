@@ -22,17 +22,12 @@
   FLASH_DEFINITION               = MsvmPkg/MsvmPkgX64.fdf
 
 #
-# Defines for the pre-built BaseCryptLib 
+# Defines for the pre-built BaseCryptLib
 #
   PEI_CRYPTO_SERVICES          = TINY_SHA
   DXE_CRYPTO_SERVICES          = STANDARD
-  RUNTIMEDXE_CRYPTO_SERVICES   = NONE
-  STANDALONEMM_CRYPTO_SERVICES = NONE
   PEI_CRYPTO_ARCH              = X64
   DXE_CRYPTO_ARCH              = X64
-  RUNTIMEDXE_CRYPTO_ARCH       = NONE
-  STANDALONEMM_CRYPTO_ARCH     = NONE
-  SMM_CRYPTO_SERVICES          = NONE
 
 ################################################################################
 #
@@ -646,7 +641,7 @@
   #  This should only be used to support upgrades/existing VMs
   gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
   gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
-  
+
   ## This PCD defines minimum length(in bytes) of the system preboot TCG event log area(LAML).
   #  For PC Client Implementation spec up to and including 1.2 the minimum log size is 64KB.
   #  Increase to 128KB since Linux is measuring more information causing the 64KB buffer to run out.
@@ -675,7 +670,7 @@
 #
 ################################################################################
 
-!include CryptoPkg/Driver/Bin/CryptoDriver.inc.dsc
+!include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.inc.dsc
 
 [Components]
   #
@@ -697,6 +692,10 @@
       LockBoxLib|MdeModulePkg/Library/SmmLockBoxLib/SmmLockBoxPeiLib.inf
       PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
       PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
+  }
+  SecurityPkg/RandomNumberGenerator/RngPei/RngPei.inf {
+    <LibraryClasses>
+      RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
   }
 
   #
@@ -805,7 +804,10 @@
   # TODO: Currently the PH is locked by the hypervisor.
   #       If this ever changes, will need a driver to lock the PH.
 
-  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
+  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf {
+    <LibraryClasses>
+      RngLib|MsvmPkg/Library/RngLib/RngLib.inf
+  }
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {

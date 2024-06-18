@@ -23,13 +23,8 @@
 
   PEI_CRYPTO_SERVICES           = TINY_SHA
   DXE_CRYPTO_SERVICES           = STANDARD
-  RUNTIMEDXE_CRYPTO_SERVICES    = NONE
-  STANDALONEMM_CRYPTO_SERVICES  = NONE
   PEI_CRYPTO_ARCH               = AARCH64
   DXE_CRYPTO_ARCH               = AARCH64
-  STANDALONEMM_CRYPTO_ARCH      = NONE
-  SMM_CRYPTO_SERVICES           = NONE
-
 
 ################################################################################
 #
@@ -479,7 +474,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
 
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0x0
-  
+
   gEfiNetworkPkgTokenSpaceGuid.PcdDhcp6UidType|4              # 04 = UUID-Based DHCPv6 Unique Identifier (DUID-UUID)
 
   # UEFI Config information from the Bios VDEV
@@ -686,7 +681,7 @@
 #
 ################################################################################
 
-!include CryptoPkg/Driver/Bin/CryptoDriver.inc.dsc
+!include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.inc.dsc
 
 [Components]
   #
@@ -703,6 +698,10 @@
   MdeModulePkg/Universal/PCD/Pei/Pcd.inf
   MsvmPkg/PlatformPei/PlatformPei.inf
   MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+  SecurityPkg/RandomNumberGenerator/RngPei/RngPei.inf {
+    <LibraryClasses>
+      RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
+  }
 
   #
   # DXE Phase modules
@@ -792,7 +791,10 @@
   MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
-  MsvmPkg/RngDxe/RngDxe.inf
+  MsvmPkg/RngDxe/RngDxe.inf {
+    <LibraryClasses>
+      RngLib|MsvmPkg/Library/RngLib/RngLib.inf
+  }
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf

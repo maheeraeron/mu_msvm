@@ -105,12 +105,13 @@ INF MsvmPkg/Sec/SecMain.inf
 INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
 INF MdeModulePkg/Core/Pei/PeiMain.inf
+INF SecurityPkg/RandomNumberGenerator/RngPei/RngPei.inf
 INF MsvmPkg/PlatformPei/PlatformPei.inf
 INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
 
-!include CryptoPkg/Driver/Bin/CryptoDriver.PEI.inc.fdf
+!include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.PEI.inc.fdf
 
 #
 # DXE Components
@@ -187,7 +188,7 @@ INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 
 INF MsKdDebugPkg2/KdDxe/KdDxe.inf
 
-!include CryptoPkg/Driver/Bin/CryptoDriver.DXE.inc.fdf
+!include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.DXE.inc.fdf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
