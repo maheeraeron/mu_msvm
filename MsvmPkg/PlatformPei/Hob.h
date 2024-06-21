@@ -42,6 +42,11 @@ HobAddPersistentMemoryRange(
     _In_ UINT64               Size
     );
 
+void
+HobAddSpecificPurposeMemoryRange(
+    _In_ EFI_PHYSICAL_ADDRESS BaseAddress,
+    _In_ UINT64               Size
+    );
 
 void
 HobAddReservedMemoryRange(

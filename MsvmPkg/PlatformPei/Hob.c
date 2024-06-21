@@ -47,6 +47,10 @@ Author:
     (MEMORY_FLAGS |                                     \
      EFI_RESOURCE_ATTRIBUTE_PERSISTENT)
 
+#define SP_MEMORY_FLAGS                                 \
+    (MEMORY_FLAGS |                                     \
+     EFI_RESOURCE_ATTRIBUTE_SPECIAL_PURPOSE)
+
 #define HOB 0x484F42 // "HOB"
 
 #define HOB_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
@@ -246,6 +250,40 @@ Return Value:
            BaseAddress,
            BaseAddress + Size - 1,
            L"Memory"));
+}
+
+void
+HobAddSpecificPurposeMemoryRange(
+    __in EFI_PHYSICAL_ADDRESS BaseAddress,
+    __in UINT64               Size
+    )
+/*++
+
+Routine Description:
+
+    Adds a specific purpose memory range hob to the current hob list.
+
+Arguments:
+
+    BaseAddress - Base address of the reserved memory range.
+
+    Size - Size of the reserved memory range.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    BuildResourceDescriptorHob(EFI_RESOURCE_SYSTEM_MEMORY,
+                               SP_MEMORY_FLAGS,
+                               BaseAddress,
+                               Size);
+    DEBUG((DEBUG_VERBOSE,
+           "HOB Start % 17lx End %17lx %s\n",
+           BaseAddress,
+           BaseAddress + Size - 1,
+           L"Specific Purpose Memory"));
 }
 
 
