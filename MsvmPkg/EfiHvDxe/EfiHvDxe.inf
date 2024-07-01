@@ -33,6 +33,7 @@
 [LibraryClasses]
     BaseLib
     DebugLib
+    FailFastLib
     HvHypercallLib
     IsolationLib
     MemoryAllocationLib

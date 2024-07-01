@@ -16,6 +16,7 @@
     UefiLib
     BaseLib
     DebugLib
+    FailFastLib
     UefiDriverEntryPoint
     MemoryAllocationLib
     DebugLib

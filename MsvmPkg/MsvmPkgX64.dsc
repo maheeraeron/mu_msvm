@@ -65,6 +65,7 @@
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
+  FailFastLib|MsvmPkg/Library/FailFastLib/FailFastLib.inf
 !if $(DEBUGLIB_SERIAL) == 1
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
 !elseif $(DEBUGLIB_BIOS) == 1

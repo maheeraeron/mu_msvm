@@ -1,0 +1,29 @@
+## @file
+#  Library for crash dump generation and failing fast.
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010016
+  BASE_NAME                      = FailFastLib
+  FILE_GUID                      = E7658760-B25A-4723-8F93-FA99EE7539F0
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = FailFastLib
+
+[Sources.X64]
+  X64/FailFast.asm
+
+[Sources.AARCH64]
+  AArch64/FailFast.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsvmPkg/MsvmPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib

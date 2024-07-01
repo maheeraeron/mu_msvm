@@ -32,6 +32,7 @@
     BaseLib
     BaseMemoryLib
     DebugLib
+    FailFastLib
     DevicePathLib
     EmclLib
     MemoryAllocationLib

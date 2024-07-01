@@ -30,6 +30,7 @@
     BaseLib
     BaseMemoryLib
     DebugLib
+    FailFastLib
     DevicePathLib
     IsolationLib
     MemoryAllocationLib
