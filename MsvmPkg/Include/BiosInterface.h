@@ -559,6 +559,7 @@ enum UefiStructureType
     UefiConfigSlit                           = 0x20,
     UefiConfigAspt                           = 0x21,
     UefiConfigPptt                           = 0x22,
+    UefiConfigGic                            = 0x23,
 };
 
 //
@@ -844,6 +845,13 @@ typedef struct _UEFI_CONFIG_AMD_ASPT
     UEFI_CONFIG_HEADER Header;
     UINT8 Aspt[];
 } UEFI_CONFIG_AMD_ASPT;
+
+typedef struct _UEFI_CONFIG_GIC
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT64 GicDistributorBase;    // GICD
+    UINT64 GicRedistributorsBase; // Redistributor block containing the BSP's GICR
+} UEFI_CONFIG_GIC;
 
 //
 // UEFI configuration information for direct parsing of IGVM parameters.

@@ -318,11 +318,6 @@
 # PERF MODULES END
 
 [PcdsFixedAtBuild.common]
-  # GIC related config
-  gArmTokenSpaceGuid.PcdGicDistributorBase|0xFFFF0000        # aka GICD
-  gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase|0xFFFEE000 # aka GICC
-  gArmTokenSpaceGuid.PcdGicRedistributorsBase|0xEFFEE000     # aka GICR
-
   # Synthetic Timer Config
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex|0x0
@@ -470,6 +465,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdInternalEventServicesEnabled|TRUE
 
 [PcdsDynamicDefault]
+  # GIC related config (legacy Hyper-V values as default)
+  gArmTokenSpaceGuid.PcdGicDistributorBase|0xFFFF0000        # aka GICD
+  gArmTokenSpaceGuid.PcdGicRedistributorsBase|0xEFFEE000     # aka GICR
+  
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE

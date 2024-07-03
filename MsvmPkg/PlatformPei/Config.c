@@ -1460,6 +1460,13 @@ Return Value:
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdAsptPtr, (UINT64)asptStructure->Aspt), CRITICAL_INITIALIZATION_FAILURE);
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdAsptSize, asptHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
+#if defined(MDE_CPU_AARCH64)
+            case UefiConfigGic:
+                UEFI_CONFIG_GIC *gicConfig = (UEFI_CONFIG_GIC*) header;
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdGicDistributorBase, gicConfig->GicDistributorBase), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdGicRedistributorsBase, gicConfig->GicRedistributorsBase), CRITICAL_INITIALIZATION_FAILURE);
+                break;
+#endif
         }
 
         calculatedConfigSize += header->Length;
