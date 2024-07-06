@@ -344,7 +344,8 @@ DefinitionBlock (
         Name(_CCA, One)
 #endif
         Name(_DDN, "VMBUS")
-        Name(_HID, "VMBus")
+        Name(_HID, "MSFT1000")
+        Name(_CID, "VMBus")
         Name(_UID, 0)
         Method(_DIS, 0) { And(STA, 0xD, STA) }
         Method(_PS0, 0) { Or(STA, 0xF, STA) }
@@ -353,7 +354,11 @@ DefinitionBlock (
             return(STA)
         }
 
-        Name(_PS3, 0)
+        // Older versions of this DSDT implemented _PS3 improperly, as: 
+        //     Name(_PS3, 0)
+        // This is intentionally a do-nothing method in case any version of Windows requires _PS3 to be implemented
+
+        Method(_PS3, 0) { return(STA) }
 
         // TODO: SPIs are not available to the guest on AARCH64, which is what
         // PcdVmbusVector is currently defined as. Supposedly it should use a PPI,
@@ -408,8 +413,8 @@ DefinitionBlock (
         Device(\_SB.VMOD.TPM2)
         {
             Name(_ADR, 0x00)
-            Name(_HID, "VTPM0101")
-            Name(_CID, "MSFT0101")
+            Name(_HID, "MSFT1001")
+            Name(_CID, Package (2) { "MSFT0101", "VTPM0101" })
             Name(_UID, 0x01)
             Name(_DDN, "Microsoft Virtual TPM 2.0")
             Name(_STR, Unicode ("Microsoft Virtual TPM 2.0"))
@@ -597,8 +602,8 @@ DefinitionBlock (
 
     Device(\_SB.GENC)
     {
-        Name(_CID, Package (2) { "VM_Gen_Counter", "VMGENCTR" })
-        Name(_HID, "Hyper_V_Gen_Counter_V1")
+        Name(_HID, "MSFT1002")
+        Name(_CID, Package (3) { "VM_Gen_Counter", "VMGENCTR", "Hyper_V_Gen_Counter_V1" })
         Name(_UID, 0)
         Name(_DDN, "VM_Gen_Counter")
         Method(ADDR, 0)
