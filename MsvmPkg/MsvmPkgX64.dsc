@@ -163,6 +163,7 @@
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
   PeiServicesTablePointerLib|MdePkg/Library/PeiServicesTablePointerLibIdt/PeiServicesTablePointerLibIdt.inf
+  NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
 
 #
 # Library instance overrides just for SEC
@@ -239,6 +240,10 @@
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
 
+  #
+  # Provide StackCookie support lib so that we can link to /GS exports
+  #
+  NULL|MdePkg/Library/StackCheckLib/StackCheckLibDynamicInit.inf
 
 #
 # Library instances overrides for just DXE CORE
@@ -888,6 +893,8 @@
   MSFT:*_*_*_DLINK_FLAGS = /DEBUG:FULL /PDBALTPATH:$(MODULE_NAME).pdb
   MSFT:*_*_*_CC_FLAGS = /Zi
 
-[BuildOptions.common.EDKII.DXE_RUNTIME_DRIVER]
-  # Force file alignment to 4K as before with runtime drivers
-  MSFT:*_*_*_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
+[BuildOptions.common.EDKII.DXE_CORE]
+  MSFT:*_*_*_DLINK_FLAGS = /FILEALIGN:4096
+
+[BuildOptions.common.EDKII.SEC, BuildOptions.common.EDKII.PEIM, BuildOptions.common.EDKII.PEI_CORE]
+  MSFT:*_*_*_DLINK_FLAGS = /ALIGN:32 /FILEALIGN:32

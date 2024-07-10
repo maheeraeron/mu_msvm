@@ -1,8 +1,0 @@
-{
-  "scope": "hyperv",
-  "type": "nuget",
-  "name": "ms_asl",
-  "source": "https://pkgs.dev.azure.com/windowspartners/_packaging/ms_asl/nuget/v3/index.json",
-  "version": "10.0.20240.1",
-  "flags": ["set_path"]
-}
