@@ -351,9 +351,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareRevision|0x00100032
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Microsoft"
 
-  # Disable image protection policy so DxeCore does not mess with MTRRs
-  # gEfiMdeModulePkgTokenSpaceGuid.PcdImageProtectionPolicy             | 0x00000000
-
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
   # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
