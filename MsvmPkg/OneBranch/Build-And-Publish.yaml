@@ -163,7 +163,7 @@ jobs:
         packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
         packDestination: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/packages'
         packTimezone: 'utc'
-        buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer).$(Build.BuildId)'
+        buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer)-$(Build.SourceBranchName).$(Build.SourceVersion)'
   - task: Powershell@2
     displayName: 'Unset access token'
     inputs:
