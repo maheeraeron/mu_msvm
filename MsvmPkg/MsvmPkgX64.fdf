@@ -1,7 +1,8 @@
 ## @file
 #  Microsoft Virtual Machine Firmware Flash Description File
 #
-#  Copyright (C) Microsoft. All rights reserved.
+#  Copyright (C) Microsoft.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 #  This file describes the layout and contents of the BIOS image that would
 #  normally get burned to flash on a physical machine.   In a Hyper-V VM
@@ -179,8 +180,6 @@ READ_LOCK_STATUS   = TRUE
 
 #
 # Dispatch these components first in DXE.
-# TODO-cho: What exactly are KdDxe's required dependencies?
-# Can we hoist KdDxe even earlier?
 #
 APRIORI DXE {
   INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
@@ -191,7 +190,6 @@ APRIORI DXE {
   INF MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
   INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   INF MsvmPkg/EventLogDxe/EventLogDxe.inf
-  #INF MsKdDebugPkg2/KdDxe/KdDxe.inf
   INF MsvmPkg/SynicTimerDxe/SynicTimerDxe.inf
   INF MsvmPkg/VariableDxe/VariableDxe.inf
   INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf

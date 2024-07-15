@@ -15,7 +15,7 @@ Author:
 
     Kris Harper (kharp) - 12-Dec-2013
 
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE: 
+ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
     IntelFrameworkModulePkg\Universal\StatusCode\RuntimeDxe\StatusCodeRuntimeDxe.c
 
 IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
@@ -219,7 +219,7 @@ Return Value:
         // Status for the boot device will be updated as needed in a distributed
         // fashion (e.g. a PXE boot failure status will be update in the PXE code)
         //
-        // The boot event will be completed before this function exits or 
+        // The boot event will be completed before this function exits or
         // in ExitBootServices.
         //
         // Set the initial boot status to indicate an I/O error.
@@ -234,7 +234,7 @@ Return Value:
         UINTN DevicePathData;
         UINTN OptionNumber;
 
-        if (Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
+        if (Data != NULL && Data->Size == (sizeof(UINTN) * 2))
         {
            DevicePathData = *((UINTN *)(Data + 1));
 
@@ -252,14 +252,14 @@ Return Value:
     }
     else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE && Value == (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_DXE_BS_EC_BOOT_OPTION_LOAD_ERROR))
     {
-        if (!EventAlreadyUpdated && Data != NULL && Data->Size == (sizeof(UINTN) * 2)) 
+        if (!EventAlreadyUpdated && Data != NULL && Data->Size == (sizeof(UINTN) * 2))
         {
             UINTN DevicePathData = *((UINTN *)(Data + 1));
             UINTN StatusCode = *((UINTN *)(Data + 1) + 1);
 
-            if ((StatusCode & ~0xFFFF) == DeviceStatusSecureBootGroup)
+            if (GET_BOOT_DEVICE_STATUS_GROUP(StatusCode) == DeviceStatusSecureBootGroup)
             {
-                BootDeviceEventUpdate(StatusCode, EFI_ACCESS_DENIED); 
+                BootDeviceEventUpdate(StatusCode, EFI_ACCESS_DENIED);
                 DEBUG((DEBUG_INFO, "[HVBE] Updating boot event: 0x%X, %r\n", StatusCode, EFI_ACCESS_DENIED));
             }
             else if (IsNetworkDeviceFilePath((EFI_DEVICE_PATH_PROTOCOL *)DevicePathData))
@@ -427,17 +427,17 @@ Return Value:
     // Replay Status code entries which were logged during the PEI phase.
     // They are saved in a GUID HOB.
     //
-    if (FeaturePcdGet(PcdStatusCodeReplayIn)) 
+    if (FeaturePcdGet(PcdStatusCodeReplayIn))
     {
         Hob.Raw = GetFirstGuidHob(&gMemoryStatusCodeRecordGuid);
 
-        if (Hob.Raw != NULL) 
+        if (Hob.Raw != NULL)
         {
             PacketHeader    = (MEMORY_STATUSCODE_PACKET_HEADER *) GET_GUID_HOB_DATA (Hob.Guid);
             MaxRecordNumber = (UINTN) PacketHeader->RecordIndex;
             Record          = (MEMORY_STATUSCODE_RECORD *) (PacketHeader + 1);
 
-            if (PacketHeader->PacketIndex > 0) 
+            if (PacketHeader->PacketIndex > 0)
             {
                 //
                 // RecordIndex has wrapped around. The record count is
@@ -453,7 +453,7 @@ Return Value:
             //   go up and mask Index by the max size.
             //   stop after processing MaxRecordNumber
             //
-            for (Index = 0; Index < MaxRecordNumber; Index++) 
+            for (Index = 0; Index < MaxRecordNumber; Index++)
             {
                 ReportStatusCode(Record[Index].CodeType,
                     Record[Index].Value,

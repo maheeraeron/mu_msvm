@@ -311,8 +311,6 @@ WriteNoFence16 (
 #define ANYSIZE_ARRAY 1       // winnt
 #endif
 
-DEFINE_GUID(GUID_NULL, 0L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
 //
 // Include NTSTATUS
 //
@@ -328,19 +326,3 @@ typedef _Return_type_success_(return >= 0) long NTSTATUS;
 // 4324 - structure was padded due to __declspec(align())
 //
 #pragma warning(disable: 4200 4201 4214 4324)
-
-
-//
-// Some time conversion helper functions
-//
-#define MS_TO_100NS(x)  ((x) * 10LL * 1000)
-#define SEC_TO_100NS(x) ((x) * 10LL * 1000 * 1000)
-#define SEC_TO_MS(x)    ((x) * 1000LL)
-
-#define MIN_TO_SEC(x)   ((x) * 60LL)
-#define MIN_TO_MS(x)    ((x) * 60LL * 1000)
-#define MIN_TO_100NS(x) ((x) * 60LL * 10 * 1000 * 1000)
-
-#define MS_TO_SEC(x)    ((x) / 1000LL)
-#define _100NS_TO_MS(x) ((x) / (10LL * 1000))
-#define _100NS_TO_S(x)  ((x) / (10LL * 1000 * 1000))

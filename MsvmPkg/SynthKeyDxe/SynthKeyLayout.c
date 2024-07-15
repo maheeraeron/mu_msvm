@@ -1,5 +1,5 @@
 /** @file
-  VMBUS Keyboard Layout. Handles the translation of key press messages from the 
+  VMBUS Keyboard Layout. Handles the translation of key press messages from the
   synthetic keyboard vdev to EFI_KEYs based on the UEFI keyboard layout.
 
   Copyright (c) Microsoft Corporation.
@@ -7,7 +7,7 @@
 **/
 
 #include "SynthKeyDxe.h"
-#include <hyperkbdprotocol.h>
+#include <Protocol/hyperkbdprotocol.h>
 #include "SynthKeyLayout.h"
 
 
@@ -17,7 +17,7 @@
 // Layout for standard en-us keyboards.
 //
 SYNTHKEY_KEY_MAP_ENTRY
-ScanCodeToEfiKey_En_Us[] = 
+ScanCodeToEfiKey_En_Us[] =
 {
 
     {   0x01,   SCAN_ESC,   0x0000, 0x0000  },     //   Escape
@@ -595,7 +595,7 @@ Return Value:
     switch (RawKey->MakeCode)
     {
     case SCANCODE_CTRL_MAKE:
-        if (RawKey->IsE0) 
+        if (RawKey->IsE0)
         {
             newShiftState = EFI_RIGHT_CONTROL_PRESSED;
         }
@@ -613,7 +613,7 @@ Return Value:
             newShiftState = EFI_LEFT_CONTROL_PRESSED;
         }
 
-        break; 
+        break;
 
     case SCANCODE_ALT_MAKE:
         if (RawKey->IsE0)
@@ -659,7 +659,7 @@ Return Value:
         //
         // SysReq is shared with Keypad-*
         //
-        if (RawKey->IsE0) 
+        if (RawKey->IsE0)
         {
             newShiftState = EFI_SYS_REQ_PRESSED;
         }
@@ -721,8 +721,8 @@ Return Value:
             // they will cause issues with the windows boot loader's
             // "Press a key to boot...." handling. Since the boot loader sets EFI_KEY_STATE_EXPOSED,
             // these key breaks will be queued and then ignored.
-            // Because the boot loader only processes a small number of keystrokes 
-            // before giving up, a legitimate key press gets stuck behind these unneeded breaks 
+            // Because the boot loader only processes a small number of keystrokes
+            // before giving up, a legitimate key press gets stuck behind these unneeded breaks
             // and the user misses the chance to boot from CD.
             //
             if (KeyState->KeyState.KeyShiftState & newShiftState)
@@ -747,7 +747,7 @@ Return Value:
     else if ((newToggleState) &&
              (!RawKey->IsBreak))
     {
-        
+
         KeyState->KeyState.KeyToggleState ^= newToggleState;
         status = KeyChangeToggle;
     }
@@ -810,7 +810,7 @@ Return Value:
         TranslatedKey->Key.UnicodeChar = RawKey->MakeCode;
 
         //
-        // Leave key states zero for Unicode input 
+        // Leave key states zero for Unicode input
         // as the vdev doesn't provide this information
         //
         return status;
@@ -823,11 +823,11 @@ Return Value:
     //
 
     //
-    // Pause/Break is fun because it generates a series of scan codes, 
+    // Pause/Break is fun because it generates a series of scan codes,
     //      e1 1d 45 e1 9d c5.
     //
-    // The vdev will combine E1 with the first scan code in the sequence 
-    // (via the IsE1 flag) so we'll see four messages total with IsBreak 
+    // The vdev will combine E1 with the first scan code in the sequence
+    // (via the IsE1 flag) so we'll see four messages total with IsBreak
     // set on the last two.
     //
     //      E1+1D, 45, E1+1D (break), 45 (break)
@@ -865,9 +865,9 @@ Return Value:
         //
         // Conversion table can handle the rest.
         //
-        for (index = 0; ScanCodeToEfiKey_En_Us[index].ScanCode != TABLE_END; index++) 
+        for (index = 0; ScanCodeToEfiKey_En_Us[index].ScanCode != TABLE_END; index++)
         {
-            if (RawKey->MakeCode == ScanCodeToEfiKey_En_Us[index].ScanCode) 
+            if (RawKey->MakeCode == ScanCodeToEfiKey_En_Us[index].ScanCode)
             {
                 TranslatedKey->Key.ScanCode    = ScanCodeToEfiKey_En_Us[index].EfiScanCode;
                 TranslatedKey->Key.UnicodeChar = ScanCodeToEfiKey_En_Us[index].UnicodeChar;
@@ -877,7 +877,7 @@ Return Value:
                 // apply it now.
                 //
                 if ((EFI_KEY_SHIFT_ACTIVE(KeyState->KeyState.KeyShiftState)) &&
-                    (ScanCodeToEfiKey_En_Us[index].UnicodeChar != ScanCodeToEfiKey_En_Us[index].ShiftUnicodeChar)) 
+                    (ScanCodeToEfiKey_En_Us[index].UnicodeChar != ScanCodeToEfiKey_En_Us[index].ShiftUnicodeChar))
                 {
                     TranslatedKey->Key.UnicodeChar = ScanCodeToEfiKey_En_Us[index].ShiftUnicodeChar;
 
@@ -893,9 +893,9 @@ Return Value:
                 // TODO: try to combine with the shift check.
                 // Shift toggles the Caps Lock state (shiftState = CapsState ^ ShiftState)
                 //
-                if (KeyState->KeyState.KeyToggleState & EFI_CAPS_LOCK_ACTIVE) 
+                if (KeyState->KeyState.KeyToggleState & EFI_CAPS_LOCK_ACTIVE)
                 {
-                    if (TranslatedKey->Key.UnicodeChar >= L'a' && TranslatedKey->Key.UnicodeChar <= L'z') 
+                    if (TranslatedKey->Key.UnicodeChar >= L'a' && TranslatedKey->Key.UnicodeChar <= L'z')
                     {
                         TranslatedKey->Key.UnicodeChar = (UINT16) (TranslatedKey->Key.UnicodeChar - L'a' + L'A');
                     }
@@ -949,8 +949,8 @@ Return Value:
         //
         // We'll signify this by clearing the scan code, leaving only the unicode value.
         //
-        if ((KeyState->KeyState.KeyToggleState & EFI_NUM_LOCK_ACTIVE) && 
-            !(EFI_KEY_SHIFT_ACTIVE(KeyState->KeyState.KeyShiftState)) && 
+        if ((KeyState->KeyState.KeyToggleState & EFI_NUM_LOCK_ACTIVE) &&
+            !(EFI_KEY_SHIFT_ACTIVE(KeyState->KeyState.KeyShiftState)) &&
             !(RawKey->IsE0))
         {
             TranslatedKey->Key.ScanCode = SCAN_NULL;

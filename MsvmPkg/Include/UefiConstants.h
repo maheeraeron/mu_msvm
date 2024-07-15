@@ -1,16 +1,10 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    UefiConstants.h
-
-Abstract:
+/** @file
 
     This file contains constants used in UEFI.
 
---*/
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 

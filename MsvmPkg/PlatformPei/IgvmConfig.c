@@ -26,7 +26,6 @@ Abstract:
 #include <Library/IoLib.h>
 #include <Library/PeiServicesLib.h>
 #include <Library/ResourcePublicationLib.h>
-#include <Ppi/ConfigPpi.h>
 #include <Hv.h>
 #include <Config.h>
 #include <KdNet.h>
@@ -486,7 +485,7 @@ Return Value:
     }
 
     EFI_ACPI_DESCRIPTION_HEADER *madtHdr = (EFI_ACPI_DESCRIPTION_HEADER*)GetIgvmData(parameterInfo, parameterInfo->MadtOffset);
-    
+
     if (madtHdr->Signature != EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE ||
         madtHdr->Length > (parameterInfo->MadtPageCount * EFI_PAGE_SIZE))
     {
@@ -504,7 +503,7 @@ Return Value:
     }
 
     EFI_ACPI_DESCRIPTION_HEADER *sratHdr = (EFI_ACPI_DESCRIPTION_HEADER*)GetIgvmData(parameterInfo, parameterInfo->SratOffset);
-   
+
     if (sratHdr->Signature != EFI_ACPI_6_2_SYSTEM_RESOURCE_AFFINITY_TABLE_SIGNATURE ||
         sratHdr->Length > (parameterInfo->SratPageCount * EFI_PAGE_SIZE))
     {
@@ -514,7 +513,7 @@ Return Value:
 
     IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSratPtr, (UINT64)sratHdr), CRITICAL_INITIALIZATION_FAILURE);
     IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSratSize, sratHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
-    
+
     //
     // Parse the command line to obtain debug parameters.
     //

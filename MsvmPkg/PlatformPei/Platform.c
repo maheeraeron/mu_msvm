@@ -37,7 +37,6 @@ Abstract:
 #include <Library/PeiServicesLib.h>
 #include <Library/ResourcePublicationLib.h>
 #include <Ppi/MasterBootMode.h>
-#include <Ppi/ConfigPpi.h>
 #include <IsolationTypes.h>
 
 #if defined (MDE_CPU_X64)
@@ -85,9 +84,9 @@ static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformationTdxGuest[] =
 
 //
 // Initial data for Memory Type Information HOB for hibernate enabled VMs.
-// This accounts for 4 SCSI drives and 2 NICs present during UEFI. 
+// This accounts for 4 SCSI drives and 2 NICs present during UEFI.
 // This is not a strict limit since an additional buffer is included in the calculations.
-// If we exceed the memory needed, resume from hibernate could fail due to a changed memory 
+// If we exceed the memory needed, resume from hibernate could fail due to a changed memory
 // map during resume.
 //
 static EFI_MEMORY_TYPE_INFORMATION MsvmMemoryTypeInformationHibernateEnabled[] =
@@ -711,9 +710,9 @@ Return Value:
             &gEfiMemoryTypeInformationGuid,
             MsvmDefaultMemoryTypeInformationTdxGuest,
             sizeof(MsvmDefaultMemoryTypeInformationTdxGuest)
-            );   
+            );
     }
-    else 
+    else
 #endif
 
     if (PcdGetBool(PcdHibernateEnabled))
@@ -722,15 +721,15 @@ Return Value:
                 &gEfiMemoryTypeInformationGuid,
                 MsvmMemoryTypeInformationHibernateEnabled,
                 sizeof(MsvmMemoryTypeInformationHibernateEnabled)
-                );      
-    }   
+                );
+    }
     else
     {
         HobAddGuidData(
                 &gEfiMemoryTypeInformationGuid,
                 MsvmDefaultMemoryTypeInformation,
                 sizeof(MsvmDefaultMemoryTypeInformation)
-                );          
+                );
     }
 
     //
@@ -745,7 +744,7 @@ Return Value:
     if (!suppressBiosDevice && !hostEmulatorsWhenHardwareIsolated)
     {
         //
-        // Setting MTRRs for virtual processors is not supported for 
+        // Setting MTRRs for virtual processors is not supported for
         // hardware isolated systems.
         //
         WriteBiosDevice(BiosConfigBootFinalize, Context->PhysicalAddressWidth);

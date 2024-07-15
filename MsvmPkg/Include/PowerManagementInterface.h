@@ -1,17 +1,11 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    PowerManagementInterface.h
-
-Abstract:
+/** @file
 
     This file contains types and constants shared between
     the PowerManagementDevice virtual device and the UEFI firmware.
 
---*/
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 

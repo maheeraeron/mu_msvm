@@ -177,7 +177,6 @@
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize
-    gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements
     gMsvmPkgTokenSpaceGuid.PcdNvdimmCount
     gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr
     gMsvmPkgTokenSpaceGuid.PcdIsolationArchitecture
@@ -185,8 +184,6 @@
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
     gMsvmPkgTokenSpaceGuid.PcdSvsmCallingArea
-    gMsvmPkgTokenSpaceGuid.PcdAsptPtr
-    gMsvmPkgTokenSpaceGuid.PcdAsptSize
     gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated
     gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled
     gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated
@@ -195,7 +192,6 @@
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress
     gMsvmPkgTokenSpaceGuid.PcdSystemMemorySize
-    gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4
     gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask
     gArmTokenSpaceGuid.PcdGicDistributorBase
     gArmTokenSpaceGuid.PcdGicRedistributorsBase
@@ -204,6 +200,9 @@
     gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable
     gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4
     gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask
+    gMsvmPkgTokenSpaceGuid.PcdAsptPtr
+    gMsvmPkgTokenSpaceGuid.PcdAsptSize
+    gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements
 
 [Ppis]
     gEfiPeiMasterBootModePpiGuid

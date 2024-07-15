@@ -1,12 +1,11 @@
-/**
-\copyright Copyright (c) Microsoft Corporation
+/** @file
 
-\file VmbusFileSystem.h
+    Implements the VMBus file system protocol.
 
-\brief Implements the VMBus file system protocol.
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
-\author Arseney Romanenko (arseneyr) 2014-10-10
-*/
 #pragma once
 #pragma warning(push)
 #pragma warning(disable:4200)

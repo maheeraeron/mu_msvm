@@ -27,7 +27,6 @@ Abstract:
 #include <Library/IoLib.h>
 #include <Library/PeiServicesLib.h>
 #include <Library/ResourcePublicationLib.h>
-#include <Ppi/ConfigPpi.h>
 #include <IsolationTypes.h>
 #include "Hv.h"
 #include "Config.h"
@@ -827,24 +826,24 @@ ConfigSetUefiConfigFlags(
     }
     else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeDefault)
     {
-        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_SHIP_MODE;            
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_SHIP_MODE;
     }
     else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeStrict)
     {
-        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_DEBUG;   
-        memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;         
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_DEBUG;
+        memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;
     }
     else if (ConfigFlags->Flags.MemoryProtectionMode == ConfigLibMemoryProtectionModeRelaxed)
     {
-        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_SHIP_MODE;   
-        memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;    
+        memoryProtectionSettings = (DXE_MEMORY_PROTECTION_SETTINGS) DXE_MEMORY_PROTECTION_SETTINGS_SHIP_MODE;
+        memoryProtectionSettings.ImageProtectionPolicy.Fields.RaiseErrorIfProtectionFails = 0;
 
         // Linux has some known loader limitations. The following checks needs to be relaxed for Linux
         // to boot successfully. For more details on these individual fields, look at DxeMemoryProtectionSettings.h
-        memoryProtectionSettings.NullPointerDetectionPolicy.Fields.DisableReadyToBoot = 1; 
+        memoryProtectionSettings.NullPointerDetectionPolicy.Fields.DisableReadyToBoot = 1;
         memoryProtectionSettings.NxProtectionPolicy.Fields.EfiLoaderData = 0;
         memoryProtectionSettings.NxProtectionPolicy.Fields.EfiBootServicesData = 0;
-        memoryProtectionSettings.NxProtectionPolicy.Fields.EfiConventionalMemory = 0;    
+        memoryProtectionSettings.NxProtectionPolicy.Fields.EfiConventionalMemory = 0;
     }
 
     // for architectures like ARM64, the UEFI spec declares that 64k runtime granularity must be supported
@@ -864,6 +863,8 @@ ConfigSetUefiConfigFlags(
         &memoryProtectionSettings,
         sizeof(memoryProtectionSettings));
 
+    // AARCH64 vTPM support does not require backwards compatibility modes
+#if defined(MDE_CPU_X64)
     //
     // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
     // When TRUE, we will perform a more "standard" measured boot
@@ -882,7 +883,8 @@ ConfigSetUefiConfigFlags(
     {
         CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdTpm2HashMask, (PcdGet32(PcdTpm2HashMask) & ~HASH_ALG_SHA384)), CRITICAL_INITIALIZATION_FAILURE);
     }
-    
+#endif
+
     if (ConfigFlags->Flags.Dhcp6DuidTypeLlt)
     {
         // Set to Dhcp6DuidTypeLlt
@@ -1445,6 +1447,7 @@ Return Value:
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdVpciInstanceFilterGuidPtr, (UINT64) filter->InstanceGuid), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
+#if defined(MDE_CPU_X64)
             case UefiConfigAspt:
                 UEFI_CONFIG_AMD_ASPT *asptStructure = (UEFI_CONFIG_AMD_ASPT*) header;
                 EFI_ACPI_DESCRIPTION_HEADER *asptHdr = (EFI_ACPI_DESCRIPTION_HEADER*) asptStructure->Aspt;
@@ -1460,6 +1463,8 @@ Return Value:
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdAsptPtr, (UINT64)asptStructure->Aspt), CRITICAL_INITIALIZATION_FAILURE);
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdAsptSize, asptHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
+#endif
+
 #if defined(MDE_CPU_AARCH64)
             case UefiConfigGic:
                 UEFI_CONFIG_GIC *gicConfig = (UEFI_CONFIG_GIC*) header;

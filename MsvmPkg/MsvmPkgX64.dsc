@@ -1,7 +1,8 @@
 ## @file
 #  EFI/Framework Microsoft Virtual Machine Firmware (MSVM) platform
 #
-#  Copyright (C) Microsoft. All rights reserved.
+#  Copyright (C) Microsoft.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -11,23 +12,23 @@
 #
 ################################################################################
 [Defines]
-  PLATFORM_NAME                  = Msvm
-  PLATFORM_GUID                  = 60d3fbae-b4ed-4a10-9145-f8185dd8b1bd
-  PLATFORM_VERSION               = 0.1
-  DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/MsvmX64
-  SUPPORTED_ARCHITECTURES        = X64
-  BUILD_TARGETS                  = DEBUG|RELEASE
-  SKUID_IDENTIFIER               = DEFAULT
-  FLASH_DEFINITION               = MsvmPkg/MsvmPkgX64.fdf
+  PLATFORM_NAME                 = Msvm
+  PLATFORM_GUID                 = 60d3fbae-b4ed-4a10-9145-f8185dd8b1bd
+  PLATFORM_VERSION              = 0.1
+  DSC_SPECIFICATION             = 0x00010005
+  OUTPUT_DIRECTORY              = Build/MsvmX64
+  SUPPORTED_ARCHITECTURES       = X64
+  BUILD_TARGETS                 = DEBUG|RELEASE
+  SKUID_IDENTIFIER              = DEFAULT
+  FLASH_DEFINITION              = MsvmPkg/MsvmPkgX64.fdf
 
 #
 # Defines for the pre-built BaseCryptLib
 #
-  PEI_CRYPTO_SERVICES          = TINY_SHA
-  DXE_CRYPTO_SERVICES          = STANDARD
-  PEI_CRYPTO_ARCH              = X64
-  DXE_CRYPTO_ARCH              = X64
+  PEI_CRYPTO_SERVICES           = TINY_SHA
+  DXE_CRYPTO_SERVICES           = STANDARD
+  PEI_CRYPTO_ARCH               = X64
+  DXE_CRYPTO_ARCH               = X64
 
 ################################################################################
 #
@@ -63,28 +64,26 @@
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
   BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
+  CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
   FailFastLib|MsvmPkg/Library/FailFastLib/FailFastLib.inf
-!if $(DEBUGLIB_SERIAL) == 1
-  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
-!elseif $(DEBUGLIB_BIOS) == 1
-  DebugLib|MsvmPkg/Library/BiosVdevDebugLib/BiosVdevDebugLib.inf
-!else
-  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
-!endif
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
   DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
+  Hash2CryptoLib|SecurityPkg/Library/DxeHash2CryptoLib/DxeHash2CryptoLib.inf
   HostVisibilityLib|MsvmPkg/Library/HostVisibilityLib/HostVisibilityLib.inf
+  HwResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
   LocalApicLib|UefiCpuPkg/Library/BaseXApicX2ApicLib/BaseXApicX2ApicLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
+  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf
   MsBootPolicyLib|MsvmPkg/Library/MsBootPolicyLib/MsBootPolicyLib.inf
   PanicLib|MdePkg/Library/BasePanicLibNull/BasePanicLibNull.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
@@ -93,29 +92,29 @@
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+  RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
   ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
-!ifdef DEBUGLIB_SERIAL
-  SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
-!else
-  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
-!endif
+  SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
   StackCheckFailureHookLib|MdePkg/Library/StackCheckFailureHookLibNull/StackCheckFailureHookLibNull.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   TimerLib|MsvmPkg/Library/HvTimerLib/HvTimerLib.inf
+  SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
-  #UefiResetSystemLib|MdeModulePkg/Library/BaseUefiResetSystemLibNull/BaseUefiResetSystemLibNull.inf ##MSChange
-  HwResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
-  SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
-  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
-  #RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
-  SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditDebugMessageLib/SecurityLockAuditDebugMessageLib.inf ##MSCHANGE
-  CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-  MpInitLib|UefiCpuPkg/Library/MpInitLibUp/MpInitLibUp.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
-  RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
-  Hash2CryptoLib|SecurityPkg/Library/DxeHash2CryptoLib/DxeHash2CryptoLib.inf
+
+!ifdef DEBUGLIB_SERIAL
+  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+  SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
+!else
+!if $(DEBUGLIB_BIOS) == 1
+  DebugLib|MsvmPkg/Library/BiosVdevDebugLib/BiosVdevDebugLib.inf
+!else
+  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+!endif
+  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+!endif
 
   ## MS_CHANGE_?
   # MeasuredBoot and Other TPM-Based Security
@@ -230,15 +229,15 @@
   PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Dxe/PcdDatabaseLoaderLibDxe.inf  # MU_CHANGE
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
   RngLib|MsvmPkg/Library/RngLib/RngLib.inf
+  UdpIoLib|NetworkPkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
-  UdpIoLib|NetworkPkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
-  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
 
   #
   # Provide StackCookie support lib so that we can link to /GS exports
@@ -275,10 +274,10 @@
 #
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceRuntimeLib.inf
-  ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
-  UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+  ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
+  UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
 
 [LibraryClasses.X64]
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
@@ -378,7 +377,7 @@
 
   # Prevent reboots due to some memory variables being out of sync, seems
   # to only be relevant when supporting S4 (hibernate)
-  # FUTURE: figure out what this is all about -- jostarks
+  # FUTURE: figure out what this is all about
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
 
   # We are only supporting SMBIOS v3.1

@@ -61,8 +61,6 @@
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits             ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdAcpiTablePtr                      ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdAcpiTableSize                     ## CONSUMES
-    gMsvmPkgTokenSpaceGuid.PcdAsptPtr                           ## CONSUMES
-    gMsvmPkgTokenSpaceGuid.PcdAsptSize                          ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress                   ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase                  ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdCom1Vector                        ## CONSUMES
@@ -98,6 +96,8 @@
 
 [Pcd.X64]
     gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress          ## PRODUCES
+    gMsvmPkgTokenSpaceGuid.PcdAsptPtr                           ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdAsptSize                          ## CONSUMES
 
 [Depex]
     gEfiAcpiTableProtocolGuid

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <hyperkbdprotocol.h>
+#include <Protocol/hyperkbdprotocol.h>
 #include <VmBusPacketFormat.h>
 
 EFI_STATUS
@@ -33,7 +33,7 @@ SynthKeyChannelInitMessage(
     _Inout_updates_bytes_(ByteCount)
                 PHK_MESSAGE_HEADER          Header,
     _In_        HK_MESSAGE_TYPE             Type,
-    _In_range_(>=, sizeof(HK_MESSAGE_HEADER)) 
+    _In_range_(>=, sizeof(HK_MESSAGE_HEADER))
                 UINT32                      ByteCount
     )
 /*++

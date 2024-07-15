@@ -32,6 +32,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/Emcl.h>
 #include <Protocol/SimpleFileSystem.h>
 #include <Protocol/LoadFile.h>
+#include <Protocol/hyperkbdprotocol.h>
 
 #include <Library/DeviceBootManagerLib.h>
 #include <Library/MsLogoLib.h>
@@ -41,7 +42,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DebugLib.h>
 #include <Library/EmclLib.h>
 #include <VirtualDeviceId.h>
-#include <hyperkbdprotocol.h>
 #include <Library/DevicePathLib.h>
 #include <Library/PcdLib.h>
 #include <Library/DevicePathLib.h>

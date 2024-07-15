@@ -1,21 +1,11 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    TpmInterface.h
-
-Abstract:
+/** @file
 
     This file contains types and constants shared between
     the VTpmDevice device and the UEFI firmware.
 
-Author:
-
-    Jingbo Wu (jingbowu) 10/2/2013
-
---*/
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 
@@ -25,8 +15,6 @@ Author:
 //
 // Use a pair of I/O ports to establish TPM 2.0 Command-Response Interface memory.
 // It is expected that UEFI TPM driver sets up the GPAs for the communication buffer.
-// (TODO: Use MMIO address. Use static well-known memory addresses. One candidate address is
-// the one right below APIC.)
 //
 enum
 {

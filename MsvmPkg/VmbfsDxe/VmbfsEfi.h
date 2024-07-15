@@ -13,6 +13,7 @@
 #include <Protocol/Emcl.h>
 #include <Protocol/Vmbus.h>
 #include <Protocol/SimpleFileSystem.h>
+#include <Protocol/VmbusFileSystem.h>
 #include <Guid/FileSystemInfo.h>
 #include <Guid/FileInfo.h>
 
@@ -27,7 +28,6 @@
 #include <Library/PrintLib.h>
 #include <Library/EmclLib.h>
 
-#include <VmbusFileSystem.h>
 
 #define VMBFS_BAD_HOST ASSERT(FALSE)
 

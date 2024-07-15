@@ -1,16 +1,10 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BiosInterface.h
-
-Abstract:
+/** @file
 
     This file contains types and constants shared between
-    the BiosDevice virtual device and the UEFI firmware.
+    the virtual device and the UEFI firmware.
 
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #pragma once

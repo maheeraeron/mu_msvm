@@ -28,6 +28,9 @@
 #include <BiosInterface.h>
 #include <IsolationTypes.h>
 
+#define SEC_TO_100NS(x) ((x) * 10LL * 1000 * 1000)
+#define _100NS_TO_S(x)  ((x) / (10LL * 1000 * 1000))
+
 EFI_STATUS
 EFIAPI
 WatchdogSoftSetPeriod (
@@ -389,7 +392,7 @@ Return Value:
     BOOLEAN useSoftwareTimer = FALSE;
 
     ASSERT_PROTOCOL_ALREADY_INSTALLED(NULL, &gEfiWatchdogTimerArchProtocolGuid);
-    
+
     if (IsHardwareIsolatedNoParavisor())
     {
         DEBUG((EFI_D_INFO, "Running on an isolated guest without the BIOS emulator. Falling back to software.\n"));

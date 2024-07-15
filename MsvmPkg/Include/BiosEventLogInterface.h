@@ -1,21 +1,12 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BiosEventLogInterface.h
-
-Abstract:
+/** @file
 
     Definitions, types and structures needed by the BIOS vdev to process events logs
     from the UEFI Event log driver.
 
-Author:
-
-    Kris Harper (kharp) - 2-Jan-2014
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
+
 #pragma once
 
 #ifdef __cplusplus

@@ -1,7 +1,8 @@
 ## @file
 #  EFI/Framework Microsoft Virtual Machine Firmware (MSVM) platform
 #
-#  Copyright (C) Microsoft. All rights reserved.
+#  Copyright (C) Microsoft.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -11,16 +12,19 @@
 #
 ################################################################################
 [Defines]
-  PLATFORM_NAME                  = Msvm
-  PLATFORM_GUID                  = 60d3fbae-b4ed-4a10-9145-f8185dd8b1bd
-  PLATFORM_VERSION               = 0.1
-  DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/MsvmAARCH64
-  SUPPORTED_ARCHITECTURES        = AARCH64
-  BUILD_TARGETS                  = DEBUG|RELEASE
-  SKUID_IDENTIFIER               = DEFAULT
-  FLASH_DEFINITION               = MsvmPkg/MsvmPkgAARCH64.fdf
+  PLATFORM_NAME                 = Msvm
+  PLATFORM_GUID                 = 60d3fbae-b4ed-4a10-9145-f8185dd8b1bd
+  PLATFORM_VERSION              = 0.1
+  DSC_SPECIFICATION             = 0x00010005
+  OUTPUT_DIRECTORY              = Build/MsvmAARCH64
+  SUPPORTED_ARCHITECTURES       = AARCH64
+  BUILD_TARGETS                 = DEBUG|RELEASE
+  SKUID_IDENTIFIER              = DEFAULT
+  FLASH_DEFINITION              = MsvmPkg/MsvmPkgAARCH64.fdf
 
+#
+# Defines for the pre-built BaseCryptLib
+#
   PEI_CRYPTO_SERVICES           = TINY_SHA
   DXE_CRYPTO_SERVICES           = STANDARD
   PEI_CRYPTO_ARCH               = AARCH64
@@ -32,7 +36,6 @@
 #
 ################################################################################
 [BuildOptions]
-  # TODO-cho: X64 has this, something similar needed for AARCH64 full debug support?
   *_*_AARCH64_GENFW_FLAGS = --keepexceptiontable
   DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM
 
@@ -74,7 +77,6 @@
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
   CpuExceptionHandlerLib|ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
-#  CrashDumpAgentLib|MdeModulePkg/Library/CrashDumpAgentLibNull/CrashDumpAgentLibNull.inf
   FailFastLib|MsvmPkg/Library/FailFastLib/FailFastLib.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
@@ -90,6 +92,7 @@
   IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
   MemoryInitPeiLib|ArmVirtPkg/Library/ArmVirtMemoryInitPeiLib/ArmVirtMemoryInitPeiLib.inf
+  MmuLib|ArmPkg/Library/MmuLib/BaseMmuLib.inf
   MsBootPolicyLib|MsvmPkg/Library/MsBootPolicyLib/MsBootPolicyLib.inf
   PanicLib|MdePkg/Library/BasePanicLibNull/BasePanicLibNull.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
@@ -99,6 +102,7 @@
   PL011UartLib|ArmPlatformPkg/Library/PL011UartLib/PL011UartLib.inf
   PlatformPeiLib|ArmPlatformPkg/PlatformPei/PlatformPeiLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
+  RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
   ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
   SortLib|MdeModulePkg/Library/BaseSortLib/BaseSortLib.inf
   StackCheckFailureHookLib|MdePkg/Library/StackCheckFailureHookLibNull/StackCheckFailureHookLibNull.inf
@@ -111,8 +115,6 @@
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
   UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
-  RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
-  MmuLib|ArmPkg/Library/MmuLib/BaseMmuLib.inf
 
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
@@ -217,31 +219,31 @@
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
-  #DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
-  #DebugLib|MsvmPkg/Library/BdDebugLib/BdDebugLib.inf
-  #PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
   DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocol.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|NetworkPkg/Library/DxeDpcLib/DxeDpcLib.inf
   DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
+  DxeMemoryProtectionHobLib|MdeModulePkg/Library/MemoryProtectionHobLibNull/DxeMemoryProtectionHobLibNull.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
   EventLogLib|MsvmPkg/Library/EventLogLib/EventLogLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
+  FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibDxe.inf
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|NetworkPkg/Library/DxeIpIoLib/DxeIpIoLib.inf
+  KdProtocolLib|MsKdDebugPkg2/Library/KdProtocolLib/KdProtocolLib.inf
+  KdTransportLib|MsKdDebugPkg2/Library/KdTransportLibSerial/KdTransportSerial.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
-  DxeMemoryProtectionHobLib|MdeModulePkg/Library/MemoryProtectionHobLibNull/DxeMemoryProtectionHobLibNull.inf
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
   NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
-  RngLib|MsvmPkg/Library/RngLib/RngLib.inf
   PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Dxe/PcdDatabaseLoaderLibDxe.inf  # MU_CHANGE
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
-  FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
+  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
+  RngLib|MsvmPkg/Library/RngLib/RngLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   UdpIoLib|NetworkPkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
@@ -249,9 +251,6 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
-  ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
-  KdTransportLib|MsKdDebugPkg2/Library/KdTransportLibSerial/KdTransportSerial.inf
-  KdProtocolLib|MsKdDebugPkg2/Library/KdProtocolLib/KdProtocolLib.inf
 
 #
 # Library instances overrides for just DXE CORE
@@ -408,7 +407,7 @@
 
   # Prevent reboots due to some memory variables being out of sync, seems
   # to only be relevant when supporting S4 (hibernate)
-  # FUTURE: figure out what this is all about -- jostarks
+  # FUTURE: figure out what this is all about
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
 
   # Support SMBIOS 3.1
@@ -443,9 +442,6 @@
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangCodes|"engeng"
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLangCodes|"en;en-US"
 
-  # Configure max supported number of Logical Processorss
-  #gUefiCpuPkgTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber|0x00000001
-
   # Base addresses of memory mapped devices in MMIO space.
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000
 
@@ -461,14 +457,13 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerInBootOrder|FALSE
 
 [PcdsFeatureFlag.common]
-  #gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdBootlogoOnlyEnable|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdInternalEventServicesEnabled|TRUE
 
 [PcdsDynamicDefault]
   # GIC related config (legacy Hyper-V values as default)
   gArmTokenSpaceGuid.PcdGicDistributorBase|0xFFFF0000        # aka GICD
   gArmTokenSpaceGuid.PcdGicRedistributorsBase|0xEFFEE000     # aka GICR
-  
+
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdPlatformRecoverySupport|FALSE
@@ -650,12 +645,6 @@
   # Fix this to dTPM 2.0 and skip the autodetection.
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x5a, 0xf2, 0x6b, 0x28, 0xc3, 0xc2, 0x8c, 0x40, 0xb3, 0xb4, 0x25, 0xe6, 0x75, 0x8b, 0x73, 0x17}
 
-  # As a test disable PCR4 measurements
-  # future change should be to have worker process pass config for this value
-  #  This should only be used to support upgrades/existing VMs
-  gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4|FALSE
-  gMsvmPkgTokenSpaceGuid.PcdExcludeFvMainFromMeasurements|TRUE
-
   ## This PCD defines minimum length(in bytes) of the system preboot TCG event log area(LAML).
   #  For PC Client Implementation spec up to and including 1.2 the minimum log size is 64KB.
   #  Increase to 128KB since Linux is measuring more information causing the 64KB buffer to run out.
@@ -670,10 +659,6 @@
   gMsvmPkgTokenSpaceGuid.PcdIsolationParavisorPresent|FALSE
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary|0x0
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask|0x0
-
-  # UEFI_CONFIG_AMD_ASPT
-  gMsvmPkgTokenSpaceGuid.PcdAsptPtr|0x0
-  gMsvmPkgTokenSpaceGuid.PcdAsptSize|0x0
 
 ################################################################################
 #
@@ -830,13 +815,11 @@
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
-      #special library For HyperV so that boot doesn't measure Main FV
-      NULL|MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.inf
   }
 
   MsKdDebugPkg2/KdDxe/KdDxe.inf {
     # Use COM1 for debugging
-    # TODO-cho: Fixed at build PCD overrides don't work for consumed libraries.
+    # Fixed at build PCD overrides don't work for consumed libraries.
     # Instead, we use a LibraryClasses override for a serial port lib that always
     # uses COM1.
     <LibraryClasses>

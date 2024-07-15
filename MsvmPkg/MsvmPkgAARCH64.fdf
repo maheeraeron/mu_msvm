@@ -1,13 +1,15 @@
-#
+## @file
 # Microsoft ARM64 Virtual Machine Firmware Flash Description File
 #
-# Copyright (C) Microsoft. All rights reserved.
+#  Copyright (C) Microsoft.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 # This file decribes the layout and contents of the firmware image that
 # would normally get burned to flash on a physical machine. In a Hyper-V VM
 # this image gets put into VM memory by the host VM worker process. The
 # net effect is the same. The code is present in the VM memory space.
 #
+##
 
 ################################################################################
 #  This FD section describes the layout of the firmware image.
@@ -33,6 +35,7 @@
 [FD.MSVM]
 BaseAddress   = 0x00000000|gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
 Size          = 0x00800000|gMsvmPkgTokenSpaceGuid.PcdFdSize
+
 ErasePolarity = 1
 BlockSize     = 0x1000 # This multiplied by NumBlocks should == Size
 NumBlocks     = 0x800

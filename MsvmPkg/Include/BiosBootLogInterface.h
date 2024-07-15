@@ -1,21 +1,12 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BiosBootLogInterface.h
-
-Abstract:
+/** @file
 
     Types and definitions for the UEFI boot logging channel
     These are shared between the VM worker process and UEFI.
 
-Author:
-
-    Kris Harper (kharp)  - 3-Jan-2014
-
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 --*/
+
 #pragma once
 
 #ifdef __cplusplus

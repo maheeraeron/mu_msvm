@@ -1,8 +1,8 @@
 ﻿##
 ## Script to Build Hyper-V UEFI firmware
 ##
-##
-## Copyright Microsoft Corporation, 2018
+## Copyright (C) Microsoft.
+##  Licensed under the BSD-2-Clause-Patent license.
 ##
 import os, sys, logging
 from edk2toolext.environment.uefi_build import UefiBuilder
@@ -36,13 +36,13 @@ class PlatformBuilder(UefiBuilder, UpdateSettingsManager, SetupSettingsManager, 
         return [
             RequiredSubmodule("MU_BASECORE"),
             RequiredSubmodule("Common/MSCORE_INTERNAL"),
-            RequiredSubmodule("Common/MU_TIANO"),
             RequiredSubmodule("Common/MU"),
+            RequiredSubmodule("Common/MU_TIANO"),
             RequiredSubmodule("Silicon/ARM/MU_TIANO"),
         ]
 
     def GetPackagesPath(self):
-        pp = ('MU_BASECORE', 'Common/MU', 'Common/MSCORE_INTERNAL', 'Common/MU_TIANO', 'Silicon/ARM/MU_TIANO')
+        pp = ('MU_BASECORE', 'Common/MSCORE_INTERNAL', 'Common/MU', 'Common/MU_TIANO', 'Silicon/ARM/MU_TIANO')
         ws = self.GetWorkspaceRoot()
         return [os.path.join(ws, x) for x in pp]
 

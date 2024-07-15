@@ -248,9 +248,9 @@ Return Value:
                 goto Cleanup;
             }
 
-            status = gBS->AllocatePages(AllocateAnyPages, 
-                                        EfiACPIMemoryNVS, 
-                                        EFI_SIZE_TO_PAGES(SIZE_4KB), 
+            status = gBS->AllocatePages(AllocateAnyPages,
+                                        EfiACPIMemoryNVS,
+                                        EFI_SIZE_TO_PAGES(SIZE_4KB),
                                         (EFI_PHYSICAL_ADDRESS*)&apMailboxAddress);
             if (EFI_ERROR(status))
             {
@@ -592,6 +592,7 @@ Return Value:
 }
 
 
+#if defined(MDE_CPU_X64)
 EFI_STATUS
 AcpiInstallAsptTable(
     EFI_ACPI_TABLE_PROTOCOL *AcpiTable
@@ -644,6 +645,7 @@ Return Value:
 
     return status;
 }
+#endif
 
 
 EFI_STATUS
@@ -806,6 +808,7 @@ Return Value:
         goto Cleanup;
     }
 
+#if defined(MDE_CPU_X64)
     //
     // Add the ASPT table.
     //
@@ -814,6 +817,7 @@ Return Value:
     {
         goto Cleanup;
     }
+#endif
 
     //
     // Add the dynamic config struct table if present.
