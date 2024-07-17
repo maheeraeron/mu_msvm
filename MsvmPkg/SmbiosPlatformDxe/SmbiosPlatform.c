@@ -856,11 +856,18 @@ Return Value:
 
 --*/
 {
-    UINT32 procCount = PcdGet32(PcdProcessorCount);
-    UINT32 processorsAdded = 0;
-    UINT32 processorsPerVirtualSocket = PcdGet32(PcdProcessorsPerVirtualSocket);
-    UINT32 threadsPerProcessor = PcdGet32(PcdThreadsPerProcessor);
-    BOOLEAN isFirstSocket = TRUE;
+    // The PCDs below are unfortunately named because 'processor' doesn't always mean the same thing.
+    //  Each PCD is guaranteed non-zero in Config.c
+    // For these, 'processor' means logical processor
+    UINT16 lpCount = (UINT16) PcdGet32(PcdProcessorCount);
+    UINT16 lpsPerVirtualSocket = (UINT16) PcdGet32(PcdProcessorsPerVirtualSocket);
+    // This means threads per core (physical processor)
+    UINT16 hwThreadsPerCore = (UINT16) PcdGet32(PcdThreadsPerProcessor);
+
+    // Divide the processors equally between the sockets
+    UINT16 totalSocketCount = (lpCount + lpsPerVirtualSocket - 1) / lpsPerVirtualSocket;
+    UINT16 lpsPerSocketQuotient = lpCount / totalSocketCount;
+    UINT16 lpsPerSocketRemainder = lpCount % totalSocketCount;
 
     //
     // Initialized array of pointers to the strings for this structure.
@@ -969,29 +976,45 @@ Return Value:
                             MAX_SMBIOS_STRING_LENGTH + 1);
 
     //
-    // Add one CPU structure per socket, and set the number of cores to the
-    // number of VPs per socket.
+    // Add one CPU structure per socket.
+    // The number of VPs (logical processors) is represented as the ThreadCount
+    // We never expose disabled cores to the guest
     //
-    isFirstSocket = TRUE;
-    while (processorsAdded != procCount)
-    {
-        UINT32 procCountInThisSocket = MIN(procCount - processorsAdded, processorsPerVirtualSocket);
-        cpuInfo.Formatted.CoreCount  = (UINT8) processorsPerVirtualSocket;
-        cpuInfo.Formatted.CoreCount2 = (UINT16) processorsPerVirtualSocket;
-        cpuInfo.Formatted.EnabledCoreCount  = (UINT8) procCountInThisSocket;
-        cpuInfo.Formatted.EnabledCoreCount2 = (UINT16) procCountInThisSocket;
-        cpuInfo.Formatted.ThreadCount  = (UINT8) threadsPerProcessor;
-        cpuInfo.Formatted.ThreadCount2 = (UINT16) threadsPerProcessor;
+    UINT16 processorsAdded = 0;
+    UINT16 socketCounter = 0;
 
-        processorsAdded += procCountInThisSocket;
+    while (processorsAdded < lpCount)
+    {
+        UINT16 hwThreadCountInThisSocket = lpsPerSocketQuotient;
+
+        if (lpsPerSocketRemainder > socketCounter)
+        {
+            // This socket gets an extra logical processor
+            hwThreadCountInThisSocket++;
+        }
+
+        UINT16 enabledCoresInThisSocket = (hwThreadCountInThisSocket + hwThreadsPerCore - 1) / hwThreadsPerCore;
+
+        cpuInfo.Formatted.CoreCount2 = enabledCoresInThisSocket;
+        cpuInfo.Formatted.CoreCount = (UINT8) MIN(cpuInfo.Formatted.CoreCount2, 0xFF);
+
+        cpuInfo.Formatted.EnabledCoreCount2 = enabledCoresInThisSocket;
+        cpuInfo.Formatted.EnabledCoreCount = (UINT8) MIN(cpuInfo.Formatted.EnabledCoreCount2, 0xFF);
+
+        cpuInfo.Formatted.ThreadCount2 = hwThreadCountInThisSocket;
+        cpuInfo.Formatted.ThreadCount = (UINT8) MIN(cpuInfo.Formatted.ThreadCount2, 0xFF);
 
         //
         // Add the structure to the SMBIOS table. Error is not fatal and ignored.
         // Only copy the string table on adding the first structure.
         //
-        (VOID)AddStructure(Smbios, &cpuInfo, isFirstSocket ? strings : NULL, NULL);
-        isFirstSocket = FALSE;
+        (VOID)AddStructure(Smbios, &cpuInfo, (socketCounter == 0) ? strings : NULL, NULL);
+
+        processorsAdded += hwThreadCountInThisSocket;
+        socketCounter++;
     }
+
+    ASSERT(processorsAdded == lpCount);
 }
 
 
