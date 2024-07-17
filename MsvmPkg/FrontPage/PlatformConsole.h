@@ -1,9 +1,10 @@
 /** @file
   Platform Console routines for showing the Hyper-V diagnostic console
 
-  Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 **/
+
 #pragma once
 
 EFI_STATUS

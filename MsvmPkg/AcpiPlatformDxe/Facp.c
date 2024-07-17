@@ -1,9 +1,9 @@
-/*++
-    This module is responsible for runtime initialization of the FACP acpi table.
+/** @file
+  This module is responsible for runtime initialization of the FACP acpi table.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <PiDxe.h>
 #include "AcpiPlatform.h"
@@ -87,7 +87,7 @@ Return Value:
              EFI_ACPI_6_2_TMR_VAL_EXT |
              EFI_ACPI_6_2_HEADLESS |
              EFI_ACPI_6_2_HW_REDUCED_ACPI;
-             
+
         //
         // Zero out set fields between offsets 46 - 108
         //
@@ -98,10 +98,10 @@ Return Value:
         {
 
             //
-            // Advertise PM-based reset 
+            // Advertise PM-based reset
             //
             facp->Flags |= EFI_ACPI_6_2_RESET_REG_SUP;
-                            
+
             //
             // Zero out set fields between offsets 148 - 244
             //
@@ -110,13 +110,13 @@ Return Value:
         }
         else
         {
-            
+
             //
             // Zero out set fields between offsets 116 - 128, no reset registers supported
             //
             ZeroMem(&facp->ResetReg,
                 FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ArmBootArch) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ResetReg));
-            
+
             //
             // Zero out set fields between offsets 148 - 268, no sleep registers supported
             //

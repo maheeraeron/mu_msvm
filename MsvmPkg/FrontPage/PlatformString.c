@@ -1,11 +1,10 @@
 /** @file
   Functions to help with loading and string formating using HII resource strings.
 
-  Copyright (c) Microsoft Corporation.
-  SPDX-License-Identifier: BSD-2-Clause-Patent
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 **/
 
-#include <EfiNt.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
@@ -20,7 +19,7 @@
 extern UINT8          FrontPageStrings[];
 
 static EFI_HII_HANDLE gPlatformConsoleStringPackHandle;
-static const EFI_GUID mPlatformConsoleStringPackGuid = 
+static const EFI_GUID mPlatformConsoleStringPackGuid =
     {0x7b222b98, 0x4b6f, 0x4adc, {0xbd, 0xc3, 0x67, 0x6e, 0x5b, 0x76, 0x4d, 0x54}};
 
 //
@@ -32,7 +31,7 @@ static UINT32         gStringBufferSize = 0;
 
 CHAR16*
 PlatformStringById(
-    _In_    EFI_STRING_ID                   Id
+    EFI_STRING_ID Id
     )
 /*++
 
@@ -62,9 +61,8 @@ Return Value:
 
 UINTN
 PlatformStringPrintWorker(
-    _In_  _Printf_format_string_
-            CHAR16                         *Format,
-    _In_    VA_LIST                         Args
+    IN  CONST CHAR16    *Format,
+    IN  VA_LIST         Args
     )
 /*++
 
@@ -102,7 +100,7 @@ Return Value:
 
     //if (charsPrinted)
     //{
-    //    gST->ConOut->OutputString(gST->ConOut, gStringBuffer); 
+    //    gST->ConOut->OutputString(gST->ConOut, gStringBuffer);
     //}
 
 Exit:
@@ -113,7 +111,7 @@ Exit:
 
 UINTN
 PlatformStringPrintById(
-    _In_    EFI_STRING_ID                   Id,
+    IN  EFI_STRING_ID   Id,
     ...
     )
 /*++
@@ -156,8 +154,7 @@ Exit:
 
 UINTN
 PlatformStringPrint(
-    _In_ _Printf_format_string_  
-            CHAR16                         *Format,
+    IN  CHAR16  *Format,
     ...
     )
 /*++
@@ -189,10 +186,9 @@ Return Value:
 
 UINTN
 PlatformStringPrintSById(
-    _Out_writes_z_(BufferSize)
-            CHAR16                         *StartOfBuffer,
-    _In_    UINTN                           BufferSize,
-    _In_    EFI_STRING_ID                   Id,
+    OUT CHAR16          *StartOfBuffer,
+    IN  UINTN           BufferSize,
+    IN  EFI_STRING_ID   Id,
     ...
     )
 /*++

@@ -1,10 +1,10 @@
-/*++
-    This module is responsible for runtime initialization of the SPCR APCI
-    table.
+/** @file
+  This module is responsible for runtime initialization of the SPCR APCI
+  table.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <PiDxe.h>
 #include <Library/IoLib.h>
@@ -85,14 +85,14 @@ Return Value:
     //
     spcr = (EFI_ACPI_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE *)Table;
 
-    spcr->BaseAddress.Address = (consoleMode == ConfigLibConsoleModeCOM1) ? 
+    spcr->BaseAddress.Address = (consoleMode == ConfigLibConsoleModeCOM1) ?
         FixedPcdGet32(PcdCom1RegisterBase) : FixedPcdGet32(PcdCom2RegisterBase);
 
 #if defined(_SPCR_INTEL_)
-    spcr->Irq = (consoleMode == ConfigLibConsoleModeCOM1) ? 
+    spcr->Irq = (consoleMode == ConfigLibConsoleModeCOM1) ?
         FixedPcdGet8(PcdCom1Vector) : FixedPcdGet8(PcdCom2Vector);
 #elif defined(_SPCR_ARM_)
-    spcr->GlobalSystemInterrupt = (consoleMode == ConfigLibConsoleModeCOM1) ? 
+    spcr->GlobalSystemInterrupt = (consoleMode == ConfigLibConsoleModeCOM1) ?
         FixedPcdGet8(PcdCom1Vector) : FixedPcdGet8(PcdCom2Vector);
 #endif
 

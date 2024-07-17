@@ -12,11 +12,9 @@
   from the following:
             MdeModulePkg\Universal\WatchdogTimerDxe\WatchdogTimer.c
 
-
 **/
 
 #include <Uefi.h>
-#include <EfiNt.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -34,29 +32,29 @@
 EFI_STATUS
 EFIAPI
 WatchdogSoftSetPeriod (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *This,
-    _In_    UINT64                            TimerPeriod
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+        UINT64                              TimerPeriod
     );
 
 EFI_STATUS
 EFIAPI
 WatchdogHwSetPeriod (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *This,
-    _In_    UINT64                            TimerPeriod
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+        UINT64                              TimerPeriod
     );
 
 EFI_STATUS
 EFIAPI
 WatchdogRegisterHandler (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *This,
-    _In_    EFI_WATCHDOG_TIMER_NOTIFY         NotifyFunction
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+    IN  EFI_WATCHDOG_TIMER_NOTIFY           NotifyFunction
     );
 
 EFI_STATUS
 EFIAPI
 WatchdogGetTimerPeriod (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *This,
-    _In_    UINT64                            *TimerPeriod
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+        UINT64                              *TimerPeriod
     );
 
 //
@@ -103,8 +101,8 @@ static EFI_EVENT    mExitBootServicesEvent = NULL;
 VOID
 EFIAPI
 WatchdogSoftTimer (
-    _In_    EFI_EVENT           Timer,
-    _In_    VOID               *Context
+    IN  EFI_EVENT   Timer,
+    IN  VOID        *Context
     )
 /*++
 
@@ -140,8 +138,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 WatchdogSoftSetPeriod (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *This,
-    _In_    UINT64                            TimerPeriod
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+        UINT64                              TimerPeriod
     )
 /*++
 
@@ -180,8 +178,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 WatchdogHwSetPeriod (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *This,
-    _In_    UINT64                            TimerPeriod
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+        UINT64                              TimerPeriod
     )
 /*++
 
@@ -252,8 +250,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 WatchdogGetTimerPeriod (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *This,
-    _In_    UINT64                           *TimerPeriod
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+        UINT64                              *TimerPeriod
     )
 /*++
 
@@ -292,8 +290,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 WatchdogRegisterHandler (
-    _In_    EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *This,
-    _In_    EFI_WATCHDOG_TIMER_NOTIFY         NotifyFunction
+    IN  EFI_WATCHDOG_TIMER_ARCH_PROTOCOL    *This,
+    IN  EFI_WATCHDOG_TIMER_NOTIFY           NotifyFunction
     )
 /*++
 
@@ -351,8 +349,8 @@ Return Value:
 VOID
 EFIAPI
 ExitBootServicesHandler(
-    __in EFI_EVENT Event,
-    __in void*     Context
+    IN  EFI_EVENT   Event,
+    IN  void*       Context
     )
 {
 
@@ -366,8 +364,8 @@ ExitBootServicesHandler(
 EFI_STATUS
 EFIAPI
 WatchdogInitialize (
-    _In_    EFI_HANDLE          ImageHandle,
-    _In_    EFI_SYSTEM_TABLE   *SystemTable
+    IN  EFI_HANDLE          ImageHandle,
+    IN  EFI_SYSTEM_TABLE    *SystemTable
     )
 /*++
 
@@ -471,5 +469,3 @@ Return Value:
 
     return EFI_SUCCESS;
 }
-
-

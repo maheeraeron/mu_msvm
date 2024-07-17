@@ -1,10 +1,10 @@
-/*++
-    This file contains routines to locate ACPI tables in the firmware volume,
-    update them appropriately, and install them via the AcpiTable protocol.
+/** @file
+  This file contains routines to locate ACPI tables in the firmware volume,
+  update them appropriately, and install them via the AcpiTable protocol.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <PiDxe.h>
 #include <Protocol/AcpiTable.h>

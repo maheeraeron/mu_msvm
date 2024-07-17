@@ -1,34 +1,20 @@
-/*++
+/** @file
+  Ring buffer Implementation for UEFI Event Channels.
 
-Copyright (c) Microsoft Corporation
+  This implementation supports writing variable length data which is stored internally
+  as a record header followed by caller data. Space can be reserved in the ring and the
+  data written at a later time using a data handle.
 
-Module Name:
+  The overflow behavior is controllable between overwriting one or more of the
+  oldest records or dropping new data once full.
 
-    EfiRing.c
+  Note that if data is overwritten, previously returned handles are invalidated
+  and functions utilizing them will fail.
 
-Abstract:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-    Ring buffer Implementation for UEFI Event Channels.
-
-    This implementation supports writing variable length data which is stored internally
-    as a record header followed by caller data. Space can be reserved in the ring and the
-    data written at a later time using a data handle.
-
-    The overflow behavior is controllable between overwriting one or more of the
-    oldest records or dropping new data once full.
-
-    Note that if data is overwritten, previously returned handles are invalidated
-    and functions utilizing them will fail.
-
-Author:
-
-    Kris Harper (kharp) - 25-Nov-2013
-
-Environment:
-
-    UEFI
-
---*/
 #include "EventLogDxe.h"
 #include "EfiRing.h"
 

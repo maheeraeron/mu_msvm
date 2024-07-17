@@ -1,37 +1,13 @@
-/*++
+/** @file
+  Internal include file the Event Log Runtime DXE Driver.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    StatusCode.c
-
-Abstract:
-
-    Status code driver.  Implements the EFI_STATUS_CODE_PROTOCOL and logs
-    events to an event log channel.
-
-Author:
-
-    Kris Harper (kharp) - 12-Dec-2013
-
-ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
+  This code is derived from:
     IntelFrameworkModulePkg\Universal\StatusCode\RuntimeDxe\StatusCodeRuntimeDxe.c
 
-IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE
-IN THE WINDOWS PRODUCT. DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT
-TO THE MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
-
-Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
---*/
+  Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include "EventLogDxe.h"
 #include "StatusCode.h"
@@ -104,19 +80,19 @@ IsBootManagerMenuFilePath (
   EFI_DEVICE_PATH_PROTOCOL     *DevicePath
 )
 {
-  EFI_HANDLE                      FvHandle;
-  VOID                            *NameGuid;
-  EFI_STATUS                      Status;
+    EFI_HANDLE                      FvHandle;
+    VOID                            *NameGuid;
+    EFI_STATUS                      Status;
 
-  Status = gBS->LocateDevicePath (&gEfiFirmwareVolume2ProtocolGuid, &DevicePath, &FvHandle);
-  if (!EFI_ERROR (Status)) {
-    NameGuid = EfiGetNameGuidFromFwVolDevicePathNode ((CONST MEDIA_FW_VOL_FILEPATH_DEVICE_PATH *) DevicePath);
-    if (NameGuid != NULL) {
-      return CompareGuid (NameGuid, PcdGetPtr (PcdBootManagerMenuFile));
+    Status = gBS->LocateDevicePath (&gEfiFirmwareVolume2ProtocolGuid, &DevicePath, &FvHandle);
+    if (!EFI_ERROR (Status)) {
+        NameGuid = EfiGetNameGuidFromFwVolDevicePathNode ((CONST MEDIA_FW_VOL_FILEPATH_DEVICE_PATH *) DevicePath);
+        if (NameGuid != NULL) {
+            return CompareGuid (NameGuid, PcdGetPtr (PcdBootManagerMenuFile));
+        }
     }
-  }
 
-  return FALSE;
+    return FALSE;
 }
 
 
@@ -133,33 +109,33 @@ IsNetworkDeviceFilePath (
   EFI_DEVICE_PATH_PROTOCOL     *DevicePath
 )
 {
-  VMBUS_DEVICE_PATH               *vmbusDevicePath;
-  VENDOR_DEVICE_PATH              *vendorDevicePath;
+    VMBUS_DEVICE_PATH               *vmbusDevicePath;
+    VENDOR_DEVICE_PATH              *vendorDevicePath;
 
-  while (!IsDevicePathEnd(DevicePath))
-  {
-      if ((DevicePathType(DevicePath) == HARDWARE_DEVICE_PATH) &&
-          (DevicePathSubType(DevicePath) == HW_VENDOR_DP))
-      {
-          vendorDevicePath = (VENDOR_DEVICE_PATH*) DevicePath;
+    while (!IsDevicePathEnd(DevicePath))
+    {
+        if ((DevicePathType(DevicePath) == HARDWARE_DEVICE_PATH) &&
+            (DevicePathSubType(DevicePath) == HW_VENDOR_DP))
+        {
+            vendorDevicePath = (VENDOR_DEVICE_PATH*) DevicePath;
 
-          if (CompareGuid(
-              &vendorDevicePath->Guid,
-              &gEfiVmbusChannelDevicePathGuid))
-          {
-              vmbusDevicePath = (VMBUS_DEVICE_PATH*) DevicePath;
-              if (CompareGuid(
-                  &vmbusDevicePath->InterfaceType,
-                  &GUID_NETWORK_CHANNEL_TYPE))
-              {
-                  return TRUE;
-              }
-          }
-      }
-      DevicePath = NextDevicePathNode(DevicePath);
-  }
+            if (CompareGuid(
+                &vendorDevicePath->Guid,
+                &gEfiVmbusChannelDevicePathGuid))
+            {
+                vmbusDevicePath = (VMBUS_DEVICE_PATH*) DevicePath;
+                if (CompareGuid(
+                    &vmbusDevicePath->InterfaceType,
+                    &GUID_NETWORK_CHANNEL_TYPE))
+                {
+                    return TRUE;
+                }
+            }
+        }
+        DevicePath = NextDevicePathNode(DevicePath);
+    }
 
-  return FALSE;
+    return FALSE;
 }
 
 
@@ -447,7 +423,7 @@ Return Value:
             }
 
             //
-            // FUTURE-2014-1-6-kharp If the PEI status code ring buffer overflowed,
+            // FUTURE: If the PEI status code ring buffer overflowed,
             //  the buffer is not processed in order.
             //   start at index RecordIndex,
             //   go up and mask Index by the max size.

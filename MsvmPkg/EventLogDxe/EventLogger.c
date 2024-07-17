@@ -1,33 +1,23 @@
-/*++
+/** @file
+  Implementation of the EFI_EVENTLOG_PROTOCOL and management of event channels
+  Event channels use a ring buffer as the backing store
 
-Copyright (c) Microsoft Corporation
+  --- Pending Events ---
+  Each Channel can have one event pending and can update the event data but not change
+  its size.
 
-Module Name:
+  Space is reserved in the backing store for pending events and the event descriptor is written
+  The data is cached outside of the backing store for easy updating (once in the ring
+  it may wrap around)
 
-    EventChannel.c
+  The current pending event can be updated any number of times before commiting.
+  Pending events can be incomplete if the event channel is reset or another pending event
+  is logged before the current one is committed.
 
-Abstract:
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-    Implementation of the EFI_EVENTLOG_PROTOCOL and management of event channels
-    Event channels use a ring buffer as the backing store
-
-    --- Pending Events ---
-    Each Channel can have one event pending and can update the event data but not change
-    its size.
-
-    Space is reserved in the backing store for pending events and the event descriptor is written
-    The data is cached outside of the backing store for easy updating (once in the ring
-    it may wrap around)
-
-    The current pending event can be updated any number of times before commiting.
-    Pending events can be incomplete if the event channel is reset or another pending event
-    is logged before the current one is committed.
-
-Author:
-
-    Kris Harper (kharp) - 20-Nov-2013
-
---*/
 #include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
 #include <Library/IoLib.h>

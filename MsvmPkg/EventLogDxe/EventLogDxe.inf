@@ -3,6 +3,7 @@
 #  Produces the Event Log and Status Code Runtime protocols.
 #
 #  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -22,12 +23,12 @@
 #
 
 [Sources]
-  EventLogDxe.h
-  StatusCode.c
-  EventLogDxe.c
   EfiHandleTable.c
   EfiRing.c
+  EventLogDxe.h
+  EventLogDxe.c
   EventLogger.c
+  StatusCode.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -38,42 +39,42 @@
   BaseLib
   BaseMemoryLib
   BiosDeviceLib
+  BootEventLogLib                 # MS_CHANGE
+  DevicePathLib                   # MS_CHANGE
   DebugLib
   HobLib
   IoLib
+  IsolationLib
   MemoryAllocationLib
   PcdLib
   TimerLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiLib
-  DevicePathLib                   # MS_CHANGE
-  BootEventLogLib                 # MS_CHANGE
-  IsolationLib
 
 [Guids]
+  gEfiVmbusChannelDevicePathGuid                ## CONSUMES
   gMemoryStatusCodeRecordGuid                   ## CONSUMES ## HOB
   gStatusCodeEventChannelGuid                   ## CONSUMES
-  gEfiVmbusChannelDevicePathGuid                ## CONSUMES
 
 [Protocols]
-  gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES
   gEfiEventLogProtocolGuid                      ## PRODUCES
   gEfiFirmwareVolume2ProtocolGuid               ## CONSUMES
-  gEfiHvProtocolGuid                            ## CONSUMES
   gEfiHvIvmProtocolGuid                         ## CONSUMES
+  gEfiHvProtocolGuid                            ## CONSUMES
   gEfiRscHandlerProtocolGuid                    ## CONSUMES
+  gEfiStatusCodeRuntimeProtocolGuid             ## PRODUCES
 
 [Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
-  gMsvmPkgTokenSpaceGuid.PcdEventLogMaxChannels
-  gMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderLoad                ## SOMETIMES_CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderStart               ## SOMETIMES_CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeReplayIn
+  gMsvmPkgTokenSpaceGuid.PcdEventLogMaxChannels
+  gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
-  gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated
-  
+  gMsvmPkgTokenSpaceGuid.PcdStatusCodeEventLogSize
+
 [Depex]
   gEfiRscHandlerProtocolGuid

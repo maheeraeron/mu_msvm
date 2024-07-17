@@ -1,24 +1,9 @@
-/*++
+/** @file
+  Entry point and initialization for combined status code and event logging driver
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    EventLogDxe.c
-
-Abstract:
-
-    Entry point and initialization for combined status code and event logging driver
-
-Author:
-
-    Kris Harper (kharp) - 20-Nov-2013
-
-Environment:
-
-    UEFI
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include "EventLogDxe.h"
 #include <Library/UefiDriverEntryPoint.h>
@@ -88,9 +73,9 @@ Return Value:
     StatusCodeRuntimeInitialize();
 
     //
-    // Workaroud: Initialize BootEventLogLib library.  This is done because BootEventLogLib 
-    //            library requires gEfiEventLogProtocolGuid, which is not available at the 
-    //            time of its constructor execution. 
+    // Workaroud: Initialize BootEventLogLib library.  This is done because BootEventLogLib
+    //            library requires gEfiEventLogProtocolGuid, which is not available at the
+    //            time of its constructor execution.
     //
     BootEventLogLibInit(ImageHandle, SystemTable);
 

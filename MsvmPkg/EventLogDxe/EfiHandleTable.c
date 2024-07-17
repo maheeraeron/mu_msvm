@@ -1,47 +1,33 @@
-/*++
+/** @file
+  A simple handle table implementation.
 
-Copyright (c) Microsoft Corporation
+  The handle table functions like a traditional handle table where an opaque handle value
+  is used to lookup a structure or other bit of information.  This implementation also
+  allows lookup of an object or handle by a user defined object key.
 
-Module Name:
+  Key lookup is accomplished by performing a memory comparision on between a caller
+  supplied key and the first N bytes of the stored object. The maximum key size is fixed
+  at the time of handle table initialization.
+  The user of the table has the option to not enable keyed lookup by specifying an
+  ObjectKeySize of zero as part of the EFI_HANDLE_TABLE_INFO structure when initializing the
+  table.
+  Note that if keyed lookup is enabled, all objects in the handle table must have a unique
+  key.
 
-    EfiHandleTable.c
+  Handles can be keyed to a given table.  When the a handle table is initialized the user
+  can specify an 8-bit key value that will be included in all handles allocated by the table.
+  The key is used to quickly reject handles allocated from a different handle table.
 
-Abstract:
+  Important Notes:
 
-    A simple handle table implementation.
+  - The current implementation is limited to adding handles only.
+  - There is no reference tracking or deletion/removal of handles.
+  - Users must provide synchronization between lookup and allocation if needed.
 
-    The handle table functions like a traditional handle table where an opaque handle value
-    is used to lookup a structure or other bit of information.  This implementation also
-    allows lookup of an object or handle by a user defined object key.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-    Key lookup is accomplished by performing a memory comparision on between a caller
-    supplied key and the first N bytes of the stored object. The maximum key size is fixed
-    at the time of handle table initialization.
-    The user of the table has the option to not enable keyed lookup by specifying an
-    ObjectKeySize of zero as part of the EFI_HANDLE_TABLE_INFO structure when initializing the
-    table.
-    Note that if keyed lookup is enabled, all objects in the handle table must have a unique
-    key.
-
-    Handles can be keyed to a given table.  When the a handle table is initialized the user
-    can specify an 8-bit key value that will be included in all handles allocated by the table.
-    The key is used to quickly reject handles allocated from a different handle table.
-
-    Important Notes:
-
-    - The current implementation is limited to adding handles only.
-    - There is no reference tracking or deletion/removal of handles.
-    - Users must provide synchronization between lookup and allocation if needed.
-    
-Author:
-
-    Kris Harper (kharp) - 20-Nov-2013
-
-Environment:
-
-    UEFI
-
---*/
 #include "EventLogDxe.h"
 #include "EfiHandleTable.h"
 
@@ -123,10 +109,10 @@ Return Value:
     UINTN allocSize;
     EFI_STATUS status;
 
-    if ((Table == NULL) || 
+    if ((Table == NULL) ||
         (Size == 0) ||
         (Size > HANDLE_TABLE_MAX_SIZE) ||
-        (Attributes == NULL) || 
+        (Attributes == NULL) ||
         (Attributes->Allocate == NULL))
     {
         status = EFI_INVALID_PARAMETER;
@@ -292,7 +278,7 @@ Return Value:
     // look through the table for a matching key.
     //
     // This does a simple linear search for a matching key.
-    // It doesn't scale well to a large number of handles 
+    // It doesn't scale well to a large number of handles
     // but works fine for the current implementation.
     //
     if ((KeySize <= table->Info.ObjectKeySize) &&

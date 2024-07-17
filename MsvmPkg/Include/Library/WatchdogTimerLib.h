@@ -1,26 +1,11 @@
-/*++
+/** @file
+  This module contains code to interact with the Hyper-V watchdog timer.
 
-    Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-Module Name:
-
-    WatchdogTimerLib.h
-
-Abstract:
-
-    This module contains code to interact with the Hyper-V watchdog timer.
-
-Author:
-
-    Kris Harper (kharp) 8-Oct-2013
-
-Environment:
-
-    UEFI
-
---*/
 #pragma once
-
 
 typedef enum
 {
@@ -41,19 +26,19 @@ typedef enum
     // UEFI that will reset the count to its original value.
     //
     WatchdogPeriodic
-}WATCHDOG_MODE;
+} WATCHDOG_MODE;
 
 
 VOID
 WatchdogConfigure(
-    _In_    UINT32                  Count,
-    _In_    WATCHDOG_MODE           Mode
+    UINT32          Count,
+    WATCHDOG_MODE   Mode
     );
 
 
 VOID
 WatchdogSetCount(
-    _In_    UINT32                  Count
+    UINT32  Count
     );
 
 
@@ -67,5 +52,5 @@ WatchdogSuspend();
 
 VOID
 WatchdogResume(
-    _In_    BOOLEAN                 PreviouslyRunning
+    BOOLEAN PreviouslyRunning
     );

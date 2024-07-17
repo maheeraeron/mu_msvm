@@ -1,9 +1,9 @@
-/*++
-    This module is responsible for runtime initialization of the WDAT APCI table.
+/** @file
+  This module is responsible for runtime initialization of the WDAT APCI table.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <PiDxe.h>
 #include <Library/BaseMemoryLib.h>
@@ -58,8 +58,8 @@ Return Value:
     {
         //
         // BiosWatchdog (for guest) has its MMIO/IO-ports at an offset w.r.t bios base address.
-        // BiosWdatAddress is at offset 8, BiosWdatData is at offset 12. WDAT ACPI table is 
-        // populated with 0 & 4 for Address & Data respectively. 
+        // BiosWdatAddress is at offset 8, BiosWdatData is at offset 12. WDAT ACPI table is
+        // populated with 0 & 4 for Address & Data respectively.
         //
         wdat->action[i].RegisterRegion.Address = biosBaseAddress + wdat->action[i].RegisterRegion.Address + 8;
     }

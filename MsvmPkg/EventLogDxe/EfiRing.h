@@ -1,25 +1,11 @@
-/*++
+/** @file
+  Ring buffer types, definitions and public functions.
+  See EfiRing.c for implementation details.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-Module Name:
-
-    EfiRing.h
-
-Abstract:
-
-    Ring buffer types, definitions and public functions.
-    See EfiRing.c for implementation details.
-
-Author:
-
-    Kris Harper (kharp) - 25-Nov-2013
-
-Environment:
-
-    UEFI
-
---*/
 #pragma once
 
 typedef UINT64   RING_HANDLE;
@@ -66,7 +52,7 @@ typedef struct
     // Behavior flags, see RING_BUFFER_nnnnn
     //
     UINT32              Flags;
-    
+
     RING_BUFFER_STATS   Stats;
     //
     // Used to invalidate data handles for destructive ring operation.

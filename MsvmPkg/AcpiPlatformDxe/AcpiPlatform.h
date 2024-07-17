@@ -1,11 +1,11 @@
-/*++
+/** @file
 
-    This file contains declarations and definitions used globally in the
-    MsvmPkg AcpiPlatformDxe driver.
+  This file contains declarations and definitions used globally in the
+  MsvmPkg AcpiPlatformDxe driver.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 

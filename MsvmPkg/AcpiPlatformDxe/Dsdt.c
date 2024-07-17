@@ -1,9 +1,9 @@
-/*++
-    This module is responsible for runtime initialization of the DSDT acpi table.
+/** @file
+  This module is responsible for runtime initialization of the DSDT acpi table.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <PiDxe.h>
 #include <Library/BaseMemoryLib.h>

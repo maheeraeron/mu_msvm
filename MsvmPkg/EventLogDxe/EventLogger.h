@@ -1,20 +1,10 @@
-/*++
+/** @file
+  Defines types, constants, and function prototypes for event channels
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
-Module Name:
-
-    EventLogger.h
-
-Abstract:
-
-    Defines types, constants, and function prototypes for event channels 
-
-Author:
-
-    Kris Harper (kharp) - 20-Nov-2013
-
---*/
 #pragma once
 
 

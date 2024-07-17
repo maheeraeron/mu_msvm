@@ -1,24 +1,11 @@
-/*++
+/** @file
+  Internal include file the Event Log Runtime DXE Driver.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    EventLogDxe.h
-
-Abstract:
-
-    Internal include file the Event Log Runtime DXE Driver.
-
-Author:
-
-    Kris Harper (kharp) - 20-Nov-2013
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
-
-#include <EfiNt.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
