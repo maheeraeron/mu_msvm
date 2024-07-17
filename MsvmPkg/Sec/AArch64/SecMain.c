@@ -2,15 +2,8 @@
   Main SEC phase code.  Transitions to PEI.
 
   Copyright (c) 2008 - 2011, Intel Corporation. All rights reserved.
-  Copyright (c) 2017, Microsoft Corporation. All rights reserved.
-
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
 **/
 
@@ -22,8 +15,6 @@
 #include <Library/Armlib.h>
 #include <Library/DebugAgentLib.h>
 #include <Ppi/TemporaryRamSupport.h>
-#include <EfiNt.h>
-
 
 //
 // The Temporary RAM support PPI data.
@@ -32,10 +23,10 @@
 EFI_STATUS
 EFIAPI
 TemporaryRamMigration (
-    _In_ CONST EFI_PEI_SERVICES **PeiServices,
-    _In_ EFI_PHYSICAL_ADDRESS   TemporaryMemoryBase,
-    _In_ EFI_PHYSICAL_ADDRESS   PermanentMemoryBase,
-    _In_ UINTN                  CopySize
+    IN  CONST EFI_PEI_SERVICES  **PeiServices,
+        EFI_PHYSICAL_ADDRESS   TemporaryMemoryBase,
+        EFI_PHYSICAL_ADDRESS   PermanentMemoryBase,
+        UINTN                  CopySize
     );
 
 
@@ -58,7 +49,7 @@ EFI_PEI_PPI_DESCRIPTOR mPrivateDispatchTable[] =
 VOID
 EFIAPI
 SecStartupPhase2(
-    _In_ VOID *Context
+    IN  VOID    *Context
     )
 /*++
 
@@ -116,8 +107,8 @@ Return Value:
 VOID
 EFIAPI
 SecStartupWithStack (
-    _In_ EFI_FIRMWARE_VOLUME_HEADER *BootFv,
-    _In_ VOID                       *TopOfCurrentStack
+    IN  EFI_FIRMWARE_VOLUME_HEADER  *BootFv,
+    IN  VOID                        *TopOfCurrentStack
     )
 /*++
 
@@ -196,10 +187,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 TemporaryRamMigration(
-    _In_ CONST EFI_PEI_SERVICES   **PeiServices,
-    _In_ EFI_PHYSICAL_ADDRESS     TemporaryMemoryBase,
-    _In_ EFI_PHYSICAL_ADDRESS     PermanentMemoryBase,
-    _In_ UINTN                    CopySize
+    IN  CONST EFI_PEI_SERVICES  **PeiServices,
+        EFI_PHYSICAL_ADDRESS    TemporaryMemoryBase,
+        EFI_PHYSICAL_ADDRESS    PermanentMemoryBase,
+        UINTN                   CopySize
     )
 /*++
 

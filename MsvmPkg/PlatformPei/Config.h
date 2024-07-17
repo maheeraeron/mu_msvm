@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Loader configuration related data and functions.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Config.h
-
-Abstract:
-
-    Worker process configuration related data and functions.
-
---*/
+**/
 
 #pragma once
 

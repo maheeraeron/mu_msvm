@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Definitions relating to X64 version of the SEC driver.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    SecP.h
-
-Abstract:
-
-    Definitions relating to X64 version of the SEC driver.
-
---*/
+**/
 
 #pragma once
 
@@ -40,8 +34,8 @@ typedef struct _TRAP_FRAME {
 
 BOOLEAN
 SecInitializeHardwareIsolation (
-    _In_ UINT32 IsolationType,
-    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+        UINT32 IsolationType,
+    IN  UEFI_IGVM_PARAMETER_INFO *ParameterInfo
     );
 
 #define MSR_GHCB        0xC0010130
@@ -119,6 +113,7 @@ typedef union _TDX_VE_EXIT_QUALIFICATION_IO
     UINT64 AsUINT64;
     UINT32 AsUINT32;
 
+#pragma warning(disable : 4201)
     struct
     {
         UINT32 AccessSize:2;
@@ -130,28 +125,29 @@ typedef union _TDX_VE_EXIT_QUALIFICATION_IO
         UINT32 Reserved2:9;
         UINT32 PortNumber:16;
     };
+#pragma warning(default : 4201)
 
 } TDX_VE_EXIT_QUALIFICATION_IO, *PTDX_VE_EXIT_QUALIFICATION_IO;
 
-LONG64
+long long
 SecGetTdxVeInfo(
-    _Out_ PTDX_VE_INFO VeInfo
+    OUT PTDX_VE_INFO VeInfo
     );
 
-LONG64
+long long
 SecGetTdInfo(
-    _Out_ PUINT32 GpaWidth
+    OUT UINT32 *GpaWidth
     );
 
 UINT64
 SecTdCallRdmsr(
-    _In_ UINT64 MsrNumber
+    UINT64 MsrNumber
     );
 
 VOID
 SecTdCallWrmsr(
-    _In_ UINT64 MsrNumber,
-    _In_ UINT64 MsrValue
+    UINT64 MsrNumber,
+    UINT64 MsrValue
     );
 
 VOID
@@ -161,20 +157,20 @@ SecTdCallHlt(
 
 UINT32
 SecTdCallReadIoPort(
-    _In_ UINT32 PortNumber,
-    _In_ UINT32 AccessSize
+    UINT32 PortNumber,
+    UINT32 AccessSize
     );
 
 VOID
 SecTdCallWriteIoPort(
-    _In_ UINT32 PortNumber,
-    _In_ UINT32 AccessSize,
-    _In_ UINT32 Value
+    UINT32 PortNumber,
+    UINT32 AccessSize,
+    UINT32 Value
     );
 
 UINT64
 MulDiv64 (
-    _In_ UINT64 Value,
-    _In_ UINT64 Multiplier,
-    _In_ UINT64 Divisor
+    UINT64 Value,
+    UINT64 Multiplier,
+    UINT64 Divisor
     );

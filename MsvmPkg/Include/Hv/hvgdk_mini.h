@@ -28,6 +28,8 @@ Abstract:
 #pragma warning(disable:4214) // bit field types other than int
 #pragma warning(disable:4324) // structure was padded due to __declspec(align())
 
+#define HV_MAXIMUM_PROCESSORS       2048
+
 //
 // Define hypervisor constants.
 //
@@ -79,7 +81,7 @@ Abstract:
 //
 // Define a 128bit type.
 //
-typedef union DECLSPEC_ALIGN(16) _HV_UINT128
+typedef union __declspec(align(16)) _HV_UINT128
 {
     struct
     {
@@ -94,7 +96,7 @@ typedef union DECLSPEC_ALIGN(16) _HV_UINT128
 //
 // Define a 256bit type.
 //
-typedef struct DECLSPEC_ALIGN(32) _HV_UINT256
+typedef struct __declspec(align(32)) _HV_UINT256
 {
     HV_UINT128  Low128;
     HV_UINT128  High128;
@@ -105,7 +107,7 @@ typedef struct DECLSPEC_ALIGN(32) _HV_UINT256
 //
 // Define a 512bit type.
 //
-typedef struct DECLSPEC_ALIGN(32) _HV_UINT512
+typedef struct __declspec(align(32)) _HV_UINT512
 {
     HV_UINT256  Low256;
     HV_UINT256  High256;
@@ -117,8 +119,8 @@ typedef struct DECLSPEC_ALIGN(32) _HV_UINT512
 //
 #define HV_CALL_ALIGNMENT   8
 
-#define HV_CALL_ATTRIBUTES DECLSPEC_ALIGN(HV_CALL_ALIGNMENT)
-#define HV_CALL_ATTRIBUTES_ALIGNED(__alignment__) DECLSPEC_ALIGN(__alignment__)
+#define HV_CALL_ATTRIBUTES __declspec(align(HV_CALL_ALIGNMENT))
+#define HV_CALL_ATTRIBUTES_ALIGNED(__alignment__) __declspec(align(__alignment__))
 
 #ifndef HV_STATUS_SUCCESS
 //
@@ -278,7 +280,7 @@ typedef UINT64 HV_GPA_PAGE_NUMBER, *PHV_GPA_PAGE_NUMBER;
 
 typedef UINT64 HV_DEVICE_VA, *PHV_DEVICE_VA;
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 #define HV_ARM64_PAGE_SIZE              4096
 #define HV_ARM64_LARGE_PAGE_SIZE        0x200000
@@ -299,7 +301,7 @@ typedef UINT64 HV_DEVICE_VA, *PHV_DEVICE_VA;
 //
 #define HV_ARM64_ENABLE_SRE             2
 
-#elif defined(_AMD64_)
+#elif defined(MDE_CPU_X64)
 
 #define HV_X64_PAGE_SIZE                4096
 #define HV_X64_LARGE_PAGE_SIZE          0x200000
@@ -334,13 +336,13 @@ typedef UINT64 HV_NANO100_DURATION, *PHV_NANO100_DURATION;
 //
 // Declare the type for hardware ID of a processor.
 //
-#if defined(_AMD64_) || defined(_ARM_)
+#if defined(MDE_CPU_X64)
 
 typedef UINT32 HV_APIC_ID, *PHV_APIC_ID;
 
 typedef HV_APIC_ID HV_PROCESSOR_HW_ID;
 
-#elif defined(_ARM64_)
+#elif defined(MDE_CPU_AARCH64)
 
 typedef UINT64 HV_PROCESSOR_HW_ID;
 
@@ -443,7 +445,7 @@ typedef enum _HV_GUEST_OS_OPENSOURCE_IDS
 
 } HV_GUEST_OS_OPENSOURCE_IDS, *PHV_GUEST_OS_OPENSOURCE_IDS;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 
 //
@@ -642,7 +644,7 @@ typedef enum _HV_ARM64_SYNTHETIC_MSR
 
 #endif
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // Declare the MSR used to identify the guest OS.
@@ -820,7 +822,7 @@ typedef union _HV_PARTITION_PRIVILEGE_MASK
 #define HV_PARTITION_PRIVILEGE_START_VIRTUAL_PROCESSOR                  0x0020000000000000
 #define HV_PARTITION_PRIVILEGE_ISOLATION                                0x0040000000000000
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 typedef union _HV_X64_PLATFORM_CAPABILITIES {
     UINT64 AsUINT64[2];
@@ -1052,7 +1054,7 @@ typedef struct _HV_HYPERVISOR_INTERFACE_INFO
 // Hypervisor Feature Information
 //
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 // CPUID Information - HvCpuIdFunctionMsHvFeatures Leaf
 
@@ -1120,7 +1122,7 @@ typedef struct _HV_X64_HYPERVISOR_FEATURES
 
 #endif
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef struct _HV_ARM64_HYPERVISOR_FEATURES
 {
@@ -1158,7 +1160,7 @@ typedef struct _HV_ARM64_HYPERVISOR_FEATURES
 // Enlightenment Info
 //
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 // CPUID Information - HvCpuIdFunctionMsHvEnlightenmentInformation Leaf
 
@@ -1210,7 +1212,7 @@ typedef struct _HV_X64_ENLIGHTENMENT_INFORMATION
 
 #endif
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef struct _HV_ARM64_ENLIGHTENMENT_INFORMATION
 {
@@ -1265,7 +1267,7 @@ typedef struct _HV_IMPLEMENTATION_LIMITS
 } HV_IMPLEMENTATION_LIMITS, *PHV_IMPLEMENTATION_LIMITS;
 
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // Hypervisor Hardware Features Info - HvCpuIdFunctionMsHvHardwareFeatures Leaf
@@ -1359,7 +1361,7 @@ typedef struct _HV_X64_HYPERVISOR_CPU_MANAGEMENT_FEATURES
 
 #endif
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef struct _HV_ARM64_HYPERVISOR_HARDWARE_FEATURES
 {
@@ -1447,7 +1449,7 @@ typedef struct _HV_HYPERVISOR_SVM_FEATURES
 } HV_HYPERVISOR_SVM_FEATURES, *PHV_HYPERVISOR_SVM_FEATURES;
 
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // Nested virtualization features (Vmx) -
@@ -1519,7 +1521,7 @@ typedef union _HV_CPUID_RESULT
 
     UINT32 AsUINT32[4];
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     struct
     {
@@ -1633,7 +1635,7 @@ typedef union _HV_REGISTER_VP_ASSIST_PAGE
     };
 } HV_REGISTER_VP_ASSIST_PAGE, *PHV_REGISTER_VP_ASSIST_PAGE;
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
 //
 // Declare the MSR used to reset partition
@@ -1652,7 +1654,7 @@ typedef union _HV_ARM64_MSR_RESET_CONTENTS
 #define HV_MSR_RESET_CONTENTS  HV_ARM64_MSR_RESET_CONTENTS
 #define PHV_MSR_RESET_CONTENTS PHV_ARM64_MSR_RESET_CONTENTS
 
-#elif defined(_AMD64_)
+#elif defined(MDE_CPU_X64)
 
 //
 // Declare the MSR for determining the current VP index.
@@ -2679,7 +2681,7 @@ typedef union _HV_HYPERCALL_OUTPUT
 typedef HV_HYPERCALL_INPUT  HV_X64_HYPERCALL_INPUT;
 typedef HV_HYPERCALL_OUTPUT HV_X64_HYPERCALL_OUTPUT;
 
-#if defined(_AMD64_) || defined(_ARM64_)
+#if defined(MDE_CPU_X64) || defined(MDE_CPU_AARCH64)
 
 #define HVCALL_FAST_BUFFER(_Variable, _ByteCount) \
     __declspec(align(16)) UINT64 _Variable[(((_ByteCount) + 15) / 16) * 2]
@@ -3019,7 +3021,7 @@ typedef enum _HV_INTERRUPT_TYPE
     // Explicit interrupt types.
     //
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
     HvArm64InterruptTypeFixed             = 0x0000,
 
@@ -3049,7 +3051,7 @@ typedef enum _HV_INTERRUPT_TYPE
 
 } HV_INTERRUPT_TYPE, *PHV_INTERRUPT_TYPE;
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
 #define HvInterruptTypeFixed HvArm64InterruptTypeFixed
 
@@ -3069,7 +3071,7 @@ typedef union _HV_SYNIC_SINT
     struct
     {
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
         UINT64 Vector       :10;
         UINT64 ReservedP1   :6;
@@ -3163,7 +3165,7 @@ typedef union _HV_REENLIGHTENMENT_CONTROL
 
     struct
     {
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
         UINT64 Vector       :10;
         UINT64 RsvdZ1       :6;
@@ -3288,7 +3290,7 @@ typedef union _HV_X64_XSAVE_XFEM_REGISTER
 // This structure represents the header area of an XSAVE area.
 // This must be aligned on a 64 byte boundary.
 //
-typedef struct DECLSPEC_ALIGN(64) _HV_X64_XSAVE_HEADER
+typedef struct __declspec(align(64)) _HV_X64_XSAVE_HEADER
 {
     //
     // Bit vector indicating which features have state store in the XSAVE
@@ -3383,7 +3385,7 @@ typedef union _HV_X64_FP_MMX_REGISTER
 // by the FXSAVE and and FXRSTOR instructions. This includes
 // leagacy FP and SSE registers.
 //
-typedef union DECLSPEC_ALIGN(16) _HV_X64_FX_REGISTERS
+typedef union __declspec(align(16)) _HV_X64_FX_REGISTERS
 {
     struct
     {
@@ -3413,7 +3415,7 @@ typedef union DECLSPEC_ALIGN(16) _HV_X64_FX_REGISTERS
 // N.B. The XSAVE header must be aligned on a 64 byte boundary. Therefore
 // this structure must be 64 byte aligned,
 //
-typedef union DECLSPEC_ALIGN(64) _HV_X64_X_REGISTERS
+typedef union __declspec(align(64)) _HV_X64_X_REGISTERS
 {
     struct
     {
@@ -3449,7 +3451,7 @@ typedef union _HV_X64_XSAVE_AREA
 typedef struct _HV_VP_CONTEXT
 {
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
     UINT64 Pc;
     UINT64 Sctlr;
@@ -3557,7 +3559,7 @@ typedef enum _HV_MESSAGE_TYPE
     HvMessageTypeUnmappedGpa = 0x80000000,
     HvMessageTypeGpaIntercept = 0x80000001,
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
     HvMessageTypeMmioIntercept = 0x80000002,
 #endif
 
@@ -3612,7 +3614,7 @@ typedef enum _HV_MESSAGE_TYPE
     HvMessageTypeExceptionIntercept = 0x80010003,
     HvMessageTypeRegisterIntercept = 0x80010006,
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     //
     // (AMD64/X86).
@@ -3625,7 +3627,7 @@ typedef enum _HV_MESSAGE_TYPE
     HvMessageTypeX64InterruptionDeliverable = 0x80010008,
     HvMessageTypeX64SipiIntercept = 0x80010009,
 
-#elif defined(_ARM64_)
+#elif defined(MDE_CPU_AARCH64)
 
     HvMessageTypeArm64ResetIntercept = 0x80010000,
 
@@ -3753,7 +3755,7 @@ typedef enum _HV_IOMMU_FAULT_TYPE
     //
     HvIommuInterruptFault,
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
     //
     // The IOMMU retrieved a transation for a DMA transaction, but the
@@ -3830,7 +3832,7 @@ typedef struct _HV_IOMMU_FAULT_MESSAGE_PAYLOAD
 // is 16B already.
 //
 
-typedef struct DECLSPEC_ALIGN(16) _HV_MESSAGE
+typedef struct __declspec(align(16)) _HV_MESSAGE
 {
     HV_MESSAGE_HEADER Header;
     union
@@ -3974,8 +3976,8 @@ typedef struct _HV_DEBUG_NET_DATA
     IPV6_ADDRESS TargetIp;
     UINT16 HostPort;
     UINT16 TargetPort;
-    UCHAR HostMac[6];
-    UCHAR TargetMac[6];
+    unsigned char HostMac[6];
+    unsigned char TargetMac[6];
 } HV_DEBUG_NET_DATA, *PHV_DEBUG_NET_DATA;
 
 //
@@ -4096,7 +4098,7 @@ typedef union _HV_INPUT_VTL
 typedef struct _HV_INITIAL_VP_CONTEXT
 {
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
     UINT64 Pc;
     UINT64 Sp_ELh;
@@ -4305,7 +4307,7 @@ typedef union _HV_REGISTER_VSM_VINA
     struct
     {
 
-#if defined(_ARM_) || defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
         UINT64 Vector          : 10;
 
@@ -4318,7 +4320,7 @@ typedef union _HV_REGISTER_VSM_VINA
         UINT64 Enabled         : 1;
         UINT64 AutoReset       : 1;
 
-#if defined(_ARM_) || defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
         UINT64 ReservedP       : 52;
 
@@ -4338,7 +4340,7 @@ typedef union _HV_REGISTER_VSM_VINA
 //   This is a read-only partition-wide register.
 //
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 typedef union _HV_X64_REGISTER_VSM_CAPABILITIES
 {
@@ -4500,7 +4502,7 @@ typedef struct _HV_VP_VTL_CONTROL
     UINT8                   ReservedZ00;
     UINT16                  ReservedZ01;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     //
     // A guest updates the VtlReturn* fields to provide the register values to
@@ -4830,7 +4832,7 @@ typedef enum _HV_REGISTER_NAME
 
     HvRegisterIsolationCapabilities  = 0x000D0100,
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     // Interruptible notification register
     HvX64RegisterDeliverabilityNotifications = 0x00010006,
@@ -5073,7 +5075,7 @@ typedef enum _HV_REGISTER_NAME
     HvX64RegisterCrInterceptCr4Mask            = 0x000E0002,
     HvX64RegisterCrInterceptIa32MiscEnableMask = 0x000E0003,
 
-#elif defined(_ARM64_)
+#elif defined(MDE_CPU_AARCH64)
     // ARM64 Registers
 
     HvArm64RegisterX0 = 0x00020000,
@@ -5284,7 +5286,7 @@ typedef enum _HV_REGISTER_NAME
     HvArm64RegisterPartitionInfoPage = 0x00090015,
     HvArm64RegisterTlbiControl = 0x00090016,
 
-#elif !defined(_ARM_)
+#else
 
 #error Unsupported Architecture
 
@@ -5338,7 +5340,7 @@ typedef union _HV_X64_INTERRUPT_STATE_REGISTER
     };
 } HV_X64_INTERRUPT_STATE_REGISTER, *PHV_X64_INTERRUPT_STATE_REGISTER;
 
-#if !defined(_ARM64_)
+#if !defined(MDE_CPU_AARCH64)
 
 typedef enum _HV_X64_PENDING_EVENT_TYPE
 {
@@ -5737,7 +5739,7 @@ typedef union _HV_REGISTER_VALUE
     UINT16                                      Reg16;
     UINT8                                       Reg8;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     HV_X64_FP_REGISTER                          Fp;
     HV_X64_FP_CONTROL_STATUS_REGISTER           FpControlStatus;
@@ -5751,7 +5753,7 @@ typedef union _HV_REGISTER_VALUE
     HV_INTERCEPT_SUSPEND_REGISTER               InterceptSuspend;
     HV_DISPATCH_SUSPEND_REGISTER                DispatchSuspend;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     HV_X64_INTERRUPT_STATE_REGISTER             InterruptState;
     HV_X64_PENDING_INTERRUPTION_REGISTER        PendingInterruption;
@@ -5759,7 +5761,7 @@ typedef union _HV_REGISTER_VALUE
     HV_X64_PENDING_EXCEPTION_EVENT              PendingExceptionEvent;
     HV_X64_PENDING_VIRTUALIZATION_FAULT_EVENT   PendingVirtualizationFaultEvent;
 
-#elif defined(_ARM64_)
+#elif defined(MDE_CPU_AARCH64)
 
     HV_ARM64_PENDING_INTERRUPTION_REGISTER      PendingInterruption;
     HV_ARM64_INTERRUPT_STATE_REGISTER           InterruptState;
@@ -5848,7 +5850,7 @@ typedef union _HV_REGISTER_CR_INTERCEPT_CONTROL
 // This sets the values provided in VpContext and makes the said Vp runnable.
 //
 
-#if defined(_AMD64_) || defined(_ARM64_)
+#if defined(MDE_CPU_X64) || defined(MDE_CPU_AARCH64)
 
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_START_VIRTUAL_PROCESSOR
 {
@@ -6241,7 +6243,7 @@ typedef union _HV_MSI_DATA_REGISTER
 {
     UINT32 AsUINT32;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     struct
     {
@@ -6264,7 +6266,7 @@ typedef union _HV_MSI_DATA_REGISTER
 typedef union _HV_MSI_ENTRY
 {
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     UINT64 AsUINT64;
 
@@ -6289,7 +6291,7 @@ typedef union _HV_MSI_ENTRY
 
 } HV_MSI_ENTRY, *PHV_MSI_ENTRY;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 #define HV_MSI_ENTRY_IS_ADDRESS_EQUAL(_MsiEntry1_, _MsiEntry2_) \
     ((_MsiEntry1_).Address.AsUINT32 == (_MsiEntry2_).Address.AsUINT32)
@@ -6344,7 +6346,7 @@ typedef struct _HV_INTERRUPT_ENTRY
     union
     {
         HV_MSI_ENTRY MsiEntry;
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
         HV_IOAPIC_RTE IoApicEntry;
         UINT64 Data;
 #else
@@ -6355,7 +6357,7 @@ typedef struct _HV_INTERRUPT_ENTRY
 
 } HV_INTERRUPT_ENTRY, *PHV_INTERRUPT_ENTRY;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 #define HV_INTERRUPT_ENTRY_IS_DATA_EQUAL(_Entry1_, _Entry2_) \
     ((_Entry1_)->Data == (_Entry2_)->Data)
@@ -6422,7 +6424,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_RETARGET_DEVICE_INTERRUPT
 // the new functions.
 //
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
 //
 // ARM64 code is required to define ReadHvMsr/WriteHvMsr functions based on
@@ -6456,7 +6458,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_PROCESS_IOMMU_PRQ
     HV_IOMMU_ID IommuId;
 } HV_INPUT_PROCESS_IOMMU_PRQ, *PHV_INPUT_PROCESS_IOMMU_PRQ;
 
-#if defined(_ARM64_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef union _HV_PARTITION_INFO_PAGE
 {
@@ -6504,6 +6506,7 @@ typedef union _HV_ARM64_REGISTER_TLBI_CONTROL
 #pragma warning(pop)
 #else
 #pragma warning(default:4200) /* nonstandard extension used : zero-sized array in struct/union */
+#pragma warning(default:4201) /* nameless struct/union */
 #pragma warning(default:4214) /* nonstandard extension used : bit field types other then int */
 #pragma warning(default:4324) /* structure was padded due to __declspec(align()) */
 #endif

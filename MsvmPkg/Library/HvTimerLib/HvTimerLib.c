@@ -24,7 +24,7 @@ Author:
 #include <Library/DebugLib.h>
 
 #include <EfiNt.h>
-#include <hvgdk.h>
+#include <Hv/hvgdk.h>
 
 #if defined(MDE_CPU_AARCH64)
 #include <Library/HvHypercallLib.h>

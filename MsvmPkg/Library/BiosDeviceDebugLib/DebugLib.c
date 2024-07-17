@@ -1,27 +1,23 @@
-/*++
+/** @file
+  This module implements the UEFI debug library interface.
+  It sends the strings to the Hyper-V BiosDevice via an intercept.
 
-Copyright (c) 2017  Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    DebugLib.c
-
-Abstract:
-
-    This module implements the UEFI debug library interface.
-    It sends the strings to the Hyper-V BiosDevice via an intercept.
+**/
 
 --*/
 
 #include <Base.h>
-#include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
-#include <Library/IoLib.h>
-#include <Library/PrintLib.h>
-#include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
-#include <EfiNt.h>
+#include <Library/IoLib.h>
+#include <Library/PcdLib.h>
+#include <Library/PrintLib.h>
+
 #include <BiosInterface.h>
 
 

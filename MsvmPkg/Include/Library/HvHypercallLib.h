@@ -1,42 +1,34 @@
-/*++
+/** @file
+  Low level hypercalls.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    HvHypercallLib.h
-
-Abstract:
-
-    Low level hypercalls.
-
---*/
+**/
 
 #pragma once
 
-#include <EfiNt.h>
-#include <hvhdk.h>
-#include <hvgdk.h>
+#include <Hv/hvgdk_mini.h>
 
 #if defined(MDE_CPU_AARCH64)
 
 HV_HYPERCALL_OUTPUT
 AsmHyperCall(
-    _In_      HV_HYPERCALL_INPUT    InputControl,
-    _In_opt_  UINT64                InputPhysicalAddress,
-    _In_opt_  UINT64                OutputPhysicalAddress
+    IN  HV_HYPERCALL_INPUT  InputControl,
+        UINT64              InputPhysicalAddress,
+        UINT64              OutputPhysicalAddress
     );
 
 HV_STATUS
 AsmGetVpRegister64(
-     _In_  UINT32      RegisterIndex,
-     _Out_ PUINT64     RegisterBuffer
+        UINT32  RegisterIndex,
+    OUT UINT64  *RegisterBuffer
     );
 
 HV_STATUS
 AsmSetVpRegister64(
-     _In_  UINT32      RegisterIndex,
-     _In_  UINT64      RegisterBuffer
+    UINT32  RegisterIndex,
+    UINT64  RegisterBuffer
     );
 
 #endif
@@ -45,13 +37,13 @@ typedef struct _HV_HYPERCALL_CONTEXT
 {
     BOOLEAN Connected;
     BOOLEAN IsTdx;
-    PVOID Ghcb;
+    VOID* Ghcb;
 
 #if defined(MDE_CPU_X64)
 
     UINT64 SharedGpaBoundary;
     UINT64 CanonicalizationMask;
-    PVOID HypercallPage;
+    VOID* HypercallPage;
     BOOLEAN ParavisorPresent;
 
 #endif
@@ -61,53 +53,53 @@ typedef struct _HV_HYPERCALL_CONTEXT
 
 VOID
 HvHypercallConnect(
-    _In_ PVOID HypercallPage,
-    _In_ UINT32 IsolationType,
-    _In_ BOOLEAN ParavisorPresent,
-    _Out_ HV_HYPERCALL_CONTEXT *Context
+    IN  VOID                    *HypercallPage,
+        UINT32                  IsolationType,
+        BOOLEAN                 ParavisorPresent,
+    OUT HV_HYPERCALL_CONTEXT    *Context
     );
 
 #elif defined(MDE_CPU_AARCH64)
 
 VOID
 HvHypercallConnect(
-    _Out_ HV_HYPERCALL_CONTEXT *Context
+    OUT HV_HYPERCALL_CONTEXT *Context
     );
 
 #endif
 
 VOID
 HvHypercallDisconnect(
-    _Inout_ HV_HYPERCALL_CONTEXT *Context
+    IN OUT  HV_HYPERCALL_CONTEXT *Context
     );
 
 HV_STATUS
 HvHypercallIssue(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_CALL_CODE CallCode,
-    _In_ BOOLEAN Fast,
-    _In_ UINT32 CountOfElements,
-    _In_ UINT64 FirstRegister,
-    _In_ UINT64 SecondRegister,
-    _Out_opt_ UINT32 *ElementsProcessed
+    IN              HV_HYPERCALL_CONTEXT    *Context,
+                    HV_CALL_CODE            CallCode,
+                    BOOLEAN                 Fast,
+                    UINT32                  CountOfElements,
+                    UINT64                  FirstRegister,
+                    UINT64                  SecondRegister,
+    OUT OPTIONAL    UINT32                  *ElementsProcessed
     );
 
 UINT64
 HvHypercallGetVpRegister64Self(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_REGISTER_NAME RegisterName
+    IN  HV_HYPERCALL_CONTEXT    *Context,
+        HV_REGISTER_NAME        RegisterName
     );
 
 VOID
 HvHypercallSetVpRegister64Self(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_REGISTER_NAME RegisterName,
-    _In_ UINT64 RegisterValue
+    IN  HV_HYPERCALL_CONTEXT    *Context,
+        HV_REGISTER_NAME        RegisterName,
+        UINT64                  RegisterValue
     );
 
 VOID
 HvHypercallRequestHypervisorCpuid(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ UINT32 CpuidLeaf,
-    _Out_ PHV_CPUID_RESULT CpuidResult
+    IN  HV_HYPERCALL_CONTEXT    *Context,
+        UINT32                  CpuidLeaf,
+    OUT PHV_CPUID_RESULT        CpuidResult
     );

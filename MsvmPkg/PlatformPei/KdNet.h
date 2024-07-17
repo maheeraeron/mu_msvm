@@ -18,10 +18,10 @@ extern BOOLEAN UseKdNetDebugger;
 
 VOID
 ParseKdNetParameters(
-    _In_z_ PUCHAR CommandLine
+    IN unsigned char *CommandLine
     );
 
 VOID
 LoadKdNet(
-    _In_ EFI_PEI_FILE_HANDLE FileHandle
+    IN EFI_PEI_FILE_HANDLE FileHandle
     );

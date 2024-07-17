@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Mmu setup asm interface for ARM64
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Extra.h
-
-Abstract:
-
-    Mmu setup asm interface for ARM64
-
---*/
+**/
 
 #pragma once
 
@@ -21,7 +15,7 @@ Abstract:
 VOID
 EFIAPI
 ConfigureCachesAndMmu(
-    IN VOID* TranslationTable,
-    IN UINTN TCR,
-    IN UINTN MAIR
+    IN  VOID* TranslationTable,
+        UINTN TCR,
+        UINTN MAIR
     );

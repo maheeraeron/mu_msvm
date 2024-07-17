@@ -1,22 +1,14 @@
-/*++
+/** @file
+  Hypervisor interactions during PEI.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Hv.h
-
-Abstract:
-
-    Hypervisor interactions during PEI.
-
---*/
+**/
 
 #pragma once
 
-#include <EfiNt.h>
-#include <hvhdk.h>
-#include <hvgdk.h>
+#include <Hv/hvgdk_mini.h>
 
 extern BOOLEAN mParavisorPresent;
 extern UINT32 mIsolationType;
@@ -29,14 +21,14 @@ HvDetectIsolation(
 
 VOID
 HvDetectSvsm(
-    IN PVOID SecretsPage,
-    OUT PUINT64 SvsmBase,
-    OUT PUINT64 SvsmSize
+    IN  VOID    *SecretsPage,
+    OUT UINT64  *SvsmBase,
+    OUT UINT64  *SvsmSize
     );
 
 typedef struct _SNP_SECRETS {
-    UINT8 Reserved[0x140];
-    UINT64 SvsmBase;
-    UINT64 SvsmSize;
-    UINT64 SvsmCallingArea;
+    UINT8   Reserved[0x140];
+    UINT64  SvsmBase;
+    UINT64  SvsmSize;
+    UINT64  SvsmCallingArea;
 } SNP_SECRETS, *PSNP_SECRETS;

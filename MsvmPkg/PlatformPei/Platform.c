@@ -1,20 +1,13 @@
-/*++
+/** @file
+  This is the Hyper-V "Platform" PEI Module. It initializes in preparation
+  for running other PEI Modules and eventually running DXE Core.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    platform.c
-
-Abstract:
-
-    This is the Hyper-V "Platform" PEI Module. It initializes in preparation
-    for running other PEI Modules and eventually running DXE Core.
-
---*/
+**/
 
 #include <PiPei.h>
-#include <EfiNt.h>
 #include <BiosInterface.h>
 #include <Platform.h>
 #include <Config.h>
@@ -157,7 +150,7 @@ ReadBiosDevice(
 #if defined (MDE_CPU_X64)
 UINTN
 GetPageTableSize(
-    _In_ CONST UINT8 PhysicalAddressWidth
+    IN CONST UINT8 PhysicalAddressWidth
     )
 /*++
 
@@ -234,11 +227,11 @@ Return Value:
 #if defined(MDE_CPU_AARCH64)
 VOID
 InitPeiMemoryArm(
-    _Inout_ PPLATFORM_INIT_CONTEXT Context,
-    _In_ CONST UINT64 Base,
-    _In_ CONST UINT64 Length,
-    _Out_ PUINT64 AllocatedBase,
-    _Out_ PUINT64 AllocatedLength
+    IN OUT  PPLATFORM_INIT_CONTEXT  Context,
+            UINT64                  Base,
+            UINT64                  Length,
+    OUT     UINT64                  *AllocatedBase,
+    OUT     UINT64                  *AllocatedLength
 )
 /*++
 
@@ -277,8 +270,6 @@ Return Value:
     //
     // Mark the firmware image as allocated, allowing it to be reclaimed by
     // the guest OS later.
-    // TODO-cho: What about pagetable, stack, heap used in PEI? This seems
-    // to boot fine.
     //
     *AllocatedBase = 0;
     *AllocatedLength = PcdGet32(PcdFdSize);
@@ -288,11 +279,11 @@ Return Value:
 #if defined (MDE_CPU_X64)
 VOID
 InitPeiMemoryIntel(
-    _Inout_ PPLATFORM_INIT_CONTEXT Context,
-    _In_ CONST UINT64 Base,
-    _In_ CONST UINT64 Length,
-    _Out_ PUINT64 AllocatedBase,
-    _Out_ PUINT64 AllocatedLength
+    IN OUT  PPLATFORM_INIT_CONTEXT  Context,
+            UINT64                  Base,
+            UINT64                  Length,
+    OUT     UINT64                  *AllocatedBase,
+    OUT     UINT64                  *AllocatedLength
 )
 /*++
 
@@ -398,7 +389,7 @@ Return Value:
 
 VOID
 InitializeMemoryMap(
-    _Inout_ PPLATFORM_INIT_CONTEXT Context
+    IN OUT PPLATFORM_INIT_CONTEXT Context
     )
 /*++
 
@@ -452,7 +443,7 @@ Return Value:
 
     //
     // If this is a hardware isolated VM with no paravisor, then skip all
-    // communication with the BIOS vDev.
+    // communication with the BiosDevice.
     //
 
     suppressBiosDevice = FALSE;
@@ -490,7 +481,7 @@ Return Value:
             if (legacyMemoryMap)
             {
                 //
-                // VDev versions 3 & 4
+                // Used by legacy Hyper-V (VM version 8.0)
                 //
                 // A memory map range contains only base address and length.
                 //
@@ -505,8 +496,6 @@ Return Value:
             }
             else
             {
-                //
-                // VDev version 5 and up
                 //
                 // A memory map range now contains base address, length, and attribute flags.
                 // The reserved bit allows for support of Intel SGX memory.
@@ -651,7 +640,7 @@ Return Value:
     //
     // Initialize the fixed MTRR for low memory.
     // The variable MTRRs are set later in this function with a trigger to
-    // the VDev.
+    // the BiosDevice.
     //
     // N.B. This call also has the effect of enabling MTRRs. The default
     // MTRR type remains uncached.
@@ -669,7 +658,7 @@ Return Value:
         );
 #elif defined(MDE_CPU_AARCH64)
     //
-    // For ARM64 we are still using the BIOS psuedo-device for runtime services.
+    // For ARM64 we are still using the BiosDevice for runtime services.
     // However the registers are now in MMIO space instead of IO space. Therefore the
     // addresses need to be translated after the guest calls SetVirtualAddressMap.
     // To have the address range included with the guest's call to SetVirtualAddressMap
@@ -806,8 +795,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 InitializePlatform(
-    _In_ EFI_PEI_FILE_HANDLE       FileHandle,
-    _In_ CONST EFI_PEI_SERVICES**  PeiServices
+    IN          EFI_PEI_FILE_HANDLE FileHandle,
+    IN CONST    EFI_PEI_SERVICES**  PeiServices
   )
 /*++
 
@@ -841,7 +830,7 @@ Return Value:
     HvDetectIsolation();
 
     //
-    // Get the configuration from the worker process.
+    // Get the configuration from the loader.
     //
     status = GetConfiguration(PeiServices, &context.PhysicalAddressWidth);
     if (EFI_ERROR(status))
@@ -896,7 +885,7 @@ Return Value:
     if (!IsHardwareIsolatedNoParavisor())
     {
         //
-        // Init the watchdog (available starting with Threshold VDev)
+        // Init the watchdog
         //
         InitializeWatchdog();
     }

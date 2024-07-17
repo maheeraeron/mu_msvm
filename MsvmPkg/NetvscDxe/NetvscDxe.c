@@ -20,7 +20,7 @@ Author:
 #include "vmrndis.h"
 #include <Library/EmclLib.h>
 #include <Library/DebugLib.h>
-#include <hvhdk.h>
+#include <Hv/hvhdk.h>
 #include <IsolationTypes.h>
 #include <Protocol/InternalEventServices.h>
 
@@ -127,8 +127,8 @@ Return Value:
     if (mInternalEventServices == NULL)
     {
         status = gBS->LocateProtocol(
-                        &gInternalEventServicesProtocolGuid, 
-                        NULL, 
+                        &gInternalEventServicesProtocolGuid,
+                        NULL,
                         (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }

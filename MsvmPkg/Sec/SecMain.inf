@@ -2,15 +2,8 @@
 #  SEC Driver
 #
 #  Copyright (c) 2008 - 2010, Intel Corporation. All rights reserved.<BR>
-#
-#  This program and the accompanying materials
-#  are licensed and made available under the terms and conditions of the BSD License
-#  which accompanies this distribution. The full text of the license may be found at
-#  http://opensource.org/licenses/bsd-license.php
-#
-#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 ##
 
 [Defines]
@@ -30,14 +23,14 @@
 [Sources]
 
 [Sources.X64]
-  X64/SecMain.c
-  X64/SecIso.c
   X64/SecEntry.asm  | MSFT
   X64/SecEntry.asm  | INTEL
+  X64/SecIso.c
+  X64/SecMain.c
 
 [Sources.AARCH64]
-  AArch64/SecMain.c
   AArch64/SecEntry.masm | MSFT
+  AArch64/SecMain.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -52,15 +45,15 @@
 
 [LibraryClasses]
   BaseLib
-  DebugLib
   BaseMemoryLib
   DebugAgentLib
+  DebugLib
 
 [LibraryClasses.X64]
+  CpuLib
   PeCoffExtraActionLib
   PeCoffGetEntryPointLib
   PeCoffLib
-  CpuLib
 
 [LibraryClasses.AARCH64]
   ArmLib
@@ -69,10 +62,10 @@
   gEfiTemporaryRamSupportPpiGuid                # PPI ALWAYS_PRODUCED
 
 [FixedPcd]
+  gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress
+  gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
+  gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
   gMsvmPkgTokenSpaceGuid.PcdFdBaseAddress
   gMsvmPkgTokenSpaceGuid.PcdFdSize
   gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress
   gMsvmPkgTokenSpaceGuid.PcdFvSize
-  gMsvmPkgTokenSpaceGuid.PcdCom1RegisterBase
-  gMsvmPkgTokenSpaceGuid.PcdCom2RegisterBase
-  gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

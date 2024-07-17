@@ -1,19 +1,12 @@
-/*++
+/** @file
+  Gets configuration values and exports them as globals and PCDs.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Config.c
-
-Abstract:
-
-    Gets configuration values and exports them as globals and PCDs.
-
---*/
+**/
 
 #include <PiPei.h>
-#include <EfiNt.h>
 #include <Platform.h>
 #include <BiosInterface.h>
 #include <AcpiTables.h>
@@ -49,19 +42,21 @@ Abstract:
 
 typedef union _CPUID_ADDRESS_SPACE_SIZES
 {
+#pragma warning(disable : 4201)
     struct
     {
         UINT8 PhysicalAddressBits;
         UINT8 VirtualAddressBits;
         UINT16 Reserved;
     };
+#pragma warning(default : 4201)
 
     UINT32 Value;
 } CPUID_ADDRESS_SPACE_SIZES;
 
 UINT8
 GetPhysicalAddressWidth(
-    _In_ CONST EFI_PEI_SERVICES**  PeiServices
+    IN CONST EFI_PEI_SERVICES**  PeiServices
     )
 /*++
 
@@ -170,7 +165,7 @@ Return Value:
 
 VOID
 DebugDumpMadt(
-    _In_ VOID* Madt
+    IN VOID* Madt
 )
 {
 #if !defined(MDEPKG_NDEBUG)
@@ -282,7 +277,7 @@ DebugDumpMadt(
 
 VOID
 DebugDumpSrat(
-    _In_ VOID* Srat
+    IN VOID* Srat
     )
 {
 #if !defined(MDEPKG_NDEBUG)
@@ -369,7 +364,7 @@ DebugDumpSrat(
 
 VOID
 DebugDumpSlit(
-    _In_ VOID* Slit
+    IN VOID* Slit
     )
 {
 #if !defined(MDEPKG_NDEBUG)
@@ -411,9 +406,9 @@ DebugDumpSlit(
 
 VOID
 DebugDumpMemoryMap(
-    _In_ VOID* MemMap,
-    _In_ UINT32 MemMapSize,
-    _In_ BOOLEAN LegacyMemoryMap
+    IN  VOID*   MemMap,
+        UINT32  MemMapSize,
+        BOOLEAN LegacyMemoryMap
     )
 {
     //
@@ -488,7 +483,7 @@ Return Value:
 
 VOID
 DebugDumpUefiConfigStruct(
-    _In_ UEFI_CONFIG_HEADER* Header
+    IN UEFI_CONFIG_HEADER* Header
     )
 {
 #if !defined(MDEPKG_NDEBUG)
@@ -708,9 +703,9 @@ DebugDumpUefiConfigStruct(
 
 VOID
 GetSmbiosStructureStringLength(
-    _In_ UINT32 HeaderLength,
-    _In_ UINT8* String,
-    _Out_ UINT32* StringLength
+        UINT32  HeaderLength,
+    IN  UINT8*  String,
+    OUT UINT32* StringLength
     )
 /*++
 
@@ -759,7 +754,7 @@ Return Value:
 
 VOID
 ConfigSetProcessorInfo(
-    UEFI_CONFIG_PROCESSOR_INFORMATION *ProcessorInfo
+    IN UEFI_CONFIG_PROCESSOR_INFORMATION *ProcessorInfo
     )
 {
     if (ProcessorInfo->ProcessorCount == 0)
@@ -789,7 +784,7 @@ ConfigSetProcessorInfo(
 
 VOID
 ConfigSetUefiConfigFlags(
-    UEFI_CONFIG_FLAGS *ConfigFlags
+    IN UEFI_CONFIG_FLAGS *ConfigFlags
     )
 {
     DXE_MEMORY_PROTECTION_SETTINGS memoryProtectionSettings;
@@ -863,10 +858,10 @@ ConfigSetUefiConfigFlags(
         &memoryProtectionSettings,
         sizeof(memoryProtectionSettings));
 
-    // AARCH64 vTPM support does not require backwards compatibility modes
+    // AARCH64 vTPM support does not require measured boot backwards-compatibility modes
 #if defined(MDE_CPU_X64)
     //
-    // For VM vdev version 8 and above, MeasureAdditionalPcrs will be TRUE.
+    // For Hyper-V VM version 9.0 and above, MeasureAdditionalPcrs will be TRUE.
     // When TRUE, we will perform a more "standard" measured boot
     //
     if (ConfigFlags->Flags.MeasureAdditionalPcrs)
@@ -876,7 +871,7 @@ ConfigSetUefiConfigFlags(
     }
 
     //
-    // For VM versions below 9.3, DisableSha384Pcr will be TRUE.
+    // For Hyper-V VM versions below 9.3, DisableSha384Pcr will be TRUE.
     // When TRUE, we remove SHA-384 from the PCR hash mask.
     //
     if (ConfigFlags->Flags.DisableSha384Pcr)
@@ -895,7 +890,7 @@ ConfigSetUefiConfigFlags(
 
 EFI_STATUS
 VerifyStructureLength(
-    _In_ UEFI_CONFIG_HEADER* Header
+    IN UEFI_CONFIG_HEADER* Header
     )
 /*++
 
@@ -1031,6 +1026,7 @@ Return Value:
     //
     // Tracking to see if the config blob has all the required structures.
     //
+#pragma warning(disable : 4201)
 #if defined(MDE_CPU_X64)
     static const UINT64 AllStructuresFound = 0x1FF;
     union {
@@ -1067,6 +1063,8 @@ Return Value:
         UINT64 AsUINT64;
     } requiredStructures;
 #endif
+#pragma warning(default : 4201)
+
     requiredStructures.AsUINT64 = 0;
 
     header = GetStartOfConfigBlob();
@@ -1495,14 +1493,14 @@ Return Value:
 
 EFI_STATUS
 GetConfiguration(
-    _In_ CONST EFI_PEI_SERVICES**  PeiServices,
-    _Out_ UINT8* PhysicalAddressWidth
+    IN CONST    EFI_PEI_SERVICES**  PeiServices,
+    OUT         UINT8*              PhysicalAddressWidth
     )
 /*++
 
 Routine Description:
 
-    Gets the configuraton from the worker process.
+    Gets the configuraton from the loader.
 
 Arguments:
 

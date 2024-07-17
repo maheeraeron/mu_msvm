@@ -1,26 +1,16 @@
-/*++
+/** @file
+  Library that provides version agnostic access to virtual machine configuration.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
+**/
 
-    ConfigLib.c
-
-Abstract:
-
-    Library that provides version agnostic access to virtual machine configuration.
-
-Author:
-
-    Larry Cleeton (lcleeton) - 02-May-2014
-
---*/
-
-#include <EfiNt.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/BiosDeviceLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
-#include <Library/BaseMemoryLib.h>
+
 #include <BiosInterface.h>
 
 UINT32
@@ -102,7 +92,7 @@ SetGenerationIdAddress(
 
 Routine Description:
 
-    Communicates the Generation ID memory location to the VDev.
+    Communicates the Generation ID memory location to the BiosDevice.
 
 Arguments:
 

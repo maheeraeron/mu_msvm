@@ -15,7 +15,7 @@ Abstract:
 #if !defined(_HVHDK_MINI_)
 #define _HVHDK_MINI_
 
-#include <hvgdk_mini.h>
+#include <Hv/hvgdk_mini.h>
 
 #if _MSC_VER > 1000
 #pragma once
@@ -26,6 +26,7 @@ Abstract:
 #endif
 
 #pragma warning(disable:4200) // zero length array
+#pragma warning(disable:4201) // nameless struct/union
 #pragma warning(disable:4214) // bit field types other than int
 #pragma warning(disable:4324) // structure was padded due to __declspec(align())
 
@@ -1292,7 +1293,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_PREPARE_FOR_SLEEP
 // transition.
 //
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef struct _HV_ARM64_PROC_STATE_GP_REGS
 {
@@ -1334,7 +1335,7 @@ typedef struct _HV_ARM64_VOLATILE_GP_REGS
 #define  HV_VOLATILE_GP_REGS    HV_ARM64_VOLATILE_GP_REGS
 #define PHV_VOLATILE_GP_REGS   PHV_ARM64_VOLATILE_GP_REGS
 
-#elif defined(_AMD64_)
+#elif defined(MDE_CPU_X64)
 
 typedef struct _HV_X64_PROC_STATE_GP_REGS
 {
@@ -1380,7 +1381,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_PREPARE_FOR_HIBERNATE
     HV_VTL RestrictApVtl;
 } HV_INPUT_PREPARE_FOR_HIBERNATE, *PHV_INPUT_PREPARE_FOR_HIBERNATE;
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef struct HV_CALL_ATTRIBUTES _HV_ARM64_OUTPUT_PREPARE_FOR_HIBERNATE
 {
@@ -1395,7 +1396,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_ARM64_OUTPUT_PREPARE_FOR_HIBERNATE
 #define  HV_OUTPUT_PREPARE_FOR_HIBERNATE  HV_ARM64_OUTPUT_PREPARE_FOR_HIBERNATE
 #define PHV_OUTPUT_PREPARE_FOR_HIBERNATE PHV_ARM64_OUTPUT_PREPARE_FOR_HIBERNATE
 
-#elif defined(_AMD64_)
+#elif defined(MDE_CPU_X64)
 
 typedef struct HV_CALL_ATTRIBUTES _HV_X64_OUTPUT_PREPARE_FOR_HIBERNATE
 {
@@ -1438,7 +1439,7 @@ typedef enum _HV_LOGICAL_PROCESSOR_REGISTER_TYPE
 typedef const HV_LOGICAL_PROCESSOR_REGISTER_TYPE
         *PCHV_LOGICAL_PROCESSOR_REGISTER_TYPE;
 
-#if defined(_ARM64_) || defined(_ARM_)
+#if defined(MDE_CPU_AARCH64)
 
 typedef union _HV_ARM64_LOGICAL_PROCESSOR_REGISTER_ADDRESS
 {
@@ -1465,7 +1466,7 @@ typedef const HV_ARM64_LOGICAL_PROCESSOR_REGISTER_ADDRESS *PCHV_ARM64_LOGICAL_PR
 #define  PHV_LOGICAL_PROCESSOR_REGISTER_ADDRESS  PHV_ARM64_LOGICAL_PROCESSOR_REGISTER_ADDRESS
 #define PCHV_LOGICAL_PROCESSOR_REGISTER_ADDRESS PCHV_ARM64_LOGICAL_PROCESSOR_REGISTER_ADDRESS
 
-#elif defined(_AMD64_)
+#elif defined(MDE_CPU_X64)
 
 typedef union _HV_X64_LOGICAL_PROCESSOR_REGISTER_ADDRESS
 {
@@ -1516,7 +1517,7 @@ typedef union _HV_LOGICAL_PROCESSOR_REGISTER_VALUE
     UINT16              Reg16;
     UINT8               Reg8;
 
-#if !defined(_ARM64_) && !defined(_ARM_)
+#if !defined(MDE_CPU_AARCH64)
 
     HV_CPUID_RESULT     Cpuid;
 
@@ -1593,9 +1594,9 @@ typedef enum _HV_DEVICE_TYPE
 {
     HV_DEVICE_TYPE_LOGICAL = 0,
     HV_DEVICE_TYPE_PCI = 1,
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
     HV_DEVICE_TYPE_IOAPIC = 2,
-#elif defined(_ARM64_)
+#elif defined(MDE_CPU_AARCH64)
     HV_DEVICE_TYPE_GIC = 2,
 #endif
     HV_DEVICE_TYPE_ACPI = 3,
@@ -1642,7 +1643,7 @@ typedef union _HV_DEVICE_ID
         UINT16 DeviceType : 2;
     } Pci;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
     // HV_DEVICE_TYPE_IOAPIC
     struct
@@ -1656,7 +1657,7 @@ typedef union _HV_DEVICE_ID
         UINT16 DeviceType : 2;
     } IoApic;
 
-#elif defined(_ARM64_)
+#elif defined(MDE_CPU_AARCH64)
 
     // HV_DEVICE_TYPE_GIC
     struct
@@ -2022,7 +2023,7 @@ typedef struct _HV_SMC_DATA_PATH_PROPERTY
     UINT16 Reserved:15;
 } HV_SMC_DATA_PATH_PROPERTY, *PHV_SMC_DATA_PATH_PROPERTY;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // BTB MSR controls.
@@ -2186,7 +2187,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_OUTPUT_GET_SYSTEM_PROPERTY
 
         BOOLEAN DmaInitializeBlocked;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
         HV_SPECULATION_CONTROL_CONFIG SpeculationControlConfig;
 
@@ -2550,7 +2551,7 @@ typedef union _HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS
     };
 } HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS, *PHV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS;
 
-C_ASSERT(sizeof(HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS) == sizeof(UINT32));
+static_assert(sizeof(HV_INPUT_REQUEST_PROCESSOR_HALT_FLAGS) == sizeof(UINT32));
 
 typedef union HV_CALL_ATTRIBUTES _HV_INPUT_REQUEST_PROCESSOR_HALT
 {
@@ -2562,7 +2563,7 @@ typedef union HV_CALL_ATTRIBUTES _HV_INPUT_REQUEST_PROCESSOR_HALT
     UINT64 AsUINT64;
 } HV_INPUT_REQUEST_PROCESSOR_HALT, *PHV_INPUT_REQUEST_PROCESSOR_HALT;
 
-C_ASSERT(sizeof(HV_INPUT_REQUEST_PROCESSOR_HALT) == sizeof(UINT64));
+static_assert(sizeof(HV_INPUT_REQUEST_PROCESSOR_HALT) == sizeof(UINT64));
 
 typedef enum _HV_BOOT_DEBUG_PORT_TYPE
 {
@@ -2647,7 +2648,7 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
         struct
         {
             HV_BOOT_DEBUG_COM_PORT_TYPE ComPortType;
-            ULONG InterfaceType;
+            unsigned long InterfaceType;
             union
             {
                 UINT16 IoPort;
@@ -2669,8 +2670,8 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
 
         struct
         {
-            ULONG  NameSpace;
-            USHORT PortSubtype;
+            unsigned long NameSpace;
+            unsigned short PortSubtype;
             UINT32 Bus;
             UINT32 Slot;
             IPV6_ADDRESS HostIP;
@@ -2684,7 +2685,7 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
             UINT32 BaseAddressRegisterByteCount[HV_BOOT_NET_BAR_COUNT];
             UINT16 BaseAddressRegisterType[HV_BOOT_NET_BAR_COUNT];
             UINT32 KdNetDataSize;
-#if defined (_ARM64_)
+#if defined (MDE_CPU_AARCH64)
             HV_SPA KdNetPciMmCfgAddr;
 #endif
             UINT8  BaseClass;
@@ -2692,7 +2693,7 @@ typedef struct _HV_BOOT_DEBUG_PARAMETERS
             UINT8  ProgIf;
             UINT16 PortType;
             UINT16 Segment;
-            UCHAR  DefaultTargetMacAddress[6];
+            unsigned char DefaultTargetMacAddress[6];
         } Net;
     };
 
@@ -2741,7 +2742,7 @@ typedef struct _HV_BOOT_PARAMETERS
 
 } HV_BOOT_PARAMETERS, *PHV_BOOT_PARAMETERS;
 
-#if defined (_ARM64_)
+#if defined (MDE_CPU_AARCH64)
 
 //
 // No known errata for the current platform.
@@ -2900,7 +2901,7 @@ typedef struct _HV_MINI_LOADER_BLOCK
 
     } RuntimeServicesMemoryRanges[HV_BOOT_MAX_RUNTIME_SERVICES_RANGES];
 
-#if defined (_ARM64_)
+#if defined (MDE_CPU_AARCH64)
 
     //
     // Details about the specific platform used for boot and errata.
@@ -3507,7 +3508,7 @@ HvlSetupHypervisor(
 #define HV_MAP_GPA_PERMISSIONS_MASK_WITH_ADJUST 0x1F
 
 #define HV_MAP_GPA_PERMISSION_BITS      5
-C_ASSERT(HV_MAP_GPA_PERMISSIONS_MASK_WITH_ADJUST == ((1 << HV_MAP_GPA_PERMISSION_BITS) - 1));
+static_assert(HV_MAP_GPA_PERMISSIONS_MASK_WITH_ADJUST == ((1 << HV_MAP_GPA_PERMISSION_BITS) - 1));
 
 //
 // The second byte contains flags that can be set for mapping information.
@@ -4000,7 +4001,7 @@ typedef union _HV_DEVICE_DOMAIN_ID
     };
 } HV_DEVICE_DOMAIN_ID, *PHV_DEVICE_DOMAIN_ID;
 
-C_ASSERT(sizeof(HV_DEVICE_DOMAIN_ID) == sizeof(UINT64));
+static_assert(sizeof(HV_DEVICE_DOMAIN_ID) == sizeof(UINT64));
 
 #define IS_HV_DEVICE_DOMAIN_EQUAL(_DevId_, _Type_, _Id_) \
     ((_DevId_).Type == (_Type_) && \
@@ -4225,7 +4226,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UNCOMMIT_GPA_PAGES
 
 } HV_INPUT_UNCOMMIT_GPA_PAGES, *PHV_INPUT_UNCOMMIT_GPA_PAGES;
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // Definitions for the HvCallGetGpaPagesAccessState and
@@ -4324,7 +4325,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_GET_SPARSE_GPA_PAGES_ACCESS_STATE
 
 #endif
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // ARM64HV_WORKITEM - We should be able to support this for ARM64, as long as
@@ -4358,7 +4359,7 @@ typedef union _HV_MSR_WATCHDOG_CONFIG_CONTENTS
 //
 // Definitions for HvCallUpdateMicrocode.
 //
-#if defined (_AMD64_)
+#if defined (MDE_CPU_X64)
 
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UPDATE_MICROCODE
 {
@@ -4370,7 +4371,7 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_UPDATE_MICROCODE
 
 #endif
 
-#if defined(_AMD64_)
+#if defined(MDE_CPU_X64)
 
 //
 // Type definitions for hot-patch hypercalls.
@@ -4392,7 +4393,7 @@ typedef enum _HV_IMAGE_QUERY_TYPE
 #define HV_HOTPATCH_MAXIMUM_MODULE_INDEX                (HV_HOTPATCH_MAXIMUM_MODULE_COUNT - 1)
 
 //
-// Define the number of patch slots for every hot-patchable image. 
+// Define the number of patch slots for every hot-patchable image.
 // Internally, Slot#0 aka primary slot refers to base image.
 //
 #define HV_HOTPATCH_MAXIMUM_SECONDARY_SLOT_COUNT        (2)
@@ -4452,7 +4453,7 @@ typedef struct _HV_MODULE_TRAITS
 typedef union _HV_GPA_PAGE_PERMISSION
 {
     UINT64 AsUINT64;
-    
+
     struct
     {
         UINT64 Valid        : 1;
@@ -4462,7 +4463,7 @@ typedef union _HV_GPA_PAGE_PERMISSION
         UINT64 GpaPage      : 40;
         UINT64 ReservedZ1   : 12;
     };
-    
+
 } HV_GPA_PAGE_PERMISSION, *PHV_GPA_PAGE_PERMISSION;
 
 typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_QUERY_IMAGE_INFO
@@ -4581,6 +4582,15 @@ typedef struct HV_CALL_ATTRIBUTES _HV_INPUT_COMMIT_PATCH
 
 } HV_INPUT_COMMIT_PATCH, *PHV_INPUT_COMMIT_PATCH;
 
+#endif
+
+#if _MSC_VER >= 1200
+#pragma warning(pop)
+#else
+#pragma warning(default:4200) /* nonstandard extension used : zero-sized array in struct/union */
+#pragma warning(default:4201) /* nameless struct/union */
+#pragma warning(default:4214) /* nonstandard extension used : bit field types other then int */
+#pragma warning(default:4324) /* structure was padded due to __declspec(align()) */
 #endif
 
 #endif // _HVHDK_MINI

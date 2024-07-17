@@ -1,18 +1,13 @@
-/*++
+/** @file
+  This file implements support routines for GHCB-based calls.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    GhcbHyperall.c
-
-Abstract:
-
-    This file implements support routines for GHCB-based calls.
-
---*/
+**/
 
 #include <Base.h>
+#include <Hv/hvgdk.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>

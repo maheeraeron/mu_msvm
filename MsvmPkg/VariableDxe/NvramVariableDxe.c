@@ -11,7 +11,7 @@ Abstract:
     Hyper-V NVRAM Variable Services driver.
 
     The module acts as a proxy and sends non-volatile variable requests
-    to the Hyper-V BIOS VDev.
+    to the Hyper-V BiosDevice.
 
 Author:
 
@@ -50,10 +50,10 @@ static EFI_PHYSICAL_ADDRESS        mNvramCommandDataBufferGpa   = 0;
 static UINT8*                      mNvramCommandDataBuffer      = NULL;
 
 //
-// NVRAM is not allowed on Hardware Isolated systems without a paravisor (even if a bios emulator is present). 
-// In a hardware isolated system the host is not part of the TCB thus we should not depend on host for NVRAM 
+// NVRAM is not allowed on Hardware Isolated systems without a paravisor (even if a bios emulator is present).
+// In a hardware isolated system the host is not part of the TCB thus we should not depend on host for NVRAM
 // information and all calls should fail appropriately.
-// 
+//
 
 static BOOLEAN mNvramNotAllowed = FALSE;
 
@@ -92,7 +92,7 @@ Returns:
     for (;;)
     {
         //
-        // Send the request to the BIOS VDev.
+        // Send the request to the BiosDevice.
         // Cast of descriptor GPA is safe as it is allocated below 4GB.
         //
         WriteBiosDevice(BiosConfigNvramCommand, (UINT32)mNvramCommandDescriptorGpa);
@@ -298,7 +298,7 @@ NvramExitBootServicesHandler(
 Routine Description:
 
     Callback to handle when ExitBootServices is called by an application/boot loader.
-    This function simply notifies the BIOS VDev of this event.
+    This function simply notifies the BiosDevice of this event.
 
 Arguments:
 
@@ -752,7 +752,7 @@ NvramDebugLog(
 
 Routine Description:
 
-    Formats and sends a log message to the BIOS VDev.
+    Formats and sends a log message to the BiosDevice.
 
 Arguments:
 

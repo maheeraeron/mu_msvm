@@ -1,25 +1,18 @@
-/*++
+/** @file
+  Routines to support hardware isolation of the SEC driver.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
+**/
 
-    SecIso.c
-
-Abstract:
-
-    Routines to support hardware isolation of the SEC driver.
-
---*/
-
+#include <Hv/hvgdk_mini.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
 #include <Library/CpuLib.h>
 #include <Register/Intel/ArchitecturalMsr.h>
-#include <EfiNt.h>
-#include <hvgdk_mini.h>
 #include <BiosInterface.h>
 #include <IsolationTypes.h>
 #include "SecP.h"
@@ -28,21 +21,21 @@ Abstract:
 #define GHCB_SET_FIELD_VALID(Ghcb, Field) \
     do { \
         if (Field < GHCB_FIELD_VALID_BITMAP0) { \
-            _bittestandset64((PUINT64)((PUCHAR)(Ghcb) + GHCB_FIELD_VALID_BITMAP0), GHCB_FIELD_INDEX(Field)); \
+            _bittestandset64((UINT64*)((UINT8*)(Ghcb) + GHCB_FIELD_VALID_BITMAP0), GHCB_FIELD_INDEX(Field)); \
         } \
     } while (0)
 
 #define SetGhcbField16(Ghcb, Field, Value) \
     GHCB_SET_FIELD_VALID(Ghcb, Field); \
-    (*(PUINT16)((PUCHAR)(Ghcb) + (Field)) = (Value))
+    (*(UINT16*)((UINT8*)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField32(Ghcb, Field, Value) \
     GHCB_SET_FIELD_VALID(Ghcb, Field); \
-    (*(PUINT32)((PUCHAR)(Ghcb) + (Field)) = (Value))
+    (*(UINT32*)((UINT8*)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField64(Ghcb, Field, Value) \
     GHCB_SET_FIELD_VALID(Ghcb, Field); \
-    (*(PUINT64)((PUCHAR)(Ghcb) + (Field)) = (Value))
+    (*(UINT64*)((UINT8*)(Ghcb) + (Field)) = (Value))
 #define GetGhcbField64(Ghcb, Field) \
-    (*(PUINT64)((PUCHAR)(Ghcb) + (Field)))
+    (*(UINT64*)((UINT8*)(Ghcb) + (Field)))
 
 #define GHCB_INFO_REGISTER_REQUEST      0x012
 #define GHCB_INFO_REGISTER_RESPONSE     0x013
@@ -61,23 +54,21 @@ Abstract:
 #define GHCB_FIELD16_VERSION            0xFFA
 #define GHCB_FIELD32_FORMAT             0xFFC
 
-PVOID Ghcb;
+VOID *Ghcb;
 UINT64 TscMultiplier;
 UINT64 TscDivisor;
 HV_PSP_CPUID_PAGE *CpuidPage;
 SEC_CPUID_INFO CpuidInfo;
 SEC_CPUID_INFO ExtendedCpuidInfo;
+
 //
 // Access to ioports should be restricted in TDX scenario.
-// This is currently not the case for development purposes.
-// TODO (sibhagat) : add ioport filtering before release. 
 //
-BOOLEAN FilterIoPortAccesses;
-
+BOOLEAN FilterIoPortAccesses = TRUE;
 
 BOOLEAN
 SecIsPortAccessAllowed(
-    _In_ UINT16 PortNumber
+    UINT16 PortNumber
     )
 {
     BOOLEAN retValue = FALSE;
@@ -100,7 +91,7 @@ SecIsPortAccessAllowed(
         // biosPort = port for BiosAddress
         // biosPort+4 = port for BiosData
         //
-        biosPort = PcdGet32(PcdBiosBaseAddress); 
+        biosPort = PcdGet32(PcdBiosBaseAddress);
 
         if ((PortNumber >= com1Register) && (PortNumber < (com1Register + 8)))
         {
@@ -121,11 +112,7 @@ SecIsPortAccessAllowed(
     }
     else
     {
-        //
-        // TODO (sibhagat) : Should be FALSE before release. Access to ioports should either be filtered 
-        // or not allowed.
-        //
-        retValue = TRUE;
+        retValue = FALSE;
     }
 
     return retValue;
@@ -133,7 +120,7 @@ SecIsPortAccessAllowed(
 
 UINT64
 SecReadMsrWithGhcb(
-    _In_ UINT64 MsrNumber
+    UINT64 MsrNumber
     )
 {
     UINT64 msrValue;
@@ -163,8 +150,8 @@ SecReadMsrWithGhcb(
 
 VOID
 SecWriteMsrWithGhcb(
-    _In_ UINT64 MsrNumber,
-    _In_ UINT64 Value
+    UINT64 MsrNumber,
+    UINT64 Value
     )
 {
     //
@@ -189,9 +176,9 @@ SecWriteMsrWithGhcb(
 
 VOID
 SecInitializeReferenceTime (
-    _In_ UINT32 ClockFrequency,
-    _In_ UINT32 TscNumerator,
-    _In_ UINT32 TscDenominator
+    UINT32 ClockFrequency,
+    UINT32 TscNumerator,
+    UINT32 TscDenominator
     )
 {
     //
@@ -214,8 +201,8 @@ SecInitializeReferenceTime (
 
 BOOLEAN
 SecInitializeHardwareIsolation (
-    _In_ UINT32 IsolationType,
-    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+    UINT32 IsolationType,
+    UEFI_IGVM_PARAMETER_INFO *ParameterInfo
     )
 {
     UINT32 clockFrequency;
@@ -266,7 +253,7 @@ SecInitializeHardwareIsolation (
         //
 
         AsmWriteMsr64(MSR_GHCB, ghcbAddress);
-        Ghcb = (PVOID)ghcbAddress;
+        Ghcb = (VOID*)ghcbAddress;
 
         //
         // Capture the location of CPUID information.
@@ -370,7 +357,7 @@ SecInitializeHardwareIsolation (
 
 BOOLEAN
 SecProcessVirtualMsrRead (
-    _In_ PTRAP_FRAME TrapFrame
+    IN PTRAP_FRAME TrapFrame
     )
 {
     UINT64 value;
@@ -443,7 +430,7 @@ SecProcessVirtualMsrRead (
 
 BOOLEAN
 SecProcessVirtualMsrWrite (
-    _In_ PTRAP_FRAME TrapFrame
+    IN PTRAP_FRAME TrapFrame
     )
 {
     UINT64 value;
@@ -478,7 +465,7 @@ SecProcessVirtualMsrWrite (
 
 BOOLEAN
 SecProcessVirtualCpuid (
-    _In_ PTRAP_FRAME TrapFrame
+    IN PTRAP_FRAME TrapFrame
     )
 {
     SEC_CPUID_INFO *cpuidInfo;
@@ -644,7 +631,7 @@ SecProcessVirtualCpuid (
 
 BOOLEAN
 SecProcessHlt(
-    _In_ PTRAP_FRAME TrapFrame
+    IN PTRAP_FRAME TrapFrame
     )
 {
     //
@@ -658,9 +645,9 @@ SecProcessHlt(
 
 BOOLEAN
 SecProcessIoPortRead(
-    _In_ PTRAP_FRAME TrapFrame,
-    _In_ UINT16 PortNumber,
-    _In_ UINT32 AccessSize
+    IN  PTRAP_FRAME TrapFrame,
+        UINT16 PortNumber,
+        UINT32 AccessSize
     )
 {
     UINT64 mask;
@@ -696,9 +683,9 @@ SecProcessIoPortRead(
 
 BOOLEAN
 SecProcessIoPortWrite(
-    _In_ PTRAP_FRAME TrapFrame,
-    _In_ UINT16 PortNumber,
-    _In_ UINT32 AccessSize
+    IN  PTRAP_FRAME TrapFrame,
+        UINT16 PortNumber,
+        UINT32 AccessSize
     )
 {
     UINT64 mask;
@@ -727,7 +714,7 @@ SecProcessIoPortWrite(
 
 BOOLEAN
 SecProcessVirtualCommunicationException (
-    _In_ PTRAP_FRAME TrapFrame
+    IN PTRAP_FRAME TrapFrame
     )
 {
     UINT32 InstructionLength;
@@ -740,7 +727,7 @@ SecProcessVirtualCommunicationException (
         // Examine the instruction to determine whether it is a read or write.
         //
 
-        if (*(PUINT8)(TrapFrame->Rip + 1) == 0x30)
+        if (*(UINT8*)(TrapFrame->Rip + 1) == 0x30)
         {
             //
             // WRMSR.
@@ -777,7 +764,7 @@ SecProcessVirtualCommunicationException (
 
 BOOLEAN
 SecProcessVirtualizationException (
-    _In_ PTRAP_FRAME TrapFrame
+    IN PTRAP_FRAME TrapFrame
     )
 {
     UINT32 accessSize;

@@ -1,16 +1,10 @@
-/*++
+/** @file
+  This file contains types and constants describing VM isolation.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    IsolationTypes.h
-
-Abstract:
-
-    This file contains types and constants describing VM isolation.
-
---*/
+**/
 
 #pragma once
 
@@ -33,7 +27,7 @@ IsIsolatedEx(
     UINT32 IsolationType
     );
 
-BOOLEAN 
+BOOLEAN
 IsIsolated();
 
 BOOLEAN
@@ -41,7 +35,7 @@ IsHardwareIsolatedEx(
     UINT32 IsolationType
     );
 
-BOOLEAN 
+BOOLEAN
 IsHardwareIsolated();
 
 BOOLEAN
@@ -49,7 +43,7 @@ IsSoftwareIsolatedEx(
     UINT32 IsolationType
     );
 
-BOOLEAN 
+BOOLEAN
 IsSoftwareIsolated();
 
 BOOLEAN
@@ -58,5 +52,5 @@ IsHardwareIsolatedNoParavisorEx(
     BOOLEAN IsParavisorPresent
     );
 
-BOOLEAN 
+BOOLEAN
 IsHardwareIsolatedNoParavisor();

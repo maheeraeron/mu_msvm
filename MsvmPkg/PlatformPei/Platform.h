@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Definitions relating to the Hyper-V "Platform" PEI Module.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Platform.h
-
-Abstract:
-
-    Definitions relating to the Hyper-V "Platform" PEI Module.
-
---*/
+**/
 
 #pragma once
 
@@ -22,10 +16,10 @@ Abstract:
 
 VOID
 TripleFault(
-    __in    UINTN   Rax,
-    __in    UINTN   Rbx,
-    __in    UINTN   Rcx,
-    __in    UINTN   Rdx
+    UINTN   Rax,
+    UINTN   Rbx,
+    UINTN   Rcx,
+    UINTN   Rdx
 );
 
 #if defined(MDE_CPU_AARCH64)

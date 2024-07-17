@@ -472,7 +472,7 @@
 
   gEfiNetworkPkgTokenSpaceGuid.PcdDhcp6UidType|4              # 04 = UUID-Based DHCPv6 Unique Identifier (DUID-UUID)
 
-  # UEFI Config information from the Bios VDEV
+  # UEFI Config information from the BiosDevice
   # UEFI_CONFIG_STRUCTURE_COUNT
   gMsvmPkgTokenSpaceGuid.PcdConfigBlobSize|0x0
   # UEFI_CONFIG_BIOS_INFORMATION

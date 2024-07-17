@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Mmu setup for ARM64
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Mmu.h
-
-Abstract:
-
-    Mmu setup for ARM64
-
---*/
+**/
 
 #pragma once
 
@@ -20,5 +14,5 @@ Abstract:
 EFI_STATUS
 EFIAPI
 ConfigureMmu(
-    IN  UINT64  MaxAddress
+    UINT64  MaxAddress
     );

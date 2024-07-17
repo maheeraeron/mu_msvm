@@ -1,9 +1,9 @@
 ## @file
 #  Config Library instance.
-#
 #  Simplifies access to virtual machine configuration information.
 #
 #  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 

@@ -1,38 +1,31 @@
-/*++
+/** @file
+  This file implements routines to update host visibility of memory.  These
+  routines will perform the correct platform-specific sequences when
+  hardware isolation is in effect with no paravisor present.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
+**/
 
-    HostVisibilityLib.c
-
-Abstract:
-
-    This file implements routines to update host visibility of memory.  These
-    routines will perform the correct platform-specific sequences when
-    hardware isolation is in effect with no paravisor present.
-
---*/
-
-#include <EfiNt.h>
+#include <Hv/hvgdk_mini.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Uefi/UefiBaseType.h>
-#include <hvgdk_mini.h>
 #include <IsolationTypes.h>
 
 UINT64
 _sev_pvalidate(
-    _In_ PVOID Address,
-    _In_ UINT32 PageSize,
-    _In_ UINT32 Validate,
-    _Out_ PUINT64 ErrorCode
+    IN  VOID    *Address,
+        UINT32  PageSize,
+        UINT32  Validate,
+    OUT UINT64  *ErrorCode
     );
 
 UINT64
 VispCallSvsm(
-    _In_ UINT64 CallCode,
-    _In_ UINT64 Parameter
+    UINT64 CallCode,
+    UINT64 Parameter
     );
 
 #define SNP_SUCCESS             0
@@ -41,9 +34,10 @@ VispCallSvsm(
 
 UINT64
 SpecialGhcbCall(
-    _In_ UINT64 GhcbValue
+    UINT64 GhcbValue
     );
 
+#pragma warning(disable : 4201)
 typedef union _GHCB_MSR
 {
     UINT64 AsUINT64;
@@ -61,6 +55,7 @@ typedef union _GHCB_MSR
     };
 
 } GHCB_MSR;
+#pragma warning(default : 4201)
 
 #define GHCB_INFO_PAGE_STATE_CHANGE     0x014
 #define GHCB_INFO_PAGE_STATE_UPDATED    0x015
@@ -94,6 +89,7 @@ typedef struct _SVSM_PVALIDATE {
 
 #define TDX_TDG_STATUS(_status_) ((_status_) >> 32)
 
+#pragma warning(disable : 4201)
 typedef union _TDX_ACCEPT_GPA {
     UINT64 AsUINT64;
     struct {
@@ -102,25 +98,26 @@ typedef union _TDX_ACCEPT_GPA {
         UINT64 GpaPageNumber : 52;
     };
 } TDX_ACCEPT_GPA, *PTDX_ACCEPT_GPA;
+#pragma warning(default : 4201)
 
 UINT64
 _tdx_tdg_mem_page_accept(
-    _In_ TDX_ACCEPT_GPA AcceptGpa
+    TDX_ACCEPT_GPA AcceptGpa
     );
 
 UINT64
 _tdx_vmcall_map_gpa(
-    _In_ UINT64 Gpa,
-    _In_ UINT64 Size,
-    _Out_opt_ PUINT64 FailedGpa
+                    UINT64  Gpa,
+                    UINT64  Size,
+    OUT OPTIONAL    UINT64  *FailedGpa
     );
 
 
 EFI_STATUS
 EfiUpdatePageRangeAcceptanceSnp(
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _In_ BOOLEAN Accept
+    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+    UINT64              PageCount,
+    BOOLEAN             Accept
     )
 /*++
 
@@ -159,7 +156,7 @@ Return Value:
             (PageCount >= SIZE_2MB))
         {
             if (_sev_pvalidate(
-                (PVOID)(StartingPageNumber * EFI_PAGE_SIZE),
+                (VOID*)(StartingPageNumber * EFI_PAGE_SIZE),
                 1,
                 Accept,
                 &errorCode) != 0)
@@ -180,7 +177,7 @@ Return Value:
         }
 
         if (_sev_pvalidate(
-            (PVOID)(StartingPageNumber * EFI_PAGE_SIZE),
+            (VOID*)(StartingPageNumber * EFI_PAGE_SIZE),
             0,
             Accept,
             &errorCode) != 0)
@@ -203,10 +200,10 @@ Return Value:
 
 EFI_STATUS
 EfiUpdatePageRangeAcceptanceSnpSvsm(
-    _In_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _In_ BOOLEAN Accept
+    IN  VOID                *SvsmCallingArea,
+        HV_GPA_PAGE_NUMBER  StartingPageNumber,
+        UINT64              PageCount,
+        BOOLEAN             Accept
     )
 /*++
 
@@ -240,7 +237,7 @@ Return Value:
     HV_GPA_PAGE_NUMBER largePageSize;
     UINT32 maximumEntries;
     UINT32 numberOfEntries;
-    PUINT64 pageArray;
+    UINT64* pageArray;
     UINT32 pageIndex;
     HV_GPA_PAGE_NUMBER pageNumber;
     UINT64 pagesRemaining;
@@ -259,7 +256,7 @@ Return Value:
         return EFI_SECURITY_VIOLATION;
     }
     maximumEntries -= numberOfEntries;
-    pageArray = (PUINT64)(pvalidate + 1);
+    pageArray = (UINT64*)(pvalidate + 1);
 
     largePageSize = SIZE_2MB / HV_PAGE_SIZE;
 
@@ -354,8 +351,8 @@ Return Value:
 
 EFI_STATUS
 EfiUpdatePageRangeAcceptanceTdx(
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount
+    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+    UINT64              PageCount
     )
 /*++
 
@@ -440,11 +437,11 @@ Return Value:
 
 EFI_STATUS
 EfiUpdatePageRangeAcceptance(
-    _In_ UINT32 IsolationType,
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _In_ BOOLEAN Accept
+                UINT32              IsolationType,
+    IN OPTIONAL VOID                *SvsmCallingArea,
+                HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                UINT64              PageCount,
+                BOOLEAN             Accept
     )
 /*++
 
@@ -514,9 +511,9 @@ Return Value:
 
 EFI_STATUS
 VispPvalidateSinglePage(
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER PageNumber,
-    _In_ BOOLEAN Validate
+    IN OPTIONAL VOID                *SvsmCallingArea,
+                HV_GPA_PAGE_NUMBER  PageNumber,
+                BOOLEAN             Validate
     )
 /*++
 
@@ -541,7 +538,7 @@ Return Value:
 --*/
 {
     UINT64 errorCode;
-    PUINT64 pageArray;
+    UINT64* pageArray;
     SVSM_PVALIDATE *pvalidate;
 
     if (SvsmCallingArea != NULL)
@@ -551,7 +548,7 @@ Return Value:
         //
 
         pvalidate = SvsmCallingArea;
-        pageArray = (PUINT64)(pvalidate + 1);
+        pageArray = (UINT64*)(pvalidate + 1);
         *pageArray = PageNumber * EFI_PAGE_SIZE;
         if (Validate)
         {
@@ -574,7 +571,7 @@ Return Value:
     }
     else
     {
-        if (_sev_pvalidate((PVOID)(PageNumber * EFI_PAGE_SIZE), 0, 0, &errorCode) != 0)
+        if (_sev_pvalidate((VOID*)(PageNumber * EFI_PAGE_SIZE), 0, 0, &errorCode) != 0)
         {
             return EFI_SECURITY_VIOLATION;
         }
@@ -591,10 +588,10 @@ Return Value:
 
 EFI_STATUS
 EfiMakePageRangeHostVisibleSnp(
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _Out_opt_ PUINT64 PagesProcessed
+    IN OPTIONAL     VOID                *SvsmCallingArea,
+                    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                    UINT64              PageCount,
+    OUT OPTIONAL    UINT64              *PagesProcessed
     )
 /*++
 
@@ -630,7 +627,7 @@ Return Value:
     GHCB_MSR ghcbMsr;
     EFI_STATUS status;
 
-    if (ARGUMENT_PRESENT(PagesProcessed))
+    if (PagesProcessed != NULL)
     {
         *PagesProcessed = 0;
     }
@@ -669,7 +666,7 @@ Return Value:
             return EFI_SECURITY_VIOLATION;
         }
 
-        if (ARGUMENT_PRESENT(PagesProcessed))
+        if (PagesProcessed != NULL)
         {
             *PagesProcessed += 1;
         }
@@ -684,10 +681,10 @@ Return Value:
 
 EFI_STATUS
 EfiChangePageRangeHostVisibilityTdx(
-    _In_ HV_GPA StartingGpa,
-    _In_ UINT64 PageCount,
-    _In_ BOOLEAN Visible,
-    _Out_opt_ PUINT64 PagesProcessed
+                    HV_GPA  StartingGpa,
+                    UINT64  PageCount,
+                    BOOLEAN Visible,
+    OUT OPTIONAL    UINT64  *PagesProcessed
     )
 /*++
 
@@ -801,7 +798,7 @@ Return Value:
         }
     }
 
-    if (ARGUMENT_PRESENT(PagesProcessed))
+    if (PagesProcessed != NULL)
     {
         *PagesProcessed = pagesProcessed;
     }
@@ -812,11 +809,11 @@ Return Value:
 
 EFI_STATUS
 EfiMakePageRangeHostVisible(
-    _In_ UINT32 IsolationType,
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _Out_opt_ PUINT64 PagesProcessed
+                    UINT32              IsolationType,
+    IN OPTIONAL     VOID                *SvsmCallingArea,
+                    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                    UINT64              PageCount,
+    OUT OPTIONAL    UINT64              *PagesProcessed
     )
 /*++
 
@@ -874,10 +871,10 @@ Return Value:
 
 EFI_STATUS
 EfiMakePageRangeHostNotVisibleSnp(
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _Out_opt_ PUINT64 PagesProcessed
+    IN OPTIONAL     VOID                *SvsmCallingArea,
+                    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                    UINT64              PageCount,
+    OUT OPTIONAL    UINT64              *PagesProcessed
     )
 /*++
 
@@ -913,7 +910,7 @@ Return Value:
     GHCB_MSR ghcbMsr;
     EFI_STATUS status;
 
-    if (ARGUMENT_PRESENT(PagesProcessed))
+    if (PagesProcessed != NULL)
     {
         *PagesProcessed = 0;
     }
@@ -946,7 +943,7 @@ Return Value:
             return status;
         }
 
-        if (ARGUMENT_PRESENT(PagesProcessed))
+        if (PagesProcessed != NULL)
         {
             *PagesProcessed += 1;
         }
@@ -961,11 +958,11 @@ Return Value:
 
 EFI_STATUS
 EfiMakePageRangeHostNotVisible(
-    _In_ UINT32 IsolationType,
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _Out_opt_ PUINT64 PagesProcessed
+                    UINT32              IsolationType,
+    IN OPTIONAL     VOID                *SvsmCallingArea,
+                    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                    UINT64              PageCount,
+    OUT OPTIONAL    UINT64              *PagesProcessed
     )
 /*++
 

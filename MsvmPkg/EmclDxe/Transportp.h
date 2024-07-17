@@ -19,7 +19,7 @@
 
 #include <vmbuspacketinterface.h>
 #include <vmbuspacketformat.h>
-#include <hvgdk.h>
+#include <Hv/hvgdk.h>
 
 NTSTATUS
 PkpInitRingBufferControl(

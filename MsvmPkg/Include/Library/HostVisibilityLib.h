@@ -1,22 +1,12 @@
-/*++
+/** @file
+  Definitions for functionality provided by host visibility change package.
+  These routines will perform the correct platform-specific sequences when
+  hardware isolation is in effect with no paravisor present.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    HostVisibilityLib.h
-
-Abstract:
-
-    Definitions for functionality provided by host visibility change package.
-    These routines will perform the correct platform-specific sequences when
-    hardware isolation is in effect with no paravisor present.
-
-Author:
-
-    Jon Lange (jlange) 14-Sep-2020
-
---*/
+**/
 
 #pragma once
 
@@ -50,11 +40,11 @@ Return Value:
 --*/
 EFI_STATUS
 EfiUpdatePageRangeAcceptance(
-    _In_ UINT32 IsolationType,
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _In_ BOOLEAN Accept
+                UINT32              IsolationType,
+    IN OPTIONAL VOID                *SvsmCallingArea,
+                HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                UINT64              PageCount,
+                BOOLEAN             Accept
     );
 
 
@@ -95,11 +85,11 @@ Return Value:
 --*/
 EFI_STATUS
 EfiMakePageRangeHostVisible(
-    _In_ UINT32 IsolationType,
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER StartingPageNumber,
-    _In_ UINT64 PageCount,
-    _Out_opt_ PUINT64 PagesProcessed
+                    UINT32              IsolationType,
+    IN OPTIONAL     VOID                *SvsmCallingArea,
+                    HV_GPA_PAGE_NUMBER  StartingPageNumber,
+                    UINT64              PageCount,
+    OUT OPTIONAL    UINT64              *PagesProcessed
     );
 
 /*++
@@ -138,9 +128,9 @@ Return Value:
 --*/
 EFI_STATUS
 EfiMakePageRangeHostNotVisible(
-    _In_ UINT32 IsolationType,
-    _In_opt_ PVOID SvsmCallingArea,
-    _In_ HV_GPA_PAGE_NUMBER PageNumber,
-    _In_ UINT64 PageCount,
-    _Out_opt_ PUINT64 PagesProcessed
+                    UINT32              IsolationType,
+    IN OPTIONAL     VOID                *SvsmCallingArea,
+                    HV_GPA_PAGE_NUMBER  PageNumber,
+                    UINT64              PageCount,
+    OUT OPTIONAL    UINT64              *PagesProcessed
     );

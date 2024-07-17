@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Hypervisor interactions during PEI.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Hv.c
-
-Abstract:
-
-    Hypervisor interactions during PEI.
-
---*/
+**/
 
 #include <PiPei.h>
 #include <Platform.h>
@@ -153,9 +147,9 @@ Return Value:
 
 VOID
 HvDetectSvsm(
-    IN PSNP_SECRETS SecretsPage,
-    OUT PUINT64 SvsmBase,
-    OUT PUINT64 SvsmSize
+    IN  PSNP_SECRETS    SecretsPage,
+    OUT UINT64          *SvsmBase,
+    OUT UINT64          *SvsmSize
     )
 /*++
 

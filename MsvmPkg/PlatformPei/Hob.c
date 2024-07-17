@@ -1,20 +1,10 @@
-/*++
+/** @file
+  Hob-building functionality.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Hob.c
-
-Abstract:
-
-    Hob-building functionality.
-
-Author:
-
-    Rich Yampell (richyam) 8-Jun-2012
-
---*/
+**/
 
 #include <Library/HobLib.h>
 #include <Library/DebugLib.h>
@@ -61,9 +51,9 @@ Author:
 static
 VOID
 HobpAcceptRamPages(
-    _Inout_ PPLATFORM_INIT_CONTEXT Context,
-    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
-    _In_ UINT64 PageCount
+    IN OUT  PPLATFORM_INIT_CONTEXT  Context,
+            HV_GPA_PAGE_NUMBER      GpaPageBase,
+            UINT64                  PageCount
     )
 /*++
 
@@ -131,7 +121,7 @@ Return Value:
     {
         HOB_FAIL_FAST_IF_FAILED (EfiUpdatePageRangeAcceptance(
             GetIsolationType(),
-            (PVOID)PcdGet64(PcdSvsmCallingArea),
+            (VOID*)PcdGet64(PcdSvsmCallingArea),
             GpaPageBase,
             PageCount,
             TRUE), CRITICAL_INITIALIZATION_FAILURE);
@@ -142,8 +132,8 @@ Return Value:
 
 void
 HobAddMmioRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS    BaseAddress,
+    UINT64                  Size
     )
 /*++
 
@@ -177,9 +167,9 @@ Return Value:
 
 void
 HobAddMemoryRange(
-    _Inout_ PPLATFORM_INIT_CONTEXT  Context,
-    _In_ EFI_PHYSICAL_ADDRESS       BaseAddress,
-    _In_ UINT64                     Size
+    IN OUT  PPLATFORM_INIT_CONTEXT  Context,
+            EFI_PHYSICAL_ADDRESS    BaseAddress,
+            UINT64                  Size
     )
 /*++
 
@@ -220,8 +210,8 @@ Return Value:
 
 void
 HobAddPersistentMemoryRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS BaseAddress,
+    UINT64               Size
     )
 /*++
 
@@ -254,8 +244,8 @@ Return Value:
 
 void
 HobAddSpecificPurposeMemoryRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS BaseAddress,
+    UINT64               Size
     )
 /*++
 
@@ -289,8 +279,8 @@ Return Value:
 
 void
 HobAddReservedMemoryRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS BaseAddress,
+    UINT64               Size
     )
 /*++
 
@@ -324,9 +314,9 @@ Return Value:
 
 void
 HobAddUntestedMemoryRange(
-    _Inout_ PPLATFORM_INIT_CONTEXT  Context,
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    IN OUT  PPLATFORM_INIT_CONTEXT  Context,
+            EFI_PHYSICAL_ADDRESS    BaseAddress,
+            UINT64                  Size
     )
 /*++
 
@@ -365,8 +355,8 @@ Return Value:
 
 void
 HobAddAllocatedMemoryRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS BaseAddress,
+    UINT64               Size
     )
 /*++
 
@@ -397,8 +387,8 @@ Return Value:
 
 void
 HobAddFvMemoryRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS BaseAddress,
+    UINT64               Size
     )
 /*++
 
@@ -428,8 +418,8 @@ Return Value:
 
 void
 HobAddIoRange(
-    __in EFI_PHYSICAL_ADDRESS BaseAddress,
-    __in UINT64               Size
+    EFI_PHYSICAL_ADDRESS BaseAddress,
+    UINT64               Size
     )
 /*++
 
@@ -460,8 +450,8 @@ Return Value:
 
 void
 HobAddCpu(
-    __in UINT8 SizeOfMemorySpace,
-    __in UINT8 SizeOfIoSpace
+    UINT8 SizeOfMemorySpace,
+    UINT8 SizeOfIoSpace
     )
 /*++
 
@@ -488,9 +478,9 @@ Return Value:
 
 void
 HobAddGuidData(
-    __in EFI_GUID* Guid,
-    __in VOID*     Data,
-    __in UINTN     DataSize
+    IN  EFI_GUID* Guid,
+    IN  VOID*     Data,
+        UINTN     DataSize
   )
 /*++
 

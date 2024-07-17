@@ -1,16 +1,10 @@
-/*++
+/** @file
+  Private include for the hypercall support routine library.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    HvHypercallLibP.h
-
-Abstract:
-
-    Private include for the hypercall support routine library.
-
---*/
+**/
 
 #pragma once
 
@@ -22,22 +16,22 @@ Abstract:
 
 HV_STATUS
 HvHypercallpIssueGhcbHypercall(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_CALL_CODE CallCode,
-    _In_opt_ VOID *InputPage,
-    _In_ UINT32 CountOfElements,
-    _Out_opt_ PUINT32 ElementsProcessed
+    IN              HV_HYPERCALL_CONTEXT    *Context,
+                    HV_CALL_CODE            CallCode,
+    IN OPTIONAL     VOID                    *InputPage,
+                    UINT32                  CountOfElements,
+    OUT OPTIONAL    UINT32                  *ElementsProcessed
     );
 
 VOID
 _tdx_vmcall_wrmsr(
-    _In_ UINT32 MsrIndex,
-    _In_ UINT64 MsrValue
+    UINT32 MsrIndex,
+    UINT64 MsrValue
     );
 
 UINT64
 _tdx_vmcall_rdmsr(
-    _In_ UINT32 MsrIndex
+    UINT32 MsrIndex
     );
 
 /// Functions that enable and disable interrupts, that are implemented based

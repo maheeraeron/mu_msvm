@@ -1,20 +1,10 @@
-;++
-;
-; Copyright (c) Microsoft Corporation
-;
-; Module Name:
-;
-;    debugstb.asm
-;
-; Abstract:
-;
-;    This file contains architecture specific functions for crash handling.
-;
-; Author:
-;
-;    Arti Gupta (argu) 11-Feb-2021
-;
-;--
+/** @file
+  This file contains architecture specific functions for crash handling.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+
+**/
 
 include macamd64.inc
 
@@ -22,10 +12,10 @@ include macamd64.inc
 ;
 ; VOID
 ; TripleFault(
-;    __in    UINT64 Rax,
-;    __in    UINT64 Rbx,
-;    __in    UINT64 Rcx,
-;    __in    UINT64 Rdx
+;    UINT64 Rax,
+;    UINT64 Rbx,
+;    UINT64 Rcx,
+;    UINT64 Rdx
 ;    );
 
 ;

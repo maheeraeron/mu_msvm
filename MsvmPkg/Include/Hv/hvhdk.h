@@ -41,8 +41,8 @@ extern "C" {
 // published) from minkernel.
 //
 
-#include <HvHdk_mini.h>
-#include <HvGdk.h>
+#include <Hv/HvHdk_mini.h>
+#include <Hv/HvGdk.h>
 
 
 //
@@ -88,7 +88,7 @@ typedef struct _HV_LOADER_BLOCK *PHV_LOADER_BLOCK;
 //
 // Hypervisor global counter set
 //
-typedef enum _HV_HYPERVISOR_COUNTER 
+typedef enum _HV_HYPERVISOR_COUNTER
 {
 
     StHvCounterLogicalProcessors = 1,
@@ -110,7 +110,7 @@ typedef enum _HV_HYPERVISOR_COUNTER
 //
 // Hypervisor Logical Processor counter set
 //
-typedef enum _HV_CPU_COUNTER 
+typedef enum _HV_CPU_COUNTER
 {
 
     StLpCounterGlobalTime = 1,
@@ -158,7 +158,7 @@ typedef enum _HV_CPU_COUNTER
 //
 // Hypervisor Hypercall-Based Logical Processor counter set
 //
-typedef enum _HV_CPU_HYPERCALLBASED_COUNTER 
+typedef enum _HV_CPU_HYPERCALLBASED_COUNTER
 {
 
     StLpHcCounterGuestRunTime = 1,
@@ -175,7 +175,7 @@ typedef enum _HV_CPU_HYPERCALLBASED_COUNTER
 //
 // Partition counter set
 //
-typedef enum _HV_PROCESS_COUNTER 
+typedef enum _HV_PROCESS_COUNTER
 {
 
     StPtCounterVirtualProcessors = 1,
@@ -218,7 +218,7 @@ typedef enum _HV_PROCESS_COUNTER
 //
 // Hypervisor Virtual Processor counter set
 //
-typedef enum _HV_THREAD_COUNTER 
+typedef enum _HV_THREAD_COUNTER
 {
 
     StVpCounterTotalRunTime = 1,
@@ -376,7 +376,7 @@ typedef enum _HV_THREAD_COUNTER
 //
 // Hypervisor Hypercall-Based Virtual Processor counter set
 //
-typedef enum _HV_THREAD_HYPERCALLBASED_COUNTER 
+typedef enum _HV_THREAD_HYPERCALLBASED_COUNTER
 {
 
     StVpHcCounterGuestRunTime = 1,

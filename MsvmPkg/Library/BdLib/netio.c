@@ -16,7 +16,7 @@ Abstract:
 #include <kdnetinterface.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <hvgdk_mini.h>
+#include <Hv/hvgdk_mini.h>
 
 #include "Bd.h"
 

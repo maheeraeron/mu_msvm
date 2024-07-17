@@ -30,7 +30,7 @@ UINTN                  mRtcTargetRegister;
 #include <BiosInterface.h>
 
 //
-// The struct used to marshal EFI_TIME to the Bios Vdev.
+// The struct used to marshal EFI_TIME to the BiosDevice.
 //
 #pragma pack(push, 1)
 
@@ -114,7 +114,7 @@ PcRtcEfiGetTime (
   }
 
   //
-  // Copy time from Bios Vdev into caller struct.
+  // Copy time from BiosDevice into caller struct.
   //
   CopyMem(Time, &mTimeBuffer->Time, sizeof(EFI_TIME));
 
@@ -178,12 +178,12 @@ PcRtcEfiSetTime (
   CopyMem(&mTimeBuffer->Time, Time, sizeof(EFI_TIME));
 
   //
-  // Send intercept to Bios Vdev to set time.
+  // Send intercept to BiosDevice to set time.
   //
   WriteBiosDevice(BiosConfigSetTime, (UINT32)mTimeBufferGpa);
 
   //
-  // Return status set by Bios Vdev.
+  // Return status set by BiosDevice.
   //
   return mTimeBuffer->Status;
 

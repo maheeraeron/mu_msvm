@@ -24,6 +24,7 @@ Environment:
 
 #include <EfiNt.h>
 #include "Bd.h"
+#include <Hv/hvgdk_mini.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -31,7 +32,6 @@ Environment:
 #include <Library/WatchdogTimerLib.h>
 #include <IsolationTypes.h>
 #include "CrashDump.h"
-#include <hvgdk_mini.h>
 
 BD_DEBUG_TABLE BdDebugTable =
 {
@@ -511,7 +511,7 @@ Return Value:
     if (!Handled)
     {
         BdSaveKframe(TrapFrame, ExceptionFrame, ContextRecord);
-        
+
         Handled = BdReportExceptionStateChange(ExceptionRecord, ContextRecord, FirstChance);
         BdRestoreKframe(TrapFrame, ExceptionFrame, ContextRecord);
         BdControlCPressed = FALSE;
@@ -566,7 +566,7 @@ Return Value:
     UNREFERENCED_PARAMETER(ExceptionFrame);
 
     //
-    // If the breakpoint is a debug print or load/unload symbols, 
+    // If the breakpoint is a debug print or load/unload symbols,
     // ignore it.
     // N.B.
     //   Assertions and Fail Fast exceptions are not Handled and

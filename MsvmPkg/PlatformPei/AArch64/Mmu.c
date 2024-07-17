@@ -1,20 +1,13 @@
 /** @file
-*  File managing the MMU for ARMv8 architecture
-*
-*  Adapted from ArmPkg\Library\ArmMmuLib\AArch64\ArmMmuLibCore.c
-*
-*  Copyright (c) 2011-2014, ARM Limited. All rights reserved.
-*  Copyright (c) 2016, Linaro Limited. All rights reserved.
-*  Copyright (c) 2017, Microsoft Corporation. All rights reserved.
-*
-*  This program and the accompanying materials
-*  are licensed and made available under the terms and conditions of the BSD License
-*  which accompanies this distribution.  The full text of the license may be found at
-*  http://opensource.org/licenses/bsd-license.php
-*
-*  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-*
+  File managing the MMU for ARMv8 architecture
+
+  Copyright (c) 2011-2014, ARM Limited. All rights reserved.
+  Copyright (c) 2016, Linaro Limited. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+
+  Adapted from ArmPkg\Library\ArmMmuLib\AArch64\ArmMmuLibCore.c
+
 **/
 
 #include <Uefi.h>
@@ -71,7 +64,7 @@ ArmMemoryAttributeToPageAttribute(
 
 VOID
 GetRootTranslationTableInfo(
-    IN UINTN     T0SZ,
+        UINTN   T0SZ,
     OUT UINTN   *TableLevel,
     OUT UINTN   *TableEntryCount
 )
@@ -91,9 +84,9 @@ GetRootTranslationTableInfo(
 STATIC
 VOID
 LookupAddresstoRootTable(
-    IN  UINT64  MaxAddress,
-    OUT UINTN  *T0SZ,
-    OUT UINTN  *TableEntryCount
+        UINT64  MaxAddress,
+    OUT UINTN   *T0SZ,
+    OUT UINTN   *TableEntryCount
 )
 {
     UINTN TopBit;
@@ -123,12 +116,12 @@ LookupAddresstoRootTable(
 STATIC
 UINT64*
 GetBlockEntryListFromAddress(
-    IN  UINT64       *RootTable,
-    IN  UINT64        TCR,
-    IN  UINT64        RegionStart,
-    OUT UINTN        *TableLevel,
-    IN OUT UINT64    *BlockEntrySize,
-    OUT UINT64      **LastBlockEntry
+    IN      UINT64  *RootTable,
+            UINT64  TCR,
+            UINT64  RegionStart,
+    OUT     UINTN   *TableLevel,
+    IN OUT  UINT64  *BlockEntrySize,
+    OUT     UINT64  **LastBlockEntry
 )
 {
     UINTN   RootTableLevel;
@@ -312,11 +305,11 @@ STATIC
 EFI_STATUS
 UpdateRegionMapping(
     IN  UINT64  *RootTable,
-    IN  UINT64  TCR,
-    IN  UINT64  RegionStart,
-    IN  UINT64  RegionLength,
-    IN  UINT64  Attributes,
-    IN  UINT64  BlockEntryMask
+        UINT64  TCR,
+        UINT64  RegionStart,
+        UINT64  RegionLength,
+        UINT64  Attributes,
+        UINT64  BlockEntryMask
 )
 {
     UINT32  Type;
@@ -381,7 +374,7 @@ STATIC
 EFI_STATUS
 FillTranslationTable(
     IN  UINT64                        *RootTable,
-    IN  UINT64                        TCR,
+        UINT64                        TCR,
     IN  ARM_MEMORY_REGION_DESCRIPTOR  *MemoryRegion
 )
 {
@@ -398,7 +391,7 @@ FillTranslationTable(
 EFI_STATUS
 EFIAPI
 ConfigureMmu(
-    IN  UINT64  MaxAddress
+    UINT64  MaxAddress
 )
 {
     VOID*                         TranslationTable;
@@ -597,7 +590,7 @@ ConfigureMmu(
 
     ConfigureCachesAndMmu(
         TranslationTable,
-        TCR, 
+        TCR,
         MAIR_ATTR(TT_ATTR_INDX_DEVICE_MEMORY, MAIR_ATTR_DEVICE_MEMORY) |                      // mapped to EFI_MEMORY_UC
         MAIR_ATTR(TT_ATTR_INDX_MEMORY_NON_CACHEABLE, MAIR_ATTR_NORMAL_MEMORY_NON_CACHEABLE) | // mapped to EFI_MEMORY_WC
         MAIR_ATTR(TT_ATTR_INDX_MEMORY_WRITE_THROUGH, MAIR_ATTR_NORMAL_MEMORY_WRITE_THROUGH) | // mapped to EFI_MEMORY_WT

@@ -1,15 +1,10 @@
-//
-// Copyright (c) 2017, Microsoft Corporation. All rights reserved.
-//
-//  This program and the accompanying materials
-//  are licensed and made available under the terms and conditions of the BSD License
-//  which accompanies this distribution.  The full text of the license may be found at
-//  http://opensource.org/licenses/bsd-license.php
-//
-//  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-//
-//
+/** @file
+  SecEntry
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+
+**/
 
     AREA    |.text|,ALIGN=3,CODE,READONLY
 
@@ -24,7 +19,7 @@ TransitionIdtAddr
 
 _ModuleEntryPoint PROC
 
-    // Worker process sets register state that become inputs to this function
+    // Loader sets register state that become inputs to this function
     //  x0 - Firmware Volume Base Address
     //  x1 - Stack Base Address
 
@@ -120,7 +115,7 @@ SerialWriteBanner PROC
     mov     w10, #0x4C  // 'L'
     strb    w10, [x9]
 
-    // TODO-cho: What's the constant for ARM64_CurrentEL format?
+    // TODO: What's the constant for ARM64_CurrentEL format?
     // mrs     x8, #ARM64_CurrentEL
     cmp     x8, #0x8
     bgt     %f3

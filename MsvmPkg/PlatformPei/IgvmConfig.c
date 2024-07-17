@@ -1,21 +1,14 @@
-/*++
+/** @file
+  Gets configuration values from IGVM file format parameters and exports
+  them as globals and PCDs.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    IgvmConfig.c
-
-Abstract:
-
-    Gets configuration values from IGVM file format parameters and exports
-    them as globals and PCDs.
-
---*/
+**/
 
 #include <IndustryStandard/Acpi.h>
 #include <PiPei.h>
-#include <EfiNt.h>
 #include <Platform.h>
 #include <BiosInterface.h>
 #if defined(MDE_CPU_AARCH64)
@@ -55,10 +48,10 @@ enum IGVM_VHS_MEMORY_MAP_ENTRY_TYPES
 #define IGVM_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
     PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, IGVM)
 
-PVOID
+VOID*
 GetIgvmData(
-    _In_ PVOID ParameterAreaBase,
-    _In_ UINT32 PageOffset
+    IN  VOID    *ParameterAreaBase,
+        UINT32  PageOffset
     )
 /*++
 
@@ -78,15 +71,15 @@ Return Value:
 
 --*/
 {
-    return (PUINT8)ParameterAreaBase + (PageOffset * EFI_PAGE_SIZE);
+    return (UINT8*)ParameterAreaBase + (PageOffset * EFI_PAGE_SIZE);
 }
 
 
 EFI_STATUS
 ParseIgvmMemoryMap(
-    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo,
-    _In_ UINT64 SvsmBase,
-    _In_ UINT64 SvsmSize
+    IN  UEFI_IGVM_PARAMETER_INFO    *ParameterInfo,
+        UINT64                      SvsmBase,
+        UINT64                      SvsmSize
     )
 /*++
 
@@ -122,7 +115,7 @@ Return Value:
     UINT64 reservedBase;
     UINT64 reservedEnd;
     UINT64 svsmEnd;
-    PVOID uefiMemoryMap;
+    VOID* uefiMemoryMap;
     EFI_STATUS Status;
 
     memoryMap = GetIgvmData(ParameterInfo, ParameterInfo->MemoryMapOffset);
@@ -329,7 +322,7 @@ Return Value:
 
 VOID
 ParseIgvmCommandLine(
-    _In_ UEFI_IGVM_PARAMETER_INFO *ParameterInfo
+    IN UEFI_IGVM_PARAMETER_INFO *ParameterInfo
     )
 /*++
 
@@ -348,7 +341,7 @@ Return Value:
 
 --*/
 {
-    PUCHAR commandString;
+    unsigned char *commandString;
     UINT32 maximumSize;
     UINT32 size;
 
@@ -405,7 +398,7 @@ Return Value:
     UEFI_CONFIG_FLAGS configFlags;
     UEFI_IGVM_PARAMETER_INFO *parameterInfo;
     UEFI_CONFIG_PROCESSOR_INFORMATION processorInfo;
-    PVOID secretsPage;
+    VOID* secretsPage;
     EFI_STATUS status;
     UINT64 svsmBase;
     UINT64 svsmSize;
@@ -433,10 +426,10 @@ Return Value:
         // TODO: Find some way of avoiding hardcode of necessary host information
         //
         UINT32 i;
-        PUINT8 azureAssetTag = "7783-7084-3265-9085-8269-3286-77";
-        PUINT8 freeParameterMemory = (PUINT8)(parameterInfo) + sizeof(UEFI_IGVM_PARAMETER_INFO);
-        PUINT8 smbiosAssetTag = freeParameterMemory + sizeof(GUID);
-        PUINT64 smbiosGuid = (PUINT64)freeParameterMemory;
+        UINT8* azureAssetTag = "7783-7084-3265-9085-8269-3286-77";
+        UINT8* freeParameterMemory = (UINT8*)(parameterInfo) + sizeof(UEFI_IGVM_PARAMETER_INFO);
+        UINT8* smbiosAssetTag = freeParameterMemory + sizeof(GUID);
+        UINT64* smbiosGuid = (UINT64*)freeParameterMemory;
 
         // set BIOS GUID
         smbiosGuid[0] = 0x7464782d7464782d;

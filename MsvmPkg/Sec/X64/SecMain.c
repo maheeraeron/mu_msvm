@@ -1,19 +1,14 @@
 /** @file
   Main SEC phase code.  Transitions to PEI.
 
-  Copyright (c) 2008 - 2011, Intel Corporation. All rights reserved.<BR>
-
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+  Copyright (c) 2008 - 2011, Intel Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
 **/
 
 #include <PiPei.h>
+#include <Hv/hvgdk_mini.h>
 #include <Library/PeimEntryPoint.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
@@ -24,8 +19,6 @@
 #include <Library/PeCoffGetEntryPointLib.h>
 #include <Library/PeCoffExtraActionLib.h>
 #include <Ppi/TemporaryRamSupport.h>
-#include <EfiNt.h>
-#include <hvgdk_mini.h>
 #include <BiosInterface.h>
 #include <IsolationTypes.h>
 #include "SecP.h"
@@ -41,10 +34,10 @@ typedef struct _SEC_IDT_TABLE {
 EFI_STATUS
 EFIAPI
 TemporaryRamMigration (
-    _In_ CONST EFI_PEI_SERVICES **PeiServices,
-    _In_ EFI_PHYSICAL_ADDRESS   TemporaryMemoryBase,
-    _In_ EFI_PHYSICAL_ADDRESS   PermanentMemoryBase,
-    _In_ UINTN                  CopySize
+    IN  CONST EFI_PEI_SERVICES  **PeiServices,
+        EFI_PHYSICAL_ADDRESS    TemporaryMemoryBase,
+        EFI_PHYSICAL_ADDRESS    PermanentMemoryBase,
+        UINTN                   CopySize
     );
 
 
@@ -67,7 +60,7 @@ HV_HYPERVISOR_ISOLATION_CONFIGURATION mIsolationConfiguration;
 
 UINT32
 Expand3ByteSize (
-  _In_ VOID* Size
+  IN VOID* Size
   )
 /*++
 
@@ -93,7 +86,7 @@ Return Value
 #if defined(SECMAIN_DEBUG_NOISY)
 VOID
 DebugPrintGuid(
-    _In_ EFI_GUID *Guid
+    IN EFI_GUID *Guid
     )
 /*++
 
@@ -364,8 +357,8 @@ Return Value:
 
 EFI_STATUS
 FindMainFv(
-    _In_  EFI_FIRMWARE_VOLUME_HEADER *SecFv,
-    _Out_ EFI_FIRMWARE_VOLUME_HEADER **MainFv
+    IN  EFI_FIRMWARE_VOLUME_HEADER  *SecFv,
+    OUT EFI_FIRMWARE_VOLUME_HEADER  **MainFv
     )
 /*++
 
@@ -473,9 +466,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 FindFfsFile(
-    _In_  EFI_FIRMWARE_VOLUME_HEADER    *Fv,
-    _In_  EFI_FV_FILETYPE               FileType,
-    _Out_ EFI_FFS_FILE_HEADER           **FoundFile
+    IN  EFI_FIRMWARE_VOLUME_HEADER  *Fv,
+        EFI_FV_FILETYPE             FileType,
+    OUT EFI_FFS_FILE_HEADER         **FoundFile
     )
 /*++
 
@@ -591,10 +584,10 @@ Cleanup:
 
 EFI_STATUS
 FindFfsFileSection(
-    _In_  EFI_PHYSICAL_ADDRESS          StartOfFile,
-    _In_  EFI_PHYSICAL_ADDRESS          EndOfFile,
-    _In_  EFI_SECTION_TYPE              SectionType,
-    _Out_ EFI_COMMON_SECTION_HEADER   **FoundSection
+        EFI_PHYSICAL_ADDRESS        StartOfFile,
+        EFI_PHYSICAL_ADDRESS        EndOfFile,
+        EFI_SECTION_TYPE            SectionType,
+    OUT EFI_COMMON_SECTION_HEADER   **FoundSection
     )
 /*++
 
@@ -719,9 +712,9 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 FindImageBaseInFv(
-    _In_  EFI_FIRMWARE_VOLUME_HEADER       *Fv,
-    _In_  EFI_FV_FILETYPE                  FileType,
-    _Out_ EFI_PHYSICAL_ADDRESS             *ImageBase
+    IN  EFI_FIRMWARE_VOLUME_HEADER  *Fv,
+        EFI_FV_FILETYPE             FileType,
+    OUT EFI_PHYSICAL_ADDRESS        *ImageBase
     )
 /*++
 
@@ -818,9 +811,9 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 FindPeiCoreImageBase (
-    _In_  EFI_FIRMWARE_VOLUME_HEADER     *SecCoreFv,
-    _Out_ EFI_FIRMWARE_VOLUME_HEADER     **PeiCoreFv,
-    _Out_ EFI_PHYSICAL_ADDRESS           *PeiCoreImageBase
+    IN  EFI_FIRMWARE_VOLUME_HEADER  *SecCoreFv,
+    OUT EFI_FIRMWARE_VOLUME_HEADER  **PeiCoreFv,
+    OUT EFI_PHYSICAL_ADDRESS        *PeiCoreImageBase
   )
 /*++
 
@@ -911,9 +904,9 @@ Cleanup:
 VOID
 EFIAPI
 FindAndReportEntryPoints (
-    _In_  EFI_FIRMWARE_VOLUME_HEADER       *SecCoreFv,
-    _Out_ EFI_FIRMWARE_VOLUME_HEADER      **PeiCoreFv,
-    _Out_ EFI_PEI_CORE_ENTRY_POINT         *PeiCoreEntryPoint
+    IN  EFI_FIRMWARE_VOLUME_HEADER  *SecCoreFv,
+    OUT EFI_FIRMWARE_VOLUME_HEADER  **PeiCoreFv,
+    OUT EFI_PEI_CORE_ENTRY_POINT    *PeiCoreEntryPoint
     )
 /*++
 
@@ -1004,7 +997,7 @@ Return Value:
 VOID
 EFIAPI
 SecStartupPhase2(
-    _In_ VOID *Context
+    IN VOID *Context
     )
 /*++
 
@@ -1065,10 +1058,10 @@ Return Value:
 VOID
 EFIAPI
 SecCoreStartupWithStack (
-    _In_ EFI_FIRMWARE_VOLUME_HEADER              *BootFv,
-    _In_ VOID                                    *TopOfCurrentStack,
-    _In_ PHV_HYPERVISOR_ISOLATION_CONFIGURATION  IsolationConfiguration,
-    _In_opt_ VOID                                *UefiIgvmConfigHeader
+    IN          EFI_FIRMWARE_VOLUME_HEADER              *BootFv,
+    IN          VOID                                    *TopOfCurrentStack,
+    IN          PHV_HYPERVISOR_ISOLATION_CONFIGURATION  IsolationConfiguration,
+    IN OPTIONAL VOID                                    *UefiIgvmConfigHeader
     )
 /*++
 
@@ -1099,8 +1092,8 @@ Return Value:
     UINT32                  Vector;
 
     DEBUG((DEBUG_VERBOSE, "\x1b")); // clear screen and scrollback
-    DEBUG((DEBUG_VERBOSE, "c\x1b")); 
-    DEBUG((DEBUG_VERBOSE, "[3J")); 
+    DEBUG((DEBUG_VERBOSE, "c\x1b"));
+    DEBUG((DEBUG_VERBOSE, "[3J"));
     DEBUG((DEBUG_VERBOSE,
            ">>> SecCoreStartupWithStack @ %p (%p, %p)\n",
            SecCoreStartupWithStack,
@@ -1219,10 +1212,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 TemporaryRamMigration(
-    _In_ CONST EFI_PEI_SERVICES   **PeiServices,
-    _In_ EFI_PHYSICAL_ADDRESS     TemporaryMemoryBase,
-    _In_ EFI_PHYSICAL_ADDRESS     PermanentMemoryBase,
-    _In_ UINTN                    CopySize
+    IN  CONST EFI_PEI_SERVICES  **PeiServices,
+        EFI_PHYSICAL_ADDRESS    TemporaryMemoryBase,
+        EFI_PHYSICAL_ADDRESS    PermanentMemoryBase,
+        UINTN                   CopySize
     )
 /*++
 
@@ -1258,7 +1251,7 @@ Return Value:
     BOOLEAN                          OldStatus;
     BASE_LIBRARY_JUMP_BUFFER         JumpBuffer;
 
-  DEBUG((DEBUG_VERBOSE, ">>> TemporaryRamMigration@0x%x(0x%x, 0x%x, 0x%x)\n",
+    DEBUG((DEBUG_VERBOSE, ">>> TemporaryRamMigration@0x%x(0x%x, 0x%x, 0x%x)\n",
          (UINT32)(UINTN)TemporaryRamMigration,
          (UINT32)(UINTN)TemporaryMemoryBase,
          (UINT32)(UINTN)PermanentMemoryBase,

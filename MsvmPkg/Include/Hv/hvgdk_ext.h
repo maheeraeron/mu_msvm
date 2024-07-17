@@ -16,7 +16,7 @@ Abstract:
 #if !defined(_HVGDK_EXT_)
 #define _HVGDK_EXT_
 
-#include <hvgdk_mini.h>
+#include <Hv/hvgdk_mini.h>
 
 #if _MSC_VER > 1000
 #pragma once
