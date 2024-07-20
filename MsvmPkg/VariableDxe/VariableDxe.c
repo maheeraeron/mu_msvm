@@ -1,37 +1,14 @@
-/*++
+/** @file
+  EFI Variable Services
 
-    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
-        Derivative of:
-            SecurityPkg\VariableAuthenticated\RuntimDxe\Variable.c
-            SecurityPkg\VariableAuthenticated\RuntimDxe\VariableDxe.c
-    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE
-    WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE
-    MICROSOFT OPEN SOURCE SOFTWARE APPROVAL POLICY.
+  Derivative of:
+    SecurityPkg\VariableAuthenticated\RuntimDxe\Variable.c
+    SecurityPkg\VariableAuthenticated\RuntimDxe\VariableDxe.c
 
-    Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
-    This program and the accompanying materials
-    are licensed and made available under the terms and conditions of the BSD License
-    which accompanies this distribution.  The full text of the license may be found at
-    http://opensource.org/licenses/bsd-license.php
-
-    THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-    WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    VariableDxe.c
-
-Abstract:
-
-    EFI Variable Services
-
-Author:
-
-    Larry Cleeton (lcleeton) - 04-Mar-2013
-
---*/
+  Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Library/BaseMemoryLib.h>
 #include <Library/Baselib.h>
@@ -128,7 +105,7 @@ static EFI_EVENT    mExitBootServicesEvent = NULL;
 
 BOOLEAN
 IsValidVariableHeader(
-    __in VARIABLE_HEADER* Variable
+    IN VARIABLE_HEADER* Variable
     )
 /*++
 
@@ -155,7 +132,7 @@ Returns:
 
 CHAR16*
 GetVariableNamePtr(
-    __in VARIABLE_HEADER* Variable
+    IN VARIABLE_HEADER* Variable
     )
 /*++
 
@@ -179,7 +156,7 @@ Returns:
 
 UINT8*
 GetVariableDataPtr(
-    __in VARIABLE_HEADER* Variable
+    IN VARIABLE_HEADER* Variable
     )
 /*++
 
@@ -209,7 +186,7 @@ Returns:
 
 VARIABLE_HEADER*
 GetNextVariablePtr(
-    __in VARIABLE_HEADER* Variable
+    IN VARIABLE_HEADER* Variable
     )
 /*++
 
@@ -244,7 +221,7 @@ Returns:
 
 UINTN
 NameSizeOfVariable(
-    __in VARIABLE_HEADER* Variable
+    IN VARIABLE_HEADER* Variable
     )
 /*++
 
@@ -276,7 +253,7 @@ Returns:
 
 UINTN
 DataSizeOfVariable(
-    __in VARIABLE_HEADER* Variable
+    IN VARIABLE_HEADER* Variable
     )
 /*++
 
@@ -307,7 +284,7 @@ Returns:
 
 VARIABLE_HEADER*
 GetStartPointer(
-    __in VOID* Store
+    IN VOID* Store
     )
 /*++
 
@@ -331,7 +308,7 @@ Returns:
 
 VARIABLE_HEADER*
 GetEndPointer(
-    __in VOID* Store
+    IN VOID* Store
     )
 /*++
 
@@ -407,9 +384,9 @@ Returns:
 
 EFI_STATUS
 FindVariable(
-    __in  CHAR16*           VariableName,
-    __in  EFI_GUID*         VendorGuid,
-    __out VARIABLE_HEADER** Variable
+    IN  CHAR16*           VariableName,
+    IN  EFI_GUID*         VendorGuid,
+    OUT VARIABLE_HEADER** Variable
   )
 /*++
 
@@ -507,12 +484,12 @@ Returns:
 
 EFI_STATUS
 UpdateVariable (
-  __in     CHAR16*          VariableName,
-  __in     EFI_GUID*        VendorGuid,
-  __in     VOID*            Data,
-  __in     UINTN            DataSize,
-  __in     UINT32           Attributes,
-  __in_opt VARIABLE_HEADER* Variable
+  IN            CHAR16*          VariableName,
+  IN            EFI_GUID*        VendorGuid,
+  IN            VOID*            Data,
+  IN            UINTN            DataSize,
+  IN            UINT32           Attributes,
+  IN OPTIONAL   VARIABLE_HEADER* Variable
   )
 /*++
 
@@ -770,8 +747,8 @@ Returns:
 
 BOOLEAN
 IsReadOnlyVariable(
-    __in CHAR16   *VariableName,
-    __in EFI_GUID *VendorGuid
+    IN  CHAR16   *VariableName,
+    IN  EFI_GUID *VendorGuid
     )
 /*++
 
@@ -922,8 +899,8 @@ Returns:
 VOID
 EFIAPI
 ExitBootServicesHandler(
-    __in EFI_EVENT Event,
-    __in void*     Context
+    IN  EFI_EVENT Event,
+    IN  void*     Context
     )
 /*++
 
@@ -960,7 +937,7 @@ Returns:
         (variable != NULL) &&
         (DataSizeOfVariable(variable) == sizeof (UINT32)))
     {
-        supportedIndications = *(PUINT32)GetVariableDataPtr(variable);
+        supportedIndications = *(UINT32*)GetVariableDataPtr(variable);
         vsmAware = (supportedIndications & 1);
     }
 
@@ -974,8 +951,8 @@ Returns:
 VOID
 EFIAPI
 VirtualAddressChangeHandler(
-    __in EFI_EVENT Event,
-    __in void*     Context
+    IN  EFI_EVENT Event,
+    IN  void*     Context
     )
 /*++
 
@@ -1013,11 +990,11 @@ Returns:
 EFI_STATUS
 EFIAPI
 VariableServiceGetVariable(
-    __in    CHAR16*          VariableName,
-    __in    EFI_GUID*        VendorGuid,
-    __out   OPTIONAL UINT32* Attributes,
-    __inout UINTN*           DataSize,
-    __out   void*            Data
+    IN              CHAR16*          VariableName,
+    IN              EFI_GUID*        VendorGuid,
+    OUT OPTIONAL    UINT32* Attributes,
+    IN OUT          UINTN*           DataSize,
+    OUT             void*            Data
     )
 /*++
 
@@ -1130,9 +1107,9 @@ Returns:
 EFI_STATUS
 EFIAPI
 VariableServiceGetNextVariableName(
-    __inout UINTN    *VariableNameSize,
-    __inout CHAR16   *VariableName,
-    __inout EFI_GUID *VendorGuid
+    IN OUT  UINTN    *VariableNameSize,
+    IN OUT  CHAR16   *VariableName,
+    IN OUT  EFI_GUID *VendorGuid
      )
 /*++
 
@@ -1266,11 +1243,11 @@ Returns:
 EFI_STATUS
 EFIAPI
 VariableServiceSetVariable(
-    __in CHAR16*   VariableName,
-    __in EFI_GUID* VendorGuid,
-    __in UINT32    Attributes,
-    __in UINTN     DataSize,
-    __in void*     Data
+    IN  CHAR16*   VariableName,
+    IN  EFI_GUID* VendorGuid,
+    IN  UINT32    Attributes,
+    IN  UINTN     DataSize,
+    IN  void*     Data
 
     )
 /*++
@@ -1462,10 +1439,10 @@ Returns:
 EFI_STATUS
 EFIAPI
 VariableServiceQueryVariableInfo(
-    __in  UINT32  Attributes,
-    __out UINT64* MaximumVariableStorageSize,
-    __out UINT64* RemainingVariableStorageSize,
-    __out UINT64* MaximumVariableSize
+        UINT32  Attributes,
+    OUT UINT64* MaximumVariableStorageSize,
+    OUT UINT64* RemainingVariableStorageSize,
+    OUT UINT64* MaximumVariableSize
     )
 /*++
 
@@ -1610,8 +1587,8 @@ Returns:
 EFI_STATUS
 EFIAPI
 VariableServiceInitialize(
-    __in EFI_HANDLE        ImageHandle,
-    __in EFI_SYSTEM_TABLE* SystemTable
+    IN  EFI_HANDLE        ImageHandle,
+    IN  EFI_SYSTEM_TABLE* SystemTable
     )
 /*++
 

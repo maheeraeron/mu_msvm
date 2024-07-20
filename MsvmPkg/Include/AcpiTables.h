@@ -1,11 +1,10 @@
 /** @file
+  This file contains declarations and definitions shared between the
+  ACPI table ASLC files and the ACPI platform DXE driver.
 
-    This file contains declarations and definitions shared between the
-    ACPI table ASLC files and the ACPI platform DXE driver.
-
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <BiosInterface.h>
 #include <IndustryStandard/SerialPortConsoleRedirectionTable.h>

@@ -1,11 +1,11 @@
-/*++
-    Defines the OEM0 fixed ACPI table. This table is used to provide initial
-    entropy to the VM during boot for the random number generator. It is
-    initialized in the worker process with random data.
+/** @file
+  Defines the OEM0 fixed ACPI table. This table is used to provide initial
+  entropy to the VM during boot for the random number generator. It is
+  initialized in the worker process with random data.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>

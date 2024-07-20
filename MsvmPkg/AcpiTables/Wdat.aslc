@@ -1,18 +1,18 @@
+/** @file
+  Defines the Microsoft Hardware Watchdog Action Table. This table informs the OS that
+  hardware support for a watchdog is provided.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
+
 /*++
-    Defines the Microsoft Hardware Watchdog Action Table. This table informs the OS that
-    hardware support for a watchdog is provided.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
-
-/*++
-
-Each WDAT instruction is exposed as two entires in the WDAT table (for compatibility with VMWP 
+Each WDAT instruction is exposed as two entires in the WDAT table (for compatibility with VMWP
 architecure). The first entry informs the VMWP the IoPort/MMIO hole to operate on. The second
-instruction performs a read/write on the requested register (IoPort/MMIO hole). These 
-read/writes are plumbed through the BiosWdatDataPort and operate on BiosWatchdog registers 
-(BiosConfigWatchdogConfig & BiosConfigWatchdogCount). 
+instruction performs a read/write on the requested register (IoPort/MMIO hole). These
+read/writes are plumbed through the BiosWdatDataPort and operate on BiosWatchdog registers
+(BiosConfigWatchdogConfig & BiosConfigWatchdogCount).
 
 //
 // Values for the BiosConfigWatchdogConfig DWORD.
@@ -27,31 +27,31 @@ read/writes are plumbed through the BiosWdatDataPort and operate on BiosWatchdog
 //
 // The WDAT instructions exposed to the guest are:
 //
-1. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_RESET - Set 'configured' and 'enabled' bit for the register 
+1. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_RESET - Set 'configured' and 'enabled' bit for the register
         BiosConfigWatchdogConfig. Setting 'enabled' bit restarts watchdog timer.
 
-2. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_COUNTDOWN_PERIOD - Value in BiosConfigWatchdogCount 
+2. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_COUNTDOWN_PERIOD - Value in BiosConfigWatchdogCount
         register is read by the guest.
 
 3. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_COUNTDOWN_PERIOD - Value provided by the guest is assigned to
         the BiosConfigWatchdogCount register.
 
-4. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_RUNNING_STATE - Value in the BiosConfigWatchdogConfig 
+4. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_RUNNING_STATE - Value in the BiosConfigWatchdogConfig
         register is read by the guest. Watchdog is enabled if 'configured' and 'enabled' bits are set.
 
 5. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_RUNNING_STATE - 'configured' and 'enabled' bits of the
         BiosConfigWatchdogConfig register are set. This enables the watchdog and starts the timer.
 
-6. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_STOPPED_STATE - Value in the BiosConfigWatchdogConfig 
-        register is read by the guest. Watchdog is in the stopped state if 'configured' bit is set 
+6. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_STOPPED_STATE - Value in the BiosConfigWatchdogConfig
+        register is read by the guest. Watchdog is in the stopped state if 'configured' bit is set
         and 'enabled' bit is not set.
 
-7. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_STOPPED_STATE - 'configured' bit of BiosConfigWatchdogConfig 
+7. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_STOPPED_STATE - 'configured' bit of BiosConfigWatchdogConfig
         register is set and 'enabled' bit is cleared. This stops the watchdog and the timer.
 
-8. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_WATCHDOG_STATUS - Value in the BiosConfigWatchdogConfig 
-        register is read by the guest. Previous guest reset was a result of the watchdog if the 
-        'boot status' bit is set. 
+8. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_QUERY_WATCHDOG_STATUS - Value in the BiosConfigWatchdogConfig
+        register is read by the guest. Previous guest reset was a result of the watchdog if the
+        'boot status' bit is set.
 
 9. EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_WATCHDOG_STATUS - 'boot status' bit of the
         BiosConfigWatchdogConfig register is set. This is the protocol to clear the bit.
@@ -71,7 +71,7 @@ read/writes are plumbed through the BiosWdatDataPort and operate on BiosWatchdog
 #define VM_HARDWARE_TIMERPERIOD 0x3E8
 
 //
-// Any changes to VM_HARDWARE_WATCHDOG_MIN_COUNT should also be reflected 
+// Any changes to VM_HARDWARE_WATCHDOG_MIN_COUNT should also be reflected
 // on the host side.
 //
 #define VM_HARDWARE_WATCHDOG_MIN_COUNT 0x5
@@ -114,7 +114,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
                 0,
                 0
             },
-            {                      // RegisterRegion (address populated during initalization) 
+            {                      // RegisterRegion (address populated during initalization)
                 EFI_ACPI_6_2_SYSTEM_IO,
                 32,
                 0,
@@ -126,7 +126,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_RESET, // WatchdogAction_reset
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -263,7 +263,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_RUNNING_STATE, // WatchdogAction_set_running
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -332,7 +332,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_STOPPED_STATE, // WatchdogAction_set_stopped
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -401,7 +401,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_WATCHDOG_STATUS, // WatchdogAction_clear_status
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -468,7 +468,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_RESET, // WatchdogAction_reset
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -564,7 +564,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
                 32,
                 0,
                 EFI_ACPI_6_2_DWORD,
-                0                // AddressRegisterOffset                
+                0                // AddressRegisterOffset
             },
             BiosConfigWatchdogConfig,// Value (watchdog config register)
             0xFFFFFFFF              // Mask
@@ -605,7 +605,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_RUNNING_STATE, // WatchdogAction_set_running
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -674,7 +674,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_STOPPED_STATE, // WatchdogAction_set_stopped
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,
@@ -743,7 +743,7 @@ VM_HARDWARE_WATCHDOG_ACTION_TABLE WDAT =
         },
         {
             EFI_ACPI_WDAT_1_0_WATCHDOG_ACTION_SET_WATCHDOG_STATUS, // WatchdogAction_clear_status
-            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE | 
+            (EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_WRITE_VALUE |
              EFI_ACPI_WDAT_1_0_WATCHDOG_INSTRUCTION_PRESERVE_REGISTER), // InstructionFlags
             {                      // Reserved_2[2]
                 0,

@@ -1,9 +1,9 @@
-/*++
-    ACPI DSDT table source
+/** @file
+  ACPI DSDT table source
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 // Establish local define for architecture
 
@@ -146,7 +146,7 @@ DefinitionBlock (
             }
         }
     }
-    
+
 #endif
 
 
@@ -354,7 +354,7 @@ DefinitionBlock (
             return(STA)
         }
 
-        // Older versions of this DSDT implemented _PS3 improperly, as: 
+        // Older versions of this DSDT implemented _PS3 improperly, as:
         //     Name(_PS3, 0)
         // This is intentionally a do-nothing method in case any version of Windows requires _PS3 to be implemented
 

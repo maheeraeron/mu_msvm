@@ -1,34 +1,24 @@
-/*++
+/** @file
+  NVRAM Variable Services driver.
 
-Copyright (c) Microsoft Corporation
+  The module acts as a proxy and sends non-volatile variable requests
+  to the Hyper-V BiosDevice.
 
-Module Name:
-
-    NvramVariableDxe.c
-
-Abstract:
-
-    Hyper-V NVRAM Variable Services driver.
-
-    The module acts as a proxy and sends non-volatile variable requests
-    to the Hyper-V BiosDevice.
-
-Author:
-
-    Larry Cleeton (lcleeton) - 07-Mar-2013
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 
+#include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/Baselib.h>
 #include <Library/BiosDeviceLib.h>
-#include <Library/IoLib.h>
 #include <Library/DebugLib.h>
-#include <Library/UefiRuntimeLib.h>
 #include <Library/DxeServicesTableLib.h>
-#include <Library/UefiBootServicesTableLib.h>
+#include <Library/IoLib.h>
 #include <Library/PrintLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeLib.h>
+
 #include <BiosInterface.h>
 #include <NvramVariableDxe.h>
 #include <IsolationTypes.h>
@@ -291,7 +281,7 @@ Return Value:
 
 VOID
 NvramExitBootServicesHandler(
-    __in BOOLEAN VsmAware
+    BOOLEAN VsmAware
     )
 /*++
 
@@ -328,10 +318,10 @@ Returns:
 
 EFI_STATUS
 NvramQueryInfo(
-    __in  UINT32  Attributes,
-    __out UINT64* MaximumVariableStorageSize,
-    __out UINT64* RemainingVariableStorageSize,
-    __out UINT64* MaximumVariableSize
+        UINT32  Attributes,
+    OUT UINT64* MaximumVariableStorageSize,
+    OUT UINT64* RemainingVariableStorageSize,
+    OUT UINT64* MaximumVariableSize
     )
 /*++
 
@@ -394,11 +384,11 @@ Returns:
 
 EFI_STATUS
 NvramSetVariable(
-    __in CHAR16*   VariableName,
-    __in EFI_GUID* VendorGuid,
-    __in UINT32    Attributes,
-    __in UINTN     DataSize,
-    __in void*     Data
+    IN  CHAR16*   VariableName,
+    OUT EFI_GUID* VendorGuid,
+        UINT32    Attributes,
+        UINTN     DataSize,
+    IN  void*     Data
     )
 /*++
 
@@ -478,11 +468,11 @@ Returns:
 
 EFI_STATUS
 NvramGetVariable(
-    __in           CHAR16*   VariableName,
-    __in           EFI_GUID* VendorGuid,
-    __out OPTIONAL UINT32*   Attributes,
-    __in __out     UINTN*    DataSize,
-    __out          void*     Data
+    IN              CHAR16*     VariableName,
+    IN              EFI_GUID*   VendorGuid,
+    OUT OPTIONAL    UINT32*     Attributes,
+    IN OUT          UINTN*      DataSize,
+    OUT             void*       Data
     )
 /*++
 
@@ -595,9 +585,9 @@ Returns:
 
 EFI_STATUS
 NvramGetFirstVariableName(
-    __out UINTN*    VariableNameSize,
-    __out CHAR16*   VariableName,
-    __inout EFI_GUID* VendorGuid
+    OUT     UINTN*      VariableNameSize,
+    OUT     CHAR16*     VariableName,
+    IN OUT  EFI_GUID*   VendorGuid
     )
 /*++
 
@@ -670,9 +660,9 @@ Returns:
 
 EFI_STATUS
 NvramGetNextVariableName(
-    __inout UINTN*    VariableNameSize,
-    __inout CHAR16*   VariableName,
-    __inout EFI_GUID* VendorGuid
+    IN OUT  UINTN*      VariableNameSize,
+    IN OUT  CHAR16*     VariableName,
+    IN OUT  EFI_GUID*   VendorGuid
     )
 /*++
 
@@ -745,7 +735,7 @@ Returns:
 extern
 VOID
 NvramDebugLog(
-    __in CONST CHAR8 *Format,
+    IN CONST CHAR8 *Format,
     ...
     )
 /*++

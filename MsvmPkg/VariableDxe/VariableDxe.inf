@@ -1,14 +1,10 @@
+## @file
+#  Component description file for Variable module
 #
-# Copyright (c) Microsoft Corporation
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
-# Module Name:
-#
-#   VariableDxe.inf
-#
-# Abstract
-#
-#   Component description file for Variable module
-#
+##
 
 [Defines]
     INF_VERSION                    = 0x00010005
@@ -19,8 +15,8 @@
     ENTRY_POINT                    = VariableServiceInitialize
 
 [Sources]
-    VariableDxe.c
     NvramVariableDxe.c
+    VariableDxe.c
 
 [Packages]
     MdePkg/MdePkg.dec
@@ -28,8 +24,8 @@
     MsvmPkg/MsvmPkg.dec
 
 [LibraryClasses]
-    BaseMemoryLib
     BaseLib
+    BaseMemoryLib
     BiosDeviceLib
     DebugLib
     DxeServicesTableLib

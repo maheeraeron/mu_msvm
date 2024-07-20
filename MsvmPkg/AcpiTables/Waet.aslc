@@ -1,22 +1,22 @@
-/*++
-    Defines the WAET fixed ACPI table. This table informs the OS that the
-    RTC and ACPI PM timer are implemented correctly. This dramatically
-    improves performance on operating systems that access these devices
-    during timer ticks, since the workarounds for the bugs involved accessing
-    the virtual hardware registers many more times than actually necessary.
+/** @file
+  Defines the WAET fixed ACPI table. This table informs the OS that the
+  RTC and ACPI PM timer are implemented correctly. This dramatically
+  improves performance on operating systems that access these devices
+  during timer ticks, since the workarounds for the bugs involved accessing
+  the virtual hardware registers many more times than actually necessary.
 
-    This is necessary for all supported Windows OSes before Windows 8.
-    Starting in Windows 8, the hypervisor reference timer and synthetic
-    interrupt timers are used instead of the PM timer and RTC, respectively.
+  This is necessary for all supported Windows OSes before Windows 8.
+  Starting in Windows 8, the hypervisor reference timer and synthetic
+  interrupt timers are used instead of the PM timer and RTC, respectively.
 
-    It is also necessary for Windows 8 when the PCI bus is present and labeled
-    a PIIX4, since Windows 8 will bugcheck if the ACPI_PM_TIMER_GOOD_FLAG
-    is not set. This is despite the fact though Windows 8 does not use the PM
-    timer when running on a Hyper-V VM.
+  It is also necessary for Windows 8 when the PCI bus is present and labeled
+  a PIIX4, since Windows 8 will bugcheck if the ACPI_PM_TIMER_GOOD_FLAG
+  is not set. This is despite the fact though Windows 8 does not use the PM
+  timer when running on a Hyper-V VM.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>

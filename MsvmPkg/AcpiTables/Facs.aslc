@@ -1,11 +1,11 @@
-/*++
-    Defines the FACS fixed ACPI table. This table is mandatory when
-    running with fixed ACPI hardware, as it provides storage for the global
-    lock.
+/** @file
+  Defines the FACS fixed ACPI table. This table is mandatory when
+  running with fixed ACPI hardware, as it provides storage for the global
+  lock.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>

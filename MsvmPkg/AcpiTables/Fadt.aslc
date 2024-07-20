@@ -1,9 +1,9 @@
-/*++
-    Defines the Fixed ACPI Description Table.
+/** @file
+  Defines the Fixed ACPI Description Table.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>
@@ -129,10 +129,10 @@ EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE FADT =
         EFI_ACPI_6_2_UNDEFINED,
         0
     },
-    { 
+    {
         EFI_ACPI_6_2_SYSTEM_IO, // SLEEP_CONTROL_REG
         EFI_ACPI_6_2_BYTE * 8,
-        0,                      
+        0,
         EFI_ACPI_6_2_BYTE,
         PowerMgmtDefaultBaseRegister + PowerMgmtControlRegOffset + 1 // Maps to upper byte [15:8] of control reg
     },

@@ -1,12 +1,11 @@
-/*++
+/** @file
+  The DBG2 Port Table information that exposes the PL011 device as a serial
+  debug device for Windows.
 
-    The DBG2 Port Table information that exposes the PL011 device as a serial
-    debug device for Windows.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
-
---*/
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>

@@ -1,9 +1,9 @@
-/*++
-    Defines the Generic Timer Description Table for ARM64.
+/** @file
+  Defines the Generic Timer Description Table for ARM64.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>

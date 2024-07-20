@@ -1,10 +1,10 @@
-/*++
-    Defines the Serial Port Redirection Table. This table informs the OS that
-    there is a port to be used for a serial console.
+/** @file
+  Defines the Serial Port Redirection Table. This table informs the OS that
+  there is a port to be used for a serial console.
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <AcpiTables.h>
