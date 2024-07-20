@@ -1,21 +1,9 @@
-/*++
-  This file contains an 'Intel Peripheral Driver' and is
-  licensed for Intel CPUs and chipsets under the terms of your
-  license agreement with Intel or your vendor.  This file may
-  be modified by the user, subject to additional terms of the
-  license agreement
---*/
 /** @file
-  BDS Lib functions which contain all the code to connect console device
+  BDS Lib functions which contain all the code to connect console device.
 
-Copyright (c) 2011 - 2013, Intel Corporation. All rights reserved.<BR>
-This software and associated documentation (if any) is furnished
-under a license and may only be used or copied in accordance
-with the terms of the license.  Except as permitted by such
-license, no part of this software or documentation may be
-reproduced, stored in a retrieval system, or transmitted in any
-form or by any means without the express written consent of
-Intel Corporation.
+  Copyright (c) 2011 - 2013, Intel Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
@@ -30,7 +18,6 @@ Intel Corporation.
 #include <Library/PcdLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
-#include <Library/MsBuildIdLib.h>
 #include <Library/DisplayDeviceStateLib.h>
 #include <Library/BmpSupportLib.h>
 #include <Library/MsLogoLib.h>
@@ -511,7 +498,7 @@ MsLogoLibSetConsoleMode (
                                         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutRow::0x%x \n", Status));
                                         FreePool (Info);
                                         goto CheckDraw;
-                                    }                                   
+                                    }
 
                                     FreePool (Info);
                                     goto CheckDraw;
@@ -560,25 +547,25 @@ MsLogoLibSetConsoleMode (
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdVideoHorizontalResolution::0x%x \n", Status));
         goto CheckDraw;
-    } 
+    }
     Status = PcdSet32S (PcdVideoVerticalResolution, NewVerticalResolution);
     if (EFI_ERROR(Status))
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdVideoVerticalResolution::0x%x \n", Status));
         goto CheckDraw;
-    } 
+    }
     Status = PcdSet32S (PcdConOutColumn, NewColumns);
     if (EFI_ERROR(Status))
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutColumn::0x%x \n", Status));
         goto CheckDraw;
-    } 
+    }
     Status = PcdSet32S (PcdConOutRow, NewRows);
     if (EFI_ERROR(Status))
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdConOutRow::0x%x \n", Status));
         goto CheckDraw;
-    } 
+    }
 
     //
     // Video mode is changed, so restart graphics console driver and higher level driver.

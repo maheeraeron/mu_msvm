@@ -1,3 +1,10 @@
+/** @file
+  MMIO allocation library
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
+
 #include <Base.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -58,9 +65,9 @@ AllocateMmioPages(
         return NULL;
     }
 
-    // TODO-cho: This is a static lib for now and the VPCI vsc does not need thread safety,
-    //           but if it ever becomes a full DXE driver, it will need to raise/lower
-    //           TPL to synchronize across different callers.
+    // TODO:    This is a static lib for now and the VPCI vsc does not need thread safety,
+    //          but if it ever becomes a full DXE driver, it will need to raise/lower
+    //          TPL to synchronize across different callers.
     baseAddress = (VOID*) alignedAllocationBase;
     mMmioFreeBaseAddress += totalAllocationSize;
     mMmioAllocatedSpace += totalAllocationSize;

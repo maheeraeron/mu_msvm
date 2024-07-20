@@ -1,3 +1,10 @@
+/** @file
+  MMIO allocation library declarations
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
+
 #pragma once
 
 #include <Base.h>

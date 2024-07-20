@@ -1,28 +1,9 @@
-/** @file -- Tpm2DeviceLibHypV.c
-This is an implementation of Tpm2DeviceLib that is specific to the Hyper-V
-guest firmware.
+/** @file
+  This is an implementation of Tpm2DeviceLib that is specific to the Hyper-V
+  guest firmware.
 
-Copyright (c) 2018, Microsoft Corporation
-
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
 **/
 
@@ -36,27 +17,27 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <IndustryStandard/Tpm20.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 
-#include <Library/Tpm2DebugLib.h>         // MS_CHANGE
-#include <TpmInterface.h>           // Definitions specific to Hyper-V VDev.
+#include <Library/Tpm2DebugLib.h>
+#include <TpmInterface.h>               // Definitions specific to Hyper-V VDev.
 
 #pragma pack(push,1)
 typedef struct _FTPM_CONTROL_AREA
 {
     //
     // This used to a Reserved field. This is the Miscellaneous field for the Command/Response interface.
-    // 
+    //
     volatile UINT32  Miscellaneous;
-    
+
     //
     // The Status field of the Control area.
     //
     volatile UINT32  Status;
-    
+
     //
     // The Cancel field of the Control area. TPM does not modify this field, hence it is not declared volatile.
     //
     UINT32  Cancel;
-    
+
     //
     // The Start field of the Control area.
     //
@@ -338,8 +319,6 @@ Tpm2RequestUseTpm (
 }
 
 /**
-  TODO: This interface is ugly and overloaded.
-        Find a better way to do this.
   This service register TPM2 device.
 
   @param Tpm2Device  TPM2 device

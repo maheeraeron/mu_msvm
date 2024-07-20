@@ -1,3 +1,10 @@
+/** @file
+  Library for accessing system settings for MsBootPolicy.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
+
 #include <Uefi.h>                                     // UEFI base types
 #include <Library/DebugLib.h>                         // DEBUG tracing
 #include <Library/DevicePathLib.h>
@@ -46,7 +53,7 @@ MsBootPolicyLibIsDevicePathBootable(
     }
 
 #ifdef EFI_DEBUG
-#define MAX_DEVICE_PATH_SIZE 0x100000  // Arbitrary 1 Meg max device path size.
+#define MAX_DEVICE_PATH_SIZE 0x100000  // Arbitrary 1 MB max device path size.
 #else
 #define MAX_DEVICE_PATH_SIZE 0         // Don't check length on retail builds.
 #endif

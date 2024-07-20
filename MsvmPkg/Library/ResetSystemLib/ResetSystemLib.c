@@ -1,14 +1,11 @@
 /** @file
-  Reset System Library functions for Hyper-V platform
+  ResetSystemLib implementation using PSCI calls
 
-  Copyright (c) 2006 - 2014, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
+  Copyright (c) 2017 - 2018, Linaro Ltd. All rights reserved.<BR>
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation.
 
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -17,10 +14,9 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
-#include <PowerManagementInterface.h>
-#include <Uefi/UefiBaseType.h>
-#include <Uefi/UefiMultiPhase.h>
 #include <Library/ResetSystemLib.h>
+
+#include <PowerManagementInterface.h>
 
 VOID
 AcpiPmControl (
@@ -40,13 +36,12 @@ AcpiPmControl (
 }
 
 /**
-  Calling this function causes a system-wide reset. This sets
-  all circuitry within the system to its initial state. This type of reset
+  This function causes a system-wide reset (cold reset), in which
+  all circuitry within the system returns to its initial state. This type of reset
   is asynchronous to system operation and operates without regard to
   cycle boundaries.
 
-  System reset should not return, if it returns, it means the system does
-  not support cold reset.
+  If this function returns, it means that the system does not support cold reset.
 **/
 VOID
 EFIAPI
@@ -61,11 +56,10 @@ ResetCold (
 }
 
 /**
-  Calling this function causes a system-wide initialization. The processors
-  are set to their initial state, and pending cycles are not corrupted.
+  This function causes a system-wide initialization (warm reset), in which all processors
+  are set to their initial state. Pending cycles are not corrupted.
 
-  System reset should not return, if it returns, it means the system does
-  not support warm reset.
+  If this function returns, it means that the system does not support warm reset.
 **/
 VOID
 EFIAPI
@@ -77,11 +71,10 @@ ResetWarm (
 }
 
 /**
-  Calling this function causes the system to enter a power state equivalent
+  This function causes the system to enter a power state equivalent
   to the ACPI G2/S5 or G3 states.
 
-  System shutdown should not return, if it returns, it means the system does
-  not support shut down reset.
+  If this function returns, it means that the system does not support shutdown reset.
 **/
 VOID
 EFIAPI
@@ -90,24 +83,6 @@ ResetShutdown (
   )
 {
   AcpiPmControl (0);
-}
-
-
-/**
-  Calling this function causes the system to enter a power state for capsule
-  update.
-
-  Reset update should not return, if it returns, it means the system does
-  not support capsule update.
-
-**/
-VOID
-EFIAPI
-EnterS3WithImmediateWake (
-  VOID
-  )
-{
-  ASSERT (FALSE);
 }
 
 /**
@@ -124,49 +99,53 @@ EnterS3WithImmediateWake (
 VOID
 EFIAPI
 ResetPlatformSpecific (
-  IN UINTN   DataSize,
-  IN VOID    *ResetData
+  IN UINTN  DataSize,
+  IN VOID   *ResetData
   )
 {
+  // Map the platform specific reset as reboot
   ResetCold ();
 }
 
 /**
-  This is the primary interface to this library.
-  All calls will be sorted from here.
-  The prototype is identical to EFI_RESET_SYSTEM.
+  The ResetSystem function resets the entire platform.
 
-  @param[in]  ResetType         EFI_RESET_TYPE for the reset being requested.
-  @param[in]  ResetStatus
-  @param[in]  DataSize
-  @param[in]  ResetData
-
+  @param[in] ResetType      The type of reset to perform.
+  @param[in] ResetStatus    The status code for the reset.
+  @param[in] DataSize       The size, in bytes, of ResetData.
+  @param[in] ResetData      For a ResetType of EfiResetCold, EfiResetWarm, or EfiResetShutdown
+                            the data buffer starts with a Null-terminated string, optionally
+                            followed by additional binary data. The string is a description
+                            that the caller may use to further indicate the reason for the
+                            system reset.
 **/
 VOID
 EFIAPI
-LibResetSystem (
-  IN EFI_RESET_TYPE   ResetType,
-  IN EFI_STATUS       ResetStatus,
-  IN UINTN            DataSize,
-  IN CHAR16           *ResetData OPTIONAL
+ResetSystem (
+  IN EFI_RESET_TYPE  ResetType,
+  IN EFI_STATUS      ResetStatus,
+  IN UINTN           DataSize,
+  IN VOID            *ResetData OPTIONAL
   )
 {
   switch (ResetType) {
-  case EfiResetWarm:
-    ResetWarm ();
-    break;
+    case EfiResetWarm:
+      ResetWarm ();
+      break;
 
- case EfiResetCold:
-    ResetCold ();
-    break;
+    case EfiResetCold:
+      ResetCold ();
+      break;
 
-  case EfiResetShutdown:
-    ResetShutdown ();
-    break;
+    case EfiResetShutdown:
+      ResetShutdown ();
+      return;
 
-  default:
-    break;
+    case EfiResetPlatformSpecific:
+      ResetPlatformSpecific (DataSize, ResetData);
+      return;
+
+    default:
+      return;
   }
-
-  return;
-} // LibResetSystem()
+}

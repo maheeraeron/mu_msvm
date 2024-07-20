@@ -1,17 +1,9 @@
 /** @file
   Serial I/O Port library functions with no library constructor/destructor
 
-  Copyright (c) 2017, Microsoft Corporation.
-
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
-**/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
@@ -103,8 +95,8 @@ PCUartInitializePort (
     }
     // Map 5..8 to 0..3
     LcrData = (UINT8)(*DataBits - (UINT8)5);
-   
-    switch (*Parity) 
+
+    switch (*Parity)
     {
         case NoParity:
             LcrParity = 0;
@@ -200,7 +192,7 @@ PCUartSetControl(
     )
 {
     UINT8 mcr;
-    
+
     if ((Control & (~(EFI_SERIAL_REQUEST_TO_SEND | EFI_SERIAL_DATA_TERMINAL_READY))) != 0)
     {
         return RETURN_UNSUPPORTED;
@@ -208,7 +200,7 @@ PCUartSetControl(
 
     mcr = IoRead8(UartBase + R_UART_MCR);
     mcr &= (~(B_UART_MCR_DTRC | B_UART_MCR_RTS));
-   
+
     if ((Control & EFI_SERIAL_DATA_TERMINAL_READY) == EFI_SERIAL_DATA_TERMINAL_READY)
     {
         mcr |= B_UART_MCR_DTRC;
@@ -291,11 +283,11 @@ PCUartGetControl(
 
     if ((mcr & B_UART_MCR_DTRC) == B_UART_MCR_DTRC)
     {
-        *Control |= EFI_SERIAL_DATA_TERMINAL_READY;    
+        *Control |= EFI_SERIAL_DATA_TERMINAL_READY;
     }
     if ((mcr & B_UART_MCR_RTS) == B_UART_MCR_RTS)
     {
-        *Control |= EFI_SERIAL_REQUEST_TO_SEND;    
+        *Control |= EFI_SERIAL_REQUEST_TO_SEND;
     }
 
     lsr = IoRead8(UartBase + R_UART_LSR);

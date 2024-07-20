@@ -9,10 +9,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //
 //  Indicates that the event is pending and the associated
 //  data may be updated at later time.
@@ -30,7 +26,7 @@ extern "C" {
 //  Describes an event log entry
 //  Event specific data may follow immediately after the header
 //
-typedef _Struct_size_bytes_(HeaderSize + DataSize) struct
+typedef struct
 {
     //
     // Optional GUID identifing the producer of the event
@@ -85,11 +81,6 @@ typedef struct
     UINT32  EventsWritten;
     UINT32  EventsLost;
     UINT32  DataSize;
-    _Field_size_(DataSize)
     UINT8   Data[];
 } BIOS_EVENT_CHANNEL;
 #pragma warning( pop )
-
-#ifdef __cplusplus
-}   // extern "C"
-#endif

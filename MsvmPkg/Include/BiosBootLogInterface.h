@@ -9,10 +9,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //
 // Device status code groups
 //
@@ -87,14 +83,9 @@ typedef struct
     EFI_STATUS                  ExtendedStatus;
     UINT16                      BootVariableNumber;
     UINT32                      DevicePathSize;
-    _Field_size_(DevicePathSize)
     UINT8                       DevicePath[];
 } BOOTEVENT_DEVICE_ENTRY;
 #pragma warning(pop)
 
 #define BOOT_EVENT_CHANNEL_GUID \
     {0x8cc6713b, 0x360d, 0x4406, {0x92, 0x68, 0xf6, 0xb0, 0xcf, 0xdf, 0xca, 0x91}}
-
-#ifdef __cplusplus
-}   // extern "C"
-#endif

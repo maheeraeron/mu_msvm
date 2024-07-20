@@ -125,13 +125,12 @@
   Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
   OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
   Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
-  Tcg2PreUefiEventLogLib|MsvmPkg/Library/Tcg2PreUefiEventLogLibNull/Tcg2PreUefiEventLogLibNull.inf
+  Tcg2PreUefiEventLogLib|SecurityPkg/Library/Tcg2PreUefiEventLogLibNull/Tcg2PreUefiEventLogLibNull.inf
   ## MS_CHANGE_?
 
   # MsCore BDS & FrontPage Libs
   PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
   DeviceBootManagerLib|MsvmPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
-  MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
   MsLogoLib|MsvmPkg/Library/MsLogoLib/MsLogoLib.inf #point to MsLogoLib
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
@@ -423,7 +422,11 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdUse1GPageTable|TRUE
 
   # COM port used for pre-DXE debugging
-  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8
+!ifdef DEBUGLIB_SERIAL
+  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8  #COM2
+!else
+  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x3F8  #COM1
+!endif
 
   # Change PcdBootManagerMenuFile to point to the FrontPage application
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x8A, 0x70, 0x42, 0x40, 0x2D, 0x0F, 0x23, 0x48, 0xAC, 0x60, 0x0D, 0x77, 0xB3, 0x11, 0x18, 0x89 }
@@ -814,7 +817,7 @@
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
@@ -824,7 +827,7 @@
 
   SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
@@ -833,6 +836,7 @@
       #special library For HyperV so that boot doesn't measure Main FV
       NULL|MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.inf
  !if $(SOURCE_DEBUG_ENABLE) == TRUE
+      SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugForceEnabled/SourceDebugForceEnabled.inf
  !else
       SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
  !endif

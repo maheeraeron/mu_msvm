@@ -77,10 +77,9 @@ EFI_STRING_ID                   BootSummaryStringIds[] = {                      
 UINT32                          BootSummaryEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID));
 UINT32                          MaxAllowedErrorEntries = sizeof(BootSummaryStringIds) / (2*sizeof(EFI_STRING_ID)) - 1;  // Last Boot Summary entry is reserved
 
-_Ret_maybenull_z_
 CHAR16*
 PlatformConsoleDeviceStatusString(
-    _In_    BOOT_DEVICE_STATUS              Status
+    IN  BOOT_DEVICE_STATUS  Status
     )
 /*++
 
@@ -172,11 +171,10 @@ Return Value:
 }
 
 
-_Ret_maybenull_z_
 CHAR16*
 PlatformConsoleNetDeviceName(
-    _In_    EFI_DEVICE_PATH_PROTOCOL       *DevicePath,
-    _In_    MAC_ADDR_DEVICE_PATH           *MacPath
+    IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+    IN  MAC_ADDR_DEVICE_PATH        *MacPath
     )
 /*++
 
@@ -253,11 +251,10 @@ Exit:
 }
 
 
-_Ret_maybenull_z_
 CHAR16*
 PlatformConsoleScsiDeviceName(
-    _In_    EFI_DEVICE_PATH_PROTOCOL       *DevicePath,
-    _In_    SCSI_DEVICE_PATH               *ScsiPath
+    IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+    IN  SCSI_DEVICE_PATH            *ScsiPath
     )
 /*++
 
@@ -332,17 +329,16 @@ Exit:
 }
 
 
-_Ret_maybenull_z_
 CHAR16*
 PlatformConsoleUnknownDeviceName(
-    _In_    const BOOTEVENT_DEVICE_ENTRY   *Event
+    IN  const BOOTEVENT_DEVICE_ENTRY   *Event
     )
 /*++
 
 Routine Description:
 
     No friendly string could be created so use the option name stored in NVRAM
-    This is relatively slow but should be an uncommon occurance
+    This is relatively slow but should be an uncommon occurrence
 
 Arguments:
 
@@ -394,10 +390,9 @@ Return Value:
 }
 
 
-_Ret_maybenull_z_
 CHAR16*
 PlatformConsoleDeviceNameString(
-    _In_    const BOOTEVENT_DEVICE_ENTRY   *Event
+    IN  const BOOTEVENT_DEVICE_ENTRY   *Event
     )
 /*++
 
@@ -440,7 +435,7 @@ Return Value:
         (Event->DevicePathSize > sizeof(EFI_DEVICE_PATH_PROTOCOL)))
     {
         //
-        // Traverse the device path to find the nodes that can be formated
+        // Traverse the device path to find the nodes that can be formatted
         //
         for (curPathNode = devicePath;
              !IsDevicePathEnd(curPathNode);
@@ -479,10 +474,9 @@ Return Value:
 
 BOOLEAN
 PlatformConsoleEventCallback(
-    _In_    VOID                           *Context,
-    _In_    const EFI_EVENT_DESCRIPTOR     *Metadata,
-    _In_bytecount_(Metadata->DataSize)
-            const BOOTEVENT_DEVICE_ENTRY   *Event
+    IN  VOID                            *Context,
+    IN  const EFI_EVENT_DESCRIPTOR      *Metadata,
+    IN  const BOOTEVENT_DEVICE_ENTRY    *Event
     )
 /*++
 
@@ -527,7 +521,7 @@ Return Value:
 
     //
     // Skip the friendly name and number for BootDeviceNoDevices
-    // This is kind of a hack, but makes the output look nice.
+    // This makes the output look nice.
     //
     if (Event->Status == BootDeviceNoDevices)
     {
@@ -566,7 +560,7 @@ Return Value:
 
 VOID
 PlatformConsoleBootSummary(
-    _In_    EFI_STRING_ID                   PromptId
+    IN  EFI_STRING_ID   PromptId
     )
 /*++
 

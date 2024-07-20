@@ -1,29 +1,9 @@
-/** @file -- Tcg2PreInitLibPei.c
-Tpm2 intialization hooks specific to the vDevice in Hyper-V.
+/** @file
+  Tpm2 intialization hooks specific to the MSFT0101 virtual TPM device.
 
-Copyright (c) 2018, Microsoft Corporation
-
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-**/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
@@ -33,7 +13,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DebugLib.h>
 #include <Library/Tpm2DeviceLib.h>
 
-#include <TpmInterface.h>           // Definitions specific to Hyper-V VDev.
+#include <TpmInterface.h>           // Definitions specific to the MSFT0101 virtual TPM device.
 
 
 VOID
@@ -48,7 +28,7 @@ ReadTpmPort(
 );
 
 /**
-  Performs basic, one-time initialization for the Hyper-V TPM vDevice.
+  Performs basic, one-time initialization for the MSFT0101 virtual TPM device.
   Will allocate a CRB buffer and configure that buffer with the device.
 
   @retval     EFI_SUCCESS   Everything is fine. Continue with init.
@@ -57,7 +37,7 @@ ReadTpmPort(
 **/
 EFI_STATUS
 EFIAPI
-HyperVTpmDeviceInitEarlyBoot(
+MsvmTpmDeviceInitEarlyBoot(
 	VOID
   )
 {
@@ -68,14 +48,14 @@ HyperVTpmDeviceInitEarlyBoot(
 
     Status = PeiServicesAllocatePages(EfiRuntimeServicesData, 2, &CrBuffer);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__" - Failed to allocate CRB for TPM VDev!\n"));
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - Failed to allocate CRB for TPM device!\n"));
         return Status;
     }
 
     if (CrBuffer > 0xFFFFFFFFULL) {
         // PEI memory was published as - Base at 1MB, size max 64MB.
         // It is guaranteed that physical address is below 4 GB.
-        DEBUG((DEBUG_ERROR, __FUNCTION__" - CRB allocation for TPM VDev is incorrect!\n"));
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - CRB allocation for TPM device is incorrect!\n"));
         ASSERT(FALSE);
         return EFI_DEVICE_ERROR;
     }
@@ -90,20 +70,20 @@ HyperVTpmDeviceInitEarlyBoot(
     DEBUG((DEBUG_VERBOSE, __FUNCTION__" - TpmBaseAddress == 0x%016lX\n", TpmBaseAddress));
 
     //
-    // Send the request to the TPM VDev.
+    // Send the request to the TPM device.
     // Cast of command buffer GPA is safe as it was allocated below 4GB.
     //
     WriteTpmPort(TpmIoMapSharedMemory, (UINT32)CrBuffer);
 
     //
-    // Query vDev the mapping result
+    // Query the mapping result
     //
     TpmIoEstablishedResponse = ReadTpmPort(TpmIoEstablished);
     if (TpmIoEstablishedResponse == 0) {
         //
-        // Couldn't establish memory mapping with vDev.
+        // Couldn't establish memory mapping with device.
         //
-        DEBUG((DEBUG_ERROR, __FUNCTION__" - Couldn't establish memory mapping with vDev!\n"));
+        DEBUG((DEBUG_ERROR, __FUNCTION__" - Couldn't establish memory mapping with device!\n"));
         return EFI_NO_MAPPING;
     }
 
@@ -112,7 +92,7 @@ HyperVTpmDeviceInitEarlyBoot(
     Tpm2RegisterTpm2DeviceLib((TPM2_DEVICE_INTERFACE*)TpmBaseAddress);
 
     return Status;
-} // HyperVTpmDeviceInitEarlyBoot()
+} // MsvmTpmDeviceInitEarlyBoot()
 
 
 /**
@@ -130,7 +110,7 @@ HyperVTpmDeviceInitEarlyBoot(
 **/
 EFI_STATUS
 EFIAPI
-HyperVTpm2InitLibConstructorPei (
+MsvmTpm2InitLibConstructorPei (
   IN       EFI_PEI_FILE_HANDLE       FileHandle,
   IN CONST EFI_PEI_SERVICES          **PeiServices
   )
@@ -155,15 +135,15 @@ HyperVTpm2InitLibConstructorPei (
     {
         DEBUG((DEBUG_ERROR, __FUNCTION__" - Failed to set the PCD PcdTpmInstanceGuid::0x%x \n", Status));
         ASSERT_EFI_ERROR( Status );
-    } 
+    }
   }
 
   //
   // If we're still good to continue init, perform the required Hyper-V init.
   if (TpmEnabled && !EarlyInitComplete) {
-    Status = HyperVTpmDeviceInitEarlyBoot();
+    Status = MsvmTpmDeviceInitEarlyBoot();
     if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - HyperVTpmDeviceInitEarlyBoot() returned %r!\n", Status ));
+      DEBUG(( DEBUG_ERROR, __FUNCTION__" - MsvmTpmDeviceInitEarlyBoot() returned %r!\n", Status ));
       ASSERT_EFI_ERROR( Status );
     }
     EarlyInitComplete = TRUE;

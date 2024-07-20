@@ -12,7 +12,7 @@ PlatformConsoleInitialize();
 
 VOID
 PlatformConsoleBootSummary(
-    _In_    EFI_STRING_ID                   Id
+    IN  EFI_STRING_ID   Id
     );
 
 //
@@ -25,26 +25,25 @@ PlatformStringInitialize();
 
 CHAR16*
 PlatformStringById(
-    _In_    EFI_STRING_ID                   Id
+    IN  EFI_STRING_ID   Id
     );
 
 UINTN
 PlatformStringPrintById(
-    _In_    EFI_STRING_ID                   Id,
+    IN  EFI_STRING_ID   Id,
     ...
     );
 
 UINTN
 PlatformStringPrintSById(
-    _Out_writes_z_(BufferSize)
-            CHAR16                         *StartOfBuffer,
-    _In_    UINTN                           BufferSize,
-    _In_    EFI_STRING_ID                   Id,
+    OUT CHAR16          *StartOfBuffer,
+    IN  UINTN           BufferSize,
+    IN  EFI_STRING_ID   Id,
     ...
     );
 
 UINTN
 PlatformStringPrint(
-    _In_    CHAR16                         *Format,
+    IN  CHAR16          *Format,
     ...
     );

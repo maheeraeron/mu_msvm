@@ -1,39 +1,24 @@
-/*++
+/** @file
+  This module contains code to interact with the Hyper-V watchdog timer.
 
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    WatchdogTimerLib.c
-
-Abstract:
-
-    This module contains code to interact with the Hyper-V watchdog timer.
-
-Author:
-
-    Kris Harper (kharp) 8-Oct-2013
-
-Environment:
-
-    UEFI
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
-#include <Uefi.h>
-#include <EfiNt.h>
-#include <Library/BiosDeviceLib.h>
-#include <Library/IoLib.h>
 #include <Library/BaseLib.h>
-#include <Library/WatchdogTimerLib.h>
+#include <Library/BiosDeviceLib.h>
 #include <Library/DebugLib.h>
+#include <Library/IoLib.h>
+#include <Library/WatchdogTimerLib.h>
+
 #include <BiosInterface.h>
 #include <IsolationTypes.h>
+#include <Uefi.h>
 
 VOID
 WatchdogConfigure(
-    _In_    UINT32                  Count,
-    _In_    WATCHDOG_MODE           Mode
+    UINT32          Count,
+    WATCHDOG_MODE   Mode
     )
 /*++
 
@@ -92,7 +77,7 @@ Return Value:
 
 VOID
 WatchdogSetCount(
-    _In_    UINT32                  Count
+    UINT32  Count
     )
 /*++
 
@@ -163,7 +148,7 @@ WatchdogSuspend()
 Routine Description:
 
      Suspends the watchdog timer.  When suspended the hardware timer is still active
-     but the watchdog count is not decremented.  If the watchdog timer is not configure
+     but the watchdog count is not decremented.  If the watchdog timer is not configured
      this routine has no effect.
 
      The return value should be used as the input to WatchdogResume
@@ -198,14 +183,14 @@ Return Value:
 
 VOID
 WatchdogResume(
-    _In_    BOOLEAN                 PreviouslyRunning
+    BOOLEAN PreviouslyRunning
     )
 /*++
 
 Routine Description:
 
      Resumes the watchdog timer.
-     If the watchdog timer is not configure this routine has no effect.
+     If the watchdog timer is not configured, this routine has no effect.
 
 Arguments:
 

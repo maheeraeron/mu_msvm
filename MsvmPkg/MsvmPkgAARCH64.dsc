@@ -137,13 +137,12 @@
   Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
   OemTpm2InitLib|SecurityPkg/Library/OemTpm2InitLibNull/OemTpm2InitLib.inf               ## MS_CHANGE_?
   Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
-  Tcg2PreUefiEventLogLib|MsvmPkg/Library/Tcg2PreUefiEventLogLibNull/Tcg2PreUefiEventLogLibNull.inf
+  Tcg2PreUefiEventLogLib|SecurityPkg/Library/Tcg2PreUefiEventLogLibNull/Tcg2PreUefiEventLogLibNull.inf
   ## MS_CHANGE_?
 
   # MsCore BDS & FrontPage Libs
   PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
   DeviceBootManagerLib|MsvmPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
-  MsBuildIdLib|MsvmPkg/Library/MsBuildIdLibNull/MsBuildIdLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
   MsLogoLib|MsvmPkg/Library/MsLogoLib/MsLogoLib.inf #point to MsLogoLib
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
@@ -429,7 +428,11 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|0x00000001
 
   # Default settings for serial port in SerialPortLib (for debug print)
+!ifdef DEBUGLIB_SERIAL
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xEFFEB000 #COM2
+!else
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xEFFEC000 #COM1
+!endif
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate|115200
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits|8
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity|1
@@ -444,9 +447,6 @@
 
   # Base addresses of memory mapped devices in MMIO space.
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000
-
-  # COM port used for pre-DXE debugging
-  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8
 
   # Disable front page auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
@@ -801,7 +801,7 @@
 
   SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
@@ -809,7 +809,7 @@
 
   SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibHypV/Tpm2DeviceLibHypV.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
@@ -818,14 +818,9 @@
   }
 
   MsKdDebugPkg2/KdDxe/KdDxe.inf {
-    # Use COM1 for debugging
-    # Fixed at build PCD overrides don't work for consumed libraries.
-    # Instead, we use a LibraryClasses override for a serial port lib that always
-    # uses COM1.
     <LibraryClasses>
-      SerialPortLib|MsvmPkg/Library/KdPL011SerialPortLib/KdPL011SerialPortLib.inf
-    <PcdsFixedAtBuild>
-      #gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xEFFEC000 #COM1
+      PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
+      SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
   }
 
   # UI Theme Protocol

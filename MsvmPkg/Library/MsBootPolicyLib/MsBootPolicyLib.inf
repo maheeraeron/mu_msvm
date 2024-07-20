@@ -1,9 +1,8 @@
 ## @file
-#  MsBootPolicyLib.inf
+#  Library for accessing system settings for MsBootPolicy
 #
-#  Description:    Library for accessing system settings for MsBootPolicy
-#
-#  Copyright (c) 2015, Microsoft Corporation.
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
