@@ -57,7 +57,7 @@
     gMsvmPkgTokenSpaceGuid.PcdVmbusSintIndex                                ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary                    ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask     ## CONSUMES
-    gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated                        ## SOMETIMES_CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdEnableIMCWhenIsolated                         ## SOMETIMES_CONSUMES
 
 [Depex]
     gEfiHvProtocolGuid

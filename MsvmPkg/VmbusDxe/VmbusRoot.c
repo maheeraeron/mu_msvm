@@ -220,7 +220,7 @@ VmbusRootInitializeContext(
     RootContext->ContactInitiated = FALSE;
     RootContext->OffersDelivered = FALSE;
 
-    status = 
+    status =
         gBS->CreateEvent(
             0,
             0,
@@ -238,7 +238,7 @@ VmbusRootInitializeContext(
     // Set the hot event to the lowest TPL possible so any driver unbindings
     // triggered by hot-remove can safely stop the EMCL channel.
     //
-    status = 
+    status =
         gBS->CreateEvent(
             EVT_NOTIFY_SIGNAL,
             TPL_APPLICATION + 1,
@@ -257,7 +257,7 @@ VmbusRootInitializeContext(
     // allocate memory for the hot message.
     //
 
-    status = 
+    status =
         gBS->CreateEvent(
             EVT_NOTIFY_SIGNAL,
             TPL_NOTIFY,
@@ -474,11 +474,11 @@ VmbusRootWaitForMessage(
 
     if (!PollForMessage)
     {
-        if (mInternalEventServices == NULL) 
+        if (mInternalEventServices == NULL)
         {
             status = gBS->LocateProtocol(
-                &gInternalEventServicesProtocolGuid, 
-                NULL, 
+                &gInternalEventServicesProtocolGuid,
+                NULL,
                 (VOID **)&mInternalEventServices);
             ASSERT_EFI_ERROR(status);
         }
@@ -533,11 +533,11 @@ VmbusRootWaitForChannelResponse(
     //
     ASSERT(EfiGetCurrentTpl() < TPL_NOTIFY);
 
-    if (mInternalEventServices == NULL) 
+    if (mInternalEventServices == NULL)
     {
         status = gBS->LocateProtocol(
-                    &gInternalEventServicesProtocolGuid, 
-                    NULL, 
+                    &gInternalEventServicesProtocolGuid,
+                    NULL,
                     (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }
@@ -590,11 +590,11 @@ VmbusRootWaitForGpadlResponse(
         return status;
     }
 
-   if (mInternalEventServices == NULL) 
+   if (mInternalEventServices == NULL)
    {
         status = gBS->LocateProtocol(
-                    &gInternalEventServicesProtocolGuid, 
-                    NULL, 
+                    &gInternalEventServicesProtocolGuid,
+                    NULL,
                     (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }
@@ -830,7 +830,7 @@ VmbusRootDispatchMessage(
         break;
 
     case ChannelMessageOpenChannelResult:
-        
+
         //
         // Store the channel ID before validating to avoid a double fetch.
         //
@@ -1476,7 +1476,7 @@ VmbusRootCreateChannel(
     channelContext = AllocatePool(sizeof(VMBUS_CHANNEL_CONTEXT));
     if (channelContext == NULL)
     {
-        status = EFI_OUT_OF_RESOURCES;        
+        status = EFI_OUT_OF_RESOURCES;
         DEBUG((EFI_D_ERROR, "--- %a: failed to create event for WaitForMessage - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
@@ -1595,7 +1595,7 @@ VmbusRootIsChannelAllowed(
 
     if (IsIsolated())
     {
-        if (!PcdGetBool(PcdDisableIMCWhenIsolated))
+        if (PcdGetBool(PcdEnableIMCWhenIsolated))
         {
 
             //

@@ -807,7 +807,7 @@ ConfigSetUefiConfigFlags(
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdLowPowerS0IdleEnabled, (UINT8)ConfigFlags->Flags.LowPowerS0IdleEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdVpciBootEnabled, (UINT8)ConfigFlags->Flags.VpciBootEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdProcIdleEnabled, (UINT8) ConfigFlags->Flags.ProcIdleEnabled), CRITICAL_INITIALIZATION_FAILURE);
-    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdDisableIMCWhenIsolated, (UINT8) ConfigFlags->Flags.DisableIMCWhenIsolated), CRITICAL_INITIALIZATION_FAILURE);
+    CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdEnableIMCWhenIsolated, (UINT8) ConfigFlags->Flags.EnableIMCWhenIsolated), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdMediaPresentEnabledByDefault, (UINT8) ConfigFlags->Flags.MediaPresentEnabledByDefault), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdWatchdogEnabled, (UINT8) ConfigFlags->Flags.WatchdogEnabled), CRITICAL_INITIALIZATION_FAILURE);
     CONFIG_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdTpmLocalityRegsEnabled, (UINT8) ConfigFlags->Flags.TpmLocalityRegsEnabled), CRITICAL_INITIALIZATION_FAILURE);

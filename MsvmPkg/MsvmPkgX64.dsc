@@ -600,7 +600,7 @@
   gMsvmPkgTokenSpaceGuid.PcdIsVmbfsBoot|FALSE
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage|FALSE
   gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault|FALSE
-  gMsvmPkgTokenSpaceGuid.PcdDisableIMCWhenIsolated|FALSE
+  gMsvmPkgTokenSpaceGuid.PcdEnableIMCWhenIsolated|FALSE
   gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled|FALSE
   gMsvmPkgTokenSpaceGuid.PcdHostEmulatorsWhenHardwareIsolated|FALSE
   gMsvmPkgTokenSpaceGuid.PcdTpmLocalityRegsEnabled|FALSE
