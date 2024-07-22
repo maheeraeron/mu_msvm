@@ -1,20 +1,10 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    NetvscDxe.h
-
-Abstract:
-
+/** @file
     EFI Driver for Synthetic Network Controller
 
-Author:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
-    Karan Handa (khanda) - 23-Nov-2012
-
---*/
 #include "NetvscDxe.h"
 #include "NvspProtocol.h"
 #include "vmrndis.h"
@@ -51,6 +41,7 @@ Author:
 //
 // NDIS Status values for REMOTE_NDIS_INDICATE_STATUS_MSG messages
 //
+// TODO SCRUB What do we do with NDIS_STATUS
 #define NDIS_STATUS_NETWORK_CHANGE              ((NDIS_STATUS)0x40010018L)
 
 #define TPL_NETVSC_CALLBACK                (TPL_CALLBACK + 2)
@@ -119,11 +110,15 @@ Return Value:
     AdapterInfo->SetRxFilterStatus = (EFI_STATUS) -1;
     AdapterInfo->GetStnAddrStatus = (EFI_STATUS) -1;
 
+    //
     // When the host has disabled media present notifications, NetvscDxe
     // must default to TRUE or PXE won't work
+    //
     AdapterInfo->MediaPresent = PcdGetBool(PcdMediaPresentEnabledByDefault);
 
+    //
     // Locate the protocol for waiting for events without the TPL restrictions.
+    //
     if (mInternalEventServices == NULL)
     {
         status = gBS->LocateProtocol(
@@ -337,7 +332,9 @@ Return Value:
         goto Cleanup;
     }
 
+    //
     // Calculating the number of receive slots.
+    //
     AdapterInfo->RxQueueCount = 0;
     for (index = 0; index < nvspMessage.Messages.Version1Messages.SendReceiveBufferComplete.NumSections; index++)
     {
@@ -519,8 +516,10 @@ Return Value:
         goto Cleanup;
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->InitRndisEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
@@ -548,7 +547,9 @@ Return Value:
     AdapterInfo->PermNodeAddress[4] = 0;
     AdapterInfo->PermNodeAddress[5] = 0;
 
+    //
     // Use the transmit buffer from the previous operation
+    //
     rndisMsgSize = RNDIS_MESSAGE_SIZE(RNDIS_QUERY_REQUEST);
 
     pQueryRequest = &pRndisMessage->Message.QueryRequest;
@@ -591,8 +592,10 @@ Return Value:
         goto Cleanup;
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->StnAddrEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
@@ -660,8 +663,10 @@ Return Value:
         goto Cleanup;
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->StnAddrEvt, &eventIndex);
     if (EFI_ERROR(status))
     {
@@ -831,8 +836,10 @@ Returns:
         goto Exit;
     }
 
+    //
     // This can be called from TPL_CALLBACK. Use WaitForEventInternal instead of gBS->WaitForEvent
     // which enforces a TPL check for TPL_APPLICATION.
+    //
     status = mInternalEventServices->WaitForEventInternal(1, &AdapterInfo->RxFilterEvt, &eventIndex);
 
     if (EFI_ERROR(status))
@@ -1169,7 +1176,9 @@ Returns:
     if (currPacket.CompletionNeeded)
     {
 
+        //
         // Send an ACK to NetVSP
+        //
         message.Header.MessageType = NvspMessage1TypeSendRNDISPacketComplete;
         message.Messages.Version1Messages.SendRNDISPacketComplete.Status = NvspStatusSuccess;
 
@@ -1995,5 +2004,3 @@ Arguments:
     Queue->Buffer[Queue->Head] = NULL;
     Queue->Head = (Queue->Head + 1)%Queue->Length;
 }
-
-

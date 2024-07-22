@@ -1,38 +1,11 @@
-/***************************************************************************
-
-Copyright (c) 1999  Microsoft Corporation
-
-Module Name:
-
-    RNDIS.H
-
-Abstract:
-
+/** @file
     This module defines the Remote NDIS message structures.
 
-Environment:
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
-    kernel mode only
-
-Notes:
-
-    THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
-    KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR
-    PURPOSE.
-
-    Copyright (c) 1999 Microsoft Corporation.  All Rights Reserved.
-
-
-Revision History:
-
-    2/8/99 : created
-
-Authors:
-
-    
-****************************************************************************/
-
+// TODO SCRUB This is an NDIS header that is just copied from Windows
 
 #ifndef _RNDIS_H_
 #define _RNDIS_H_

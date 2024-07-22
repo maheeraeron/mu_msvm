@@ -1,22 +1,9 @@
 /** @file
-
-    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
-                MsvmPkg\MsvmSnpDxe\StationAddress.c.
-    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE 
-    WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE 
-    MICROSOFT OPEN SOURCE  SOFTWARE APPROVAL POLICY. 
-
     Implementation of reading the MAC address of a network adapter.
- 
-Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials are licensed 
-and made available under the terms and conditions of the BSD License which 
-accompanies this distribution. The full text of the license may be found at 
-http://opensource.org/licenses/bsd-license.php 
 
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
+    Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 **/
 
 #include "Snp.h"
@@ -61,7 +48,7 @@ Return Value:
         &Snp->AdapterContext->NicInfo.PermNodeAddress,
         Snp->Mode.HwAddressSize);
 
-  return EFI_SUCCESS;
+    return EFI_SUCCESS;
 }
 
 

@@ -1,26 +1,11 @@
 /** @file
-
-    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
-                MsvmPkg\MsvmSnpDxe\ReceiveFilters.c.
-    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE 
-    WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE 
-    MICROSOFT OPEN SOURCE  SOFTWARE APPROVAL POLICY. 
-
     Implementation of managing the multicast receive filters of a network
     interface.
 
-Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials are licensed and made available under the 
-terms and conditions of the BSD License which accompanies this distribution. The 
-full text of the license may be found at 
-http://opensource.org/licenses/bsd-license.php 
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
+    Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 **/
-
-
 
 #include "Snp.h"
 
@@ -159,7 +144,7 @@ Routine Description:
 
     Manages the multicast receive filters of a network interface.
 
-    This function is used enable and disable the hardware and software receive 
+    This function is used to enable and disable the hardware and software receive 
     filters for the underlying network device.
     The receive filter change is broken down into three steps: 
     * The filter mask bits that are set (ON) in the Enable parameter are added to 
@@ -189,7 +174,7 @@ Routine Description:
       Snp->Mode->ReceiveFilterSettings will make it so no more packets are 
       returned by the Receive() function, but the receive hardware may still be 
       moving packets into system memory before inspecting and discarding them.
-      Unexpected system errors, reboots and hangs can occur if an OS is loaded 
+      Unexpected system errors, reboots, and hangs can occur if an OS is loaded 
       and the network devices are not Shutdown() and Stopped().
     If ResetMCastFilter is TRUE, then the multicast receive filter list on the 
     network interface will be reset to the default multicast receive filter list.

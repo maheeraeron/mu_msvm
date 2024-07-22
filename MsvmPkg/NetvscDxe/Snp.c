@@ -1,22 +1,9 @@
 /** @file
-
-    ATTENTION - THIS FILE CONTAINS THIRD PARTY OPEN SOURCE CODE:
-                MsvmPkg\MsvmSnpDxe\Snp.c.
-    IT IS CLEARED ONLY FOR LIMITED USE BY WINDOWS CORE HYPER-V FOR THE HYPER-V ROLE IN THE
-    WINDOWS PRODUCT.  DO NOT USE OR SHARE THIS CODE WITHOUT APPROVAL PURSUANT TO THE
-    MICROSOFT OPEN SOURCE  SOFTWARE APPROVAL POLICY.
-
     Implementation of driver entry point and driver binding protocol.
 
-Copyright (c) 2004 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials are licensed
-and made available under the terms and conditions of the BSD License which
-accompanies this distribution. The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
+    Copyright (c) 2004 - 2011, Intel Corporation. All rights reserved.<BR>
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
 **/
 
 #include "Snp.h"
@@ -78,7 +65,6 @@ Returns:
     //
     ZeroMem((CHAR8 *)&macAddrNode, sizeof(macAddrNode));
 
-
     //
     // The MAC address is intentionally *not* being put in this device node.
     // This is because the MAC address is not always known prior to device
@@ -87,11 +73,6 @@ Returns:
     // powering on this device.  There is now an explicit agreement between
     // this driver and the Hyper-V management code that this device node
     // will always contain zeros for the MAC address.
-    //
-    // CopyMem(
-    //     (CHAR8 *)&macAddrNode.MacAddress,
-    //     (CHAR8 *)&macAddress,
-    //     sizeof(EFI_MAC_ADDRESS));
     //
 
     macAddrNode.Header.Type       = MESSAGING_DEVICE_PATH;
@@ -261,9 +242,6 @@ Return Value:
                 This->DriverBindingHandle,
                 ControllerHandle);
     }
-    //
-    // Uninstall EMCL protocol.
-    //
 
     EmclUninstallProtocol(ControllerHandle);
 }

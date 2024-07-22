@@ -1,20 +1,9 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    NetvscDxe.h
-
-Abstract:
-
+/** @file
     EFI Driver for Synthetic Network Controller
 
-Author:
-
-    Karan Handa (khanda) - 23-Nov-2012
-
---*/
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 
@@ -37,6 +26,7 @@ Author:
 #include <Library/SerialPortLib.h>
 #include <Library/Printlib.h>
 
+// TODO SCRUB Make generic protocol definitions, remove EfiNt.h?
 //
 // The following base NDIS types are referenced by nvspprotocol.h.
 // Including the NT header (ntddndis.h) that defines them will pull

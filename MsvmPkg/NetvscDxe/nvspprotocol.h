@@ -1,24 +1,13 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    NvspProtocol.h
-
-Abstract:
-
+/** @file
     This file contains the protocol used by the network VSP/VSC. This protocol
     defines the messages that are sent through the VMBus ring buffer established
     during the channel offer from the VSP to the VSC. The small size of this
     protocol is possible because most of the work for facilitating a network
     connection is handled by the RNDIS protocol.
 
-Author:
-
-    Author jeffreyk 27-June-2005
-
---*/
+    Copyright (c) Microsoft Corporation.
+    Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
 
