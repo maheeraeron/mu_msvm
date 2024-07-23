@@ -1,21 +1,10 @@
-;++
-;
-; Copyright (c) Microsoft Corporation
-;
-; Module Name:
-;
-;   HvlSnp.asm
-;
-; Abstract:
-;
-;   Asm implementations of SNP instructions that will become compiler
-;   intrinsics.
-;
-; Author:
-;
-;   Jon Lange (jlange) 15-Oct-2019
-;
-;--
+/** @file
+  Asm implementations of SNP instructions that will become compiler
+  intrinsics.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 include macamd64.inc
 

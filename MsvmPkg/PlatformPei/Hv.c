@@ -7,10 +7,12 @@
 **/
 
 #include <PiPei.h>
+
 #include <Platform.h>
 #include <Hv.h>
 #include <IsolationTypes.h>
 
+#include <Hv/HvGuestCpuid.h>
 #include <Library/DebugLib.h>
 #include <Library/CrashDumpAgentLib.h>
 
@@ -73,15 +75,19 @@ Return Value:
     switch (cpuidResult.MsHvIsolationConfiguration.IsolationType)
     {
     case HV_PARTITION_ISOLATION_TYPE_VBS:
+        static_assert(HV_PARTITION_ISOLATION_TYPE_VBS == UefiIsolationTypeVbs);
         mIsolationType = UefiIsolationTypeVbs;
         break;
     case HV_PARTITION_ISOLATION_TYPE_SNP:
+        static_assert(HV_PARTITION_ISOLATION_TYPE_SNP == UefiIsolationTypeSnp);
         mIsolationType = UefiIsolationTypeSnp;
         break;
     case HV_PARTITION_ISOLATION_TYPE_TDX:
+        static_assert(HV_PARTITION_ISOLATION_TYPE_TDX == UefiIsolationTypeTdx);
         mIsolationType = UefiIsolationTypeTdx;
         break;
     case HV_PARTITION_ISOLATION_TYPE_NONE:
+        static_assert(HV_PARTITION_ISOLATION_TYPE_NONE == UefiIsolationTypeNone);
         return;
     default:
         ASSERT(FALSE);

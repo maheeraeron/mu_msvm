@@ -1,16 +1,9 @@
-/*++
+/** @file
+  Library for accessing the BiosDevice emulated device registers.
+  Abstracts away the type of IO required from callers.
 
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BiosDeviceLibCore.c
-
-Abstract:
-
-    Library for accessing the BIOS VDev emulated device registers.
-    Abstracts away the type of IO required from callers.
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>

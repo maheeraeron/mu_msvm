@@ -47,7 +47,7 @@ typedef struct _DSDT_AML_DESCRIPTOR
 
 EFI_STATUS
 DsdtAllocateAmlData(
-    __out UINT32 *AmlDataAddress
+    OUT UINT32 *AmlDataAddress
     )
 /*++
 
@@ -165,7 +165,7 @@ Return Value:
             goto Cleanup;
         }
 
-        ZeroMem((PVOID)nvdimmBuffer, NVDIMM_IO_BUFFER_SIZE);
+        ZeroMem((VOID*)nvdimmBuffer, NVDIMM_IO_BUFFER_SIZE);
         SetVpmemACPIBuffer((UINT32)nvdimmBuffer);
     }
 
@@ -204,7 +204,7 @@ Cleanup:
 
 EFI_STATUS
 DsdtInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Dsdt
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Dsdt
     )
 /*++
 

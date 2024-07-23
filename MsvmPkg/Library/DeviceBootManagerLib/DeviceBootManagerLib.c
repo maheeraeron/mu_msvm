@@ -1,55 +1,32 @@
 /** @file
- *Device Boot Manager  - Device Extensions to BdsDxe.
+  Device Boot Manager  - Device Extensions to BdsDxe.
 
-Copyright (c) 2017, Microsoft Corporation
-
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
- and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-**/
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #include <Uefi.h>
-#include <EfiNt.h>
 
 #include <Protocol/Emcl.h>
-#include <Protocol/SimpleFileSystem.h>
 #include <Protocol/LoadFile.h>
-#include <Protocol/hyperkbdprotocol.h>
+#include <Protocol/SimpleFileSystem.h>
 
+#include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>
 #include <Library/DeviceBootManagerLib.h>
+#include <Library/DevicePathLib.h>
+#include <Library/DxeServicesTableLib.h>
+#include <Library/EmclLib.h>
+#include <Library/PcdLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/MsBootPolicyLib.h>
 #include <Library/MsLogoLib.h>
 #include <Library/MsPlatBdsLib.h>
+#include <Library/PcdLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/DxeServicesTableLib.h>
-#include <Library/DebugLib.h>
-#include <Library/EmclLib.h>
-#include <VirtualDeviceId.h>
-#include <Library/DevicePathLib.h>
-#include <Library/PcdLib.h>
-#include <Library/DevicePathLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/MsBootPolicyLib.h>
-#include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
+
+#include <VirtualDeviceId.h>
 
 //
 // Predefined platform default console device path
@@ -467,7 +444,7 @@ DeviceBootManagerBeforeConsole (
     for (Index = 0; Index < HandleCount; Index++) {
         if (ConsoleIn == NULL) {
             Status = EmclChannelTypeSupported(HandleBuffer[Index],
-                                              &HK_INTERFACE_GUID,
+                                              &gSyntheticKeyboardClassGuid,
                                               NULL);
             if (!EFI_ERROR(Status)) {
                 ConsoleIn = HandleBuffer[Index];
@@ -476,14 +453,14 @@ DeviceBootManagerBeforeConsole (
 
         if (ConsoleOut == NULL) {
             Status = EmclChannelTypeSupported(HandleBuffer[Index],
-                                              &SYNTHVID_CLASS_ID,
+                                              &gSyntheticVideoClassGuid,
                                               NULL);
             if (!EFI_ERROR(Status)) {
                 ConsoleOut = HandleBuffer[Index];
             }
             else {
                 Status = EmclChannelTypeSupported(HandleBuffer[Index],
-                                                  &SYNTH3DVID_DEVICE_ID,
+                                                  &gSynthetic3dVideoClassGuid,
                                                   NULL);
                 if (!EFI_ERROR(Status)) {
                     ConsoleOut = HandleBuffer[Index];
@@ -647,7 +624,7 @@ DeviceBootManagerUnableToBoot (
 
         if(PcdGetBool(PcdDefaultBootAttemptPxe)) {
             // Set to low resolution VGA mode
-            // TODO-cho: This fails on Hyper-V, so don't do it here. Probably
+            // TODO: This fails on Hyper-V, so don't do it here. Probably
             // because synth video doesn't support it?
             // Status = MsLogoLibSetConsoleMode(TRUE, FALSE);
             // if (EFI_ERROR(Status) != FALSE) {
@@ -655,7 +632,7 @@ DeviceBootManagerUnableToBoot (
             // }
 
             // Attempt PXE based on configured IP version
-            if(PcdGetBool(PcdPxeIpV6))
+            if (PcdGetBool(PcdPxeIpV6))
             {
                 //IPv6
                 Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv6);

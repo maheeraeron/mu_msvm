@@ -1,6 +1,10 @@
 ## @file
 #  Instance of Debug Library that intercepts to the Hyper-V BiosDevice.
 #  It uses Print Library to produce formatted output strings.
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
 ##
 
 [Defines]

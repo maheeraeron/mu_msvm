@@ -4,6 +4,7 @@
 #  specialized wrappers for specific event log channels such as the boot log.
 #
 #  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -21,12 +22,12 @@
 
 [LibraryClasses]
   BaseLib
-  DebugLib
-  UefiBootServicesTableLib
   BaseMemoryLib
+  DebugLib
+  DevicePathLib
   MemoryAllocationLib
   PcdLib
-  DevicePathLib
+  UefiBootServicesTableLib
 
 [Packages]
   MdePkg/MdePkg.dec

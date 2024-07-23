@@ -36,7 +36,7 @@ Return Value:
 typedef
 VOID *
 (EFIAPI *HANDLE_MEMORY_ALLOCATE)(
-    _In_    UINTN           Size
+    IN      UINTN           Size
     );
 
 
@@ -86,10 +86,10 @@ Return Value:
 typedef
 EFI_STATUS
 (EFIAPI *HANDLE_ENUMERATE_CALLBACK)(
-    _In_    const EFI_HANDLE                TableHandle,
-    _In_    VOID                           *CallbackContext,
-    _In_    EFI_HANDLE                      ObjectHandle,
-    _In_    VOID                           *Object
+    IN      const EFI_HANDLE                TableHandle,
+    IN      VOID                           *CallbackContext,
+    IN      EFI_HANDLE                      ObjectHandle,
+    IN      VOID                           *Object
     );
 
 
@@ -106,42 +106,41 @@ typedef struct
 
 EFI_STATUS
 EfiHandleTableInitialize(
-    _In_        const EFI_HANDLE_TABLE_INFO    *Attributes,
-    _In_        const UINT32                Size,
-    _In_        const UINT8                 TableKey,
-    _Out_       EFI_HANDLE                 *Table
+    IN          const EFI_HANDLE_TABLE_INFO    *Attributes,
+    IN          const UINT32                Size,
+    IN          const UINT8                 TableKey,
+    OUT         EFI_HANDLE                 *Table
     );
 
 
 EFI_STATUS
 EfiHandleTableAllocateObject(
-    _In_        EFI_HANDLE                  TableHandle,
-    _In_        const UINTN                 ObjectSize,
-    _Outptr_    VOID                      **Object,
-    _Out_       EFI_HANDLE                 *Handle
+    IN          EFI_HANDLE                  TableHandle,
+    IN          const UINTN                 ObjectSize,
+    OUT         VOID                      **Object,
+    OUT         EFI_HANDLE                 *Handle
     );
 
 
 VOID *
 EfiHandleTableLookupByKey(
-    _In_        const EFI_HANDLE            TableHandle,
-    _In_bytecount_(KeySize)
-                const VOID                 *Key,
-    _In_        const UINT32                KeySize,
-    _Out_opt_   EFI_HANDLE                 *Handle
+    IN              const EFI_HANDLE            TableHandle,
+    IN              const VOID                 *Key,
+    IN              const UINT32                KeySize,
+    OUT OPTIONAL    EFI_HANDLE                 *Handle
     );
 
 
 VOID *
 EfiHandleTableLookupByHandle(
-    _In_        const EFI_HANDLE            TableHandle,
-    _In_        const EFI_HANDLE            Handle
+    IN          const EFI_HANDLE            TableHandle,
+    IN          const EFI_HANDLE            Handle
     );
 
 
 EFI_STATUS
 EfiHandleTableEnumerateObjects(
-    _In_        const EFI_HANDLE            TableHandle,
-    _In_        const VOID                 *CallbackContext,
-    _In_        HANDLE_ENUMERATE_CALLBACK   Callback
+    IN          const EFI_HANDLE            TableHandle,
+    IN          const VOID                 *CallbackContext,
+    IN          HANDLE_ENUMERATE_CALLBACK   Callback
     );

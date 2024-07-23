@@ -7,8 +7,13 @@
 **/
 
 #include <PiDxe.h>
+
 #include <IsolationTypes.h>
 #include <FailFast.h>
+#include <Synchronization.h>
+
+#include <Hv/HvGuestHypercall.h>
+#include <Hv/HvStatus.h>
 
 #include <Protocol/Cpu.h>
 #include <Protocol/EfiHv.h>
@@ -44,8 +49,8 @@ typedef struct _EFI_HV_SINT_CONFIGURATION
 
 typedef struct _EFI_HV_PAGES
 {
-    UCHAR HypercallInputPage[EFI_PAGE_SIZE];
-    UCHAR HypercallOutputPage[EFI_PAGE_SIZE];
+    UINT8 HypercallInputPage[EFI_PAGE_SIZE];
+    UINT8 HypercallOutputPage[EFI_PAGE_SIZE];
     HV_SYNIC_EVENT_FLAGS_PAGE EventFlagsPage;
     HV_MESSAGE_PAGE MessagePage;
 } EFI_HV_PAGES, *PEFI_HV_PAGES;
@@ -65,11 +70,11 @@ PEFI_HV_PAGES mHvPages;
 
 #if defined(MDE_CPU_X64)
 
-UCHAR *mHypercallPage;
+UINT8 *mHypercallPage;
 
 #endif
 
-PVOID mHvInputPage;
+VOID* mHvInputPage;
 PHV_SYNIC_EVENT_FLAGS_PAGE mEventFlagsPage;
 PHV_MESSAGE_PAGE mMessagePage;
 EFI_HANDLE mHvHandle;
@@ -81,7 +86,7 @@ LIST_ENTRY mHostVisiblePageList;
 UINT64 mSharedGpaBoundary;
 UINT64 mCanonicalizationMask;
 UINT32 mIsolationType;
-PVOID mSvsmCallingArea;
+VOID* mSvsmCallingArea;
 
 EFI_HV_SINT_CONFIGURATION mSintConfiguration[HV_SYNIC_SINT_COUNT];
 UINT8 mVectorSint[256];
@@ -105,7 +110,7 @@ extern EFI_HV_IVM_PROTOCOL mHvIvm;
 
 UINTN
 EfiHvpSharedPa(
-    PVOID Address
+    VOID* Address
     )
 /**
     Given an address, which may be either a VA or a PA, removes any
@@ -131,9 +136,9 @@ EfiHvpSharedPa(
 }
 
 
-PVOID
+VOID*
 EfiHvpSharedVa(
-    PVOID Address
+    VOID* Address
     )
 /**
     Given an address, which may be either a VA or a PA, returns a canonicalized
@@ -145,7 +150,7 @@ EfiHvpSharedVa(
 
 **/
 {
-    return (PVOID)(EfiHvpSharedPa(Address) | mCanonicalizationMask);
+    return (VOID*)(EfiHvpSharedPa(Address) | mCanonicalizationMask);
 }
 
 
@@ -177,11 +182,11 @@ VOID
 EFIAPI
 EfiHvInterruptHandler (
 #if defined(MDE_CPU_X64)
-    __in EFI_EXCEPTION_TYPE InterruptType,
+    IN  EFI_EXCEPTION_TYPE InterruptType,
 #elif defined(MDE_CPU_AARCH64)
-    __in HARDWARE_INTERRUPT_SOURCE InterruptType,
+    IN  HARDWARE_INTERRUPT_SOURCE InterruptType,
 #endif
-    __in EFI_SYSTEM_CONTEXT SystemContext
+    IN  EFI_SYSTEM_CONTEXT SystemContext
     )
 /*++
     The interrupt handler for SINT interrupts. Raises to high level and
@@ -225,11 +230,11 @@ EfiHvInterruptHandler (
 EFI_STATUS
 EFIAPI
 EfiHvConnectSint (
-    __in EFI_HV_PROTOCOL *This,
-    __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex,
-    __in UINT8 Vector,
-    __in EFI_HV_INTERRUPT_HANDLER InterruptHandler,
-    __in VOID *Context
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  UINT8 Vector,
+    IN  EFI_HV_INTERRUPT_HANDLER InterruptHandler,
+    IN  VOID *Context
     )
 /*++
     Enables a SINT and provides an interrupt routine to be called at
@@ -352,10 +357,10 @@ EfiHvEventInterruptHandler (
 EFI_STATUS
 EFIAPI
 EfiHvConnectSintToEvent (
-    __in EFI_HV_PROTOCOL *This,
-    __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex,
-    __in UINT8 Vector,
-    __in EFI_EVENT Event
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  UINT8 Vector,
+    IN  EFI_EVENT Event
     )
 /*++
     Enables a SINT and provides an event to be signaled when the interrupt
@@ -375,7 +380,7 @@ EfiHvConnectSintToEvent (
 {
     EFI_STATUS status;
 
-    status = 
+    status =
         EfiHvConnectSint(
             This,
             SintIndex,
@@ -390,8 +395,8 @@ EfiHvConnectSintToEvent (
 VOID
 EFIAPI
 EfiHvDisconnectSint (
-    __in EFI_HV_PROTOCOL *This,
-    __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
     Disables a SINT that was previously enabled with EfiHvConnectSint
@@ -457,8 +462,8 @@ EfiHvDisconnectSint (
 HV_MESSAGE *
 EFIAPI
 EfiHvGetSintMessage (
-    __in EFI_HV_PROTOCOL *This,
-    __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
     Retrieves the next message from the SINT message queue.
@@ -486,8 +491,8 @@ EfiHvGetSintMessage (
 VOID
 EFIAPI
 EfiHvCompleteSintMessage (
-    __in EFI_HV_PROTOCOL *This,
-    __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
     Marks the current message in the SINT message queue as complete so
@@ -516,8 +521,8 @@ EfiHvCompleteSintMessage (
 volatile HV_SYNIC_EVENT_FLAGS *
 EFIAPI
 EfiHvGetSintEventFlags (
-    __in EFI_HV_PROTOCOL *This,
-    __in_range(<, HV_SYNIC_SINT_COUNT) HV_SYNIC_SINT_INDEX SintIndex
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_SYNIC_SINT_INDEX SintIndex
     )
 /*++
     Retrieves a pointer to the event flags for a SINT.
@@ -541,7 +546,7 @@ EfiHvGetSintEventFlags (
 UINT64
 EFIAPI
 EfiHvGetReferenceTime (
-    __in EFI_HV_PROTOCOL *This
+    IN  EFI_HV_PROTOCOL *This
     )
 /*++
     Retrieves the current hypervisor reference time, in 100ns units.
@@ -567,7 +572,7 @@ EfiHvGetReferenceTime (
 UINT32
 EFIAPI
 EfiHvGetCurrentVpIndex (
-    __in EFI_HV_PROTOCOL *This
+    IN  EFI_HV_PROTOCOL *This
     )
 /*++
     Retrieves the current virtual processor index.
@@ -593,9 +598,9 @@ EfiHvGetCurrentVpIndex (
 VOID
 EFIAPI
 EfiHvSetTimer (
-    __in EFI_HV_PROTOCOL *This,
-    __in UINT32 TimerIndex,
-    __in UINT64 Expiration
+    IN  EFI_HV_PROTOCOL *This,
+    IN  UINT32 TimerIndex,
+    IN  UINT64 Expiration
     )
 /*++
     Sets a hypervisor timer to expire.
@@ -642,11 +647,11 @@ VOID
 EFIAPI
 EfiHvDirectTimerInterruptHandler (
 #if defined(MDE_CPU_X64)
-    __in EFI_EXCEPTION_TYPE InterruptType,
+    IN  EFI_EXCEPTION_TYPE InterruptType,
 #elif defined(MDE_CPU_AARCH64)
-    __in HARDWARE_INTERRUPT_SOURCE InterruptType,
+    IN  HARDWARE_INTERRUPT_SOURCE InterruptType,
 #endif
-    __in EFI_SYSTEM_CONTEXT SystemContext
+    IN  EFI_SYSTEM_CONTEXT SystemContext
     )
 /*++
     The interrupt handler for direct-mode timers. Raises to high level and
@@ -687,13 +692,13 @@ EfiHvDirectTimerInterruptHandler (
 EFI_STATUS
 EFIAPI
 EfiHvConfigureTimer (
-    __in EFI_HV_PROTOCOL *This,
-    __in UINT32 TimerIndex,
-    __in HV_SYNIC_SINT_INDEX SintIndex,
-    __in BOOLEAN Periodic,
-    __in BOOLEAN DirectMode,
-    __in UINT8 Vector,
-    __in_opt EFI_HV_INTERRUPT_HANDLER InterruptHandler
+    IN          EFI_HV_PROTOCOL             *This,
+    IN          UINT32                      TimerIndex,
+    IN          HV_SYNIC_SINT_INDEX         SintIndex,
+    IN          BOOLEAN                     Periodic,
+    IN          BOOLEAN                     DirectMode,
+    IN          UINT8                       Vector,
+    IN OPTIONAL EFI_HV_INTERRUPT_HANDLER    InterruptHandler
     )
 /*++
     Configures a timer for use. Start it with EfiHvSetTimer.
@@ -814,10 +819,10 @@ EfiHvConfigureTimer (
 
 HV_STATUS
 EfiHvIssueHypercall (
-    _In_ HV_CALL_CODE CallCode,
-    _In_ BOOLEAN Fast,
-    _In_ UINT64 FirstRegister,
-    _In_ UINT64 SecondRegister
+    IN  HV_CALL_CODE CallCode,
+    IN  BOOLEAN Fast,
+    IN  UINT64 FirstRegister,
+    IN  UINT64 SecondRegister
     )
 /*++
     Issues a hypercall.
@@ -836,7 +841,7 @@ EfiHvIssueHypercall (
 
 --*/
 {
-    return 
+    return
         HvHypercallIssue(
             mUseBypassContext ? &mHvBypassContext : &mHvContext,
             CallCode,
@@ -850,7 +855,7 @@ EfiHvIssueHypercall (
 
 EFI_STATUS
 EfiHvConvertStatus (
-    __in HV_STATUS Status
+    IN  HV_STATUS Status
     )
 /*++
     Converts a hypervisor status code into an EFI status code.
@@ -878,11 +883,11 @@ EfiHvConvertStatus (
 EFI_STATUS
 EFIAPI
 EfiHvPostMessage (
-    __in EFI_HV_PROTOCOL *This,
-    __in HV_CONNECTION_ID ConnectionId,
-    __in HV_MESSAGE_TYPE MessageType,
-    __in_bcount(PayloadSize) VOID *Payload,
-    __in_range(0, HV_MESSAGE_PAYLOAD_BYTE_COUNT) UINT32 PayloadSize
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_CONNECTION_ID ConnectionId,
+    IN  HV_MESSAGE_TYPE MessageType,
+    IN  VOID *Payload,
+    IN  UINT32 PayloadSize
     )
 /*++
     Posts a message to a hypervisor message port.
@@ -919,7 +924,7 @@ EfiHvPostMessage (
     ZeroMem((UINT8 *)input->Payload + PayloadSize,
             sizeof(input->Payload) - PayloadSize);
 
-    hvStatus = 
+    hvStatus =
         EfiHvIssueHypercall(
             HvCallPostMessage,
             FALSE,
@@ -950,9 +955,9 @@ EfiHvPostMessage (
 EFI_STATUS
 EFIAPI
 EfiHvSignalEvent (
-    __in EFI_HV_PROTOCOL *This,
-    __in HV_CONNECTION_ID ConnectionId,
-    __in UINT16 FlagNumber
+    IN  EFI_HV_PROTOCOL *This,
+    IN  HV_CONNECTION_ID ConnectionId,
+    IN  UINT16 FlagNumber
     )
 /*++
     Signals a hypervisor event port.
@@ -989,9 +994,9 @@ EfiHvSignalEvent (
 EFI_STATUS
 EFIAPI
 EfiHvStartApplicationProcessor (
-    __in EFI_HV_PROTOCOL *This,
-    __in UINT64 VpIndex,
-    __in PHV_INITIAL_VP_CONTEXT VpContext
+    IN  EFI_HV_PROTOCOL *This,
+    IN  UINT64 VpIndex,
+    IN  PHV_INITIAL_VP_CONTEXT VpContext
     )
 /*++
     Start an application processor.
@@ -1018,7 +1023,7 @@ EfiHvStartApplicationProcessor (
     CopyMem(&input->VpContext, VpContext, sizeof(HV_INITIAL_VP_CONTEXT));
     input->VpIndex = (HV_VP_INDEX)VpIndex;
 
-    hvStatus = 
+    hvStatus =
         EfiHvIssueHypercall(
             HvCallStartVirtualProcessor,
             FALSE,
@@ -1031,10 +1036,10 @@ EfiHvStartApplicationProcessor (
 EFI_STATUS
 EFIAPI
 EfiHvpModifySparseGpaPageHostVisibility(
-    _In_ HV_MAP_GPA_FLAGS MapFlags,
-    _In_ UINT32 PageCount,
-    _In_ HV_GPA_PAGE_NUMBER GpaPageBase,
-    _Out_opt_ UINT32* PageCountProcessed
+    IN              HV_MAP_GPA_FLAGS    MapFlags,
+    IN              UINT32              PageCount,
+    IN              HV_GPA_PAGE_NUMBER  GpaPageBase,
+    OUT OPTIONAL    UINT32*             PageCountProcessed
     )
 /*++
     Handles the ModifySparseGpaPageHostVisibility hypercall.
@@ -1194,7 +1199,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         //
         // Call the hypervisor.
         //
-        hvStatus = 
+        hvStatus =
             HvHypercallIssue(
                 mBypassOnly ? &mHvBypassContext : &mHvContext,
                 HvCallModifySparseGpaPageHostVisibility,
@@ -1281,12 +1286,12 @@ EfiHvpModifySparseGpaPageHostVisibility(
 EFI_STATUS
 EFIAPI
 EfiHvMakeAddressRangeHostVisible(
-    _In_ EFI_HV_IVM_PROTOCOL *This,
-    _In_ HV_MAP_GPA_FLAGS MapFlags,
-    _In_ VOID *BaseAddress,
-    _In_ UINT32 ByteCount,
-    _In_ BOOLEAN ZeroPages,
-    _Out_opt_ EFI_HV_PROTECTION_HANDLE *ProtectionHandle
+    IN              EFI_HV_IVM_PROTOCOL         *This,
+    IN              HV_MAP_GPA_FLAGS            MapFlags,
+    IN              VOID                        *BaseAddress,
+    IN              UINT32                      ByteCount,
+    IN              BOOLEAN                     ZeroPages,
+    OUT OPTIONAL    EFI_HV_PROTECTION_HANDLE    *ProtectionHandle
     )
 /*++
     Makes a chunk of memory visible to the host.
@@ -1377,7 +1382,7 @@ EfiHvMakeAddressRangeHostVisible(
     //
     // Update the visibility as requested.
     //
-    status = 
+    status =
         EfiHvpModifySparseGpaPageHostVisibility(
             MapFlags,
             protectionObject->NumberOfPages,
@@ -1393,7 +1398,7 @@ EfiHvMakeAddressRangeHostVisible(
         //
         if (pageCountProcessed != 0)
         {
-            revertStatus = 
+            revertStatus =
                 EfiHvpModifySparseGpaPageHostVisibility(
                     HV_MAP_GPA_PERMISSIONS_NONE,
                     pageCountProcessed,
@@ -1437,8 +1442,8 @@ EfiHvMakeAddressRangeHostVisible(
 VOID
 EFIAPI
 EfiHvMakeAddressRangeNotHostVisible(
-    _In_ EFI_HV_IVM_PROTOCOL *This,
-    _In_ EFI_HV_PROTECTION_HANDLE ProtectionHandle
+    IN  EFI_HV_IVM_PROTOCOL *This,
+    IN  EFI_HV_PROTECTION_HANDLE ProtectionHandle
     )
 /*++
     Makes a chunk of memory not visible to the host.
@@ -1457,7 +1462,7 @@ EfiHvMakeAddressRangeNotHostVisible(
 
     RemoveEntryList(&ProtectionHandle->ListEntry);
 
-    status = 
+    status =
         EfiHvpModifySparseGpaPageHostVisibility(
             HV_MAP_GPA_PERMISSIONS_NONE,
             ProtectionHandle->NumberOfPages,
@@ -1529,7 +1534,7 @@ EfiHvConnectToHypervisor (
 
     if ((mIsolationType == UefiIsolationTypeSnp) && !paravisorPresent)
     {
-        mSvsmCallingArea = (PVOID)PcdGet64(PcdSvsmCallingArea);
+        mSvsmCallingArea = (VOID*)PcdGet64(PcdSvsmCallingArea);
     }
 
     //
@@ -1664,7 +1669,7 @@ EfiHvConnectToHypervisor (
         //
         if ((mIsolationType != UefiIsolationTypeSnp) && paravisorPresent)
         {
-            PVOID hvInputPage;
+            VOID* hvInputPage;
 
             hvInputPage = AllocatePages(1);
             if (hvInputPage == NULL)
@@ -1789,7 +1794,7 @@ EfiHvDisconnectFromHypervisor (
     //
     if ((mHvInputPage != mHvPages->HypercallInputPage) && !mBypassOnly)
     {
-        mHvInputPage = (PVOID)EfiHvpBasePa((UINTN)mHvInputPage);
+        mHvInputPage = (VOID*)EfiHvpBasePa((UINTN)mHvInputPage);
 
         status = EfiHvpModifySparseGpaPageHostVisibility(
             HV_MAP_GPA_PERMISSIONS_NONE,
@@ -1872,7 +1877,7 @@ EfiHvConnectToSynic (
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
-        mMessagePage = (PHV_MESSAGE_PAGE)EfiHvpSharedVa((PVOID)gpa);
+        mMessagePage = (PHV_MESSAGE_PAGE)EfiHvpSharedVa((VOID*)gpa);
     }
     else
     {
@@ -1899,7 +1904,7 @@ EfiHvConnectToSynic (
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
         }
 
-        mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)EfiHvpSharedVa((PVOID)gpa);
+        mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)EfiHvpSharedVa((VOID*)gpa);
     }
     else
     {
@@ -1999,8 +2004,8 @@ EfiHvDisconnectFromSynic (
 VOID
 EFIAPI
 EfiHvExitBootServices (
-    __in EFI_EVENT Event,
-    __in VOID *Context
+    IN  EFI_EVENT Event,
+    IN  VOID *Context
     )
 /*++
     Called when ExitBootServices() is called. Tears down the hypervisor
@@ -2046,8 +2051,8 @@ EFI_HV_IVM_PROTOCOL mHvIvm =
 EFI_STATUS
 EFIAPI
 EfiHvInitialize (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
     Entrypoint. Initializes the EfiHv driver.
@@ -2055,7 +2060,7 @@ EfiHvInitialize (
     @param ImageHandle The handle of the loaded image.
 
     @param SystemTable A pointer to the system table.
-    
+
     @returns EFI status.
 
 --*/

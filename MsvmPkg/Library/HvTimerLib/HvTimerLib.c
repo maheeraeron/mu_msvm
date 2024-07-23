@@ -1,30 +1,18 @@
-/*++
+/** @file
+  This file implements the TimerLib library class using the hypervisor
+  reference time counter.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    HvTimerLib.c
-
-Abstract:
-
-    This file implements the TimerLib library class using the hypervisor
-    reference time counter.
-
-Author:
-
-    John Starks (jostarks) - 29 Jun 2012
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>
+
+#include <Hv/HvGuestMsr.h>
 #include <Library/BaseLib.h>
 #include <Library/TimerLib.h>
 #include <Library/IoLib.h>
 #include <Library/DebugLib.h>
-
-#include <EfiNt.h>
-#include <Hv/hvgdk.h>
 
 #if defined(MDE_CPU_AARCH64)
 #include <Library/HvHypercallLib.h>
@@ -142,7 +130,7 @@ Return Value:
 {
 #if defined (MDE_CPU_X64)
 
-    return AsmReadMsr64(HV_X64_MSR_TIME_REF_COUNT);
+    return AsmReadMsr64(HvSyntheticMsrTimeRefCount);
 
 #elif defined(MDE_CPU_AARCH64)
 
@@ -157,9 +145,6 @@ Return Value:
 #else
 #error unsupported architecture
 #endif
-
-
-
 }
 
 

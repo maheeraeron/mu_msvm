@@ -16,8 +16,8 @@ EFI_HV_IVM_PROTOCOL *mHvIvm;
 EFI_STATUS
 EFIAPI
 EventLogDxeEntry (
-    _In_    EFI_HANDLE          ImageHandle,
-    _In_    EFI_SYSTEM_TABLE   *SystemTable
+    IN      EFI_HANDLE          ImageHandle,
+    IN      EFI_SYSTEM_TABLE   *SystemTable
     )
 /*++
 

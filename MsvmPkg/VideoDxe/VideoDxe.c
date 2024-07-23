@@ -113,7 +113,7 @@ Return Value:
     }
 
     status = EmclChannelTypeSupported(ControllerHandle,
-                                      &SYNTHVID_CLASS_ID,
+                                      &gSyntheticVideoClassGuid,
                                       This->DriverBindingHandle);
 
     if (status == EFI_SUCCESS)
@@ -122,7 +122,7 @@ Return Value:
     }
 
     return EmclChannelTypeSupported(ControllerHandle,
-                                    &SYNTH3DVID_DEVICE_ID,
+                                    &gSynthetic3dVideoClassGuid,
                                     This->DriverBindingHandle);
 }
 

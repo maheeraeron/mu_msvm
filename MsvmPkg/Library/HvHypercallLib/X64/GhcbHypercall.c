@@ -3,11 +3,10 @@
 
   Copyright (c) Microsoft Corporation.
   Licensed under the BSD-2-Clause-Patent license.
-
 **/
 
 #include <Base.h>
-#include <Hv/hvgdk.h>
+#include <Hv/HvGuestHypercall.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -36,11 +35,11 @@ typedef struct _GHCB_HYPERCALL {
 
 HV_STATUS
 HvHypercallpIssueGhcbHypercall(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_CALL_CODE CallCode,
-    _In_opt_ VOID *InputPage,
-    _In_ UINT32 CountOfElements,
-    _Out_opt_ PUINT32 ElementsProcessed
+    IN              HV_HYPERCALL_CONTEXT    *Context,
+    IN              HV_CALL_CODE            CallCode,
+    IN OPTIONAL     VOID                    *InputPage,
+                    UINT32                  CountOfElements,
+    OUT OPTIONAL    UINT32                  *ElementsProcessed
     )
 {
     PGHCB_HYPERCALL ghcb;
@@ -80,7 +79,7 @@ HvHypercallpIssueGhcbHypercall(
         }
 
         inputSize = headerSize + (repSize * CountOfElements);
-        if (inputSize > FIELD_OFFSET(GHCB_HYPERCALL, Output))
+        if (inputSize > OFFSET_OF(GHCB_HYPERCALL, Output))
         {
             ASSERT(FALSE);
             return HV_STATUS_INVALID_PARAMETER;

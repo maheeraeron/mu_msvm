@@ -18,6 +18,8 @@ Author:
 
 #pragma once
 
+#pragma warning(disable : 4201)
+
 typedef struct {
     UCHAR Type;  //CmResourceType
     BOOLEAN Valid;
@@ -706,3 +708,5 @@ typedef struct _EFI_KDNET_HOB {
     KDNET_GET_PACKET_COUNT GetReceivedPacketCount;
     UINT64 CanonicalizationMask;
 } EFI_KDNET_HOB;
+
+#pragma warning(default : 4201)

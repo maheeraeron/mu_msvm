@@ -1,17 +1,12 @@
-/*++
+/** @file
+  Library setup for BiosDeviceLib
 
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BiosDeviceLibSetup.c
-    
-Abstract:
-
-    Library setup for BiosDeviceLib
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
+
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 
@@ -34,7 +29,7 @@ BiosDeviceLibConstructor (
   )
 {
     EFI_STATUS status = EFI_SUCCESS;
-    
+
     SetupBaseAddress();
 
     return status;

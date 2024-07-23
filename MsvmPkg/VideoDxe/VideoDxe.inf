@@ -44,3 +44,5 @@
 
 [Guids]
     gEfiVmbusChannelDevicePathGuid  ## CONSUMES
+    gSyntheticVideoClassGuid        ## CONSUMES
+    gSynthetic3dVideoClassGuid      ## CONSUMES

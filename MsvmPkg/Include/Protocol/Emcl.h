@@ -1,20 +1,9 @@
-/*++
+/** @file
+  Provides the protocol definition for EFI_EMCL_PROTOCOL, which provides
+  ring buffer management and packet transport for VMBus channels.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Emcl.h
-
-Abstract:
-
-    Provides the protocol definition for EFI_EMCL_PROTOCOL, which provides
-    ring buffer management and packet transport for VMBus channels.
-
-Author:
-
-    Arseney Romanenko (arseneyr) - 16-Jul-2012
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #pragma once
@@ -44,113 +33,113 @@ typedef struct _EFI_EXTERNAL_BUFFER
 typedef
 VOID
 (*EFI_EMCL_COMPLETION_ROUTINE)(
-    __in_opt VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN OPTIONAL VOID    *Context,
+    IN          VOID    *Buffer,
+                UINT32  BufferLength
     );
 
 typedef
 VOID
 (*EFI_EMCL_RECEIVE_PACKET)(
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN          VOID                *ReceiveContext,
+    IN          VOID                *PacketContext,
+    IN OPTIONAL VOID                *Buffer,
+                UINT32              BufferLength,
+                UINT16              TransferPageSetId,
+                UINT32              RangeCount,
+    IN          EFI_TRANSFER_RANGE  *Ranges
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_START_CHANNEL)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 IncomingRingBufferPageCount,
-    __in UINT32 OutgoingRingBufferPageCount
+    IN  EFI_EMCL_PROTOCOL   *This,
+        UINT32              IncomingRingBufferPageCount,
+        UINT32              OutgoingRingBufferPageCount
     );
 
 typedef
 VOID
 (EFIAPI *EFI_EMCL_STOP_CHANNEL)(
-    __in EFI_EMCL_PROTOCOL *This
+    IN  EFI_EMCL_PROTOCOL *This
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_SEND_PACKET)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
-    __in_opt VOID *CompletionContext
+    IN          EFI_EMCL_PROTOCOL           *This,
+    IN          VOID                        *InlineBuffer,
+                UINT32                      InlineBufferLength,
+    IN          EFI_EXTERNAL_BUFFER         *ExternalBuffers,
+                UINT32                      ExternalBufferCount,
+    IN OPTIONAL EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
+    IN OPTIONAL VOID                        *CompletionContext
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_COMPLETE_PACKET)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in VOID *PacketContext,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  EFI_EMCL_PROTOCOL   *This,
+    IN  VOID                *PacketContext,
+    IN  VOID                *Buffer,
+        UINT32              BufferLength
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_SET_RECEIVE_CALLBACK)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_opt EFI_EMCL_RECEIVE_PACKET ReceiveCallback,
-    __in_opt VOID *ReceiveContext,
-    __in_range(<=, TPL_EMCL) EFI_TPL Tpl
+    IN          EFI_EMCL_PROTOCOL       *This,
+    IN OPTIONAL EFI_EMCL_RECEIVE_PACKET ReceiveCallback,
+    IN OPTIONAL VOID                    *ReceiveContext,
+    IN          EFI_TPL                 Tpl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_CREATE_GPADL)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in HV_MAP_GPA_FLAGS MapFlags,
-    __out EFI_EMCL_GPADL **Gpadl
+    IN  EFI_EMCL_PROTOCOL   *This,
+    IN  VOID                *Buffer,
+        UINT32              BufferLength,
+    IN  HV_MAP_GPA_FLAGS    MapFlags,
+    OUT EFI_EMCL_GPADL      **Gpadl
     );
 
 typedef
 UINT32
 (EFIAPI *EFI_EMCL_GET_GPADL_HANDLE)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN EFI_EMCL_PROTOCOL    *This,
+    IN EFI_EMCL_GPADL       *Gpadl
     );
 
 typedef
-PVOID
+VOID*
 (EFIAPI *EFI_EMCL_GET_GPADL_BUFFER)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN EFI_EMCL_PROTOCOL    *This,
+    IN EFI_EMCL_GPADL       *Gpadl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_DESTROY_GPADL)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN EFI_EMCL_PROTOCOL    *This,
+    IN EFI_EMCL_GPADL       *Gpadl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_CREATE_GPA_RANGE)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 Handle,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in BOOLEAN Writable
+    IN  EFI_EMCL_PROTOCOL   *This,
+        UINT32              Handle,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+        UINT32              ExternalBufferCount,
+        BOOLEAN             Writable
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_DESTROY_GPA_RANGE)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 Handle
+    IN  EFI_EMCL_PROTOCOL   *This,
+        UINT32              Handle
     );
 
 struct _EFI_EMCL_PROTOCOL
@@ -176,7 +165,7 @@ extern EFI_GUID gEfiEmclProtocolGuid;
 
 //
 // VERSION 2 of EMCL interface
-// 
+//
 
 // Modify the handling of ExternalBuffers in scenarios
 // where the data is transfered in a bounce buffer.
@@ -187,22 +176,22 @@ extern EFI_GUID gEfiEmclProtocolGuid;
 typedef
 EFI_STATUS
 (EFIAPI *EFI_EMCL_SEND_PACKET_EX)(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in UINT32 SendPacketFlags,
-    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
-    __in_opt VOID *CompletionContext
+    IN          EFI_EMCL_PROTOCOL           *This,
+    IN          VOID                        *InlineBuffer,
+                UINT32                      InlineBufferLength,
+    IN          EFI_EXTERNAL_BUFFER         *ExternalBuffers,
+                UINT32                      ExternalBufferCount,
+                UINT32                      SendPacketFlags,
+    IN OPTIONAL EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
+    IN OPTIONAL VOID                        *CompletionContext
     );
-    
 
+#pragma warning(disable : 4201)
 struct _EFI_EMCL_V2_PROTOCOL {
     EFI_EMCL_PROTOCOL;
 
     EFI_EMCL_SEND_PACKET_EX SendPacketEx;
 };
+#pragma warning(default : 4201)
 
 extern EFI_GUID gEfiEmclV2ProtocolGuid;
- 

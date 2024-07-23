@@ -1,17 +1,12 @@
-/*++
+/** @file
+  Library setup for the runtime version of BiosDeviceLib
 
-    Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BiosDeviceRuntimeLibSetup.c
-    
-Abstract:
-
-    Library setup for the runtime version of BiosDeviceLib
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <PiDxe.h>
+
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -55,7 +50,7 @@ BiosDeviceRuntimeLibConstructor (
   )
 {
     EFI_STATUS status = EFI_SUCCESS;
-    
+
     SetupBaseAddress();
 
 #if _USING_BIOS_MMIO_
@@ -67,7 +62,7 @@ BiosDeviceRuntimeLibConstructor (
                               &gEfiEventVirtualAddressChangeGuid,
                               &mVirtualAddressChangeEvent);
     ASSERT_EFI_ERROR(status);
-    
+
 #endif
 
     return status;
@@ -80,7 +75,7 @@ BiosDeviceRuntimeLibDestructor(
   IN EFI_SYSTEM_TABLE   *SystemTable
   )
 {
-  
+
 #if _USING_BIOS_MMIO_
 
   if (mVirtualAddressChangeEvent != NULL) {

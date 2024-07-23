@@ -1,18 +1,21 @@
 /** @file
-    EFI Driver for Synthetic Network Controller
+  EFI Driver for Synthetic Network Controller
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
-**/
+#include <IsolationTypes.h>
+
+#include <Protocol/EfiHv.h>
+#include <Protocol/Emcl.h>
+#include <Protocol/InternalEventServices.h>
+
+#include <Library/DebugLib.h>
+#include <Library/EmclLib.h>
 
 #include "NetvscDxe.h"
 #include "NvspProtocol.h"
 #include "vmrndis.h"
-#include <Library/EmclLib.h>
-#include <Library/DebugLib.h>
-#include <Hv/hvhdk.h>
-#include <IsolationTypes.h>
-#include <Protocol/InternalEventServices.h>
 
 //
 // This number is just a random 16 bit number which is used to

@@ -1,19 +1,8 @@
-/*++
+/** @file
+  Utility functions for EMCL.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    EmclLib.h
-
-Abstract:
-
-    Utility functions for EMCL.
-
-Author:
-
-    Marius Buleandra (mariub) - 31 Jul 2012
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #pragma once
@@ -22,36 +11,36 @@ Author:
 EFI_STATUS
 EFIAPI
 EmclInstallProtocol (
-    __in EFI_HANDLE ControllerHandle
+    IN  EFI_HANDLE ControllerHandle
     );
 
 VOID
 EFIAPI
 EmclUninstallProtocol (
-    __in EFI_HANDLE ControllerHandle
+    IN  EFI_HANDLE ControllerHandle
     );
 
 EFI_STATUS
 EFIAPI
 EmclSendPacketSync (
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount
+    IN  EFI_EMCL_PROTOCOL   *This,
+    IN  VOID                *InlineBuffer,
+        UINT32              InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+        UINT32              ExternalBufferCount
     );
 
 EFI_STATUS
 EmclChannelTypeSupported (
-    __in EFI_HANDLE ControllerHandle,
-    __in const EFI_GUID *ChannelType,
-    __in EFI_HANDLE AgentHandle
+    IN  EFI_HANDLE      ControllerHandle,
+    IN  const EFI_GUID  *ChannelType,
+    IN  EFI_HANDLE      AgentHandle
     );
 
 EFI_STATUS
 EmclChannelTypeAndInstanceSupported (
-    __in EFI_HANDLE ControllerHandle,
-    __in const EFI_GUID *ChannelType,
-    __in EFI_HANDLE AgentHandle,
-    __in_opt const EFI_GUID *ChannelInstance
+    IN          EFI_HANDLE ControllerHandle,
+    IN          const EFI_GUID *ChannelType,
+    IN          EFI_HANDLE AgentHandle,
+    IN OPTIONAL const EFI_GUID *ChannelInstance
     );

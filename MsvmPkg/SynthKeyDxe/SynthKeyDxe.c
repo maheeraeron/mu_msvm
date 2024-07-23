@@ -42,7 +42,7 @@ SynthKeyDriverStop(
 
 VOID
 SynthKeyDriverCleanup(
-    _In_  _Post_ptr_invalid_ 
+    _In_  _Post_ptr_invalid_
                 PSYNTH_KEYBOARD_DEVICE      Device
     );
 
@@ -51,8 +51,8 @@ SynthKeyDriverCleanup(
 // The UEFI runtime will first call the EFI_DRIVER_BINDING_SUPPORTED entry
 // and if the device returns EFI_SUCCESS
 // EFI_DRIVER_BINDING_START and finally EFI_DRIVER_BINDING_STOP.
-// 
-EFI_DRIVER_BINDING_PROTOCOL gSynthKeyDriverBinding = 
+//
+EFI_DRIVER_BINDING_PROTOCOL gSynthKeyDriverBinding =
 {
     SynthKeyDriverSupported,
     SynthKeyDriverStart,
@@ -154,8 +154,8 @@ Return Value:
         return status;
     }
 
-    status = EmclChannelTypeSupported(DeviceCandidate, 
-                                      &HK_INTERFACE_GUID,
+    status = EmclChannelTypeSupported(DeviceCandidate,
+                                      &gSyntheticKeyboardClassGuid,
                                       This->DriverBindingHandle);
 
     if (!(EFI_ERROR(status)))
@@ -193,7 +193,7 @@ Return Value:
 
     EFI_SUCCESS on success
     Other EFI_STATUS values on failure.
-    
+
 --*/
 {
     PSYNTH_KEYBOARD_DEVICE  pDevice = NULL;
@@ -224,7 +224,7 @@ Return Value:
     //
     pDevice = AllocateZeroPool(sizeof(SYNTH_KEYBOARD_DEVICE));
 
-    if (pDevice == NULL) 
+    if (pDevice == NULL)
     {
         status = EFI_OUT_OF_RESOURCES;
         DEBUG((EFI_D_ERROR, "--- %a: failed to allocate memory - %r \n", __FUNCTION__, status));
@@ -245,7 +245,7 @@ Return Value:
                                Controller,
                                EFI_OPEN_PROTOCOL_BY_DRIVER);
 
-    if (EFI_ERROR(status)) 
+    if (EFI_ERROR(status))
     {
         goto Cleanup;
     }
@@ -309,7 +309,7 @@ Cleanup:
 
 VOID
 SynthKeyDriverCleanup(
-    _In_  _Post_ptr_invalid_ 
+    _In_  _Post_ptr_invalid_
                 PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
@@ -317,7 +317,7 @@ SynthKeyDriverCleanup(
 Routine Description:
 
     Performs common cleanup for a synthetic keyboard device.
-    This function assumes the device context was at least allocated, but 
+    This function assumes the device context was at least allocated, but
     handles and pointers contained within the context may or may not be valid.
 
 Arguments:
@@ -356,7 +356,7 @@ Return Value:
                            gSynthKeyDriverBinding.DriverBindingHandle,
                            pDevice->Handle);
     }
-    
+
     gBS->FreePool(pDevice);
 }
 
@@ -384,7 +384,7 @@ Arguments:
 
     NumberOfChildren  UNUSED - Number of Handles in ChildHandleBuffer. If number of
                       children is zero stop the entire bus driver.
-                      
+
     ChildHandleBuffer UNUSED - List of Child Handles to Stop.
 
 Return Value:
@@ -415,7 +415,7 @@ Return Value:
                                Controller,
                                EFI_OPEN_PROTOCOL_GET_PROTOCOL);
 
-    if (EFI_ERROR(status)) 
+    if (EFI_ERROR(status))
     {
         return status;
     }

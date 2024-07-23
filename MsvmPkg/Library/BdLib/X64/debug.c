@@ -24,7 +24,7 @@ Environment:
 
 #include <EfiNt.h>
 #include "Bd.h"
-#include <Hv/hvgdk_mini.h>
+#include <Hv/HvGuestCpuid.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>

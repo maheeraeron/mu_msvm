@@ -59,7 +59,6 @@ typedef struct
     //
     RING_HANDLE_KEY     HandleKey;
 
-    _Field_size_(Size)
     UINT8               Buffer[];
 } EFI_RING_BUFFER;
 
@@ -76,78 +75,74 @@ typedef enum
 
 EFI_STATUS
 RingBufferReserve(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_        const UINT32            DataSize,
-    _Out_opt_   RING_HANDLE            *DataHandle
+    IN              EFI_RING_BUFFER        *Ring,
+    IN              const UINT32            DataSize,
+    OUT OPTIONAL    RING_HANDLE            *DataHandle
     );
 
 
 EFI_STATUS
 RingBufferAdd(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_bytecount_(DataSize)
-                const VOID             *Data,
-    _In_        const UINT32            DataSize,
-    _Out_opt_   RING_HANDLE            *DataHandle
+    IN              EFI_RING_BUFFER        *Ring,
+    IN              const VOID             *Data,
+    IN              const UINT32            DataSize,
+    OUT OPTIONAL    RING_HANDLE            *DataHandle
     );
 
 
 EFI_STATUS
 RingBufferRemove(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _Out_writes_bytes_to_opt_(*DataSize, *DataSize)
-                VOID                   *Data,
-    _Inout_opt_ UINT32                 *DataSize
+    IN              EFI_RING_BUFFER        *Ring,
+    OUT OPTIONAL    VOID                   *Data,
+    IN OUT OPTIONAL UINT32                 *DataSize
     );
 
 
 EFI_STATUS
 RingBufferIo(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_        const RING_HANDLE       DataHandle,
-    _In_        const RING_IO_OPERATION Op,
-    _In_        const UINT32            Offset,
-    _When_(Op == DataRead, _Out_writes_bytes_to_(*DataSize, *DataSize))
-    _When_(Op == DataWrite, _In_bytecount_(*DataSize))
-                VOID                   *Data,
-    _Inout_     UINT32                 *DataSize
+    IN      EFI_RING_BUFFER        *Ring,
+    IN      const RING_HANDLE       DataHandle,
+    IN      const RING_IO_OPERATION Op,
+    IN      const UINT32            Offset,
+//  _When_(Op == DataRead, _Out_writes_bytes_to_(*DataSize, *DataSize))
+//  _When_(Op == DataWrite, _In_bytecount_(*DataSize))
+    IN OUT  VOID                   *Data,
+    IN OUT  UINT32                 *DataSize
     );
 
 
 EFI_STATUS
 RingBufferHandleEnumerate(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _Inout_     RING_HANDLE            *Enumerator,
-    _Out_       RING_HANDLE            *Item,
-    _Out_opt_   UINT32                 *ItemSize
+    IN              const EFI_RING_BUFFER  *Ring,
+    IN OUT          RING_HANDLE            *Enumerator,
+    OUT             RING_HANDLE            *Item,
+    OUT OPTIONAL    UINT32                 *ItemSize
     );
 
 
 EFI_STATUS
 RingBufferHandleIsValid(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_        const RING_HANDLE       DataHandle
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const RING_HANDLE       DataHandle
     );
 
 
 VOID
 RingBufferReset(
-    _In_        EFI_RING_BUFFER        *Ring
+    IN          EFI_RING_BUFFER        *Ring
     );
 
 
 EFI_STATUS
 RingBufferFlatten(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _Inout_     UINT32                 *BufferSize,
-    _Out_bytecap_post_bytecount_(*BufferSize, *BufferSize)
-                VOID                   *Buffer
+    IN          const EFI_RING_BUFFER  *Ring,
+    IN OUT      UINT32                 *BufferSize,
+    OUT         VOID                   *Buffer
     );
 
 EFI_STATUS
 RingBufferInitialize(
-    _In_bytecount_(sizeof(EFI_RING_BUFFER) + Capacity)
-                EFI_RING_BUFFER        *Ring,
-    _In_        const UINT32            Capacity,
-    _In_        const UINT32            Flags
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const UINT32            Capacity,
+    IN          const UINT32            Flags
     );

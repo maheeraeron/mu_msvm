@@ -1,16 +1,9 @@
-/*++
+/** @file
+ This file implements support routines for GHCB-based calls.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    GhcbCall.c
-
-Abstract:
-
-    This file implements support routines for GHCB-based calls.
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #include <Base.h>
 #include <Library/BaseLib.h>
@@ -43,23 +36,23 @@ typedef struct _GHCB_HYPERCALL {
 #define GHCB_SET_FIELD_VALID(Ghcb, Field) \
     do { \
         if (Field < GHCB_FIELD_VALID_BITMAP0) { \
-            _bittestandset64((PUINT64)((PUCHAR)(Ghcb) + GHCB_FIELD_VALID_BITMAP0), GHCB_FIELD_INDEX(Field)); \
+            _bittestandset64((UINT64*)((UINT8*)(Ghcb) + GHCB_FIELD_VALID_BITMAP0), GHCB_FIELD_INDEX(Field)); \
         } \
     } while (0)
 
 #define SetGhcbField16(Ghcb, Field, Value) \
     GHCB_SET_FIELD_VALID(Ghcb, Field); \
-    (*(PUINT16)((PUCHAR)(Ghcb) + (Field)) = (Value))
+    (*(UINT16*)((UINT8*)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField32(Ghcb, Field, Value) \
     GHCB_SET_FIELD_VALID(Ghcb, Field); \
-    (*(PUINT32)((PUCHAR)(Ghcb) + (Field)) = (Value))
+    (*(UINT32*)((UINT8*)(Ghcb) + (Field)) = (Value))
 #define SetGhcbField64(Ghcb, Field, Value) \
     GHCB_SET_FIELD_VALID(Ghcb, Field); \
-    (*(PUINT64)((PUCHAR)(Ghcb) + (Field)) = (Value))
+    (*(UINT64*)((UINT8*)(Ghcb) + (Field)) = (Value))
 #define GetGhcbField64(Ghcb, Field) \
-    (*(PUINT64)((PUCHAR)(Ghcb) + (Field)))
+    (*(UINT64*)((UINT8*)(Ghcb) + (Field)))
 #define SET_GHCB_FORMAT(Ghcb, Format) \
-    ((*(PUINT32)(Ghcb) + 0x3FF) = (Format))
+    ((*(UINT32*)(Ghcb) + 0x3FF) = (Format))
 
 #define GHCB_EXITCODE_MSR               0x7C
 
@@ -72,7 +65,7 @@ typedef struct _GHCB_HYPERCALL {
 #define GHCB_FIELD_VALID_BITMAP0        0x3F0
 #define GHCB_FIELD_VALID_BITMAP1        0x3F8
 
-PVOID
+VOID*
 GhcbInitializeGhcb(
     VOID
     )
@@ -117,15 +110,15 @@ GhcbInitializeGhcb(
         CpuDeadLoop();
     }
 
-    return (PVOID)(ghcbAddress | canonicalizationMask);
+    return (VOID*)(ghcbAddress | canonicalizationMask);
 }
 
 
 VOID
 GhcbWriteMsr(
-    _In_ PVOID Ghcb,
-    _In_ UINT64 MsrNumber,
-    _In_ UINT64 RegisterValue
+    IN  VOID    *Ghcb,
+        UINT64  MsrNumber,
+        UINT64  RegisterValue
     )
 {
     EFI_TPL tpl;
@@ -158,9 +151,9 @@ GhcbWriteMsr(
 
 VOID
 GhcbReadMsr(
-    _In_ PVOID Ghcb,
-    _In_ UINT64 MsrNumber,
-    _Out_ UINT64* RegisterValue
+    IN  VOID    *Ghcb,
+        UINT64  MsrNumber,
+    OUT UINT64  *RegisterValue
     )
 {
     EFI_TPL tpl;

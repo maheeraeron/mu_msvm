@@ -38,7 +38,6 @@ typedef struct
     RING_HANDLE                 Handle;
     EFI_EVENT_DESCRIPTOR        Metadata;
     UINTN                       CacheSize;
-    _Field_size_bytes_(CacheSize)
     VOID*                       Cache;
 } EVENT_PENDING_INFO;
 
@@ -49,7 +48,6 @@ typedef struct
 {
     RING_HANDLE                 RingEnum;
     UINT32                      BufferSize;
-    _Field_size_(BufferSize)
     UINT8                       Buffer[];
 } EVENT_ENUM_CONTEXT;
 
@@ -63,7 +61,6 @@ typedef struct
     //
     // Cached pending event information
     //
-    _Guarded_by_(Lock)
     EVENT_PENDING_INFO          Pending;
     EFI_LOCK                    Lock;
     //
@@ -74,7 +71,6 @@ typedef struct
     //
     // Backing store for event data
     //
-    _Guarded_by_(Lock)
     EFI_RING_BUFFER             Ring;
 } EVENT_CHANNEL;
 
@@ -82,7 +78,7 @@ typedef struct
 //  Channel Id GUID must be the first field in the EVENT_CHANNEL
 //  as it is used as the object lookup key in the handle table.
 //
-C_ASSERT(FIELD_OFFSET(EVENT_CHANNEL,Id) == 0);
+static_assert(OFFSET_OF(EVENT_CHANNEL,Id) == 0);
 
 //
 // Number of bytes to increase the enumeration bounce buffer by
@@ -114,18 +110,18 @@ const EFI_EVENTLOG_PROTOCOL mEfiEventLogProtocol =
 
 EFI_STATUS
 EventPendingCommitInternal(
-    _In_    EVENT_CHANNEL              *Channel
+    IN      EVENT_CHANNEL              *Channel
     );
 
 VOID
 EventPendingCleanup(
-    _In_    EVENT_CHANNEL              *Channel
+    IN      EVENT_CHANNEL              *Channel
     );
 
 
 VOID*
 EventAllocate32BitMemory(
-    _In_    UINT32                      Size
+    IN      UINT32                      Size
     )
 /*++
 
@@ -158,11 +154,10 @@ Return Value:
 }
 
 
-_Acquires_nonreentrant_lock_(Channel->Lock)
-FORCEINLINE
+__forceinline
 VOID
 EventChannelLock(
-    _In_    EVENT_CHANNEL              *Channel
+    IN      EVENT_CHANNEL              *Channel
     )
 /*++
 
@@ -184,11 +179,10 @@ Return Value:
 }
 
 
-_Releases_nonreentrant_lock_(Channel->Lock)
-FORCEINLINE
+__forceinline
 VOID
 EventChannelUnlock(
-    _In_    EVENT_CHANNEL              *Channel
+    IN      EVENT_CHANNEL              *Channel
     )
 /*++
 
@@ -212,8 +206,8 @@ Return Value:
 
 EVENT_CHANNEL *
 EventChannelFromGuid(
-    _In_    const EFI_GUID             *Channel,
-    _Out_   EFI_HANDLE                 *Handle
+    IN      const EFI_GUID             *Channel,
+    OUT     EFI_HANDLE                 *Handle
     )
 /*++
 
@@ -256,7 +250,7 @@ Return Value:
 
 EVENT_CHANNEL *
 EventChannelFromHandle(
-    _In_    const EFI_HANDLE            Channel
+    IN      const EFI_HANDLE            Channel
     )
 /*++
 
@@ -290,10 +284,10 @@ Return Value:
 
 EFI_STATUS
 EventChannelFlushCallback(
-    _In_    const EFI_HANDLE            TableHandle,
-    _In_    VOID                       *CallbackContext,
-    _In_    const EFI_HANDLE            ObjectHandle,
-    _In_    VOID                       *Object
+    IN      const EFI_HANDLE            TableHandle,
+    IN      VOID                       *CallbackContext,
+    IN      const EFI_HANDLE            ObjectHandle,
+    IN      VOID                       *Object
     )
 /*++
 
@@ -425,10 +419,10 @@ Exit:
 
 EFI_STATUS
 EventChannelResetCallback(
-    _In_    const EFI_HANDLE            TableHandle,
-    _In_    VOID                       *CallbackContext,
-    _In_    const EFI_HANDLE            ObjectHandle,
-    _In_    VOID                       *Object
+    IN      const EFI_HANDLE            TableHandle,
+    IN      VOID                       *CallbackContext,
+    IN      const EFI_HANDLE            ObjectHandle,
+    IN      VOID                       *Object
     )
 /*++
 
@@ -471,7 +465,7 @@ Return Value:
 
 EFI_STATUS
 EventPendingCommitInternal(
-    _In_        EVENT_CHANNEL          *Channel
+    IN          EVENT_CHANNEL          *Channel
     )
 /*++
 
@@ -533,7 +527,7 @@ Return Value:
 
 VOID
 EventPendingCleanup(
-    _In_        EVENT_CHANNEL          *Channel
+    IN          EVENT_CHANNEL          *Channel
     )
 /*++
 
@@ -563,9 +557,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventChannelCreate(
-    _In_        const EFI_GUID         *Channel,
-    _In_opt_    EVENT_CHANNEL_INFO     *Attributes,
-    _Out_opt_   EFI_HANDLE             *Handle
+    IN              const EFI_GUID         *Channel,
+    IN OPTIONAL     EVENT_CHANNEL_INFO     *Attributes,
+    OUT OPTIONAL    EFI_HANDLE             *Handle
     )
 /*++
 
@@ -678,7 +672,7 @@ Exit:
 EFI_STATUS
 EFIAPI
 EventChannelFlush(
-    _In_    const EFI_HANDLE            Channel
+    IN      const EFI_HANDLE            Channel
     )
 /*++
 
@@ -729,7 +723,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventChannelReset(
-    _In_    const EFI_HANDLE            Channel
+    IN      const EFI_HANDLE            Channel
     )
 /*++
 
@@ -778,8 +772,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventChannelStatistics(
-    _In_    const EFI_HANDLE            Channel,
-    _Out_   EVENT_CHANNEL_STATISTICS   *Stats
+    IN      const EFI_HANDLE            Channel,
+    OUT     EVENT_CHANNEL_STATISTICS   *Stats
     )
 /*++
 
@@ -821,11 +815,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventEnumerate(
-    _In_    const EFI_HANDLE            Channel,
-    _Inout_ EFI_HANDLE                 *Enumerator,
-    _Out_   EFI_EVENT_DESCRIPTOR       *Metadata,
-    _Outptr_result_bytebuffer_(Metadata->DataSize)
-            VOID                      **Event
+    IN      const EFI_HANDLE            Channel,
+    IN OUT  EFI_HANDLE                 *Enumerator,
+    OUT     EFI_EVENT_DESCRIPTOR       *Metadata,
+    OUT     VOID                      **Event
     )
 /*++
 
@@ -1000,10 +993,9 @@ Exit:
 EFI_STATUS
 EFIAPI
 EventLog(
-    _In_    const EFI_HANDLE            Channel,
-    _In_    const EFI_EVENT_DESCRIPTOR *Event,
-    _In_opt_bytecount_(Event->DataSize)
-            const VOID                 *Data
+    IN          const EFI_HANDLE            Channel,
+    IN          const EFI_EVENT_DESCRIPTOR *Event,
+    IN OPTIONAL const VOID                 *Data
     )
 /*++
 
@@ -1205,10 +1197,9 @@ Exit:
 EFI_STATUS
 EFIAPI
 EventPendingGet(
-    _In_    const EFI_HANDLE            Channel,
-    _Out_   EFI_EVENT_DESCRIPTOR       *Metadata,
-    _Outptr_result_bytebuffer_(Metadata->DataSize)
-            VOID                      **Data
+    IN      const EFI_HANDLE            Channel,
+    OUT     EFI_EVENT_DESCRIPTOR       *Metadata,
+    OUT     VOID                      **Data
     )
 /*++
 
@@ -1266,7 +1257,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventPendingCommit(
-    _In_    const EFI_HANDLE            Channel
+    IN      const EFI_HANDLE            Channel
     )
 /*++
 

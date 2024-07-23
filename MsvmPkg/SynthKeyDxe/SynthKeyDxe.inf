@@ -1,6 +1,6 @@
 ## @file
 # Ps2 Keyboard UEFI Driver which produce gEfiSimpleTextInProtocolGuid and gEfiSimpleTextInputExProtocolGuid
-# protocol. 
+# protocol.
 # The keyboard type implemented follows IBM compatible PS2 protocol, with Scan Codes Set 1.
 #
 # This dirver directly uses IsaIo protocol service to support KeyBoard work.
@@ -30,7 +30,7 @@
 [Packages]
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
-   
+
 [LibraryClasses]
     BaseLib
     BaseMemoryLib
@@ -44,8 +44,8 @@
     UefiDriverEntryPoint
     UefiLib
     UefiRuntimeServicesTableLib
- 
-  
+
+
 [Protocols]
     gEfiVmbusProtocolGuid                   ## CONSUMES
     gEfiEmclProtocolGuid                    ## CONSUMES
@@ -55,3 +55,4 @@
 
 [Guids]
     gEfiVmbusChannelDevicePathGuid          ## CONSUMES
+    gSyntheticKeyboardClassGuid             ## CONSUMES

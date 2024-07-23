@@ -16,7 +16,7 @@
 
 EFI_STATUS
 Oem0InitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Table
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Table
     )
 /*++
 

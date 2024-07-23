@@ -1,36 +1,25 @@
-/*++
+/** @file
+  Library wrapper around EFI_EVENTLOG_PROTOCOL for logging boot events
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    BootEventLib.c
-
-Abstract:
-
-    Library wrapper around EFI_EVENTLOG_PROTOCOL for logging boot events
-
-Author:
-
-    Kris Harper (kharp) - 11-Dec-2013
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
-#include <EfiNt.h>
-#include <Library/PcdLib.h>
-#include <Library/DebugLib.h>
+
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/EventLogLib.h>
 #include <Library/BootEventLogLib.h>
+#include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/EventLogLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
+#include <Library/UefiBootServicesTableLib.h>
 
 EFI_STATUS
 EFIAPI
 BootEventLogConstructor(
-    _In_    EFI_HANDLE                          ImageHandle,
-    _In_    EFI_SYSTEM_TABLE                   *SystemTable
+    IN  EFI_HANDLE          ImageHandle,
+    IN  EFI_SYSTEM_TABLE    *SystemTable
     )
 /*++
 
@@ -57,10 +46,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 BootDeviceEventStart(
-    _In_    const EFI_DEVICE_PATH_PROTOCOL     *DevicePath,
-    _In_    UINT16                              BootVariableNumber,
-    _In_    BOOT_DEVICE_STATUS                  InitialStatus,
-    _In_    EFI_STATUS                          ExtendedStatus
+    IN  const EFI_DEVICE_PATH_PROTOCOL  *DevicePath,
+        UINT16                          BootVariableNumber,
+    IN  BOOT_DEVICE_STATUS              InitialStatus,
+        EFI_STATUS                      ExtendedStatus
     )
 /*++
 
@@ -91,8 +80,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 BootDeviceEventUpdate(
-    _In_    BOOT_DEVICE_STATUS                  Status,
-    _In_    EFI_STATUS                          ExtendedStatus
+    IN  BOOT_DEVICE_STATUS  Status,
+        EFI_STATUS          ExtendedStatus
     )
 /*++
 
@@ -119,8 +108,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 BootDeviceEventPendingStatus(
-    _Out_   BOOT_DEVICE_STATUS                 *Status,
-    _Out_   EFI_STATUS                         *ExtendedStatus
+    OUT BOOT_DEVICE_STATUS  *Status,
+    OUT EFI_STATUS          *ExtendedStatus
     )
 /*++
 
@@ -225,7 +214,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 BootDeviceEventStatistics(
-    _Out_   EVENT_CHANNEL_STATISTICS           *Stats
+    OUT EVENT_CHANNEL_STATISTICS    *Stats
     )
 /*++
 
@@ -250,8 +239,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 BootDeviceEventEnumerate(
-    _In_    EFI_EVENTLOG_ENUMERATE_CALLBACK     Callback,
-    _In_    const VOID                         *Context
+    IN  EFI_EVENTLOG_ENUMERATE_CALLBACK Callback,
+    IN  const VOID                      *Context
     )
 /*++
 

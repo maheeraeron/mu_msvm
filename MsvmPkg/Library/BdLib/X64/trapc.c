@@ -32,6 +32,7 @@ Environment:
 // -------------------------------------------------------------------- Pragmas
 
 #pragma warning(disable:4152)      // Function pointer to data pointer.
+#pragma warning(disable:4201)
 
 // ------------------------------------------------------------------ Functions
 
@@ -60,19 +61,19 @@ ArchSetIdtEntry (
 Routine Description:
 
     Initializes the specified interrupt vector with the provided ISR.
-    
+
 Arguments:
 
     IdtBase - Pointer to the base of the Interrupt Descriptor Table.
-    
+
     Offset - Offset in the IDT for the interrupt vector to hook.
-    
+
     InterruptHandler - Address to the interrupt handler.
 
     Access - Access rights for the interrupt vector.
-        
+
     Selector - Code selector for the interrupt handler.
-    
+
 Return Value:
 
     None.
@@ -136,17 +137,17 @@ Return Value:
 
     idtBase = (IA32_IDT_GATE_DESCRIPTOR*)Idt;
 
-    if (IdtLength < (0x2d * sizeof(IA32_IDT_GATE_DESCRIPTOR))) 
+    if (IdtLength < (0x2d * sizeof(IA32_IDT_GATE_DESCRIPTOR)))
     {
         return;
     }
 
     //
-    // Initialize the entries to the default unhandled exception handler. 
+    // Initialize the entries to the default unhandled exception handler.
     // Then insert specific exception handlers.
     //
 
-    for (index = 0; 
+    for (index = 0;
          index <= 0x2d;
          index += 1)
     {
@@ -388,7 +389,7 @@ Return Value:
 
     AsmReadIdtr(&idtRegister);
 
-    if (idtRegister.Limit < (0x2d * sizeof(IA32_IDT_GATE_DESCRIPTOR))) 
+    if (idtRegister.Limit < (0x2d * sizeof(IA32_IDT_GATE_DESCRIPTOR)))
     {
         //
         // We do not have enought IDT entries to setup the debuggers.
@@ -620,3 +621,6 @@ Return Value:
     KiSaveProcessorControlState(&BdPrcb->ProcessorState);
     return;
 }
+
+#pragma warning(default:4152)
+#pragma warning(default:4201)

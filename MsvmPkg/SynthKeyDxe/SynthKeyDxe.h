@@ -70,12 +70,13 @@ typedef struct _EFI_KEY_BUFFER
 // Encapsulates the EFI KeyState (shift key and toggle key state) plus
 // internal state specific to the Hyper-V driver.
 //
+#pragma warning(disable : 4201)
 typedef struct _SYNTH_KEYBOARD_STATE
 {
     EFI_KEY_STATE   KeyState;
 
     struct
-    {     
+    {
         // TRUE -> EMCL Channel has been opened.
         unsigned    ChannelOpen:1;
 
@@ -90,6 +91,7 @@ typedef struct _SYNTH_KEYBOARD_STATE
     };
 
 }SYNTH_KEYBOARD_STATE, *PSYNTH_KEYBOARD_STATE;
+#pragma warning(default : 4201)
 
 
 #define SYNTH_KEYBOARD_DEVICE_SIGNATURE         SIGNATURE_32('S', 'k', 'e', 'y')
@@ -157,7 +159,7 @@ Return Value:
 
 
 //
-// Helpers to get the device context from 
+// Helpers to get the device context from
 // EFI_SIMPLE_TEXT_INPUT_PROTOCOL or EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL pointers
 //
 #define SYNTH_KEYBOARD_DEVICE_FROM_THIS(a)      \

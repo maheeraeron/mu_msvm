@@ -16,27 +16,27 @@
 
 EFI_STATUS
 Oem0InitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Table
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Table
     );
 
 EFI_STATUS
 DsdtInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Dsdt
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Dsdt
     );
 
 EFI_STATUS
 SpcrInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Spcr
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Spcr
     );
 
 EFI_STATUS
 FacpInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Facp
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Facp
     );
 
 EFI_STATUS
 WdatInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Wdat
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Wdat
     );
 
 extern BOOLEAN mHardwareIsolatedNoParavisor;

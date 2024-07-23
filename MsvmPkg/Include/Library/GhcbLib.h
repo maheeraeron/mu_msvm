@@ -1,24 +1,11 @@
-/*++
+/** @file
+  Definitions for functionality available through GHCB calls to the host.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    GhcbLib.h
-
-Abstract:
-
-    Definitions for functionality available through GHCB calls to the host.
-
-Author:
-
-    Jon Lange (jlange) 7-Feb-2024
-
---*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 #pragma once
-
-#include <EfiNt.h>
 
 /*++
 
@@ -56,7 +43,7 @@ Return Value:
     Pointer to the GHCB.
 
 --*/
-PVOID
+VOID*
 GhcbInitializeGhcb(
     VOID
     );
@@ -83,9 +70,9 @@ Return Value:
 --*/
 VOID
 GhcbWriteMsr(
-    _In_ PVOID Ghcb,
-    _In_ UINT64 MsrNumber,
-    _In_ UINT64 RegisterValue
+    IN  VOID    *Ghcb,
+        UINT64  MsrNumber,
+        UINT64  RegisterValue
     );
 
 
@@ -111,7 +98,7 @@ Return Value:
 --*/
 VOID
 GhcbReadMsr(
-    _In_ PVOID Ghcb,
-    _In_ UINT64 MsrNumber,
-    _Out_ UINT64* RegisterValue
+    IN  VOID    *Ghcb,
+        UINT64  MsrNumber,
+    OUT UINT64  *RegisterValue
     );

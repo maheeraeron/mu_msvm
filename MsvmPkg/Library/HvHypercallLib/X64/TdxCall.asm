@@ -1,20 +1,9 @@
-;++
-;
-; Copyright (c) Microsoft Corporation
-;
-; Module Name:
-;
-;   TdxCall.asm
-;
-; Abstract:
-;
-;   Asm implementations of TDX calls.
-;
-; Author:
-;
-;   Jon Lange (jlange) 12-Aug-2020
-;
-;--
+/** @file
+  Asm implementations of TDX calls.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+**/
 
 include macamd64.inc
 
@@ -72,8 +61,8 @@ include macamd64.inc
 ;
 ; VOID
 ; _tdx_vmcall_wrmsr(
-;     _In_ UINT32 MsrIndex,
-;     _In_ UINT64 MsrValue
+;     UINT32 MsrIndex,
+;     UINT64 MsrValue
 ;     );
 ;
 ; Routine Description:
@@ -128,9 +117,9 @@ include macamd64.inc
 ; void
 ; HV_HYPERCALL_OUTPUT
 ; HvHypercallpIssueTdxHypercall(
-;     _In_ HV_HYPERCALL_INPUT InputControl,
-;     _In_opt_ UINT64 InputPhysicalAddress,
-;     _In_opt_ UINT64 OutputPhysicalAddress
+;     IN    HV_HYPERCALL_INPUT InputControl,
+;           UINT64 InputPhysicalAddress,
+;           UINT64 OutputPhysicalAddress
 ;     )
 ;
 ; Routine Description:

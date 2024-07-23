@@ -1,10 +1,9 @@
 ## @file
-# LIbrary to inform Tcg2Pei not to measure FvMain as this isn't the HyperV design 
-# 
+# Library to inform Tcg2Pei not to measure FvMain.
+# Some legacy Hyper-V versions require this
 #
-# @copyright
-# Copyright (c) 2017 Microsoft Corporation. All rights reserved
-#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -27,9 +26,9 @@ SecurityPkg/SecurityPkg.dec
 ExcludeMainFvFromMeasurementLib.c
 
 [LibraryClasses]
-PeiServicesLib
-PcdLib
 DebugLib
+PcdLib
+PeiServicesLib
 
 [FixedPcd]
 gMsvmPkgTokenSpaceGuid.PcdFvBaseAddress

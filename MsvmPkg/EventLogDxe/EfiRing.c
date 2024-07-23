@@ -42,7 +42,7 @@ typedef struct
 
 UINT32
 RingBufferCurrentKey(
-    _In_    EFI_RING_BUFFER        *Ring
+    IN      EFI_RING_BUFFER        *Ring
     )
 /*++
 
@@ -74,7 +74,7 @@ Return Value:
 
 UINT32
 RingBufferBytesFree(
-    _In_    const EFI_RING_BUFFER  *Ring
+    IN      const EFI_RING_BUFFER  *Ring
     )
 /*++
 
@@ -136,11 +136,9 @@ Return Value:
 
 VOID
 RingBufferWrapIfNeeded(
-    _In_    const EFI_RING_BUFFER      *Ring,
-    _Inout_ _Deref_in_range_(0, Ring->Size - 1) _Deref_out_range_(0, Ring->Size - 1)
-            UINT32                     *Offset,
-    _In_range_(<, Ring->Size)
-            UINT32                      BytesRequired
+    IN      const EFI_RING_BUFFER      *Ring,
+    IN OUT  UINT32                     *Offset,
+    IN      UINT32                      BytesRequired
     )
 /*++
 
@@ -174,8 +172,8 @@ Return Value:
 
 EFI_STATUS
 RingBufferIsValidOffset(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _In_        UINT32                  Offset
+    IN          const EFI_RING_BUFFER  *Ring,
+    IN          UINT32                  Offset
     )
 /*++
 
@@ -209,9 +207,9 @@ Return Value:
 
 EFI_STATUS
 RingBufferRecordAt(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _Inout_     UINT32                 *Offset,
-    _Outptr_    RING_RECORD           **Header
+    IN          const EFI_RING_BUFFER  *Ring,
+    IN OUT      UINT32                 *Offset,
+    OUT         RING_RECORD           **Header
     )
 /*++
 
@@ -293,12 +291,10 @@ Exit:
 
 UINT32
 RingBufferFillDataAt(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_range_(0, Ring->Size - 1)
-                const UINT32            Offset,
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const UINT32            Offset,
                 const UINT8             Value,
-    _In_range_(<, Ring->Size)
-                const UINT32            DataSize
+    IN          const UINT32            DataSize
     )
 /*++
 
@@ -356,13 +352,10 @@ Return Value:
 
 UINT32
 RingBufferWriteDataAt(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_range_(0, Ring->Size - 1)
-                const UINT32            Offset,
-    _In_bytecount_(DataSize)
-                const VOID             *Data,
-    _In_range_(<, Ring->Size)
-                const UINT32            DataSize
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const UINT32            Offset,
+    IN          const VOID             *Data,
+    IN          const UINT32            DataSize
     )
 /*++
 
@@ -422,13 +415,10 @@ Return Value:
 
 UINT32
 RingBufferReadDataAt(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _In_range_(0, Ring->Size - 1)
-                UINT32                  Offset,
-    _Out_writes_bytes_(DataSize)
-                VOID                   *Data,
-    _In_range_(<, Ring->Size)
-                UINT32                  DataSize
+    IN          const EFI_RING_BUFFER  *Ring,
+    IN          UINT32                  Offset,
+    OUT         VOID                   *Data,
+    IN          UINT32                  DataSize
     )
 /*++
 
@@ -489,14 +479,11 @@ Return Value:
 
 EFI_STATUS
 RingBufferReadRecord(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _Inout_     UINT32                 *Offset,
-    _Outptr_    RING_RECORD           **Header,
-    _Out_writes_bytes_to_opt_(*DataSize, *DataSize)
-                VOID                   *Data,
-    _When_((Data == NULL), _Inout_opt_)
-    _When_((Data != NULL), _Inout_)
-                UINT32                 *DataSize
+    IN              const EFI_RING_BUFFER  *Ring,
+    IN OUT          UINT32                 *Offset,
+    OUT             RING_RECORD           **Header,
+    OUT             VOID                   *Data,
+    IN OUT OPTIONAL UINT32                 *DataSize
     )
 /*++
 
@@ -580,14 +567,12 @@ Exit:
 
 EFI_STATUS
 RingBufferIo(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_        const RING_HANDLE       DataHandle,
-    _In_        const RING_IO_OPERATION Op,
-    _In_        const UINT32            Offset,
-    _When_(Op == DataRead, _Out_writes_bytes_to_(*DataSize, *DataSize))
-    _When_(Op == DataWrite, _In_bytecount_(*DataSize))
-                VOID                   *Data,
-    _Inout_     UINT32                 *DataSize
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const RING_HANDLE       DataHandle,
+    IN          const RING_IO_OPERATION Op,
+    IN          const UINT32            Offset,
+    IN OUT      VOID                   *Data,
+    IN OUT      UINT32                 *DataSize
     )
 /*++
 
@@ -690,9 +675,9 @@ Exit:
 
 EFI_STATUS
 RingBufferReserve(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_        const UINT32            DataSize,
-    _Out_opt_   RING_HANDLE            *DataHandle
+    IN              EFI_RING_BUFFER        *Ring,
+    IN              const UINT32            DataSize,
+    OUT OPTIONAL    RING_HANDLE            *DataHandle
     )
 /*++
 
@@ -792,11 +777,10 @@ Exit:
 
 EFI_STATUS
 RingBufferAdd(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_bytecount_(DataSize)
-                const VOID             *Data,
-    _In_        const UINT32            DataSize,
-    _Out_opt_   RING_HANDLE            *DataHandle
+    IN              EFI_RING_BUFFER        *Ring,
+    IN              const VOID             *Data,
+    IN              const UINT32            DataSize,
+    OUT OPTIONAL    RING_HANDLE            *DataHandle
     )
 /*++
 
@@ -857,10 +841,9 @@ Return Value:
 
 EFI_STATUS
 RingBufferRemove(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _Out_writes_bytes_to_opt_(*DataSize, *DataSize)
-                VOID                   *Data,
-    _Inout_opt_ UINT32                 *DataSize
+    IN              EFI_RING_BUFFER        *Ring,
+    OUT OPTIONAL    VOID                   *Data,
+    IN OUT OPTIONAL UINT32                 *DataSize
     )
 /*++
 
@@ -920,10 +903,10 @@ Return Value:
 
 EFI_STATUS
 RingBufferHandleEnumerate(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _Inout_     RING_HANDLE            *Enumerator,
-    _Out_       RING_HANDLE            *Item,
-    _Out_opt_   UINT32                 *ItemSize
+    IN              const EFI_RING_BUFFER  *Ring,
+    IN OUT          RING_HANDLE            *Enumerator,
+    OUT             RING_HANDLE            *Item,
+    OUT OPTIONAL    UINT32                 *ItemSize
     )
 /*++
 
@@ -1013,8 +996,8 @@ Exit:
 
 EFI_STATUS
 RingBufferHandleIsValid(
-    _In_        EFI_RING_BUFFER        *Ring,
-    _In_        const RING_HANDLE       DataHandle
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const RING_HANDLE       DataHandle
     )
 /*++
 
@@ -1058,10 +1041,9 @@ Return Value:
 
 EFI_STATUS
 RingBufferFlatten(
-    _In_        const EFI_RING_BUFFER  *Ring,
-    _Inout_     UINT32                 *BufferSize,
-    _Out_bytecap_post_bytecount_(*BufferSize, *BufferSize)
-                VOID                   *Buffer
+    IN          const EFI_RING_BUFFER  *Ring,
+    IN OUT      UINT32                 *BufferSize,
+    OUT         VOID                   *Buffer
     )
 /*++
 
@@ -1145,7 +1127,7 @@ Exit:
 
 VOID
 RingBufferReset(
-    _In_        EFI_RING_BUFFER        *Ring
+    IN          EFI_RING_BUFFER        *Ring
     )
 /*++
 
@@ -1172,10 +1154,9 @@ Return Value:
 
 EFI_STATUS
 RingBufferInitialize(
-    _In_bytecount_(sizeof(EFI_RING_BUFFER) + Capacity)
-                EFI_RING_BUFFER        *Ring,
-    _In_        const UINT32            Capacity,
-    _In_        const UINT32            Flags
+    IN          EFI_RING_BUFFER        *Ring,
+    IN          const UINT32            Capacity,
+    IN          const UINT32            Flags
     )
 /*++
 

@@ -8,7 +8,9 @@
 
 #pragma once
 
-#include <Hv/hvgdk_mini.h>
+#include <Hv/HvGuestCpuid.h>
+#include <Hv/HvGuestHypercall.h>
+#include <Hv/HvStatus.h>
 
 #if defined(MDE_CPU_AARCH64)
 

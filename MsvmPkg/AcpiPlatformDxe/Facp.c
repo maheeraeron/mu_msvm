@@ -14,7 +14,7 @@
 
 EFI_STATUS
 FacpInitializeTable(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Facp
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Facp
     )
 /*++
 
@@ -92,7 +92,7 @@ Return Value:
         // Zero out set fields between offsets 46 - 108
         //
         ZeroMem(&facp->SciInt,
-            FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, IaPcBootArch) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, SciInt));
+            OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, IaPcBootArch) - OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, SciInt));
 
         if (hostEmulatorsPresent)
         {
@@ -106,7 +106,7 @@ Return Value:
             // Zero out set fields between offsets 148 - 244
             //
             ZeroMem(&facp->XPm1aEvtBlk,
-                FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, SleepControlReg) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
+                OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, SleepControlReg) - OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
         }
         else
         {
@@ -115,13 +115,13 @@ Return Value:
             // Zero out set fields between offsets 116 - 128, no reset registers supported
             //
             ZeroMem(&facp->ResetReg,
-                FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ArmBootArch) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ResetReg));
+                OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ArmBootArch) - OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, ResetReg));
 
             //
             // Zero out set fields between offsets 148 - 268, no sleep registers supported
             //
             ZeroMem(&facp->XPm1aEvtBlk,
-                FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, HypervisorVendorIdentity) - FIELD_OFFSET(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
+                OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, HypervisorVendorIdentity) - OFFSET_OF(EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE, XPm1aEvtBlk));
         }
     }
 

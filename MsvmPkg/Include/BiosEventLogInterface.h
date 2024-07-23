@@ -66,7 +66,11 @@ typedef struct
     //
 } EFI_EVENT_DESCRIPTOR;
 
-#define SIZEOF_EFI_EVENT_DESCRIPTOR_REVISION_1  (RTL_SIZEOF_THROUGH_FIELD(EFI_EVENT_DESCRIPTOR, DataSize))
+#define FIELD_SIZE(TYPE, Field) (sizeof(((TYPE *)0)->Field))
+#define SIZEOF_THROUGH_FIELD(TYPE, Field) \
+    (OFFSET_OF(TYPE, Field) + FIELD_SIZE(TYPE, Field))
+
+#define SIZEOF_EFI_EVENT_DESCRIPTOR_REVISION_1  (SIZEOF_THROUGH_FIELD(EFI_EVENT_DESCRIPTOR, DataSize))
 
 //
 // Represents an event channel plus data.

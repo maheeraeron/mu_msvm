@@ -1,21 +1,10 @@
-/*++
+/** @file
+  Library wrapper around EFI_EVENTLOG_PROTOCOL
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    EventLogLib.c
-
-Abstract:
-
-    Library wrapper around EFI_EVENTLOG_PROTOCOL
-
-Author:
-
-    Kris Harper (kharp) - 11-Dec-2013
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
-#include <EfiNt.h>
+
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -48,12 +37,12 @@ Return Value:
     EFI_STATUS status;
 
     if ((mEventLogProtocol == NULL) &&
-        (gBS != NULL) && 
+        (gBS != NULL) &&
         (gBS->LocateProtocol != NULL))
     {
         status = gBS->LocateProtocol(&gEfiEventLogProtocolGuid, NULL, &mEventLogProtocol);
 
-        if (EFI_ERROR (status)) 
+        if (EFI_ERROR (status))
         {
             mEventLogProtocol = NULL;
         }
@@ -66,14 +55,14 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogConstructor(
-    _In_    EFI_HANDLE                  ImageHandle,
-    _In_    EFI_SYSTEM_TABLE           *SystemTable
+    IN  EFI_HANDLE          ImageHandle,
+    IN  EFI_SYSTEM_TABLE    *SystemTable
     )
 /*++
 
 Routine Description:
 
-    
+
 
 Arguments:
 
@@ -96,9 +85,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogChannelCreate(
-    _In_        const EFI_GUID         *Channel,
-    _In_opt_    EVENT_CHANNEL_INFO     *Attributes,
-    _Out_opt_   EFI_HANDLE             *Handle
+    IN              const EFI_GUID      *Channel,
+    IN OPTIONAL     EVENT_CHANNEL_INFO  *Attributes,
+    OUT OPTIONAL    EFI_HANDLE          *Handle
     )
 /*++
 
@@ -136,8 +125,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogChannelOpen(
-    _In_        const EFI_GUID         *Channel,
-    _Out_opt_   EFI_HANDLE             *Handle
+    IN              const EFI_GUID  *Channel,
+    OUT OPTIONAL    EFI_HANDLE      *Handle
     )
 /*++
 
@@ -166,11 +155,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogLib(
-    _In_        const EFI_HANDLE        Channel,
-    _In_        UINT32                  Flags,
-    _In_        const UINT32            EventId,
-    _In_        const UINT32            DataSize,
-    _In_opt_    const VOID             *Data
+    IN          const EFI_HANDLE    Channel,
+                UINT32              Flags,
+                const UINT32        EventId,
+                const UINT32        DataSize,
+    IN OPTIONAL const VOID          *Data
     )
 /*++
 
@@ -216,10 +205,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogPendingGet(
-    _In_        const EFI_HANDLE        Channel,
-    _Out_       EFI_EVENT_DESCRIPTOR   *Metadata,
-    _Outptr_result_bytebuffer_(Metadata->DataSize)
-                VOID                  **Data
+    IN  const EFI_HANDLE        Channel,
+    OUT EFI_EVENT_DESCRIPTOR    *Metadata,
+    OUT VOID                    **Data
     )
 /*++
 
@@ -257,7 +245,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogPendingCommit(
-    _In_        const EFI_HANDLE        Channel
+    IN  const EFI_HANDLE    Channel
     )
 /*++
 
@@ -291,7 +279,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogFlush(
-    _In_        const EFI_HANDLE        Channel
+    IN  const EFI_HANDLE    Channel
     )
 /*++
 
@@ -324,7 +312,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogReset(
-    _In_        const EFI_HANDLE        Channel
+    IN  const EFI_HANDLE    Channel
     )
 /*++
 
@@ -357,8 +345,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogStatistics(
-    _In_    const EFI_HANDLE            Channel,
-    _Out_   EVENT_CHANNEL_STATISTICS   *Stats
+    IN  const EFI_HANDLE            Channel,
+    OUT EVENT_CHANNEL_STATISTICS    *Stats
     )
 /*++
 
@@ -393,9 +381,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EventLogEnumerate(
-    _In_    const EFI_HANDLE                    Channel,
-    _In_    EFI_EVENTLOG_ENUMERATE_CALLBACK     Callback,
-    _In_    const VOID                         *Context
+    IN  const EFI_HANDLE                Channel,
+    IN  EFI_EVENTLOG_ENUMERATE_CALLBACK Callback,
+    IN  const VOID                      *Context
     )
 /*++
 
@@ -427,14 +415,14 @@ Return Value:
     BOOLEAN    keepGoing  = TRUE;
 
     //
-    // FUTURE-2014-01-06-kharp  provided filtering capabilities either here on in the
+    // FUTURE: provide filtering capabilities either here on in the
     // protocol implementation.  Currently all callbacks need to perform their own
     // filtering if needed.
     //
 
     if (EventLogGetProtocol())
     {
-        status = EFI_SUCCESS;   
+        status = EFI_SUCCESS;
 
         while ((!EFI_ERROR(status)) && (keepGoing))
         {

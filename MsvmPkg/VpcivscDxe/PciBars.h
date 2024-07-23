@@ -14,6 +14,7 @@
 #include <Base.h>
 
 // Attribute types for BARs. See PCI Local Bus Specification Revision 3.0, section 6.2.5.1
+#pragma warning(disable : 4201)
 typedef struct _PCI_BAR_FORMAT
 {
     union {
@@ -35,6 +36,7 @@ typedef struct _PCI_BAR_FORMAT
         UINT32 AsUINT32;
     };
 } PCI_BAR_FORMAT;
+#pragma warning(default : 4201)
 
 #define PCI_BAR_MEMORY_SPACE 0
 

@@ -16,7 +16,7 @@ Abstract:
 #include <kdnetinterface.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Hv/hvgdk_mini.h>
+#include <Hv/HvGuestMsr.h>
 
 #include "Bd.h"
 
@@ -81,9 +81,9 @@ Return Value:
 
     WaitTime = 10;
     WaitTime *= Microseconds;
-    StartTime = AsmReadMsr64(HV_X64_MSR_TIME_REF_COUNT);
+    StartTime = AsmReadMsr64(HvSyntheticMsrTimeRefCount);
     do {
-    } while (AsmReadMsr64(HV_X64_MSR_TIME_REF_COUNT) - StartTime < WaitTime);
+    } while (AsmReadMsr64(HvSyntheticMsrTimeRefCount) - StartTime < WaitTime);
 
     return;
 }

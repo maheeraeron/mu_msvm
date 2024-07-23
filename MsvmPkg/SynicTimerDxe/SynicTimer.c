@@ -24,28 +24,28 @@
 EFI_STATUS
 EFIAPI
 SynicTimerRegisterHandler (
-    __in EFI_TIMER_ARCH_PROTOCOL  *This,
-    __in EFI_TIMER_NOTIFY         NotifyFunction
+    IN  EFI_TIMER_ARCH_PROTOCOL  *This,
+    IN  EFI_TIMER_NOTIFY         NotifyFunction
     );
 
 EFI_STATUS
 EFIAPI
 SynicTimerSetTimerPeriod (
-    __in EFI_TIMER_ARCH_PROTOCOL  *This,
-    __in UINT64                   TimerPeriod
+    IN  EFI_TIMER_ARCH_PROTOCOL  *This,
+    IN  UINT64                   TimerPeriod
     );
 
 EFI_STATUS
 EFIAPI
 SynicTimerGetTimerPeriod (
-    __in EFI_TIMER_ARCH_PROTOCOL   *This,
-    __out UINT64                   *TimerPeriod
+    IN  EFI_TIMER_ARCH_PROTOCOL   *This,
+    OUT UINT64                   *TimerPeriod
     );
 
 EFI_STATUS
 EFIAPI
 SynicTimerGenerateSoftInterrupt (
-    __in EFI_TIMER_ARCH_PROTOCOL *This
+    IN  EFI_TIMER_ARCH_PROTOCOL *This
     );
 
 EFI_TIMER_ARCH_PROTOCOL mTimer = {
@@ -104,8 +104,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynicTimerRegisterHandler (
-    __in EFI_TIMER_ARCH_PROTOCOL *This,
-    __in EFI_TIMER_NOTIFY NotifyFunction
+    IN  EFI_TIMER_ARCH_PROTOCOL *This,
+    IN  EFI_TIMER_NOTIFY NotifyFunction
     )
 /*++
 
@@ -148,8 +148,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynicTimerSetTimerPeriod (
-    __in EFI_TIMER_ARCH_PROTOCOL *This,
-    __in UINT64 TimerPeriod
+    IN  EFI_TIMER_ARCH_PROTOCOL *This,
+    IN  UINT64 TimerPeriod
     )
 /*++
 
@@ -179,8 +179,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynicTimerGetTimerPeriod (
-    __in EFI_TIMER_ARCH_PROTOCOL   *This,
-    __out UINT64                   *TimerPeriod
+    IN  EFI_TIMER_ARCH_PROTOCOL   *This,
+    OUT UINT64                   *TimerPeriod
     )
 /*++
 
@@ -201,7 +201,7 @@ Return Value:
 
 --*/
 {
-    EFI_STATUS status; 
+    EFI_STATUS status;
 
     if (TimerPeriod == NULL)
     {
@@ -218,7 +218,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynicTimerGenerateSoftInterrupt (
-    __in EFI_TIMER_ARCH_PROTOCOL *This
+    IN  EFI_TIMER_ARCH_PROTOCOL *This
     )
 /*++
 
@@ -248,7 +248,7 @@ Return Value:
 VOID
 EFIAPI
 SynicTimerInterruptHandler (
-    __in VOID *Context
+    IN  VOID *Context
     )
 /*++
 
@@ -293,8 +293,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynicTimerInitialize (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
 

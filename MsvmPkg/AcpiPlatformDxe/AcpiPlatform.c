@@ -47,7 +47,7 @@ BOOLEAN mHardwareIsolatedNoParavisor = FALSE;
 
 EFI_STATUS
 RuntimeInitializeTableIfNecessary(
-    __inout EFI_ACPI_DESCRIPTION_HEADER* Table
+    IN OUT  EFI_ACPI_DESCRIPTION_HEADER* Table
     )
 /*++
 
@@ -83,7 +83,7 @@ Return Value:
 
 EFI_STATUS
 LocateFvInstanceWithTables(
-    __out EFI_FIRMWARE_VOLUME2_PROTOCOL** Instance
+    OUT EFI_FIRMWARE_VOLUME2_PROTOCOL** Instance
     )
 /*++
 
@@ -182,7 +182,7 @@ Return Value:
 
 EFI_STATUS
 AcpiInstallMadtTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 /*++
 
@@ -325,7 +325,7 @@ Cleanup:
 
 EFI_STATUS
 AcpiInstallSratTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 /*++
 
@@ -370,7 +370,7 @@ Return Value:
 
 EFI_STATUS
 AcpiInstallPpttTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 /*++
 
@@ -416,7 +416,7 @@ Return Value:
 
 EFI_STATUS
 AcpiInstallSlitTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 /*++
 
@@ -468,7 +468,7 @@ Return Value:
 
 EFI_STATUS
 AcpiInstallNfitTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 {
     EFI_STATUS status;
@@ -543,7 +543,7 @@ Cleanup:
 
 EFI_STATUS
 AcpiInstallConfigStructTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 /*++
 
@@ -595,7 +595,7 @@ Return Value:
 #if defined(MDE_CPU_X64)
 EFI_STATUS
 AcpiInstallAsptTable(
-    EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
 /*++
 
@@ -651,8 +651,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 AcpiPlatformInitializeAcpiTables(
-    __in EFI_HANDLE        ImageHandle,
-    __in EFI_SYSTEM_TABLE* SystemTable
+    IN  EFI_HANDLE        ImageHandle,
+    IN  EFI_SYSTEM_TABLE* SystemTable
     )
 /*++
 

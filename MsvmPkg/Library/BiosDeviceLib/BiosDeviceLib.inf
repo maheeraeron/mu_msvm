@@ -1,5 +1,9 @@
 ## @file
-# Library functions to access the Hyper-V BIOS VDev registers
+#  Library functions to access the BiosDevice registers
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
 ##
 
 [Defines]
@@ -8,7 +12,7 @@
     FILE_GUID                      = c1009b62-fbb0-457f-a919-4b8de5711377
     MODULE_TYPE                    = BASE
     VERSION_STRING                 = 1.0
-    LIBRARY_CLASS                  = BiosDeviceLib 
+    LIBRARY_CLASS                  = BiosDeviceLib
     CONSTRUCTOR                    = BiosDeviceLibConstructor
 
 [Sources]
@@ -18,10 +22,10 @@
 [LibraryClasses]
     IoLib
     PcdLib
-    
+
 [Packages]
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
-  
+
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

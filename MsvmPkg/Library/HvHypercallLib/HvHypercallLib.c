@@ -1,18 +1,13 @@
-/*++
+/** @file
+  This file implements hypercall support routines.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    HvHypercallLib.c
-
-Abstract:
-
-    This file implements hypercall support routines.
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #include <Base.h>
+#include <Hv/HvGuest.h>
+#include <Hv/HvGuestMsr.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -26,20 +21,20 @@ Abstract:
 
 #if defined(MDE_CPU_X64)
 
-HV_X64_HYPERCALL_OUTPUT
+HV_HYPERCALL_OUTPUT
 HvHypercallpIssueTdxHypercall(
-    _In_ HV_X64_HYPERCALL_INPUT Control,
-    _In_ UINT64                 InputPhysicalAddress,
-    _In_ UINT64                 OutputPhysicalAddress
+    IN  HV_HYPERCALL_INPUT  Control,
+        UINT64              InputPhysicalAddress,
+        UINT64              OutputPhysicalAddress
     );
 
 
 VOID
 HvHypercallConnect(
-    _In_ PVOID HypercallPage,
-    _In_ UINT32 IsolationType,
-    _In_ BOOLEAN ParavisorPresent,
-    _Out_ HV_HYPERCALL_CONTEXT *Context
+    IN  VOID                    *HypercallPage,
+        UINT32                  IsolationType,
+        BOOLEAN                 ParavisorPresent,
+    OUT HV_HYPERCALL_CONTEXT    *Context
     )
 /*++
 
@@ -154,7 +149,7 @@ Return Value:
 
 VOID
 HvHypercallConnect(
-    _Out_ HV_HYPERCALL_CONTEXT *Context
+    OUT HV_HYPERCALL_CONTEXT *Context
     )
 /*++
 
@@ -197,7 +192,7 @@ Return Value:
 
 VOID
 HvHypercallDisconnect(
-    _Inout_ HV_HYPERCALL_CONTEXT *Context
+    IN OUT HV_HYPERCALL_CONTEXT *Context
     )
 /*++
 
@@ -252,13 +247,13 @@ Return Value:
 
 HV_STATUS
 HvHypercallIssue(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_CALL_CODE CallCode,
-    _In_ BOOLEAN Fast,
-    _In_ UINT32 CountOfElements,
-    _In_ UINT64 FirstRegister,
-    _In_ UINT64 SecondRegister,
-    _Out_opt_ UINT32 *ElementsProcessed
+    IN              HV_HYPERCALL_CONTEXT    *Context,
+    IN              HV_CALL_CODE            CallCode,
+                    BOOLEAN                 Fast,
+                    UINT32                  CountOfElements,
+                    UINT64                  FirstRegister,
+                    UINT64                  SecondRegister,
+    OUT OPTIONAL    UINT32                  *ElementsProcessed
     )
 /*++
 
@@ -323,8 +318,8 @@ Return Value:
             // input parameters.
             //
 
-            ((PUINT64)Context->Ghcb)[0] = FirstRegister;
-            ((PUINT64)Context->Ghcb)[1] = SecondRegister;
+            ((UINT64*)Context->Ghcb)[0] = FirstRegister;
+            ((UINT64*)Context->Ghcb)[1] = SecondRegister;
 
             FirstRegister = 0;
         }
@@ -360,10 +355,10 @@ Return Value:
     }
     else
     {
-        typedef HV_X64_HYPERCALL_OUTPUT HYPERCALL_ROUTINE(
-            __in HV_X64_HYPERCALL_INPUT Control,
-            __in UINT64                 InputPhysicalAddress,
-            __in UINT64                 OutputPhysicalAddress
+        typedef HV_HYPERCALL_OUTPUT HYPERCALL_ROUTINE(
+            IN  HV_HYPERCALL_INPUT  Control,
+                UINT64              InputPhysicalAddress,
+                UINT64              OutputPhysicalAddress
             );
 
 #pragma warning(disable: 4055)
@@ -458,9 +453,9 @@ Return Value:
 
 
 #if !defined(MDEPKG_NDEBUG)
-PWSTR
+CHAR16*
 HvHypercallpRegisterNameToString(
-    _In_ HV_REGISTER_NAME RegisterName
+    IN  HV_REGISTER_NAME RegisterName
     )
 {
     switch (RegisterName)
@@ -599,7 +594,7 @@ HvHypercallpRegisterNameToString(
 static
 UINT32
 HvHypercallpGetMsrNameFromRegisterName(
-    _In_ HV_REGISTER_NAME RegisterName
+    IN  HV_REGISTER_NAME RegisterName
     )
 /*++
 
@@ -637,7 +632,7 @@ Return Value:
     case HvRegisterSint13:
     case HvRegisterSint14:
     case HvRegisterSint15:
-        msrIndex = HV_X64_MSR_SINT0 + (RegisterName - HvRegisterSint0);
+        msrIndex = HvSyntheticMsrSint0 + (RegisterName - HvRegisterSint0);
         break;
 
     case HvRegisterScontrol:
@@ -646,7 +641,7 @@ Return Value:
     case HvRegisterSipp:
     case HvRegisterEom:
     case HvRegisterSirbp:
-        msrIndex = HV_X64_MSR_SCONTROL + (RegisterName - HvRegisterScontrol);
+        msrIndex = HvSyntheticMsrSint0 + (RegisterName - HvRegisterScontrol);
         break;
 
     case HvRegisterNestedSint0:
@@ -665,7 +660,7 @@ Return Value:
     case HvRegisterNestedSint13:
     case HvRegisterNestedSint14:
     case HvRegisterNestedSint15:
-        msrIndex = HV_X64_MSR_NESTED_SINT0 +
+        msrIndex = HvSyntheticMsrNestedSint0 +
             (RegisterName - HvRegisterNestedSint0);
 
         break;
@@ -676,25 +671,25 @@ Return Value:
     case HvRegisterNestedSipp:
     case HvRegisterNestedEom:
     case HvRegisterNestedSirbp:
-        msrIndex = HV_X64_MSR_NESTED_SCONTROL +
+        msrIndex = HvSyntheticMsrNestedSControl +
             (RegisterName - HvRegisterNestedScontrol);
 
         break;
 
     case HvRegisterVpIndex:
-        msrIndex = HV_X64_MSR_VP_INDEX;
+        msrIndex = HvSyntheticMsrVpIndex;
         break;
 
     case HvRegisterGuestOsId:
-        msrIndex = HV_X64_MSR_GUEST_OS_ID;
+        msrIndex = HvSyntheticMsrGuestOsId;
         break;
 
     case HvRegisterTimeRefCount:
-        msrIndex = HV_X64_MSR_TIME_REF_COUNT;
+        msrIndex = HvSyntheticMsrTimeRefCount;
         break;
 
     case HvRegisterNestedVpIndex:
-        msrIndex = HV_X64_MSR_NESTED_VP_INDEX;
+        msrIndex = HvSyntheticMsrNestedVpIndex;
         break;
 
     case HvRegisterStimer0Config:
@@ -705,12 +700,12 @@ Return Value:
     case HvRegisterStimer2Count:
     case HvRegisterStimer3Config:
     case HvRegisterStimer3Count:
-        msrIndex = HV_X64_MSR_STIMER0_CONFIG +
+        msrIndex = HvSyntheticMsrSTimer0Config +
             (RegisterName - HvRegisterStimer0Config);
         break;
 
     case HvX64RegisterHypercall:
-        msrIndex = HV_X64_MSR_HYPERCALL;
+        msrIndex = HvSyntheticMsrHypercall;
         break;
 
     default:
@@ -725,8 +720,8 @@ Return Value:
 
 UINT64
 HvHypercallGetVpRegister64Self(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_REGISTER_NAME RegisterName
+    IN  HV_HYPERCALL_CONTEXT *Context,
+    IN  HV_REGISTER_NAME RegisterName
     )
 /*++
 
@@ -790,9 +785,9 @@ Return Value:
 
 VOID
 HvHypercallSetVpRegister64Self(
-    _In_ HV_HYPERCALL_CONTEXT *Context,
-    _In_ HV_REGISTER_NAME RegisterName,
-    _In_ UINT64 RegisterValue
+    IN  HV_HYPERCALL_CONTEXT *Context,
+    IN  HV_REGISTER_NAME RegisterName,
+        UINT64 RegisterValue
     )
 /*++
 

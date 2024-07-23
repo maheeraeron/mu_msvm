@@ -1,5 +1,9 @@
 ## @file
-# Library functions to access the Hyper-V BIOS VDev registers
+#  Library functions to access the BiosDevice registers
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
 ##
 
 [Defines]
@@ -23,13 +27,13 @@
 
 [LibraryClasses.AARCH64]
     DxeServicesTableLib
-    
+
 [Packages]
     MdePkg/MdePkg.dec
     MsvmPkg/MsvmPkg.dec
-    
+
 [Guids]
     gEfiEventVirtualAddressChangeGuid
-  
+
 [Pcd]
     gMsvmPkgTokenSpaceGuid.PcdBiosBaseAddress

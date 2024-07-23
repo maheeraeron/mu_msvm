@@ -6,7 +6,8 @@
 
 **/
 
-#include <Hv/hvgdk_mini.h>
+#include <Hv/HvGuestCpuid.h>
+#include <Hv/HvGuestMsr.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -320,7 +321,7 @@ SecInitializeHardwareIsolation (
 
     if (IsolationType == UefiIsolationTypeSnp)
     {
-        clockFrequency = (UINT32)SecReadMsrWithGhcb(HV_X64_MSR_TSC_FREQUENCY);
+        clockFrequency = (UINT32)SecReadMsrWithGhcb(HvSyntheticMsrTscFrequency);
         tscNumerator = 1;
         tscDenominator = 1;
     }

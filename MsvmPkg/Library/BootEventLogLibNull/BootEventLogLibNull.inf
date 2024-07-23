@@ -2,6 +2,7 @@
 #  Provides wrapper Boot Event Log entries using EFI_EVENTLOG_PROTOCOL
 #
 #  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
 
@@ -19,12 +20,12 @@
 
 [LibraryClasses]
   BaseLib
-  DebugLib
-  UefiBootServicesTableLib
   BaseMemoryLib
+  DebugLib
+  EventLogLib
   MemoryAllocationLib
   PcdLib
-  EventLogLib
+  UefiBootServicesTableLib
 
 [Packages]
   MdePkg/MdePkg.dec

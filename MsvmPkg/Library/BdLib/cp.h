@@ -39,6 +39,7 @@ static const CP_PORT_ADDRESS_TYPE CpPortTypeUninitialized   = 0;
 static const CP_PORT_ADDRESS_TYPE CpPortTypeIoPort          = 1;
 static const CP_PORT_ADDRESS_TYPE CpPortTypeMemoryMapped    = 2;
 
+#pragma warning(disable : 4201)
 typedef struct
 {
     CP_PORT_ADDRESS_TYPE Type;
@@ -48,6 +49,7 @@ typedef struct
         EFI_PHYSICAL_ADDRESS MmioAddress;
     };
 } CP_PORT_ADDRESS, *PCP_PORT_ADDRESS;
+#pragma warning(default : 4201)
 
 //
 // Generic baud rates.

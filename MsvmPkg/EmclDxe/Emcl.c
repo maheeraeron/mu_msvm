@@ -128,6 +128,7 @@ typedef struct _EMCL_CONTEXT
 
 } EMCL_CONTEXT;
 
+#pragma warning(disable : 4201)
 typedef struct _EMCL_INCOMING_PACKET
 {
     union
@@ -138,6 +139,7 @@ typedef struct _EMCL_INCOMING_PACKET
     };
 
 } EMCL_INCOMING_PACKET;
+#pragma warning(default : 4201)
 
 typedef struct _EMCL_OUTGOING_PACKET
 {
@@ -1441,7 +1443,7 @@ Return Value:
 
     //
     // Free any outstanding completion packets.
-    // FUTURE-arseneyr-20130410: Complete these packets back to the VSCs as
+    // FUTURE: Complete these packets back to the VSCs as
     // aborted and have the VSCs handle this case appropriately.
     //
 

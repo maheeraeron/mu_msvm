@@ -1,21 +1,10 @@
-;++
-;
-; Copyright (c) Microsoft Corporation
-;
-; Module Name:
-;
-;   Snp.asm
-;
-; Abstract:
-;
-;   Asm implementations of SNP instructions that will become compiler
-;   intrinsics.
-;
-; Author:
-;
-;   Jon Lange (jlange) 15-Oct-2019
-;
-;--
+/** @file
+  Asm implementations of SNP instructions that will become compiler
+  intrinsics.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 include macamd64.inc
 
@@ -23,10 +12,10 @@ include macamd64.inc
 ;
 ; UINT64
 ; _sev_pvalidate(
-;     _In_ PVOID Address,
-;     _In_ UINT32 PageSize,
-;     _In_ UINT32 Validate,
-;     _Out_ PUINT64 ErrorCode
+;     IN  VOID   *Address,
+;         UINT32 PageSize,
+;         UINT32 Validate,
+;     OUT UINT64 *ErrorCode
 ;     );
 ;
 ; Routine Description:
@@ -74,7 +63,7 @@ include macamd64.inc
 ;
 ; UINT64
 ; SpecialGhcbCall(
-;     _In_ UINT64 GhcbValue
+;     UINT64 GhcbValue
 ;     );
 ;
 ; Routine Description:
@@ -149,13 +138,13 @@ include macamd64.inc
         ret
 
         NESTED_END SpecialGhcbCall, _TEXT$00
-        
+
 ;*++
 ;
 ; UINT64
 ; VispCallSvsm(
-;     _In_ UINT64 RequestCode,
-;     _In_ UINT64 Parameter
+;     UINT64 RequestCode,
+;     UINT64 Parameter
 ;     );
 ;
 ; Routine Description:
@@ -192,5 +181,5 @@ include macamd64.inc
         ret
 
         NESTED_END VispCallSvsm, _TEXT$00
-        
+
         end

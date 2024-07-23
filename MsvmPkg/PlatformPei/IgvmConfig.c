@@ -11,6 +11,7 @@
 #include <PiPei.h>
 #include <Platform.h>
 #include <BiosInterface.h>
+#include <Hv/HvGuest.h>
 #if defined(MDE_CPU_AARCH64)
 #include <Library/ArmLib.h>
 #endif

@@ -1,21 +1,10 @@
-;++
-;
-; Copyright (c) Microsoft Corporation
-;
-; Module Name:
-;
-;   Tdx.asm
-;
-; Abstract:
-;
-;   Asm implementations of TDX instructions that will become compiler
-;   intrinsics.
-;
-; Author:
-;
-;   Jon Lange (jlange) 4-Aug-2020
-;
-;--
+/** @file
+  Asm implementations of TDX instructions that will become compiler
+  intrinsics.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 include macamd64.inc
 
@@ -23,7 +12,7 @@ include macamd64.inc
 ;
 ; UINT64
 ; _tdx_tdg_mem_page_accept(
-;     _In_ TDX_ACCEPT_GPA AcceptGpa
+;     IN TDX_ACCEPT_GPA AcceptGpa
 ;     );
 ;
 ; Routine Description:
@@ -55,9 +44,9 @@ include macamd64.inc
 ;
 ; BOOLEAN
 ; _tdx_vmcall_map_gpa(
-;     _In_ UINT64 Gpa,
-;     _In_ UINT64 Size,
-;     _Out_opt_ PUINT64 FailedGpa
+;                   UINT64 Gpa,
+;                   UINT64 Size,
+;     OUT OPTIONAL  UINT64 *FailedGpa
 ;     );
 ;
 ; Routine Description:
@@ -79,7 +68,7 @@ include macamd64.inc
 ;
 ;--*
 
-        NESTED_ENTRY _tdx_vmcall_map_gpa, _TEXT$00        
+        NESTED_ENTRY _tdx_vmcall_map_gpa, _TEXT$00
 
         push_reg    r13
         push_reg    r12
@@ -111,6 +100,6 @@ include macamd64.inc
 
         ret
 
-        NESTED_END _tdx_vmcall_map_gpa, _TEXT$00        
+        NESTED_END _tdx_vmcall_map_gpa, _TEXT$00
 
         end

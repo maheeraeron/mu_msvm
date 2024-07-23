@@ -1,4 +1,10 @@
+/** @file
+  Library to inform Tcg2Pei not to measure FvMain.
+  Some legacy Hyper-V versions require this
 
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #include <PiPei.h>
 #include <Library/PeiServicesLib.h>
@@ -7,10 +13,10 @@
 #include <Ppi/FirmwareVolumeInfoMeasurementExcluded.h>
 
 
-EFI_PEI_FIRMWARE_VOLUME_INFO_MEASUREMENT_EXCLUDED_PPI exclude = {  
+EFI_PEI_FIRMWARE_VOLUME_INFO_MEASUREMENT_EXCLUDED_PPI exclude = {
 	1, //count
 	{
-		(EFI_PHYSICAL_ADDRESS) FixedPcdGet64(PcdFvBaseAddress), 
+		(EFI_PHYSICAL_ADDRESS) FixedPcdGet64(PcdFvBaseAddress),
 		(UINT64) FixedPcdGet32(PcdFvSize)
 	}
 };

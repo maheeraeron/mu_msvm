@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <Hv/HvGuest.h>
+
 /*++
 
 Routine Description:

@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <Hv/hvgdk_mini.h>
-
 extern BOOLEAN mParavisorPresent;
 extern UINT32 mIsolationType;
 extern UINT32 mSharedGpaBit;

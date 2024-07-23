@@ -8,7 +8,8 @@
 **/
 
 #include <PiPei.h>
-#include <Hv/hvgdk_mini.h>
+
+#include <Hv/HvGuestCpuid.h>
 #include <Library/PeimEntryPoint.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>

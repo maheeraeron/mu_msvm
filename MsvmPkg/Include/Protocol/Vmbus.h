@@ -19,6 +19,8 @@ Author:
 
 #pragma once
 
+#include <EfiNt.h>
+
 #define EFI_VMBUS_LEGACY_PROTOCOL_GUID \
     {0x59e6efc9, 0x9695, 0x470a, {0x9d, 0x87, 0x2, 0x61, 0xd8, 0x45, 0x1d, 0xd8}}
 #define EFI_VMBUS_PROTOCOL_GUID \

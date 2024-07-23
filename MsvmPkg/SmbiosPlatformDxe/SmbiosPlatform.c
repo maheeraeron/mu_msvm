@@ -139,8 +139,8 @@ Return Value:
 
 VOID
 NumberToMemoryLocationString(
-    _In_ UINT16                                     Number,
-    _Out_writes_bytes_(LOCATION_STRING_SIZE) CHAR8* Buffer
+        UINT16  Number,
+    OUT CHAR8*  Buffer
 )
 /*++
 
@@ -174,10 +174,10 @@ Return Value:
 
 BOOLEAN
 AddStructure(
-    _In_       EFI_SMBIOS_PROTOCOL*    Smbios,
-    _In_       VOID*                   Structure,
-    _In_opt_   CHAR8**                 Strings,
-    _Out_opt_  EFI_SMBIOS_HANDLE*      Handle
+    IN              EFI_SMBIOS_PROTOCOL*    Smbios,
+    IN              VOID*                   Structure,
+    IN OPTIONAL     CHAR8**                 Strings,
+    OUT OPTIONAL    EFI_SMBIOS_HANDLE*      Handle
     )
 /*++
 
@@ -257,10 +257,10 @@ Return Value:
 
 void
 DateToSmbiosDate(
-    char *Source,
-    size_t SourceSizeInBytes,
-    char *Dest,
-    size_t DestSizeInBytes
+    IN  char    *Source,
+        size_t  SourceSizeInBytes,
+    IN  char    *Dest,
+        size_t  DestSizeInBytes
     )
 /*++
 
@@ -381,7 +381,7 @@ Notes:
 
 VOID
 AddBiosInformation(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
     )
 /*++
 
@@ -500,7 +500,7 @@ Return Value:
 
 VOID
 AddSystemInformation(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
     )
 /*++
 
@@ -654,8 +654,8 @@ Return Value:
 
 BOOLEAN
 AddSystemEnclosure(
-    _In_  EFI_SMBIOS_PROTOCOL* Smbios,
-    _Out_ EFI_SMBIOS_HANDLE*   ChassisHandle
+    IN  EFI_SMBIOS_PROTOCOL* Smbios,
+    OUT EFI_SMBIOS_HANDLE*   ChassisHandle
     )
 /*++
 
@@ -749,8 +749,8 @@ Return Value:
 
 VOID
 AddBaseboardInformation(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios,
-    _In_ EFI_SMBIOS_HANDLE    ChassisHandle
+    IN  EFI_SMBIOS_PROTOCOL* Smbios,
+    IN  EFI_SMBIOS_HANDLE    ChassisHandle
     )
 /*++
 
@@ -837,7 +837,7 @@ Return Value:
 
 VOID
 AddProcessorInformation(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
     )
 /*++
 
@@ -1020,7 +1020,7 @@ Return Value:
 
 VOID
 AddOEMStrings(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
     )
 /*++
 
@@ -1091,10 +1091,10 @@ Return Value:
 
 BOOLEAN
 AddPhysicalMemoryArray(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios,
-    _In_ EFI_SMBIOS_HANDLE    MemoryErrorHandle,
-    _Out_ EFI_SMBIOS_HANDLE*  PhysicalMemoryArrayHandle,
-    _In_ UINT16               PhysicalMemoryArraySize
+    IN  EFI_SMBIOS_PROTOCOL*    Smbios,
+    IN  EFI_SMBIOS_HANDLE       MemoryErrorHandle,
+    OUT EFI_SMBIOS_HANDLE*      PhysicalMemoryArrayHandle,
+    IN  UINT16                  PhysicalMemoryArraySize
     )
 /*++
 
@@ -1160,11 +1160,11 @@ Return Value:
 
 BOOLEAN
 AddMemoryArrayMappedAddress(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios,
-    _In_ UINT64               BaseAddress,
-    _In_ UINT64               Size,
-    _In_ EFI_SMBIOS_HANDLE    PhysicalMemoryArrayHandle,
-    __out EFI_SMBIOS_HANDLE*  MemoryArrayMappedAddressHandle
+    IN  EFI_SMBIOS_PROTOCOL*    Smbios,
+    IN  UINT64                  BaseAddress,
+    IN  UINT64                  Size,
+    IN  EFI_SMBIOS_HANDLE       PhysicalMemoryArrayHandle,
+    OUT EFI_SMBIOS_HANDLE*      MemoryArrayMappedAddressHandle
     )
 /*++
 
@@ -1262,13 +1262,13 @@ Return Value:
 
 BOOLEAN
 AddMemoryDevice(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios,
-    _In_ UINT64               Size,
-    _In_ UINT32               MemoryFlags,
-    _In_ EFI_SMBIOS_HANDLE    PhysicalMemoryArrayHandle,
-    _In_ EFI_SMBIOS_HANDLE    MemoryErrorHandle,
-    _In_ CHAR8*               LocationString,
-    _Out_ EFI_SMBIOS_HANDLE*  MemoryDeviceHandle
+    IN  EFI_SMBIOS_PROTOCOL*    Smbios,
+    IN  UINT64                  Size,
+    IN  UINT32                  MemoryFlags,
+    IN  EFI_SMBIOS_HANDLE       PhysicalMemoryArrayHandle,
+    IN  EFI_SMBIOS_HANDLE       MemoryErrorHandle,
+    IN  CHAR8*                  LocationString,
+    OUT EFI_SMBIOS_HANDLE*      MemoryDeviceHandle
     )
 /*++
 
@@ -1443,11 +1443,11 @@ Return Value:
 
 VOID
 AddMemoryDeviceMappedAddress(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios,
-    _In_ UINT64               BaseAddress,
-    _In_ UINT64               Size,
-    _In_ EFI_SMBIOS_HANDLE    MemoryDeviceHandle,
-    _In_ EFI_SMBIOS_HANDLE    MemoryArrayMappedAddressHandle
+    IN  EFI_SMBIOS_PROTOCOL* Smbios,
+    IN  UINT64               BaseAddress,
+    IN  UINT64               Size,
+    IN  EFI_SMBIOS_HANDLE    MemoryDeviceHandle,
+    IN  EFI_SMBIOS_HANDLE    MemoryArrayMappedAddressHandle
     )
 /*++
 
@@ -1548,7 +1548,7 @@ Return Value:
 
 VOID
 AddSystemBootInformation(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
     )
 /*++
 
@@ -1596,13 +1596,13 @@ Return Value:
 
 VOID
 AddMemoryRegion(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios,
-    _In_ UINT64 BaseAddress,
-    _In_ UINT64 Length,
-    _In_ UINT32 MemoryFlags,
-    _In_ CHAR8* LocationString,
-    _In_ EFI_SMBIOS_HANDLE PhysicalMemoryArrayHandle,
-    _In_ EFI_SMBIOS_HANDLE MemoryErrorHandle
+    IN  EFI_SMBIOS_PROTOCOL* Smbios,
+    IN  UINT64 BaseAddress,
+    IN  UINT64 Length,
+    IN  UINT32 MemoryFlags,
+    IN  CHAR8* LocationString,
+    IN  EFI_SMBIOS_HANDLE PhysicalMemoryArrayHandle,
+    IN  EFI_SMBIOS_HANDLE MemoryErrorHandle
     )
 /*++
 
@@ -1678,9 +1678,9 @@ Return Value:
 
 VOID
 AccumulateMemoryRegionsFromMemoryRange(
-    BOOLEAN LegacyMemoryMap,
-    VOID *Range,
-    VOID *Context
+    IN  BOOLEAN LegacyMemoryMap,
+    IN  VOID    *Range,
+    OUT VOID    *Context
     )
 /*++
 
@@ -1724,9 +1724,9 @@ Return Value:
 
 VOID
 AddMemoryRegionsFromMemoryRange(
-    BOOLEAN LegacyMemoryMap,
-    VOID *Range,
-    VOID *Context
+    IN  BOOLEAN LegacyMemoryMap,
+    IN  VOID    *Range,
+    OUT VOID    *Context
     )
 /*++
 
@@ -1841,7 +1841,7 @@ Return Value:
 
 VOID
 AddMemoryStructures(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
 )
 /*++
 
@@ -1871,7 +1871,7 @@ Return Value:
 {
     ADD_MEMORY_REGIONS_CONTEXT context;
     UINT32 memmapSize;
-    PVOID memmap;
+    VOID* memmap;
     UINT32 memmapLength;
     UINT32 memRangeSize;
     UINT64 regions;
@@ -1882,7 +1882,7 @@ Return Value:
     // Get Memory Map from Config blob via PCDs.
     //
     memmapSize = PcdGet32(PcdMemoryMapSize);
-    memmap = (PVOID)(UINTN) PcdGet64(PcdMemoryMapPtr);
+    memmap = (VOID*)(UINTN) PcdGet64(PcdMemoryMapPtr);
     memRangeSize = legacyMemoryMap ? sizeof(VM_MEMORY_RANGE) : sizeof(VM_MEMORY_RANGE_V5);
     memmapLength = memmapSize / memRangeSize;
 
@@ -1935,7 +1935,7 @@ Return Value:
 
 VOID
 AddAllStructures(
-    _In_ EFI_SMBIOS_PROTOCOL* Smbios
+    IN  EFI_SMBIOS_PROTOCOL* Smbios
     )
 /*++
 
@@ -1971,8 +1971,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SmbiosPlatformEntryPoint(
-    _In_ EFI_HANDLE        ImageHandle,
-    _In_ EFI_SYSTEM_TABLE* SystemTable
+    IN  EFI_HANDLE        ImageHandle,
+    IN  EFI_SYSTEM_TABLE* SystemTable
     )
 /*++
 

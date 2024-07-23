@@ -8,7 +8,7 @@
 
 **/
 
-#include <Hv/hvgdk_mini.h>
+#include <Hv/HvGuest.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Uefi/UefiBaseType.h>
