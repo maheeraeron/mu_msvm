@@ -641,7 +641,7 @@ Return Value:
     case HvRegisterSipp:
     case HvRegisterEom:
     case HvRegisterSirbp:
-        msrIndex = HvSyntheticMsrSint0 + (RegisterName - HvRegisterScontrol);
+        msrIndex = HvSyntheticMsrSControl + (RegisterName - HvRegisterScontrol);
         break;
 
     case HvRegisterNestedSint0:
