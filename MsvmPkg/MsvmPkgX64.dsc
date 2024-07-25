@@ -37,7 +37,11 @@
 ################################################################################
 [BuildOptions]
   *_*_X64_GENFW_FLAGS = --keepexceptiontable
+!if $(DEBUGLIB_ADVANCED) == 1
+  DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM -D ADVANCED_LOGGER_ENABLED
+!else
   DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM
+!endif
 
 ################################################################################
 #
@@ -106,13 +110,19 @@
 
 !ifdef DEBUGLIB_SERIAL
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
-  SerialPortLib|PcAtChipsetPkg\Library\SerialIoLib\SerialIoLib.inf
-!else
-!if $(DEBUGLIB_BIOS) == 1
+  SerialPortLib|PcAtChipsetPkg/Library/SerialIoLib/SerialIoLib.inf
+!elseif $(DEBUGLIB_BIOS) == 1
   DebugLib|MsvmPkg/Library/BiosDeviceDebugLib/BiosDeviceDebugLib.inf
+  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+!elseif $(DEBUGLIB_ADVANCED) == 1
+  DebugLib|AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
+  SerialPortLib|PcAtChipsetPkg/Library/SerialIoLib/SerialIoLib.inf
+  AdvancedLoggerAccessLib|AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
+  AdvancedLoggerHdwPortLib|AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
+  AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
+  MmUnblockMemoryLib|MdePkg/Library/MmUnblockMemoryLib/MmUnblockMemoryLibNull.inf
 !else
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
-!endif
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
 !endif
 
@@ -167,6 +177,9 @@
 # Library instance overrides just for SEC
 #
 [LibraryClasses.common.SEC]
+!if $(DEBUGLIB_ADVANCED) == 1
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Sec/AdvancedLoggerLib.inf
+!endif
 
 #
 # Library instance overrides for PEI
@@ -185,6 +198,9 @@
 #
 [LibraryClasses.common.PEI_CORE]
   PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf
+!if $(DEBUGLIB_ADVANCED) == 1
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/PeiCore/AdvancedLoggerLib.inf
+!endif
 
 #
 # Library instance overrides just for PEIMs
@@ -199,14 +215,21 @@
 
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
 
+!if $(DEBUGLIB_ADVANCED) == 1
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
+  DebugLib|AdvLoggerPkg/Library/PeiDebugLibAdvancedLogger/PeiDebugLibAdvancedLogger.inf
+!endif
+
 #
 # Library instance overrides for DXE
 #
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
+!if $(DEBUGLIB_ADVANCED) == 0
   DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
   DebugLib|MsvmPkg/Library/BdDebugLib/BdDebugLib.inf
+!endif
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|NetworkPkg/Library/DxeDpcLib/DxeDpcLib.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
@@ -250,15 +273,19 @@
   DxeCoreEntryPoint|MdePkg/Library/DxeCoreEntryPoint/DxeCoreEntryPoint.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
+!if $(DEBUGLIB_ADVANCED) == 1
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/DxeCore/AdvancedLoggerLib.inf
+!else
   PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
+!endif
 ##MSChange Begin
   MemoryBinOverrideLib|MdeModulePkg/Library/MemoryBinOverrideLibNull/MemoryBinOverrideLibNull.inf
-
 [LibraryClasses.common.DXE_DRIVER]
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
   HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
   GhcbLib|MsvmPkg/Library/GhcbLib/GhcbLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
+  PolicyLib|PolicyServicePkg/Library/DxePolicyLib/DxePolicyLib.inf
 ##MSChange End
   Tcg2PhysicalPresencePromptLib|MsvmPkg/Library/Tcg2PhysicalPresencePromptLibApprove/Tcg2PhysicalPresencePromptLibApprove.inf   ## MS_CHANGE
 
@@ -269,14 +296,28 @@
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
 
 #
+# Library instance overrides for DXE Drivers and Applications
+#
+[LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
+!if $(DEBUGLIB_ADVANCED) == 1
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Dxe/AdvancedLoggerLib.inf
+!endif
+
+#
 # Library instance overrides for just DXE Runtime Drivers
 #
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceRuntimeLib.inf
-  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
+!if $(DEBUGLIB_ADVANCED) == 1
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Runtime/AdvancedLoggerLib.inf
+!else
+  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+!endif
+
+
 
 [LibraryClasses.X64]
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
@@ -309,6 +350,13 @@
 # PERF MODULES END
 
 [PcdsFixedAtBuild.common]
+  # Advanced Logger configuration
+!if $(DEBUGLIB_ADVANCED) == 1
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase|0xFA000000   # Must be TemporaryRamBase
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages|1     # Size is 4KB
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024        # Size is 4MB
+!endif
+
   # Synthetic Timer Config
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerTimerIndex|0x0
@@ -424,6 +472,8 @@
   # COM port used for pre-DXE debugging
 !ifdef DEBUGLIB_SERIAL
   gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8  #COM2
+!elseif $(DEBUGLIB_ADVANCED) == 1
+  gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x2F8  #COM2
 !else
   gPcAtChipsetPkgTokenSpaceGuid.PcdUartIoPortBaseAddress|0x3F8  #COM1
 !endif
@@ -455,6 +505,12 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplBuildPageTables|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwarePerformanceDataTableS3Support|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdInternalEventServicesEnabled|TRUE
+
+!if $(DEBUGLIB_ADVANCED) == 1
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|FALSE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM|FALSE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE
+!endif
 
 [PcdsDynamicDefault]
 
@@ -720,10 +776,7 @@
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 
   MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
-  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf {
-    <LibraryClasses>
-      #DebugLib|MdeModulePkg/Library/PeiDxeDebugLibReportStatusCode/PeiDxeDebugLibReportStatusCode.inf
-  }
+  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
   MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf {
     <LibraryClasses>
@@ -804,6 +857,11 @@
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/VmbfsDxe/VmbfsDxe.inf
   MsvmPkg/VmMeasurementDxe/VmMeasurementDxe.inf
+
+!if $(DEBUGLIB_ADVANCED) == 1
+  # Advanced logger components
+  AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
+!endif
 
   # TPM related components
   # TODO: Currently the PH is locked by the hypervisor.

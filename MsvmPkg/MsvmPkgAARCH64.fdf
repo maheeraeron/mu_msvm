@@ -160,6 +160,10 @@ APRIORI DXE {
 INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
 INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
 
+!if $(DEBUGLIB_ADVANCED) == 1
+  INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
+!endif
+
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
 INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf

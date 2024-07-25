@@ -269,7 +269,7 @@ Return Value:
     HV_MESSAGE *message;
     HV_MESSAGE_TYPE messageType;
 
-#if defined(MDE_CPU_X64)
+#if defined(MDE_CPU_X64) && !defined(ADVANCED_LOGGER_ENABLED)
     DebugPollDebugger();
 #endif
 

@@ -195,6 +195,10 @@ APRIORI DXE {
   INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 }
 
+!if $(DEBUGLIB_ADVANCED) == 1
+  INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
+!endif
+
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
 INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf

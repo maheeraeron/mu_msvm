@@ -4,7 +4,7 @@
     FILE_GUID                      = a4b0a0bd-9462-48de-b9fb-35336e38768e
     MODULE_TYPE                    = DXE_DRIVER
     VERSION_STRING                 = 1.0
-    LIBRARY_CLASS                  = HvHypercallLib|DXE_DRIVER UEFI_DRIVER DXE_RUNTIME_DRIVER
+    LIBRARY_CLASS                  = HvHypercallLib|DXE_DRIVER UEFI_DRIVER DXE_RUNTIME_DRIVER DXE_CORE
 
 [Sources]
     HvHypercallLib.c
