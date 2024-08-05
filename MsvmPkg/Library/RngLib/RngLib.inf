@@ -21,7 +21,7 @@
   FILE_GUID                      = 626440D8-1971-41D9-9AB2-FB25F4AE79BC
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = RngLib | DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER DXE_CORE DXE_RUNTIME_DRIVER
+  LIBRARY_CLASS                  = RngLib | DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER DXE_RUNTIME_DRIVER
   CONSTRUCTOR                    = RngLibConstructor
 
 [Sources]

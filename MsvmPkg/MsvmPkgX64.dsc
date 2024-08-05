@@ -260,11 +260,10 @@
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
-
   #
   # Provide StackCookie support lib so that we can link to /GS exports
   #
-  NULL|MdePkg/Library/StackCheckLib/StackCheckLibDynamicInit.inf
+  NULL|MdePkg/Library/StackCheckLib/StackCheckLibStaticInit.inf
 
 #
 # Library instances overrides for just DXE CORE
