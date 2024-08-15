@@ -38,6 +38,13 @@ jobs:
     ${{ if eq(parameters.pipeline, 'Official') }}:
       ob_createvpack_vpackdirectory: '$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin'
   steps:
+  - task: NuGetAuthenticate@1
+    inputs:
+      nuGetServiceConnections: WindowsPartners_NugetFeedConnection
+  - task: PipAuthenticate@1
+    displayName: 'Pip authenticate'
+    inputs:
+      artifactFeeds: '$(System.TeamProject)/$(System.TeamProject)_PublicPackages'
   - task: PowerShell@2
     displayName: 'Update Az Module'
     inputs:
@@ -59,20 +66,15 @@ jobs:
         git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $token"
         git config --global http.https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal.extraheader "AUTHORIZATION: Bearer $token"
         git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $token"
-  - task: PkgESInstallNuGetToolsPackage@10
-    displayName: 'Install Python'
+  - task: UsePythonVersion@0
+    displayName: 'Install Python 3.12'
     inputs:
-      packageName: python
-      packageVersion: '$(Env.PythonVersion)'
-      packageSources: 'https://api.nuget.org/v3/index.json'
-      subPaths: tools
+      versionSpec: '3.12.0'
+      architecture: 'x64'
   - task: CmdLine@2
     displayName: 'Add mu_build pip'
     inputs:
       script: python.exe -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir
-  - task: NuGetAuthenticate@1
-    inputs:
-      nuGetServiceConnections: WindowsPartners_NugetFeedConnection
   - task: CmdLine@2
     displayName: 'Platform build Setup'
     inputs:
