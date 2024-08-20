@@ -17,7 +17,7 @@ parameters:
 variables:
   Build.ToolChainTag: "VS2022"
   PlatformPkg: "MsvmPkg"
-  Env.PythonVersion: "3.10.0"
+  Env.PythonVersion: "3.12.0"
   GIT_TERMINAL_PROMPT: "0"
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.PR.$(Build.Arch).$(Build.Target)"
   Parameters.vPack.majorVer: "24"
