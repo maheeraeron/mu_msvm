@@ -3054,6 +3054,7 @@ Return Value:
     UINT64 pageOffset;
     PEMCL_BOUNCE_PAGE bouncePage;
     PUCHAR bounceBuffer;
+    PUCHAR bounceBufferEnd;
     PUCHAR extBuffer;
     UINT32 transferToGo;
     UINT32 copySize;
@@ -3099,6 +3100,7 @@ Return Value:
         pageOffset = 0; // no more offsets
 
         copySize = MIN(copySize, transferToGo);
+        bounceBufferEnd = bounceBuffer + copySize;
 
         if (CopyToBounce)
         {
@@ -3131,20 +3133,20 @@ Return Value:
         // Zero any unused space in buffer we are sharing with the host.
         if (transferToGo == 0 &&
             CopyToBounce &&
-            ((UINT64)bounceBuffer % EFI_PAGE_SIZE))
+            ((UINT64)bounceBufferEnd % EFI_PAGE_SIZE))
         {
-            pageOffset = (UINT64)bounceBuffer % EFI_PAGE_SIZE;
-            copySize = EFI_PAGE_SIZE - (UINT32)pageOffset;
+            UINT32 endOffset = (UINT64)bounceBufferEnd % EFI_PAGE_SIZE;
+            UINT32 zeroSize = EFI_PAGE_SIZE - endOffset;
 
             DEBUG((EFI_D_VERBOSE,
                 "%a(%d) Zero %p size=0x%x (from offset=0x%x)\n",
                 __FUNCTION__,
                 __LINE__,
-                bounceBuffer,
-                copySize,
-                pageOffset));
+                bounceBufferEnd,
+                zeroSize,
+                endOffset));
 
-            ZeroMem(bounceBuffer, copySize);
+            ZeroMem(bounceBufferEnd, zeroSize);
         }
         bouncePage = bouncePage->NextBouncePage;
     }
