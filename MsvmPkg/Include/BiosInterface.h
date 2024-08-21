@@ -554,6 +554,8 @@ enum UefiStructureType
     UefiConfigAspt                           = 0x21,
     UefiConfigPptt                           = 0x22,
     UefiConfigGic                            = 0x23,
+    UefiConfigMcfg                           = 0x24,
+    UefiConfigSsdt                           = 0x25,
 };
 
 //
@@ -846,6 +848,18 @@ typedef struct _UEFI_CONFIG_GIC
     UINT64 GicDistributorBase;    // GICD
     UINT64 GicRedistributorsBase; // Redistributor block containing the BSP's GICR
 } UEFI_CONFIG_GIC;
+
+typedef struct _UEFI_CONFIG_MCFG
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Mcfg[];
+} UEFI_CONFIG_MCFG;
+
+typedef struct _UEFI_CONFIG_SSDT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Ssdt[];
+} UEFI_CONFIG_SSDT;
 
 //
 // UEFI configuration information for direct parsing of IGVM parameters.

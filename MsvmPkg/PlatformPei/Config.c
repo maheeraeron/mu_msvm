@@ -694,6 +694,14 @@ DebugDumpUefiConfigStruct(
             DEBUG((DEBUG_VERBOSE, "\tVpci instance filter:%g\n", (EFI_GUID*) filter->InstanceGuid));
             break;
 
+        case UefiConfigMcfg:
+            DEBUG((DEBUG_VERBOSE, "\tMCFG table found.\n"));
+            break;
+
+        case UefiConfigSsdt:
+            DEBUG((DEBUG_VERBOSE, "\tSSDT table found.\n"));
+            break;
+
         default:
             DEBUG((DEBUG_VERBOSE, "\t!!! Unrecognized config structure type !!!\n"));
             break;
@@ -968,7 +976,11 @@ Return Value:
         0, //UefiConfigSmbiosSystemFamily
         0, //UefiConfigSmbiosMemoryDeviceSerialNumber
         0, //UefiConfigSlit
+        0, //UefiConfigAspt
         0, //UefiConfigPptt
+        0, //UefiConfigGic
+        0, //UefiConfigMcfg
+        0, //UefiConfigSsdt
     };
 
     //
@@ -1470,6 +1482,38 @@ Return Value:
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdGicRedistributorsBase, gicConfig->GicRedistributorsBase), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 #endif
+            case UefiConfigMcfg:
+                UEFI_CONFIG_MCFG *mcfgStructure = (UEFI_CONFIG_MCFG*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *mcfgHdr = (EFI_ACPI_DESCRIPTION_HEADER*) mcfgStructure->Mcfg;
+
+                if (mcfgStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    mcfgHdr->Signature != EFI_ACPI_6_2_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE ||
+                    mcfgHdr->Length > (mcfgStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "*** Malformed MCFG\n"));
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+                }
+
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdMcfgPtr, (UINT64)mcfgStructure->Mcfg), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdMcfgSize, mcfgHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+                break;
+
+            case UefiConfigSsdt:
+                UEFI_CONFIG_SSDT *ssdtStructure = (UEFI_CONFIG_SSDT*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *ssdtHdr = (EFI_ACPI_DESCRIPTION_HEADER*) ssdtStructure->Ssdt;
+
+                if (ssdtStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    ssdtHdr->Signature != EFI_ACPI_6_2_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE ||
+                    ssdtHdr->Length > (ssdtStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "*** Malformed SSDT\n"));
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+                }
+
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSsdtPtr, (UINT64)ssdtStructure->Ssdt), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSsdtSize, ssdtHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+                break;
+
         }
 
         calculatedConfigSize += header->Length;
