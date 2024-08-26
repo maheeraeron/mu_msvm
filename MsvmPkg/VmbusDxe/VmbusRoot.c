@@ -40,6 +40,7 @@ struct _VMBUS_ROOT_CONTEXT
     EFI_EVENT HotEvent;
     LIST_ENTRY HotMessageList;
 
+    BOOLEAN Confidential;
     BOOLEAN SintConnected;
     BOOLEAN ContactInitiated;
     BOOLEAN OffersDelivered;
@@ -157,6 +158,11 @@ VmbusComponentNameGetControllerName(
     __out CHAR16 **ControllerName
     );
 
+EFI_STATUS
+VmbusRootConnectSint(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in BOOLEAN Reconnect
+    );
 
 VMBUS_ROOT_CONTEXT mRootContext;
 
@@ -216,6 +222,14 @@ VmbusRootInitializeContext(
     ZeroMem(RootContext, sizeof(*RootContext));
     RootContext->Signature = VMBUS_ROOT_CONTEXT_SIGNATURE;
     InitializeListHead(&RootContext->HotMessageList);
+
+    //
+    // When hardware isolation is in use, VmBus must first attempt to connect
+    // to the paravisor using encrypted memory. If this fails, VmBus will
+    // fall back to using isolated hypercalls and host-visible memory.
+    //
+
+    RootContext->Confidential = IsHardwareIsolated() && IsParavisorPresent();
     RootContext->SintConnected = FALSE;
     RootContext->ContactInitiated = FALSE;
     RootContext->OffersDelivered = FALSE;
@@ -490,7 +504,7 @@ VmbusRootWaitForMessage(
     hvMessage = NULL;
     while (hvMessage == NULL)
     {
-        hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+        hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex), RootContext->Confidential);
     }
 
     //
@@ -506,7 +520,8 @@ VmbusRootWaitForMessage(
         0);
 
     CopyMem(Message->Data, hvMessage->Payload, Message->Size);
-    mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+    status = mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex), RootContext->Confidential);
+    ASSERT_EFI_ERROR(status);
 }
 
 
@@ -640,8 +655,9 @@ VmbusRootInitializeMessage(
 }
 
 
-VOID
+EFI_STATUS
 VmbusRootSendMessage(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
     __in VMBUS_MESSAGE *Message
     )
 /**
@@ -661,14 +677,17 @@ VmbusRootSendMessage(
                                   gVmbusConnectionId,
                                   VMBUS_MESSAGE_TYPE,
                                   Message->Data,
-                                  Message->Size);
+                                  Message->Size,
+                                  RootContext->Confidential);
 
     } while (status == EFI_NOT_READY);
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "Vmbus failed to send message\n"));
+        DEBUG((EFI_D_ERROR, "Vmbus failed to send message, confidential=%d\n", RootContext->Confidential));
     }
+
+    return status;
 }
 
 
@@ -690,19 +709,35 @@ VmbusRootSintNotify (
 {
     VMBUS_ROOT_CONTEXT *rootContext;
     HV_MESSAGE *hvMessage;
+    EFI_STATUS status;
 
     rootContext = (VMBUS_ROOT_CONTEXT*)Context;
 
     VmbusRootScanEventFlags(rootContext,
-                            mHv->GetSintEventFlags(mHv, FixedPcdGet8(PcdVmbusSintIndex)));
+                            mHv->GetSintEventFlags(mHv, FixedPcdGet8(PcdVmbusSintIndex), FALSE));
 
-    hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+#if defined(MDE_CPU_X64)
+
+    //
+    // If a confidential connection is used, the paravisor's event flags page
+    // must also be scanned.
+    //
+    if (rootContext->Confidential)
+    {
+        VmbusRootScanEventFlags(rootContext,
+                                mHv->GetSintEventFlags(mHv, FixedPcdGet8(PcdVmbusSintIndex), TRUE));
+    }
+
+#endif
+
+    hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex), rootContext->Confidential);
 
     if (hvMessage != NULL)
     {
         if (VmbusRootDispatchMessage(rootContext, hvMessage))
         {
-            mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+            status = mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex), rootContext->Confidential);
+            ASSERT_EFI_ERROR(status);
         }
     }
 }
@@ -945,11 +980,12 @@ VmbusRootHotAddAllocation(
     VMBUS_ROOT_CONTEXT *context;
     HV_MESSAGE *hvMessage;
     VMBUS_HOT_MESSAGE *hotMessage;
+    EFI_STATUS status;
 
     ASSERT(EfiGetCurrentTpl() == TPL_NOTIFY);
 
     context = (VMBUS_ROOT_CONTEXT*)Context;
-    hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+    hvMessage = mHv->GetSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex), context->Confidential);
 
     hotMessage = AllocatePool(sizeof(*hotMessage));
     if (hotMessage == NULL)
@@ -1003,7 +1039,8 @@ VmbusRootHotAddAllocation(
     gBS->SignalEvent(context->HotEvent);
 
 Cleanup:
-    mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+    status = mHv->CompleteSintMessage(mHv, FixedPcdGet8(PcdVmbusSintIndex), context->Confidential);
+    ASSERT_EFI_ERROR(status);
 }
 
 
@@ -1371,9 +1408,30 @@ VmbusRootInitiateContact(
                            ChannelMessageInitiateContact,
                            sizeof(message.InitiateContact));
 
-    message.InitiateContact.VMBusVersionRequested = VMBUS_VERSION_LATEST;
+    message.InitiateContact.VMBusVersionRequested = VMBUS_VERSION_WIN8_1;
     message.InitiateContact.TargetMessageVp = mHv->GetCurrentVpIndex(mHv);
-    VmbusRootSendMessage(&message);
+    status = VmbusRootSendMessage(RootContext, &message);
+    if (EFI_ERROR(status))
+    {
+        if (!RootContext->Confidential)
+        {
+            return status;
+        }
+
+        DEBUG((EFI_D_WARN, "--- %a: Retrying without confidential control plane\n", __FUNCTION__));
+        RootContext->Confidential = FALSE;
+        status = VmbusRootConnectSint(RootContext, TRUE);
+        if (EFI_ERROR(status))
+        {
+            return status;
+        }
+        
+        status = VmbusRootSendMessage(RootContext, &message);
+        if (EFI_ERROR(status))
+        {
+            return status;
+        }
+    }
 
     //
     // We may have leftover messages if this driver was stopped previously.
@@ -1384,7 +1442,7 @@ VmbusRootInitiateContact(
     } while (message.Header.MessageType != ChannelMessageVersionResponse);
 
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        message.Size == sizeof(message.VersionResponse),
+        message.Size >= VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE,
         VMBUS,
         __LINE__,
         0);
@@ -1430,7 +1488,7 @@ VmbusRootSendUnload(
                                ChannelMessageUnload,
                                sizeof(message.Header));
 
-    VmbusRootSendMessage(&message);
+    VmbusRootSendMessage(RootContext, &message);
 
     //
     // Ignore all messages until the unload response comes back.
@@ -1642,7 +1700,7 @@ VmbusRootEnumerateChildren(
                                ChannelMessageRequestOffers,
                                sizeof(message.Header));
 
-    VmbusRootSendMessage(&message);
+    VmbusRootSendMessage(RootContext, &message);
     for (;;)
     {
         VmbusRootWaitForMessage(RootContext, FALSE, &message);
@@ -1748,6 +1806,39 @@ VmbusRootDriverSupported (
 
 
 EFI_STATUS
+VmbusRootConnectSint(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in BOOLEAN Reconnect
+    )
+{
+    EFI_STATUS status;
+
+    //
+    // Disconnect first if the SINT was previously connected. This is the case
+    // on fallback from attempting a confidential connection to the paravisor.
+    //
+    if (Reconnect)
+    {
+        mHv->DisconnectSint(mHv, FixedPcdGet8(PcdVmbusSintIndex));
+    }
+
+    status = mHv->ConnectSint(mHv,
+                              FixedPcdGet8(PcdVmbusSintIndex),
+                              FixedPcdGet8(PcdVmbusSintVector),
+                              RootContext->Confidential,
+                              VmbusRootSintNotify,
+                              RootContext);
+    DEBUG((DEBUG_VERBOSE, "--- %a after ConnectSint status %r\n", __FUNCTION__, status));
+    if (EFI_ERROR(status))
+    {
+        DEBUG((EFI_D_ERROR, "--- %a: failed to connect SINT - %r \n", __FUNCTION__, status));
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
 EFIAPI
 VmbusRootDriverStart (
     __in EFI_DRIVER_BINDING_PROTOCOL *This,
@@ -1800,15 +1891,9 @@ VmbusRootDriverStart (
     }
     DEBUG((DEBUG_VERBOSE, "--- %a after VmbusRootInitializeContext\n", __FUNCTION__));
 
-    status = mHv->ConnectSint(mHv,
-                              FixedPcdGet8(PcdVmbusSintIndex),
-                              FixedPcdGet8(PcdVmbusSintVector),
-                              VmbusRootSintNotify,
-                              &mRootContext);
-    DEBUG((DEBUG_VERBOSE, "--- %a after ConnectSint status %r\n", __FUNCTION__, status));
+    status = VmbusRootConnectSint(&mRootContext, FALSE);
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to connect SINT - %r \n", __FUNCTION__, status));
         goto Cleanup;
     }
 

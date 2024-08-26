@@ -275,7 +275,7 @@ Return Value:
 
     if (mUseDirectTimer == FALSE)
     {
-        message = mHv->GetSintMessage(mHv, mSintIndex);
+        message = mHv->GetSintMessage(mHv, mSintIndex, FALSE);
         if (message != NULL)
         {
             messageType = message->Header.MessageType;
@@ -283,7 +283,7 @@ Return Value:
             {
                 DEBUG((EFI_D_ERROR, "%a: Unexpected message type 0xlx%", __FUNCTION__, messageType));
             }
-            mHv->CompleteSintMessage(mHv, mSintIndex);
+            mHv->CompleteSintMessage(mHv, mSintIndex, FALSE);
         }
     }
 
@@ -339,6 +339,7 @@ Return Value:
         status = mHv->ConnectSint(mHv,
                                   mSintIndex,
                                   PcdGet8(PcdSynicTimerVector),
+                                  FALSE,
                                   SynicTimerInterruptHandler,
                                   NULL);
 

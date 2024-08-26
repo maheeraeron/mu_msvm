@@ -35,11 +35,20 @@ AsmSetVpRegister64(
 
 #endif
 
+typedef struct _EFI_SYNIC_COMPONENT
+{
+    VOID *Page;
+    BOOLEAN DisableOnCleanup;
+
+} EFI_SYNIC_COMPONENT, *PEFI_SYNIC_COMPONENT;
+
 typedef struct _HV_HYPERCALL_CONTEXT
 {
     BOOLEAN Connected;
     BOOLEAN IsTdx;
     VOID* Ghcb;
+    EFI_SYNIC_COMPONENT EventFlagsPage;
+    EFI_SYNIC_COMPONENT MessagePage;
 
 #if defined(MDE_CPU_X64)
 

@@ -275,7 +275,7 @@ Return Value:
         Gpadl->GpadlHandle));
 
     pfnSent = pfnIndex;
-    VmbusRootSendMessage(&sendMessage);
+    VmbusRootSendMessage(channelContext->RootContext, &sendMessage);
 
     //
     // Keep sending GPADL body packets until we run out of PFNs to send.
@@ -294,7 +294,7 @@ Return Value:
         }
 
         pfnSent += pfnIndex;
-        VmbusRootSendMessage(&sendMessage);
+        VmbusRootSendMessage(channelContext->RootContext, &sendMessage);
     }
 
     receiveMessage = NULL;
@@ -472,7 +472,7 @@ Return Value:
 
         sendMessage.GpadlTeardown.ChildRelId = channelContext->ChannelId;
         sendMessage.GpadlTeardown.Gpadl = Gpadl->GpadlHandle;
-        VmbusRootSendMessage(&sendMessage);
+        VmbusRootSendMessage(channelContext->RootContext, &sendMessage);
         status = VmbusRootWaitForGpadlResponse(channelContext->RootContext,
                                                Gpadl->GpadlHandle,
                                                &receiveMessage);
@@ -675,7 +675,7 @@ Return Value:
     sendMessage.OpenChannel.RingBufferGpadlHandle = RingBufferGpadl->GpadlHandle;
     sendMessage.OpenChannel.DownstreamRingBufferPageOffset = RingBufferPageOffset;
     sendMessage.OpenChannel.TargetVp = mHv->GetCurrentVpIndex(mHv);
-    VmbusRootSendMessage(&sendMessage);
+    VmbusRootSendMessage(channelContext->RootContext, &sendMessage);
     receiveMessage = VmbusRootWaitForChannelResponse(channelContext);
 
     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
@@ -790,7 +790,7 @@ Return Value:
                                sizeof(sendMessage.CloseChannel));
 
     sendMessage.CloseChannel.ChildRelId = channelContext->ChannelId;
-    VmbusRootSendMessage(&sendMessage);
+    VmbusRootSendMessage(channelContext->RootContext, &sendMessage);
     return EFI_SUCCESS;
 }
 

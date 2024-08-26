@@ -53,6 +53,19 @@ typedef struct _EFI_HV_PAGES
     UINT8 HypercallOutputPage[EFI_PAGE_SIZE];
     HV_SYNIC_EVENT_FLAGS_PAGE EventFlagsPage;
     HV_MESSAGE_PAGE MessagePage;
+
+#if defined(MDE_CPU_X64)
+
+    //
+    // Additional pages needed to configure the paravisor in an isolated VM, to
+    // allow for encrypted communication with the paravisor.
+    //
+
+    HV_SYNIC_EVENT_FLAGS_PAGE ParavisorEventFlagsPage;
+    HV_MESSAGE_PAGE ParavisorMessagePage;
+
+#endif
+
 } EFI_HV_PAGES, *PEFI_HV_PAGES;
 
 typedef struct _EFI_HV_PROTECTION_OBJECT
@@ -61,6 +74,13 @@ typedef struct _EFI_HV_PROTECTION_OBJECT
     UINT64 GpaPageBase;
     UINT32 NumberOfPages;
 } EFI_HV_PROTECTION_OBJECT, *PEFI_HV_PROTECTION_OBJECT;
+
+//
+// When hardware isolation is in use, the main hypercall context is used to
+// communicate with the paravisor, while the bypass context is used to
+// communicate with the host hypervisor. If hardware isolated without a
+// paravisor, only the bypass context is used.
+//
 
 HV_HYPERCALL_CONTEXT mHvContext;
 HV_HYPERCALL_CONTEXT mHvBypassContext;
@@ -75,8 +95,6 @@ UINT8 *mHypercallPage;
 #endif
 
 VOID* mHvInputPage;
-PHV_SYNIC_EVENT_FLAGS_PAGE mEventFlagsPage;
-PHV_MESSAGE_PAGE mMessagePage;
 EFI_HANDLE mHvHandle;
 BOOLEAN mSynicConnected;
 EFI_EVENT mExitBootServicesEvent;
@@ -233,6 +251,7 @@ EfiHvConnectSint (
     IN  EFI_HV_PROTOCOL *This,
     IN  HV_SYNIC_SINT_INDEX SintIndex,
     IN  UINT8 Vector,
+    IN  BOOLEAN NoProxy,
     IN  EFI_HV_INTERRUPT_HANDLER InterruptHandler,
     IN  VOID *Context
     )
@@ -245,6 +264,10 @@ EfiHvConnectSint (
     @param SintIndex The SINT to connect.
 
     @param Vector The vector to use for the SINT interrupt.
+
+    @param NoProxy If TRUE, the paravisor SINT will not be configured as a proxy
+        even if hardware isolated. This flag has no effect if hardware isolation
+        is not in use.
 
     @param InterruptHandler A pointer to the interrupt handler for the SINT.
 
@@ -305,10 +328,11 @@ EfiHvConnectSint (
     {
 
         //
-        // Register the SINT with the host hypervisor before registering it with the paravisor as a proxy interrupt.
+        // Register the SINT with the host hypervisor before registering it with the paravisor as a proxy interrupt,
+        // unless the caller requested that the SINT not be proxied.
         //
         HvHypercallSetVpRegister64Self(&mHvBypassContext, HvRegisterSint0 + SintIndex, sint.AsUINT64);
-        sint.Proxy = 1;
+        sint.Proxy = !NoProxy;
     }
 
     if (!mBypassOnly)
@@ -385,6 +409,7 @@ EfiHvConnectSintToEvent (
             This,
             SintIndex,
             Vector,
+            FALSE,
             EfiHvEventInterruptHandler,
             Event);
 
@@ -463,7 +488,8 @@ HV_MESSAGE *
 EFIAPI
 EfiHvGetSintMessage (
     IN  EFI_HV_PROTOCOL *This,
-    IN  HV_SYNIC_SINT_INDEX SintIndex
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  BOOLEAN Direct
     )
 /*++
     Retrieves the next message from the SINT message queue.
@@ -472,13 +498,22 @@ EfiHvGetSintMessage (
 
     @param SintIndex The index of the SINT.
 
+    @param Direct Do not bypass the paravisor, if one is present.
+
     @returns A pointer to the next message, or NULL if there is currently no message.
 
 --*/
 {
     volatile HV_MESSAGE *message;
+    PHV_HYPERCALL_CONTEXT context;
 
-    message = &mMessagePage->SintMessage[SintIndex];
+    context = (mUseBypassContext && !Direct) ? &mHvBypassContext : &mHvContext;
+    if (context->MessagePage.Page == NULL)
+    {
+        return NULL;
+    }
+    
+    message = &((PHV_MESSAGE_PAGE)context->MessagePage.Page)->SintMessage[SintIndex];
     if (message->Header.MessageType == HvMessageTypeNone)
     {
         return NULL;
@@ -488,11 +523,12 @@ EfiHvGetSintMessage (
 }
 
 
-VOID
+EFI_STATUS
 EFIAPI
 EfiHvCompleteSintMessage (
     IN  EFI_HV_PROTOCOL *This,
-    IN  HV_SYNIC_SINT_INDEX SintIndex
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  BOOLEAN Direct
     )
 /*++
     Marks the current message in the SINT message queue as complete so
@@ -502,19 +538,30 @@ EfiHvCompleteSintMessage (
 
     @param SintIndex The index of the SINT.
 
+    @param Direct Do not bypass the paravisor, if one is present.
+
     @returns nothing.
 
 --*/
 {
     volatile HV_MESSAGE *message;
+    PHV_HYPERCALL_CONTEXT context;
 
-    message = &mMessagePage->SintMessage[SintIndex];
+    context = (mUseBypassContext && !Direct) ? &mHvBypassContext : &mHvContext;
+    if (context->MessagePage.Page == NULL)
+    {
+        return EFI_UNSUPPORTED;
+    }
+
+    message = &((PHV_MESSAGE_PAGE)context->MessagePage.Page)->SintMessage[SintIndex];
     message->Header.MessageType = HvMessageTypeNone;
     MemoryBarrier();
     if (message->Header.MessageFlags.MessagePending)
     {
-        HvHypercallSetVpRegister64Self(mUseBypassContext ? &mHvBypassContext : &mHvContext, HvRegisterEom, 0);
+        HvHypercallSetVpRegister64Self(context, HvRegisterEom, 0);
     }
+
+    return EFI_SUCCESS;
 }
 
 
@@ -522,7 +569,8 @@ volatile HV_SYNIC_EVENT_FLAGS *
 EFIAPI
 EfiHvGetSintEventFlags (
     IN  EFI_HV_PROTOCOL *This,
-    IN  HV_SYNIC_SINT_INDEX SintIndex
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  BOOLEAN Direct
     )
 /*++
     Retrieves a pointer to the event flags for a SINT.
@@ -531,13 +579,22 @@ EfiHvGetSintEventFlags (
 
     @param SintIndex The index of the SINT.
 
+    @param Direct Do not bypass the paravisor, if one is present.
+
     @returns A pointer to the event flags.
 
 --*/
 {
+    PHV_HYPERCALL_CONTEXT context;
     volatile HV_SYNIC_EVENT_FLAGS *pFlags;
 
-    pFlags = &mEventFlagsPage->SintEventFlags[SintIndex];
+    context = (mUseBypassContext && !Direct) ? &mHvBypassContext : &mHvContext;
+    if (context->EventFlagsPage.Page == NULL)
+    {
+        return NULL;
+    }
+
+    pFlags = &((PHV_SYNIC_EVENT_FLAGS_PAGE)context->EventFlagsPage.Page)->SintEventFlags[SintIndex];
 
     return pFlags;
 }
@@ -887,7 +944,8 @@ EfiHvPostMessage (
     IN  HV_CONNECTION_ID ConnectionId,
     IN  HV_MESSAGE_TYPE MessageType,
     IN  VOID *Payload,
-    IN  UINT32 PayloadSize
+    IN  UINT32 PayloadSize,
+    IN  BOOLEAN DirectHypercall
     )
 /*++
     Posts a message to a hypervisor message port.
@@ -902,6 +960,8 @@ EfiHvPostMessage (
 
     @param PayloadSize The length of the payload buffer, in bytes.
 
+    @param DirectHypercall Do not bypass the paravisor, if one is present.
+
     @returns EFI status.
 
 --*/
@@ -914,8 +974,18 @@ EfiHvPostMessage (
     DEBUG((DEBUG_VERBOSE, ">>> %a: ConnId 0x%x MessageType 0x%x Payload 0x%p Size 0x%x\n",
         __FUNCTION__, ConnectionId, MessageType, Payload, PayloadSize));
 
+    //
+    // A direct hypercall is only valid if we are hardware isolated with a
+    // paravisor.
+    //
+
+    if (DirectHypercall && (!mUseBypassContext || mBypassOnly))
+    {
+        return EFI_INVALID_PARAMETER;
+    }
+
     oldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
-    input = (PHV_INPUT_POST_MESSAGE)mHvInputPage;
+    input = (PHV_INPUT_POST_MESSAGE)(DirectHypercall ? &mHvPages->HypercallInputPage : mHvInputPage);
     input->ConnectionId = ConnectionId;
     input->Reserved = 0;
     input->MessageType = MessageType;
@@ -925,11 +995,14 @@ EfiHvPostMessage (
             sizeof(input->Payload) - PayloadSize);
 
     hvStatus =
-        EfiHvIssueHypercall(
+        HvHypercallIssue(
+            (mUseBypassContext && !DirectHypercall) ? &mHvBypassContext : &mHvContext,
             HvCallPostMessage,
             FALSE,
+            0,
             EfiHvpBasePa((UINTN)input),
-            0);
+            0,
+            NULL);
 
     gBS->RestoreTPL(oldTpl);
     switch (hvStatus)
@@ -943,7 +1016,21 @@ EfiHvPostMessage (
     // or if the VM has been throttled. Convert this to EFI_NOT_READY so
     // that the caller can retry later.
     //
+    // N.B. The paravisor should not throttle messages, so treat it as an error
+    //      in that case.
+    //
     case HV_STATUS_INVALID_CONNECTION_ID:
+        if (DirectHypercall)
+        {
+            status = EFI_DEVICE_ERROR;
+        }
+        else
+        {
+            status = EFI_NOT_READY;
+        }
+
+        break;
+        
     case HV_STATUS_INSUFFICIENT_BUFFERS:
         status = EFI_NOT_READY;
     }
@@ -1841,6 +1928,128 @@ EfiHvDisconnectFromHypervisor (
 }
 
 
+PEFI_SYNIC_COMPONENT
+EfiHvpGetSynicComponent(
+    IN  PHV_HYPERCALL_CONTEXT Context,
+    IN  HV_REGISTER_NAME Register
+    )
+/*++
+    Gets a synthetic interrupt controller component based on its register.
+
+    @param Context A pointer to the context.
+
+    @param Register The register for the component.
+
+    @returns The component.
+
+--*/
+{
+    switch (Register)
+    {
+    case HvRegisterSipp:
+        return &Context->MessagePage;
+
+    case HvRegisterSifp:
+        return &Context->EventFlagsPage;
+
+    default:
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+
+        // Unreachable but needed to compile.
+        return NULL;
+    }
+}
+
+
+VOID
+EfiHvpEnableSynicComponent(
+    IN  HV_REGISTER_NAME Register,
+    IN  VOID *Buffer,
+    IN  BOOLEAN Direct
+    )
+/*++
+    Enables a synthetic interrupt controller component.
+
+    @param Register The register for the component.
+
+    @param Buffer The buffer to use if the component is not already configured.
+
+    @param Direct If true, configure the component for the paravisor's synic.
+
+    @returns EFI status.
+
+--*/
+{
+    PHV_HYPERCALL_CONTEXT context;
+    PEFI_SYNIC_COMPONENT component;
+    UINTN gpa;
+
+    //
+    // Use the SIMP format, as they are all the same.
+    //
+
+    HV_SYNIC_SIMP simp;
+
+    context = (mUseBypassContext && !Direct) ? &mHvBypassContext : &mHvContext;
+    component = EfiHvpGetSynicComponent(context, Register);
+
+    //
+    // Check if the component is for the paravisor in a hardware-isolated
+    // environment.
+    //
+    // N.B. When using the paravisor synic, any buffer used must not be host
+    //      visible.
+    //
+
+    simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, Register);
+    if (simp.SimpEnabled != 0)
+    {
+        gpa = simp.BaseSimpGpa * EFI_PAGE_SIZE;
+        if ((!Direct && gpa < mSharedGpaBoundary) ||
+            (Direct && mSharedGpaBoundary != 0 && gpa >= mSharedGpaBoundary))
+        {
+
+            //
+            // Failure is not allowed here - need to fail fast
+            //
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        }
+
+        if (Direct)
+        {
+            component->Page = (VOID*)gpa;
+        }
+        else
+        {
+            component->Page = EfiHvpSharedVa((VOID*)gpa);
+        }
+    }
+    else
+    {
+        ASSERT((mUseBypassContext == FALSE) || mBypassOnly || Direct);
+        component->Page = Buffer;
+        simp.SimpEnabled = 1;
+        if (Direct)
+        {
+            simp.BaseSimpGpa = EfiHvpBasePa((UINTN)component->Page) / EFI_PAGE_SIZE;
+        }
+        else
+        {
+            simp.BaseSimpGpa = EfiHvpSharedPa(component->Page) / EFI_PAGE_SIZE;
+        }
+
+        HvHypercallSetVpRegister64Self(context, Register, simp.AsUINT64);
+
+        //
+        // Only disable the component on cleanup if it was explicitly enabled
+        // here.
+        //
+
+        component->DisableOnCleanup = TRUE;
+    }
+}
+
+
 EFI_STATUS
 EfiHvConnectToSynic (
     VOID
@@ -1854,70 +2063,79 @@ EfiHvConnectToSynic (
 
 --*/
 {
-    HV_HYPERCALL_CONTEXT *context;
-    UINTN gpa;
-    HV_SYNIC_SIEFP siefp;
-    HV_SYNIC_SIMP simp;
-
-    context = mUseBypassContext ? &mHvBypassContext : &mHvContext;
-
     //
     // Enable the message page.
     //
-    simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
-    if (simp.SimpEnabled != 0)
-    {
-        gpa = simp.BaseSimpGpa * EFI_PAGE_SIZE;
-        if (gpa < mSharedGpaBoundary)
-        {
-
-            //
-            // Failure is not allowed here - need to fail fast
-            //
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
-        }
-
-        mMessagePage = (PHV_MESSAGE_PAGE)EfiHvpSharedVa((VOID*)gpa);
-    }
-    else
-    {
-        ASSERT((mUseBypassContext == FALSE) || mBypassOnly);
-        mMessagePage = &mHvPages->MessagePage;
-        simp.SimpEnabled = 1;
-        simp.BaseSimpGpa = EfiHvpSharedPa(mMessagePage) / EFI_PAGE_SIZE;
-        HvHypercallSetVpRegister64Self(context, HvRegisterSipp, simp.AsUINT64);
-    }
+    EfiHvpEnableSynicComponent(HvRegisterSipp, &mHvPages->MessagePage, FALSE);
 
     //
     // Enable the event page.
     //
-    siefp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSifp);
-    if (siefp.SiefpEnabled != 0)
-    {
-        gpa = siefp.BaseSiefpGpa * EFI_PAGE_SIZE;
-        if (gpa < mSharedGpaBoundary)
-        {
+    EfiHvpEnableSynicComponent(HvRegisterSifp, &mHvPages->EventFlagsPage, FALSE);
 
-            //
-            // Failure is not allowed here - need to fail fast
-            //
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
-        }
+#if defined(MDE_CPU_X64)
 
-        mEventFlagsPage = (PHV_SYNIC_EVENT_FLAGS_PAGE)EfiHvpSharedVa((VOID*)gpa);
-    }
-    else
+    //
+    // When hardware isolated, also enable the paravisor's components.
+    //
+
+    if (mUseBypassContext && !mBypassOnly)
     {
-        ASSERT((mUseBypassContext == FALSE) || mBypassOnly);
-        mEventFlagsPage = &mHvPages->EventFlagsPage;
-        siefp.SiefpEnabled = 1;
-        siefp.BaseSiefpGpa = EfiHvpSharedPa(mEventFlagsPage) / EFI_PAGE_SIZE;
-        HvHypercallSetVpRegister64Self(context, HvRegisterSifp, siefp.AsUINT64);
+        EfiHvpEnableSynicComponent(HvRegisterSipp,
+                                   &mHvPages->ParavisorMessagePage,
+                                   TRUE);
+
+        EfiHvpEnableSynicComponent(HvRegisterSifp,
+                                   &mHvPages->ParavisorEventFlagsPage,
+                                   TRUE);
     }
+
+#endif
 
     mSynicConnected = TRUE;
 
     return EFI_SUCCESS;
+}
+
+
+VOID
+EfiHvpDisableSynicComponent(
+    IN  HV_REGISTER_NAME Register,
+    IN  BOOLEAN Direct
+    )
+/*++
+    Disables a synthetic interrupt controller component.
+
+    @param Register The register for the component.
+
+    @param Direct If true, configure the component for the paravisor's synic.
+
+    @returns nothing.
+
+--*/
+{
+    PHV_HYPERCALL_CONTEXT context;
+    PEFI_SYNIC_COMPONENT component;
+
+    //
+    // Use the SIMP format, as they are all the same.
+    //
+    HV_SYNIC_SIMP simp;
+
+    context = (mUseBypassContext && !Direct) ? &mHvBypassContext : &mHvContext;
+    component = EfiHvpGetSynicComponent(context, Register);
+
+    //
+    // Disable the register only if the component was explicitly enabled before.
+    //
+
+    if (component->DisableOnCleanup)
+    {
+        simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, Register);
+        simp.SimpEnabled = 0;
+        simp.BaseSimpGpa = 0;
+        HvHypercallSetVpRegister64Self(context, Register, simp.AsUINT64);
+    }
 }
 
 
@@ -1935,8 +2153,6 @@ EfiHvDisconnectFromSynic (
 --*/
 {
     HV_HYPERCALL_CONTEXT *context;
-    HV_SYNIC_SIEFP siefp;
-    HV_SYNIC_SIMP simp;
     HV_SYNIC_SINT_INDEX sintIndex;
     UINT32 timerIndex;
     UINT32 flagsIndex = 0;
@@ -1962,40 +2178,61 @@ EfiHvDisconnectFromSynic (
     for (sintIndex = 0; sintIndex < HV_SYNIC_SINT_COUNT; sintIndex += 1)
     {
         EfiHvDisconnectSint(&mHv, sintIndex);
-        while (EfiHvGetSintMessage(&mHv, sintIndex) != NULL)
+        while (EfiHvGetSintMessage(&mHv, sintIndex, FALSE) != NULL)
         {
-            EfiHvCompleteSintMessage(&mHv, sintIndex);
+            EfiHvCompleteSintMessage(&mHv, sintIndex, FALSE);
         }
 
         //
         // Zero the event flags for this SINT.
         //
-        volatile HV_SYNIC_EVENT_FLAGS* flags = EfiHvGetSintEventFlags(&mHv, sintIndex);
+        volatile HV_SYNIC_EVENT_FLAGS* flags = EfiHvGetSintEventFlags(&mHv, sintIndex, FALSE);
 
         for (flagsIndex = 0; flagsIndex < HV_EVENT_FLAGS_DWORD_COUNT; flagsIndex++)
         {
             flags->Flags32[flagsIndex] = 0;
         }
+
+#if defined(MDE_CPU_X64)
+
+        //
+        // Do the same for the paravisor synic if hardware isolated.
+        //
+
+        if (mUseBypassContext && !mBypassOnly)
+        {
+            while (EfiHvGetSintMessage(&mHv, sintIndex, TRUE) != NULL)
+            {
+                EfiHvCompleteSintMessage(&mHv, sintIndex, TRUE);
+            }
+
+            flags = EfiHvGetSintEventFlags(&mHv, sintIndex, TRUE);
+            for (flagsIndex = 0; flagsIndex < HV_EVENT_FLAGS_DWORD_COUNT; flagsIndex++)
+            {
+                flags->Flags32[flagsIndex] = 0;
+            }
+        }
+
+#endif
+
     }
 
-    if ((mUseBypassContext == FALSE) || mBypassOnly)
+
+    //
+    // Disable the message and event flags pages if they were enabled.
+    //
+    EfiHvpDisableSynicComponent(HvRegisterSipp, FALSE);
+    EfiHvpDisableSynicComponent(HvRegisterSifp, FALSE);
+
+#if defined(MDE_CPU_X64)
+
+    if (mUseBypassContext && !mBypassOnly)
     {
-
-        //
-        // Disable the message page.
-        //
-        simp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSipp);
-        simp.SimpEnabled = 0;
-        simp.BaseSimpGpa = 0;
-        HvHypercallSetVpRegister64Self(context, HvRegisterSipp, simp.AsUINT64);
-
-        // Disable the event page.
-
-        siefp.AsUINT64 = HvHypercallGetVpRegister64Self(context, HvRegisterSifp);
-        siefp.SiefpEnabled = 0;
-        siefp.BaseSiefpGpa = 0;
-        HvHypercallSetVpRegister64Self(context, HvRegisterSifp, siefp.AsUINT64);
+        EfiHvpDisableSynicComponent(HvRegisterSipp, TRUE);
+        EfiHvpDisableSynicComponent(HvRegisterSifp, TRUE);
     }
+
+#endif
 
     mSynicConnected = FALSE;
 }

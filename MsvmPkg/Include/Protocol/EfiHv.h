@@ -26,6 +26,7 @@ EFI_STATUS
     IN  EFI_HV_PROTOCOL *This,
     IN  HV_SYNIC_SINT_INDEX SintIndex,
     IN  UINT8 Vector,
+    IN  BOOLEAN NoProxy,
     IN  EFI_HV_INTERRUPT_HANDLER InterruptHandler,
     IN  VOID *Context
     );
@@ -50,21 +51,24 @@ typedef
 HV_MESSAGE *
 (EFIAPI *EFI_HV_GET_SINT_MESSAGE)(
     IN  EFI_HV_PROTOCOL *This,
-    IN  HV_SYNIC_SINT_INDEX SintIndex
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  BOOLEAN Direct
     );
 
 typedef
-VOID
+EFI_STATUS
 (EFIAPI *EFI_HV_COMPLETE_SINT_MESSAGE)(
     IN  EFI_HV_PROTOCOL *This,
-    IN  HV_SYNIC_SINT_INDEX SintIndex
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  BOOLEAN Direct
     );
 
 typedef
 volatile HV_SYNIC_EVENT_FLAGS *
 (EFIAPI *EFI_HV_GET_SINT_EVENT_FLAGS)(
     IN  EFI_HV_PROTOCOL *This,
-    IN  HV_SYNIC_SINT_INDEX SintIndex
+    IN  HV_SYNIC_SINT_INDEX SintIndex,
+    IN  BOOLEAN Direct
     );
 
 typedef
@@ -112,7 +116,8 @@ EFI_STATUS
     IN  HV_CONNECTION_ID ConnectionId,
     IN  HV_MESSAGE_TYPE MessageType,
     IN  VOID *Payload,
-    IN  UINT32 PayloadSize
+    IN  UINT32 PayloadSize,
+    IN  BOOLEAN DirectHypercall
     );
 
 typedef

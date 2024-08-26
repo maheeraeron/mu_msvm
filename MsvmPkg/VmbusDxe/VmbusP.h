@@ -227,8 +227,9 @@ VmbusRootInitializeMessage(
     __in UINT32 Size
     );
 
-VOID
+EFI_STATUS
 VmbusRootSendMessage(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
     __in VMBUS_MESSAGE *Message
     );
 
