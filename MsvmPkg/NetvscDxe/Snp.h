@@ -37,6 +37,8 @@ typedef struct
     EFI_SIMPLE_NETWORK_MODE     Mode;
 
     NETVSC_ADAPTER_CONTEXT      *AdapterContext;
+
+    EFI_EVENT    ExitBootServicesEvent;
 } SNP_DRIVER;
 
 #define EFI_SIMPLE_NETWORK_DEV_FROM_THIS(a) CR(a, SNP_DRIVER, Snp, SNP_DRIVER_SIGNATURE)

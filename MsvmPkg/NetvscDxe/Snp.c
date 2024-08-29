@@ -19,6 +19,30 @@ SnpShutdownAndStop(
     SnpStopImpl(SnpDriver);
 }
 
+/**
+  One notified function to stop UNDI device when gBS->ExitBootServices() called.
+
+  @param  Event                   Pointer to this event
+  @param  Context                 Event handler private data
+
+**/
+VOID
+EFIAPI
+SnpNotifyExitBootServices (
+  EFI_EVENT  Event,
+  VOID       *Context
+  )
+{
+  SNP_DRIVER  *Snp;
+
+  Snp = (SNP_DRIVER *)Context;
+
+  //
+  // Shutdown and stop UNDI driver
+  //
+  SnpShutdownAndStop (Snp);
+}
+
 
 EFI_STATUS
 AppendMac2DevPath(
@@ -348,6 +372,13 @@ Return Value:
                     );
         }
 
+        if (PcdGetBool (PcdSnpCreateExitBootServicesEvent)) {
+            //
+            // Close EXIT_BOOT_SERVICES Event
+            //
+            gBS->CloseEvent (SnpDriver->ExitBootServicesEvent);
+        }
+
         if (AdapterContext->NicInfo.Emcl != NULL)
         {
             SnpShutdownAndStop(SnpDriver);
@@ -670,6 +701,25 @@ Return Value:
     //
     SnpShutdownAndStop(snpDriver);
 
+    if (PcdGetBool (PcdSnpCreateExitBootServicesEvent)) {
+        //
+        // Create EXIT_BOOT_SERIVES Event
+        //
+        status = gBS->CreateEventEx (
+                        EVT_NOTIFY_SIGNAL,
+                        TPL_CALLBACK,
+                        SnpNotifyExitBootServices,
+                        snpDriver,
+                        &gEfiEventBeforeExitBootServicesGuid ,   // MS_HYP_CHANGE
+                        &snpDriver->ExitBootServicesEvent
+                        );
+
+        if (EFI_ERROR (status)) {
+            DEBUG((EFI_D_ERROR, "--- %a: failed to create the exit boot services event - %r \n", __FUNCTION__, status));
+            goto Cleanup;
+        }
+    }
+
     status = AppendMac2DevPath(
         &snpDriver->AdapterContext->DevPath,
         snpDriver->AdapterContext->BaseDevPath,
@@ -837,6 +887,7 @@ Return Value:
         //
         NetvscCleanupController(This, ControllerHandle, TRUE, TRUE);
     }
+
     return EFI_SUCCESS;
 }
 

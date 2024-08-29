@@ -291,6 +291,13 @@ Return Value:
     HV_HYPERCALL_OUTPUT callOutput;
 
     ASSERT(Context->Connected);
+// TODO: temporary until exception handling can reboot
+#if defined(MDE_CPU_AARCH64)
+    if (!Context->Connected)
+    {
+        return HV_STATUS_INVALID_PARTITION_STATE;
+    }
+#endif
     ASSERT(CountOfElements <= HV_X64_MAX_HYPERCALL_ELEMENTS);
 
     // DEBUG((DEBUG_VERBOSE, ">>> %a\n", __FUNCTION__));

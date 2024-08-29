@@ -21,7 +21,7 @@
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
-#  DRIVER_BINDING                =  mSimpleNetworkDriverBinding                        
+#  DRIVER_BINDING                =  mSimpleNetworkDriverBinding
 #  COMPONENT_NAME                =  gSimpleNetworkComponentName
 #  COMPONENT_NAME2               =  gSimpleNetworkComponentName2
 #
@@ -51,6 +51,7 @@
   MdeModulePkg/MdeModulePkg.dec
   MdePkg/MdePkg.dec
   MsvmPkg/MsvmPkg.dec
+  NetworkPkg/NetworkPkg.dec
 
 [LibraryClasses]
   DebugLib
@@ -64,6 +65,8 @@
 [Guids]
   gEfiEventExitBootServicesGuid                 # CONSUMES
   gEfiVmbusChannelDevicePathGuid                # CONSUMES
+  # MS_HYP_CHANGE - Use gEfiEventBeforeExitBootServicesGuid for SnpDxe to issue shutdown before VmBus disconnect
+  gEfiEventBeforeExitBootServicesGuid               ## SOMETIMES_CONSUMES ## Event
 
 [Protocols]
   gEfiDevicePathProtocolGuid                    # PRODUCES
@@ -73,4 +76,5 @@
   gInternalEventServicesProtocolGuid            # CONSUMES
 
 [Pcd]
-  gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault  # CONSUMES
+  gEfiNetworkPkgTokenSpaceGuid.PcdSnpCreateExitBootServicesEvent   ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault           ## CONSUMES
