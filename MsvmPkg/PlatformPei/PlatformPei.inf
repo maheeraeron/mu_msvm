@@ -99,6 +99,8 @@
     gMsvmPkgTokenSpaceGuid.PcdSsdtSize
     gMsvmPkgTokenSpaceGuid.PcdPpttPtr
     gMsvmPkgTokenSpaceGuid.PcdPpttSize
+    gMsvmPkgTokenSpaceGuid.PcdHmatPtr
+    gMsvmPkgTokenSpaceGuid.PcdHmatSize
     gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr
     gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize
     gMsvmPkgTokenSpaceGuid.PcdEntropyPtr

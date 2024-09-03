@@ -183,6 +183,10 @@
   gMsvmPkgTokenSpaceGuid.PcdPpttPtr|0x0|UINT64|0x605F
   gMsvmPkgTokenSpaceGuid.PcdPpttSize|0x0|UINT32|0x6060
 
+  # UEFI_CONFIG_HMAT
+  gMsvmPkgTokenSpaceGuid.PcdHmatPtr|0x0|UINT64|0x606E
+  gMsvmPkgTokenSpaceGuid.PcdHmatSize|0x0|UINT32|0x606F
+
   # UEFI_CONFIG_MEMORY_MAP
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapPtr|0x0|UINT64|0x6004
   gMsvmPkgTokenSpaceGuid.PcdMemoryMapSize|0x0|UINT32|0x6005

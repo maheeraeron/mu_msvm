@@ -87,6 +87,8 @@
     gMsvmPkgTokenSpaceGuid.PcdSlitSize                          ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdSratPtr                           ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdSratSize                          ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdHmatPtr                           ## CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdHmatSize                          ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdTpmEnabled                        ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdVirtualBatteryEnabled             ## CONSUMES
     gMsvmPkgTokenSpaceGuid.PcdWatchdogEnabled                   ## CONSUMES

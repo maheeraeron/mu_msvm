@@ -405,6 +405,78 @@ DebugDumpSlit(
 }
 
 VOID
+DebugDumpHmat(
+    IN VOID* Hmat
+    )
+{
+#if !defined(MDEPKG_NDEBUG)
+    EFI_ACPI_DESCRIPTION_HEADER  *acpiHdr = (EFI_ACPI_DESCRIPTION_HEADER*) Hmat;
+    UINT32 hmatEntryCount;
+    UINT8 *cursor;
+    UINT8 *hmatEnd;
+    EFI_ACPI_6_5_HMAT_STRUCTURE_HEADER *hmatEntryHeader;
+    EFI_ACPI_6_5_HMAT_STRUCTURE_MEMORY_PROXIMITY_DOMAIN_ATTRIBUTES * msar;
+    EFI_ACPI_6_5_HMAT_STRUCTURE_SYSTEM_LOCALITY_LATENCY_AND_BANDWIDTH_INFO * sllbi;
+    EFI_ACPI_6_5_HMAT_STRUCTURE_MEMORY_SIDE_CACHE_INFO * msci;
+
+    DEBUG((DEBUG_VERBOSE, "--- Hmat data @ %x\n", acpiHdr));
+    DEBUG((DEBUG_VERBOSE, "    Header Signature %x\n", acpiHdr->Signature));
+    DEBUG((DEBUG_VERBOSE, "    Length %x\n", acpiHdr->Length));
+
+    hmatEntryCount = 0;
+    cursor = (UINT8*)acpiHdr;
+    hmatEnd = cursor + acpiHdr->Length;
+    cursor += sizeof(EFI_ACPI_6_5_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE_HEADER);
+    
+    while (cursor < hmatEnd)
+    {
+        hmatEntryHeader = (EFI_ACPI_6_5_HMAT_STRUCTURE_HEADER*)cursor;
+        ++hmatEntryCount;
+
+        switch (hmatEntryHeader->Type)
+        {
+        case EFI_ACPI_6_5_HMAT_TYPE_MEMORY_PROXIMITY_DOMAIN_ATTRIBUTES:
+            msar  = (EFI_ACPI_6_5_HMAT_STRUCTURE_MEMORY_PROXIMITY_DOMAIN_ATTRIBUTES*)cursor;
+            DEBUG((DEBUG_VERBOSE, "    MSAR\n"));
+            DEBUG((DEBUG_VERBOSE, "     InitiatorProximityDomainValid %x\n", (UINT32)msar->Flags.InitiatorProximityDomainValid));
+            DEBUG((DEBUG_VERBOSE, "     InitiatorProximityDomain %x\n", msar->InitiatorProximityDomain));
+            DEBUG((DEBUG_VERBOSE, "     MemoryProximityDomain %x\n", msar->MemoryProximityDomain));
+            break;
+
+        case EFI_ACPI_6_5_HMAT_TYPE_SYSTEM_LOCALITY_LATENCY_AND_BANDWIDTH_INFO:
+            sllbi = (EFI_ACPI_6_5_HMAT_STRUCTURE_SYSTEM_LOCALITY_LATENCY_AND_BANDWIDTH_INFO *)cursor;
+            DEBUG((DEBUG_VERBOSE, "    SLLBI\n"));
+            DEBUG((DEBUG_VERBOSE, "     MemoryHierarchy %x\n", (UINT32)sllbi->Flags.MemoryHierarchy));
+            DEBUG((DEBUG_VERBOSE, "     AccessAttributes %x\n", (UINT32)sllbi->Flags.AccessAttributes));
+            DEBUG((DEBUG_VERBOSE, "     MinTransferSize %x\n", (UINT32)sllbi->MinTransferSize));
+            DEBUG((DEBUG_VERBOSE, "     NumberOfInitiatorProximityDomains %x\n", sllbi->NumberOfInitiatorProximityDomains));
+            DEBUG((DEBUG_VERBOSE, "     NumberOfTargetProximityDomains %x\n", sllbi->NumberOfTargetProximityDomains));
+            break;
+
+        case EFI_ACPI_6_5_HMAT_TYPE_MEMORY_SIDE_CACHE_INFO:
+            msci = (EFI_ACPI_6_5_HMAT_STRUCTURE_MEMORY_SIDE_CACHE_INFO *)cursor;
+            DEBUG((DEBUG_VERBOSE, "    MSCI\n"));
+            DEBUG((DEBUG_VERBOSE, "      MemoryProximityDomain %x\n", msci->MemoryProximityDomain));
+            DEBUG((DEBUG_VERBOSE, "      TotalCacheLevels %x\n", (UINT32)msci->CacheAttributes.TotalCacheLevels));
+            DEBUG((DEBUG_VERBOSE, "      CacheLevel %x\n", (UINT32)msci->CacheAttributes.CacheLevel));
+            DEBUG((DEBUG_VERBOSE, "      CacheAssociativity %x\n", (UINT32)msci->CacheAttributes.CacheAssociativity));
+            DEBUG((DEBUG_VERBOSE, "      WritePolicy %x\n", (UINT32)msci->CacheAttributes.WritePolicy));
+            DEBUG((DEBUG_VERBOSE, "      CacheLineSize %x\n", (UINT32)msci->CacheAttributes.CacheLineSize));
+            break;
+
+        default:
+            DEBUG((DEBUG_VERBOSE, "Uknown HMAT entry type %x\n", (UINT32)hmatEntryHeader->Type));
+            break;
+        }
+
+        cursor += hmatEntryHeader->Length;
+    }
+
+    DEBUG((DEBUG_VERBOSE, "    HmatEntryCount %x\n", hmatEntryCount));
+#endif
+}
+
+VOID
 DebugDumpMemoryMap(
     IN  VOID*   MemMap,
         UINT32  MemMapSize,
@@ -518,6 +590,11 @@ DebugDumpUefiConfigStruct(
 
         case UefiConfigPptt:
             DEBUG((DEBUG_VERBOSE, "\tPPTT table found.\n"));
+            break;
+
+        case UefiConfigHmat:
+            UEFI_CONFIG_HMAT *hmat = (UEFI_CONFIG_HMAT*)Header;
+            DebugDumpHmat(hmat->Hmat);
             break;
 
         case UefiConfigMemoryMap:
@@ -981,6 +1058,7 @@ Return Value:
         0, //UefiConfigGic
         0, //UefiConfigMcfg
         0, //UefiConfigSsdt
+        0, //UefiConfigHmat
     };
 
     //
@@ -1212,6 +1290,22 @@ Return Value:
 
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdPpttPtr, (UINT64)ppttStructure->Pptt), CRITICAL_INITIALIZATION_FAILURE);
                 CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdPpttSize, ppttHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+                break;
+
+            case UefiConfigHmat:
+                UEFI_CONFIG_HMAT *hmatStructure = (UEFI_CONFIG_HMAT*) header;
+                EFI_ACPI_DESCRIPTION_HEADER *hmatHdr = (EFI_ACPI_DESCRIPTION_HEADER*) hmatStructure->Hmat;
+
+                if (hmatStructure->Header.Length < (sizeof(UEFI_CONFIG_HEADER) + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) ||
+                    hmatHdr->Signature != EFI_ACPI_6_5_HETEROGENEOUS_MEMORY_ATTRIBUTE_TABLE_SIGNATURE ||
+                    hmatHdr->Length > (hmatStructure->Header.Length - sizeof(UEFI_CONFIG_HEADER)))
+                {
+                    DEBUG((DEBUG_ERROR, "*** Malformed HMAT\n"));
+                    CONFIG_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+                }
+
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet64S(PcdHmatPtr, (UINT64)hmatStructure->Hmat), CRITICAL_INITIALIZATION_FAILURE);
+                CONFIG_FAIL_FAST_IF_FAILED(PcdSet32S(PcdHmatSize, hmatHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
                 break;
 
             case UefiConfigMemoryMap:

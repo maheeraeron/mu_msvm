@@ -556,6 +556,7 @@ enum UefiStructureType
     UefiConfigGic                            = 0x23,
     UefiConfigMcfg                           = 0x24,
     UefiConfigSsdt                           = 0x25,
+    UefiConfigHmat                           = 0x26,
 };
 
 //
@@ -612,6 +613,12 @@ typedef struct _UEFI_CONFIG_PPTT
     UEFI_CONFIG_HEADER Header;
     UINT8 Pptt[];
 } UEFI_CONFIG_PPTT;
+
+typedef struct _UEFI_CONFIG_HMAT
+{
+    UEFI_CONFIG_HEADER Header;
+    UINT8 Hmat[];
+} UEFI_CONFIG_HMAT;
 
 typedef struct _UEFI_CONFIG_MEMORY_MAP
 {

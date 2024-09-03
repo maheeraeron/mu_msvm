@@ -369,6 +369,52 @@ Return Value:
 
 
 EFI_STATUS
+AcpiInstallHmatTable(
+    IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
+    )
+/*++
+
+Routine Description:
+
+    Retrieves the HMAT table from the worker process and installs it.
+
+Arguments:
+
+    AcpiTable - A pointer to the ACPI table protocol.
+
+Return Value:
+
+    EFI_STATUS.
+
+--*/
+{
+    EFI_STATUS status;
+    EFI_ACPI_DESCRIPTION_HEADER *table;
+    UINTN tableHandle;
+    UINT32 tableSize;
+
+    tableSize = PcdGet32(PcdHmatSize);
+    table = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN) PcdGet64(PcdHmatPtr);
+
+    if (tableSize == 0)
+    {
+        ASSERT(table == NULL);
+        DEBUG((EFI_D_INFO, "HMAT not installed.\n"));
+        return EFI_SUCCESS;
+    }
+
+    ASSERT(table->Length == tableSize);
+
+    status = AcpiTable->InstallAcpiTable(AcpiTable,
+                                         table,
+                                         table->Length,
+                                         &tableHandle);
+
+    return status;
+}
+
+
+EFI_STATUS
 AcpiInstallPpttTable(
     IN OUT  EFI_ACPI_TABLE_PROTOCOL *AcpiTable
     )
@@ -952,6 +998,15 @@ Return Value:
     // Add the SSDT table if present.
     //
     status = AcpiInstallSsdtTable(acpiTable);
+    if (EFI_ERROR(status))
+    {
+        goto Cleanup;
+    }
+
+    //
+    // Add the HMAT table if present.
+    //
+    status = AcpiInstallHmatTable(acpiTable);
     if (EFI_ERROR(status))
     {
         goto Cleanup;
