@@ -765,7 +765,6 @@
 
   FatPkg/EnhancedFatDxe/Fat.inf
 
-  MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
   MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
@@ -818,6 +817,8 @@
   }
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+
+  MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 
  # Networking components
 

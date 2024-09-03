@@ -229,12 +229,13 @@ INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 
+INF MsGraphicsPkg/DisplayEngineDxe/DisplayEngineDxe.inf
+
 !include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.DXE.inc.fdf
 
 INF MsvmPkg/AcpiPlatformDxe/AcpiPlatformDxe.inf
 INF RuleOverride=ACPITABLE MsvmPkg/AcpiTables/AcpiTables.inf
 INF MsvmPkg/CpuDxe/CpuDxe.inf
-INF MsvmPkg/DisplayEngineDxe/DisplayEngineDxe.inf
 INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
 INF MsvmPkg/EmclDxe/EmclDxe.inf
 INF MsvmPkg/EventLogDxe/EventLogDxe.inf
