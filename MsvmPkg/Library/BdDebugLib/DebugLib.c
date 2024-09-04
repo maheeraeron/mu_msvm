@@ -24,11 +24,11 @@ Author:
 #include <Library/PrintLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrashLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/BdDebugLib.h>
 
 #include <EfiNt.h>
-#include <FailFast.h>
 
 // -------------------------------------------------------------------- Defines
 

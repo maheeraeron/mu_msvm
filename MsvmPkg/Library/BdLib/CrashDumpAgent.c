@@ -164,14 +164,14 @@ EfiBugCheckWithContext(
 
     if (EFI_ERROR(status))
     {
-        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
+        BdTripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
                     0,
                     0,
                     0);
     }
     else
     {
-        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
+        BdTripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
                     (UINT64)BdDumpBuffer.Buffer,
                     BdDumpBuffer.Offset,
                     0);

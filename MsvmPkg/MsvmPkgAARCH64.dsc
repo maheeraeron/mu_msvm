@@ -79,12 +79,12 @@
   BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceLib.inf
   CacheMaintenanceLib|ArmPkg/Library/ArmCacheMaintenanceLib/ArmCacheMaintenanceLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  CrashLib|MsvmPkg/Library/CrashLib/CrashLib.inf
   CpuExceptionHandlerLib|ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
-  FailFastLib|MsvmPkg/Library/FailFastLib/FailFastLib.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
-  DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
+  DefaultExceptionHandlerLib|MsvmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
   DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
   DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
   EmclLib|MsvmPkg/Library/EmclLib/EmclLib.inf
@@ -247,7 +247,6 @@
 !endif
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   DpcLib|NetworkPkg/Library/DxeDpcLib/DxeDpcLib.inf
-  DefaultExceptionHandlerLib|ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf
   DxeMemoryProtectionHobLib|MdeModulePkg/Library/MemoryProtectionHobLibNull/DxeMemoryProtectionHobLibNull.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
@@ -258,8 +257,10 @@
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   IpIoLib|NetworkPkg/Library/DxeIpIoLib/DxeIpIoLib.inf
+!if $(DEBUGLIB_ADVANCED) == 0
   KdProtocolLib|MsKdDebugPkg2/Library/KdProtocolLib/KdProtocolLib.inf
   KdTransportLib|MsKdDebugPkg2/Library/KdTransportLibSerial/KdTransportSerial.inf
+!endif
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf
   MmioAllocationLib|MsvmPkg/Library/MmioAllocationLib/MmioAllocationLib.inf
@@ -443,7 +444,13 @@
 
 # Disable asserts when not building debug
 !if $(TARGET) == DEBUG
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
+  # TODO: Originally, this was set to 0x47 to enable DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED
+  # However, SerialDebugAssert in MsKdDebugPkg2 will generate recursive exceptions in
+  # DefaultExceptionHandlerLib when a debugger isn't enabled at runtime on debug builds
+  # (which means MsKdDebugPkg2 hasn't installed the right trap handlers).
+  # Revisit when moving to the MU feature debugger
+  # gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x07
 !else
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x06
 !endif
@@ -890,11 +897,13 @@
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
   }
 
+!if $(DEBUGLIB_ADVANCED) == 0
   MsKdDebugPkg2/KdDxe/KdDxe.inf {
     <LibraryClasses>
       PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
       SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
   }
+!endif
 
   # UI Theme Protocol
   MsGraphicsPkg/MsUiTheme/Dxe/MsUiThemeProtocol.inf

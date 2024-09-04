@@ -24,7 +24,6 @@
 
 [Sources.X64]
     X64/kduefi.preefi
-    X64/debugstb.asm
 
 [Sources.AARCH64]
     AArch64/Mmu.c
@@ -50,6 +49,7 @@
     ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
+    CrashLib
     DebugLib
     HobLib
     IoLib

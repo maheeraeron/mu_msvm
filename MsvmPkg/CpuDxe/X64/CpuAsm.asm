@@ -1,4 +1,4 @@
-      TITLE   CpuAsm.asm: 
+      TITLE   CpuAsm.asm:
 ;++
 ;
 ; Copyright (c) 2013  Microsoft Corporation
@@ -57,12 +57,12 @@ SetDataSelectors PROC PUBLIC
 SetDataSelectors ENDP
 
 ;-----------------------------------------------------------------------------
-; AsmIdtVector00                   
+; AsmIdtVector00
 ;-----------------------------------------------------------------------------
-; 
-; These are the actual interrupt vector entry points. The macros below ensure 
-; that the vector always pushes an error code and the vector number to the 
-; stack before calling into CommonInterruptEntry. Some interrupts come 
+;
+; These are the actual interrupt vector entry points. The macros below ensure
+; that the vector always pushes an error code and the vector number to the
+; stack before calling into CommonInterruptEntryMsvm. Some interrupts come
 ; pre-populated with an error code and do not need an extra one pushed.
 ;
 ; N.B. Each entry must be no more than 8 bytes and must be 8-byte aligned.
@@ -89,18 +89,18 @@ IF (vector GE 32) OR (((1 SHL vector) AND ErrorCodeBitmap) EQ 0)
 ENDIF
 
     push LOW(vector)
-    jmp CommonInterruptEntry
+    jmp CommonInterruptEntryMsvm
 
 vector = vector + 1
 
 ENDM
 
 ;---------------------------------------;
-; CommonInterruptEntry                  ;
+; CommonInterruptEntryMsvm                  ;
 ;---------------------------------------;
 ; The follow algorithm is used for the common interrupt routine.
 
-CommonInterruptEntry PROC PUBLIC FRAME
+CommonInterruptEntryMsvm PROC PUBLIC FRAME
     .pushframe code
     .allocstack 8
     cli
@@ -251,7 +251,7 @@ CommonInterruptEntry PROC PUBLIC FRAME
 ;; call into exception handler
     movzx   rcx, byte ptr [rbp + 8]
     lea     rax, ExternalVectorTable
-    mov     rax, [rax + rcx * 8]       
+    mov     rax, [rax + rcx * 8]
     test    rax, rax                        ; NULL?
     jz      nonNullValue;
 
@@ -342,7 +342,7 @@ nonNullValue:
     add     rsp, 24
     iretq
 
-CommonInterruptEntry ENDP
+CommonInterruptEntryMsvm ENDP
 
 END
 

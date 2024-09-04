@@ -41,13 +41,6 @@
     (MEMORY_FLAGS |                                     \
      EFI_RESOURCE_ATTRIBUTE_SPECIAL_PURPOSE)
 
-#define HOB 0x484F42 // "HOB"
-
-#define HOB_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
-    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(HOB);
-#define HOB_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
-    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, HOB)
-
 static
 VOID
 HobpAcceptRamPages(
@@ -119,12 +112,12 @@ Return Value:
 #if defined(MDE_CPU_X64)
     if (IsHardwareIsolated())
     {
-        HOB_FAIL_FAST_IF_FAILED (EfiUpdatePageRangeAcceptance(
+        PEI_FAIL_FAST_IF_FAILED(EfiUpdatePageRangeAcceptance(
             GetIsolationType(),
             (VOID*)PcdGet64(PcdSvsmCallingArea),
             GpaPageBase,
             PageCount,
-            TRUE), CRITICAL_INITIALIZATION_FAILURE);
+            TRUE));
     }
 #endif
 }

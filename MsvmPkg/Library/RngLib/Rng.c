@@ -22,6 +22,7 @@ Abstract:
 #include <BiosInterface.h>
 #include <Library/BiosDeviceLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrashLib.h>
 #include <Uefi.h>
 #include <Uefi/UefiBaseType.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -29,10 +30,6 @@ Abstract:
 #if defined(MDE_CPU_X64)
 #include <IsolationTypes.h>
 #endif
-
-#include <FailFast.h>
-
-#define RNG 0x524E47 // "RNG"
 
 #define WITHIN_4_GB_LL (0xFFFFFFFFLL)
 
@@ -133,7 +130,7 @@ RngLibConstructor (
     IN EFI_HANDLE ImageHandle,
     IN EFI_SYSTEM_TABLE *SystemTable
   )
-  
+
 {
   // MS_HYP_CHANGE BEGIN
 #if defined(MDE_CPU_X64)
@@ -153,13 +150,13 @@ RngLibConstructor (
   else
   {
     //
-    // If we are running isolated, we must use RDRAND for a secure implementation of 
+    // If we are running isolated, we must use RDRAND for a secure implementation of
     // random number generation.
     //
-    if (IsHardwareIsolated()) 
+    if (IsHardwareIsolated())
     {
       DEBUG((DEBUG_ERROR, "%a: RDRAND is not present on an isolated guest..\n", __FUNCTION__));
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, GetIsolationType());
+      FAIL_FAST_INITIALIZATION_FAILURE(EFI_SECURITY_VIOLATION);
     }
 
     DEBUG((DEBUG_INFO, "%a: RDRAND is not present. Using host emulation.\n", __FUNCTION__));
@@ -176,14 +173,15 @@ RngLibConstructor (
   {
 
     EFI_PHYSICAL_ADDRESS address = WITHIN_4_GB_LL;
-
-    if (EFI_ERROR(gBS->AllocatePages(AllocateMaxAddress,
+    EFI_STATUS status = gBS->AllocatePages(AllocateMaxAddress,
                                      EfiBootServicesData,
                                      EFI_SIZE_TO_PAGES(sizeof(CRYPTO_COMMAND_DESCRIPTOR)),
-                                     &address)))
+                                     &address);
+
+    if (EFI_ERROR(status))
     {
       // Fail fast since there is no way forward from this failure.
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, 0);
+      FAIL_FAST_INITIALIZATION_FAILURE(status);
     }
 
     mCryptoCommandDescriptor = (PCRYPTO_COMMAND_DESCRIPTOR) address;
@@ -191,7 +189,7 @@ RngLibConstructor (
     if (mCryptoCommandDescriptor == NULL)
     {
       // Fail fast since there is no way forward from this failure.
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, RNG, __LINE__, 0);
+      FAIL_FAST_INITIALIZATION_FAILURE(EFI_OUT_OF_RESOURCES);
     }
 
     mCryptoCommandDescriptorGpa = (EFI_PHYSICAL_ADDRESS) mCryptoCommandDescriptor;
@@ -222,7 +220,7 @@ GetRandomNumber16 (
   ASSERT (Rand != NULL);
   if (mUseHostEmulation)
   {
-    return ProcessUsingHostEmulation(2, (UINT8 *)Rand);  // MS_HYP_CHANGE    
+    return ProcessUsingHostEmulation(2, (UINT8 *)Rand);  // MS_HYP_CHANGE
   }
   else
   {

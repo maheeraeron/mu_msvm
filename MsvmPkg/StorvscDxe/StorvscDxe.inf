@@ -31,8 +31,8 @@
 [LibraryClasses]
     BaseLib
     BaseMemoryLib
+    CrashLib
     DebugLib
-    FailFastLib
     DevicePathLib
     EmclLib
     MemoryAllocationLib

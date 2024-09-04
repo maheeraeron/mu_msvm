@@ -11,7 +11,6 @@
 
 #include <Uefi.h>
 #include <EfiNt.h>
-#include <FailFast.h>
 
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
@@ -22,6 +21,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseLib.h>
+#include <Library/CrashLib.h>
 #include <Library/UefiLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/DebugLib.h>
@@ -38,8 +38,6 @@
 #define TPL_STORVSC_NOTIFY TPL_NOTIFY
 
 #define STORVSC_MAX_LUN_TRANSFER_LENGTH (sizeof(UCHAR) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET)
-
-#define STORVSC 0x53544f52565343 // "STORVSC"
 
 typedef struct _STORVSC_CHANNEL_CONTEXT
 {

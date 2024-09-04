@@ -16,6 +16,10 @@
 #include <Library/DebugAgentLib.h>
 #include <Ppi/TemporaryRamSupport.h>
 
+
+VOID
+SetGuestOsId();
+
 //
 // The Temporary RAM support PPI data.
 //
@@ -176,6 +180,11 @@ Return Value:
 
     SecCoreData.BootFirmwareVolumeBase = BootFv;
     SecCoreData.BootFirmwareVolumeSize = (UINTN) BootFv->FvLength;
+
+    //
+    // Set the guest OS ID so that hypercalls are possible.
+    //
+    SetGuestOsId();
 
     //
     // Initialize Debug Agent to support source level debug in SEC/PEI phases

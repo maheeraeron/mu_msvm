@@ -146,75 +146,6 @@ typedef enum _HV_X64_SYNTHETIC_MSR
 
 } HV_X64_SYNTHETIC_MSR, *PHV_X64_SYNTHETIC_MSR;
 
-#else
-
-typedef enum _HV_ARM64_SYNTHETIC_MSR
-{
-    HvSyntheticMsrGuestOsId                 =    0x40000000,
-    HvSyntheticMsrHypercall                 =    0x40000001,
-    HvSyntheticMsrVpIndex                   =    0x40000002,
-    HvSyntheticMsrReset                     =    0x40000003,
-    HvSyntheticMsrCpuMgmtVersion            =    0x40000004,
-    HvSyntheticMsrTimeRefCount              =    0x40000020,
-    HvSyntheticMsrReferenceTsc              =    0x40000021,
-    HvSyntheticMsrTscFrequency              =    0x40000022,
-    HvSyntheticMsrVpAssistPage              =    0x40000073,
-    HvSyntheticMsrSControl                  =    0x40000080,
-    HvSyntheticMsrSVersion                  =    0x40000081,
-    HvSyntheticMsrSiefp                     =    0x40000082,
-    HvSyntheticMsrSimp                      =    0x40000083,
-    HvSyntheticMsrEom                       =    0x40000084,
-    HvSyntheticMsrSirb                      =    0x40000085,
-    HvSyntheticMsrSint0                     =    0x40000090,
-    HvSyntheticMsrSint1                     =    0x40000091,
-    HvSyntheticMsrSint2                     =    0x40000092,
-    HvSyntheticMsrSint3                     =    0x40000093,
-    HvSyntheticMsrSint4                     =    0x40000094,
-    HvSyntheticMsrSint5                     =    0x40000095,
-    HvSyntheticMsrSint6                     =    0x40000096,
-    HvSyntheticMsrSint7                     =    0x40000097,
-    HvSyntheticMsrSint8                     =    0x40000098,
-    HvSyntheticMsrSint9                     =    0x40000099,
-    HvSyntheticMsrSint10                    =    0x4000009A,
-    HvSyntheticMsrSint11                    =    0x4000009B,
-    HvSyntheticMsrSint12                    =    0x4000009C,
-    HvSyntheticMsrSint13                    =    0x4000009D,
-    HvSyntheticMsrSint14                    =    0x4000009E,
-    HvSyntheticMsrSint15                    =    0x4000009F,
-    HvSyntheticMsrSTimer0Config             =    0x400000B0,
-    HvSyntheticMsrSTimer0Count              =    0x400000B1,
-    HvSyntheticMsrSTimer1Config             =    0x400000B2,
-    HvSyntheticMsrSTimer1Count              =    0x400000B3,
-    HvSyntheticMsrSTimer2Config             =    0x400000B4,
-    HvSyntheticMsrSTimer2Count              =    0x400000B5,
-    HvSyntheticMsrSTimer3Config             =    0x400000B6,
-    HvSyntheticMsrSTimer3Count              =    0x400000B7,
-    HvSyntheticMsrPerfFeedbackTrigger       =    0x400000C1,
-    HvSyntheticMsrGuestSchedulerEvent       =    0x400000C2,
-    HvSyntheticMsrGuestIdle                 =    0x400000F0,
-    HvSyntheticMsrDebugDeviceOptions        =    0x400000FF,
-    HvSyntheticMsrCrashP0                   =    0x40000100,
-    HvSyntheticMsrCrashP1                   =    0x40000101,
-    HvSyntheticMsrCrashP2                   =    0x40000102,
-    HvSyntheticMsrCrashP3                   =    0x40000103,
-    HvSyntheticMsrCrashP4                   =    0x40000104,
-    HvSyntheticMsrCrashCtl                  =    0x40000105,
-    HvSyntheticMsrReenlightenmentControl    =    0x40000106,
-    HvSyntheticMsrTscEmulationControl       =    0x40000107,
-    HvSyntheticMsrTscEmulationStatus        =    0x40000108,
-    HvSyntheticMsrSWatchdogConfig           =    0x40000110,
-    HvSyntheticMsrSWatchdogCount            =    0x40000111,
-    HvSyntheticMsrSWatchdogStatus           =    0x40000112,
-    HvSyntheticMsrSTimeUnhaltedTimerConfig  =    0x40000114,
-    HvSyntheticMsrSTimeUnhaltedTimerCount   =    0x40000115,
-    HvSyntheticMsrMemoryZeroingControl      =    0x40000116,
-
-} HV_ARM64_SYNTHETIC_MSR, *PHV_ARM64_SYNTHETIC_MSR;
-
-#endif
-
-#if defined(MDE_CPU_X64)
-
 //
 // Declare the MSR used to identify the guest OS.
 //
@@ -265,5 +196,20 @@ typedef union _HV_X64_MSR_HYPERCALL_CONTENTS
         UINT64 GpaPageNumber        : 52;
     };
 } HV_X64_MSR_HYPERCALL_CONTENTS, *PHV_X64_MSR_HYPERCALL_CONTENTS;
+
+#define HV_CRASH_MAXIMUM_MESSAGE_SIZE     4096ull
+
+typedef union _HV_CRASH_CTL_REG_CONTENTS
+{
+    UINT64 AsUINT64;
+    struct
+    {
+        UINT64 Reserved      : 58; // Reserved bits
+        UINT64 PreOSId       : 3;  // Crash occurred in the preOS environment
+        UINT64 NoCrashDump   : 1;  // Crash dump will not be captured
+        UINT64 CrashMessage  : 1;  // P3 is the PA of the message, P4 is the length in bytes
+        UINT64 CrashNotify   : 1;  // Log contents of crash parameter system registers
+    };
+} HV_CRASH_CTL_REG_CONTENTS, *PHV_CRASH_CTL_REG_CONTENTS;
 
 #pragma warning(default : 4201)

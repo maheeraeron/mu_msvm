@@ -409,44 +409,24 @@ Return Value:
     //
     // Validate the response received from the host before proceeding.
     //
-    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        BufferLength >= VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1,
-        STORVSC,
-        __LINE__,
-        0);
-    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        packet->Operation == VStorOperationCompleteIo,
-        STORVSC,
-        __LINE__,
-        0);
-    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-        packet->VmSrb.SenseInfoExLength <= VMSCSI_SENSE_BUFFER_SIZE,
-        STORVSC,
-        __LINE__,
-        0);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(BufferLength >= VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(packet->Operation == VStorOperationCompleteIo);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(packet->VmSrb.SenseInfoExLength <= VMSCSI_SENSE_BUFFER_SIZE);
 
     switch (request->ScsiRequest->DataDirection)
     {
     case EFI_EXT_SCSI_DATA_DIRECTION_READ:
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-            packet->VmSrb.DataTransferLength <= request->ScsiRequest->InTransferLength,
-            STORVSC,
-            __LINE__,
-            0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(packet->VmSrb.DataTransferLength <= request->ScsiRequest->InTransferLength);
         break;
 
     case EFI_EXT_SCSI_DATA_DIRECTION_WRITE:
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(
-            packet->VmSrb.DataTransferLength <= request->ScsiRequest->OutTransferLength,
-            STORVSC,
-            __LINE__,
-            0)
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(packet->VmSrb.DataTransferLength <= request->ScsiRequest->OutTransferLength)
         break;
 
     case EFI_EXT_SCSI_DATA_DIRECTION_BIDIRECTIONAL:
         // Bidirectional data transfer is not supported.
     default:
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(STORVSC, __LINE__, 0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
 
     }
 
@@ -1098,7 +1078,7 @@ Return Value:
     //
     if (rawListLength > STORVSC_MAX_LUN_TRANSFER_LENGTH)
     {
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(STORVSC, __LINE__, 0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     for (index = 0; index < rawListLength / sizeof(rawList->Lun[0]); index++)
@@ -1113,7 +1093,7 @@ Return Value:
             goto Cleanup;
         }
 
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(lun < SCSI_MAXIMUM_LUNS_PER_TARGET, STORVSC, __LINE__, 0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(lun < SCSI_MAXIMUM_LUNS_PER_TARGET);
 
         targetLunEntry->Lun = (UCHAR)lun;
         targetLunEntry->TargetId = Target;

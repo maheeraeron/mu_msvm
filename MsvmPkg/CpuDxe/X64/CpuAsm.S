@@ -1,4 +1,4 @@
-#      TITLE   CpuAsm.S: 
+#      TITLE   CpuAsm.S:
 
 ;++
 ;
@@ -30,7 +30,7 @@ ExternalVectorTablePtr:
 ASM_GLOBAL ASM_PFX(InitializeExternalVectorTablePtr)
 ASM_PFX(InitializeExternalVectorTablePtr):
     lea     ExternalVectorTablePtr(%rip), %rax # save vector number
-    mov     %rcx, (%rax) 
+    mov     %rcx, (%rax)
     ret
 
 
@@ -42,9 +42,9 @@ ASM_PFX(InitializeExternalVectorTablePtr):
 #------------------------------------------------------------------------------
 ASM_GLOBAL ASM_PFX(SetCodeSelector)
 ASM_PFX(SetCodeSelector):
-    subq    $0x10, %rsp 
-    leaq    L_setCodeSelectorLongJump(%rip), %rax 
-    movq    %rax, (%rsp) 
+    subq    $0x10, %rsp
+    leaq    L_setCodeSelectorLongJump(%rip), %rax
+    movq    %rax, (%rsp)
     movw    %cx, 4(%rsp)
     .byte   0xFF, 0x2C, 0x24     # jmp (%rsp) note:fword jmp
 L_setCodeSelectorLongJump:
@@ -67,12 +67,12 @@ ASM_PFX(SetDataSelectors):
     ret
 
 #---------------------------------------;
-# CommonInterruptEntry                  ;
+# CommonInterruptEntryMsvm                  ;
 #---------------------------------------;
 # The follow algorithm is used for the common interrupt routine.
 
-ASM_GLOBAL ASM_PFX(CommonInterruptEntry)
-ASM_PFX(CommonInterruptEntry):
+ASM_GLOBAL ASM_PFX(CommonInterruptEntryMsvm)
+ASM_PFX(CommonInterruptEntryMsvm):
     cli
     #
     # All interrupt handlers are invoked through interrupt gates, so
@@ -82,14 +82,14 @@ ASM_PFX(CommonInterruptEntry):
     # Calculate vector number
     #
     xchgq   (%rsp), %rcx # get the return address of call, actually, it is the address of vector number.
-    movzwl  (%rcx), %ecx 
+    movzwl  (%rcx), %ecx
     cmp     $32, %ecx          # Intel reserved vector for exceptions?
     jae     NoErrorCode
     pushq   %rax
     leaq    ASM_PFX(mErrorCodeFlag)(%rip), %rax
-    bt      %ecx, (%rax) 
+    bt      %ecx, (%rax)
     popq    %rax
-    jc      CommonInterruptEntry_al_0000
+    jc      CommonInterruptEntryMsvm_al_0000
 
 NoErrorCode:
 
@@ -99,7 +99,7 @@ NoErrorCode:
     #
     pushq   (%rsp)
     movq    $0, 8(%rsp)
-CommonInterruptEntry_al_0000:
+CommonInterruptEntryMsvm_al_0000:
     pushq   %rbp
     movq    %rsp, %rbp
 
@@ -200,16 +200,16 @@ CommonInterruptEntry_al_0000:
     movq    %cr8, %rax
     pushq   %rax
     movq    %cr4, %rax
-    orq     $0x208, %rax 
-    movq    %rax, %cr4 
+    orq     $0x208, %rax
+    movq    %rax, %cr4
     pushq   %rax
-    mov     %cr3, %rax 
+    mov     %cr3, %rax
     pushq   %rax
-    mov     %cr2, %rax 
+    mov     %cr2, %rax
     pushq   %rax
     xorq    %rax, %rax
     pushq   %rax
-    mov     %cr0, %rax 
+    mov     %cr0, %rax
     pushq   %rax
 
 #; UINT64  Dr0, Dr1, Dr2, Dr3, Dr6, Dr7;
@@ -253,7 +253,7 @@ CommonInterruptEntry_al_0000:
     # Per X64 calling convention, allocate maximum parameter stack space
     # and make sure RSP is 16-byte aligned
     #
-    subq    $40, %rsp 
+    subq    $40, %rsp
     call    *%rax
     addq    $40, %rsp
 

@@ -61,7 +61,7 @@ LEAF_END BdBreakPointWithStatus, _TEXT$00
 ;++
 ;
 ; VOID
-; TripleFault(
+; BdTripleFault(
 ;    __in    UINT64 Rax,
 ;    __in    UINT64 Rbx,
 ;    __in    UINT64 Rcx,
@@ -92,7 +92,7 @@ LEAF_END BdBreakPointWithStatus, _TEXT$00
 ;
 ;--
 
-LEAF_ENTRY      TripleFault, _TEXT$00
+LEAF_ENTRY      BdTripleFault, _TEXT$00
 
                 mov     rax, rcx
                 mov     rbx, rdx
@@ -110,7 +110,7 @@ EternalUD:
 
                 jmp     EternalUD
 
-LEAF_END        TripleFault, _TEXT$00
+LEAF_END        BdTripleFault, _TEXT$00
 
 end
 

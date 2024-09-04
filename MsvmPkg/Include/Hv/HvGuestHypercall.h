@@ -13,6 +13,22 @@
 #pragma warning(disable : 4201)
 
 //
+// Define a 128bit type.
+//
+typedef union __declspec(align(16)) _HV_UINT128
+{
+    struct
+    {
+        UINT64  Low64;
+        UINT64  High64;
+    };
+
+    UINT32  Dword[4];
+
+    UINT8 AsUINT8[16];
+} HV_UINT128, *PHV_UINT128;
+
+//
 // Define an alignment for structures passed via hypercall.
 //
 #define HV_CALL_ALIGNMENT   8
@@ -1462,6 +1478,15 @@ typedef enum _HV_REGISTER_NAME
 #endif
 
 } HV_REGISTER_NAME, *PHV_REGISTER_NAME;
+
+typedef union _HV_REGISTER_VALUE
+{
+    HV_UINT128                                  Reg128;
+    UINT64                                      Reg64;
+    UINT32                                      Reg32;
+    UINT16                                      Reg16;
+    UINT8                                       Reg8;
+} HV_REGISTER_VALUE, *PHV_REGISTER_VALUE;
 
 //
 // Definition for HvStartVirtualProcessor hypercall input structure.

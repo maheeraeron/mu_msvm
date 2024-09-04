@@ -12,7 +12,7 @@
 #include <Protocol/DevicePath.h>
 #include <Protocol/EfiHv.h>
 #include <Protocol/Vmbus.h>
-#include <FailFast.h>
+#include <Library/CrashLib.h>
 
 //
 // Disable warnings for nameless unions/structs.
@@ -25,8 +25,6 @@
 //
 #define MAXIMUM_SYNIC_MESSAGE_BYTES 240
 #define MAX_USER_DEFINED_BYTES 120
-
-#define VMBUS 0x564d425553 // "VMBUS"
 
 typedef struct _GPA_RANGE
 {

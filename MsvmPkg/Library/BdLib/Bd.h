@@ -335,7 +335,7 @@ BdBreakPointWithStatus(
     );
 
 VOID
-TripleFault(
+BdTripleFault(
     __in    UINTN   Rax,
     __in    UINTN   Rbx,
     __in    UINTN   Rcx,

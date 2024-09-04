@@ -30,9 +30,11 @@ Abstract:
 #include <Library/DebugLib.h>
 #include <Library/MtrrLib.h>
 #include <Library/LocalApicLib.h>
+#include <Library/UefiLib.h>
+#include <Library/CpuExceptionHandlerLib.h>
 #include <Guid/IdleLoopEvent.h>
 #include <IsolationTypes.h>   // MS_HYP_CHANGE
-#include <FailFast.h>  // MS_HYP_CHANGE
+#include <Library/CrashLib.h>  // MS_HYP_CHANGE
 
 #if defined(MDE_CPU_X64)
 
@@ -41,12 +43,7 @@ Abstract:
 
 #endif
 
-
-#define INTERRUPT_VECTOR_NUMBER   256 // MS_HYP_CHANGE
-
-// MU_CHANGE START 
-
-#define CPU 0x435055 // "CPU"
+// MU_CHANGE START
 
 #define HEAP_GUARD_NONSTOP_MODE  FALSE
 

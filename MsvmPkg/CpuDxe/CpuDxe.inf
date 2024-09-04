@@ -30,9 +30,10 @@
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
+  CpuExceptionHandlerLib
   CpuLib
+  CrashLib
   DebugLib
-  FailFastLib
   DxeServicesTableLib
   MemoryAllocationLib
   MtrrLib
@@ -40,7 +41,7 @@
   UefiDriverEntryPoint
   LocalApicLib
   IsolationLib    ## MS_HYP_CHANGE
-  
+
 [Sources]
   CpuDxe.c
   CpuDxe.h
@@ -62,8 +63,9 @@
   gEfiHvProtocolGuid                            ## MS_HYP_CHANGE
 
 [Guids]
-  gIdleLoopEventGuid                            ## CONSUMES ## GUID ## MS_HYP_CHANGE
-  gEfiEndOfDxeEventGroupGuid                    ## CONSUMES ## GUID ## MS_HYP_CHANGE
+  gIdleLoopEventGuid                            ## CONSUMES           ## Event
+  gEfiVectorHandoffTableGuid                    ## SOMETIMES_CONSUMES ## SystemTable
+  gEfiEndOfDxeEventGroupGuid                    ## CONSUMES ## GUID   ## MS_HYP_CHANGE
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
@@ -71,10 +73,10 @@
   # gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
   # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
   # gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                      ## CONSUMES
   gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress                    ## CONSUMES
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount                              ## CONSUMES
   # MU_CHANGE END
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                      ## CONSUMES
 
 [Depex]
   TRUE

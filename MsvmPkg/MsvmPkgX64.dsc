@@ -69,9 +69,9 @@
   BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
+  CcExitLib|UefiCpuPkg/Library/CcExitLibNull/CcExitLibNull.inf
+  CrashLib|MsvmPkg/Library/CrashLib/CrashLib.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
-  CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
-  FailFastLib|MsvmPkg/Library/FailFastLib/FailFastLib.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
@@ -212,6 +212,7 @@
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/PeiHvHypercallLib.inf
   PcdDatabaseLoaderLib|MdeModulePkg/Library/PcdDatabaseLoaderLib/Pei/PcdDatabaseLoaderLibPei.inf  # MU_CHANGE
   RngLib|MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
+  CpuExceptionHandlerLib|MsvmPkg/Library/CpuExceptionHandlerLib/PeiCpuExceptionHandlerLib.inf
 
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
 
@@ -226,6 +227,7 @@
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   BootEventLogLib|MsvmPkg/Library/BootEventLogLib/BootEventLogLib.inf
   ConfigLib|MsvmPkg/Library/ConfigLib/ConfigLib.inf
+  CpuExceptionHandlerLib|MsvmPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
 !if $(DEBUGLIB_ADVANCED) == 0
   DebugAgentLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
   DebugLib|MsvmPkg/Library/BdDebugLib/BdDebugLib.inf

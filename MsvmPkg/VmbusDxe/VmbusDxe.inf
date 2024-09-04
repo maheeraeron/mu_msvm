@@ -29,8 +29,8 @@
 [LibraryClasses]
     BaseLib
     BaseMemoryLib
+    CrashLib
     DebugLib
-    FailFastLib
     DevicePathLib
     IsolationLib
     MemoryAllocationLib

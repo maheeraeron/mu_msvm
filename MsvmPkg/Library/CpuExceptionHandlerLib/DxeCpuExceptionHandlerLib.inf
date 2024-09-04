@@ -1,0 +1,69 @@
+## @file
+#  CPU Exception Handler library instance for DXE modules.
+#
+#  Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | c1dad0459d94c5a230f50aaf2eadfb8d | 2024-08-23T22-28-52 | 1ab6556d76c73af2ca74a855504e3f6c1b9ab264
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DxeCpuExceptionHandlerLib
+  MODULE_UNI_FILE                = DxeCpuExceptionHandlerLib.uni
+  FILE_GUID                      = B6E9835A-EDCF-4748-98A8-27D3C722E02D
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.1
+  LIBRARY_CLASS                  = CpuExceptionHandlerLib|DXE_CORE DXE_DRIVER UEFI_APPLICATION
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+[Sources.Ia32]
+  Ia32/ExceptionHandlerAsm.nasm
+  Ia32/ExceptionTssEntryAsm.nasm
+  Ia32/ArchExceptionHandler.c
+  Ia32/ArchInterruptDefs.h
+
+[Sources.X64]
+  X64/Xcode5ExceptionHandlerAsm.nasm
+  X64/ArchExceptionHandler.c
+  X64/ArchInterruptDefs.h
+
+[Sources.common]
+  CpuExceptionCommon.h
+  CpuExceptionCommon.c
+  PeiDxeSmmCpuException.c
+  DxeException.c
+
+[Pcd]
+  # MU_CHANGE START Remove memory protection PCD references
+  # gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard
+  # MU_CHANGE END
+  gUefiCpuPkgTokenSpaceGuid.PcdCpuStackSwitchExceptionList
+  gUefiCpuPkgTokenSpaceGuid.PcdCpuKnownGoodStackSize
+
+[FeaturePcd]
+  gUefiCpuPkgTokenSpaceGuid.PcdCpuSmmStackGuard                    ## CONSUMES
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  MsvmPkg/MsvmPkg.dec           ## MS_HYP_CHANGE
+
+[LibraryClasses]
+  BaseLib
+  SerialPortLib
+  PrintLib
+  SynchronizationLib
+  LocalApicLib
+  PeCoffGetEntryPointLib
+  MemoryAllocationLib
+  DebugLib
+  CcExitLib
+  CrashLib                      ## MS_HYP_CHANGE
+  DxeMemoryProtectionHobLib ## MU_CHANGE

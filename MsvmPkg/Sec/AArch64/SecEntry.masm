@@ -9,6 +9,7 @@
     AREA    |.text|,ALIGN=3,CODE,READONLY
 
     EXPORT  _ModuleEntryPoint
+    EXPORT  SetGuestOsId
     IMPORT  SecStartupWithStack
 
 StartupAddr
@@ -53,14 +54,12 @@ HvInvokeDebugger ENDP
 
 SetGuestOsId PROC
 
-    // *untested*
-
     ldr     x0, =0x0000000100010051     // hypercall input (rep 1 argument, fast, HvCallSetVpRegisters)
     ldr     x1, =0xFFFFFFFFFFFFFFFF     // partition id (self)
     ldr     x2, =0x00000000FFFFFFFE     // pad + vp index (-2 == self)
     ldr     x3, =0x0000000000090002     // pad + RegisterName == HvRegisterGuestOsId
     mov     x4, #0                      // pad
-    mov     x5, #1                      // RegisterValue.Low == HvGuestOsMicrosoftMSDOS
+    mov     x5, #0x0001000000000000     // RegisterValue.Low == HvGuestOsVendorMicrosoft | HvGuestOsMicrosoftUndefined
     mov     x6, #0                      // RegisterValue.High
     hvc     #1
     and     x0, x0, #0xFFFF             // isolate result

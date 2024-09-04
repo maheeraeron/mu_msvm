@@ -9,6 +9,7 @@
 
     EXPORT AsmHyperCall
     EXPORT AsmGetVpRegister64
+    EXPORT AsmGetVpRegister
     EXPORT AsmSetVpRegister64
 
 ARM64_HYPERCALL_IMM16   equ 1
@@ -53,6 +54,34 @@ AsmGetVpRegister64 PROC
 
     ret
 AsmGetVpRegister64 ENDP
+
+//
+// HV_STATUS
+// AsmGetVpRegister(
+//     IN  UINT32               RegisterIndex,
+//     OUT HV_REGISTER_VALUE    *RegisterBuffer
+// );
+//
+AsmGetVpRegister PROC
+
+    mov w3, w0                      // IN  InputList[0].RegisterName0, padding, clear high bits
+    stp x0, x1, [sp, #-0x10]!       // Push RegisterIndex, RegisterBuffer onto stack
+
+    ldr x0, =0x0000000100010050     // hypercall input (fast rep call 1 argument HvCallGetVpRegisters)
+    ldr x1, =0xFFFFFFFFFFFFFFFF     // partition id (self)
+    mov x2, #0xFFFFFFFE             // vp index (self), padding
+    mov x4, #0                      // OUT padding to 16 byte alignment
+    mov x5, #0                      // OUT InputList[0].RegisterValue.Low
+    mov x6, #0                      // OUT InputList[0].RegisterValue.High
+
+    hvc #ARM64_HYPERCALL_IMM16
+
+    ldp x2, x1, [sp], #0x10         // Pop RegisterBuffer into x1
+    stp x15, x16, [x1], #0x10       // Store 128 bits into *RegisterBuffer
+    and x0, x0, #0xFFFF
+
+    ret
+AsmGetVpRegister ENDP
 
 //
 // HV_STATUS

@@ -16,8 +16,6 @@
 #include <Library/DebugLib.h>
 #include <Library/CrashDumpAgentLib.h>
 
-#define HV 0x4856 // "HV"
-
 BOOLEAN mParavisorPresent = FALSE;
 UINT32 mIsolationType = UefiIsolationTypeNone;
 UINT32 mSharedGpaBit = 0;
@@ -98,7 +96,7 @@ Return Value:
     if (EFI_ERROR(status))
     {
         DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdIsolationArchitecture::0x%x \n", status));
-        PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
+        PEI_FAIL_FAST_IF_FAILED(status);
     }
 
     if (cpuidResult.MsHvIsolationConfiguration.ParavisorPresent)
@@ -108,7 +106,7 @@ Return Value:
         if (EFI_ERROR(status))
         {
             DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdIsolationParavisorPresent::0x%x \n", status));
-            PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
+            PEI_FAIL_FAST_IF_FAILED(status);
         }
     }
 
@@ -124,7 +122,7 @@ Return Value:
         }
         else if (cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits > (virtualAddressBits - 1))
         {
-            PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(cpuidResult.MsHvIsolationConfiguration.SharedGpaBoundaryBits);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         DEBUG((DEBUG_VERBOSE,
@@ -143,7 +141,7 @@ Return Value:
         if (EFI_ERROR(status))
         {
             DEBUG((DEBUG_ERROR, "Failed to set the PCD PcdIsolationSharedGpaBoundary::0x%x \n", status));
-            PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
+            PEI_FAIL_FAST_IF_FAILED(status);
         }
     }
 
@@ -193,7 +191,7 @@ Return Value:
         if (EFI_ERROR(status))
         {
             DEBUG((DEBUG_ERROR, "Failed to set the SVSM calling area address::0x%x \n", status));
-            PEI_FAIL_FAST_IF_FAILED(status, CRITICAL_INITIALIZATION_FAILURE, HV);
+            PEI_FAIL_FAST_IF_FAILED(status);
         }
     }
     else

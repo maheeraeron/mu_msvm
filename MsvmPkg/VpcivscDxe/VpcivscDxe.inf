@@ -17,8 +17,8 @@
 
 [LibraryClasses]
     UefiDriverEntryPoint
+    CrashLib
     DebugLib
-    FailFastLib
     UefiLib
     BaseLib
     BaseMemoryLib

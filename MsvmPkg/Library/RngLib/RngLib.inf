@@ -33,8 +33,8 @@
 
 [LibraryClasses]
   BaseLib
+  CrashLib
   DebugLib
-  FailFastLib
   DebugLib ## MS_HYP_CHANGE
   UefiBootServicesTableLib ## MS_HYP_CHANGE
   BiosDeviceLib ## MS_HYP_CHANGE

@@ -28,6 +28,12 @@ AsmGetVpRegister64(
     );
 
 HV_STATUS
+AsmGetVpRegister(
+        UINT32              RegisterIndex,
+    OUT HV_REGISTER_VALUE  *RegisterBuffer
+    );
+
+HV_STATUS
 AsmSetVpRegister64(
     UINT32  RegisterIndex,
     UINT64  RegisterBuffer

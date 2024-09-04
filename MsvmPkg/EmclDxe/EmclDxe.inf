@@ -15,8 +15,8 @@
     UefiBootServicesTableLib
     UefiLib
     BaseLib
+    CrashLib
     DebugLib
-    FailFastLib
     UefiDriverEntryPoint
     MemoryAllocationLib
     DebugLib

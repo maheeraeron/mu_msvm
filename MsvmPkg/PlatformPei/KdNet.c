@@ -31,14 +31,6 @@ Abstract:
 BOOLEAN UseKdNetDebugger;
 DEBUG_NET_PARAMETERS KdNetParameters;
 
-#define KDNET 0x4B444E4554 // "KDNET"
-
-#define KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
-    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(KDNET);
-#define KDNET_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
-    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, KDNET)
-
-
 #if defined(MDE_CPU_X64)
 
 EFI_STATUS
@@ -85,7 +77,7 @@ AllocateHostVisiblePages(
 
     if (EFI_ERROR(status))
     {
-        KDNET_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     *Allocation += PcdGet64(PcdIsolationSharedGpaBoundary);

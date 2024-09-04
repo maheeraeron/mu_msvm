@@ -14,8 +14,13 @@ Abstract:
 
 #include "CpuDxe.h"
 #include "CpuPageTable.h"
+#include <Library/DeviceStateLib.h> // MU_CHANGE
+#define CPU_INTERRUPT_NUM  256
 
 // MSCHANGE BEGIN Copied from MU_BASECORE 1808 since these definitions have been removed from public release
+#include <Library/PrintLib.h>
+#include <Hv/HvGuestMsr.h>
+
 //
 // Below macro is deprecated, and should not be used.
 //
@@ -62,8 +67,8 @@ EFI_EVENT   mEndOfDxeEvent;
 
 
 
-IA32_IDT_GATE_DESCRIPTOR  gIdtTable[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_HYP_CHANGE
-IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[INTERRUPT_VECTOR_NUMBER] = { 0 }; // MS_HYP_CHANGE
+IA32_IDT_GATE_DESCRIPTOR  gIdtTable[CPU_INTERRUPT_NUM] = { 0 }; // MS_HYP_CHANGE
+IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[CPU_INTERRUPT_NUM] = { 0 }; // MS_HYP_CHANGE
 
 EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100]; // MS_HYP_CHANGE
 EFI_HANDLE                mCpuHandle = NULL;
@@ -195,72 +200,93 @@ SetInterruptDescriptorTableHandlerAddress (
 **/
 VOID
 EFIAPI
-CommonExceptionHandler (
+CommonExceptionHandlerMsvm (
   IN EFI_EXCEPTION_TYPE   InterruptType,
   IN EFI_SYSTEM_CONTEXT   SystemContext
   )
 {
 #if defined (MDE_CPU_X64)
-  DEBUG ((
-    EFI_D_ERROR,
+  CHAR8 buffer[HV_CRASH_MAXIMUM_MESSAGE_SIZE];
+  UINTN cursor = 0;
+
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "!!!! X64 Exception Type - %016lx !!!!\n",
     (UINT64)InterruptType
-    ));
+    );
+
   if ((mErrorCodeFlag & (1 << InterruptType)) != 0) {
-    DEBUG ((
-      EFI_D_ERROR,
+    cursor += AsciiSPrint (
+      &buffer[cursor],
+      (sizeof buffer) - (sizeof(buffer[0]) * cursor),
       "ExceptionData - %016lx\n",
       SystemContext.SystemContextX64->ExceptionData
-      ));
+      );
   }
-  DEBUG ((
-    EFI_D_ERROR,
+
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "RIP - %016lx, RFL - %016lx\n",
     SystemContext.SystemContextX64->Rip,
     SystemContext.SystemContextX64->Rflags
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
+    "ExceptionData - %016lx\n",
+    SystemContext.SystemContextX64->ExceptionData
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "RAX - %016lx, RCX - %016lx, RDX - %016lx\n",
     SystemContext.SystemContextX64->Rax,
     SystemContext.SystemContextX64->Rcx,
     SystemContext.SystemContextX64->Rdx
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "RBX - %016lx, RSP - %016lx, RBP - %016lx\n",
     SystemContext.SystemContextX64->Rbx,
     SystemContext.SystemContextX64->Rsp,
     SystemContext.SystemContextX64->Rbp
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "RSI - %016lx, RDI - %016lx\n",
     SystemContext.SystemContextX64->Rsi,
     SystemContext.SystemContextX64->Rdi
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "R8  - %016lx, R9  - %016lx, R10 - %016lx\n",
     SystemContext.SystemContextX64->R8,
     SystemContext.SystemContextX64->R9,
     SystemContext.SystemContextX64->R10
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "R11 - %016lx, R12 - %016lx, R13 - %016lx\n",
     SystemContext.SystemContextX64->R11,
     SystemContext.SystemContextX64->R12,
     SystemContext.SystemContextX64->R13
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "R14 - %016lx, R15 - %016lx\n",
     SystemContext.SystemContextX64->R14,
     SystemContext.SystemContextX64->R15
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint (
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "CS  - %04lx, DS  - %04lx, ES  - %04lx, FS  - %04lx, GS  - %04lx, SS  - %04lx\n",
     SystemContext.SystemContextX64->Cs,
     SystemContext.SystemContextX64->Ds,
@@ -268,60 +294,72 @@ CommonExceptionHandler (
     SystemContext.SystemContextX64->Fs,
     SystemContext.SystemContextX64->Gs,
     SystemContext.SystemContextX64->Ss
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "GDT - %016lx; %04lx,                   IDT - %016lx; %04lx\n",
     SystemContext.SystemContextX64->Gdtr[0],
     SystemContext.SystemContextX64->Gdtr[1],
     SystemContext.SystemContextX64->Idtr[0],
     SystemContext.SystemContextX64->Idtr[1]
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "LDT - %016lx, TR  - %016lx\n",
     SystemContext.SystemContextX64->Ldtr,
     SystemContext.SystemContextX64->Tr
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "CR0 - %016lx, CR2 - %016lx, CR3 - %016lx\n",
     SystemContext.SystemContextX64->Cr0,
     SystemContext.SystemContextX64->Cr2,
     SystemContext.SystemContextX64->Cr3
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "CR4 - %016lx, CR8 - %016lx\n",
     SystemContext.SystemContextX64->Cr4,
     SystemContext.SystemContextX64->Cr8
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "DR0 - %016lx, DR1 - %016lx, DR2 - %016lx\n",
     SystemContext.SystemContextX64->Dr0,
     SystemContext.SystemContextX64->Dr1,
     SystemContext.SystemContextX64->Dr2
-    ));
-  DEBUG ((
-    EFI_D_ERROR,
+    );
+  cursor += AsciiSPrint(
+    &buffer[cursor],
+    (sizeof buffer) - (sizeof(buffer[0]) * cursor),
     "DR3 - %016lx, DR6 - %016lx, DR7 - %016lx\n",
     SystemContext.SystemContextX64->Dr3,
     SystemContext.SystemContextX64->Dr6,
     SystemContext.SystemContextX64->Dr7
-    ));
+    );
+
+  for (UINT32 index = 0; index < cursor; index += 0x100) // MAX_DEBUG_MESSAGE_LENGTH
+  {
+    DEBUG ((EFI_D_ERROR, "%a", &buffer[index]));
+  }
+
 #else
 #error CPU type not supported for exception information dump!
 #endif
 
-  //
-  // Hang the system with CpuSleep so the processor will enter a lower power
-  // state.
-  //
-  while (TRUE) {
-    CpuSleep ();
-  };
+  FailFast(
+    InterruptType,
+    SystemContext.SystemContextX64->ExceptionData,
+    0,
+    (UINTN)&buffer,
+    cursor);
 }
+
 // MS_HYP_CHANGE END
 
 /**
@@ -478,6 +516,9 @@ CpuRegisterInterruptHandler (
   )
 {
   // MS_HYP_CHANGE BEGIN
+#if defined(DEBUGLIB_ADVANCED)
+  return RegisterCpuInterruptHandler (InterruptType, InterruptHandler);
+#else
   if (InterruptType < 0 || InterruptType > 0xff) {
     return EFI_UNSUPPORTED;
   }
@@ -501,6 +542,7 @@ CpuRegisterInterruptHandler (
 
   ExternalVectorTable[InterruptType] = InterruptHandler;
   return EFI_SUCCESS;
+#endif
   // MS_HYP_CHANGE END
 }
 
@@ -603,7 +645,7 @@ CpuSetMemoryAttributes (
   MemoryAttributes = Attributes & MEMORY_ATTRIBUTE_MASK;
 
   if (Attributes != (CacheAttributes | MemoryAttributes)) {
-    DEBUG ((DEBUG_ERROR, "Invalid attributes.\n"));  
+    DEBUG ((DEBUG_ERROR, "Invalid attributes.\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -643,7 +685,7 @@ CpuSetMemoryAttributes (
       break;
 
     default:
-      DEBUG ((DEBUG_ERROR, "Invalid cache attributes.\n"));    
+      DEBUG ((DEBUG_ERROR, "Invalid cache attributes.\n"));
       return EFI_INVALID_PARAMETER;
     }
 
@@ -1144,6 +1186,43 @@ InitInterruptDescriptorTable (
   VOID
   )
 {
+#if defined(DEBUGLIB_ADVANCED)
+  EFI_STATUS                Status;
+  EFI_VECTOR_HANDOFF_INFO   *VectorInfoList;
+  EFI_VECTOR_HANDOFF_INFO   *VectorInfo;
+  IA32_IDT_GATE_DESCRIPTOR  *IdtTable;
+  IA32_DESCRIPTOR           IdtDescriptor;
+  UINTN                     IdtEntryCount;
+
+  VectorInfo = NULL;
+  Status     = EfiGetSystemConfigurationTable (&gEfiVectorHandoffTableGuid, (VOID **)&VectorInfoList);
+  if ((Status == EFI_SUCCESS) && (VectorInfoList != NULL)) {
+    VectorInfo = VectorInfoList;
+  }
+
+  AsmReadIdtr (&IdtDescriptor);
+  IdtEntryCount = (IdtDescriptor.Limit + 1) / sizeof (IA32_IDT_GATE_DESCRIPTOR);
+  if (IdtEntryCount < CPU_INTERRUPT_NUM) {
+    //
+    // Increase Interrupt Descriptor Table and Copy the old IDT table in
+    //
+    IdtTable = gIdtTable; // MS_HYP_CHANGE
+    ASSERT (IdtTable != NULL);
+    CopyMem (IdtTable, (VOID *)IdtDescriptor.Base, sizeof (IA32_IDT_GATE_DESCRIPTOR) * IdtEntryCount);
+
+    //
+    // Load Interrupt Descriptor Table
+    //
+    IdtDescriptor.Base  = (UINTN)IdtTable;
+    IdtDescriptor.Limit = (UINT16)(sizeof (IA32_IDT_GATE_DESCRIPTOR) * CPU_INTERRUPT_NUM - 1);
+    AsmWriteIdtr (&IdtDescriptor);
+  }
+
+  Status = InitializeCpuExceptionHandlers (VectorInfo);
+  ASSERT_EFI_ERROR (Status);
+
+#else
+
   EFI_STATUS                Status;
   IA32_DESCRIPTOR           OldIdtPtr;
   IA32_IDT_GATE_DESCRIPTOR  *OldIdt;
@@ -1177,7 +1256,7 @@ InitInterruptDescriptorTable (
   // Intialize IDT
   //
   CurrentCs = AsmReadCs();
-  for (Index = 0; Index < INTERRUPT_VECTOR_NUMBER; Index ++) {
+  for (Index = 0; Index < CPU_INTERRUPT_NUM; Index ++) {
 
     //
     // If the old IDT had a handler for this interrupt, then
@@ -1212,10 +1291,12 @@ InitInterruptDescriptorTable (
   //
   for (Index = 0; Index < 32; Index++) {
     if (gIdtTable[Index].Bits.GateType == 0) {
-      Status = CpuRegisterInterruptHandler (&gCpu, Index, CommonExceptionHandler);
+      Status = CpuRegisterInterruptHandler (&gCpu, Index, CommonExceptionHandlerMsvm);
       ASSERT_EFI_ERROR (Status);
     }
   }
+
+#endif
 }
 
 #if defined(MDE_CPU_X64)
@@ -1244,7 +1325,7 @@ EndOfDxeCallback (
   EFI_PHYSICAL_ADDRESS PageTableBase = 0;
   TDX_CONTEXT *TdxApStartContext;
   UINT32 ApWaitInMailboxFunctionSize = 0;
- 
+
   ApMailbox = (MP_WAKEUP_MAILBOX *) PcdGet64(PcdAcpiMadtMpMailBoxAddress);
   ProcessorCount = PcdGet32(PcdProcessorCount);
 
@@ -1259,7 +1340,7 @@ EndOfDxeCallback (
   if (EFI_ERROR(Status))
   {
       DEBUG((EFI_D_ERROR, "%a: Failed to locate the protocol.\n", __FUNCTION__));
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, CPU, __LINE__, Status);
+      FAIL_FAST_INITIALIZATION_FAILURE(Status);
   }
 
   //
@@ -1275,7 +1356,7 @@ EndOfDxeCallback (
   if (PageTableBase == 0)
   {
       DEBUG((EFI_D_ERROR, "%a: Failed to initialize the page tables\n", __FUNCTION__));
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, CPU, __LINE__, EFI_OUT_OF_RESOURCES);
+      FAIL_FAST_INITIALIZATION_FAILURE(EFI_OUT_OF_RESOURCES);
   }
 
   CopyMem (
@@ -1304,7 +1385,7 @@ EndOfDxeCallback (
 
     //
     // Once startGate is setup, the Hypervisor could start the VP. All the context setup
-    // should be completed before setting the startGate. After setting the startGate, the 
+    // should be completed before setting the startGate. After setting the startGate, the
     // context should not be modified until the AP has entered the mailbox wait.
     //
     TdxApStartContext->r9 = VpIndex;
@@ -1313,7 +1394,7 @@ EndOfDxeCallback (
 
     //
     // Wake up the processor so that it can start executing the AP wait loop.
-    //    
+    //
 
     Status = mHv->StartApplicationProcessor(
                     mHv,
@@ -1323,12 +1404,12 @@ EndOfDxeCallback (
     if (EFI_ERROR(Status))
     {
       DEBUG((EFI_D_ERROR, "%a: Failed to wakeup AP : %u\n", __FUNCTION__, VpIndex));
-      FAIL_FAST(CRITICAL_INITIALIZATION_FAILURE, CPU, __LINE__, Status);
+      FAIL_FAST_INITIALIZATION_FAILURE(Status);
     }
 
     //
     // Wait for this AP to enter the wait loop before moving on to the next AP.
-    // 
+    //
 
     DEBUG((EFI_D_INFO, "Waiting for AP(%u) to wait the mailbox. \n", VpIndex));
 

@@ -188,7 +188,7 @@ VpciChannelReceivePacketCallback(
     if (BufferLength < sizeof(*header))
     {
         DEBUG((DEBUG_ERROR, "Recv VPCI channel packet less than header size!\n"));
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, 0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     // See VpciEvtChannelProcessPacket fdo.c
@@ -202,26 +202,26 @@ VpciChannelReceivePacketCallback(
         if (BufferLength < (UINT32) FIELD_OFFSET(VPCI_QUERY_BUS_RELATIONS, Devices))
         {
             DEBUG((DEBUG_ERROR, "Recv VPCI channel packet very short\n"));
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, 0);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
         PVPCI_QUERY_BUS_RELATIONS busRelationsPacket = Buffer;
 
         if (busRelationsPacket->DeviceCount > VPCI_MAX_DEVICES_PER_BUS)
         {
-            DEBUG((DEBUG_ERROR, "Recv VPCI bus relations packet with too many devices\n"));
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, busRelationsPacket->DeviceCount);  
+            DEBUG((DEBUG_ERROR, "Recv VPCI bus relations packet with too many devices (%d)\n", busRelationsPacket->DeviceCount));
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         if (busRelationsPacket->DeviceCount == 0)
         {
             DEBUG((DEBUG_ERROR, "vpci child device list empty!\n"));
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, busRelationsPacket->DeviceCount);  
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         if (busRelationsPacket->Devices == NULL)
         {
             DEBUG((DEBUG_ERROR, "vpci child device list empty!\n"));
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, busRelationsPacket->DeviceCount);  
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         DEBUG((DEBUG_VPCI_INFO, "Recv VpciMsgBusRelations packet, number of child devices 0x%x\n", busRelationsPacket->Devices));
@@ -230,8 +230,8 @@ VpciChannelReceivePacketCallback(
 
         if (BufferLength < sizeRequired)
         {
-            DEBUG((DEBUG_ERROR, "Recv VPCI bus relations packet with not enough size for all devices\n"));
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, BufferLength);         
+            DEBUG((DEBUG_ERROR, "Recv VPCI bus relations packet with not enough size for all devices.  Size: %x\n", BufferLength));
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         // Signal that we have received a valid VpciMsgBusRelations packet.
@@ -280,11 +280,11 @@ VpciChannelSendCompletionCallback(
 
     DEBUG((DEBUG_VPCI_INFO, "Got vpci completion packet of size 0x%x\n", BufferLength));
 
-    if ((completionContext->CompletionPacketLength != 0) && 
+    if ((completionContext->CompletionPacketLength != 0) &&
             (BufferLength < completionContext->CompletionPacketLength))
     {
-        DEBUG((DEBUG_ERROR, "Recv VPCI packet with unexpected size.\n"));
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, BufferLength);   
+        DEBUG((DEBUG_ERROR, "Recv VPCI packet with unexpected size:\n"));
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     if (completionContext->CompletionPacket != NULL)
@@ -338,10 +338,10 @@ VpciChannelSendPacketSync(
         goto Cleanup;
     }
 
-    status = gBS->CreateEvent(EVT_TIMER, 
+    status = gBS->CreateEvent(EVT_TIMER,
                               0,
                               NULL,
-                              NULL, 
+                              NULL,
                               &timerEvent);
 
     if (EFI_ERROR(status))
@@ -375,12 +375,12 @@ VpciChannelSendPacketSync(
         DEBUG((DEBUG_ERROR, "vpci WaitForEvent failed!\n"));
         goto Cleanup;
     }
-    
+
     // If the timer expired, fail fast.
     if (signaledEventIndex == 1)
     {
         DEBUG((DEBUG_ERROR, "Host did not send a completion packet!\n"));
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, 0);  
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     DEBUG((DEBUG_VPCI_INFO, "vpci vsc packet sent got 0x%x byte completion back copied\n", completionContext.BytesCopied));
@@ -1192,10 +1192,10 @@ VpcivscDriverBindingStart (
         goto Cleanup;
     }
 
-    status = gBS->CreateEvent(EVT_TIMER, 
+    status = gBS->CreateEvent(EVT_TIMER,
                               0,
                               NULL,
-                              NULL, 
+                              NULL,
                               &timerEvent);
 
     if (EFI_ERROR(status))
@@ -1253,17 +1253,17 @@ VpcivscDriverBindingStart (
         DEBUG((DEBUG_ERROR, "vpci WaitForEvent failed!\n"));
         goto Cleanup;
     }
-    
+
     // If the timer expired, fail fast.
     if (index == 1)
     {
         DEBUG((DEBUG_ERROR, "Host did not send a bus relations packet!\n"));
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(VPCIVSC, __LINE__, 0);  
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     status = gBS->CloseEvent(instance->WaitForBusRelationsMessage);
     instance->WaitForBusRelationsMessage = NULL;
-    status = gBS->CloseEvent(timerEvent);   
+    status = gBS->CloseEvent(timerEvent);
 
 
     DEBUG((DEBUG_VPCI_INFO, "got %x child devices\n", instance->DeviceCount));

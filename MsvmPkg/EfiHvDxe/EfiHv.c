@@ -9,7 +9,6 @@
 #include <PiDxe.h>
 
 #include <IsolationTypes.h>
-#include <FailFast.h>
 #include <Synchronization.h>
 
 #include <Hv/HvGuestHypercall.h>
@@ -22,6 +21,7 @@
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/CrashLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HostVisibilityLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -36,10 +36,6 @@
 #endif
 
 #define WINHVP_MAX_REPS_PER_HYPERCALL   0xFFF
-
-#define EFI 0x454649 // "EFI"
-
-
 typedef struct _EFI_HV_SINT_CONFIGURATION
 {
     EFI_HV_INTERRUPT_HANDLER InterruptHandler;
@@ -512,7 +508,7 @@ EfiHvGetSintMessage (
     {
         return NULL;
     }
-    
+
     message = &((PHV_MESSAGE_PAGE)context->MessagePage.Page)->SintMessage[SintIndex];
     if (message->Header.MessageType == HvMessageTypeNone)
     {
@@ -1030,7 +1026,7 @@ EfiHvPostMessage (
         }
 
         break;
-        
+
     case HV_STATUS_INSUFFICIENT_BUFFERS:
         status = EFI_NOT_READY;
     }
@@ -1205,7 +1201,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
 
             if (EFI_ERROR(status))
             {
-                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
             }
 
             ASSERT(pagesProcessed <= PageCount);
@@ -1232,7 +1228,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
                 FALSE);
             if (EFI_ERROR(status))
             {
-                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
             }
         }
 
@@ -1337,7 +1333,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
         //
         if (EFI_ERROR(status))
         {
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         //
@@ -1354,7 +1350,7 @@ EfiHvpModifySparseGpaPageHostVisibility(
                 TRUE);
             if (EFI_ERROR(status))
             {
-                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
             }
         }
     }
@@ -1497,7 +1493,7 @@ EfiHvMakeAddressRangeHostVisible(
                 //
                 // This is not allowed to fail - need to fail fast
                 //
-                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
             }
         }
 
@@ -1561,7 +1557,7 @@ EfiHvMakeAddressRangeNotHostVisible(
         //
         // This is not allowed to fail - need to fail fast
         //
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 }
 
@@ -1689,7 +1685,7 @@ EfiHvConnectToHypervisor (
             mHypercallPage[1] == 0 &&
             mHypercallPage[2] == 0)
         {
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         //
@@ -1698,7 +1694,7 @@ EfiHvConnectToHypervisor (
         status = mCpu->SetMemoryAttributes (mCpu, (EFI_PHYSICAL_ADDRESS)mHypercallPage, EFI_PAGE_SIZE, EFI_MEMORY_RO);
         if (EFI_ERROR(status))
         {
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
     }
 
@@ -1778,7 +1774,7 @@ EfiHvConnectToHypervisor (
 
             if (EFI_ERROR(status))
             {
-                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+                FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
             }
 
             mHvInputPage = EfiHvpSharedVa(hvInputPage);
@@ -1894,7 +1890,7 @@ EfiHvDisconnectFromHypervisor (
             //
             // Failure is not allowed here - need to fail fast.
             //
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         FreePages(mHvInputPage, 1);
@@ -1953,7 +1949,7 @@ EfiHvpGetSynicComponent(
         return &Context->EventFlagsPage;
 
     default:
-        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
 
         // Unreachable but needed to compile.
         return NULL;
@@ -2012,7 +2008,7 @@ EfiHvpEnableSynicComponent(
             //
             // Failure is not allowed here - need to fail fast
             //
-            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(EFI, __LINE__, 0);
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
         }
 
         if (Direct)

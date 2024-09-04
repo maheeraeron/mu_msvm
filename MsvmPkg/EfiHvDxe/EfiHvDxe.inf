@@ -32,8 +32,8 @@
 
 [LibraryClasses]
     BaseLib
+    CrashLib
     DebugLib
-    FailFastLib
     HvHypercallLib
     IsolationLib
     MemoryAllocationLib

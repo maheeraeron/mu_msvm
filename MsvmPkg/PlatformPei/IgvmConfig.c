@@ -42,13 +42,6 @@ enum IGVM_VHS_MEMORY_MAP_ENTRY_TYPES
     IGVM_VHF_MEMORY_MAP_ENTRY_TYPE_VTL2_PROTECTABLE  = 0x3,
 };
 
-#define IGVM 0x4947564D // "IGVM"
-
-#define IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR() \
-    PEI_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR(IGVM);
-#define IGVM_FAIL_FAST_IF_FAILED(Status, ErrorCode) \
-    PEI_FAIL_FAST_IF_FAILED(Status, ErrorCode, IGVM)
-
 VOID*
 GetIgvmData(
     IN  VOID    *ParameterAreaBase,
@@ -415,11 +408,11 @@ Return Value:
     // Capture the total size of config information.
     //
 
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE), CRITICAL_INITIALIZATION_FAILURE);
+    PEI_FAIL_FAST_IF_FAILED(PcdSet32S(PcdConfigBlobSize, parameterInfo->ParameterPageCount * EFI_PAGE_SIZE));
 
     if (parameterInfo->UefiIgvmConfigurationFlags & UEFI_IGVM_CONFIGURATION_ENABLE_HOST_EMULATORS)
     {
-        IGVM_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdHostEmulatorsWhenHardwareIsolated, TRUE), CRITICAL_INITIALIZATION_FAILURE);
+        PEI_FAIL_FAST_IF_FAILED(PcdSetBoolS(PcdHostEmulatorsWhenHardwareIsolated, TRUE));
     }
 
     {
@@ -442,9 +435,9 @@ Return Value:
             smbiosAssetTag[i] = azureAssetTag[i];
         }
 
-        IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdBiosGuidPtr, (UINT64)smbiosGuid), CRITICAL_INITIALIZATION_FAILURE);
-        IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisAssetTagStr, (UINT64)smbiosAssetTag), CRITICAL_INITIALIZATION_FAILURE);
-        IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisAssetTagSize, 33), CRITICAL_INITIALIZATION_FAILURE);
+        PEI_FAIL_FAST_IF_FAILED(PcdSet64S(PcdBiosGuidPtr, (UINT64)smbiosGuid));
+        PEI_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSmbiosChassisAssetTagStr, (UINT64)smbiosAssetTag));
+        PEI_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSmbiosChassisAssetTagSize, 33));
     }
 
     //
@@ -465,9 +458,9 @@ Return Value:
     if (loaderBlock->NumberOfProcessors == 0 || loaderBlock->NumberOfProcessors > HV_MAXIMUM_PROCESSORS)
     {
         DEBUG((DEBUG_ERROR, "Invalid processor count %u.\n", loaderBlock->NumberOfProcessors));
-        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdProcessorCount, loaderBlock->NumberOfProcessors), CRITICAL_INITIALIZATION_FAILURE);
+    PEI_FAIL_FAST_IF_FAILED(PcdSet32S(PcdProcessorCount, loaderBlock->NumberOfProcessors));
 
     //
     // Enable ACPI tables
@@ -475,7 +468,7 @@ Return Value:
     if (parameterInfo->MadtPageCount == 0)
     {
         DEBUG((DEBUG_ERROR, "MadtPageCount was 0.\n"));
-        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     EFI_ACPI_DESCRIPTION_HEADER *madtHdr = (EFI_ACPI_DESCRIPTION_HEADER*)GetIgvmData(parameterInfo, parameterInfo->MadtOffset);
@@ -484,16 +477,16 @@ Return Value:
         madtHdr->Length > (parameterInfo->MadtPageCount * EFI_PAGE_SIZE))
     {
         DEBUG((DEBUG_ERROR, "*** Malformed MADT\n"));
-        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdMadtPtr, (UINT64)madtHdr), CRITICAL_INITIALIZATION_FAILURE);
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdMadtSize, madtHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+    PEI_FAIL_FAST_IF_FAILED(PcdSet64S(PcdMadtPtr, (UINT64)madtHdr));
+    PEI_FAIL_FAST_IF_FAILED(PcdSet32S(PcdMadtSize, madtHdr->Length));
 
     if (parameterInfo->SratPageCount == 0)
     {
         DEBUG((DEBUG_ERROR, "SratPageCount was 0.\n"));
-        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
     EFI_ACPI_DESCRIPTION_HEADER *sratHdr = (EFI_ACPI_DESCRIPTION_HEADER*)GetIgvmData(parameterInfo, parameterInfo->SratOffset);
@@ -502,11 +495,11 @@ Return Value:
         sratHdr->Length > (parameterInfo->SratPageCount * EFI_PAGE_SIZE))
     {
         DEBUG((DEBUG_ERROR, "*** Malformed SRAT\n"));
-        IGVM_FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSratPtr, (UINT64)sratHdr), CRITICAL_INITIALIZATION_FAILURE);
-    IGVM_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSratSize, sratHdr->Length), CRITICAL_INITIALIZATION_FAILURE);
+    PEI_FAIL_FAST_IF_FAILED(PcdSet64S(PcdSratPtr, (UINT64)sratHdr));
+    PEI_FAIL_FAST_IF_FAILED(PcdSet32S(PcdSratSize, sratHdr->Length));
 
     //
     // Parse the command line to obtain debug parameters.
