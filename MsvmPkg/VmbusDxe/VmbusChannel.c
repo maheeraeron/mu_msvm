@@ -43,7 +43,7 @@ VmbusChannelPrepareGpadl (
     __in EFI_VMBUS_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
-    __in BOOLEAN ZeroPages,
+    __in UINT32 Flags,
     __in HV_MAP_GPA_FLAGS MapFlags,
     __out EFI_VMBUS_GPADL **Gpadl
     )
@@ -68,8 +68,7 @@ Arguments:
 
     BufferLength - Length of the buffer.
 
-    ZeroPages - TRUE if the pages must be zero-filled upon return to the
-                caller.
+    Flags - Flags to control GPADL creation.
 
     MapFlags - Mapping flags to control the host visibility. Only HV_MAP_GPA_READABLE and
         HV_MAP_GPA_WRITABLE are valid in the access mask when isolation is used.
@@ -85,6 +84,7 @@ Return Value:
     VMBUS_CHANNEL_CONTEXT *channelContext;
     EFI_VMBUS_GPADL *gpadl;
     EFI_STATUS status;
+    BOOLEAN zeroPages;
 
     if (BufferLength == 0)
     {
@@ -102,6 +102,13 @@ Return Value:
     {
         status = EFI_INVALID_PARAMETER;
         DEBUG((EFI_D_ERROR, "--- %a: Gpadls are not aligned - %r \n", __FUNCTION__, status));
+        return status;
+    }
+
+    if ((Flags & ~EFI_VMBUS_PREPARE_GPADL_FLAGS) != 0)
+    {
+        status = EFI_INVALID_PARAMETER;
+        DEBUG((EFI_D_ERROR, "--- %a: invalid flags - %r \n", __FUNCTION__, status));
         return status;
     }
 
@@ -126,17 +133,24 @@ Return Value:
     gpadl->NumberOfPages = (UINT32)((UINTN)BufferLength >> EFI_PAGE_SHIFT);
     gpadl->GpadlHandle = 0;
     gpadl->Legacy = FALSE;
+    zeroPages = (Flags & EFI_VMBUS_PREPARE_GPADL_FLAG_ZERO_PAGES) != 0;
 
     //
     // Make the entire buffer visible to the host if required.
     //
-    if (IsIsolated())
+    // N.B. On a hardware-isolated VM, the buffer can only be encrypted if the
+    //      channel is confidential and the caller specified that the GPADL can
+    //      be encrypted.
+    //
+    if (IsIsolated() && 
+        ((Flags & EFI_VMBUS_PREPARE_GPADL_FLAG_ALLOW_ENCRYPTED) == 0 || 
+         !channelContext->Confidential))
     {
         status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,
                                                      MapFlags,
                                                      Buffer,
                                                      BufferLength,
-                                                     ZeroPages,
+                                                     zeroPages,
                                                      &gpadl->ProtectionHandle);
 
         if (EFI_ERROR(status))
@@ -146,11 +160,17 @@ Return Value:
         }
 
         gpadl->VisibleBufferPA = (UINTN)Buffer + mSharedGpaBoundary;
+        DEBUG((EFI_D_VERBOSE, "--- %a: host-visible GPADL \n", __FUNCTION__));
     }
     else
     {
+        if (IsIsolated())
+        {
+            DEBUG((EFI_D_VERBOSE, "--- %a: non-host-visible GPADL \n", __FUNCTION__));
+        }
+
         gpadl->VisibleBufferPA = (UINTN)Buffer;
-        if (ZeroPages)
+        if (zeroPages)
         {
             ZeroMem(Buffer, BufferLength);
         }
@@ -594,7 +614,14 @@ Return Value:
 
 --*/
 {
-    return (PVOID)(Gpadl->VisibleBufferPA | mCanonicalizationMask);
+    if (Gpadl->VisibleBufferPA >= mSharedGpaBoundary)
+    {
+        return (PVOID)(Gpadl->VisibleBufferPA | mCanonicalizationMask);
+    }
+    else
+    {
+        return (PVOID)Gpadl->VisibleBufferPA;
+    }
 }
 
 
@@ -1005,6 +1032,13 @@ Return Value:
     {
         ChannelContext->VmbusProtocol.Flags |= EFI_VMBUS_PROTOCOL_FLAGS_PIPE_MODE;
         ChannelContext->LegacyVmbusProtocol.Flags |= EFI_VMBUS_PROTOCOL_FLAGS_PIPE_MODE;
+    }
+
+    if (VmbusRootSupportsFeatureFlag(RootContext, VMBUS_FEATURE_FLAG_CONFIDENTIAL_CHANNELS) &&
+        (Offer->Flags & VMBUS_OFFER_FLAG_CONFIDENTIAL_CHANNEL) != 0)
+    {
+        DEBUG((EFI_D_INFO, "--- %a: channel is confidential - {%g}-{%g}-%u\n", __FUNCTION__, Offer->InterfaceType, Offer->InterfaceInstance, Offer->SubChannelIndex));
+        ChannelContext->Confidential = TRUE;
     }
 }
 

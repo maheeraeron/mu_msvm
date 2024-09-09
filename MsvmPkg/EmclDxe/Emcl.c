@@ -311,10 +311,17 @@ Return Value:
     Context->IncomingPageCount = IncomingRingBufferPageCount + 1;
     Context->OutgoingPageCount = OutgoingRingBufferPageCount + 1;
 
+    //
+    // The ring buffer GPADL is allowed to use encrypted memory on a hardware
+    // isolated VM when the channel is marked as confidential. The flag will
+    // have no effect otherwise.
+    //
+
     status = Context->VmbusProtocol->PrepareGpadl(Context->VmbusProtocol,
                                                   Context->RingBufferPages,
                                                   pageCount * EFI_PAGE_SIZE,
-                                                  TRUE,
+                                                  (EFI_VMBUS_PREPARE_GPADL_FLAG_ZERO_PAGES |
+                                                   EFI_VMBUS_PREPARE_GPADL_FLAG_ALLOW_ENCRYPTED),
                                                   HV_MAP_GPA_READABLE | HV_MAP_GPA_WRITABLE,
                                                   &Context->RingBufferGpadl);
     if (EFI_ERROR(status))
@@ -1987,10 +1994,16 @@ Return Value:
                  EMCL_CONTEXT_SIGNATURE);
 
     vmbusGpadl = NULL;
+
+    //
+    // TODO: Devices should have a way to request encrypted GPADL support for
+    // a confidential channel on a hardware-isolated VM.
+    //
+
     status = context->VmbusProtocol->PrepareGpadl(context->VmbusProtocol,
                                                   Buffer,
                                                   BufferLength,
-                                                  FALSE,
+                                                  0,
                                                   MapFlags,
                                                   &vmbusGpadl);
     if (EFI_ERROR(status))

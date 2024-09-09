@@ -30,6 +30,23 @@ Author:
 
 #define EFI_VMBUS_PROTOCOL_FLAGS_PIPE_MODE  0x1
 
+//
+// Zero all memory in the buffer used for the GPADL.
+//
+
+#define EFI_VMBUS_PREPARE_GPADL_FLAG_ZERO_PAGES      0x1
+
+//
+// Indicates that the GPADL buffer may be in encrypted memory on a hardware
+// isolated VM, if the channel is confidential. If the channel is not
+// confidential, or hardware isolation is not in use, the flag has no effect.
+//
+
+#define EFI_VMBUS_PREPARE_GPADL_FLAG_ALLOW_ENCRYPTED 0x2
+#define EFI_VMBUS_PREPARE_GPADL_FLAGS \
+    (EFI_VMBUS_PREPARE_GPADL_FLAG_ZERO_PAGES | \
+     EFI_VMBUS_PREPARE_GPADL_FLAG_ALLOW_ENCRYPTED)
+
 typedef struct _EFI_VMBUS_PROTOCOL EFI_VMBUS_PROTOCOL;
 typedef struct _EFI_VMBUS_LEGACY_PROTOCOL EFI_VMBUS_LEGACY_PROTOCOL;
 
@@ -85,7 +102,7 @@ EFI_STATUS
     __in EFI_VMBUS_PROTOCOL *This,
     __in_bcount(BufferLength) VOID *Buffer,
     __in UINT32 BufferLength,
-    __in BOOLEAN ZeroPages,
+    __in UINT32 Flags,
     __in HV_MAP_GPA_FLAGS MapFlags,
     __out EFI_VMBUS_GPADL **Gpadl
     );

@@ -21,6 +21,10 @@
 #include <Protocol/InternalEventServices.h>
 #include <VmbusP.h>
 
+#define VMBUS_SUPPORTED_FEATURE_FLAGS (0)
+#define VMBUS_SUPPORTED_FEATURE_FLAGS_PARAVISOR \
+    (VMBUS_FEATURE_FLAG_CONFIDENTIAL_CHANNELS)
+
 typedef struct _VMBUS_HOT_MESSAGE
 {
     LIST_ENTRY Link;
@@ -48,6 +52,7 @@ struct _VMBUS_ROOT_CONTEXT
 
     VMBUS_CHANNEL_CONTEXT *Channels[VMBUS_MAX_CHANNELS];
     UINT32 MaxInterruptUsed;
+    UINT32 FeatureFlags;
 };
 
 INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
@@ -101,6 +106,12 @@ VmbusRootWaitForMessage(
 
 EFI_STATUS
 VmbusRootInitiateContact(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in UINT32 RequestedVersion
+    );
+
+EFI_STATUS
+VmbusRootNegotiateVersion(
     __in VMBUS_ROOT_CONTEXT *RootContext
     );
 
@@ -163,6 +174,17 @@ VmbusRootConnectSint(
     __in VMBUS_ROOT_CONTEXT *RootContext,
     __in BOOLEAN Reconnect
     );
+
+//
+// UEFI does not use any features of the versions in between Win8.1 and Copper,
+// so there is no reason to try to request them.
+//
+
+static const UINT32 gVmbusSupportedVersions[] =
+{
+    VMBUS_VERSION_COPPER,
+    VMBUS_VERSION_WIN8_1
+};
 
 VMBUS_ROOT_CONTEXT mRootContext;
 
@@ -1333,7 +1355,7 @@ VmbusRootExitBootServices(
 
 
 EFI_STATUS
-VmbusRootInitiateContact(
+VmbusRootNegotiateVersion(
     __in VMBUS_ROOT_CONTEXT *RootContext
     )
 /**
@@ -1342,26 +1364,81 @@ VmbusRootInitiateContact(
 
     This function must be called at TPL < TPL_HIGH_LEVEL.
 
-    This routine receives a message from the host and therefore
-    must validate this message before using it.
-
     @param RootContext Pointer to the root context.
 
     @returns EFI_STATUS.
 
 **/
 {
+    EFI_STATUS status = EFI_PROTOCOL_ERROR;
+    SIZE_T index;
+    UINT32 version;
+
+    for (index = 0; index < ARRAY_SIZE(gVmbusSupportedVersions); index++)
+    {
+        version = gVmbusSupportedVersions[index];
+        status = VmbusRootInitiateContact(RootContext, version);
+        if (status != EFI_PROTOCOL_ERROR)
+        {
+            break;
+        }
+
+        DEBUG((EFI_D_WARN, "--- %a: host did not support version 0x%x\n", __FUNCTION__, version));
+    }
+
+    if (!EFI_ERROR(status))
+    {
+        DEBUG((EFI_D_INFO, "--- %a: negotiated version 0x%x\n", __FUNCTION__, version));
+    }
+
+    return status;
+}
+
+
+EFI_STATUS
+VmbusRootInitiateContact(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in UINT32 RequestedVersion
+    )
+/**
+    This routine initiates contact with the host endpoint using the requested
+    version.
+
+    This function must be called at TPL < TPL_HIGH_LEVEL.
+
+    This routine receives a message from the host and therefore
+    must validate this message before using it.
+
+    @param RootContext Pointer to the root context.
+
+    @param RequestedVersion The protocol version to request from the host.
+
+    @returns EFI_STATUS.
+
+**/
+{
     VMBUS_MESSAGE message;
+    UINT32 size;
     EFI_STATUS status;
 
     ASSERT(RootContext->SintConnected);
 
     VmbusRootInitializeMessage(&message,
                            ChannelMessageInitiateContact,
-                           sizeof(message.InitiateContact));
+                           VMBUS_CHANNEL_INITIATE_CONTACT_MIN_SIZE);
 
-    message.InitiateContact.VMBusVersionRequested = VMBUS_VERSION_WIN8_1;
+    message.InitiateContact.VMBusVersionRequested = RequestedVersion;
     message.InitiateContact.TargetMessageVp = mHv->GetCurrentVpIndex(mHv);
+    if (RequestedVersion >= VMBUS_VERSION_COPPER)
+    {
+        message.InitiateContact.FeatureFlags = VMBUS_SUPPORTED_FEATURE_FLAGS;
+        if (RootContext->Confidential)
+        {
+            message.InitiateContact.FeatureFlags |= VMBUS_SUPPORTED_FEATURE_FLAGS_PARAVISOR;
+        }
+    }
+
+    RootContext->FeatureFlags = message.InitiateContact.FeatureFlags;
     status = VmbusRootSendMessage(RootContext, &message);
     if (EFI_ERROR(status))
     {
@@ -1376,6 +1453,16 @@ VmbusRootInitiateContact(
         if (EFI_ERROR(status))
         {
             return status;
+        }
+        
+        //
+        // Clear feature flags only supported for confidential connections.
+        //
+
+        if (RequestedVersion >= VMBUS_VERSION_COPPER)
+        {
+            message.InitiateContact.FeatureFlags = VMBUS_SUPPORTED_FEATURE_FLAGS;
+            RootContext->FeatureFlags = message.InitiateContact.FeatureFlags;
         }
 
         status = VmbusRootSendMessage(RootContext, &message);
@@ -1393,7 +1480,11 @@ VmbusRootInitiateContact(
         VmbusRootWaitForMessage(RootContext, FALSE, &message);
     } while (message.Header.MessageType != ChannelMessageVersionResponse);
 
-    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(message.Size >= VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE);
+    size = (RequestedVersion >= VMBUS_VERSION_COPPER)
+        ? sizeof(message.VersionResponse)
+        : VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE;
+
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(message.Size >= size);
 
     if (!message.VersionResponse.VersionSupported ||
         message.VersionResponse.ConnectionState
@@ -1405,6 +1496,11 @@ VmbusRootInitiateContact(
     else
     {
         RootContext->ContactInitiated = TRUE;
+        if (RequestedVersion >= VMBUS_VERSION_COPPER)
+        {
+            RootContext->FeatureFlags &= message.VersionResponse.SupportedFeatures;
+        }
+
         status = EFI_SUCCESS;
     }
     return status;
@@ -1831,7 +1927,7 @@ VmbusRootDriverStart (
 
     mRootContext.SintConnected = TRUE;
 
-    status = VmbusRootInitiateContact(&mRootContext);
+    status = VmbusRootNegotiateVersion(&mRootContext);
     if (EFI_ERROR(status))
     {
         DEBUG((EFI_D_ERROR, "--- %a: failed to initiate contact - %r \n", __FUNCTION__, status));
@@ -2212,3 +2308,11 @@ VmbusDriverInitialize (
     return EFI_SUCCESS;
 }
 
+BOOLEAN
+VmbusRootSupportsFeatureFlag(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in UINT32 FeatureFlag
+    )
+{
+    return (RootContext->FeatureFlags & FeatureFlag) != 0;
+}

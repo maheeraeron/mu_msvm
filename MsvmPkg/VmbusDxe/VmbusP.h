@@ -193,6 +193,13 @@ typedef struct _VMBUS_CHANNEL_CONTEXT
     //
     EFI_EVENT Interrupt;
 
+    //
+    // A confidential channel is a channel offered by the paravisor on a
+    // hardware-isolated VM, which means it can use encrypted memory for the
+    // ring buffer.
+    //
+    BOOLEAN Confidential;
+
 } VMBUS_CHANNEL_CONTEXT;
 
 struct _EFI_VMBUS_GPADL
@@ -280,6 +287,12 @@ VmbusChannelInitializeContext(
 VOID
 VmbusChannelDestroyContext(
     __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    );
+
+BOOLEAN
+VmbusRootSupportsFeatureFlag(
+    __in VMBUS_ROOT_CONTEXT *RootContext,
+    __in UINT32 FeatureFlag
     );
 
 #pragma warning(pop)
