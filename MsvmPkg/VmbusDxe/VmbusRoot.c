@@ -21,7 +21,7 @@
 #include <Protocol/InternalEventServices.h>
 #include <VmbusP.h>
 
-#define VMBUS_SUPPORTED_FEATURE_FLAGS (0)
+#define VMBUS_SUPPORTED_FEATURE_FLAGS (VMBUS_FEATURE_FLAG_CLIENT_ID)
 #define VMBUS_SUPPORTED_FEATURE_FLAGS_PARAVISOR \
     (VMBUS_FEATURE_FLAG_CONFIDENTIAL_CHANNELS)
 
@@ -185,6 +185,14 @@ static const UINT32 gVmbusSupportedVersions[] =
     VMBUS_VERSION_COPPER,
     VMBUS_VERSION_WIN8_1
 };
+
+//
+// The ID for the UEFI VmBus client.
+//
+
+// {18DD3964-3E8A-4E42-86FA-C8E6B191EE0E}
+DEFINE_GUID(VMBUS_UEFI_CLIENT_ID, 
+0x18dd3964, 0x3e8a, 0x4e42, 0x86, 0xfa, 0xc8, 0xe6, 0xb1, 0x91, 0xee, 0xe);
 
 VMBUS_ROOT_CONTEXT mRootContext;
 
@@ -1423,14 +1431,16 @@ VmbusRootInitiateContact(
 
     ASSERT(RootContext->SintConnected);
 
-    VmbusRootInitializeMessage(&message,
-                           ChannelMessageInitiateContact,
-                           VMBUS_CHANNEL_INITIATE_CONTACT_MIN_SIZE);
+    size = (RequestedVersion >= VMBUS_VERSION_COPPER)
+        ? sizeof(message.InitiateContact)
+        : VMBUS_CHANNEL_INITIATE_CONTACT_MIN_SIZE;
 
+    VmbusRootInitializeMessage(&message, ChannelMessageInitiateContact, size);
     message.InitiateContact.VMBusVersionRequested = RequestedVersion;
     message.InitiateContact.TargetMessageVp = mHv->GetCurrentVpIndex(mHv);
     if (RequestedVersion >= VMBUS_VERSION_COPPER)
     {
+        message.InitiateContact.ClientId = VMBUS_UEFI_CLIENT_ID;
         message.InitiateContact.FeatureFlags = VMBUS_SUPPORTED_FEATURE_FLAGS;
         if (RootContext->Confidential)
         {
