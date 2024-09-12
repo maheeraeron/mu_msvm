@@ -32,11 +32,16 @@ jobs:
         Build.Arch: 'AARCH64'
         Build.Extra: ''
   variables:
+    Build.ToolChainTag: "VS2022"
+    Env.PythonVersion: "3.12"
+    GIT_TERMINAL_PROMPT: "0"
     ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
     ob_nugetPublishing_enabled:  ${{parameters.publishNuget}}
     ob_artifactSuffix: '_$(Build.Arch)_$(Build.Target)'
     ${{ if eq(parameters.pipeline, 'Official') }}:
       ob_createvpack_vpackdirectory: '$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin'
+    PlatformPkg: "MsvmPkg"
+    WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # https://aka.ms/obpipelines/containers
   steps:
   - task: NuGetAuthenticate@1
     inputs:

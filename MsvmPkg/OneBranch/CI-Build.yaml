@@ -9,24 +9,17 @@ trigger:
     - official/*
 pr: none
 
-
-resources:    
-  repositories:     
-    - repository: templates_onebranch        
-      type: git 
-      name: OneBranch.Pipelines/GovernedTemplates  
-      ref: refs/heads/main 
+resources:
+  repositories:
+    - repository: templates_onebranch
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
 
 variables:
-  Build.ToolChainTag: "VS2022"
-  PlatformPkg: "MsvmPkg"
-  Env.PythonVersion: "3.12.0"
-  GIT_TERMINAL_PROMPT: "0"
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
   Parameters.vPack.majorVer: "24"
   Parameters.vPack.minorVer: "0"
-  WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # https://aka.ms/obpipelines/containers
-
 
 extends:
   template: v2/Microsoft.Official.yml@templates_onebranch                   # EXTEND MICROSOFT.OFFICIAL.YML
