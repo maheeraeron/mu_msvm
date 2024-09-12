@@ -1,15 +1,10 @@
-/*----------------------------------------------------------------------------
-  $Microsoft Confidential$
-  $Copyright (C) 2004 Microsoft Corporation.  All Rights Reserved.$
+/** @file
+  This file contains the structures that defines the format of the vmbus
+  packets.
 
-  File: VmbusPacketFormat.h
-
-  Abstract:
-
-    This file contains the structures that defines the format of the vmbus
-    packets.
-
-----------------------------------------------------------------------------*/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #pragma once
 
@@ -62,7 +57,7 @@ typedef struct _VMRCB
 
 } VMRCB, *PVMRCB;
 
-C_ASSERT(FIELD_OFFSET(VMRCB, FeatureBits) == 64);
+static_assert(OFFSET_OF(VMRCB, FeatureBits) == 64);
 
 //
 // This structure defines a range in guest physical space that can be made
@@ -145,12 +140,12 @@ typedef struct _VMPIPE_PROTOCOL_HEADER
     VMPIPE_PROTOCOL_MESSAGE_TYPE PacketType;
     union
     {
-        ULONG DataSize;
+        UINT32 DataSize;
 
         struct
         {
-            USHORT DataSize;
-            USHORT Offset;
+            UINT16 DataSize;
+            UINT16 Offset;
         } Partial;
     };
 } VMPIPE_PROTOCOL_HEADER, *PVMPIPE_PROTOCOL_HEADER;

@@ -8,10 +8,10 @@
 
 #pragma once
 
-#include <vmbuspacketinterface.h>
-#include <vmbuspacketformat.h>
+#include <Vmbus/VmbusPacketInterface.h>
+#include <Vmbus/VmbusPacketFormat.h>
 
-NTSTATUS
+EFI_STATUS
 PkpInitRingBufferControl(
     IN OUT PPACKET_LIB_CONTEXT Context
     );

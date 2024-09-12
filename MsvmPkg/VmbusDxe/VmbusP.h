@@ -34,6 +34,7 @@ typedef struct _GPA_RANGE
 
 } GPA_RANGE;
 
+#include <EfiNt.h>
 #include <ChannelMessages.h>
 
 #define VMBUS_MESSAGE_CONNECTION_ID 1

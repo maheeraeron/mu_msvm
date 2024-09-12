@@ -19,8 +19,6 @@ Author:
 
 #pragma once
 
-#include <EfiNt.h>
-
 #define EFI_VMBUS_LEGACY_PROTOCOL_GUID \
     {0x59e6efc9, 0x9695, 0x470a, {0x9d, 0x87, 0x2, 0x61, 0xd8, 0x45, 0x1d, 0xd8}}
 #define EFI_VMBUS_PROTOCOL_GUID \
@@ -56,110 +54,110 @@ typedef UINT32 HV_MAP_GPA_FLAGS, *PHV_MAP_GPA_FLAGS;
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_CREATE_GPADL_LEGACY)(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __out UINT32 *GpadlHandle
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    OUT UINT32 *GpadlHandle
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_DESTROY_GPADL_LEGACY)(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in UINT32 GpadlHandle
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  UINT32 GpadlHandle
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_OPEN_CHANNEL_LEGACY)(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in UINT32 RingBufferGpadlHandle,
-    __in UINT32 RingBufferPageOffset
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  UINT32 RingBufferGpadlHandle,
+    IN  UINT32 RingBufferPageOffset
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_CLOSE_CHANNEL_LEGACY)(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_REGISTER_ISR_LEGACY)(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in_opt EFI_EVENT Event
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  EFI_EVENT Event OPTIONAL
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_SEND_INTERRUPT_LEGACY)(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_PREPARE_GPADL)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT32 Flags,
-    __in HV_MAP_GPA_FLAGS MapFlags,
-    __out EFI_VMBUS_GPADL **Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  UINT32 Flags,
+    IN  HV_MAP_GPA_FLAGS MapFlags,
+    OUT  EFI_VMBUS_GPADL **Gpadl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_CREATE_GPADL)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     );
 
 typedef
 UINT32
 (EFIAPI *EFI_VMBUS_GET_GPADL_HANDLE)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     );
 
 typedef
-PVOID
+VOID*
 (EFIAPI *EFI_VMBUS_GET_GPADL_BUFFER)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_DESTROY_GPADL)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_OPEN_CHANNEL)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *RingBufferGpadl,
-    __in UINT32 RingBufferPageOffset
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *RingBufferGpadl,
+    IN  UINT32 RingBufferPageOffset
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_CLOSE_CHANNEL)(
-    __in EFI_VMBUS_PROTOCOL *This
+    IN  EFI_VMBUS_PROTOCOL *This
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_REGISTER_ISR)(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in_opt EFI_EVENT Event
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_EVENT Event OPTIONAL
     );
 
 typedef
 EFI_STATUS
 (EFIAPI *EFI_VMBUS_SEND_INTERRUPT)(
-    __in EFI_VMBUS_PROTOCOL *This
+    IN  EFI_VMBUS_PROTOCOL *This
     );
 
 struct _EFI_VMBUS_LEGACY_PROTOCOL

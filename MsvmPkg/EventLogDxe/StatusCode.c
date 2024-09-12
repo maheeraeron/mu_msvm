@@ -21,20 +21,14 @@
 #include <Protocol/Vmbus.h>
 #include <Protocol/ReportStatusCodeHandler.h>
 
-//
-// VMBUS guid for synthetic NIC
-//
-DEFINE_GUID(GUID_NETWORK_CHANNEL_TYPE, 0xf8615163, 0xdf3e, 0x46c5, 0x91,
-    0x3f, 0xf2, 0xd2, 0xf9, 0x65, 0xed, 0xe);
-
 EFI_STATUS
 EFIAPI
 ReportStatusCode(
-  _In_      EFI_STATUS_CODE_TYPE     CodeType,
-  _In_      EFI_STATUS_CODE_VALUE    Value,
-  _In_      UINT32                   Instance,
-  _In_opt_  EFI_GUID                 *CallerId,
-  _In_opt_  EFI_STATUS_CODE_DATA     *Data
+  IN  EFI_STATUS_CODE_TYPE     CodeType,
+  IN  EFI_STATUS_CODE_VALUE    Value,
+  IN  UINT32                   Instance,
+  IN  EFI_GUID                 *CallerId OPTIONAL,
+  IN  EFI_STATUS_CODE_DATA     *Data OPTIONAL
   );
 
 
@@ -126,7 +120,7 @@ IsNetworkDeviceFilePath (
                 vmbusDevicePath = (VMBUS_DEVICE_PATH*) DevicePath;
                 if (CompareGuid(
                     &vmbusDevicePath->InterfaceType,
-                    &GUID_NETWORK_CHANNEL_TYPE))
+                    &gSyntheticNetworkClassGuid))
                 {
                     return TRUE;
                 }
@@ -142,11 +136,11 @@ IsNetworkDeviceFilePath (
 EFI_STATUS
 EFIAPI
 ReportStatusCode(
-    _In_        EFI_STATUS_CODE_TYPE     CodeType,
-    _In_        EFI_STATUS_CODE_VALUE    Value,
-    _In_        UINT32                   Instance,
-    _In_opt_    EFI_GUID                *CallerId,
-    _In_opt_    EFI_STATUS_CODE_DATA    *Data
+    IN  EFI_STATUS_CODE_TYPE     CodeType,
+    IN  EFI_STATUS_CODE_VALUE    Value,
+    IN  UINT32                   Instance,
+    IN  EFI_GUID                *CallerId OPTIONAL,
+    IN  EFI_STATUS_CODE_DATA    *Data OPTIONAL
     )
 /*++
 

@@ -1,3 +1,11 @@
+## @file
+#  Library for EMCL (EFI VmBus client library).
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
+##
+
 [Defines]
     INF_VERSION                    = 0x00010005
     BASE_NAME                      = EmclLib
@@ -15,6 +23,6 @@
     MsvmPkg/MsvmPkg.dec
 
 [Protocols]
-    gEfiEmclProtocolGuid              #PRODUCES
-    gEfiEmclTagProtocolGuid
+    gEfiEmclProtocolGuid                #PRODUCES
+    gEfiEmclTagProtocolGuid             #PRODUCES
     gInternalEventServicesProtocolGuid  #CONSUMES

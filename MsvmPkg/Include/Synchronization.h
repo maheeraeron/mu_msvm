@@ -9,6 +9,71 @@
 
 #define MemoryBarrier() __faststorefence()
 
+__forceinline
+INT32
+ReadAcquire (
+    IN  INT32 const volatile *Source
+    )
+
+{
+    INT32 value;
+
+    value = *Source;
+    return value;
+}
+
+__forceinline
+INT32
+ReadNoFence (
+    IN INT32 const volatile *Source
+    )
+
+{
+    INT32 value;
+
+    value = *Source;
+    return value;
+}
+
+__forceinline
+VOID
+WriteNoFence (
+    OUT INT32 volatile *Destination,
+    IN  INT32 Value
+    )
+
+{
+
+    *Destination = Value;
+    return;
+}
+
+__forceinline
+VOID
+WriteNoFence16 (
+    OUT INT16 volatile *Destination,
+    IN  INT16 Value
+    )
+
+{
+
+    *Destination = Value;
+    return;
+}
+
+__forceinline
+VOID
+WriteRelease (
+    OUT INT32 volatile *Destination,
+    IN  INT32 Value
+    )
+
+{
+
+    *Destination = Value;
+    return;
+}
+
 #elif defined(MDE_CPU_AARCH64)
 
 #pragma intrinsic(__dmb)
@@ -33,5 +98,70 @@ _ARM64INTR_BARRIER_TYPE;
 void __dmb(unsigned int _Type);
 
 #define MemoryBarrier() __dmb(_ARM64_BARRIER_SY)
+
+__forceinline
+INT32
+ReadAcquire (
+    IN  INT32 const volatile *Source
+    )
+
+{
+    INT32 value;
+
+    value = __iso_volatile_load32((int *)Source);
+    __dmb(_ARM64_BARRIER_ISH);
+    return value;
+}
+
+__forceinline
+INT32
+ReadNoFence (
+    IN  INT32 const volatile *Source
+    )
+
+{
+    INT32 value;
+
+    value = __iso_volatile_load32((int *)Source);
+    return value;
+}
+
+__forceinline
+VOID
+WriteNoFence16 (
+    OUT INT16 volatile *Destination,
+    IN  INT16 Value
+    )
+
+{
+    __iso_volatile_store16(Destination, Value);
+    return;
+}
+
+__forceinline
+VOID
+WriteNoFence (
+    OUT INT32 volatile *Destination,
+    IN  INT32 Value
+    )
+
+{
+    __iso_volatile_store32((int *)Destination, Value);
+    return;
+}
+
+__forceinline
+VOID
+WriteRelease (
+    OUT INT32 volatile *Destination,
+    IN  INT32 Value
+    )
+
+{
+    __dmb(_ARM64_BARRIER_ISH);
+    __iso_volatile_store32((int *)Destination, Value);
+    return;
+}
+
 
 #endif

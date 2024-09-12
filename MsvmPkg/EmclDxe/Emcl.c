@@ -1,23 +1,12 @@
-/*++
+/** @file
+  Implements the EFI EMCL protocol.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
-Module Name:
-
-    Emcl.c
-
-Abstract:
-
-    Implements the EFI EMCL protocol.
-
-Author:
-
-    Arseney Romanenko (arseneyr) - 2-Aug-2012
-
---*/
+**/
 
 #include <PiDxe.h>
-#include <EfiNt.h>
 #include <IsolationTypes.h>
 
 #include <Library/UefiLib.h>
@@ -32,14 +21,14 @@ Author:
 #include <Protocol/Vmbus.h>
 #include <Protocol/EfiHv.h>
 
+#include <Vmbus/VmbusPacketInterface.h>
 
-#define VMBUS_RING_BUFFER_SINGLE_MAPPED 1
-#include <VmbusPacketInterface.h>
+#include <Synchronization.h>
 
 #define EMCL_DRIVER_VERSION 0x10
 
 #define ADDRESS_AND_SIZE_TO_SPAN_PAGES(_Addr_,_Size_) \
-    (ALIGN_VALUE((((UINT_PTR)(_Addr_)) & EFI_PAGE_MASK) + (_Size_), EFI_PAGE_SIZE) >> EFI_PAGE_SHIFT)
+    (ALIGN_VALUE((((UINTN)(_Addr_)) & EFI_PAGE_MASK) + (_Size_), EFI_PAGE_SIZE) >> EFI_PAGE_SHIFT)
 
 #define VARIABLE_STRUCT_SIZE(_Type_,_Field_,_Size_) \
     ((OFFSET_OF(_Type_,_Field_)) + sizeof(*(((_Type_ *)0)->_Field_)) * (_Size_))
@@ -55,7 +44,7 @@ typedef struct _EMCL_BOUNCE_BLOCK
     UINT32                      InUsePageCount;
     BOOLEAN                     IsHostVisible;
 
-    PVOID                       BlockBase;
+    VOID*                       BlockBase;
     UINT32                      BlockPageCount;
     EFI_HV_PROTECTION_HANDLE    ProtectionHandle;
 
@@ -73,7 +62,7 @@ typedef struct _EMCL_BOUNCE_PAGE
 {
     struct _EMCL_BOUNCE_PAGE*   NextBouncePage;
     struct _EMCL_BOUNCE_BLOCK*  BounceBlock;
-    PVOID                       PageVA;
+    VOID*                       PageVA;
     UINT64                      HostVisiblePA;
 } EMCL_BOUNCE_PAGE, *PEMCL_BOUNCE_PAGE;
 
@@ -158,71 +147,71 @@ extern EFI_GUID gEfiEmclTagProtocolGuid;
 EFI_STATUS
 EFIAPI
 EmclDestroyGpadl(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  EFI_EMCL_GPADL *Gpadl
     );
 
 EFI_STATUS
 EFIAPI
 EmclComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     );
 
 EFI_STATUS
 EFIAPI
 EmclComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     );
 
 EFI_STATUS
 EmclpAllocateBounceBlock(
-    __in EMCL_CONTEXT *Context,
-    __in UINT32 BlockByteCount
+    IN  EMCL_CONTEXT *Context,
+    IN  UINT32 BlockByteCount
     );
 
 VOID
 EmclpFreeBounceBlock(
-    _In_ PEMCL_BOUNCE_BLOCK Block
+    IN  PEMCL_BOUNCE_BLOCK Block
     );
 
 VOID
 EmclpFreeAllBounceBlocks(
-    __in EMCL_CONTEXT *Context
+    IN  EMCL_CONTEXT *Context
     );
 
 PEMCL_BOUNCE_PAGE
 EmclpAcquireBouncePages(
-    __in EMCL_CONTEXT *Context,
-    __in UINT32 PageCount
+    IN  EMCL_CONTEXT *Context,
+    IN  UINT32 PageCount
     );
 
 VOID
 EmclpReleaseBouncePages(
-    __in EMCL_CONTEXT *Context,
-    __in PEMCL_BOUNCE_PAGE BounceListHead
+    IN   EMCL_CONTEXT *Context,
+    IN   PEMCL_BOUNCE_PAGE BounceListHead
     );
 
 VOID
 EmclpCopyBouncePagesToExternalBuffer(
-    _In_ EFI_EXTERNAL_BUFFER *ExternalBuffer,
-    _In_ PEMCL_BOUNCE_PAGE BouncePageList,
-    _In_ BOOLEAN CopyToBounce
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffer,
+    IN  PEMCL_BOUNCE_PAGE BouncePageList,
+    IN  BOOLEAN CopyToBounce
     );
 
 VOID
 EmclpZeroBouncePageList(
-    _In_ PEMCL_BOUNCE_PAGE BouncePageList
+    IN  PEMCL_BOUNCE_PAGE BouncePageList
     );
 
 VOID
 EmclDestroyPacketLibrary(
-    __in EMCL_CONTEXT *Context
+    IN  EMCL_CONTEXT *Context
     )
 /*++
 
@@ -266,9 +255,9 @@ Return Value:
 
 EFI_STATUS
 EmclInitializePacketLibrary(
-    __in EMCL_CONTEXT *Context,
-    __in UINT32 IncomingRingBufferPageCount,
-    __in UINT32 OutgoingRingBufferPageCount
+    IN  EMCL_CONTEXT *Context,
+    IN  UINT32 IncomingRingBufferPageCount,
+    IN  UINT32 OutgoingRingBufferPageCount
     )
 /*++
 
@@ -291,9 +280,8 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    NTSTATUS ntStatus;
     UINT32 pageCount;
-    PVOID ringData;
+    VOID* ringData;
     VOID *incomingControl;
 
     //
@@ -332,13 +320,13 @@ Return Value:
     ringData = Context->VmbusProtocol->GetGpadlBuffer(Context->VmbusProtocol,
                                                       Context->RingBufferGpadl);
 
-    incomingControl = (VOID*)((UINT_PTR)ringData +
+    incomingControl = (VOID*)((UINTN)ringData +
                       Context->OutgoingPageCount * EFI_PAGE_SIZE);
 
-    Context->OutgoingData = (PVOID)((UINT_PTR)ringData + EFI_PAGE_SIZE);
-    Context->IncomingData = (PVOID)((UINT_PTR)incomingControl + EFI_PAGE_SIZE);
+    Context->OutgoingData = (VOID*)((UINTN)ringData + EFI_PAGE_SIZE);
+    Context->IncomingData = (VOID*)((UINTN)incomingControl + EFI_PAGE_SIZE);
 
-    ntStatus = PkInitializeSingleMappedRingBuffer(&Context->PkLibContext,
+    status = PkInitializeSingleMappedRingBuffer(&Context->PkLibContext,
                                                   incomingControl,
                                                   Context->IncomingData,
                                                   IncomingRingBufferPageCount,
@@ -346,9 +334,8 @@ Return Value:
                                                   Context->OutgoingData,
                                                   OutgoingRingBufferPageCount);
 
-    if (!NT_SUCCESS(ntStatus))
+    if (EFI_ERROR(status))
     {
-        status = EFI_DEVICE_ERROR;
         goto Cleanup;
     }
 
@@ -367,8 +354,8 @@ Cleanup:
 
 UINT32
 EmclGpaRangesSize(
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in_range(>, 0) UINT32 ExternalBufferCount
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount
     )
 /*++
 
@@ -406,9 +393,9 @@ Return Value:
 
 VOID
 EmclpInitializeGpaRanges(
-    __inout GPA_RANGE* Range,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in_range(>, 0) UINT32 ExternalBufferCount
+    IN OUT  GPA_RANGE* Range,
+    IN      EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN      UINT32 ExternalBufferCount
     )
 /*++
 
@@ -438,7 +425,7 @@ Return Value:
     for (index = 0; index < ExternalBufferCount; ++index)
     {
         Range->ByteCount = ExternalBuffers[index].BufferSize;
-        Range->ByteOffset = (UINT32)((UINT_PTR)ExternalBuffers[index].Buffer & EFI_PAGE_MASK);
+        Range->ByteOffset = (UINT32)((UINTN)ExternalBuffers[index].Buffer & EFI_PAGE_MASK);
         pfnCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(
             ExternalBuffers[index].Buffer,
             ExternalBuffers[index].BufferSize);
@@ -446,10 +433,10 @@ Return Value:
         for (pfnIndex = 0; pfnIndex < pfnCount; ++pfnIndex)
         {
             Range->PfnArray[pfnIndex] =
-                ((UINT_PTR)ExternalBuffers[index].Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
+                ((UINTN)ExternalBuffers[index].Buffer >> EFI_PAGE_SHIFT) + pfnIndex;
         }
 
-        Range = (GPA_RANGE*)((UINT_PTR)Range +
+        Range = (GPA_RANGE*)((UINTN)Range +
             VARIABLE_STRUCT_SIZE(GPA_RANGE, PfnArray, pfnCount));
     }
 }
@@ -457,13 +444,13 @@ Return Value:
 
 VOID
 EmclWriteGpaDirectPacket(
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in_range(>, 0) UINT32 ExternalBufferCount,
-    __in UINT64 TransactionId,
-    __in BOOLEAN RequestCompletion,
-    __in VOID *OutputBuffer
+    IN  VOID *InlineBuffer,
+    IN  UINT32 InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount,
+    IN  UINT64 TransactionId,
+    IN  BOOLEAN RequestCompletion,
+    IN  VOID *OutputBuffer
     )
 /*++
 
@@ -522,13 +509,13 @@ Return Value:
 
 VOID
 EmclWriteGpaDirectPacketBounce(
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in EFI_EXTERNAL_BUFFER *ExternalBuffer, // singular; for offset and length
-    __in PEMCL_BOUNCE_PAGE BouncePageList,
-    __in UINT64 TransactionId,
-    __in BOOLEAN RequestCompletion,
-    __in VOID *OutputBuffer
+    IN  VOID *InlineBuffer,
+    IN  UINT32 InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffer, // singular; for offset and length
+    IN  PEMCL_BOUNCE_PAGE BouncePageList,
+    IN  UINT64 TransactionId,
+    IN  BOOLEAN RequestCompletion,
+    IN  VOID *OutputBuffer
     )
 /*++
 
@@ -591,14 +578,14 @@ Return Value:
     //
 
     header->Range->ByteCount = ExternalBuffer->BufferSize;
-    header->Range->ByteOffset = (UINT32)((UINT_PTR)ExternalBuffer->Buffer & EFI_PAGE_MASK);
+    header->Range->ByteOffset = (UINT32)((UINTN)ExternalBuffer->Buffer & EFI_PAGE_MASK);
 
     bouncePage = BouncePageList;
     for (pfnIndex = 0; pfnIndex < pfnCount; ++pfnIndex)
     {
         ASSERT(bouncePage);
         header->Range->PfnArray[pfnIndex] =
-           (UINT_PTR)bouncePage->HostVisiblePA >> EFI_PAGE_SHIFT;
+           (UINTN)bouncePage->HostVisiblePA >> EFI_PAGE_SHIFT;
         bouncePage = bouncePage->NextBouncePage;
     }
     ASSERT(bouncePage == NULL);
@@ -608,7 +595,7 @@ Return Value:
 
 VOID
 EmclDestroyOutgoingPacket(
-    __in EMCL_OUTGOING_PACKET *Packet
+    IN  EMCL_OUTGOING_PACKET *Packet
     )
 /*++
 
@@ -636,16 +623,16 @@ Return Value:
 
 EFI_STATUS
 EmclpSendPacket(
-    __in EMCL_CONTEXT *Context,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in VMBUS_PACKET_TYPE PacketType,
-    __in VMPIPE_PROTOCOL_MESSAGE_TYPE PipePacketType,
-    __in UINT64 TransactionId,
-    __in EMCL_COMPLETION_ENTRY *CompletionEntry,
-    __in BOOLEAN DeferInterrupt
+    IN  EMCL_CONTEXT *Context,
+    IN  VOID *InlineBuffer,
+    IN  UINT32 InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount,
+    IN  VMBUS_PACKET_TYPE PacketType,
+    IN  VMPIPE_PROTOCOL_MESSAGE_TYPE PipePacketType,
+    IN  UINT64 TransactionId,
+    IN  EMCL_COMPLETION_ENTRY *CompletionEntry,
+    IN  BOOLEAN DeferInterrupt
     )
 /*++
 
@@ -688,7 +675,6 @@ Return Value:
 --*/
 {
     EFI_STATUS status;
-    NTSTATUS ntStatus;
     UINT32 packetSize;
     VOID *packetBuffer;
     EMCL_OUTGOING_PACKET *outgoingPacket;
@@ -857,11 +843,11 @@ Return Value:
         InsertTailList(&Context->CompletionEntries, &CompletionEntry->Link);
     }
 
-    ntStatus = PkSendPacketSingleMapped(&Context->PkLibContext,
+    status = PkSendPacketSingleMapped(&Context->PkLibContext,
                                         packetBuffer,
                                         packetSize);
 
-    if (ntStatus == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT || Context->InterruptDeferred)
+    if (status == EFI_RING_SIGNAL_OPPOSITE_ENDPOINT || Context->InterruptDeferred)
     {
         if (!DeferInterrupt)
         {
@@ -871,7 +857,7 @@ Return Value:
         Context->InterruptDeferred = DeferInterrupt;
     }
 
-    if (ntStatus == STATUS_BUFFER_OVERFLOW)
+    if (status == EFI_BUFFER_TOO_SMALL)
     {
         //
         // The packet should be queued to send later.
@@ -884,10 +870,8 @@ Return Value:
             Context->InterruptDeferred = FALSE;
         }
     }
-    else if (!NT_SUCCESS(ntStatus))
+    else if (EFI_ERROR(status))
     {
-        status = EFI_DEVICE_ERROR;
-
         // Perform cleanup actions that should be done at high TPL here so that
         // the setup, packet send and cleanup are synchronized correctly.
 
@@ -925,8 +909,8 @@ Cleanup:
 
 VOID
 EmclDispatchPacket(
-    __in EMCL_CONTEXT *Context,
-    __in EMCL_INCOMING_PACKET *Packet
+    IN  EMCL_CONTEXT *Context,
+    IN  EMCL_INCOMING_PACKET *Packet
     )
 /*++
 
@@ -952,7 +936,7 @@ Return Value:
     UINT32 inlineBufferLength;
     PVMPIPE_PROTOCOL_HEADER pipeHeader;
     LIST_ENTRY *listEntry;
-    ULONG expectedRangeCount;
+    UINT32 expectedRangeCount;
 
     expectedRangeCount = 0;
 
@@ -962,7 +946,7 @@ Return Value:
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
-    inlineBuffer = (VOID*)((UINT_PTR)(&Packet->Descriptor) +
+    inlineBuffer = (VOID*)((UINTN)(&Packet->Descriptor) +
         Packet->Descriptor.DataOffset8 * 8);
 
     inlineBufferLength = (Packet->Descriptor.Length8 -
@@ -979,7 +963,7 @@ Return Value:
             listEntry != &Context->CompletionEntries;
             listEntry = listEntry->ForwardLink)
         {
-            completionEntry = CONTAINING_RECORD(listEntry, EMCL_COMPLETION_ENTRY, Link);
+            completionEntry = BASE_CR(listEntry, EMCL_COMPLETION_ENTRY, Link);
             if (completionEntry->TransactionId == Packet->Descriptor.TransactionId)
             {
                 RemoveEntryList(&completionEntry->Link);
@@ -1037,7 +1021,7 @@ Return Value:
                     FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
                 }
 
-                inlineBuffer = (VOID*)((UINT_PTR)inlineBuffer + sizeof(*pipeHeader));
+                inlineBuffer = (VOID*)((UINTN)inlineBuffer + sizeof(*pipeHeader));
                 inlineBufferLength = pipeHeader->DataSize;
             }
 
@@ -1057,13 +1041,13 @@ Return Value:
         if (Context->ReceiveCallback != NULL)
         {
             // Validate the packet and header values before processing the packet.
-            if (Packet->Descriptor.DataOffset8 * 8 < FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges))
+            if (Packet->Descriptor.DataOffset8 * 8 < OFFSET_OF(VMTRANSFER_PAGE_PACKET_HEADER, Ranges))
             {
                 FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
             }
 
             expectedRangeCount =
-                ((Packet->Descriptor.DataOffset8 * 8) - FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges)) /
+                ((Packet->Descriptor.DataOffset8 * 8) - OFFSET_OF(VMTRANSFER_PAGE_PACKET_HEADER, Ranges)) /
                     sizeof(VMTRANSFER_PAGE_RANGE);
 
             if (Packet->TransferHeader.RangeCount != expectedRangeCount)
@@ -1092,8 +1076,8 @@ Return Value:
 
 VOID
 EmclProcessQueue(
-    __in EFI_EVENT Event,
-    __in_opt VOID *EventContext
+    IN  EFI_EVENT Event,
+    IN  VOID *EventContext OPTIONAL
     )
 /*++
 
@@ -1116,11 +1100,11 @@ Return Value:
 --*/
 {
     EMCL_CONTEXT *context;
-    NTSTATUS status;
+    EFI_STATUS status;
     EFI_TPL tpl;
     UINT32 ringOffset;
     UINT32 currentOffset;
-    PVOID incomingBuffer;
+    VOID* incomingBuffer;
     UINT32 bufferLength;
     EMCL_INCOMING_PACKET *incomingPacket;
     UINT32 receivedCount;
@@ -1142,11 +1126,11 @@ Return Value:
                                         &incomingBuffer,
                                         &bufferLength);
 
-            if (status == STATUS_END_OF_FILE)
+            if (status == EFI_END_OF_FILE)
             {
                 break;
             }
-            else if (!NT_SUCCESS(status))
+            else if (EFI_ERROR(status))
             {
                 break;
             }
@@ -1176,7 +1160,7 @@ Return Value:
             // Replace with validated buffer length.
             //
 
-            WriteNoFence16((SHORT*)&incomingPacket->Descriptor.Length8, (SHORT)(bufferLength / 8));
+            WriteNoFence16((UINT16*)&incomingPacket->Descriptor.Length8, (UINT16)(bufferLength / 8));
 
             EmclDispatchPacket(context, incomingPacket);
             ++receivedCount;
@@ -1185,11 +1169,11 @@ Return Value:
         if (receivedCount > 0)
         {
             status = PkCompleteRemoval(&context->PkLibContext, ringOffset);
-            if (status == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+            if (status == EFI_RING_SIGNAL_OPPOSITE_ENDPOINT)
             {
                 context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
             }
-            else if (!NT_SUCCESS(status))
+            else if (EFI_ERROR(status))
             {
                 break;
             }
@@ -1212,12 +1196,12 @@ Return Value:
                                             outgoingPacket->Buffer,
                                             outgoingPacket->BufferSize);
 
-        if (status == STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT)
+        if (status == EFI_RING_SIGNAL_OPPOSITE_ENDPOINT)
         {
             context->VmbusProtocol->SendInterrupt(context->VmbusProtocol);
         }
 
-        if (!NT_SUCCESS(status))
+        if (EFI_ERROR(status))
         {
             break;
         }
@@ -1236,9 +1220,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclStartChannel(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 IncomingRingBufferPageCount,
-    __in UINT32 OutgoingRingBufferPageCount
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  UINT32 IncomingRingBufferPageCount,
+    IN  UINT32 OutgoingRingBufferPageCount
     )
 /*++
 
@@ -1370,7 +1354,7 @@ Cleanup:
 VOID
 EFIAPI
 EmclStopChannel(
-    __in EFI_EMCL_PROTOCOL *This
+    IN  EFI_EMCL_PROTOCOL *This
     )
 /*++
 
@@ -1477,11 +1461,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclCreateGpaRange(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 Handle,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in BOOLEAN Writable
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  UINT32 Handle,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount,
+    IN  BOOLEAN Writable
     )
 /*++
 
@@ -1558,8 +1542,8 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 EmclDestroyGpaRange(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in UINT32 Handle
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  UINT32 Handle
     )
 /*++
 
@@ -1606,14 +1590,14 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclSendPacketEx(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in UINT32 SendPacketFlags,
-    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
-    __in_opt VOID *CompletionRoutineContext
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  VOID *InlineBuffer,
+    IN  UINT32 InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount,
+    IN  UINT32 SendPacketFlags,
+    IN  EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine OPTIONAL,
+    IN  VOID *CompletionRoutineContext OPTIONAL
     )
 /*++
 
@@ -1748,13 +1732,13 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 EmclSendPacket(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount,
-    __in_opt EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine,
-    __in_opt VOID *CompletionRoutineContext
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  VOID *InlineBuffer,
+    IN  UINT32 InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount,
+    IN  EFI_EMCL_COMPLETION_ROUTINE CompletionRoutine OPTIONAL,
+    IN  VOID *CompletionRoutineContext OPTIONAL
     )
 /*++
 
@@ -1804,10 +1788,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclCompletePacket(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in VOID *PacketContext,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 
@@ -1881,10 +1865,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclSetReceiveCallback(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_opt EFI_EMCL_RECEIVE_PACKET ReceiveCallback,
-    __in_opt VOID *ReceiveContext,
-    __in_range(<=, TPL_EMCL) EFI_TPL Tpl
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  EFI_EMCL_RECEIVE_PACKET ReceiveCallback OPTIONAL,
+    IN  VOID *ReceiveContext OPTIONAL,
+    IN  EFI_TPL Tpl
     )
 /*++
 
@@ -1951,11 +1935,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclCreateGpadl(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in HV_MAP_GPA_FLAGS MapFlags,
-    __out EFI_EMCL_GPADL **Gpadl
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  HV_MAP_GPA_FLAGS MapFlags,
+    OUT EFI_EMCL_GPADL **Gpadl
     )
 /*++
 
@@ -2038,8 +2022,8 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 EmclDestroyGpadl(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  EFI_EMCL_GPADL *Gpadl
     )
 /*++
 
@@ -2086,8 +2070,8 @@ Return Value:
 UINT32
 EFIAPI
 EmclGetGpadlHandle(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  EFI_EMCL_GPADL *Gpadl
     )
 /*++
 
@@ -2119,11 +2103,11 @@ Return Value:
 }
 
 
-PVOID
+VOID*
 EFIAPI
 EmclGetGpadlBuffer(
-    __in EFI_EMCL_PROTOCOL *This,
-    __in EFI_EMCL_GPADL *Gpadl
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  EFI_EMCL_GPADL *Gpadl
     )
 /*++
 
@@ -2158,7 +2142,7 @@ Return Value:
 
 VOID
 EmclInitializeContext(
-    __in EMCL_CONTEXT *Context
+    IN  EMCL_CONTEXT *Context
     )
 /*++
 
@@ -2199,9 +2183,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclDriverSupported(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /*++
 
@@ -2235,9 +2219,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclDriverStart(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /*++
 
@@ -2360,10 +2344,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 EmclDriverStop(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     )
 /*++
 
@@ -2488,9 +2472,9 @@ EFI_DRIVER_BINDING_PROTOCOL gEmclDriverBindingProtocol =
 EFI_STATUS
 EFIAPI
 EmclComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     )
 /*++
 
@@ -2531,11 +2515,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     )
 /*++
 
@@ -2591,8 +2575,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclDriverInitialize(
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
 
@@ -2640,8 +2624,8 @@ Return Value:
 
 EFI_STATUS
 EmclpAllocateBounceBlock(
-    __in EMCL_CONTEXT *Context,
-    __in UINT32 BlockByteCount
+    IN  EMCL_CONTEXT *Context,
+    IN  UINT32 BlockByteCount
     )
 /*++
 
@@ -2748,7 +2732,7 @@ Return Value:
         // Canonicalize the VA.
         //
 
-        nextVa = (PVOID)(PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask) | nextPa);
+        nextVa = (VOID*)(PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask) | nextPa);
         bounceBlock->IsHostVisible = TRUE;
     }
 
@@ -2797,7 +2781,7 @@ Cleanup:
 
 VOID
 EmclpFreeBounceBlock(
-    _In_ PEMCL_BOUNCE_BLOCK Block
+    IN  PEMCL_BOUNCE_BLOCK Block
     )
 /*++
 
@@ -2839,7 +2823,7 @@ Return Value:
 
 VOID
 EmclpFreeAllBounceBlocks(
-    __in EMCL_CONTEXT *Context
+    IN  EMCL_CONTEXT *Context
     )
 
 /*++
@@ -2888,8 +2872,8 @@ Return Value:
 
 PEMCL_BOUNCE_PAGE
 EmclpAcquireBouncePages(
-    __in EMCL_CONTEXT *Context,
-    __in UINT32 PageCount
+    IN  EMCL_CONTEXT *Context,
+    IN  UINT32 PageCount
     )
 /*++
 
@@ -2984,8 +2968,8 @@ Return Value:
 
 VOID
 EmclpReleaseBouncePages(
-    __in EMCL_CONTEXT *Context,
-    __in PEMCL_BOUNCE_PAGE BounceListHead
+    IN  EMCL_CONTEXT *Context,
+    IN  PEMCL_BOUNCE_PAGE BounceListHead
     )
 /*++
 
@@ -3035,9 +3019,9 @@ Return Value:
 
 VOID
 EmclpCopyBouncePagesToExternalBuffer(
-    _In_ EFI_EXTERNAL_BUFFER *ExternalBuffer,
-    _In_ PEMCL_BOUNCE_PAGE BouncePageList,
-    _In_ BOOLEAN CopyToBounce
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffer,
+    IN  PEMCL_BOUNCE_PAGE BouncePageList,
+    IN  BOOLEAN CopyToBounce
     )
 /*++
 
@@ -3064,9 +3048,9 @@ Return Value:
 {
     UINT64 pageOffset;
     PEMCL_BOUNCE_PAGE bouncePage;
-    PUCHAR bounceBuffer;
-    PUCHAR bounceBufferEnd;
-    PUCHAR extBuffer;
+    UINT8* bounceBuffer;
+    UINT8* bounceBufferEnd;
+    UINT8* extBuffer;
     UINT32 transferToGo;
     UINT32 copySize;
 
@@ -3091,7 +3075,7 @@ Return Value:
     {
         ASSERT(bouncePage);
 
-        bounceBuffer = (PUCHAR)bouncePage->PageVA;
+        bounceBuffer = (UINT8*)bouncePage->PageVA;
 
         // Zero any unused space in buffer we are sharing with the host.
         if (CopyToBounce && pageOffset)
@@ -3168,7 +3152,7 @@ Return Value:
 
 VOID
 EmclpZeroBouncePageList(
-    _In_ PEMCL_BOUNCE_PAGE BouncePageList
+    IN  PEMCL_BOUNCE_PAGE BouncePageList
     )
 {
     PEMCL_BOUNCE_PAGE bouncePage = BouncePageList;

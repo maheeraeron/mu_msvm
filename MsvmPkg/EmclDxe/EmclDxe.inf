@@ -1,3 +1,11 @@
+## @file
+#  EMCL (EFI VmBus client library) DXE driver.
+#
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the BSD-2-Clause-Patent license.
+#
+##
+
 [Defines]
     INF_VERSION                    = 0x00010005
     BASE_NAME                      = EmclDxe
@@ -37,6 +45,6 @@
     TRUE
 
 [Pcd]
-    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
-    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary                    ## SOMETIMES_CONSUMES
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask     ## SOMETIMES_CONSUMES
 

@@ -25,9 +25,9 @@ EFIAPI
 EmclSendPacketSync (
     IN  EFI_EMCL_PROTOCOL   *This,
     IN  VOID                *InlineBuffer,
-        UINT32              InlineBufferLength,
+    IN  UINT32              InlineBufferLength,
     IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
-        UINT32              ExternalBufferCount
+    IN  UINT32              ExternalBufferCount
     );
 
 EFI_STATUS
@@ -39,8 +39,8 @@ EmclChannelTypeSupported (
 
 EFI_STATUS
 EmclChannelTypeAndInstanceSupported (
-    IN          EFI_HANDLE ControllerHandle,
-    IN          const EFI_GUID *ChannelType,
-    IN          EFI_HANDLE AgentHandle,
-    IN OPTIONAL const EFI_GUID *ChannelInstance
+    IN  EFI_HANDLE ControllerHandle,
+    IN  const EFI_GUID *ChannelType,
+    IN  EFI_HANDLE AgentHandle,
+    IN  const EFI_GUID *ChannelInstance OPTIONAL
     );

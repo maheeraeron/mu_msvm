@@ -10,7 +10,7 @@
 #pragma once
 
 #include <Protocol/hyperkbdprotocol.h>
-#include <VmBusPacketFormat.h>
+#include <Vmbus/VmBusPacketFormat.h>
 
 EFI_STATUS
 SynthKeyChannelOpen(

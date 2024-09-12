@@ -1,21 +1,12 @@
-/*----------------------------------------------------------------------------
- $Microsoft Confidential$
- $Copyright (C) 2004 Microsoft Corporation.  All Rights Reserved.$
+/** @file
+  This file implements VMBus's ring buffers.
 
- $File: RingBuffer.c $
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 
+**/
 
- Abstract:
-
-     This file implements VMBus's ring buffers.
-
- Environment:
-
-     Kernel mode or user mode
-
-  9/7/2004 (jakeo) - Initial VMBus creation
-
-----------------------------------------------------------------------------*/
+#include <Synchronization.h>
 
 #include "transportp.h"
 
@@ -25,24 +16,24 @@
 
 VOID
 PkpExpectInterrupt(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext,
-    _In_ BOOLEAN IsIncoming
+    IN  PPACKET_LIB_CONTEXT PkLibContext,
+    IN  BOOLEAN IsIncoming
     );
 
 static
 BOOLEAN
 PkpValidatePointer(
-    _In_ UINT32 DataBytesInRing,
-    _In_ UINT32 Pointer
+    IN  UINT32 DataBytesInRing,
+    IN  UINT32 Pointer
     );
 
 /// Initializes and validates the ring buffer pointer caches in the packet
 /// context from the public data in the ring control structure.
 ///
 /// \param Context Context to finish initializing.
-NTSTATUS
+EFI_STATUS
 PkpInitRingBufferControl(
-    _Inout_ PPACKET_LIB_CONTEXT Context
+    IN OUT  PPACKET_LIB_CONTEXT Context
     )
 {
     UINT32 incomingIn;
@@ -54,16 +45,16 @@ PkpInitRingBufferControl(
     // Fetch and validate the in/out pointers.
     //
 
-    incomingIn = ReadNoFence((LONG*)&Context->Incoming.Control->In);
-    incomingOut = ReadNoFence((LONG*)&Context->Incoming.Control->Out);
-    outgoingIn = ReadNoFence((LONG*)&Context->Outgoing.Control->In);
-    outgoingOut = ReadNoFence((LONG*)&Context->Outgoing.Control->Out);
+    incomingIn = ReadNoFence((UINT32*)&Context->Incoming.Control->In);
+    incomingOut = ReadNoFence((UINT32*)&Context->Incoming.Control->Out);
+    outgoingIn = ReadNoFence((UINT32*)&Context->Outgoing.Control->In);
+    outgoingOut = ReadNoFence((UINT32*)&Context->Outgoing.Control->Out);
     if (!PkpValidatePointer(Context->Incoming.DataBytesInRing, incomingIn) ||
         !PkpValidatePointer(Context->Incoming.DataBytesInRing, incomingOut) ||
         !PkpValidatePointer(Context->Outgoing.DataBytesInRing, outgoingIn) ||
         !PkpValidatePointer(Context->Outgoing.DataBytesInRing, outgoingOut))
     {
-        return STATUS_FILE_CORRUPT_ERROR;
+        return EFI_RING_CORRUPT_ERROR;
     }
 
     //
@@ -96,7 +87,7 @@ PkpInitRingBufferControl(
 
     PkpExpectInterrupt(Context, TRUE);
     PkpExpectInterrupt(Context, FALSE);
-    return STATUS_SUCCESS;
+    return EFI_SUCCESS;
 }
 
 /// This function reduces a specified value using a specfied modulus. This
@@ -110,14 +101,14 @@ PkpInitRingBufferControl(
 static
 UINT32
 PkModuloReduce(
-    _In_range_(0, Modulus * 2 - 1)  UINT32 Value,
-    _In_                            UINT32 Modulus
+    IN  UINT32 Value,
+    IN  UINT32 Modulus
     )
 {
     if (Value >= Modulus)
     {
         Value -= Modulus;
-        NT_ASSERT(Value < Modulus);
+        ASSERT(Value < Modulus);
     }
 
     return Value;
@@ -134,8 +125,8 @@ PkModuloReduce(
 static
 BOOLEAN
 PkpValidatePointer(
-    _In_ UINT32 DataBytesInRing,
-    _In_ UINT32 Pointer
+    IN  UINT32 DataBytesInRing,
+    IN  UINT32 Pointer
     )
 {
     return Pointer < DataBytesInRing && (Pointer % sizeof(UINT64)) == 0;
@@ -161,15 +152,15 @@ PkpValidatePointer(
 static
 UINT32
 PkpDataAvailable(
-    _In_                                UINT32 DataBytesInRing,
-    _In_range_(0, DataBytesInRing - 1)  UINT32 PreviouslyCapturedIn,
-    _In_range_(0, DataBytesInRing - 1)  UINT32 PreviouslyCapturedOut
+    IN  UINT32 DataBytesInRing,
+    IN  UINT32 PreviouslyCapturedIn,
+    IN  UINT32 PreviouslyCapturedOut
     )
 {
     UINT32 bytesAvailable;
 
-    NT_ASSERT(PreviouslyCapturedIn < DataBytesInRing);
-    NT_ASSERT(PreviouslyCapturedOut < DataBytesInRing);
+    ASSERT(PreviouslyCapturedIn < DataBytesInRing);
+    ASSERT(PreviouslyCapturedOut < DataBytesInRing);
 
     bytesAvailable = PreviouslyCapturedIn - PreviouslyCapturedOut;
     if (bytesAvailable < DataBytesInRing)
@@ -221,15 +212,15 @@ PkpDataAvailable(
 static
 UINT32
 PkpFreeBytes(
-    _In_                                UINT32 DataBytesInRing,
-    _In_range_(0, DataBytesInRing - 1)  UINT32 PreviouslyCapturedIn,
-    _In_range_(0, DataBytesInRing - 1)  UINT32 PreviouslyCapturedOut
+    IN  UINT32 DataBytesInRing,
+    IN  UINT32 PreviouslyCapturedIn,
+    IN  UINT32 PreviouslyCapturedOut
     )
 {
     UINT32 bytesFree;
 
-    NT_ASSERT(PreviouslyCapturedIn < DataBytesInRing);
-    NT_ASSERT(PreviouslyCapturedOut < DataBytesInRing);
+    ASSERT(PreviouslyCapturedIn < DataBytesInRing);
+    ASSERT(PreviouslyCapturedOut < DataBytesInRing);
 
     bytesFree = PreviouslyCapturedOut - PreviouslyCapturedIn - 1;
     if (bytesFree < DataBytesInRing)
@@ -278,23 +269,23 @@ PkpFreeBytes(
 /// \param Out Current cached value of the Out pointer.
 /// \param DataBytesInRing How many data bytes are in the ring buffer.
 ///
-/// \retval STATUS_SUCCESS The ring buffer has enough space for the packet.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
+/// \retval EFI_SUCCESS The ring buffer has enough space for the packet.
+/// \retval EFI_RING_CORRUPT_ERROR The ring buffer itself has become corrupt.
 ///     No further processing on it is likely to succeed.
-/// \retval STATUS_INVALID_PARAMETER The packet is larger than the size of the
+/// \retval EFI_INVALID_PARAMETER The packet is larger than the size of the
 ///     ring buffer.
-/// \retval STATUS_BUFFER_OVERFLOW The ring buffer is currently full.
-NTSTATUS
+/// \retval EFI_BUFFER_TOO_SMALL The ring buffer is currently full.
+EFI_STATUS
 PkpCheckSendBufferFreeBytes(
-    _In_    PPACKET_LIB_CONTEXT PkLibContext,
-    _In_    UINT32              TotalPacketSize,
-    _In_    UINT32              In,
-    _In_    UINT32              Out,
-    _In_    UINT32              DataBytesInRing
+    IN  PPACKET_LIB_CONTEXT PkLibContext,
+    IN  UINT32              TotalPacketSize,
+    IN  UINT32              In,
+    IN  UINT32              Out,
+    IN  UINT32              DataBytesInRing
     )
 {
     PVMRCB control;
-    NTSTATUS status = STATUS_SUCCESS;
+    EFI_STATUS status = EFI_SUCCESS;
     UINT32 pendingSendSize;
 
     if (PkpFreeBytes(DataBytesInRing, In, Out) < TotalPacketSize)
@@ -306,10 +297,10 @@ PkpCheckSendBufferFreeBytes(
         // the public version and check again.
         //
 
-        Out = ReadNoFence((LONG*)&control->Out);
+        Out = ReadNoFence((UINT32*)&control->Out);
         if (!PkpValidatePointer(DataBytesInRing, Out))
         {
-            status = STATUS_FILE_CORRUPT_ERROR;
+            status = EFI_RING_CORRUPT_ERROR;
             goto Cleanup;
         }
 
@@ -324,7 +315,7 @@ PkpCheckSendBufferFreeBytes(
 
             if (TotalPacketSize >= DataBytesInRing)
             {
-                status = STATUS_INVALID_PARAMETER;
+                status = EFI_INVALID_PARAMETER;
                 goto Cleanup;
             }
 
@@ -358,7 +349,7 @@ PkpCheckSendBufferFreeBytes(
                 pendingSendSize = DataBytesInRing - 1;
             }
 
-            WriteNoFence((LONG*)&control->PendingSendSize, pendingSendSize);
+            WriteNoFence((UINT32*)&control->PendingSendSize, pendingSendSize);
 
             //
             // Store the actual send size so that it can be retrieved by
@@ -376,10 +367,10 @@ PkpCheckSendBufferFreeBytes(
             //
 
             MemoryBarrier();
-            Out = ReadNoFence((LONG*)&control->Out);
+            Out = ReadNoFence((UINT32*)&control->Out);
             if (!PkpValidatePointer(DataBytesInRing, Out))
             {
-                status = STATUS_FILE_CORRUPT_ERROR;
+                status = EFI_RING_CORRUPT_ERROR;
                 goto Cleanup;
             }
 
@@ -390,7 +381,7 @@ PkpCheckSendBufferFreeBytes(
                 // The ring buffer is really full.
                 //
 
-                status = STATUS_BUFFER_OVERFLOW;
+                status = EFI_BUFFER_TOO_SMALL;
                 goto Cleanup;
             }
 
@@ -415,20 +406,20 @@ Cleanup:
 /// \param PkLibContext Pointer to the packet library context structure.
 /// \param NewIn New In value.
 ///
-/// \retval STATUS_SUCCESS The packet was successfully inserted into the ring
+/// \retval EFI_SUCCESS The packet was successfully inserted into the ring
 ///     buffer and the number of bytes that were in the ring before insertion
 ///     was larger than NonEmptyThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
+/// \retval EFI_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
 ///     inserted into the ring buffer and the number of bytes that were in the
 ///     ring buffer before insertion was less than or equal to NonEmptyThreshold
 ///     and the number of bytes after insertion was greater than
 ///     NonEmptyThreshold and the opposite endpoint's InterruptMask was clear.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
+/// \retval EFI_RING_CORRUPT_ERROR The ring buffer itself has become corrupt.
 ///     No further processing on it is likely to succeed.
-NTSTATUS
+EFI_STATUS
 PkCompleteInsertion(
-    _In_  PPACKET_LIB_CONTEXT   PkLibContext,
-    _In_  UINT32                NewIn
+    IN   PPACKET_LIB_CONTEXT   PkLibContext,
+    IN   UINT32                NewIn
     )
 {
     UINT32 oldIn;
@@ -440,7 +431,7 @@ PkCompleteInsertion(
     control = PkLibContext->Outgoing.Control;
     dataBytesInRing = PkLibContext->Outgoing.DataBytesInRing;
 
-    NT_ASSERT(PkpValidatePointer(dataBytesInRing, NewIn));
+    ASSERT(PkpValidatePointer(dataBytesInRing, NewIn));
 
     //
     // Update the stored In pointer.
@@ -457,7 +448,7 @@ PkCompleteInsertion(
     // before updating the In pointer and the other endpoint seeing the change.
     //
 
-    WriteRelease((LONG*)&control->In, NewIn);
+    WriteRelease((UINT32*)&control->In, NewIn);
 
     //
     // Ensure that the write to the public In pointer is visible before
@@ -471,16 +462,16 @@ PkCompleteInsertion(
     // Read the interrupt mask bit.
     //
 
-    interruptMask = ReadNoFence((LONG*)&control->InterruptMask);
+    interruptMask = ReadNoFence((UINT32*)&control->InterruptMask);
 
     //
     // Read and cache the public Out pointer.
     //
 
-    currentOut = ReadNoFence((LONG*)&control->Out);
+    currentOut = ReadNoFence((UINT32*)&control->Out);
     if (!PkpValidatePointer(dataBytesInRing, currentOut))
     {
-        return STATUS_FILE_CORRUPT_ERROR;
+        return EFI_RING_CORRUPT_ERROR;
     }
 
     PkLibContext->OutgoingOutCache = currentOut;
@@ -497,17 +488,17 @@ PkCompleteInsertion(
     {
         if (interruptMask == 0)
         {
-            return STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT;
+            return EFI_RING_SIGNAL_OPPOSITE_ENDPOINT;
         }
         else
         {
             (*PkLibContext->InterruptMaskSkips) += 1;
-            return STATUS_SUCCESS;
+            return EFI_SUCCESS;
         }
     }
     else
     {
-        return STATUS_SUCCESS;
+        return EFI_SUCCESS;
     }
 }
 
@@ -518,23 +509,23 @@ PkCompleteInsertion(
 /// \param PkLibContext Pointer to the packet library context structure.
 /// \param NewOut New Out value.
 ///
-/// \retval STATUS_SUCCESS The packet was successfully removed from the ring
+/// \retval EFI_SUCCESS The packet was successfully removed from the ring
 ///     buffer and the number of bytes that were in the ring before removal was
 ///     smaller than NonFullThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
+/// \retval EFI_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
 ///     removed from the ring buffer and the number of bytes that were in the
 ///     ring buffer before removal was greater than or equal to NonFullThreshold
 ///     and the number of bytes after insertion was less than NonFullThreshold
 ///     and the opposite endpoint's InterruptMask was clear. This code is not an
-///     error, i.e. NT_SUCCESS(STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT) is true.
-/// \retval STATUS_RING_NEWLY_EMPTY The incoming ring is now empty.  This can be
+///     error, i.e. EFI_ERROR(EFI_RING_SIGNAL_OPPOSITE_ENDPOINT) is false.
+/// \retval EFI_RING_NEWLY_EMPTY The incoming ring is now empty.  This can be
 ///     used as a hint by the client to avoid immediately trying to receive
 ///     another packet, thus avoiding a pointless lock acquisition.    This code
-///     is not an error, i.e. NT_SUCCESS(STATUS_RING_NEWLY_EMPTY) is true.
-NTSTATUS
+///     is not an error, i.e. EFI_ERROR(EFI_RING_NEWLY_EMPTY) is false.
+EFI_STATUS
 PkCompleteRemoval(
-    _In_  PPACKET_LIB_CONTEXT   PkLibContext,
-    _In_  UINT32                NewOut
+    IN   PPACKET_LIB_CONTEXT   PkLibContext,
+    IN   UINT32                NewOut
     )
 {
     UINT32 oldFreeBytes;
@@ -548,13 +539,13 @@ PkCompleteRemoval(
     control = PkLibContext->Incoming.Control;
     dataBytesInRing = PkLibContext->Incoming.DataBytesInRing;
 
-    NT_ASSERT(PkpValidatePointer(dataBytesInRing, NewOut));
+    ASSERT(PkpValidatePointer(dataBytesInRing, NewOut));
 
     //
     // Mark that an interrupt is expected if the ring is now empty.
     //
 
-    if ((UINT64)ReadNoFence((LONG*)&control->In) == NewOut)
+    if ((UINT64)ReadNoFence((UINT32*)&control->In) == NewOut)
     {
         PkpExpectInterrupt(PkLibContext, TRUE);
     }
@@ -565,7 +556,7 @@ PkCompleteRemoval(
 
     oldOut = PkLibContext->IncomingOut;
     PkLibContext->IncomingOut = NewOut;
-    WriteNoFence((LONG*)&control->Out, NewOut);
+    WriteNoFence((UINT32*)&control->Out, NewOut);
 
     //
     // Flush the write to the public Out pointer to ensure that the subsequent
@@ -579,16 +570,16 @@ PkCompleteRemoval(
     // Determine whether an interrupt may be necessary.
     //
 
-    pendingSendSize = ReadNoFence((LONG*)&control->PendingSendSize);
+    pendingSendSize = ReadNoFence((UINT32*)&control->PendingSendSize);
 
     //
     // Read and cache the public In pointer.
     //
 
-    currentIn = ReadNoFence((LONG*)&control->In);
+    currentIn = ReadNoFence((UINT32*)&control->In);
     if (!PkpValidatePointer(dataBytesInRing, currentIn))
     {
-        return STATUS_FILE_CORRUPT_ERROR;
+        return EFI_RING_CORRUPT_ERROR;
     }
 
     PkLibContext->IncomingInCache = currentIn;
@@ -612,17 +603,17 @@ PkCompleteRemoval(
         newFreeBytes = PkpFreeBytes(dataBytesInRing, currentIn, NewOut);
         if (newFreeBytes >= pendingSendSize && oldFreeBytes < pendingSendSize)
         {
-            return STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT;
+            return EFI_RING_SIGNAL_OPPOSITE_ENDPOINT;
         }
     }
 
     if (NewOut == currentIn)
     {
-        return STATUS_RING_NEWLY_EMPTY;
+        return EFI_RING_NEWLY_EMPTY;
     }
     else
     {
-        return STATUS_SUCCESS;
+        return EFI_SUCCESS;
     }
 }
 
@@ -635,7 +626,7 @@ PkCompleteRemoval(
 /// \returns A 32-bit offset in bytes from where the next packet will be read.
 UINT32
 PkGetOutgoingRingOffset(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
+    IN  PPACKET_LIB_CONTEXT PkLibContext
     )
 {
     return PkLibContext->OutgoingIn;
@@ -650,64 +641,10 @@ PkGetOutgoingRingOffset(
 /// \returns A 32-bit offset in bytes from where the next packet will be read.
 UINT32
 PkGetIncomingRingOffset(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
+    IN  PPACKET_LIB_CONTEXT PkLibContext
     )
 {
     return PkLibContext->IncomingOut;
-}
-
-
-/// Determines whether the incoming ring is empty.
-///
-/// \param PkLibContext Packet library context.
-///
-/// \returns TRUE if the ring is empty, FALSE otherwise.
-BOOLEAN
-PkIsIncomingRingEmpty(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    return (PkLibContext->IncomingOut == PkLibContext->Incoming.Control->In);
-}
-
-
-/// Determines whether there is enough space in the outgoing ring to send a
-/// packet of a given size.
-///
-/// \param PkLibContext Packet library context.
-///
-/// \returns TRUE if the ring buffer cannot fit the last queued packet, FALSE
-///     otherwise.
-BOOLEAN
-PkIsOutgoingRingFull(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext,
-    _In_ UINT32 SendSize
-    )
-{
-    UINT32 totalSendSize;
-
-    totalSendSize = ALIGN_UP(SendSize, UINT64) + sizeof(PREVIOUS_PACKET_OFFSET);
-    if (totalSendSize > PkGetOutgoingRingFreeBytes(PkLibContext))
-    {
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-
-/// Retrieves the size of the previous send that failed because the ring was too
-/// full, or 0 if the most recent send was successful.
-///
-/// \param PkLibContext Packet library context.
-///
-/// \returns The send size as an unsigned integer.
-UINT32
-PkGetLastFailedSendSize(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    return PkLibContext->PendingSendSize;
 }
 
 
@@ -721,16 +658,16 @@ PkGetLastFailedSendSize(
 ///     that we want to insert into the ring buffer.
 /// \param Buffer Returns a pointer to the buffer.
 ///
-/// \returns NTSTATUS value
-NTSTATUS
+/// \returns EFI_STATUS value
+EFI_STATUS
 PkGetSendBuffer(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext,
-    _Inout_ PUINT32 Offset,
-    _In_range_(>, 0) UINT32 PacketSize,
-    _Out_ _Outptr_result_bytebuffer_(PacketSize) PVOID *Buffer
+    IN      PPACKET_LIB_CONTEXT PkLibContext,
+    IN OUT  UINT32* Offset,
+    IN      UINT32 PacketSize,
+    OUT     VOID* *Buffer
     )
 {
-    NTSTATUS status;
+    EFI_STATUS status;
     PVMRCB control;
     UINT32 totalPacketSize;
     UINT32 in;
@@ -738,13 +675,8 @@ PkGetSendBuffer(
     volatile UINT64 *buffer;
     PREVIOUS_PACKET_OFFSET packetOffset;
     UINT32 dataBytesInRing;
-#ifndef VMBUS_RING_BUFFER_SINGLE_MAPPED
-    UINT32 PacketOneBeforeEndOffset;
-    UINT32 PacketEndOffset;
-#else
     INT64 PacketOneBeforeEndOffset;
     INT64 PacketEndOffset;
-#endif
 
     PacketSize = ALIGN_UP(PacketSize, UINT64);
     totalPacketSize = PacketSize + sizeof(PREVIOUS_PACKET_OFFSET);
@@ -761,24 +693,19 @@ PkGetSendBuffer(
     // Get the correct buffer offset we will write into.
     //
 
-#ifndef VMBUS_RING_BUFFER_SINGLE_MAPPED
-        PacketOneBeforeEndOffset = PacketSize / sizeof(UINT64) - 1;
-        PacketEndOffset = PacketSize / sizeof(UINT64);
-#else
-        PacketOneBeforeEndOffset =
-            ((INT64)(PkModuloReduce(in + PacketSize - sizeof(UINT64), dataBytesInRing)) - (INT64)in) / (INT64)sizeof(UINT64);
-        PacketEndOffset =
-            ((INT64)(PkModuloReduce(in + PacketSize, dataBytesInRing)) - (INT64)in) / (INT64)sizeof(UINT64);
+    PacketOneBeforeEndOffset =
+        ((INT64)(PkModuloReduce(in + PacketSize - sizeof(UINT64), dataBytesInRing)) - (INT64)in) / (INT64)sizeof(UINT64);
+    PacketEndOffset =
+        ((INT64)(PkModuloReduce(in + PacketSize, dataBytesInRing)) - (INT64)in) / (INT64)sizeof(UINT64);
 
-        NT_ASSERT(PacketOneBeforeEndOffset <= UINT32_MAX);
-        NT_ASSERT(PacketEndOffset <= UINT32_MAX);
-#endif
+    ASSERT(PacketOneBeforeEndOffset <= UINT32_MAX);
+    ASSERT(PacketEndOffset <= UINT32_MAX);
 
     //
     // Pull the buffer into the processor cache.
     //
 
-    buffer = (PUINT64)&PkLibContext->Outgoing.Data[in];
+    buffer = (UINT64*)&PkLibContext->Outgoing.Data[in];
     PrefetchForWrite(&buffer[PacketOneBeforeEndOffset]);
     PrefetchForWrite(buffer);
 
@@ -792,7 +719,7 @@ PkGetSendBuffer(
                                          out,
                                          dataBytesInRing);
 
-    if (!NT_SUCCESS(status))
+    if (EFI_ERROR(status))
     {
         goto Cleanup;
     }
@@ -822,7 +749,7 @@ PkGetSendBuffer(
     {
         PkLibContext->PendingSendSize = 0;
         control = PkLibContext->Outgoing.Control;
-        WriteNoFence((LONG*)&control->PendingSendSize, 0);
+        WriteNoFence((UINT32*)&control->PendingSendSize, 0);
     }
 
     //
@@ -830,8 +757,8 @@ PkGetSendBuffer(
     //
 
     *Offset = PkModuloReduce(in + totalPacketSize, dataBytesInRing);
-    *Buffer = (PVOID)buffer;
-    status = STATUS_SUCCESS;
+    *Buffer = (VOID*)buffer;
+    status = EFI_SUCCESS;
 
 Cleanup:
     return status;
@@ -850,18 +777,18 @@ Cleanup:
 ///     packets or PkCompleteRemoval to finish reading.
 /// \param Buffer Buffer pointing to ring data to receive.
 /// \param Length Returns the length of the buffer.
-NTSTATUS
+EFI_STATUS
 PkGetReceiveBuffer(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext,
-    _Inout_ PUINT32 Offset,
-    _Out_ __deref_bcount(*Length) PVOID *Buffer,
-    _Out_ _Deref_out_range_(>=, sizeof(VMPACKET_DESCRIPTOR)) PUINT32 Length
+    IN      PPACKET_LIB_CONTEXT PkLibContext,
+    IN OUT  UINT32 *Offset,
+    OUT     VOID* *Buffer,
+    OUT     UINT32 *Length
     )
 {
     UINT32 in;
     UINT32 out;
     UINT32 bytesInRing;
-    NTSTATUS status;
+    EFI_STATUS status;
     PVMPACKET_DESCRIPTOR header;
     UINT32 packetLength;
     UINT32 totalPacketSize;
@@ -875,7 +802,7 @@ PkGetReceiveBuffer(
     in = PkLibContext->IncomingInCache;
     out = *Offset;
 
-    NT_ASSERT(out < dataBytesInRing);
+    ASSERT(out < dataBytesInRing);
 
     if (in == out)
     {
@@ -888,17 +815,17 @@ PkGetReceiveBuffer(
         // contents below do not get prefetched with stale data.
         //
 
-        in = ReadAcquire((LONG*)&PkLibContext->Incoming.Control->In);
+        in = ReadAcquire((UINT32*)&PkLibContext->Incoming.Control->In);
         if (!PkpValidatePointer(dataBytesInRing, in))
         {
-            status = STATUS_FILE_CORRUPT_ERROR;
+            status = EFI_RING_CORRUPT_ERROR;
             goto Cleanup;
         }
 
         PkLibContext->IncomingInCache = in;
         if (in == out)
         {
-            status = STATUS_END_OF_FILE;
+            status = EFI_END_OF_FILE;
             goto Cleanup;
         }
     }
@@ -906,14 +833,12 @@ PkGetReceiveBuffer(
     bytesInRing = PkpDataAvailable(dataBytesInRing, in, out);
     header = (PVMPACKET_DESCRIPTOR)&PkLibContext->Incoming.Data[out];
 
-#ifdef VMBUS_RING_BUFFER_SINGLE_MAPPED
     //
     // Since packets are aligned to the size of UINT64, as long as the packet length field
     // offset is less than sizeof(UINT64), we don't have to worry about wrapping around the
     // end of the ring buffer. We assert here to keep the assertion with the relevant code.
     //
-    static_assert(FIELD_OFFSET(VMPACKET_DESCRIPTOR, Length8) < sizeof(UINT64), "");
-#endif
+    static_assert(OFFSET_OF(VMPACKET_DESCRIPTOR, Length8) < sizeof(UINT64), "");
 
     //
     // Capture the length field and shift it to a byte count.
@@ -940,7 +865,7 @@ PkGetReceiveBuffer(
     if (packetLength < sizeof(VMPACKET_DESCRIPTOR) ||
         totalPacketSize > bytesInRing)
     {
-        status = STATUS_FILE_CORRUPT_ERROR;
+        status = EFI_RING_CORRUPT_ERROR;
         goto Cleanup;
     }
 
@@ -951,15 +876,11 @@ PkGetReceiveBuffer(
     //
 
 #if DBG
-    if (((PPREVIOUS_PACKET_OFFSET)((PUINT8)
-#ifndef VMBUS_RING_BUFFER_SINGLE_MAPPED
-        header + packetLength
-#else
-        PkLibContext->Incoming.Data + PkModuloReduce((UINT32)((PUCHAR)header - PkLibContext->Incoming.Data + packetLength), dataBytesInRing)
-#endif
+    if (((PPREVIOUS_PACKET_OFFSET)((UINT8*)
+        PkLibContext->Incoming.Data + PkModuloReduce((UINT32)((UINT8*)header - PkLibContext->Incoming.Data + packetLength), dataBytesInRing)
         ))->Offset != out)
     {
-        status = STATUS_FILE_CORRUPT_ERROR;
+        status = EFI_RING_CORRUPT_ERROR;
         goto Cleanup;
     }
 #endif
@@ -967,14 +888,12 @@ PkGetReceiveBuffer(
     *Buffer = header;
     *Length = packetLength;
     *Offset = PkModuloReduce(out + totalPacketSize, dataBytesInRing);
-    status = STATUS_SUCCESS;
+    status = EFI_SUCCESS;
 
 Cleanup:
     return status;
 }
 
-
-#if defined(VMBUS_RING_BUFFER_SINGLE_MAPPED)
 
 /// This function writes to a single-mapped ring buffer, folding around if
 /// necessary.
@@ -989,16 +908,16 @@ Cleanup:
 ///     packet to write.
 VOID
 PkWritePacketSingleMapped(
-    _In_                        PPACKET_LIB_CONTEXT PkLibContext,
-    _In_reads_bytes_(PacketBufSize)  PVOID               PacketBuf,
-    _In_range_(>, 0)            UINT32              PacketBufSize,
-    _In_                        UINT32              Offset
+    IN  PPACKET_LIB_CONTEXT PkLibContext,
+    IN  VOID*               PacketBuf,
+    IN  UINT32              PacketBufSize,
+    IN  UINT32              Offset
     )
 {
     UINT32 in;
     UINT32 dataBytesInRing;
     UINT32 ringBufferEndOffset;
-    volatile UCHAR *buffer;
+    volatile UINT8 *buffer;
 
     buffer = PkLibContext->Outgoing.Data;
 
@@ -1008,7 +927,7 @@ PkWritePacketSingleMapped(
     ringBufferEndOffset = dataBytesInRing - in;
     if (ALIGN_UP(PacketBufSize, UINT64) <= ringBufferEndOffset)
     {
-        RtlCopyMemory((PVOID)(buffer + in),
+        CopyMem((VOID*)(buffer + in),
                       PacketBuf,
                       PacketBufSize);
     }
@@ -1017,12 +936,12 @@ PkWritePacketSingleMapped(
         //
         // Handle the case where we must copy a packet around the end of the ring buffer.
         //
-        RtlCopyMemory((PVOID)(buffer + in),
+        CopyMem((VOID*)(buffer + in),
                       PacketBuf,
                       ringBufferEndOffset);
 
-        RtlCopyMemory((PVOID)buffer,
-                      (PUCHAR)PacketBuf + ringBufferEndOffset,
+        CopyMem((VOID*)buffer,
+                      (UINT8*)PacketBuf + ringBufferEndOffset,
                       PacketBufSize - ringBufferEndOffset);
     }
 }
@@ -1042,13 +961,13 @@ PkWritePacketSingleMapped(
 ///     as retrieved from PkGetIncomingPacketSize.
 VOID
 PkReadPacketSingleMapped(
-    _In_                        PPACKET_LIB_CONTEXT     PkLibContext,
-    _Out_writes_bytes_(PacketBufSize) PVOID                   PacketBuf,
-    _In_                        UINT32                  PacketBufSize,
-    _In_                        UINT32                  Out
+    IN  PPACKET_LIB_CONTEXT     PkLibContext,
+    OUT VOID*                   PacketBuf,
+    IN  UINT32                  PacketBufSize,
+    IN  UINT32                  Out
     )
 {
-    volatile UCHAR *buffer;
+    volatile UINT8 *buffer;
     UINT32 dataBytesInRing;
     UINT32 ringBufferEndOffset;
 
@@ -1068,7 +987,7 @@ PkReadPacketSingleMapped(
 
     if (PacketBufSize <= ringBufferEndOffset)
     {
-        RtlCopyMemory(PacketBuf, (PVOID)(buffer + Out), PacketBufSize);
+        CopyMem(PacketBuf, (VOID*)(buffer + Out), PacketBufSize);
     }
     else
     {
@@ -1077,411 +996,17 @@ PkReadPacketSingleMapped(
         // the end of the ring buffer.
         //
 
-        RtlCopyMemory(PacketBuf,
-                      (PVOID)(buffer + Out),
+        CopyMem(PacketBuf,
+                      (VOID*)(buffer + Out),
                       ringBufferEndOffset);
 
-        RtlCopyMemory((PUCHAR)PacketBuf + ringBufferEndOffset,
-                      (PVOID)buffer,
+        CopyMem((UINT8*)PacketBuf + ringBufferEndOffset,
+                      (VOID*)buffer,
                       PacketBufSize - ringBufferEndOffset);
 
-        NT_ASSERT(PacketBufSize - ringBufferEndOffset + sizeof(PREVIOUS_PACKET_OFFSET) ==
+        ASSERT(PacketBufSize - ringBufferEndOffset + sizeof(PREVIOUS_PACKET_OFFSET) ==
             PkModuloReduce(Out + PacketBufSize + sizeof(PREVIOUS_PACKET_OFFSET), dataBytesInRing));
     }
-}
-
-
-#endif
-
-
-/// This function inserts a packet into an endpoint's outgoing ring buffer.  It
-/// does not use any side-band buffer management.
-///
-/// Assumes that the caller will synchronize access to the outgoing ring.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-/// \param PacketBuf Pointer to a buffer containing the packet to be sent.
-/// \param PacketBufSize Size of the buffer in bytes.
-/// \param TransactionId ID for this packet assigned by the next layer up in the
-///     stack.  It will be used for completion, cancelation and synchronization.
-/// \param RequestCompletion Indicates whether a completion packet should be
-///     required.  A simple packet may or may not need one, as it doesn't refer
-///     to external memory mappings with lifetimes separate from the packet
-///     itself.
-///
-/// \retval STATUS_SUCCESS The packet was successfully inserted into the ring
-///     buffer and the number of bytes that were in the ring before insertion
-///     was larger than NonEmptyThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
-///     inserted into the ring buffer and the number of bytes that were in the
-///     ring buffer before insertion was smaller than NonEmptyThreshold.
-/// \retval STATUS_INVALID_PARAMETER The packet is larger than the total size of
-///     the ring.  This packet can never be sent through this ring.
-/// \retval STATUS_BUFFER_OVERFLOW The packet is larger than the current free
-///     space in the ring.  The packet could be sent through this ring later,
-///     when the opposite endpoint consumes some or all of the currently waiting
-///     packets.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
-///     No further processing on it is likely to succeed.
-_Must_inspect_result_
-NTSTATUS
-PkSendPacketSimple(
-    _In_                        PPACKET_LIB_CONTEXT PkLibContext,
-    _In_reads_bytes_(PacketBufSize)  PVOID               PacketBuf,
-    _In_                        UINT32              PacketBufSize,
-    _In_                        UINT64              TransactionId,
-    _In_                        BOOLEAN             RequestCompletion
-    )
-{
-    PVMPACKET_DESCRIPTOR header;
-    NTSTATUS             status;
-    UINT32               messageLength;
-    UINT32               newIn;
-
-    messageLength = sizeof(*header) + PacketBufSize;
-    newIn = PkLibContext->OutgoingIn;
-    status = PkGetSendBuffer(PkLibContext,
-                             &newIn,
-                             messageLength,
-                             &header);
-
-    if (!NT_SUCCESS(status))
-    {
-        goto Cleanup;
-    }
-
-    //
-    // Fill in the header.
-    //
-
-    header->Type = VmbusPacketTypeDataInBand;
-    header->DataOffset8 = sizeof(*header) / 8;
-    header->Length8 = (UINT16)(ALIGN_UP(messageLength, UINT64) / 8);
-    header->Flags = RequestCompletion ? VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED : 0;
-    PkWriteRingBufferField(header->TransactionId, TransactionId);
-
-    //
-    // Ensure the compiler does not touch the packet data again for either read
-    // or write.
-    //
-
-    _ReadWriteBarrier();
-
-    //
-    // Copy the caller supplied data to the ring.
-    //
-
-    PkWriteRingBuffer(PkLibContext, header + 1, PacketBuf, PacketBufSize);
-
-    //
-    // Finally, update the control structure so the data is visible to the
-    // other end of the pipe.
-    //
-
-    status = PkCompleteInsertion(PkLibContext, newIn);
-
-Cleanup:
-    return status;
-}
-
-
-/// This function inserts a packet into an endpoint's outgoing ring buffer.  It
-/// uses transfer pages for containing actual data and the packet for metadata
-/// (probably commands.)
-///
-/// Assumes that the caller will synchronize access to the outgoing ring.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-/// \param PacketBuf Pointer to a buffer containing the packet to be sent.
-/// \param PacketBufSize Size of the buffer in bytes.
-/// \param TransactionId ID for this packet assigned by the next layer up in the
-///     stack.  It will be used for completion, cancelation and synchronization.
-/// \param TransferPageSetId The transfer page set ID, to be interpretted by the
-///     opposite endpoint.
-/// \param Ranges A set of ordered offsets and lengths within the the transfer
-///     page set that contain data associated with this transaction.
-/// \param SenderOwnsSet If true, this indicates that the TransferPageSetId is
-///     one generated by the sending endpoint.  If false, the ID referred to is
-///     one generated by the receiving endpoint.
-///
-/// \retval STATUS_SUCCESS The packet was successfully inserted into the ring
-///     buffer and the number of bytes that were in the ring before insertion
-///     was larger than NonEmptyThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
-///     inserted into the ring buffer and the number of bytes that were in the
-///     ring buffer before insertion was smaller than NonEmptyThreshold.
-/// \retval STATUS_INVALID_PARAMETER The packet is larger than the total size of
-///     the ring.  This packet can never be sent through this ring.
-/// \retval STATUS_BUFFER_OVERFLOW The packet is larger than the current free
-///     space in the ring.  The packet could be sent through this ring later,
-///     when the opposite endpoint consumes some or all of the currently waiting
-///     packets.
-_Must_inspect_result_
-NTSTATUS
-PkSendPacketTransferPage(
-    _In_                        PPACKET_LIB_CONTEXT     PkLibContext,
-    _In_reads_bytes_(PacketBufSize)  PVOID                   PacketBuf,
-    _In_                        UINT32                  PacketBufSize,
-    _In_                        UINT64                  TransactionId,
-    _In_                        UINT16                  TransferPageSetId,
-    _In_                        PVMTRANSFER_PAGE_RANGES Ranges,
-    _In_                        BOOLEAN                 SenderOwnsSet
-    )
-{
-    PVMTRANSFER_PAGE_RANGES       subRanges;
-    NTSTATUS                      status;
-    UINT32                        newIn;
-    ULONG                         rangeCount;
-    UINT32                        headerLength;
-    UINT32                        messageLength;
-    PVMTRANSFER_PAGE_PACKET_HEADER header;
-    UINT32                        rangesWritten;
-
-    //
-    // Count up all the offset/length tuples that will be part of this packet.
-    //
-
-    rangeCount = 0;
-    for (subRanges = Ranges; subRanges != NULL; subRanges = subRanges->Next)
-    {
-        rangeCount += subRanges->RangeCount;
-    }
-
-    headerLength = FIELD_OFFSET(VMTRANSFER_PAGE_PACKET_HEADER, Ranges) +
-        sizeof(VMTRANSFER_PAGE_RANGE) * rangeCount;
-
-    messageLength = headerLength + PacketBufSize;
-    newIn = PkLibContext->OutgoingIn;
-    status = PkGetSendBuffer(PkLibContext,
-                             &newIn,
-                             messageLength,
-                             &header);
-
-    if (!NT_SUCCESS(status))
-    {
-        goto Cleanup;
-    }
-
-    //
-    // Build the packet header.
-    //
-
-    header->Descriptor.Type         = VmbusPacketTypeDataUsingTransferPages;
-    header->Descriptor.DataOffset8  = (UINT16)(headerLength / 8);
-    header->Descriptor.Length8      = (UINT16)(ALIGN_UP(messageLength, UINT64) / 8);
-    header->Descriptor.Flags        = VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED;
-    PkWriteRingBufferField(header->Descriptor.TransactionId , TransactionId);
-    PkWriteRingBufferField(header->TransferPageSetId        , TransferPageSetId);
-    PkWriteRingBufferField(header->SenderOwnsSet            , SenderOwnsSet);
-    PkWriteRingBufferField(header->Reserved                 , 0);
-    PkWriteRingBufferField(header->RangeCount               , rangeCount);
-
-    //
-    // Ensure the compiler does not touch the packet data again for either read
-    // or write.
-    //
-
-    _ReadWriteBarrier();
-
-    //
-    // Copy the transfer page ranges onto the ring.
-    //
-
-    rangesWritten = 0;
-    for (subRanges = Ranges; subRanges != NULL; subRanges = subRanges->Next)
-    {
-        __assume(rangesWritten + subRanges->RangeCount <= rangeCount);
-
-        PkWriteRingBuffer(
-            PkLibContext,
-            &header->Ranges[rangesWritten],
-            subRanges->Range,
-            subRanges->RangeCount * sizeof(VMTRANSFER_PAGE_RANGE));
-        rangesWritten += subRanges->RangeCount;
-    }
-
-    NT_ASSERT(rangesWritten == rangeCount);
-
-    //
-    // Copy the caller supplied data to the ring.
-    //
-
-    PkWriteRingBuffer(PkLibContext, (PUINT8)header + headerLength, PacketBuf, PacketBufSize);
-
-    //
-    // Finally, update the control structure so the data is visible to the
-    // other end of the pipe.
-    //
-
-    status = PkCompleteInsertion(PkLibContext, newIn);
-
-Cleanup:
-
-    return status;
-}
-
-
-/// This function inserts a cancel packet into an endpoint's outgoing ring
-/// buffer.
-///
-/// Assumes that the caller will synchronize access to the outgoing ring.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-/// \param TransactionId Transaction ID of the previous packet which is now
-///     being cancelled.
-///
-/// \retval STATUS_SUCCESS The packet was successfully inserted into the ring
-///     buffer and the number of bytes that were in the ring before insertion
-///     was larger than NonEmptyThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
-///     inserted into the ring buffer and the caller should signal the opposite
-///     endpoint.
-/// \retval STATUS_INVALID_PARAMETER The packet is larger than the total size of
-///     the ring.  This packet can never be sent through this ring.
-/// \retval STATUS_BUFFER_OVERFLOW The packet is larger than the current free
-///     space in the ring.  The packet could be sent through this ring later,
-///     when the opposite endpoint consumes some or all of the currently waiting
-///     packets.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
-///     No further processing on it is likely to succeed.
-_Must_inspect_result_
-NTSTATUS
-PkSendCancel(
-    _In_  PPACKET_LIB_CONTEXT   PkLibContext,
-    _In_  UINT64                TransactionId
-    )
-{
-    PVMPACKET_DESCRIPTOR    header;
-    NTSTATUS                status;
-    UINT32                  newIn;
-
-    newIn = PkLibContext->OutgoingIn;
-    status = PkGetSendBuffer(PkLibContext,
-                             &newIn,
-                             sizeof(*header),
-                             &header);
-
-    if (!NT_SUCCESS(status))
-    {
-        goto Cleanup;
-    }
-
-    header->Type = VmbusPacketTypeCancelRequest;
-    header->Flags = 0;
-    header->DataOffset8 = sizeof(VMPACKET_DESCRIPTOR) / 8;
-    header->Length8 = sizeof(VMPACKET_DESCRIPTOR) / 8;
-    PkWriteRingBufferField(header->TransactionId, TransactionId);
-
-    //
-    // Ensure the compiler does not touch the packet data again for either read
-    // or write.
-    //
-
-    _ReadWriteBarrier();
-
-    //
-    // Finally, update the control structure so the data is visible to the
-    // other end of the pipe.
-    //
-
-    status = PkCompleteInsertion(PkLibContext, newIn);
-
-Cleanup:
-
-    return status;
-}
-
-
-/// This function inserts a completion packet into an endpoint's outgoing ring
-/// buffer.
-///
-/// Assumes that the caller will synchronize access to the outgoing ring.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-/// \param TransactionId Transaction ID of the previous packet which is now
-///     being completed.
-/// \param PacketBuf Pointer to a buffer containing the packet to be sent.
-/// \param PacketBufSize Size of the buffer in bytes.
-/// \param IsLongTransaction The caller has already called PkDropCompletionCount
-///     for this transaction.
-///
-/// \retval STATUS_SUCCESS The packet was successfully inserted into the ring
-///     buffer and the number of bytes that were in the ring before insertion
-///     was larger than NonEmptyThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
-///     inserted into the ring buffer and the number of bytes that were in the
-///     ring buffer before insertion was smaller than NonEmptyThreshold.
-/// \retval STATUS_INVALID_PARAMETER The packet is larger than the total size of
-///     the ring.  This packet can never be sent through this ring.
-/// \retval STATUS_BUFFER_OVERFLOW The packet is larger than the current free
-///     space in the ring.  The packet could be sent through this ring later,
-///     when the opposite endpoint consumes some or all of the currently waiting
-///     packets.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
-///     No further processing on it is likely to succeed.
-_Must_inspect_result_
-NTSTATUS
-PkSendCompletion(
-    _In_                            PPACKET_LIB_CONTEXT PkLibContext,
-    _In_                            UINT64              TransactionId,
-    _In_reads_bytes_opt_(PacketBufSize)  PVOID               PacketBuf,
-    _In_                            UINT32              PacketBufSize,
-    _In_                            BOOLEAN             IsLongTransaction
-    )
-{
-    PVMPACKET_DESCRIPTOR header;
-    NTSTATUS status;
-    UINT32 messageLength;
-    UINT32 newIn;
-
-    UNREFERENCED_PARAMETER(IsLongTransaction);
-
-    messageLength = sizeof(*header) + PacketBufSize;
-    if (!ARGUMENT_PRESENT(PacketBuf))
-    {
-        NT_ASSERT(PacketBufSize == 0);
-    }
-
-    newIn = PkLibContext->OutgoingIn;
-    status = PkGetSendBuffer(PkLibContext, &newIn, messageLength, &header);
-    if (!NT_SUCCESS(status))
-    {
-        goto Cleanup;
-    }
-
-    //
-    // Push the header onto the ring.
-    //
-
-    header->Type = VmbusPacketTypeCompletion;
-    header->Flags = 0;
-    header->DataOffset8 = sizeof(*header) / 8;
-    header->Length8 = (UINT16)(ALIGN_UP(messageLength, UINT64) / 8);
-    PkWriteRingBufferField(header->TransactionId, TransactionId);
-
-    //
-    // Ensure the compiler does not touch the packet data again for either read
-    // or write.
-    //
-
-    _ReadWriteBarrier();
-
-    //
-    // Copy the caller supplied data to the ring.
-    //
-
-    PkWriteRingBuffer(PkLibContext, header + 1, PacketBuf, PacketBufSize);
-
-    //
-    // Finally, update the control structure so the data is visible to the
-    // other end of the pipe.
-    //
-
-    status = PkCompleteInsertion(PkLibContext, newIn);
-
-Cleanup:
-
-    return status;
 }
 
 
@@ -1495,37 +1020,36 @@ Cleanup:
 /// \param PacketBuf Pointer to a buffer containing the packet to be sent.
 /// \param PacketBufSize Size of the buffer in bytes.
 ///
-/// \retval STATUS_SUCCESS The packet was successfully inserted into the ring
+/// \retval EFI_SUCCESS The packet was successfully inserted into the ring
 ///     buffer and the number of bytes that were in the ring before insertion
 ///     was larger than NonEmptyThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
+/// \retval EFI_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
 ///     inserted into the ring buffer and the number of bytes that were in the
 ///     ring buffer before insertion was smaller than NonEmptyThreshold.
-/// \retval STATUS_INVALID_PARAMETER The packet is larger than the total size of
+/// \retval EFI_INVALID_PARAMETER The packet is larger than the total size of
 ///     the ring.  This packet can never be sent through this ring.
-/// \retval STATUS_BUFFER_OVERFLOW The packet is larger than the current free
+/// \retval EFI_BUFFER_TOO_SMALL The packet is larger than the current free
 ///     space in the ring.  The packet could be sent through this ring later,
 ///     when the opposite endpoint consumes some or all of the currently waiting
 ///     packets.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
+/// \retval EFI_RING_CORRUPT_ERROR The ring buffer itself has become corrupt.
 ///     No further processing on it is likely to succeed.
-_Must_inspect_result_
-NTSTATUS
+EFI_STATUS
 PkSendPacketRaw(
-    _In_                        PPACKET_LIB_CONTEXT PkLibContext,
-    _In_reads_bytes_(PacketBufSize)  PVOID               PacketBuf,
-    _In_range_(>, 0)            UINT32              PacketBufSize
+    IN  PPACKET_LIB_CONTEXT PkLibContext,
+    IN  VOID*               PacketBuf,
+    IN  UINT32              PacketBufSize
     )
 {
-    NTSTATUS        status;
+    EFI_STATUS      status;
     UINT32          newIn;
-    PUINT8          buffer;
+    UINT8*          buffer;
 
-    NT_ASSERT(PacketBufSize > 0);
+    ASSERT(PacketBufSize > 0);
 
     newIn = PkLibContext->OutgoingIn;
     status = PkGetSendBuffer(PkLibContext, &newIn, PacketBufSize, &buffer);
-    if (!NT_SUCCESS(status))
+    if (EFI_ERROR(status))
     {
         goto Cleanup;
     }
@@ -1549,106 +1073,6 @@ Cleanup:
 }
 
 
-/// This function removes a packet from the endpoint's incoming packet ring.
-///
-/// Assumes that the caller will synchronize access to the incoming ring.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-/// \param PacketBuf Pointer to a buffer into which the incoming packet can be
-///     copied.
-/// \param PacketBufSize Size of the buffer in bytes.
-/// \param PacketBufSizeNeeded Out parameter allowing the caller to know how big
-///     the packet is.
-///
-/// \retval STATUS_SUCCESS The packet was successfully removed from the ring
-///     buffer and the number of bytes that were in the ring before removal was
-///     smaller than NonFullThreshold.
-/// \retval STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT The packet was successfully
-///     removed from the ring buffer and the number of bytes that were in the
-///     ring buffer before removal was greater than or equal to NonFullThreshold
-///     and the number of bytes after insertion was less than NonFullThreshold.
-///     This code is not an error, i.e.
-///     NT_SUCCESS(STATUS_RING_SIGNAL_OPPOSITE_ENDPOINT) is true.
-/// \retval STATUS_RING_NEWLY_EMPTY The incoming ring is now empty.  This can be
-///     used as a hint by the client to avoid immediately trying to receive
-///     another packet, thus avoiding a pointless lock acquisition.  This code
-///     is not an error, i.e. NT_SUCCESS(STATUS_RING_NEWLY_EMPTY) is true.
-/// \retval STATUS_BUFFER_TOO_SMALL PacketBuf was too small to contain the next
-///     packet in the ring buffer.
-/// \retval STATUS_END_OF_FILE The ring was empty and there are no packets to
-///     receive.
-/// \retval STATUS_FILE_CORRUPT_ERROR The ring buffer itself has become corrupt.
-///     No further processing on it is likely to succeed.
-_Must_inspect_result_
-NTSTATUS
-PkReceivePacket(
-    _In_                        PPACKET_LIB_CONTEXT     PkLibContext,
-    _Out_writes_bytes_(PacketBufSize) PVMPACKET_DESCRIPTOR    PacketBuf,
-    _In_range_(>=, sizeof(VMPACKET_DESCRIPTOR))
-                                UINT32                  PacketBufSize,
-    _Out_opt_                   PUINT32                 PacketBufSizeNeeded
-    )
-{
-    NTSTATUS status;
-    UINT32 newOut;
-    PVOID buffer;
-    UINT32 incomingPacketSize;
-
-    newOut = PkLibContext->IncomingOut;
-    status = PkGetReceiveBuffer(PkLibContext, &newOut, &buffer, &incomingPacketSize);
-    if (!NT_SUCCESS(status))
-    {
-        goto Cleanup;
-    }
-
-    if (ARGUMENT_PRESENT(PacketBufSizeNeeded))
-    {
-        *PacketBufSizeNeeded = incomingPacketSize;
-    }
-
-    if (incomingPacketSize > PacketBufSize)
-    {
-        status = STATUS_BUFFER_TOO_SMALL;
-        goto Cleanup;
-    }
-
-    //
-    // Now grab the packet.
-    //
-
-    PkReadRingBuffer(PkLibContext, PacketBuf, buffer, incomingPacketSize);
-
-    //
-    // To prevent the opposite endpoint from writing a different packet size
-    // into the header after we've read the header length but before we've
-    // removed the packet from the ring buffer, we'll just write over the
-    // length field with the (already validated) value we read initially.
-    //
-
-    PacketBuf->Length8 = (UINT16)(incomingPacketSize / 8);
-    status = PkCompleteRemoval(PkLibContext, newOut);
-
-Cleanup:
-
-    return status;
-}
-
-
-/// This function returns total number of bytes in the ring, regardless of
-/// whether they are currently in use.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-///
-/// \returns The number of bytes in the ring.
-UINT32
-PkGetIncomingRingSize(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    return PkLibContext->Incoming.DataBytesInRing;
-}
-
-
 /// This function returns total number of bytes in the ring, regardless of
 /// whether they are currently in use.
 ///
@@ -1657,7 +1081,7 @@ PkGetIncomingRingSize(
 /// \returns The number of bytes in the ring.
 UINT32
 PkGetOutgoingRingSize(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
+    IN   PPACKET_LIB_CONTEXT PkLibContext
     )
 {
     return PkLibContext->Outgoing.DataBytesInRing;
@@ -1675,39 +1099,8 @@ PkGetOutgoingRingSize(
 /// \returns The number of bytes that were free in the ring at some point during
 ///     the execution of this function.
 UINT32
-PkGetIncomingRingFreeBytes(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    UINT32          currentOut;
-    UINT32          currentIn;
-    UINT32          dataBytesInRing;
-
-    dataBytesInRing = PkLibContext->Incoming.DataBytesInRing;
-    currentOut = PkLibContext->IncomingOut;
-    currentIn = ReadNoFence((LONG*)&PkLibContext->Incoming.Control->In);
-    if (!PkpValidatePointer(dataBytesInRing, currentIn))
-    {
-        return 0;
-    }
-
-    return PkpFreeBytes(dataBytesInRing, currentIn, currentOut);
-}
-
-
-/// This function returns a snapshot of the number of bytes that are free within
-/// the ring.  The number returned may be inaccurate by the time the function
-/// returns, as packets may have been inserted or removed while the function was
-/// executing.  Consequently, this function is only useful as a general gauge of
-/// activity.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-///
-/// \returns The number of bytes that were free in the ring at some point during
-///     the execution of this function.
-UINT32
 PkGetOutgoingRingFreeBytes(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
+    IN   PPACKET_LIB_CONTEXT PkLibContext
     )
 {
     UINT32          currentOut;
@@ -1716,105 +1109,13 @@ PkGetOutgoingRingFreeBytes(
 
     dataBytesInRing = PkLibContext->Outgoing.DataBytesInRing;
     currentIn = PkLibContext->OutgoingIn;
-    currentOut = ReadNoFence((LONG*)&PkLibContext->Outgoing.Control->Out);
+    currentOut = ReadNoFence((UINT32*)&PkLibContext->Outgoing.Control->Out);
     if (!PkpValidatePointer(dataBytesInRing, currentOut))
     {
         return 0;
     }
 
     return PkpFreeBytes(dataBytesInRing, currentIn, currentOut);
-}
-
-
-/// This function returns a snapshot of the number of bytes that are available
-/// to be consumed from the ring.  The number returned may be inaccurate by the
-/// time the function returns, as packets may have been inserted or removed
-/// while the function was executing.  Consequently, this function is only
-/// useful as a general gauge of activity.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-///
-/// \returns The number of bytes that were available in the ring at some point
-///     during the execution of this function.
-UINT32
-PkGetIncomingRingAvailableBytes(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    UINT32          currentOut;
-    UINT32          currentIn;
-    UINT32          dataBytesInRing;
-
-    dataBytesInRing = PkLibContext->Incoming.DataBytesInRing;
-    currentOut = PkLibContext->IncomingOut;
-    currentIn = ReadNoFence((LONG*)&PkLibContext->Incoming.Control->In);
-    if (!PkpValidatePointer(dataBytesInRing, currentIn))
-    {
-        return 0;
-    }
-
-    return PkpDataAvailable(dataBytesInRing, currentIn, currentOut);
-}
-
-
-/// This function returns a snapshot of the number of bytes that are available
-/// to be consumed from the ring.  The number returned may be inaccurate by the
-/// time the function returns, as packets may have been inserted or removed
-/// while the function was executing.  Consequently, this function is only
-/// useful as a general gauge of activity.
-///
-/// \param PkLibContext Pointer to the packet library context structure.
-///
-/// \returns The number of bytes that were available in the ring at some point
-///     during the execution of this function.
-UINT32
-PkGetOutgoingRingAvailableBytes(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    UINT32          currentOut;
-    UINT32          currentIn;
-    UINT32          dataBytesInRing;
-
-    dataBytesInRing = PkLibContext->Outgoing.DataBytesInRing;
-    currentIn = PkLibContext->OutgoingIn;
-    currentOut = ReadNoFence((LONG*)&PkLibContext->Outgoing.Control->Out);
-    if (!PkpValidatePointer(dataBytesInRing, currentOut))
-    {
-        return 0;
-    }
-
-    return PkpDataAvailable(dataBytesInRing, currentIn, currentOut);
-}
-
-
-/// This routine masks/unmasks the interrupts on this endpoint. This involves
-/// setting a flag for the opposite endpoint to look at when deciding whether to
-/// send an interrupt to this endpoint.
-///
-/// \param PkLibContext Struct containing all of the lib's context.
-/// \param Mask Supplies the Mask value to mask or unmask the interrupts.
-VOID
-PkSetInterruptMask(
-    _In_    PPACKET_LIB_CONTEXT PkLibContext,
-    _In_    BOOLEAN             Mask
-    )
-{
-    WriteNoFence((LONG*)&PkLibContext->Incoming.Control->InterruptMask, Mask);
-}
-
-
-/// This routine determines whether incoming interrupts are currently masked.
-///
-/// \param PkLibContext A pointer to the packet library context.
-///
-/// \returns TRUE if interrupts are currently masked.
-BOOLEAN
-PkAreIncomingInterruptsMasked(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    return PkLibContext->Incoming.Control->InterruptMask != 0;
 }
 
 
@@ -1826,43 +1127,13 @@ PkAreIncomingInterruptsMasked(
 /// \returns TRUE if interrupts are currently masked.
 UINT32
 PkpExpectedInterruptCount(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
+    IN   PPACKET_LIB_CONTEXT PkLibContext
     )
 {
     return PkLibContext->EmptyRingBufferCount +
            PkLibContext->FullRingBufferCount -
            PkLibContext->NonspuriousInterruptCount;
 
-}
-
-
-/// This function is invoked when an interrupt arrives.  It records the event
-/// and, by examining other ring-related state, determines whether the interrupt
-/// was valid or possibly spurious.
-///
-/// Note that there are race conditions in interrupt delivery and the return
-/// value from this function is not 100% reliable.  It is, however, good enough
-/// to be used as the basis for a spurious interrupt counter.
-///
-/// \param PkLibContext Struct containing all of the lib's context.
-///
-/// \retval TRUE There was a condition which should have prompted an interrupt.
-///     FALSE   - There was not a condition which should have prompted an
-///     interrupt.
-BOOLEAN
-PkInterruptArrived(
-    _In_    PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    if (PkpExpectedInterruptCount(PkLibContext) > 0)
-    {
-        PkLibContext->NonspuriousInterruptCount += 1;
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
 }
 
 
@@ -1875,8 +1146,8 @@ PkInterruptArrived(
 ///     empty. Otherwise, expect one because it is full.
 VOID
 PkpExpectInterrupt(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext,
-    _In_ BOOLEAN IsIncoming
+    IN   PPACKET_LIB_CONTEXT PkLibContext,
+    IN   BOOLEAN IsIncoming
     )
 {
     if (PkpExpectedInterruptCount(PkLibContext) < MAXIMUM_EXPECTED_INTERRUPT_COUNT)
@@ -1891,77 +1162,3 @@ PkpExpectInterrupt(
         }
     }
 }
-
-
-/// This routine calculates the location of the data inside a packet that was
-/// just received via PkReceivePacket.  At this point we know that Length8
-/// represents the size of the buffer (and that it is at least the size of the
-/// header) but we need to verify that DataOffset8 is valid and that the packet
-/// contains at least MinimumDataSize bytes.
-///
-/// \param PacketBuf Pointer to the header of a packet that was received from
-///     the ring buffer
-/// \param MinimumDataSize Minimum size required for success
-/// \param ActualDataSize Optional pointer to location that will receive the
-///     actual data size
-/// \param StartOfData Pointer to location that will point to the start of the
-///     payload if the function succeeds.
-///
-/// \retval STATUS_SUCCESS StartOfData points the the beginning of the data, and
-///     is guaranteed to be at least MinimumDataSize bytes long.
-/// \retval STATUS_BUFFER_TOO_SMALL The packet does contain the minimum number
-///     of bytes in the payload.  ActualDataSize is computed.
-/// \retval STATUS_INVALID_PARAMETER DataOffset8 is invalid. ActualDataSize is
-///     not set.
-NTSTATUS
-PkGetPacketData(
-    _In_reads_bytes_(PacketBuf->Length8 * 8) PVMPACKET_DESCRIPTOR  PacketBuf,
-    _In_                                UINT32                MinimumDataSize,
-    _Out_opt_                           PUINT32               ActualDataSize,
-    _Out_                               PVOID*                StartOfData
-    )
-{
-    ULONG dataSize;
-
-    if (PacketBuf->DataOffset8 > PacketBuf->Length8)
-    {
-        return STATUS_INVALID_PARAMETER;
-    }
-
-    dataSize = (PacketBuf->Length8 - PacketBuf->DataOffset8) * 8;
-    if (ActualDataSize != NULL)
-    {
-        *ActualDataSize = dataSize;
-    }
-
-    if (dataSize < MinimumDataSize)
-    {
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-
-    *StartOfData = (PVOID)((PUCHAR)PacketBuf + PacketBuf->DataOffset8 * 8);
-    return STATUS_SUCCESS;
-}
-
-
-/// Returns whether the opposite endpoint will deterministically request and
-/// send ring-full interrupts when appropriate.
-///
-/// If this returns FALSE, the caller must ensure that a retry mechanism is in
-/// use when the ring buffer fills up or make other arrangements to find out
-/// when the ring buffer has enough space available.
-///
-/// \param PkLibContext A pointer to the packet library context.
-///
-/// \returns TRUE if the opposite endpoint fully supports ring-full interrupts.
-BOOLEAN
-PkSupportsRingFullInterrupts(
-    _In_ PPACKET_LIB_CONTEXT PkLibContext
-    )
-{
-    PVMRCB control;
-
-    control = PkLibContext->Incoming.Control;
-    return control->FeatureBits.SupportsPendingSendSize != 0;
-}
-

@@ -1,24 +1,11 @@
-/*++
+/** @file
+  Utility functions for EMCL.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    EmclLib.h
-
-Abstract:
-
-    Utility functions for EMCL.
-
-Author:
-
-    Marius Buleandra (mariub) - 31 Jul 2012
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
-
 #include <Uefi.h>
-#include <EfiNt.h>
 
 #include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -50,7 +37,7 @@ INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 EFI_STATUS
 EFIAPI
 EmclInstallProtocol (
-    __in EFI_HANDLE ControllerHandle
+    IN  EFI_HANDLE ControllerHandle
     )
 /*++
 
@@ -111,7 +98,7 @@ Cleanup:
 VOID
 EFIAPI
 EmclUninstallProtocol (
-    __in EFI_HANDLE ControllerHandle
+    IN  EFI_HANDLE ControllerHandle
     )
 /*++
 
@@ -158,9 +145,9 @@ Return Value:
 
 VOID
 EmclSynchronousPacketCompletion (
-    __in_opt VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context OPTIONAL,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 
@@ -203,11 +190,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 EmclSendPacketSync (
-    __in EFI_EMCL_PROTOCOL *This,
-    __in_bcount(InlineBufferLength) VOID *InlineBuffer,
-    __in UINT32 InlineBufferLength,
-    __in_ecount(ExternalBufferCount) EFI_EXTERNAL_BUFFER *ExternalBuffers,
-    __in UINT32 ExternalBufferCount
+    IN  EFI_EMCL_PROTOCOL *This,
+    IN  VOID *InlineBuffer,
+    IN  UINT32 InlineBufferLength,
+    IN  EFI_EXTERNAL_BUFFER *ExternalBuffers,
+    IN  UINT32 ExternalBufferCount
     )
 /*++
 
@@ -239,11 +226,11 @@ Return Value:
 
     ZeroMem(&context, sizeof(EMCL_LIB_COMPLETION_CONTEXT));
 
-    if (mInternalEventServices == NULL) 
+    if (mInternalEventServices == NULL)
     {
         status = gBS->LocateProtocol(
-                        &gInternalEventServicesProtocolGuid, 
-                        NULL, 
+                        &gInternalEventServicesProtocolGuid,
+                        NULL,
                         (VOID **)&mInternalEventServices);
         ASSERT_EFI_ERROR(status);
     }
@@ -306,9 +293,9 @@ Cleanup:
 
 EFI_STATUS
 EmclChannelTypeSupported (
-    __in EFI_HANDLE ControllerHandle,
-    __in const EFI_GUID *ChannelType,
-    __in EFI_HANDLE AgentHandle
+    IN  EFI_HANDLE ControllerHandle,
+    IN  const EFI_GUID *ChannelType,
+    IN  EFI_HANDLE AgentHandle
     )
 /*++
 
@@ -352,10 +339,10 @@ Return Value:
 ///
 EFI_STATUS
 EmclChannelTypeAndInstanceSupported (
-    __in EFI_HANDLE ControllerHandle,
-    __in const EFI_GUID *ChannelType,
-    __in EFI_HANDLE AgentHandle,
-    __in_opt const EFI_GUID *ChannelInstance
+    IN  EFI_HANDLE ControllerHandle,
+    IN  const EFI_GUID *ChannelType,
+    IN  EFI_HANDLE AgentHandle,
+    IN  const EFI_GUID *ChannelInstance OPTIONAL
     )
 {
     EFI_STATUS status;

@@ -44,7 +44,7 @@ typedef struct _RECT {
 #define BYTE UINT8
 
 #include <SynthVidProtocol.h>
-#include <VmBusPacketFormat.h>
+#include <Vmbus/VmBusPacketFormat.h>
 
 #define VIDEODXE_VERSION 1
 #define VIDEODXE_CONTEXT_SIGNATURE SIGNATURE_32('V','D','X','E')

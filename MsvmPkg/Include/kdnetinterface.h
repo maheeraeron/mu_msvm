@@ -1,19 +1,8 @@
-/*++
+/** @file
+  Defines the public interface for kdnet used by the kdnet library consumers.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    kdnetinterface.h
-
-Abstract:
-
-    Defines the public interface for kdnet used by the kdnet library consumers.
-
-Author:
-
-    Ben Leis (benleis) 5-17-2010
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #pragma once
@@ -193,7 +182,7 @@ typedef struct _DHCP_STATE {
     ETHERNET_ADDRESS DhcpServerMac;
 } DHCP_STATE, *PDHCP_STATE;
 
-C_ASSERT((FIELD_OFFSET(DHCP_STATE, DhcpServerMac) & 0x3) == 0);
+C_ASSERT((OFFSET_OF(DHCP_STATE, DhcpServerMac) & 0x3) == 0);
 
 typedef struct _IPV6_STATE {
     IPV6_ADDRESS LinkLocalAddress;
@@ -210,7 +199,7 @@ typedef struct _IPV6_STATE {
     UCHAR NoRouterSolicitations;
 } IPV6_STATE, *PIPV6_STATE;
 
-C_ASSERT((FIELD_OFFSET(IPV6_STATE, RouterEthernetAddress) & 0x3) == 0);
+C_ASSERT((OFFSET_OF(IPV6_STATE, RouterEthernetAddress) & 0x3) == 0);
 
 #define KD_NET_KEY_SIZE_DWORDS 8
 #define KD_NET_KEY_SIZE (KD_NET_KEY_SIZE_DWORDS * sizeof(ULONG))

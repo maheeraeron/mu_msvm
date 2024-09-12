@@ -56,6 +56,7 @@
   gEfiVmbusChannelDevicePathGuid                ## CONSUMES
   gMemoryStatusCodeRecordGuid                   ## CONSUMES ## HOB
   gStatusCodeEventChannelGuid                   ## CONSUMES
+  gSyntheticNetworkClassGuid                    ## CONSUMES
 
 [Protocols]
   gEfiEventLogProtocolGuid                      ## PRODUCES
