@@ -1,17 +1,11 @@
-/*++
-
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-  CpuGdt.c
-
-Abstract:
-
+/** @file
   C based implementation of IA32 interrupt handling only
   requiring a minimal assembly interrupt entry point.
 
---*/
+  Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
 
 #include "CpuDxe.h"
 
@@ -119,7 +113,7 @@ STATIC GDT_ENTRIES GdtTemplate = {
     0x0FFFF,        // limit 15:0
     0x0,            // base 15:0
     0x0,            // base 23:16
-    0x09A,          // present, ring 0, data, expand-up, writable MS_HYP_CHANGE
+    0x09A,          // present, ring 0, code, execute/read
     0x0CF,          // page-granular, 32-bit
     0x0,
   },

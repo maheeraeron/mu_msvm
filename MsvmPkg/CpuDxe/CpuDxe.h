@@ -1,16 +1,10 @@
-/*++
+/** @file
+  CPU DXE Module to produce CPU ARCH Protocol and CPU MP Protocol.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) 2008 - 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-Module Name:
-
-    CpuDxe.h
-
-Abstract:
-
-    CPU DXE Module to produce CPU ARCH Protocol.
-
---*/
+**/
 
 #ifndef _CPU_DXE_H_
 #define _CPU_DXE_H_
@@ -51,7 +45,6 @@ Abstract:
 #define HEAP_GUARD_NONSTOP_MODE       \
         ((PcdGet8 (PcdHeapGuardPropertyMask) & (BIT6|BIT4|BIT1|BIT0)) > BIT6)
 */
-
 #define NULL_DETECTION_NONSTOP_MODE  FALSE
 
 /*
@@ -161,10 +154,10 @@ ApWaitInMailbox(void);
 EFI_STATUS
 EFIAPI
 CpuFlushCpuDataCache (
-  IN EFI_CPU_ARCH_PROTOCOL     *This,
-  IN EFI_PHYSICAL_ADDRESS      Start,
-  IN UINT64                    Length,
-  IN EFI_CPU_FLUSH_TYPE        FlushType
+  IN EFI_CPU_ARCH_PROTOCOL  *This,
+  IN EFI_PHYSICAL_ADDRESS   Start,
+  IN UINT64                 Length,
+  IN EFI_CPU_FLUSH_TYPE     FlushType
   );
 
 /**
@@ -179,7 +172,7 @@ CpuFlushCpuDataCache (
 EFI_STATUS
 EFIAPI
 CpuEnableInterrupt (
-  IN EFI_CPU_ARCH_PROTOCOL     *This
+  IN EFI_CPU_ARCH_PROTOCOL  *This
   );
 
 /**
@@ -194,7 +187,7 @@ CpuEnableInterrupt (
 EFI_STATUS
 EFIAPI
 CpuDisableInterrupt (
-  IN EFI_CPU_ARCH_PROTOCOL     *This
+  IN EFI_CPU_ARCH_PROTOCOL  *This
   );
 
 /**
@@ -210,8 +203,8 @@ CpuDisableInterrupt (
 EFI_STATUS
 EFIAPI
 CpuGetInterruptState (
-  IN  EFI_CPU_ARCH_PROTOCOL     *This,
-  OUT BOOLEAN                   *State
+  IN  EFI_CPU_ARCH_PROTOCOL  *This,
+  OUT BOOLEAN                *State
   );
 
 /**
@@ -229,8 +222,8 @@ CpuGetInterruptState (
 EFI_STATUS
 EFIAPI
 CpuInit (
-  IN EFI_CPU_ARCH_PROTOCOL     *This,
-  IN EFI_CPU_INIT_TYPE         InitType
+  IN EFI_CPU_ARCH_PROTOCOL  *This,
+  IN EFI_CPU_INIT_TYPE      InitType
   );
 
 /**
@@ -256,9 +249,9 @@ CpuInit (
 EFI_STATUS
 EFIAPI
 CpuRegisterInterruptHandler (
-  IN EFI_CPU_ARCH_PROTOCOL         *This,
-  IN EFI_EXCEPTION_TYPE            InterruptType,
-  IN EFI_CPU_INTERRUPT_HANDLER     InterruptHandler
+  IN EFI_CPU_ARCH_PROTOCOL      *This,
+  IN EFI_EXCEPTION_TYPE         InterruptType,
+  IN EFI_CPU_INTERRUPT_HANDLER  InterruptHandler
   );
 
 /**
@@ -287,10 +280,10 @@ CpuRegisterInterruptHandler (
 EFI_STATUS
 EFIAPI
 CpuGetTimerValue (
-  IN  EFI_CPU_ARCH_PROTOCOL       *This,
-  IN  UINT32                      TimerIndex,
-  OUT UINT64                      *TimerValue,
-  OUT UINT64                      *TimerPeriod OPTIONAL
+  IN  EFI_CPU_ARCH_PROTOCOL  *This,
+  IN  UINT32                 TimerIndex,
+  OUT UINT64                 *TimerValue,
+  OUT UINT64                 *TimerPeriod OPTIONAL
   );
 
 /**
@@ -312,10 +305,10 @@ CpuGetTimerValue (
 EFI_STATUS
 EFIAPI
 CpuSetMemoryAttributes (
-  IN EFI_CPU_ARCH_PROTOCOL      *This,
-  IN EFI_PHYSICAL_ADDRESS       BaseAddress,
-  IN UINT64                     Length,
-  IN UINT64                     Attributes
+  IN EFI_CPU_ARCH_PROTOCOL  *This,
+  IN EFI_PHYSICAL_ADDRESS   BaseAddress,
+  IN UINT64                 Length,
+  IN UINT64                 Attributes
   );
 
 // MS_HYP_CHANGE BEGIN

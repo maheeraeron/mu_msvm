@@ -1,19 +1,12 @@
-/*++
+/** @file
+  Return Paging attribute.
 
-Copyright (c) Microsoft Corporation
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-Module Name:
-
-    PagingAttribute.c
-
-Abstract:
-
-    Return Paging attribute.
-
---*/
+**/
 
 #include "CpuPageTable.h"
-
 
 /**
   Get paging details.
@@ -25,16 +18,16 @@ Abstract:
 **/
 VOID
 GetPagingDetails (
-  IN  PAGE_TABLE_LIB_PAGING_CONTEXT_DATA *PagingContextData,
-  OUT UINTN                              **PageTableBase     OPTIONAL,
-  OUT UINT32                             **Attributes        OPTIONAL
+  IN  PAGE_TABLE_LIB_PAGING_CONTEXT_DATA  *PagingContextData,
+  OUT UINTN                               **PageTableBase     OPTIONAL,
+  OUT UINT32                              **Attributes        OPTIONAL
   )
 {
   if (PageTableBase != NULL) {
     *PageTableBase = &PagingContextData->X64.PageTableBase;
   }
+
   if (Attributes != NULL) {
     *Attributes = &PagingContextData->X64.Attributes;
   }
 }
-
