@@ -56,7 +56,6 @@
   SecurityManagementLib
   PeCoffLib
   TpmMeasurementLib
-  ReportStatusCodeLib             # MS_CHANGE
 
 [Protocols]
   gEfiFirmwareVolume2ProtocolGuid       ## SOMETIMES_CONSUMES
