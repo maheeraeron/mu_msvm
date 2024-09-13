@@ -201,7 +201,6 @@ APRIORI DXE {
 
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
-INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
@@ -241,6 +240,7 @@ INF MsvmPkg/EmclDxe/EmclDxe.inf
 INF MsvmPkg/EventLogDxe/EventLogDxe.inf
 INF MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF MsvmPkg/NetvscDxe/NetvscDxe.inf
+INF MsvmPkg/NvmExpressDxe/NvmExpressDxe.inf
 INF MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
 INF MsvmPkg/SerialDxe/SerialDxe.inf
 INF MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf

@@ -773,7 +773,6 @@
   FatPkg/EnhancedFatDxe/Fat.inf
 
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
-  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Core/Dxe/DxeMain.inf {
@@ -850,6 +849,7 @@
   MsvmPkg/EventLogDxe/EventLogDxe.inf
   MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
+  MsvmPkg/NvmExpressDxe/NvmExpressDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
   MsvmPkg/RngDxe/RngDxe.inf {
     <LibraryClasses>

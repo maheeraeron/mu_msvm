@@ -28,6 +28,7 @@
     EmclLib
     MmioAllocationLib
     IoLib
+    IsolationLib
 
 [Protocols]
     gEfiVmbusProtocolGuid           #CONSUMES
@@ -38,5 +39,7 @@
     gEfiVmbusChannelDevicePathGuid  #CONSUMES
 
 [Pcd]
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary
+    gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask
     gMsvmPkgTokenSpaceGuid.PcdVpciBootEnabled
     gMsvmPkgTokenSpaceGuid.PcdVpciInstanceFilterGuidPtr

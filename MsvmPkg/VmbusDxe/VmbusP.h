@@ -73,13 +73,12 @@ extern EFI_GUID gEfiVmbusRootProtocolGuid;
 //
 // For isolated guests, only allow the channels for drivers that have been triaged for security
 // and guest hardening.
-// TODO: This restriction only applies to SNP for now since we need VBS to be less restrictive to
-// allow easy development. Once we have covered more guest hardening, this restriction should be
-// applied to VBS as well.
 //
 // The following channels have gone through a security review and are allowed during UEFI:
 //
 //      Storage channel (StorvscDxe)
+//      Networking channel (NetvscDxe)
+//      Virtual PCI channel (VpcivscDxe)
 //
 typedef struct
 {

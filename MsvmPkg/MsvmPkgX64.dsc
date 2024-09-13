@@ -817,7 +817,6 @@
   }
   MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
-  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
@@ -858,6 +857,7 @@
   MsvmPkg/EventLogDxe/EventLogDxe.inf
   MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   MsvmPkg/NetvscDxe/NetvscDxe.inf
+  MsvmPkg/NvmExpressDxe/NvmExpressDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf

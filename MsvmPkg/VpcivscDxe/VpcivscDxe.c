@@ -21,6 +21,8 @@
 #include <Library/DevicePathLib.h>
 #include <Library/PcdLib.h>
 
+#include <IsolationTypes.h>
+
 EFI_DRIVER_BINDING_PROTOCOL gVpcivscDriverBinding =
 {
     VpcivscDriverBindingSupported,
@@ -91,6 +93,9 @@ typedef struct _VPCIVSC_COMPLETION_CONTEXT
     UINT32 CompletionPacketLength;
     UINT32 BytesCopied;
 } VPCIVSC_COMPLETION_CONTEXT, *PVPCIVSC_COMPLETION_CONTEXT;
+
+UINTN mSharedGpaBoundary;
+UINT64 mCanonicalizationMask;
 
 //
 // VmBus incoming ring buffer page count
@@ -811,6 +816,17 @@ VpciChannelPdoSendAssignedResourcesMessage(
             Context->MappedBars[i].MappedAddress,
             Context->MappedBars[i].Size);
 
+        // For confidental VMs, MMIO is translated to a shared section of memory
+        // above the shared GPA boundary. This requires a translation which must be
+        // reflected in config space, but not sent to the VSP.
+        if (IsIsolated())
+        {
+            Context->MappedBars[i].MappedAddress += mSharedGpaBoundary;
+
+            // Canonicalize the address.
+            Context->MappedBars[i].MappedAddress |= mCanonicalizationMask;
+        }
+
         // Since this is a 64 bit bar, set the next descriptor as null type.
         rawBarIndex++;
         ASSERT(rawBarIndex < PCI_TYPE0_BAR_COUNT);
@@ -1049,6 +1065,9 @@ VpcivscDriverEntryPoint (
                                                       &gVpcivscComponentName,
                                                       &gVpcivscComponentName2);
     ASSERT_EFI_ERROR(status);
+
+    mSharedGpaBoundary = PcdGet64(PcdIsolationSharedGpaBoundary);
+    mCanonicalizationMask = PcdGet64(PcdIsolationSharedGpaCanonicalizationBitmask);
 
     return status;
 }
