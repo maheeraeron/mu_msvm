@@ -18,30 +18,8 @@
 //
 // Below macro is deprecated, and should not be used.
 //
-#define  FIRMWARE_VARIABLE_MTRR_NUMBER  6
-#define  MTRR_LIB_IA32_MTRR_CAP                      0x0FE
-#define  MTRR_LIB_IA32_MTRR_CAP_VCNT_MASK            0x0FF
-#define  MTRR_LIB_IA32_MTRR_FIX64K_00000             0x250
-#define  MTRR_LIB_IA32_MTRR_FIX16K_80000             0x258
-#define  MTRR_LIB_IA32_MTRR_FIX16K_A0000             0x259
-#define  MTRR_LIB_IA32_MTRR_FIX4K_C0000              0x268
-#define  MTRR_LIB_IA32_MTRR_FIX4K_C8000              0x269
-#define  MTRR_LIB_IA32_MTRR_FIX4K_D0000              0x26A
-#define  MTRR_LIB_IA32_MTRR_FIX4K_D8000              0x26B
-#define  MTRR_LIB_IA32_MTRR_FIX4K_E0000              0x26C
-#define  MTRR_LIB_IA32_MTRR_FIX4K_E8000              0x26D
-#define  MTRR_LIB_IA32_MTRR_FIX4K_F0000              0x26E
-#define  MTRR_LIB_IA32_MTRR_FIX4K_F8000              0x26F
-#define  MTRR_LIB_IA32_VARIABLE_MTRR_BASE            0x200
-//
-// Below macro is deprecated, and should not be used.
-//
-#define  MTRR_LIB_IA32_VARIABLE_MTRR_END             0x20F
-#define  MTRR_LIB_IA32_MTRR_DEF_TYPE                 0x2FF
 #define  MTRR_LIB_MSR_VALID_MASK                     0xFFFFFFFFFULL
 #define  MTRR_LIB_CACHE_VALID_ADDRESS                0xFFFFFF000ULL
-#define  MTRR_LIB_CACHE_MTRR_ENABLED                 0x800
-#define  MTRR_LIB_CACHE_FIXED_MTRR_ENABLED           0x400
 // MSCHANGE END Copied from MU_BASECORE 1808 since these definitions have been removed from public release
 
 #define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP) // MS_HYP_CHANGE
@@ -51,7 +29,11 @@
 //
 // Global Variables
 //
+BOOLEAN     InterruptState = FALSE;
+EFI_HANDLE  mCpuHandle     = NULL;
+BOOLEAN     mIsFlushingGCD;
 
+// MS_HYP_CHANGE BEGIN
 #if defined(MDE_CPU_X64)
 
 EFI_HV_PROTOCOL *mHv; // MS_HYP_CHANGE
@@ -59,79 +41,75 @@ EFI_EVENT   mEndOfDxeEvent;
 
 #endif
 
-
-
 IA32_IDT_GATE_DESCRIPTOR  gIdtTable[CPU_INTERRUPT_NUM] = { 0 }; // MS_HYP_CHANGE
 IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[CPU_INTERRUPT_NUM] = { 0 }; // MS_HYP_CHANGE
 
 EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100]; // MS_HYP_CHANGE
-EFI_HANDLE                mCpuHandle = NULL;
-BOOLEAN                   mIsFlushingGCD;
 UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS; // MS_HYP_CHANGE
 UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // MS_HYP_CHANGE
 UINT16                    mOrigIdtEntryCount    = 0;  // MS_HYP_CHANGE
 
 BOOLEAN                   mStrictIsolation;
 UINT32                    mIsolationType;
+// MS_HYP_CHANGE END
 
-FIXED_MTRR    mFixedMtrrTable[] = {
+FIXED_MTRR  mFixedMtrrTable[] = {
   {
-    MTRR_LIB_IA32_MTRR_FIX64K_00000,  // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX64K_00000,
     0,
     0x10000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX16K_80000,  // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX16K_80000,
     0x80000,
     0x4000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX16K_A0000,  // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX16K_A0000,
     0xA0000,
     0x4000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_C0000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_C0000,
     0xC0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_C8000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_C8000,
     0xC8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_D0000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_D0000,
     0xD0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_D8000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_D8000,
     0xD8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_E0000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_E0000,
     0xE0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_E8000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_E8000,
     0xE8000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_F0000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_F0000,
     0xF0000,
     0x1000
   },
   {
-    MTRR_LIB_IA32_MTRR_FIX4K_F8000, // MS_HYP_CHANGE
+    MSR_IA32_MTRR_FIX4K_F8000,
     0xF8000,
     0x1000
   },
 };
-
 
 EFI_CPU_ARCH_PROTOCOL  gCpu = {
   CpuFlushCpuDataCache,
@@ -391,7 +369,6 @@ CpuFlushCpuDataCache (
   }
 }
 
-
 /**
   Enables CPU interrupts.
 
@@ -408,6 +385,8 @@ CpuEnableInterrupt (
   )
 {
   EnableInterrupts ();
+
+  InterruptState = TRUE;
   return EFI_SUCCESS;
 }
 
@@ -428,6 +407,8 @@ CpuDisableInterrupt (
   )
 {
   DisableInterrupts ();
+
+  InterruptState = FALSE;
   return EFI_SUCCESS;
 }
 
@@ -646,12 +627,12 @@ CpuSetMemoryAttributes (
 
   //
   // If this function is called because GCD SetMemorySpaceAttributes () is called
-  // by RefreshGcdMemoryAttributes (), then we are just synchronzing GCD memory
+  // by RefreshGcdMemoryAttributes (), then we are just synchronizing GCD memory
   // map with MTRR values. So there is no need to modify MTRRs, just return immediately
   // to avoid unnecessary computing.
   //
   if (mIsFlushingGCD) {
-    DEBUG((EFI_D_INFO, "  Flushing GCD\n"));
+    DEBUG ((DEBUG_VERBOSE, "  Flushing GCD\n"));
     return EFI_SUCCESS;
   }
 
@@ -678,7 +659,6 @@ CpuSetMemoryAttributes (
         break;
 
       default:
-      DEBUG ((DEBUG_ERROR, "Invalid cache attributes.\n"));
         return EFI_INVALID_PARAMETER;
     }
 
@@ -941,7 +921,7 @@ SetGcdMemorySpaceAttributes (
 
 **/
 VOID
-RefreshGcdMemoryAttributes (
+RefreshMemoryAttributesFromMtrr (
   VOID
   )
 {
@@ -962,14 +942,9 @@ RefreshGcdMemoryAttributes (
   UINT32                           FirmwareVariableMtrrCount;
   UINT8                            DefaultMemoryType;
 
-  if (!IsMtrrSupported ()) {
-    return;   // MS_HYP_CHANGE
-  }
-
   FirmwareVariableMtrrCount = GetFirmwareVariableMtrrCount ();
   ASSERT (FirmwareVariableMtrrCount <= MTRR_NUMBER_OF_VARIABLE_MTRR);
 
-  mIsFlushingGCD = TRUE;    // MS_HYP_CHANGE
   MemorySpaceMap = NULL;
 
   //
@@ -1126,8 +1101,6 @@ RefreshGcdMemoryAttributes (
   if (MemorySpaceMap != NULL) {
     FreePool (MemorySpaceMap);
   }
-
-  mIsFlushingGCD = FALSE;
 }
 
 // MS_HYP_CHANGE BEGIN
@@ -1181,6 +1154,53 @@ RestoreInterruptDescriptorTableHandlerAddress (
     gIdtTable[Index].Bits.OffsetUpper = mOrigIdtEntry[Index].Bits.OffsetUpper;
 #endif
   }
+}
+// MS_HYP_CHANGE END
+
+/**
+ Check if paging is enabled or not.
+**/
+BOOLEAN
+IsPagingAndPageAddressExtensionsEnabled (
+  VOID
+  )
+{
+  IA32_CR0  Cr0;
+  IA32_CR4  Cr4;
+
+  Cr0.UintN = AsmReadCr0 ();
+  Cr4.UintN = AsmReadCr4 ();
+
+  return ((Cr0.Bits.PG != 0) && (Cr4.Bits.PAE != 0));
+}
+
+
+/**
+  Refreshes the GCD Memory Space attributes according to MTRRs and Paging.
+
+  This function refreshes the GCD Memory Space attributes according to MTRRs
+  and page tables.
+
+**/
+VOID
+RefreshGcdMemoryAttributes (
+  VOID
+  )
+{
+  mIsFlushingGCD = TRUE;
+
+  if (IsMtrrSupported ()) {
+    RefreshMemoryAttributesFromMtrr ();
+  }
+
+  // MS_HYP_CHANGE BEGIN
+  //if (IsPagingAndPageAddressExtensionsEnabled ()) {
+  //  DEBUG ((DEBUG_INFO, "Syncing GCD...\n")); // MU_CHANGE
+  //  RefreshGcdMemoryAttributesFromPaging ();
+  //}
+  // MS_HYP_CHANGE END
+
+  mIsFlushingGCD = FALSE;
 }
 
 /**
@@ -1451,6 +1471,231 @@ IdleLoopEventCallback (
   CpuSleep ();
 }
 
+/**
+  Ensure the compatibility of a memory space descriptor with the MMIO aperture.
+
+  The memory space descriptor can come from the GCD memory space map, or it can
+  represent a gap between two neighboring memory space descriptors. In the
+  latter case, the GcdMemoryType field is expected to be
+  EfiGcdMemoryTypeNonExistent.
+
+  If the memory space descriptor already has type
+  EfiGcdMemoryTypeMemoryMappedIo, and its capabilities are a superset of the
+  required capabilities, then no action is taken -- it is by definition
+  compatible with the aperture.
+
+  Otherwise, the intersection of the memory space descriptor is calculated with
+  the aperture. If the intersection is the empty set (no overlap), no action is
+  taken; the memory space descriptor is compatible with the aperture.
+
+  Otherwise, the type of the descriptor is investigated again. If the type is
+  EfiGcdMemoryTypeNonExistent (representing a gap, or a genuine descriptor with
+  such a type), then an attempt is made to add the intersection as MMIO space
+  to the GCD memory space map, with the specified capabilities. This ensures
+  continuity for the aperture, and the descriptor is deemed compatible with the
+  aperture.
+
+  Otherwise, the memory space descriptor is incompatible with the MMIO
+  aperture.
+
+  @param[in] Base         Base address of the aperture.
+  @param[in] Length       Length of the aperture.
+  @param[in] Capabilities Capabilities required by the aperture.
+  @param[in] Descriptor   The descriptor to ensure compatibility with the
+                          aperture for.
+
+  @retval EFI_SUCCESS            The descriptor is compatible. The GCD memory
+                                 space map may have been updated, for
+                                 continuity within the aperture.
+  @retval EFI_INVALID_PARAMETER  The descriptor is incompatible.
+  @return                        Error codes from gDS->AddMemorySpace().
+**/
+EFI_STATUS
+IntersectMemoryDescriptor (
+  IN  UINT64                                 Base,
+  IN  UINT64                                 Length,
+  IN  UINT64                                 Capabilities,
+  IN  CONST EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *Descriptor
+  )
+{
+  UINT64      IntersectionBase;
+  UINT64      IntersectionEnd;
+  EFI_STATUS  Status;
+
+  if ((Descriptor->GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo) &&
+      ((Descriptor->Capabilities & Capabilities) == Capabilities))
+  {
+    return EFI_SUCCESS;
+  }
+
+  IntersectionBase = MAX (Base, Descriptor->BaseAddress);
+  IntersectionEnd  = MIN (
+                       Base + Length,
+                       Descriptor->BaseAddress + Descriptor->Length
+                       );
+  if (IntersectionBase >= IntersectionEnd) {
+    //
+    // The descriptor and the aperture don't overlap.
+    //
+    return EFI_SUCCESS;
+  }
+
+  if (Descriptor->GcdMemoryType == EfiGcdMemoryTypeNonExistent) {
+    Status = gDS->AddMemorySpace (
+                    EfiGcdMemoryTypeMemoryMappedIo,
+                    IntersectionBase,
+                    IntersectionEnd - IntersectionBase,
+                    Capabilities
+                    );
+
+    DEBUG ((
+      EFI_ERROR (Status) ? DEBUG_ERROR : DEBUG_VERBOSE,
+      "%a: %a: add [%Lx, %Lx): %r\n",
+      gEfiCallerBaseName,
+      __FUNCTION__,
+      IntersectionBase,
+      IntersectionEnd,
+      Status
+      ));
+    return Status;
+  }
+
+  DEBUG ((
+    DEBUG_ERROR,
+    "%a: %a: desc [%Lx, %Lx) type %u cap %Lx conflicts "
+    "with aperture [%Lx, %Lx) cap %Lx\n",
+    gEfiCallerBaseName,
+    __FUNCTION__,
+    Descriptor->BaseAddress,
+    Descriptor->BaseAddress + Descriptor->Length,
+    (UINT32)Descriptor->GcdMemoryType,
+    Descriptor->Capabilities,
+    Base,
+    Base + Length,
+    Capabilities
+    ));
+  return EFI_INVALID_PARAMETER;
+}
+
+/**
+  Add MMIO space to GCD.
+  The routine checks the GCD database and only adds those which are
+  not added in the specified range to GCD.
+
+  @param Base         Base address of the MMIO space.
+  @param Length       Length of the MMIO space.
+  @param Capabilities Capabilities of the MMIO space.
+
+  @retval EFI_SUCCESS The MMIO space was added successfully.
+**/
+EFI_STATUS
+AddMemoryMappedIoSpace (
+  IN  UINT64  Base,
+  IN  UINT64  Length,
+  IN  UINT64  Capabilities
+  )
+{
+  EFI_STATUS                       Status;
+  UINTN                            Index;
+  UINTN                            NumberOfDescriptors;
+  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap;
+
+  Status = gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a: %a: GetMemorySpaceMap(): %r\n",
+      gEfiCallerBaseName,
+      __FUNCTION__,
+      Status
+      ));
+    return Status;
+  }
+
+  for (Index = 0; Index < NumberOfDescriptors; Index++) {
+    Status = IntersectMemoryDescriptor (
+               Base,
+               Length,
+               Capabilities,
+               &MemorySpaceMap[Index]
+               );
+    if (EFI_ERROR (Status)) {
+      goto FreeMemorySpaceMap;
+    }
+  }
+
+  DEBUG_CODE_BEGIN ();
+  //
+  // Make sure there are adjacent descriptors covering [Base, Base + Length).
+  // It is possible that they have not been merged; merging can be prevented
+  // by allocation and different capabilities.
+  //
+  UINT64                           CheckBase;
+  EFI_STATUS                       CheckStatus;
+  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  Descriptor;
+
+  for (CheckBase = Base;
+       CheckBase < Base + Length;
+       CheckBase = Descriptor.BaseAddress + Descriptor.Length)
+  {
+    CheckStatus = gDS->GetMemorySpaceDescriptor (CheckBase, &Descriptor);
+    ASSERT_EFI_ERROR (CheckStatus);
+    ASSERT (Descriptor.GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo);
+    ASSERT ((Descriptor.Capabilities & Capabilities) == Capabilities);
+  }
+
+  DEBUG_CODE_END ();
+
+FreeMemorySpaceMap:
+  FreePool (MemorySpaceMap);
+
+  return Status;
+}
+
+
+/**
+  Add and allocate CPU local APIC memory mapped space.
+
+  @param[in]ImageHandle     Image handle this driver.
+
+**/
+VOID
+AddLocalApicMemorySpace (
+  IN EFI_HANDLE  ImageHandle
+  )
+{
+  EFI_STATUS            Status;
+  EFI_PHYSICAL_ADDRESS  BaseAddress;
+
+  BaseAddress = (EFI_PHYSICAL_ADDRESS)GetLocalApicBaseAddress ();
+  Status      = AddMemoryMappedIoSpace (BaseAddress, SIZE_4KB, EFI_MEMORY_UC);
+  ASSERT_EFI_ERROR (Status);
+
+  //
+  // Try to allocate APIC memory mapped space, does not check return
+  // status because it may be allocated by other driver, or DXE Core if
+  // this range is built into Memory Allocation HOB.
+  //
+  Status = gDS->AllocateMemorySpace (
+                  EfiGcdAllocateAddress,
+                  EfiGcdMemoryTypeMemoryMappedIo,
+                  0,
+                  SIZE_4KB,
+                  &BaseAddress,
+                  ImageHandle,
+                  NULL
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_INFO,
+      "%a: %a: AllocateMemorySpace() Status - %r\n",
+      gEfiCallerBaseName,
+      __FUNCTION__,
+      Status
+      ));
+  }
+}
+
 
 /**
   Initialize the state information for the CPU Architectural Protocol.
@@ -1473,6 +1718,7 @@ InitializeCpu (
   EFI_STATUS  Status;
   EFI_EVENT   IdleLoopEvent;
 
+  // MS_HYP_CHANGE BEGIN
   //
   // Determine whether hardware isolation is being enforced.  If so, then
   // certain aspects of hardware initialization are not supported when no
@@ -1485,7 +1731,6 @@ InitializeCpu (
   }
 
   mIsolationType = GetIsolationType();
-
   // MS_HYP_CHANGE END
 
   InitializePageTableLib();
@@ -1520,15 +1765,21 @@ InitializeCpu (
   //
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mCpuHandle,
-                  &gEfiCpuArchProtocolGuid, &gCpu,
-                  &gEfiCpu2ProtocolGuid, &gCpu2,  // MS_HYP_CHANGE
+                  &gEfiCpuArchProtocolGuid,
+                  &gCpu,
+                  // MS_HYP_CHANGE BEGIN
+                  &gEfiCpu2ProtocolGuid,
+                  &gCpu2,
+                  // MS_HYP_CHANGE ENG
                   NULL
                   );
+  // MS_HYP_CHANGE BEGIN
   if (EFI_ERROR(Status))
   {
     DEBUG((EFI_D_ERROR, "%a: Failed to install protocol.\n", __FUNCTION__));
     goto Cleanup;
   }
+  // MS_HYP_CHANGE END
 
   //
   // Refresh GCD memory space map according to MTRR value.
@@ -1546,6 +1797,8 @@ InitializeCpu (
                   &gIdleLoopEventGuid,
                   &IdleLoopEvent
                   );
+
+  // MS_HYP_CHANGE BEGIN
   if (EFI_ERROR(Status))
   {
     DEBUG((EFI_D_ERROR, "%a: Failed to create the idle events callback.\n", __FUNCTION__));
@@ -1574,8 +1827,8 @@ InitializeCpu (
       }
     }
   }
-
 #endif
+  // MS_HYP_CHANGE END
 
 Cleanup:
 

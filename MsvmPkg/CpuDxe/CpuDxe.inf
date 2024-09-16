@@ -28,7 +28,6 @@
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
-  CpuExceptionHandlerLib
   CpuLib
   CrashLib
   DebugLib
@@ -38,6 +37,8 @@
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   LocalApicLib
+  CpuExceptionHandlerLib
+  MpInitLib
   IsolationLib    ## MS_HYP_CHANGE
 
 [Sources]
@@ -58,7 +59,9 @@
 [Protocols]
   gEfiCpuArchProtocolGuid                       ## PRODUCES
   gEfiCpu2ProtocolGuid                          ## MS_HYP_CHANGE
+  gEfiMemoryAttributeProtocolGuid               ## TCBZ3519 MU_CHANGE PRODUCES
   gEfiHvProtocolGuid                            ## MS_HYP_CHANGE
+  gMemoryProtectionNonstopModeProtocolGuid      ## MU_CHANGE: PRODUCES
 
 [Guids]
   gIdleLoopEventGuid                            ## CONSUMES           ## Event

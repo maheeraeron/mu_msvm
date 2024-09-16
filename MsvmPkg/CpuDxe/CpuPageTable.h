@@ -10,6 +10,8 @@
 #define _PAGE_TABLE_LIB_H_
 
 #include <IndustryStandard/PeImage.h>
+#include <Protocol/MemoryAttribute.h>             // TCBZ3519 MU_CHANGE
+#include <Protocol/MemoryProtectionNonstopMode.h> // MU_CHANGE
 
 #define PAGE_TABLE_LIB_PAGING_CONTEXT_IA32_X64_ATTRIBUTES_PSE              BIT0
 #define PAGE_TABLE_LIB_PAGING_CONTEXT_IA32_X64_ATTRIBUTES_PAE              BIT1
@@ -153,19 +155,28 @@ GetPagingDetails (
   OUT UINT32                              **Attributes        OPTIONAL
   );
 
-// MS_HYP_CHANGE BEGIN
-#if defined(MDE_CPU_X64)
+// TCBZ3519 MU_CHANGE START
 
-/*
-  Initialize the page tables for MP support in TDX.
-
-  @param  ApMailbox       The address of the MP wake up mailbox.
-*/
-UINT64
-InitializeMpPageTables (
-  IN UINT64 ApMailbox
+/**
+  Install Memory Attribute Protocol.
+**/
+VOID
+InstallEfiMemoryAttributeProtocol (
+  VOID
   );
 
-#endif
+// TCBZ3519 MU_CHANGE END
+
+// MU_CHANGE START
+
+/**
+ Install the Memory Protection Nonstop Protocol
+**/
+VOID
+InstallMemoryProtectionNonstopModeProtocol (
+  VOID
+  );
+
+// MU_CHANGE END
 
 #endif

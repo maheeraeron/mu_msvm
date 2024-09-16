@@ -13,6 +13,7 @@
 
 #include <Protocol/Cpu.h>
 #include <Protocol/Cpu2.h>    // MS_HYP_CHANGE
+#include <Register/Intel/Msr.h>
 
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -26,6 +27,7 @@
 #include <Library/LocalApicLib.h>
 #include <Library/UefiLib.h>
 #include <Library/CpuExceptionHandlerLib.h>
+#include <Library/MpInitLib.h>
 #include <Guid/IdleLoopEvent.h>
 #include <IsolationTypes.h>   // MS_HYP_CHANGE
 #include <Library/CrashLib.h>  // MS_HYP_CHANGE
@@ -384,7 +386,22 @@ RestoreInterruptDescriptorTableHandlerAddress (
   IN UINTN       Index
   );
 
+#if defined(MDE_CPU_X64)
+
+/*
+  Initialize the page tables for MP support in TDX.
+
+  @param  ApMailbox       The address of the MP wake up mailbox.
+*/
+UINT64
+InitializeMpPageTables (
+  IN UINT64 ApMailbox
+  );
+
+#endif
+
 // MS_HYP_CHANGE END
 
+extern EFI_HANDLE  mCpuHandle; // TCBZ3519 MU_CHANGE
 #endif
 

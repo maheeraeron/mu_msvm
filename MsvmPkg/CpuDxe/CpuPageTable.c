@@ -87,17 +87,23 @@ PAGE_ATTRIBUTE_TABLE  mPageAttributeTable[] = {
   { Page1G, SIZE_1GB, PAGING_1G_ADDRESS_MASK_64 },
 };
 
-UINTN                             mNumberOfProcessors = 1;  // MS_HYP_CHANGE
-PAGE_TABLE_POOL                   *mPageTablePool = NULL;
-BOOLEAN                           mPageTablePoolLock = FALSE;
-PAGE_TABLE_LIB_PAGING_CONTEXT     mPagingContext;
-EFI_SMM_BASE2_PROTOCOL            *mSmmBase2 = NULL;
+UINTN                          mNumberOfProcessors = 1;  // MS_HYP_CHANGE
+PAGE_TABLE_POOL                *mPageTablePool    = NULL;
+BOOLEAN                        mPageTablePoolLock = FALSE;
+PAGE_TABLE_LIB_PAGING_CONTEXT  mPagingContext;
+EFI_SMM_BASE2_PROTOCOL         *mSmmBase2 = NULL;
 
 //
 // Record the page fault exception count for one instruction execution.
 //
 UINTN  *mPFEntryCount;
 UINT64                    *(*mLastPFEntryPointer)[MAX_PF_ENTRY_COUNT];
+
+// MU_CHANGE START
+UINTN   mPFCount = 0;
+UINT64  mPageFaultAddresses[MAX_PF_ENTRY_COUNT];
+UINT64  mPageFaultAttributes[MAX_PF_ENTRY_COUNT];
+// MU_CHANGE END
 
 /**
  Check if current execution environment is in SMM mode or not, via
@@ -580,7 +586,7 @@ SplitPage (
     // No need support 1G->4K directly, we should use 1G->2M, then 2M->4K to get more compact page table.
     //
     ASSERT (SplitAttribute == Page2M || SplitAttribute == Page4K);
-    if ((SplitAttribute == Page2M || SplitAttribute == Page4K)) {
+    if (((SplitAttribute == Page2M) || (SplitAttribute == Page4K))) {
       NewPageEntry = AllocatePagesFunc (1);
       DEBUG ((DEBUG_VERBOSE, "Split - 0x%x\n", NewPageEntry));
       if (NewPageEntry == NULL) {
@@ -1221,6 +1227,183 @@ AllocatePageTableMemory (
 }
 
 /**
+  Special handler for #DB exception, which will restore the page attributes
+  (not-present). It should work with #PF handler which will set pages to
+  'present'.
+
+  @param ExceptionType  Exception type.
+  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
+
+**/
+VOID
+EFIAPI
+DebugExceptionHandler (
+  IN EFI_EXCEPTION_TYPE  ExceptionType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
+  )
+{
+  UINTN       CpuIndex;
+  UINTN       PFEntry;
+  BOOLEAN     IsWpEnabled;
+  EFI_STATUS  Status;  // MU_CHANGE - CodeQL change
+
+  // MU_CHANGE [START] - CodeQL change
+  Status = MpInitLibWhoAmI (&CpuIndex);
+
+  if (EFI_ERROR (Status)) {
+    // MS_HYP_CHANGE PANIC ("Failed to get processor number in the DebugExceptionHandler");
+    goto Done;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
+
+  //
+  // Clear last PF entries
+  //
+  IsWpEnabled = IsReadOnlyPageWriteProtected ();
+  if (IsWpEnabled) {
+    DisableReadOnlyPageWriteProtect ();
+  }
+
+  for (PFEntry = 0; PFEntry < mPFEntryCount[CpuIndex]; PFEntry++) {
+    if (mLastPFEntryPointer[CpuIndex][PFEntry] != NULL) {
+      *mLastPFEntryPointer[CpuIndex][PFEntry] &= ~(UINT64)IA32_PG_P;
+    }
+  }
+
+  if (IsWpEnabled) {
+    EnableReadOnlyPageWriteProtect ();
+  }
+
+  //
+  // Reset page fault exception count for next page fault.
+  //
+  mPFEntryCount[CpuIndex] = 0;
+
+Done:
+  //
+  // Flush TLB
+  //
+  CpuFlushTlb ();
+
+  //
+  // Clear TF in EFLAGS
+  //
+  if (mPagingContext.MachineType == IMAGE_FILE_MACHINE_I386) {
+    SystemContext.SystemContextIa32->Eflags &= (UINT32) ~BIT8;
+  } else {
+    SystemContext.SystemContextX64->Rflags &= (UINT64) ~BIT8;
+  }
+}
+
+/**
+  Special handler for #PF exception, which will set the pages which caused
+  #PF to be 'present'. The attribute of those pages should be restored in
+  the subsequent #DB handler.
+
+  @param ExceptionType  Exception type.
+  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
+
+**/
+VOID
+EFIAPI
+PageFaultExceptionHandler (
+  IN EFI_EXCEPTION_TYPE  ExceptionType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
+  )
+{
+  EFI_STATUS                     Status;
+  UINT64                         PFAddress;
+  PAGE_TABLE_LIB_PAGING_CONTEXT  PagingContext;
+  PAGE_ATTRIBUTE                 PageAttribute;
+  UINT64                         Attributes;
+  UINT64                         *PageEntry;
+  UINTN                          Index;
+  UINTN                          CpuIndex;
+  UINTN                          PageNumber;
+  BOOLEAN                        NonStopMode;
+
+  PFAddress = AsmReadCr2 () & ~EFI_PAGE_MASK;
+  if (PFAddress < BASE_4KB) {
+    NonStopMode = NULL_DETECTION_NONSTOP_MODE ? TRUE : FALSE;
+  } else {
+    NonStopMode = HEAP_GUARD_NONSTOP_MODE ? TRUE : FALSE;
+  }
+
+  if (NonStopMode) {
+    // MU_CHANGE [START] - CodeQL change
+    Status = MpInitLibWhoAmI (&CpuIndex);
+
+    if (EFI_ERROR (Status)) {
+      // MS_HYP_CHANGE PANIC ("Failed to get processor number in the PageFaultExceptionHandler");
+      goto Done;
+    }
+
+    // MU_CHANGE [END] - CodeQL change
+    GetCurrentPagingContext (&PagingContext);
+    //
+    // Memory operation cross page boundary, like "rep mov" instruction, will
+    // cause infinite loop between this and Debug Trap handler. We have to make
+    // sure that current page and the page followed are both in PRESENT state.
+    //
+    PageNumber = 2;
+    while (PageNumber > 0) {
+      PageEntry = GetPageTableEntry (&PagingContext, PFAddress, &PageAttribute);
+      ASSERT (PageEntry != NULL);
+
+      if (PageEntry != NULL) {
+        Attributes = GetAttributesFromPageEntry (PageEntry);
+        if ((Attributes & EFI_MEMORY_RP) != 0) {
+          Attributes &= ~EFI_MEMORY_RP;
+          Status      = AssignMemoryPageAttributes (
+                          &PagingContext,
+                          PFAddress,
+                          EFI_PAGE_SIZE,
+                          Attributes,
+                          NULL
+                          );
+          if (!EFI_ERROR (Status)) {
+            Index = mPFEntryCount[CpuIndex];
+            //
+            // Re-retrieve page entry because above calling might update page
+            // table due to table split.
+            //
+            PageEntry                              = GetPageTableEntry (&PagingContext, PFAddress, &PageAttribute);
+            mLastPFEntryPointer[CpuIndex][Index++] = PageEntry;
+            mPFEntryCount[CpuIndex]                = Index;
+          }
+        }
+      }
+
+      PFAddress += EFI_PAGE_SIZE;
+      --PageNumber;
+    }
+  }
+
+Done:
+  //
+  // Initialize the serial port before dumping.
+  //
+  SerialPortInitialize ();
+  //
+  // Display ExceptionType, CPU information and Image information
+  //
+  DumpCpuContext (ExceptionType, SystemContext);
+  if (NonStopMode) {
+    //
+    // Set TF in EFLAGS
+    //
+    if (mPagingContext.MachineType == IMAGE_FILE_MACHINE_I386) {
+      SystemContext.SystemContextIa32->Eflags |= (UINT32)BIT8;
+    } else {
+      SystemContext.SystemContextX64->Rflags |= (UINT64)BIT8;
+    }
+  } else {
+    CpuDeadLoop ();
+  }
+}
+
+/**
   Initialize the Page Table lib.
 **/
 VOID
@@ -1261,8 +1444,456 @@ InitializePageTableLib (
   DEBUG ((DEBUG_INFO, "  PageTableBase - 0x%Lx\n", (UINT64)*PageTableBase));
   DEBUG ((DEBUG_INFO, "  Attributes    - 0x%x\n", *Attributes));
 
-  return ;
+  return;
 }
+
+// TCBZ3519 MU_CHANGE START
+
+/**
+  This function set given attributes of the memory region specified by
+  BaseAddress and Length.
+  The valid Attributes is EFI_MEMORY_RP, EFI_MEMORY_XP, and EFI_MEMORY_RO.
+  @param  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
+  @param  BaseAddress       The physical address that is the start address of
+                            a memory region.
+  @param  Length            The size in bytes of the memory region.
+  @param  Attributes        The bit mask of attributes to set for the memory
+                            region.
+  @retval EFI_SUCCESS           The attributes were set for the memory region.
+  @retval EFI_INVALID_PARAMETER Length is zero.
+                                Attributes specified an illegal combination of
+                                attributes that cannot be set together.
+  @retval EFI_UNSUPPORTED       The processor does not support one or more
+                                bytes of the memory resource range specified
+                                by BaseAddress and Length.
+                                The bit mask of attributes is not supported for
+                                the memory resource range specified by
+                                BaseAddress and Length.
+  @retval EFI_OUT_OF_RESOURCES  Requested attributes cannot be applied due to lack of
+                                system resources.
+  @retval EFI_ACCESS_DENIED         Attributes for the requested memory region are
+                                controlled by system firmware and cannot be updated
+                                via the protocol.
+**/
+EFI_STATUS
+EFIAPI
+EfiSetMemoryAttributes (
+  IN  EFI_MEMORY_ATTRIBUTE_PROTOCOL  *This,
+  IN  EFI_PHYSICAL_ADDRESS           BaseAddress,
+  IN  UINT64                         Length,
+  IN  UINT64                         Attributes
+  )
+{
+  RETURN_STATUS  Status;
+  BOOLEAN        IsModified;
+  BOOLEAN        IsSplitted;
+
+  DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx (0x%lx)\n", __FUNCTION__, BaseAddress, Length, Attributes));
+
+  if (Attributes == 0) {
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes == 0\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((Attributes & ~EFI_MEMORY_ACCESS_MASK) != 0) {
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes(0x%lx) invalid\n", __FUNCTION__, Attributes));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Length == 0) {
+    DEBUG ((DEBUG_ERROR, "Length is 0!\n"));
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  Status = ConvertMemoryPageAttributes (NULL, BaseAddress, Length, Attributes, PageActionSet, NULL, &IsSplitted, &IsModified);
+  if (!EFI_ERROR (Status)) {
+    if (IsModified) {
+      //
+      // Flush TLB as last step.
+      //
+      // Note: Since APs will always init CR3 register in HLT loop mode or do
+      // TLB flush in MWAIT loop mode, there's no need to flush TLB for them
+      // here.
+      //
+      CpuFlushTlb ();
+    }
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Failed in ConvertMemoryPageAttributes (%r)\n", __FUNCTION__, Status));
+  }
+
+  return Status;
+}
+
+/**
+  This function clears given attributes of the memory region specified by
+  BaseAddress and Length.
+  The valid Attributes is EFI_MEMORY_RP, EFI_MEMORY_XP, and EFI_MEMORY_RO.
+  @param  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
+  @param  BaseAddress       The physical address that is the start address of
+                            a memory region.
+  @param  Length            The size in bytes of the memory region.
+  @param  Attributes        The bit mask of attributes to clear for the memory
+                            region.
+  @retval EFI_SUCCESS           The attributes were cleared for the memory region.
+  @retval EFI_INVALID_PARAMETER Length is zero.
+                                Attributes specified an illegal combination of
+                                attributes that cannot be cleared together.
+  @retval EFI_UNSUPPORTED       The processor does not support one or more
+                                bytes of the memory resource range specified
+                                by BaseAddress and Length.
+                                The bit mask of attributes is not supported for
+                                the memory resource range specified by
+                                BaseAddress and Length.
+  @retval EFI_OUT_OF_RESOURCES  Requested attributes cannot be applied due to lack of
+                                system resources.
+  @retval EFI_ACCESS_DENIED     Attributes for the requested memory region are
+                                controlled by system firmware and cannot be updated
+                                via the protocol.
+**/
+EFI_STATUS
+EFIAPI
+EfiClearMemoryAttributes (
+  IN  EFI_MEMORY_ATTRIBUTE_PROTOCOL  *This,
+  IN  EFI_PHYSICAL_ADDRESS           BaseAddress,
+  IN  UINT64                         Length,
+  IN  UINT64                         Attributes
+  )
+{
+  RETURN_STATUS  Status;
+  BOOLEAN        IsModified;
+  BOOLEAN        IsSplitted;
+
+  DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx (0x%lx)\n", __FUNCTION__, BaseAddress, Length, Attributes));
+
+  if (Attributes == 0) {
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes == 0\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((Attributes & ~EFI_MEMORY_ACCESS_MASK) != 0) {
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes(0x%lx) invalid\n", __FUNCTION__, Attributes));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Length == 0) {
+    DEBUG ((DEBUG_ERROR, "Length is 0!\n"));
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  Status = ConvertMemoryPageAttributes (NULL, BaseAddress, Length, Attributes, PageActionClear, NULL, &IsSplitted, &IsModified);
+  if (!EFI_ERROR (Status)) {
+    if (IsModified) {
+      //
+      // Flush TLB as last step.
+      //
+      // Note: Since APs will always init CR3 register in HLT loop mode or do
+      // TLB flush in MWAIT loop mode, there's no need to flush TLB for them
+      // here.
+      //
+      CpuFlushTlb ();
+    }
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Failed in ConvertMemoryPageAttributes (%r)\n", __FUNCTION__, Status));
+  }
+
+  return Status;
+}
+
+/**
+  This function retrieves the attributes of the memory region specified by
+  BaseAddress and Length. If different attributes are got from different part
+  of the memory region, EFI_NO_MAPPING will be returned.
+  @param  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
+  @param  BaseAddress       The physical address that is the start address of
+                            a memory region.
+  @param  Length            The size in bytes of the memory region.
+  @param  Attributes        Pointer to attributes returned.
+  @retval EFI_SUCCESS           The attributes got for the memory region.
+  @retval EFI_INVALID_PARAMETER Length is zero.
+                                Attributes is NULL.
+  @retval EFI_NO_MAPPING        Attributes are not consistent cross the memory
+                                region.
+  @retval EFI_UNSUPPORTED       The processor does not support one or more
+                                bytes of the memory resource range specified
+                                by BaseAddress and Length.
+**/
+EFI_STATUS
+EFIAPI
+EfiGetMemoryAttributes (
+  IN  EFI_MEMORY_ATTRIBUTE_PROTOCOL  *This,
+  IN  EFI_PHYSICAL_ADDRESS           BaseAddress,
+  IN  UINT64                         Length,
+  OUT UINT64                         *Attributes
+  )
+{
+  PAGE_TABLE_LIB_PAGING_CONTEXT  CurrentPagingContext;
+  EFI_PHYSICAL_ADDRESS           Address;
+  UINT64                         *PageEntry;
+  UINT64                         MemAttr;
+  PAGE_ATTRIBUTE                 PageAttr;
+  INT64                          Size;
+  UINT64                         AddressEncMask;
+
+  // MU_CHANGE START: Change debug verbosity
+  // DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx\n", __FUNCTION__, BaseAddress, Length));
+  DEBUG ((DEBUG_VERBOSE, "%a: 0x%lx - 0x%lx\n", __FUNCTION__, BaseAddress, Length));
+  // MU_CHANGE END
+
+  if ((BaseAddress & (EFI_PAGE_SIZE - 1)) != 0) {
+    DEBUG ((DEBUG_ERROR, "BaseAddress(0x%lx) is not aligned!\n", BaseAddress));
+    return EFI_UNSUPPORTED;
+  }
+
+  if ((Length & (EFI_PAGE_SIZE - 1)) != 0) {
+    DEBUG ((DEBUG_ERROR, "Length(0x%lx) is not aligned!\n", Length));
+    return EFI_UNSUPPORTED;
+  }
+
+  if (Length == 0) {
+    DEBUG ((DEBUG_ERROR, "Length is 0!\n"));
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (Attributes == NULL) {
+    DEBUG ((DEBUG_ERROR, "Attributes is NULL\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Size    = (INT64)Length;
+  MemAttr = (UINT64)-1;
+
+  // Make sure AddressEncMask is contained to smallest supported address field.
+  //
+  AddressEncMask = PcdGet64 (PcdPteMemoryEncryptionAddressOrMask) & PAGING_1G_ADDRESS_MASK_64;
+
+  GetCurrentPagingContext (&CurrentPagingContext);
+
+  do {
+    PageEntry = GetPageTableEntry (&CurrentPagingContext, BaseAddress, &PageAttr);
+    if ((PageEntry == NULL) || (PageAttr == PageNone)) {
+      return EFI_UNSUPPORTED;
+    }
+
+    //
+    // If the memory range is cross page table boundary, make sure they
+    // share the same attribute. Return EFI_NO_MAPPING if not.
+    //
+    *Attributes = GetAttributesFromPageEntry (PageEntry);
+    if ((MemAttr != (UINT64)-1) && (*Attributes != MemAttr)) {
+      return EFI_NO_MAPPING;
+    }
+
+    switch (PageAttr) {
+      case Page4K:
+        Address      = *PageEntry & ~AddressEncMask & PAGING_4K_ADDRESS_MASK_64;
+        Size        -= (EFI_PAGE_SIZE - (BaseAddress - Address));
+        BaseAddress += (EFI_PAGE_SIZE - (BaseAddress - Address));
+        break;
+
+      case Page2M:
+        Address      = *PageEntry & ~AddressEncMask & PAGING_2M_ADDRESS_MASK_64;
+        Size        -= SIZE_2MB - (BaseAddress - Address);
+        BaseAddress += SIZE_2MB - (BaseAddress - Address);
+        break;
+
+      case Page1G:
+        Address      = *PageEntry & ~AddressEncMask & PAGING_1G_ADDRESS_MASK_64;
+        Size        -= SIZE_1GB - (BaseAddress - Address);
+        BaseAddress += SIZE_1GB - (BaseAddress - Address);
+        break;
+
+      default:
+        return EFI_UNSUPPORTED;
+    }
+
+    MemAttr = *Attributes;
+  } while (Size > 0);
+
+  // MU_CHANGE START: Change debug verbosity
+  // DEBUG ((DEBUG_INFO, "%a: Attributes is 0x%lx\n", __FUNCTION__, *Attributes));
+  DEBUG ((DEBUG_VERBOSE, "%a: Attributes is 0x%lx\n", __FUNCTION__, *Attributes));
+  // MU_CHANG END
+
+  return EFI_SUCCESS;
+}
+
+EFI_MEMORY_ATTRIBUTE_PROTOCOL  mMemoryAttributeProtocol = {
+  EfiGetMemoryAttributes,
+  EfiSetMemoryAttributes,
+  EfiClearMemoryAttributes,
+};
+
+// MU_CHANGE START
+
+/**
+  Marks the faulting pages as present, R/W, and executable so execution can resume.
+
+  @param[in] ExceptionType  Exception type.
+  @param[in] SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
+
+  @retval EFI_SUCCESS              Page attributes were cleared.
+  @retval RETURN_ACCESS_DENIED     The attributes for the page could not be modified.
+  @retval RETURN_OUT_OF_RESOURCES  There are not enough system resources to modify the attributes of
+                                   the memory resource range.
+**/
+EFI_STATUS
+EFIAPI
+ClearPageFault (
+  IN EFI_EXCEPTION_TYPE  ExceptionType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
+  )
+{
+  EFI_STATUS                     Status;
+  UINT64                         PFAddress;
+  PAGE_TABLE_LIB_PAGING_CONTEXT  PagingContext;
+  PAGE_ATTRIBUTE                 PageAttribute;
+  UINT64                         OldAttributes;
+  UINT64                         NewAttributes;
+  UINT64                         *PageEntry;
+  UINTN                          CpuIndex;
+  UINTN                          PageNumber;
+
+  PFAddress = AsmReadCr2 () & ~EFI_PAGE_MASK;
+  MpInitLibWhoAmI (&CpuIndex);
+  GetCurrentPagingContext (&PagingContext);
+  //
+  // Memory operation cross page boundary, like "rep mov" instruction, will
+  // cause infinite loop. We have to make sure that current page and the page
+  // followed are both in PRESENT state.
+  //
+  PageNumber = 2;
+  while (PageNumber > 0) {
+    PageEntry = GetPageTableEntry (&PagingContext, PFAddress, &PageAttribute);
+    ASSERT (PageEntry != NULL);
+    if (PageEntry != NULL) {
+      OldAttributes = GetAttributesFromPageEntry (PageEntry);
+      if (((OldAttributes & EFI_MEMORY_RP) != 0) || ((OldAttributes & EFI_MEMORY_XP) != 0)) {
+        NewAttributes  = OldAttributes;
+        NewAttributes &= ~(EFI_MEMORY_RP | EFI_MEMORY_XP);
+        DEBUG ((DEBUG_INFO, "%a - Clearing page fault at address: 0x%x\n", __FUNCTION__, PFAddress));
+        Status = AssignMemoryPageAttributes (
+                   &PagingContext,
+                   PFAddress,
+                   EFI_PAGE_SIZE,
+                   NewAttributes,
+                   NULL
+                   );
+        if (!EFI_ERROR (Status)) {
+          if (mPFCount < ARRAY_SIZE (mPageFaultAddresses)) {
+            mPageFaultAttributes[mPFCount]  = OldAttributes;
+            mPageFaultAddresses[mPFCount++] = PFAddress;
+          }
+        } else {
+          DEBUG ((DEBUG_INFO, "%a - Failed to clear page fault at address: 0x%x\n", __FUNCTION__, PFAddress));
+        }
+      }
+    }
+
+    PFAddress += EFI_PAGE_SIZE;
+    --PageNumber;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Restores the page table attributes of a page whose attributes were cleared via a call to
+  CLEAR_PAGE_FAULT.
+
+  @retval EFI_SUCCESS              Page attributes were restored.
+  @retval EFI_DEVICE_ERROR         The attributes could not be modified for one or more of the pages being restored.
+**/
+EFI_STATUS
+EFIAPI
+ResetPageAttributes (
+  VOID
+  )
+{
+  EFI_STATUS                     Status = EFI_SUCCESS;
+  UINT64                         PFAddress;
+  PAGE_TABLE_LIB_PAGING_CONTEXT  PagingContext;
+  PAGE_ATTRIBUTE                 PageAttribute;
+  UINT64                         Attributes;
+  UINT64                         *PageEntry;
+
+  while (mPFCount > 0) {
+    PFAddress = mPageFaultAddresses[--mPFCount];
+    GetCurrentPagingContext (&PagingContext);
+
+    PageEntry = GetPageTableEntry (&PagingContext, PFAddress, &PageAttribute);
+
+    if (PageEntry != NULL) {
+      Attributes = mPageFaultAttributes[mPFCount];
+      DEBUG ((DEBUG_INFO, "%a - Restoring page attributes at address: 0x%x\n", __FUNCTION__, PFAddress));
+      if (EFI_ERROR (
+            AssignMemoryPageAttributes (
+              &PagingContext,
+              PFAddress,
+              EFI_PAGE_SIZE,
+              Attributes,
+              NULL
+              )
+            ))
+      {
+        DEBUG ((DEBUG_ERROR, "%a - Unable to set memory attributes at address: 0x%x\n", __FUNCTION__, PFAddress));
+        Status = EFI_DEVICE_ERROR;
+      }
+
+      mPageFaultAddresses[mPFCount] = 0;
+    }
+  }
+
+  return Status;
+}
+
+MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  mMemoryNonstopModeProtocol = {
+  ClearPageFault,
+  ResetPageAttributes
+};
+
+/**
+  Install Memory Attribute Protocol.
+**/
+VOID
+InstallEfiMemoryAttributeProtocol (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &mCpuHandle,
+                  &gEfiMemoryAttributeProtocolGuid,
+                  &mMemoryAttributeProtocol,
+                  NULL
+                  );
+  ASSERT_EFI_ERROR (Status);
+}
+
+// TCBZ3519 MU_CHANGE END
+
+// MU_CHANGE START
+
+/**
+  Install Memory Protection Nonstop Protocol.
+**/
+VOID
+InstallMemoryProtectionNonstopModeProtocol (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &mCpuHandle,
+                  &gMemoryProtectionNonstopModeProtocolGuid,
+                  &mMemoryNonstopModeProtocol,
+                  NULL
+                  );
+  ASSERT_EFI_ERROR (Status);
+}
+
+// MU_CHANGE END
 
 // MS_HYP_CHANGE BEGIN
 #if defined(MDE_CPU_X64)
