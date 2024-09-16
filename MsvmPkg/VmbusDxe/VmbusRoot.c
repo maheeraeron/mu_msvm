@@ -1490,11 +1490,7 @@ VmbusRootInitiateContact(
         VmbusRootWaitForMessage(RootContext, FALSE, &message);
     } while (message.Header.MessageType != ChannelMessageVersionResponse);
 
-    size = (RequestedVersion >= VMBUS_VERSION_COPPER)
-        ? sizeof(message.VersionResponse)
-        : VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE;
-
-    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(message.Size >= size);
+    FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(message.Size >= VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE);
 
     if (!message.VersionResponse.VersionSupported ||
         message.VersionResponse.ConnectionState
@@ -1508,6 +1504,7 @@ VmbusRootInitiateContact(
         RootContext->ContactInitiated = TRUE;
         if (RequestedVersion >= VMBUS_VERSION_COPPER)
         {
+            FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(message.Size >= sizeof(message.VersionResponse));
             RootContext->FeatureFlags &= message.VersionResponse.SupportedFeatures;
         }
 
