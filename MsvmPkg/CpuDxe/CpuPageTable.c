@@ -14,6 +14,7 @@
 #include <Library/SerialPortLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/PrintLib.h>
+#include <Library/PanicLib.h>  // MU_CHANGE
 #include <Protocol/SmmBase2.h>
 #include <Register/Intel/Cpuid.h>
 #include <Register/Intel/Msr.h>
@@ -87,7 +88,6 @@ PAGE_ATTRIBUTE_TABLE  mPageAttributeTable[] = {
   { Page1G, SIZE_1GB, PAGING_1G_ADDRESS_MASK_64 },
 };
 
-UINTN                          mNumberOfProcessors = 1;  // MS_HYP_CHANGE
 PAGE_TABLE_POOL                *mPageTablePool    = NULL;
 BOOLEAN                        mPageTablePoolLock = FALSE;
 PAGE_TABLE_LIB_PAGING_CONTEXT  mPagingContext;

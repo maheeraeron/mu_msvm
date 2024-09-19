@@ -15,6 +15,9 @@
 #include <Protocol/Cpu2.h>    // MS_HYP_CHANGE
 #include <Register/Intel/Msr.h>
 
+#include <Ppi/SecPlatformInformation.h>
+#include <Ppi/SecPlatformInformation2.h>
+
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DxeServicesTableLib.h>
@@ -27,10 +30,12 @@
 #include <Library/LocalApicLib.h>
 #include <Library/UefiLib.h>
 #include <Library/CpuExceptionHandlerLib.h>
+#include <Library/HobLib.h>
+#include <Library/ReportStatusCodeLib.h>
 #include <Library/MpInitLib.h>
+#include <Library/DxeMemoryProtectionHobLib.h> // MU_CHANGE
+
 #include <Guid/IdleLoopEvent.h>
-#include <IsolationTypes.h>   // MS_HYP_CHANGE
-#include <Library/CrashLib.h>  // MS_HYP_CHANGE
 
 #if defined(MDE_CPU_X64)
 
@@ -39,8 +44,7 @@
 
 #endif
 
-// MU_CHANGE START
-
+// MU_CHANGE START Remove Nonstop Mode
 #define HEAP_GUARD_NONSTOP_MODE  FALSE
 
 /*
@@ -61,13 +65,6 @@
                                        EFI_MEMORY_WB  | \
                                        EFI_MEMORY_UCE   \
                                        )
-
-
-#define EFI_MEMORY_PAGETYPE_MASK      (EFI_MEMORY_RP  | \
-                                       EFI_MEMORY_XP  | \
-                                       EFI_MEMORY_RO    \
-                                       )
-
 
 #if defined(MDE_CPU_X64)
 
@@ -359,7 +356,7 @@ InitGlobalDescriptorTable (
 VOID
 EFIAPI
 SetCodeSelector (
-  UINT16 Selector
+  UINT16  Selector
   );
 
 /**
@@ -371,37 +368,50 @@ SetCodeSelector (
 VOID
 EFIAPI
 SetDataSelectors (
-  UINT16 Selector
+  UINT16  Selector
   );
 
-// MS_HYP_CHANGE BEGIN
 /**
-  Restore original Interrupt Descriptor Table Handler Address.
+  Update GCD memory space attributes according to current page table setup.
+**/
+VOID
+RefreshGcdMemoryAttributesFromPaging (
+  VOID
+  );
 
-  @param Index        The Index of the interrupt descriptor table handle.
+/**
+  Special handler for #DB exception, which will restore the page attributes
+  (not-present). It should work with #PF handler which will set pages to
+  'present'.
+
+  @param ExceptionType  Exception type.
+  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
 
 **/
 VOID
-RestoreInterruptDescriptorTableHandlerAddress (
-  IN UINTN       Index
+EFIAPI
+DebugExceptionHandler (
+  IN EFI_EXCEPTION_TYPE  ExceptionType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
   );
 
-#if defined(MDE_CPU_X64)
+/**
+  Special handler for #PF exception, which will set the pages which caused
+  #PF to be 'present'. The attribute of those pages should be restored in
+  the subsequent #DB handler.
 
-/*
-  Initialize the page tables for MP support in TDX.
+  @param ExceptionType  Exception type.
+  @param SystemContext  Pointer to EFI_SYSTEM_CONTEXT.
 
-  @param  ApMailbox       The address of the MP wake up mailbox.
-*/
-UINT64
-InitializeMpPageTables (
-  IN UINT64 ApMailbox
+**/
+VOID
+EFIAPI
+PageFaultExceptionHandler (
+  IN EFI_EXCEPTION_TYPE  ExceptionType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
   );
 
-#endif
-
-// MS_HYP_CHANGE END
-
+extern BOOLEAN     mIsAllocatingPageTable;
+extern UINTN       mNumberOfProcessors;
 extern EFI_HANDLE  mCpuHandle; // TCBZ3519 MU_CHANGE
 #endif
-

@@ -37,36 +37,52 @@
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   LocalApicLib
+  UefiLib
   CpuExceptionHandlerLib
+  HobLib
+  ReportStatusCodeLib
   MpInitLib
+  TimerLib
+  PeCoffGetEntryPointLib
+  DxeMemoryProtectionHobLib ## MU_CHANGE
   IsolationLib    ## MS_HYP_CHANGE
 
 [Sources]
   CpuDxe.c
   CpuDxe.h
   CpuGdt.c
+  CpuMp.c
+  CpuMp.h
   CpuPageTable.h
   CpuPageTable.c
+
+[Sources.IA32]
+  Ia32/CpuAsm.nasm
+  Ia32/PagingAttribute.c
 
 [Sources.X64]
   X64/CpuApWait.asm | MSFT   ## MS_HYP_CHANGE
   X64/CpuAsm.asm    | MSFT   ## MS_HYP_CHANGE
   X64/CpuAsm.asm    | INTEL  ## MS_HYP_CHANGE
   X64/CpuAsm.S      | GCC    ## MS_HYP_CHANGE
-
   X64/PagingAttribute.c
 
 [Protocols]
   gEfiCpuArchProtocolGuid                       ## PRODUCES
-  gEfiCpu2ProtocolGuid                          ## MS_HYP_CHANGE
+  gEfiCpu2ProtocolGuid                          ## MS_HYP_CHANGE PRODUCES
+  gEfiHvProtocolGuid                            ## MS_HYP_CHANGE CONSUMES
+  gEfiMpServiceProtocolGuid                     ## PRODUCES
   gEfiMemoryAttributeProtocolGuid               ## TCBZ3519 MU_CHANGE PRODUCES
-  gEfiHvProtocolGuid                            ## MS_HYP_CHANGE
   gMemoryProtectionNonstopModeProtocolGuid      ## MU_CHANGE: PRODUCES
 
 [Guids]
   gIdleLoopEventGuid                            ## CONSUMES           ## Event
   gEfiVectorHandoffTableGuid                    ## SOMETIMES_CONSUMES ## SystemTable
-  gEfiEndOfDxeEventGroupGuid                    ## CONSUMES ## GUID   ## MS_HYP_CHANGE
+  gEfiEndOfDxeEventGroupGuid                    ## CONSUMES           ## GUID   ## MS_HYP_CHANGE
+
+[Ppis]
+  gEfiSecPlatformInformation2PpiGuid            ## UNDEFINED # HOB
+  gEfiSecPlatformInformationPpiGuid             ## UNDEFINED # HOB
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
@@ -74,10 +90,10 @@
   # gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                       ## CONSUMES
   # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
   # gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
-  gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress                    ## CONSUMES
-  gMsvmPkgTokenSpaceGuid.PcdProcessorCount                              ## CONSUMES
   # MU_CHANGE END
   gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                      ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress                    ## MS_HYP_CHANGE CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdProcessorCount                              ## MS_HYP_CHANGE CONSUMES
 
 [Depex]
   TRUE

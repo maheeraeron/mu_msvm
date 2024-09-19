@@ -7,24 +7,10 @@
 **/
 
 #include "CpuDxe.h"
+#include "CpuMp.h"
 #include "CpuPageTable.h"
 #include <Library/DeviceStateLib.h> // MU_CHANGE
 #define CPU_INTERRUPT_NUM  256
-
-// MSCHANGE BEGIN Copied from MU_BASECORE 1808 since these definitions have been removed from public release
-#include <Library/PrintLib.h>
-#include <Hv/HvGuestMsr.h>
-
-//
-// Below macro is deprecated, and should not be used.
-//
-#define  MTRR_LIB_MSR_VALID_MASK                     0xFFFFFFFFFULL
-#define  MTRR_LIB_CACHE_VALID_ADDRESS                0xFFFFFF000ULL
-// MSCHANGE END Copied from MU_BASECORE 1808 since these definitions have been removed from public release
-
-#define CACHE_ATTRIBUTE_MASK   (EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT | EFI_MEMORY_WB | EFI_MEMORY_UCE | EFI_MEMORY_WP) // MS_HYP_CHANGE
-#define MEMORY_ATTRIBUTE_MASK  (EFI_MEMORY_RP | EFI_MEMORY_XP | EFI_MEMORY_RO)  // MS_HYP_CHANGE
-
 
 //
 // Global Variables
@@ -34,9 +20,14 @@ EFI_HANDLE  mCpuHandle     = NULL;
 BOOLEAN     mIsFlushingGCD;
 
 // MS_HYP_CHANGE BEGIN
+#include <IsolationTypes.h>
+#include <Hv/HvGuestMsr.h>
+#include <Library/CrashLib.h>
+#include <Library/PrintLib.h>
+
 #if defined(MDE_CPU_X64)
 
-EFI_HV_PROTOCOL *mHv; // MS_HYP_CHANGE
+EFI_HV_PROTOCOL *mHv;
 EFI_EVENT   mEndOfDxeEvent;
 
 #endif
@@ -45,13 +36,16 @@ IA32_IDT_GATE_DESCRIPTOR  gIdtTable[CPU_INTERRUPT_NUM] = { 0 }; // MS_HYP_CHANGE
 IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[CPU_INTERRUPT_NUM] = { 0 }; // MS_HYP_CHANGE
 
 EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100]; // MS_HYP_CHANGE
-UINT64                    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS; // MS_HYP_CHANGE
-UINT64                    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;  // MS_HYP_CHANGE
 UINT16                    mOrigIdtEntryCount    = 0;  // MS_HYP_CHANGE
 
 BOOLEAN                   mStrictIsolation;
 UINT32                    mIsolationType;
 // MS_HYP_CHANGE END
+
+BOOLEAN     mIsAllocatingPageTable = FALSE;
+UINT64      mValidMtrrAddressMask;
+UINT64      mValidMtrrBitsMask;
+UINT64      mTimerPeriod = 0;
 
 FIXED_MTRR  mFixedMtrrTable[] = {
   {
@@ -144,6 +138,17 @@ UINT32 mErrorCodeFlag = 0x00027d00;
 //
 // Local function prototypes
 //
+
+/**
+  Restore original Interrupt Descriptor Table Handler Address.
+
+  @param Index        The Index of the interrupt descriptor table handle.
+
+**/
+VOID
+RestoreInterruptDescriptorTableHandlerAddress (
+  IN UINTN       Index
+  );
 
 /**
   Set Interrupt Descriptor Table Handler Address.
@@ -390,7 +395,6 @@ CpuEnableInterrupt (
   return EFI_SUCCESS;
 }
 
-
 /**
   Disables CPU interrupts.
 
@@ -411,7 +415,6 @@ CpuDisableInterrupt (
   InterruptState = FALSE;
   return EFI_SUCCESS;
 }
-
 
 /**
   Return the state of interrupts.
@@ -437,7 +440,6 @@ CpuGetInterruptState (
   *State = GetInterruptState ();  // MS_HYP_CHANGE
   return EFI_SUCCESS;
 }
-
 
 /**
   Generates an INIT to the CPU.
@@ -573,6 +575,21 @@ CpuGetTimerValue (
   return EFI_SUCCESS;
 }
 
+/**
+  A minimal wrapper function that allows MtrrSetAllMtrrs() to be passed to
+  EFI_MP_SERVICES_PROTOCOL.StartupAllAPs() as Procedure.
+
+  @param[in] Buffer  Pointer to an MTRR_SETTINGS object, to be passed to
+                     MtrrSetAllMtrrs().
+**/
+VOID
+EFIAPI
+SetMtrrsFromBuffer (
+  IN VOID  *Buffer
+  )
+{
+  MtrrSetAllMtrrs (Buffer);
+}
 
 /**
   Implementation of SetMemoryAttributes() service of CPU Architecture Protocol.
@@ -613,17 +630,6 @@ CpuSetMemoryAttributes (
   UINT64                    CacheAttributes;
   UINT64                    MemoryAttributes;
   MTRR_MEMORY_CACHE_TYPE    CurrentCacheType;
-  // MS_HYP_CHANGE BEGIN
-
-  CacheAttributes = Attributes & CACHE_ATTRIBUTE_MASK;
-  MemoryAttributes = Attributes & MEMORY_ATTRIBUTE_MASK;
-
-  if (Attributes != (CacheAttributes | MemoryAttributes)) {
-    DEBUG ((DEBUG_ERROR, "Invalid attributes.\n"));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  // DEBUG((DEBUG_VERBOSE, "CacheAttributes: 0x%lx , MemoryAttributes: (0x%lx)\n", CacheAttributes, MemoryAttributes));
 
   //
   // If this function is called because GCD SetMemorySpaceAttributes () is called
@@ -634,6 +640,28 @@ CpuSetMemoryAttributes (
   if (mIsFlushingGCD) {
     DEBUG ((DEBUG_VERBOSE, "  Flushing GCD\n"));
     return EFI_SUCCESS;
+  }
+
+  //
+  // During memory attributes updating, new pages may be allocated to setup
+  // smaller granularity of page table. Page allocation action might then cause
+  // another calling of CpuSetMemoryAttributes() recursively, due to memory
+  // protection policy configured (such as the DXE NX Protection Policy). // MU_CHANGE
+  // Since this driver will always protect memory used as page table by itself,
+  // there's no need to apply protection policy requested from memory service.
+  // So it's safe to just return EFI_SUCCESS if this time of calling is caused
+  // by page table memory allocation.
+  //
+  if (mIsAllocatingPageTable) {
+    DEBUG ((DEBUG_VERBOSE, "  Allocating page table memory\n"));
+    return EFI_SUCCESS;
+  }
+
+  CacheAttributes  = Attributes & EFI_CACHE_ATTRIBUTE_MASK;
+  MemoryAttributes = Attributes & EFI_MEMORY_ATTRIBUTE_MASK;
+
+  if (Attributes != (CacheAttributes | MemoryAttributes)) {
+    return EFI_INVALID_PARAMETER;
   }
 
   if (CacheAttributes != 0) {
@@ -662,6 +690,7 @@ CpuSetMemoryAttributes (
         return EFI_INVALID_PARAMETER;
     }
 
+    // MS_HYP_CHANGE BEGIN
     //
     // If this system enforces hardware isolation with no paravisor, then
     // cache attribute changes are not possible.  However, this routine may
@@ -676,6 +705,7 @@ CpuSetMemoryAttributes (
       if (!IsMtrrSupported ()) {
           return EFI_INVALID_PARAMETER;
       }
+    // MS_HYP_CHANGE BEGIN
 
       //
       // call MTRR library function
@@ -686,12 +716,11 @@ CpuSetMemoryAttributes (
                  CacheType
                  );
 
-      if (EFI_ERROR(Status)) {
-        return (EFI_STATUS) Status;
+      if (EFI_ERROR (Status)) {
+        return Status;
       }
     }
   }
-  // MS_HYP_CHANGE END
 
   //
   // Set memory attribute by page table
@@ -740,13 +769,12 @@ InitializeMtrrMask (
     AsmCpuid (0x80000008, &RegEax, NULL, NULL, NULL);
 
     PhysicalAddressBits = (UINT8)RegEax;
-
-    mValidMtrrBitsMask    = LShiftU64 (1, PhysicalAddressBits) - 1;
-    mValidMtrrAddressMask = mValidMtrrBitsMask & 0xfffffffffffff000ULL;
   } else {
-    mValidMtrrBitsMask    = MTRR_LIB_MSR_VALID_MASK;    // MS_HYP_CHANGE
-    mValidMtrrAddressMask = MTRR_LIB_CACHE_VALID_ADDRESS;   // MS_HYP_CHANGE
+    PhysicalAddressBits = 36;
   }
+
+  mValidMtrrBitsMask    = LShiftU64 (1, PhysicalAddressBits) - 1;
+  mValidMtrrAddressMask = mValidMtrrBitsMask & 0xfffffffffffff000ULL;
 }
 
 /**
@@ -912,7 +940,6 @@ SetGcdMemorySpaceAttributes (
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Refreshes the GCD Memory Space attributes according to MTRRs.
@@ -1173,7 +1200,6 @@ IsPagingAndPageAddressExtensionsEnabled (
 
   return ((Cr0.Bits.PG != 0) && (Cr4.Bits.PAE != 0));
 }
-
 
 /**
   Refreshes the GCD Memory Space attributes according to MTRRs and Paging.
@@ -1652,7 +1678,6 @@ FreeMemorySpaceMap:
   return Status;
 }
 
-
 /**
   Add and allocate CPU local APIC memory mapped space.
 
@@ -1696,7 +1721,6 @@ AddLocalApicMemorySpace (
   }
 }
 
-
 /**
   Initialize the state information for the CPU Architectural Protocol.
 
@@ -1733,7 +1757,7 @@ InitializeCpu (
   mIsolationType = GetIsolationType();
   // MS_HYP_CHANGE END
 
-  InitializePageTableLib();
+  InitializePageTableLib ();
 
   InitializeFloatingPointUnits ();
 
@@ -1834,4 +1858,3 @@ Cleanup:
 
   return Status;
 }
-

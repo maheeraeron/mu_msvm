@@ -179,4 +179,22 @@ InstallMemoryProtectionNonstopModeProtocol (
 
 // MU_CHANGE END
 
+// MS_HYP_CHANGE BEGIN
+
+#if defined(MDE_CPU_X64)
+
+/*
+  Initialize the page tables for MP support in TDX.
+
+  @param  ApMailbox       The address of the MP wake up mailbox.
+*/
+UINT64
+InitializeMpPageTables (
+  IN UINT64 ApMailbox
+  );
+
+#endif
+
+// MS_HYP_CHANGE END
+
 #endif
