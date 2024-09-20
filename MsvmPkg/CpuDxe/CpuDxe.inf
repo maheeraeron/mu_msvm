@@ -55,6 +55,7 @@
   CpuMp.h
   CpuPageTable.h
   CpuPageTable.c
+  CpuBd.c         ## MS_HYP_CHANGE
 
 [Sources.IA32]
   Ia32/CpuAsm.nasm

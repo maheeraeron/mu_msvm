@@ -466,4 +466,72 @@ WhoAmI (
   OUT UINTN                    *ProcessorNumber
   );
 
+// MS_HYP_CHANGE BEGIN
+#if defined(MDE_CPU_X64)
+
+#define AP_WAIT_IN_MAILBOX_CODE_MAX_SIZE 1024
+
+//
+// Describes the MP wakeup mailbox control structure use to
+// wakeup cpus spinning in long mode
+//
+typedef struct {
+  UINT16                  Command;
+  UINT16                  Reserved;
+  UINT32                  ApicId;
+  UINT64                  WakeUpVector;
+  UINT8                   ReservedForOs[2032];
+
+  //
+  // 2048 bytes reserved for use by the firmware
+  //
+  volatile UINT8          HasVcpuEnteredMailboxWait;
+  UINT8                   ApWaitInMailboxCode[AP_WAIT_IN_MAILBOX_CODE_MAX_SIZE];
+  UINT8                   ReservedForFirmware[1023];
+} MP_WAKEUP_MAILBOX;
+
+typedef struct {
+    UINT32 startGate;
+
+    UINT16 dataSelector;
+    UINT16 staticGdtLimit;
+    UINT32 staticGdtBase;
+
+    UINT16 taskSelector;
+    UINT16 idtrLimit;
+    UINT64 idtrBase;
+
+    UINT64 initialRip;
+    UINT16 codeSelector;
+    UINT16 padding2[2];
+    UINT16 gdtrLimit;
+    UINT64 gdtrBase;
+
+    UINT64 rsp;
+    UINT64 rbp;
+    UINT64 r8;
+    UINT64 r9;
+    UINT64 r10;
+    UINT64 r11;
+    UINT64 cr0;
+    UINT64 cr3;
+    UINT64 cr4;
+    UINT32 transitionCr3;
+    UINT32 padding3;
+
+    UINT8 staticGdt[16];
+} TDX_CONTEXT;
+
+//
+// Function declarations that are defined in the assembly code.
+//
+void
+ApWaitInMailboxEnd(void);
+
+void
+ApWaitInMailbox(void);
+
+#endif
+// MS_HYP_CHANGE END
+
 #endif // _CPU_MP_H_
