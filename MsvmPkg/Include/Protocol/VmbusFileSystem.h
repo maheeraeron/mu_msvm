@@ -1,5 +1,4 @@
 /** @file
-
     Implements the VMBus file system protocol.
 
     Copyright (c) Microsoft Corporation.
@@ -8,32 +7,12 @@
 
 #pragma once
 #pragma warning(push)
-#pragma warning(disable:4200)
 
 //
 // Make sure padding works correctly for the flexible array members.
 //
 
 #pragma warning(error:4820)
-
-#define GUID_VMBFS_INTERFACE_TYPE_DEFINE {0xc376c1c3, 0xd276, 0x48d2, \
-    {0x90, 0xa9, 0xc0, 0x47, 0x48, 0x07, 0x2c, 0x60}}
-
-#define GUID_VMBFS_IMC_INSTANCE_DEFINE {0xc4e5e7d1, 0xd748, 0x4afc, \
-    {0x97, 0x9d, 0x68, 0x31, 0x67, 0x91, 0x0a, 0x55}}
-
-#define GUID_VMBFS_BOOT_INSTANCE_DEFINE {0xc63c9bdf, 0x5fa5, 0x4208, \
-    {0xb0, 0x3f, 0x6b, 0x45, 0x8b, 0x36, 0x55, 0x92}}
-
-/* c376c1c3-d276-48d2-90a9-c04748072c60 */
-DEFINE_GUID(GUID_VMBFS_INTERFACE_TYPE, 0xc376c1c3, 0xd276, 0x48d2, 0x90, 0xa9, 0xc0, 0x47, 0x48, 0x07, 0x2c, 0x60);
-
-/* c4e5e7d1-d748-4afc-979d-683167910a55 */
-DEFINE_GUID(GUID_VMBFS_IMC_INSTANCE, 0xc4e5e7d1, 0xd748, 0x4afc, 0x97, 0x9d, 0x68, 0x31, 0x67, 0x91, 0x0a, 0x55);
-
-/* c63c9bdf-5fa5-4208-b03f-6b458b365592 */
-DEFINE_GUID(GUID_VMBFS_BOOT_INSTANCE, 0xc63c9bdf, 0x5fa5, 0x4208, 0xb0, 0x3f, 0x6b, 0x45, 0x8b, 0x36, 0x55, 0x92);
-
 
 #define VMBFS_MAXIMUM_MESSAGE_SIZE 12288
 #define VMBFS_MAXIMUM_PAYLOAD_SIZE(_Header_) (VMBFS_MAXIMUM_MESSAGE_SIZE - sizeof(_Header_))
@@ -103,7 +82,7 @@ typedef struct _VMBFS_MESSAGE_VERSION_RESPONSE
 typedef struct _VMBFS_MESSAGE_GET_FILE_INFO
 {
     VMBFS_MESSAGE_HEADER Header;
-    WCHAR FilePath[];
+    CHAR16 FilePath[];
 
 } VMBFS_MESSAGE_GET_FILE_INFO, *PVMBFS_MESSAGE_GET_FILE_INFO;
 
@@ -134,7 +113,7 @@ typedef struct _VMBFS_MESSAGE_READ_FILE
     VMBFS_MESSAGE_HEADER Header;
     UINT32 ByteCount;
     UINT64 Offset;
-    WCHAR FilePath[];
+    CHAR16 FilePath[];
 
 } VMBFS_MESSAGE_READ_FILE, *PVMBFS_MESSAGE_READ_FILE;
 
@@ -155,7 +134,7 @@ typedef struct _VMBFS_MESSAGE_READ_FILE_RDMA
     UINT32 ByteCount;
     UINT64 FileOffset;
     UINT64 TokenOffset;
-    WCHAR FilePath[];
+    CHAR16 FilePath[];
 
 } VMBFS_MESSAGE_READ_FILE_RDMA, *PVMBFS_MESSAGE_READ_FILE_RDMA;
 

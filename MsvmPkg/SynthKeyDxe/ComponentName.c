@@ -15,19 +15,19 @@
 EFI_STATUS
 EFIAPI
 SynthKeyComponentNameGetDriverName(
-    _In_        EFI_COMPONENT_NAME2_PROTOCOL   *This,
-    _In_        CHAR8                          *Language,
-    _Out_       CHAR16                        **DriverName
+    IN          EFI_COMPONENT_NAME2_PROTOCOL   *This,
+    IN          CHAR8                          *Language,
+    OUT         CHAR16                        **DriverName
     );
 
 EFI_STATUS
 EFIAPI
 SynthKeyComponentNameGetControllerName(
-    _In_        EFI_COMPONENT_NAME2_PROTOCOL   *This,
-    _In_        EFI_HANDLE                      ControllerHandle,
-    _In_opt_    EFI_HANDLE                      ChildHandle,
-    _In_        CHAR8                          *Language,
-    _Out_       CHAR16                        **ControllerName
+    IN          EFI_COMPONENT_NAME2_PROTOCOL   *This,
+    IN          EFI_HANDLE                      ControllerHandle,
+    IN OPTIONAL EFI_HANDLE                      ChildHandle,
+    IN          CHAR8                          *Language,
+    OUT         CHAR16                        **ControllerName
     );
 
 
@@ -61,9 +61,9 @@ EFI_UNICODE_STRING_TABLE gSynthKeyControllerNameTable[] =
 EFI_STATUS
 EFIAPI
 SynthKeyComponentNameGetDriverName(
-    _In_        EFI_COMPONENT_NAME2_PROTOCOL   *This,
-    _In_        CHAR8                          *Language,
-    _Out_       CHAR16                        **DriverName
+    IN          EFI_COMPONENT_NAME2_PROTOCOL   *This,
+    IN          CHAR8                          *Language,
+    OUT         CHAR16                        **DriverName
     )
 /*++
 
@@ -111,11 +111,11 @@ Returns:
 EFI_STATUS
 EFIAPI
 SynthKeyComponentNameGetControllerName(
-    _In_        EFI_COMPONENT_NAME2_PROTOCOL   *This,
-    _In_        EFI_HANDLE                      ControllerHandle,
-    _In_opt_    EFI_HANDLE                      ChildHandle,
-    _In_        CHAR8                          *Language,
-    _Out_       CHAR16                        **ControllerName
+    IN          EFI_COMPONENT_NAME2_PROTOCOL   *This,
+    IN          EFI_HANDLE                      ControllerHandle,
+    IN OPTIONAL EFI_HANDLE                      ChildHandle,
+    IN          CHAR8                          *Language,
+    OUT         CHAR16                        **ControllerName
     )
 /*++
 

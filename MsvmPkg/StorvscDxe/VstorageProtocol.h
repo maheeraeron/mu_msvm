@@ -10,42 +10,14 @@
 
 #pragma once
 
+#include <MsvmBase.h>
+
 #pragma warning(push)
 #pragma warning(disable: 4201) // Allow nameless structs
-#pragma warning(disable: 4214) // bit field types other than int
 
 //
 //  Public interface to the server
 //
-
-//
-//  StorVSP device interface guid
-//
-DEFINE_GUID(GUID_STORVSP, \
-    0x66cbde6f, 0x1828, 0x47de, 0x8f, 0x3d, 0xe4, 0x15, 0xb3, 0x12, 0x91, 0xb9);
-
-//
-//  VMBUS guid for channel and hardware id for the client
-//  ba6163d9-04a1-4d29-b605-72e2ffb1dc7f
-//
-DEFINE_GUID(GUID_STORAGE_CHANNEL_TYPE, \
-    0xba6163d9, 0x04a1, 0x4d29, 0xb6, 0x05, 0x72, 0xe2, 0xff, 0xb1, 0xdc, 0x7f);
-
-//
-// VMBUS guid for emulated channel and hardware id for the client
-// 32412632-86cb-44a2-9b5c-50d1417354f5
-//
-DEFINE_GUID(GUID_EMULATED_STORAGE_CHANNEL_TYPE, \
-    0x32412632, 0x86cb, 0x44a2, 0x9b, 0x5c, 0x50, 0xd1, 0x41, 0x73, 0x54, 0xf5);
-
-//
-// VMBUS guid for channel and hardware id for the synthetic fibre channel
-// 2f9bcc4a-0069-4af3-b76b-6fd0be528cda
-//
-DEFINE_GUID(GUID_SYNTHETIC_FIBRE_CHANNEL_TYPE, \
-    0x2f9bcc4a, 0x0069, 0x4af3, 0xb7, 0x6b, 0x6f, 0xd0, 0xbe, 0x52, 0x8c, 0xda);
-
-#define VMSTOR_MAXIMUM_SUBCHANNEL_COUNT 15
 
 //
 //  Protocol versions.
@@ -143,51 +115,51 @@ typedef enum
 
 typedef struct _VMSCSI_REQUEST
 {
-    USHORT Length;
-    UCHAR SrbStatus;
-    UCHAR ScsiStatus;
+    UINT16 Length;
+    UINT8 SrbStatus;
+    UINT8 ScsiStatus;
 
-    UCHAR Reserved1;
-    UCHAR PathId;
-    UCHAR TargetId;
-    UCHAR Lun;
+    UINT8 Reserved1;
+    UINT8 PathId;
+    UINT8 TargetId;
+    UINT8 Lun;
 
-    UCHAR CdbLength;
-    UCHAR SenseInfoExLength;
-    UCHAR DataIn;
-    UCHAR Properties;
+    UINT8 CdbLength;
+    UINT8 SenseInfoExLength;
+    UINT8 DataIn;
+    UINT8 Properties;
 
-    ULONG DataTransferLength;
+    UINT32 DataTransferLength;
 
     union
     {
-        UCHAR Cdb[CDB16GENERIC_LENGTH];
+        UINT8 Cdb[CDB16GENERIC_LENGTH];
 
-        UCHAR SenseDataEx[VMSCSI_SENSE_BUFFER_SIZE];
+        UINT8 SenseDataEx[VMSCSI_SENSE_BUFFER_SIZE];
 
-        UCHAR ReservedArray[MAX_DATA_BUFFER_LENGTH_WITH_PADDING];
+        UINT8 ReservedArray[MAX_DATA_BUFFER_LENGTH_WITH_PADDING];
     };
 
     //
     // The following were added in Windows 8
     //
-    USHORT  Reserve;
-    UCHAR   QueueTag;
-    UCHAR   QueueAction;
-    ULONG   SrbFlags;
-    ULONG   TimeOutValue;
-    ULONG   QueueSortKey;
+    UINT16  Reserve;
+    UINT8   QueueTag;
+    UINT8   QueueAction;
+    UINT32  SrbFlags;
+    UINT32  TimeOutValue;
+    UINT32  QueueSortKey;
 } VMSCSI_REQUEST, *PVMSCSI_REQUEST;
 
-C_ASSERT((sizeof(VMSCSI_REQUEST) % 4) == 0);
+static_assert((sizeof(VMSCSI_REQUEST) % 4) == 0);
 
-#define VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1 FIELD_OFFSET(VMSCSI_REQUEST, Reserve)
+#define VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1 OFFSET_OF(VMSCSI_REQUEST, Reserve)
 
-C_ASSERT(VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1 == 0x24);
+static_assert(VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1 == 0x24);
 
-#define VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2 (RTL_SIZEOF_THROUGH_FIELD(VMSCSI_REQUEST, QueueSortKey))
+#define VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2 (SIZEOF_THROUGH_FIELD(VMSCSI_REQUEST, QueueSortKey))
 
-C_ASSERT(VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2 == 0x34);
+static_assert(VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2 == 0x34);
 
 
 //
@@ -199,12 +171,12 @@ C_ASSERT(VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2 == 0x34);
 //
 typedef struct _VMSTORAGE_CHANNEL_PROPERTIES
 {
-    ULONG Reserved;
+    UINT32 Reserved;
     UINT16 MaximumSubChannelCount;
     UINT16 Reserved2;
-    ULONG Flags;
-    ULONG MaxTransferBytes;
-    ULONGLONG Reserved3;
+    UINT32 Flags;
+    UINT32 MaxTransferBytes;
+    UINT64 Reserved3;
 } VMSTORAGE_CHANNEL_PROPERTIES, *PVMSTORAGE_CHANNEL_PROPERTIES;
 
 //
@@ -213,7 +185,7 @@ typedef struct _VMSTORAGE_CHANNEL_PROPERTIES
 
 #define STORAGE_CHANNEL_SUPPORTS_MULTI_CHANNEL          0x1
 
-C_ASSERT((sizeof(VMSTORAGE_CHANNEL_PROPERTIES) % 4) == 0);
+static_assert((sizeof(VMSTORAGE_CHANNEL_PROPERTIES) % 4) == 0);
 
 //
 // This structure is sent as part of the channel offer. It exists for old
@@ -224,12 +196,12 @@ C_ASSERT((sizeof(VMSTORAGE_CHANNEL_PROPERTIES) % 4) == 0);
 //
 typedef struct _VMSTORAGE_OFFER_PROPERTIES
 {
-    USHORT Reserved;
-    UCHAR PathId;
-    UCHAR TargetId;
-    ULONG Reserved2;
-    ULONG Flags;
-    ULONG Reserved3[3];
+    UINT16 Reserved;
+    UINT8 PathId;
+    UINT8 TargetId;
+    UINT32 Reserved2;
+    UINT32 Flags;
+    UINT32 Reserved3[3];
 } VMSTORAGE_OFFER_PROPERTIES, *PVMSTORAGE_OFFER_PROPERTIES;
 
 #define STORAGE_OFFER_EMULATED_IDE_FLAG               0x2
@@ -242,16 +214,16 @@ typedef struct _VMSTORAGE_PROTOCOL_VERSION
     //
     // Major (MSW) and minor (LSW) version numbers.
     //
-    USHORT MajorMinor;
+    UINT16 MajorMinor;
 
     //
     // Windows build number. Purely informative.
     //
-    USHORT Build;
+    UINT16 Build;
 
 } VMSTORAGE_PROTOCOL_VERSION, *PVMSTORAGE_PROTOCOL_VERSION;
 
-C_ASSERT((sizeof(VMSTORAGE_PROTOCOL_VERSION) % 4) == 0);
+static_assert((sizeof(VMSTORAGE_PROTOCOL_VERSION) % 4) == 0);
 
 //
 //  This structure is for fibre channel Wwn Packets.
@@ -259,51 +231,51 @@ C_ASSERT((sizeof(VMSTORAGE_PROTOCOL_VERSION) % 4) == 0);
 typedef struct _VMFC_WWN_PACKET
 {
     BOOLEAN PrimaryWwnActive;
-    CHAR    Reserved1;
-    USHORT  Reserved2;
+    INT8    Reserved1;
+    UINT16  Reserved2;
 
-    CHAR    PrimaryPortWwn[8];
-    CHAR    PrimaryNodeWwn[8];
-    CHAR    SecondaryPortWwn[8];
-    CHAR    SecondaryNodeWwn[8];
+    INT8    PrimaryPortWwn[8];
+    INT8    PrimaryNodeWwn[8];
+    INT8    SecondaryPortWwn[8];
+    INT8    SecondaryNodeWwn[8];
 } VMFC_WWN_PACKET, *PVMFC_WWN_PACKET;
 
-C_ASSERT((sizeof(VMFC_WWN_PACKET) % 4) == 0);
+static_assert((sizeof(VMFC_WWN_PACKET) % 4) == 0);
 
 //
 // Used to register or unregister Asynchronous Media Event Notification to the client
 //
 typedef struct _VSTOR_CLIENT_PROPERTIES
 {
-    ULONG AsyncNotifyCapable : 1;
-    ULONG Reserved           : 31;
+    UINT32 AsyncNotifyCapable : 1;
+    UINT32 Reserved           : 31;
 
 } VSTOR_CLIENT_PROPERTIES, *PVSTOR_CLIENT_PROPERTIES;
 
-C_ASSERT((sizeof(VSTOR_CLIENT_PROPERTIES) % 4) == 0);
+static_assert((sizeof(VSTOR_CLIENT_PROPERTIES) % 4) == 0);
 
 typedef struct _VSTOR_ASYNC_REGISTER_PACKET
 {
-    UCHAR      Lun;
-    UCHAR      Target;
-    UCHAR      Path;
+    UINT8      Lun;
+    UINT8      Target;
+    UINT8      Path;
     BOOLEAN    Register;
 } VSTOR_ASYNC_REGISTER_PACKET, *PVSTOR_ASYNC_REGISTER_PACKET;
 
-C_ASSERT((sizeof(VSTOR_ASYNC_REGISTER_PACKET) % 4) == 0);
+static_assert((sizeof(VSTOR_ASYNC_REGISTER_PACKET) % 4) == 0);
 
 //
 // Used to send notifications to StorVsc about media change events
 //
 typedef struct _VSTOR_NOTIFICATION_PACKET
 {
-    UCHAR    Lun;
-    UCHAR    Target;
-    UCHAR    Path;
-    UCHAR    Flags;
+    UINT8    Lun;
+    UINT8    Target;
+    UINT8    Path;
+    UINT8    Flags;
 } VSTOR_NOTIFICATION_PACKET, *PVSTOR_NOTIFICATION_PACKET;
 
-C_ASSERT((sizeof(VSTOR_NOTIFICATION_PACKET) % 4) == 0);
+static_assert((sizeof(VSTOR_NOTIFICATION_PACKET) % 4) == 0);
 
 typedef struct _VSTOR_PACKET
 {
@@ -315,12 +287,12 @@ typedef struct _VSTOR_PACKET
     //
     //  Flags - see below for values
     //
-    ULONG     Flags;
+    UINT32     Flags;
 
     //
     // Status of the request returned from the server side.
     //
-    ULONG     Status;
+    UINT32     Status;
 
     //
     // Data payload area
@@ -362,20 +334,20 @@ typedef struct _VSTOR_PACKET
         // Buffer. The buffer size will be the maximun of union members. It is
         // used to transfer data.
         //
-        UCHAR  Buffer[0x34];
+        UINT8  Buffer[0x34];
     };
 
 } VSTOR_PACKET, *PVSTOR_PACKET;
 
-C_ASSERT((sizeof(VSTOR_PACKET) % 8) == 0);
+static_assert((sizeof(VSTOR_PACKET) % 8) == 0);
 
-#define VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1 (RTL_SIZEOF_THROUGH_FIELD(VSTOR_PACKET, Status) + VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1)
+#define VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1 (SIZEOF_THROUGH_FIELD(VSTOR_PACKET, Status) + VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_1)
 
-C_ASSERT(VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1 == 0x30);
+static_assert(VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_1 == 0x30);
 
-#define VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_2 (RTL_SIZEOF_THROUGH_FIELD(VSTOR_PACKET, Status) + VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2)
+#define VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_2 (SIZEOF_THROUGH_FIELD(VSTOR_PACKET, Status) + VMSTORAGE_SIZEOF_VMSCSI_REQUEST_REVISION_2)
 
-C_ASSERT(VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_2 == 0x40);
+static_assert(VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_2 == 0x40);
 
 
 //
@@ -398,31 +370,31 @@ C_ASSERT(VMSTORAGE_SIZEOF_VSTOR_PACKET_REVISION_2 == 0x40);
 
 typedef struct _ADAPTER_ADDRESS
 {
-    ULONGLONG PartitionId;
+    UINT64 PartitionId;
 
     GUID ChannelInstanceGUID;
 
     //
     //  SCSI address
     //
-    UCHAR Reserved;
-    UCHAR PathId;
-    UCHAR TargetId;
-    UCHAR Lun;
+    UINT8 Reserved;
+    UINT8 PathId;
+    UINT8 TargetId;
+    UINT8 Lun;
 
     //
     //  Flags
     //
-    ULONG Flags;
+    UINT32 Flags;
 
     //
     // World wide names for SynthFc
     //
     BOOLEAN PrimaryWwnActive;
-    UCHAR   PrimaryPortWwn[8];
-    UCHAR   PrimaryNodeWwn[8];
-    UCHAR   SecondaryPortWwn[8];
-    UCHAR   SecondaryNodeWwn[8];
+    UINT8   PrimaryPortWwn[8];
+    UINT8   PrimaryNodeWwn[8];
+    UINT8   SecondaryPortWwn[8];
+    UINT8   SecondaryNodeWwn[8];
 
 } ADAPTER_ADDRESS, *PADAPTER_ADDRESS;
 

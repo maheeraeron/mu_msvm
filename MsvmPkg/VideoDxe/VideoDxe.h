@@ -10,7 +10,6 @@
 
 #include <Uefi.h>
 #include <PiDxe.h>
-#include <EfiNt.h>
 
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
@@ -35,10 +34,10 @@
 #define DEFAULT_SCREEN_HEIGHT           (768)
 
 typedef struct _RECT {
-  LONG left;
-  LONG top;
-  LONG right;
-  LONG bottom;
+  INT32 left;
+  INT32 top;
+  INT32 right;
+  INT32 bottom;
 } RECT, *PRECT;
 
 #define BYTE UINT8
@@ -90,8 +89,8 @@ extern EFI_COMPONENT_NAME_PROTOCOL gVideoDxeComponentName;
 EFI_STATUS
 EFIAPI
 VideoDxeDriverEntryPoint (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     );
 
 //
@@ -101,26 +100,26 @@ VideoDxeDriverEntryPoint (
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingSupported(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     );
 
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingStart(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     );
 
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingStop(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     );
 
 //
@@ -130,19 +129,19 @@ VideoDxeDriverBindingStop(
 EFI_STATUS
 EFIAPI
 VideoDxeComponentNameGetDriverName(
-    __in EFI_COMPONENT_NAME2_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     );
 
 EFI_STATUS
 EFIAPI
 VideoDxeComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME2_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     );
 
 //
@@ -150,17 +149,17 @@ VideoDxeComponentNameGetControllerName(
 //
 EFI_STATUS
 VideoChannelOpen(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     );
 
 VOID
 VideoChannelClose(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     );
 
 EFI_STATUS
 VideoChannelStartInitialize(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     );
 
 //
@@ -169,31 +168,31 @@ VideoChannelStartInitialize(
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputQueryMode(
-  __in  EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
-  __in  UINT32 ModeNumber,
-  __in  UINTN *SizeOfInfo,
-  __out EFI_GRAPHICS_OUTPUT_MODE_INFORMATION **Info
+  IN   EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
+  IN   UINT32 ModeNumber,
+  IN   UINTN *SizeOfInfo,
+  OUT EFI_GRAPHICS_OUTPUT_MODE_INFORMATION **Info
   );
 
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputSetMode(
-  __in  EFI_GRAPHICS_OUTPUT_PROTOCOL * This,
-  __in  UINT32 ModeNumber
+  IN   EFI_GRAPHICS_OUTPUT_PROTOCOL * This,
+  IN   UINT32 ModeNumber
   );
 
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputBlt(
-  __in  EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
-  __in  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer, OPTIONAL
-  __in  EFI_GRAPHICS_OUTPUT_BLT_OPERATION  BltOperation,
-  __in  UINTN SourceX,
-  __in  UINTN SourceY,
-  __in  UINTN DestinationX,
-  __in  UINTN DestinationY,
-  __in  UINTN Width,
-  __in  UINTN Height,
-  __in  UINTN Delta
+  IN   EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
+  IN   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer, OPTIONAL
+  IN   EFI_GRAPHICS_OUTPUT_BLT_OPERATION  BltOperation,
+  IN   UINTN SourceX,
+  IN   UINTN SourceY,
+  IN   UINTN DestinationX,
+  IN   UINTN DestinationY,
+  IN   UINTN Width,
+  IN   UINTN Height,
+  IN   UINTN Delta
   );
 

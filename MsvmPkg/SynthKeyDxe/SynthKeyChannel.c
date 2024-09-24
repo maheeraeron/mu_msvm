@@ -1,5 +1,5 @@
 /** @file
-  VMBUS Keyboard Channel implementation for UEFI.  This contains the VMBUS 
+  VMBUS Keyboard Channel implementation for UEFI.  This contains the VMBUS
   specific layer of the synthetic keyboard driver. It will manage the VMBUS
   channel and process keystroke messages, translate and then queue them.
 
@@ -20,38 +20,36 @@
 
 VOID
 SynthKeyChannelReceivePacketCallback(
-    _In_        VOID                       *ReceiveContext,
-    _In_        VOID                       *PacketContext,
-    _In_opt_bytecount_(BufferLength)
-                VOID                       *Buffer,
-    _In_        UINT32                      BufferLength,
-    _In_        UINT16                      TransferPageSetId,
-    _In_        UINT32                      RangeCount,
-    _In_count_(RangeCount)
-                EFI_TRANSFER_RANGE         *Ranges
+    IN          VOID                       *ReceiveContext,
+    IN          VOID                       *PacketContext,
+    IN OPTIONAL VOID                       *Buffer,
+    IN          UINT32                      BufferLength,
+    IN          UINT16                      TransferPageSetId,
+    IN          UINT32                      RangeCount,
+    IN          EFI_TRANSFER_RANGE         *Ranges
     );
 
 EFI_STATUS
 SynthKeyChannelEstablishCommunications(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     );
 
 EFI_STATUS
 OnProtocolResponse(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        PHK_MESSAGE_HEADER          Message
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          PHK_MESSAGE_HEADER          Message
     );
 
 EFI_STATUS
 OnMessageEvent(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        PHK_MESSAGE_HEADER          Message
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          PHK_MESSAGE_HEADER          Message
     );
 
 
 EFI_STATUS
 SynthKeyChannelOpen(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -124,7 +122,7 @@ Cleanup:
 
 EFI_STATUS
 SynthKeyChannelClose(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -165,9 +163,9 @@ Return Value:
 
 EFI_STATUS
 SynthKeyChannelSendMessage(
-    _In_ PSYNTH_KEYBOARD_DEVICE     pDevice,
-    _In_ PHK_MESSAGE_HEADER         Message,
-    _In_ UINT32                     MessageSize
+    IN   PSYNTH_KEYBOARD_DEVICE     pDevice,
+    IN   PHK_MESSAGE_HEADER         Message,
+    IN   UINT32                     MessageSize
     )
 /*++
 
@@ -217,15 +215,13 @@ Return Value:
 
 VOID
 SynthKeyChannelReceivePacketCallback(
-    _In_        VOID                       *ReceiveContext,
-    _In_        VOID                       *PacketContext,
-    _In_opt_bytecount_(BufferLength)
-                VOID                       *Buffer,
-    _In_        UINT32                      BufferLength,
-    _In_        UINT16                      TransferPageSetId,
-    _In_        UINT32                      RangeCount,
-    _In_count_(RangeCount)
-                EFI_TRANSFER_RANGE         *Ranges
+    IN          VOID                       *ReceiveContext,
+    IN          VOID                       *PacketContext,
+    IN OPTIONAL VOID                       *Buffer,
+    IN          UINT32                      BufferLength,
+    IN          UINT16                      TransferPageSetId,
+    IN          UINT32                      RangeCount,
+    IN          EFI_TRANSFER_RANGE         *Ranges
     )
 /*++
 
@@ -295,7 +291,7 @@ Return Value:
 
 EFI_STATUS
 SynthKeyChannelEstablishCommunications(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -370,7 +366,7 @@ Exit:
 
 EFI_STATUS
 SynthKeyChannelSetIndicators(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -414,8 +410,8 @@ Return Value:
 
 EFI_STATUS
 OnProtocolResponse(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        PHK_MESSAGE_HEADER          Message
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          PHK_MESSAGE_HEADER          Message
     )
 /*++
 
@@ -462,8 +458,8 @@ Return Value:
 
 EFI_STATUS
 OnMessageEvent(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        PHK_MESSAGE_HEADER          Message
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          PHK_MESSAGE_HEADER          Message
     )
 /*++
 

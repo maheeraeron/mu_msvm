@@ -1,30 +1,12 @@
-/*++
+/** @file
+  Provides the protocol definition for EFI_VMBUS_PROTOCOL, which manages
+  VMBus channels.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    Vmbus.h
-
-Abstract:
-
-    Provides the protocol definition for EFI_VMBUS_PROTOCOL, which manages
-    VMBus channels.
-
-Author:
-
-    Arseney Romanenko (arseneyr) - 16-Jul-2012
-
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
 --*/
 
 #pragma once
-
-#define EFI_VMBUS_LEGACY_PROTOCOL_GUID \
-    {0x59e6efc9, 0x9695, 0x470a, {0x9d, 0x87, 0x2, 0x61, 0xd8, 0x45, 0x1d, 0xd8}}
-#define EFI_VMBUS_PROTOCOL_GUID \
-    {0x998629a6, 0xbbd0, 0x476b, {0x81, 0xef, 0x05, 0x99, 0x41, 0xe9, 0xe6, 0xf9}}
-#define EFI_VMBUS_LEGACY_PROTOCOL_IVM_GUID \
-    {0x8e03933f, 0x8048, 0x4a87, {0x81, 0x47, 0x7f, 0x05, 0xc3, 0x38, 0x28, 0x5d}}
 
 #define EFI_VMBUS_PROTOCOL_FLAGS_PIPE_MODE  0x1
 

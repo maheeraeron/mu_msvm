@@ -48,6 +48,7 @@
   gEfiVmbusChannelDevicePathGuid                ## CONSUMES
   gEfiFileInfoGuid                              ## CONSUMES
   gEfiFileSystemInfoGuid                        ## CONSUMES
+  gSyntheticVmbfsClassGuid                      ## CONSUMES
 
 [Protocols]
   gEfiDevicePathProtocolGuid                    ## CONSUMES

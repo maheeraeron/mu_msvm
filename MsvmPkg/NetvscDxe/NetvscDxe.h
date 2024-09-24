@@ -211,78 +211,78 @@ NvspStatusToEfiStatus(
     _In_ NVSP_STATUS nvspStatus
 );
 
-FORCEINLINE
+__forceinline
 EFI_STATUS
 RxQueueInit(
     _In_ RX_QUEUE    *Queue,
     _In_ UINT32      Length
     );
 
-FORCEINLINE
+__forceinline
 VOID
 RxQueueDestroy(
     _In_ RX_QUEUE *Queue
     );
 
-FORCEINLINE
+__forceinline
 BOOLEAN
 RxQueueIsAlmostFull(
     _In_ RX_QUEUE *Queue
     );
 
-FORCEINLINE
+__forceinline
 BOOLEAN
 RxQueueIsEmpty(
     _In_ RX_QUEUE *Queue
     );
 
-FORCEINLINE
+__forceinline
 VOID
 RxQueueEnqueue(
     _In_ RX_QUEUE              *Queue,
     _In_ RX_PACKET_INSTANCE    *PacketInfo
     );
 
-FORCEINLINE
+__forceinline
 VOID
 RxQueueDequeue(
     _In_ RX_QUEUE               *Queue,
     _Out_ RX_PACKET_INSTANCE    *PacketInfo
     );
 
-FORCEINLINE
+__forceinline
 EFI_STATUS
 TxQueueInit(
     _In_ TX_QUEUE    *Queue,
     _In_ UINT32      Length
     );
 
-FORCEINLINE
+__forceinline
 VOID
 TxQueueDestroy(
     _In_ TX_QUEUE *Queue
     );
 
-FORCEINLINE
+__forceinline
 BOOLEAN
 TxQueueIsFull(
     _In_ TX_QUEUE *Queue
     );
 
-FORCEINLINE
+__forceinline
 BOOLEAN
 TxQueueIsEmpty(
     _In_ TX_QUEUE *Queue
     );
 
-FORCEINLINE
+__forceinline
 VOID
 TxQueueEnqueue(
     _In_ TX_QUEUE    *Queue,
     _In_ VOID        *TxBuffer
     );
 
-FORCEINLINE
+__forceinline
 VOID
 TxQueueDequeue(
     _In_ TX_QUEUE     *Queue,

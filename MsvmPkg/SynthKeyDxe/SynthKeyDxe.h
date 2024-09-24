@@ -11,9 +11,6 @@
 
 #pragma once
 
-
-#include <EfiNt.h>
-
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
 #include <Protocol/DevicePath.h>
@@ -123,12 +120,12 @@ typedef struct _SYNTH_KEYBOARD_DEVICE
 } SYNTH_KEYBOARD_DEVICE, *PSYNTH_KEYBOARD_DEVICE;
 
 
-FORCEINLINE
+__forceinline
 VOID
 SynthKeyReportStatus(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        EFI_STATUS_CODE_TYPE        Type,
-    _In_        EFI_STATUS_CODE_VALUE       Value
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          EFI_STATUS_CODE_TYPE        Type,
+    IN          EFI_STATUS_CODE_VALUE       Value
     )
 /*++
 

@@ -8,7 +8,6 @@
 **/
 
 #include <Uefi.h>
-#include <EfiNt.h>
 
 #include <Protocol/Emcl.h>
 #include <Protocol/Vmbus.h>
@@ -66,7 +65,7 @@ typedef struct _FILE_INFORMATION {
     BOOLEAN RdmaCapable;
     PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL FileSystem;
     UINT64 FileOffset;
-    SIZE_T FilePathLength;
+    UINTN FilePathLength;
 } FILE_INFORMATION, *PFILE_INFORMATION;
 
 typedef struct _VMBFS_FILE {
@@ -88,9 +87,9 @@ UINTN gEventIndexDiscarded;
 EFI_STATUS
 EFIAPI
 VmbfsStart (
-    _In_ EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_ EFI_HANDLE ControllerHandle,
-    _In_opt_ EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     );
 
 //
@@ -99,14 +98,14 @@ VmbfsStart (
 EFI_STATUS
 EFIAPI
 VmbfsOpenVolume (
-    _In_ EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
-    _Out_ EFI_FILE_PROTOCOL **Root
+    IN  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
+    OUT EFI_FILE_PROTOCOL **Root
     );
 
 VOID
 VmbfsCloseVolume (
-    _In_ PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL VmbfsSimpleFileSystemProtocol,
-    _In_ BOOLEAN ChannelOpened
+    IN  PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL VmbfsSimpleFileSystemProtocol,
+    IN  BOOLEAN ChannelOpened
     );
 
 //
@@ -114,99 +113,99 @@ VmbfsCloseVolume (
 //
 VOID
 VmbfsReceivePacketCallback (
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN  VOID *ReceiveContext,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  UINT16 TransferPageSetId,
+    IN  UINT32 RangeCount,
+    IN  EFI_TRANSFER_RANGE *Ranges
     );
 
 EFI_STATUS
 VmbfsSendReceivePacket (
-    __in PFILESYSTEM_INFORMATION FileSystemInformation,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINTN BufferLength,
-    __in UINT32 GpaRangeHandle,
-    __in_bcount(ExternalBufferLength) VOID *ExternalBuffer,
-    __in UINTN ExternalBufferLength,
-    __in BOOLEAN IsWritable
+    IN  PFILESYSTEM_INFORMATION FileSystemInformation,
+    IN  VOID *Buffer,
+    IN  UINTN BufferLength,
+    IN  UINT32 GpaRangeHandle,
+    IN  VOID *ExternalBuffer,
+    IN  UINTN ExternalBufferLength,
+    IN  BOOLEAN IsWritable
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsOpen (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Out_ EFI_FILE_PROTOCOL **NewHandle,
-    _In_ CHAR16 *FileName,
-    _In_ UINT64 OpenMode,
-    _In_ UINT64 Attributes
+    IN  EFI_FILE_PROTOCOL *This,
+    OUT EFI_FILE_PROTOCOL **NewHandle,
+    IN  CHAR16 *FileName,
+    IN  UINT64 OpenMode,
+    IN  UINT64 Attributes
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsClose (
-    _In_ EFI_FILE_PROTOCOL *This
+    IN  EFI_FILE_PROTOCOL *This
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsRead (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Inout_ UINTN *BufferSize,
-    _Out_writes_bytes_(BufferSize) VOID *Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN OUT  UINTN *BufferSize,
+    OUT     VOID *Buffer
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsWrite (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Inout_ UINTN *BufferSize,
-    _In_reads_bytes_(BufferSize) PVOID Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN OUT  UINTN *BufferSize,
+    IN      VOID *Buffer
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsGetPosition (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Out_ UINT64 *Position
+    IN  EFI_FILE_PROTOCOL *This,
+    OUT UINT64 *Position
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsSetPosition (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _In_ UINT64 Position
+    IN  EFI_FILE_PROTOCOL *This,
+    IN  UINT64 Position
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsGetInfo (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _In_ EFI_GUID *InformationType,
-    _Inout_ UINTN *BufferSize,
-    _Out_ VOID *Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN      EFI_GUID *InformationType,
+    IN OUT  UINTN *BufferSize,
+    OUT     VOID *Buffer
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsSetInfo (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _In_ EFI_GUID *InformationType,
-    _Inout_ UINTN *BufferSize,
-    _In_ VOID *Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN      EFI_GUID *InformationType,
+    IN OUT  UINTN *BufferSize,
+    IN      VOID *Buffer
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsFlush (
-  _In_ EFI_FILE_PROTOCOL *This
+  IN  EFI_FILE_PROTOCOL *This
   );
 
 EFI_STATUS
 EFIAPI
 VmbfsDelete (
-  _In_ EFI_FILE_PROTOCOL *This
+  IN  EFI_FILE_PROTOCOL *This
   );
 

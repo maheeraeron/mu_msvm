@@ -15,35 +15,34 @@
 EFI_STATUS
 EFIAPI
 SynthKeyDriverSupported(
-    _In_        EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_        EFI_HANDLE                   Controller,
-    _In_        EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
+    IN          EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN          EFI_HANDLE                   Controller,
+    IN          EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
     );
 
 
 EFI_STATUS
 EFIAPI
 SynthKeyDriverStart(
-    _In_        EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_        EFI_HANDLE                   Controller,
-    _In_        EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
+    IN          EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN          EFI_HANDLE                   Controller,
+    IN          EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
     );
 
 
 EFI_STATUS
 EFIAPI
 SynthKeyDriverStop(
-    _In_        EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_        EFI_HANDLE                   Controller,
-    _In_        UINTN                        NumberOfChildren,
-    _In_        EFI_HANDLE                  *ChildHandleBuffer
+    IN          EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN          EFI_HANDLE                   Controller,
+    IN          UINTN                        NumberOfChildren,
+    IN          EFI_HANDLE                  *ChildHandleBuffer
     );
 
 
 VOID
 SynthKeyDriverCleanup(
-    _In_  _Post_ptr_invalid_
-                PSYNTH_KEYBOARD_DEVICE      Device
+    IN          PSYNTH_KEYBOARD_DEVICE      Device
     );
 
 //
@@ -66,8 +65,8 @@ EFI_DRIVER_BINDING_PROTOCOL gSynthKeyDriverBinding =
 EFI_STATUS
 EFIAPI
 SynthKeyDriverEntry(
-    _In_        EFI_HANDLE                  ImageHandle,
-    _In_        EFI_SYSTEM_TABLE           *SystemTable
+    IN          EFI_HANDLE                  ImageHandle,
+    IN          EFI_SYSTEM_TABLE           *SystemTable
     )
 /*++
 
@@ -108,9 +107,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynthKeyDriverSupported(
-    _In_        EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_        EFI_HANDLE                   DeviceCandidate,
-    _In_        EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
+    IN          EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN          EFI_HANDLE                   DeviceCandidate,
+    IN          EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
     )
 /*++
 
@@ -170,9 +169,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynthKeyDriverStart(
-    _In_        EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_        EFI_HANDLE                   Controller,
-    _In_        EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
+    IN          EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN          EFI_HANDLE                   Controller,
+    IN          EFI_DEVICE_PATH_PROTOCOL    *RemainingDevicePath
     )
 /*++
 
@@ -309,8 +308,7 @@ Cleanup:
 
 VOID
 SynthKeyDriverCleanup(
-    _In_  _Post_ptr_invalid_
-                PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -364,10 +362,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SynthKeyDriverStop(
-  _In_          EFI_DRIVER_BINDING_PROTOCOL *This,
-  _In_          EFI_HANDLE                   Controller,
-  _In_          UINTN                        NumberOfChildren,
-  _In_          EFI_HANDLE                  *ChildHandleBuffer
+  IN            EFI_DRIVER_BINDING_PROTOCOL *This,
+  IN            EFI_HANDLE                   Controller,
+  IN            UINTN                        NumberOfChildren,
+  IN            EFI_HANDLE                  *ChildHandleBuffer
   )
 /*++
 

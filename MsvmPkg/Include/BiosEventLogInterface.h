@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <MsvmBase.h>
+
 //
 //  Indicates that the event is pending and the associated
 //  data may be updated at later time.
@@ -66,10 +68,6 @@ typedef struct
     //
 } EFI_EVENT_DESCRIPTOR;
 
-#define FIELD_SIZE(TYPE, Field) (sizeof(((TYPE *)0)->Field))
-#define SIZEOF_THROUGH_FIELD(TYPE, Field) \
-    (OFFSET_OF(TYPE, Field) + FIELD_SIZE(TYPE, Field))
-
 #define SIZEOF_EFI_EVENT_DESCRIPTOR_REVISION_1  (SIZEOF_THROUGH_FIELD(EFI_EVENT_DESCRIPTOR, DataSize))
 
 //
@@ -77,8 +75,6 @@ typedef struct
 // This is used when flushing a UEFI event channel to the BIOS device.
 // Data is series of EFI_EVENT_DESCRIPTORs with variable sized data.
 //
-#pragma warning( push )
-#pragma warning( disable:4200)  // nonstandard extension zero sized array
 typedef struct
 {
     GUID    Channel;
@@ -87,4 +83,3 @@ typedef struct
     UINT32  DataSize;
     UINT8   Data[];
 } BIOS_EVENT_CHANNEL;
-#pragma warning( pop )

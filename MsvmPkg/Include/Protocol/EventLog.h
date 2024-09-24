@@ -1,10 +1,9 @@
 /** @file
+  Event logging protocol
 
-   Event logging protocol             
-
-   Copyright (c) Microsoft Corporation
-
-**/
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #ifndef __EFI_EVENTLOG_PROTOCOL_H__
 #define __EFI_EVENTLOG_PROTOCOL_H__
@@ -245,7 +244,7 @@ EFI_STATUS
 ///
 /// Provides flexible event logging services to the platform firmware.
 ///
-typedef struct _EFI_EVENTLOG_PROTOCOL 
+typedef struct _EFI_EVENTLOG_PROTOCOL
 {
     EFI_EVENTLOG_CHANNEL_CREATE         ChannelCreate;
     EFI_EVENTLOG_CHANNEL_FLUSH          ChannelFlush;

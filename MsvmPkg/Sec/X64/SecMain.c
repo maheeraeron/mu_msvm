@@ -122,9 +122,9 @@ Return Value:
 }
 
 
-PWSTR
+CHAR16*
 FileTypeToString(
-    _In_ EFI_FV_FILETYPE Type
+    IN  EFI_FV_FILETYPE Type
     )
 /*++
 
@@ -179,8 +179,8 @@ Return Value:
 
 VOID
 DebugFvhDump(
-    _In_ EFI_FIRMWARE_VOLUME_HEADER *FVH,
-    _In_ PWSTR Indent
+    IN  EFI_FIRMWARE_VOLUME_HEADER *FVH,
+    IN  CHAR16 *Indent
     )
 /*++
 
@@ -213,8 +213,8 @@ Return Value:
 
 VOID
 DebugFhDump(
-    _In_ EFI_FFS_FILE_HEADER *FH,
-    _In_ PWSTR Indent)
+    IN  EFI_FFS_FILE_HEADER *FH,
+    IN  CHAR16 *Indent)
 /*++
 
 Routine Description:
@@ -245,10 +245,10 @@ Return Value:
 
 VOID
 DebugHexDump(
-    _In_ EFI_PHYSICAL_ADDRESS Base,
-    _In_ UINT32 Offset,
-    _In_ UINT32 Len,
-    _In_ PWSTR Indent)
+    IN  EFI_PHYSICAL_ADDRESS Base,
+    IN  UINT32 Offset,
+    IN  UINT32 Len,
+    IN  CHAR16 *Indent)
 /*++
 
 Routine Description:
@@ -271,7 +271,7 @@ Return Value:
 
 --*/
 {
-    UCHAR *buffer = (UCHAR *)(UINTN)(Base + Offset);
+    UINT8 *buffer = (UINT8 *)(UINTN)(Base + Offset);
     UINT32 i, j;
     for (i = 0; i < Len; i += 16)
     {
@@ -287,9 +287,9 @@ Return Value:
 
 VOID
 DebugVolDump(
-    _In_ EFI_PHYSICAL_ADDRESS Base,
-    _In_ UINT32 Len,
-    _In_ PWSTR Indent
+    IN  EFI_PHYSICAL_ADDRESS Base,
+    IN  UINT32 Len,
+    IN  CHAR16 *Indent
     )
 /*++
 

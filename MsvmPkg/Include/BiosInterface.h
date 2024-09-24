@@ -495,11 +495,6 @@ typedef struct _CRYPTO_COMMAND_DESCRIPTOR
 #define BIOS_WATCHDOG_RUNNING       (BIOS_WATCHDOG_CONFIGURED | BIOS_WATCHDOG_ENABLED)
 
 #pragma pack(push, 1)
-#pragma warning(push)
-//
-// Disable warning for: nonstandard extension used: zero-sized array in struct/union
-//
-#pragma warning(disable : 4200)
 
 //
 // Common config header.
@@ -903,5 +898,4 @@ typedef struct _UEFI_IGVM_LOADER_BLOCK
     UINT32 NumberOfProcessors;
 } UEFI_IGVM_LOADER_BLOCK;
 
-#pragma warning(pop)
 #pragma pack(pop)

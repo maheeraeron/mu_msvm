@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <EfiNt.h>
 #include <Protocol/SerialIo.h>
 #include <Protocol/DevicePath.h>
 
@@ -155,26 +154,26 @@ typedef struct
 EFI_STATUS
 EFIAPI
 SerialDriverSupported(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     Controller,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL     *This,
+    IN  EFI_HANDLE                      Controller,
+    IN  EFI_DEVICE_PATH_PROTOCOL        *RemainingDevicePath
     );
 
 EFI_STATUS
 EFIAPI
 SerialDriverStart(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     Controller,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL     *This,
+    IN  EFI_HANDLE                      Controller,
+    IN  EFI_DEVICE_PATH_PROTOCOL        *RemainingDevicePath
     );
 
 EFI_STATUS
 EFIAPI
 SerialDriverStop(
-    _In_  EFI_DRIVER_BINDING_PROTOCOL   *This,
-    _In_  EFI_HANDLE                    Controller,
-    _In_  UINTN                         NumberOfChildren,
-    _In_  EFI_HANDLE                    *ChildHandleBuffer
+    IN   EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN   EFI_HANDLE                     Controller,
+    IN   UINTN                          NumberOfChildren,
+    IN   EFI_HANDLE                     *ChildHandleBuffer
     );
 
 //
@@ -183,49 +182,49 @@ SerialDriverStop(
 EFI_STATUS
 EFIAPI
 SerialReset(
-    _In_ EFI_SERIAL_IO_PROTOCOL         *This
+    IN  EFI_SERIAL_IO_PROTOCOL          *This
     );
 
 EFI_STATUS
 EFIAPI
 SerialSetAttributes(
-    _In_ EFI_SERIAL_IO_PROTOCOL         *This,
-    _In_ UINT64                         BaudRate,
-    _In_ UINT32                         ReceiveFifoDepth,
-    _In_ UINT32                         Timeout,
-    _In_ EFI_PARITY_TYPE                Parity,
-    _In_ UINT8                          DataBits,
-    _In_ EFI_STOP_BITS_TYPE             StopBits
+    IN  EFI_SERIAL_IO_PROTOCOL          *This,
+    IN  UINT64                          BaudRate,
+    IN  UINT32                          ReceiveFifoDepth,
+    IN  UINT32                          Timeout,
+    IN  EFI_PARITY_TYPE                 Parity,
+    IN  UINT8                           DataBits,
+    IN  EFI_STOP_BITS_TYPE              StopBits
     );
 
 EFI_STATUS
 EFIAPI
 SerialSetControl(
-    _In_ EFI_SERIAL_IO_PROTOCOL         *This,
-    _In_ UINT32                         Control
+    IN  EFI_SERIAL_IO_PROTOCOL          *This,
+    IN  UINT32                          Control
     );
 
 EFI_STATUS
 EFIAPI
 SerialGetControl(
-    _In_ EFI_SERIAL_IO_PROTOCOL         *This,
-    _Out_ UINT32                        *Control
+    IN  EFI_SERIAL_IO_PROTOCOL          *This,
+    OUT UINT32                          *Control
     );
 
 EFI_STATUS
 EFIAPI
 SerialWrite(
-    _In_ EFI_SERIAL_IO_PROTOCOL         *This,
-    _Inout_ UINTN                       *BufferSize,
-    _In_ VOID                           *Buffer
+    IN      EFI_SERIAL_IO_PROTOCOL      *This,
+    IN OUT  UINTN                       *BufferSize,
+    IN      VOID                        *Buffer
     );
 
 EFI_STATUS
 EFIAPI
 SerialRead(
-    _In_ EFI_SERIAL_IO_PROTOCOL         *This,
-    _Inout_ UINTN                       *BufferSize,
-    _Out_ VOID                          *Buffer
+    IN      EFI_SERIAL_IO_PROTOCOL      *This,
+    IN OUT  UINTN                       *BufferSize,
+    OUT     VOID                        *Buffer
     );
 
 //
@@ -233,47 +232,47 @@ SerialRead(
 //
 BOOLEAN
 SerialPortPresent(
-    _In_ SERIAL_DEVICE                  *SerialDevice
+    IN  SERIAL_DEVICE                   *SerialDevice
     );
 
 BOOLEAN
 SerialFifoFull(
-    _In_ SERIAL_DEV_FIFO                *Fifo
+    IN  SERIAL_DEV_FIFO                 *Fifo
     );
 
 BOOLEAN
 SerialFifoEmpty(
-    _In_ SERIAL_DEV_FIFO                *Fifo
+    IN  SERIAL_DEV_FIFO                 *Fifo
     );
 
 EFI_STATUS
 SerialFifoAdd(
-    _In_ SERIAL_DEV_FIFO                *Fifo,
-    _In_ UINT8                          Data
+    IN  SERIAL_DEV_FIFO                 *Fifo,
+    IN  UINT8                           Data
     );
 
 EFI_STATUS
 SerialFifoRemove(
-    _In_  SERIAL_DEV_FIFO               *Fifo,
-    _Out_ UINT8                         *Data
+    IN  SERIAL_DEV_FIFO                 *Fifo,
+    OUT UINT8                           *Data
     );
 
 EFI_STATUS
 SerialReceiveTransmit(
-    _In_ SERIAL_DEVICE                  *SerialDevice
+    IN  SERIAL_DEVICE                   *SerialDevice
     );
 
 UINT8
 SerialReadPort(
-    _In_ UINT16                         BaseAddress,
-    _In_ UINT32                         Offset
+    IN  UINT16                          BaseAddress,
+    IN  UINT32                          Offset
     );
 
 VOID
 SerialWritePort(
-    _In_ UINT16                         BaseAddress,
-    _In_ UINT32                         Offset,
-    _In_ UINT8                          Data
+    IN  UINT16                          BaseAddress,
+    IN  UINT32                          Offset,
+    IN  UINT8                           Data
     );
 
 
@@ -283,24 +282,24 @@ SerialWritePort(
 EFI_STATUS
 EFIAPI
 SerialComponentNameGetDriverName(
-    _In_  EFI_COMPONENT_NAME_PROTOCOL   *This,
-    _In_  CHAR8                         *Language,
-    _Out_ CHAR16                        **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL     *This,
+    IN  CHAR8                           *Language,
+    OUT CHAR16                          **DriverName
     );
 
 
 EFI_STATUS
 EFIAPI
 SerialComponentNameGetControllerName(
-    _In_  EFI_COMPONENT_NAME_PROTOCOL   *This,
-    _In_  EFI_HANDLE                    ControllerHandle,
-    _In_opt_ EFI_HANDLE                 ChildHandle,
-    _In_  CHAR8                         *Language,
-    _Out_ CHAR16                        **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL     *This,
+    IN  EFI_HANDLE                      ControllerHandle,
+    IN  EFI_HANDLE                      ChildHandle OPTIONAL,
+    IN  CHAR8                           *Language,
+    OUT CHAR16                          **ControllerName
     );
 
 VOID
 AddName(
-    _In_  SERIAL_DEVICE                 *SerialDevice,
-    _In_  SERIAL_DEVICE_PROPERTIES      *SerialProperties
+    IN   SERIAL_DEVICE                 *SerialDevice,
+    IN   SERIAL_DEVICE_PROPERTIES      *SerialProperties
     );

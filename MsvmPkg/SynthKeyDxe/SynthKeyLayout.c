@@ -7,7 +7,7 @@
 **/
 
 #include "SynthKeyDxe.h"
-#include <Protocol/hyperkbdprotocol.h>
+#include <Protocol/SynthKeyProtocol.h>
 #include "SynthKeyLayout.h"
 
 
@@ -550,8 +550,8 @@ ScanCodeToEfiKey_En_Us[] =
 
 SynthKeyStateChangeType
 SynthKeyLayoutUpdateKeyState(
-    _In_        PHK_MESSAGE_KEYSTROKE       RawKey,
-    _In_        PSYNTH_KEYBOARD_STATE       KeyState
+    IN          PHK_MESSAGE_KEYSTROKE       RawKey,
+    IN          PSYNTH_KEYBOARD_STATE       KeyState
     )
 /*++
 
@@ -758,9 +758,9 @@ Return Value:
 
 EFI_STATUS
 SynthKeyLayoutTranslateKey(
-    _In_        PHK_MESSAGE_KEYSTROKE       RawKey,
-    _In_        PSYNTH_KEYBOARD_STATE       KeyState,
-    _Out_       EFI_KEY_DATA               *TranslatedKey
+    IN          PHK_MESSAGE_KEYSTROKE       RawKey,
+    IN          PSYNTH_KEYBOARD_STATE       KeyState,
+    OUT         EFI_KEY_DATA               *TranslatedKey
     )
 /*++
 

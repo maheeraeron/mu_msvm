@@ -12,35 +12,35 @@
 
 VOID
 VmbfsCleanup (
-    _In_ EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_ EFI_HANDLE ControllerHandle,
-    _In_ PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL SimpleFileSystemProtocol
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL SimpleFileSystemProtocol
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     );
 
 EFI_STATUS
 EFIAPI
 VmbfsSupported(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     Controller,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     Controller,
+    IN  EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
     )
 
 /*++
@@ -77,8 +77,6 @@ Return Value:
     EFI_STATUS status;
     EFI_VMBUS_PROTOCOL *vmbus;
 
-    UNREFERENCED_PARAMETER(RemainingDevicePath);
-
     status = gBS->OpenProtocol(
         Controller,
         &gEfiVmbusProtocolGuid,
@@ -100,7 +98,7 @@ Return Value:
 
     status = EmclChannelTypeSupported(
         Controller,
-        &GUID_VMBFS_INTERFACE_TYPE,
+        &gSyntheticVmbfsClassGuid,
         This->DriverBindingHandle);
 
 Exit:
@@ -111,9 +109,9 @@ Exit:
 EFI_STATUS
 EFIAPI
 VmbfsStart (
-    _In_ EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_ EFI_HANDLE ControllerHandle,
-    _In_opt_ EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 
 /*++
@@ -154,8 +152,6 @@ Return Value:
     EFI_EMCL_PROTOCOL *emclProtocol = NULL;
     EFI_DEVICE_PATH_PROTOCOL *devicePath = NULL;
     BOOLEAN EmclInstalled = FALSE;
-
-    UNREFERENCED_PARAMETER(RemainingDevicePath);
 
     //
     // Check if device already running.
@@ -264,9 +260,9 @@ Cleanup:
 
 VOID
 VmbfsCleanup (
-    _In_ EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_ EFI_HANDLE ControllerHandle,
-    _In_ PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL SimpleFileSystemProtocol
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL SimpleFileSystemProtocol
     )
 
 /*++
@@ -321,10 +317,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsStop (
-    _In_ EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_ EFI_HANDLE ControllerHandle,
-    _In_ UINTN NumberOfChildren,
-    _In_opt_ EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer OPTIONAL
 )
 
 /*++
@@ -445,9 +441,9 @@ EFI_DRIVER_BINDING_PROTOCOL gVmbfsDriverBindingProtocol =
 EFI_STATUS
 EFIAPI
 VmbfsComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     )
 /*++
 
@@ -488,11 +484,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     )
 /*++
 
@@ -576,8 +572,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsEntry (
-    _In_ EFI_HANDLE       ImageHandle,
-    _In_ EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE       ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
 

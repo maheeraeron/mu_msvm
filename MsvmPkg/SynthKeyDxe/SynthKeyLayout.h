@@ -1,5 +1,5 @@
 /** @file
-  VMBUS Keyboard Layout. Handles the translation of key press messages from the 
+  VMBUS Keyboard Layout. Handles the translation of key press messages from the
   synthetic keyboard vdev to EFI_KEYs based on the UEFI keyboard layout.
 
   This code is derived from:
@@ -77,13 +77,13 @@ typedef enum
 //
 SynthKeyStateChangeType
 SynthKeyLayoutUpdateKeyState(
-    _In_        PHK_MESSAGE_KEYSTROKE       RawKey,
-    _In_        PSYNTH_KEYBOARD_STATE       KeyState
+    IN          PHK_MESSAGE_KEYSTROKE       RawKey,
+    IN          PSYNTH_KEYBOARD_STATE       KeyState
     );
 
 EFI_STATUS
 SynthKeyLayoutTranslateKey(
-    _In_        PHK_MESSAGE_KEYSTROKE       RawKey,
-    _In_        PSYNTH_KEYBOARD_STATE       KeyState,
-    _Out_       EFI_KEY_DATA               *TranslatedKey
+    IN          PHK_MESSAGE_KEYSTROKE       RawKey,
+    IN          PSYNTH_KEYBOARD_STATE       KeyState,
+    OUT         EFI_KEY_DATA               *TranslatedKey
     );

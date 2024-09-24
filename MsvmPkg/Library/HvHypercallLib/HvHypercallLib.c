@@ -368,8 +368,6 @@ Return Value:
                 UINT64              OutputPhysicalAddress
             );
 
-#pragma warning(disable: 4055)
-
         HYPERCALL_ROUTINE* hypercallRoutine;
         if (Context->IsTdx)
         {

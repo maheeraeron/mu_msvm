@@ -9,32 +9,30 @@
 
 #pragma once
 
-#include <Protocol/hyperkbdprotocol.h>
+#include <Protocol/SynthKeyProtocol.h>
 #include <Vmbus/VmBusPacketFormat.h>
 
 EFI_STATUS
 SynthKeyChannelOpen(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     );
 
 EFI_STATUS
 SynthKeyChannelClose(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     );
 
 EFI_STATUS
 SynthKeyChannelSetIndicators(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     );
 
-FORCEINLINE
+__forceinline
 VOID
 SynthKeyChannelInitMessage(
-    _Inout_updates_bytes_(ByteCount)
-                PHK_MESSAGE_HEADER          Header,
-    _In_        HK_MESSAGE_TYPE             Type,
-    _In_range_(>=, sizeof(HK_MESSAGE_HEADER))
-                UINT32                      ByteCount
+    IN OUT      PHK_MESSAGE_HEADER          Header,
+    IN          HK_MESSAGE_TYPE             Type,
+    IN          UINT32                      ByteCount
     )
 /*++
 

@@ -1,5 +1,5 @@
 /** @file
-  UEFI SIMPLE_TEXT_INPUT_PROTOCOL and SIMPLE_TEXT_INPUT_PROTOCOL_EX implementation for 
+  UEFI SIMPLE_TEXT_INPUT_PROTOCOL and SIMPLE_TEXT_INPUT_PROTOCOL_EX implementation for
   Hyper-V synthetic keyboard. This contains hardware agnostic functionality for interacting
   with UEFI applications. It also provides a simple API for a connectivity/hardware
   layer (e.g. vmbus) to queue keystrokes.
@@ -24,10 +24,10 @@
 #define SYNTH_KEYBOARD_EX_NOTIFY_SIGNATURE      SIGNATURE_32 ('S', 'k', 'e', 'n')
 
 //
-// Tracks registered notification functions that will be called when the 
+// Tracks registered notification functions that will be called when the
 // requested key press event occurs.
 //
-typedef struct _SYNTH_KEYBOARD_EX_NOTIFY 
+typedef struct _SYNTH_KEYBOARD_EX_NOTIFY
 {
   UINTN                               Signature;
   LIST_ENTRY                          NotifyEntry;
@@ -39,53 +39,53 @@ typedef struct _SYNTH_KEYBOARD_EX_NOTIFY
 
 VOID
 KeyNotifyFire(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        EFI_KEY_DATA               *pKey
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          EFI_KEY_DATA               *pKey
     );
 
 VOID
 KeyNotifyCleanup(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     );
 
 BOOLEAN
 KeyNotifyIsKeyRegistered(
-    _In_        EFI_KEY_DATA               *RegisteredData,
-    _In_        EFI_KEY_DATA               *InputData
+    IN          EFI_KEY_DATA               *RegisteredData,
+    IN          EFI_KEY_DATA               *InputData
     );
 
 BOOLEAN
 KeyNotifyIsPartialKey(
-    _In_        EFI_INPUT_KEY              *Key
+    IN          EFI_INPUT_KEY              *Key
     );
 
 VOID
 KeyBufferInitialize(
-    _In_        EFI_KEY_BUFFER             *Queue
+    IN          EFI_KEY_BUFFER             *Queue
     );
 
 VOID
 KeyBufferInsert(
-    _In_        EFI_KEY_BUFFER             *Queue,
-    _In_        EFI_KEY_DATA               *KeyData
+    IN          EFI_KEY_BUFFER             *Queue,
+    IN          EFI_KEY_DATA               *KeyData
     );
 
 EFI_STATUS
 KeyBufferRemove(
-    _In_        EFI_KEY_BUFFER             *Queue,
-    _Out_opt_   EFI_KEY_DATA               *KeyData
+    IN          EFI_KEY_BUFFER             *Queue,
+    OUT         EFI_KEY_DATA               *KeyData OPTIONAL
     );
 
 BOOLEAN
 KeyBufferIsEmpty(
-    _In_    EFI_KEY_BUFFER                 *Queue
+    IN          EFI_KEY_BUFFER             *Queue
     );
 
 
 VOID
 SimpleTextInQueueKey(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        EFI_KEY_DATA               *Key
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          EFI_KEY_DATA               *Key
     )
 /*++
 
@@ -126,8 +126,8 @@ Return Value:
 
 EFI_STATUS
 SimpleTextInDequeueKey(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _Out_       EFI_KEY_DATA               *KeyData
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    OUT         EFI_KEY_DATA               *KeyData
     )
 /*++
 
@@ -171,14 +171,14 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SimpleTextInReset(
-    _In_        EFI_SIMPLE_TEXT_INPUT_PROTOCOL *This,
-    _In_        BOOLEAN                         ExtendedVerification
+    IN          EFI_SIMPLE_TEXT_INPUT_PROTOCOL *This,
+    IN          BOOLEAN                         ExtendedVerification
     )
 /*++
 
 Routine Description:
 
-    SIMPLE_TEXT_INPUT_PROTOCOL Reset Implementation. 
+    SIMPLE_TEXT_INPUT_PROTOCOL Reset Implementation.
     Resets the keyboard clearing all buffered keystrokes.
 
 Arguments:
@@ -231,8 +231,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SimpleTextInResetEx(
-    _In_        EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL   *This,
-    _In_        BOOLEAN                              ExtendedVerification
+    IN          EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL   *This,
+    IN          BOOLEAN                              ExtendedVerification
     )
 /*++
 
@@ -264,8 +264,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SimpleTextInReadKeyStroke(
-    _In_        EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
-    _Out_       EFI_INPUT_KEY                   *Key
+    IN          EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+    OUT         EFI_INPUT_KEY                   *Key
     )
 /*++
 
@@ -326,8 +326,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SimpleTextInReadKeyStrokeEx(
-    _In_        EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-    _Out_       EFI_KEY_DATA                       *KeyData
+    IN          EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+    OUT         EFI_KEY_DATA                       *KeyData
     )
 /*++
 
@@ -368,8 +368,8 @@ Return Value:
 VOID
 EFIAPI
 SimpleTextInWaitForKey(
-    _In_        EFI_EVENT                   Event,
-    _In_        VOID                       *Context
+    IN          EFI_EVENT                   Event,
+    IN          VOID                       *Context
     )
 /*++
 
@@ -408,7 +408,7 @@ Return Value:
     // See if there is a key in the buffer, looping to remove and skip
     // partial keys since they are not supported in WaitforKey
     //
-    while (!KeyBufferIsEmpty(&pDevice->EfiKeyQueue)) 
+    while (!KeyBufferIsEmpty(&pDevice->EfiKeyQueue))
     {
         EFI_INPUT_KEY *nextKey = &pDevice->EfiKeyQueue.Buffer[pDevice->EfiKeyQueue.Head].Key;
 
@@ -435,8 +435,8 @@ Return Value:
 VOID
 EFIAPI
 SimpleTextInWaitForKeyEx(
-    _In_        EFI_EVENT                   Event,
-    _In_        VOID                       *Context
+    IN          EFI_EVENT                   Event,
+    IN          VOID                       *Context
     )
 /*++
 
@@ -467,8 +467,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SimpleTextInSetState(
-    _In_        EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-    _In_        EFI_KEY_TOGGLE_STATE               *KeyToggleState
+    IN          EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+    IN          EFI_KEY_TOGGLE_STATE               *KeyToggleState
     )
 /*++
 
@@ -502,7 +502,7 @@ Return Value:
         return EFI_INVALID_PARAMETER;
     }
 
-    if ((*KeyToggleState & EFI_TOGGLE_STATE_VALID) != EFI_TOGGLE_STATE_VALID) 
+    if ((*KeyToggleState & EFI_TOGGLE_STATE_VALID) != EFI_TOGGLE_STATE_VALID)
     {
         return EFI_UNSUPPORTED;
     }
@@ -537,10 +537,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SimpleTextInRegisterKeyNotify(
-    _In_        EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-    _In_        EFI_KEY_DATA                       *KeyData,
-    _In_        EFI_KEY_NOTIFY_FUNCTION             KeyNotificationFunction,
-    _Out_       EFI_HANDLE                         *NotifyHandle
+    IN          EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+    IN          EFI_KEY_DATA                       *KeyData,
+    IN          EFI_KEY_NOTIFY_FUNCTION             KeyNotificationFunction,
+    OUT         EFI_HANDLE                         *NotifyHandle
     )
 /*++
 
@@ -561,8 +561,8 @@ Arguments:
 
     KeyNotificationFunction     Function to be called when the key sequence in KeyData is received.
 
-    NotifyHandle                On return, contains the unique handle identifying the registered 
-                                notification. This must be unregistered using the 
+    NotifyHandle                On return, contains the unique handle identifying the registered
+                                notification. This must be unregistered using the
                                 SIMPLE_TEXT_INPUT_EX_PROTOCOL UnregisterKeyNotify API.
 
 Return Value:
@@ -581,9 +581,9 @@ Return Value:
     EFI_STATUS  status;
     EFI_TPL     oldTpl;
 
-    if ((KeyData == NULL) || 
-        (NotifyHandle == NULL) || 
-        (KeyNotificationFunction == NULL)) 
+    if ((KeyData == NULL) ||
+        (NotifyHandle == NULL) ||
+        (KeyNotificationFunction == NULL))
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -603,7 +603,7 @@ Return Value:
                            NotifyEntry,
                            SYNTH_KEYBOARD_EX_NOTIFY_SIGNATURE);
 
-        if (KeyNotifyIsKeyRegistered(&currentNotify->KeyData, KeyData)) 
+        if (KeyNotifyIsKeyRegistered(&currentNotify->KeyData, KeyData))
         {
             if (currentNotify->KeyNotificationFn == KeyNotificationFunction)
             {
@@ -615,7 +615,7 @@ Return Value:
     }
 
     //
-    // No existing notfication matches the request, 
+    // No existing notfication matches the request,
     // allocate a notification and save the necessary information.
     //
     newNotify = (PSYNTH_KEYBOARD_EX_NOTIFY)AllocateZeroPool(sizeof(SYNTH_KEYBOARD_EX_NOTIFY));
@@ -648,8 +648,8 @@ Exit:
 EFI_STATUS
 EFIAPI
 SimpleTextInUnregisterKeyNotify(
-    _In_        EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-    _In_        EFI_HANDLE                          NotificationHandle
+    IN          EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+    IN          EFI_HANDLE                          NotificationHandle
     )
 /*++
 
@@ -678,7 +678,7 @@ Return Value:
     LIST_ENTRY *link;
     EFI_STATUS  status = EFI_INVALID_PARAMETER;
     EFI_TPL     oldTpl;
-    
+
     if (NotificationHandle == NULL)
     {
         return status;
@@ -688,7 +688,7 @@ Return Value:
     {
         return status;
     }
-  
+
     oldTpl = gBS->RaiseTPL(TPL_KEYBOARD_NOTIFY);
 
     //
@@ -723,7 +723,7 @@ Return Value:
 
 EFI_STATUS
 SimpleTextInInitialize(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -763,7 +763,7 @@ Return Value:
                               pDevice,
                               &pDevice->ConIn.WaitForKey);
 
-    if (EFI_ERROR (status)) 
+    if (EFI_ERROR (status))
     {
         goto ErrorExit;
     }
@@ -774,7 +774,7 @@ Return Value:
                               pDevice,
                               &pDevice->ConInEx.WaitForKeyEx);
 
-    if (EFI_ERROR (status)) 
+    if (EFI_ERROR (status))
     {
         goto ErrorExit;
     }
@@ -785,7 +785,7 @@ Return Value:
     //
     // Use the reset handler to get things to their initial
     // state. Ignore the return since this call will always fail
-    // with EFI_DEVICE_ERROR as the channel is not up yet but we want to perform the rest of the 
+    // with EFI_DEVICE_ERROR as the channel is not up yet but we want to perform the rest of the
     // initialization.
     //
     SimpleTextInReset(&pDevice->ConIn, FALSE);
@@ -813,7 +813,7 @@ Return Value:
     }
 
     pDevice->State.SimpleTextInstalled = TRUE;
-    
+
 ErrorExit:
 
     if (EFI_ERROR(status))
@@ -827,7 +827,7 @@ ErrorExit:
 
 VOID
 SimpleTextInCleanup(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -846,7 +846,7 @@ Return Value:
 
 --*/
 {
-    EFI_STATUS  status; 
+    EFI_STATUS  status;
     EFI_TPL     oldTpl;
 
     //
@@ -856,8 +856,8 @@ Return Value:
 
     //
     // Uninstall the SimpleTextIn and SimpleTextInEx protocols
-    // InstallMultipleProtocolInterfaces guarantees that all 
-    // interfaces are installed on success, so if SimpleTextIn 
+    // InstallMultipleProtocolInterfaces guarantees that all
+    // interfaces are installed on success, so if SimpleTextIn
     // was installed, we know we can uninstall both protocols.
     //
     if (pDevice->State.SimpleTextInstalled)
@@ -869,7 +869,7 @@ Return Value:
                                                           &pDevice->ConInEx,
                                                           NULL);
 
-        if (EFI_ERROR(status)) 
+        if (EFI_ERROR(status))
         {
             goto Exit;
         }
@@ -893,12 +893,12 @@ Return Value:
         pDevice->ConIn.WaitForKey = NULL;
     }
 
-    if (pDevice->ConInEx.WaitForKeyEx != NULL) 
+    if (pDevice->ConInEx.WaitForKeyEx != NULL)
     {
         gBS->CloseEvent(pDevice->ConInEx.WaitForKeyEx);
         pDevice->ConInEx.WaitForKeyEx = NULL;
     }
-    
+
     KeyNotifyCleanup(pDevice);
 
 Exit:
@@ -909,8 +909,8 @@ Exit:
 
 VOID
 KeyNotifyFire(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice,
-    _In_        EFI_KEY_DATA               *pKey
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice,
+    IN          EFI_KEY_DATA               *pKey
     )
 /*++
 
@@ -946,7 +946,7 @@ Return Value:
                            NotifyEntry,
                            SYNTH_KEYBOARD_EX_NOTIFY_SIGNATURE);
 
-        if (KeyNotifyIsKeyRegistered(&currentNotify->KeyData, pKey)) 
+        if (KeyNotifyIsKeyRegistered(&currentNotify->KeyData, pKey))
         {
             currentNotify->KeyNotificationFn(pKey);
         }
@@ -956,7 +956,7 @@ Return Value:
 
 VOID
 KeyNotifyCleanup(
-    _In_        PSYNTH_KEYBOARD_DEVICE      pDevice
+    IN          PSYNTH_KEYBOARD_DEVICE      pDevice
     )
 /*++
 
@@ -990,7 +990,7 @@ Return Value:
 
 BOOLEAN
 KeyNotifyIsPartialKey(
-    _In_        EFI_INPUT_KEY              *Key
+    IN          EFI_INPUT_KEY              *Key
     )
 /*++
 
@@ -1016,8 +1016,8 @@ Return Value:
 
 BOOLEAN
 KeyNotifyIsKeyRegistered(
-    _In_        EFI_KEY_DATA               *RegisteredData,
-    _In_        EFI_KEY_DATA               *InputData
+    IN          EFI_KEY_DATA               *RegisteredData,
+    IN          EFI_KEY_DATA               *InputData
     )
 /*++
 
@@ -1073,7 +1073,7 @@ Return Value:
 
 VOID
 KeyBufferInitialize(
-    _In_        EFI_KEY_BUFFER             *Queue
+    IN          EFI_KEY_BUFFER             *Queue
     )
 /*++
 
@@ -1097,8 +1097,8 @@ Return Value:
 
 VOID
 KeyBufferInsert(
-    _In_        EFI_KEY_BUFFER             *Queue,
-    _In_        EFI_KEY_DATA               *KeyData
+    IN          EFI_KEY_BUFFER             *Queue,
+    IN          EFI_KEY_DATA               *KeyData
     )
 /*++
 
@@ -1138,8 +1138,8 @@ Return Value:
 
 EFI_STATUS
 KeyBufferRemove(
-    _In_        EFI_KEY_BUFFER             *Queue,
-    _Out_opt_   EFI_KEY_DATA               *KeyData
+    IN          EFI_KEY_BUFFER             *Queue,
+    OUT         EFI_KEY_DATA               *KeyData OPTIONAL
     )
 /*++
 
@@ -1158,7 +1158,7 @@ Return Value:
 
     EFI_SUCCESS on success.
     EFI_NOT_READY if the buffer is empty.
-    
+
 --*/
 {
     if (KeyBufferIsEmpty(Queue))
@@ -1179,7 +1179,7 @@ Return Value:
 
 BOOLEAN
 KeyBufferIsEmpty(
-    _In_    EFI_KEY_BUFFER                 *Queue
+    IN      EFI_KEY_BUFFER                 *Queue
     )
 /*++
 
@@ -1189,7 +1189,7 @@ Routine Description:
 
 Arguments:
 
-    Queue       Key buffer to check for emptiness.    
+    Queue       Key buffer to check for emptiness.
 
 Return Value:
 

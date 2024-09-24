@@ -33,6 +33,7 @@ Author:
 // -------------------------------------------------------------------- Defines
 
 #define DEBUG_PRINT_MAX_SIZE 1024
+#define STATUS_BREAKPOINT                ((NTSTATUS)0x80000003L)    // winnt
 
 // ------------------------------------------------------------------ Globals
 

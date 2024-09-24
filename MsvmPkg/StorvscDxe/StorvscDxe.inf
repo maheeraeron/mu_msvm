@@ -48,3 +48,4 @@
 
 [Guids]
     gEfiVmbusChannelDevicePathGuid      ## CONSUMES
+    gSyntheticStorageClassGuid          ## CONSUMES

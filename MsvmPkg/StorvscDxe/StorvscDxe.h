@@ -10,7 +10,6 @@
 #pragma once
 
 #include <Uefi.h>
-#include <EfiNt.h>
 
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
@@ -37,7 +36,7 @@
 #define TPL_STORVSC_CALLBACK (TPL_CALLBACK + 1)
 #define TPL_STORVSC_NOTIFY TPL_NOTIFY
 
-#define STORVSC_MAX_LUN_TRANSFER_LENGTH (sizeof(UCHAR) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET)
+#define STORVSC_MAX_LUN_TRANSFER_LENGTH (sizeof(UINT8) * 8 * SCSI_MAXIMUM_LUNS_PER_TARGET)
 
 typedef struct _STORVSC_CHANNEL_CONTEXT
 {
@@ -72,8 +71,8 @@ typedef struct _STORVSC_CHANNEL_REQUEST
 typedef struct _TARGET_LUN
 {
     LIST_ENTRY ListEntry;
-    UCHAR TargetId;
-    UCHAR Lun;
+    UINT8 TargetId;
+    UINT8 Lun;
 } TARGET_LUN, *PTARGET_LUN;
 
 
@@ -93,207 +92,207 @@ extern EFI_COMPONENT_NAME_PROTOCOL gStorvscComponentName;
 EFI_STATUS
 EFIAPI
 StorvscDriverEntryPoint (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     );
 
 EFI_STATUS
 EFIAPI
 StorvscDriverBindingSupported (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     );
 
 EFI_STATUS
 EFIAPI
 StorvscDriverBindingStart (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     );
 
 EFI_STATUS
 EFIAPI
 StorvscDriverBindingStop (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     );
 
 EFI_STATUS
 EFIAPI
 StorvscComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME2_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     );
 
 EFI_STATUS
 EFIAPI
 StorvscComponentNameGetControllerName (
-    __in EFI_COMPONENT_NAME2_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruPassThru (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Packet,
-    __in_opt EFI_EVENT Event
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Packet,
+    IN      EFI_EVENT Event OPTIONAL
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetNextTargetLun (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __inout UINT8 **Target,
-    __inout UINT64 *Lun
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN OUT  UINT8 **Target,
+    IN OUT  UINT64 *Lun
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruBuildDevicePath (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __inout EFI_DEVICE_PATH_PROTOCOL **DevicePath
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun,
+    IN OUT  EFI_DEVICE_PATH_PROTOCOL **DevicePath
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetTargetLun (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in EFI_DEVICE_PATH_PROTOCOL *DevicePath,
-    __out UINT8 **Target,
-    __out UINT64 *Lun
+    IN  EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN  EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    OUT UINT8 **Target,
+    OUT UINT64 *Lun
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruResetChannel (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This
+    IN  EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruResetTargetLun (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in UINT8 *Target,
-    __in UINT64 Lun
+    IN  EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN  UINT8 *Target,
+    IN  UINT64 Lun
     );
 
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetNextTarget (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __inout UINT8 **Target
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN OUT  UINT8 **Target
     );
 
 EFI_STATUS
 StorChannelOpen (
-    __in EFI_EMCL_V2_PROTOCOL* Emcl,
-    __out PSTORVSC_CHANNEL_CONTEXT *ChannelContext
+    IN  EFI_EMCL_V2_PROTOCOL* Emcl,
+    OUT PSTORVSC_CHANNEL_CONTEXT *ChannelContext
     );
 
 VOID
 StorChannelClose (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext
+    IN  PSTORVSC_CHANNEL_CONTEXT ChannelContext
     );
 
 EFI_STATUS
 StorChannelInitScsiPacket (
-    __in EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __out VSTOR_PACKET *Packet,
-    __out EFI_EXTERNAL_BUFFER *ExternalBuffer
+    IN  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
+    IN  UINT8 *Target,
+    IN  UINT64 Lun,
+    OUT VSTOR_PACKET *Packet,
+    OUT EFI_EXTERNAL_BUFFER *ExternalBuffer
     );
 
 VOID
 StorChannelCopyPacketDataToRequest (
-    __in PVSTOR_PACKET Packet,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest
+    IN      PVSTOR_PACKET Packet,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest
     );
 
 VOID
 StorChannelCompletionRoutine (
-    __in_opt VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context OPTIONAL,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     );
 
 EFI_STATUS
 StorChannelSendScsiRequest (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __in_opt EFI_EVENT Event
+    IN      PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun,
+    IN      EFI_EVENT Event OPTIONAL
     );
 
 EFI_STATUS
 StorChannelSendScsiRequestSync (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
-    __in UINT8 *Target,
-    __in UINT64 Lun
+    IN      PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun
     );
 
 VOID
 StorChannelReceivePacketCallback (
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN  VOID *ReceiveContext,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer OPTIONAL,
+    IN  UINT32 BufferLength,
+    IN  UINT16 TransferPageSetId,
+    IN  UINT32 RangeCount,
+    IN  EFI_TRANSFER_RANGE *Ranges
     );
 
 VOID
 StorChannelInitSyntheticVstorPacket (
-    __out PVSTOR_PACKET Packet
+    OUT  PVSTOR_PACKET Packet
     );
 
 EFI_STATUS
 StorChannelSendSyntheticVstorPacket (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __inout PVSTOR_PACKET Packet
+    IN      PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    IN OUT  PVSTOR_PACKET Packet
     );
 
 EFI_STATUS
 StorChannelEstablishCommunications (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext
+    IN  PSTORVSC_CHANNEL_CONTEXT ChannelContext
     );
 
 VOID
 StorChannelTeardownReportLunsRequest (
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request
     );
 
 EFI_STATUS
 StorChannelBuildLunList(
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __out LIST_ENTRY *LunList
+    IN  PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    OUT  LIST_ENTRY *LunList
     );
 
 VOID
 StorChannelFreeLunList(
-    __inout LIST_ENTRY *LunList
+    IN OUT  LIST_ENTRY *LunList
     );
 
 LIST_ENTRY*
 StorChannelSearchLunList (
-    __in LIST_ENTRY *LunList,
-    __in UCHAR Target,
-    __in UCHAR Lun
+    IN  LIST_ENTRY *LunList,
+    IN  UINT8 Target,
+    IN  UINT8 Lun
     );
 

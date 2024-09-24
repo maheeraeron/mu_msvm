@@ -12,11 +12,11 @@
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruPassThru (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Packet,
-    __in_opt EFI_EVENT Event
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Packet,
+    IN      EFI_EVENT Event OPTIONAL
     )
 /*++
 
@@ -51,7 +51,7 @@ Return Value:
 
     instance = STORVSC_ADAPTER_CONTEXT_FROM_EXT_SCSI_PASS_THRU_THIS(This);
 
-    if (StorChannelSearchLunList(&instance->LunList, *Target, (UCHAR)Lun) ==
+    if (StorChannelSearchLunList(&instance->LunList, *Target, (UINT8)Lun) ==
             NULL)
     {
         return EFI_INVALID_PARAMETER;
@@ -85,9 +85,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetNextTargetLun (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __inout UINT8 **Target,
-    __inout UINT64 *Lun
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN OUT  UINT8 **Target,
+    IN OUT  UINT64 *Lun
     )
 /*++
 
@@ -152,7 +152,7 @@ Return Value:
     }
     else
     {
-        listEntry = StorChannelSearchLunList(&instance->LunList, **Target, (UCHAR)*Lun);
+        listEntry = StorChannelSearchLunList(&instance->LunList, **Target, (UINT8)*Lun);
 
         if (listEntry != NULL)
         {
@@ -184,10 +184,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruBuildDevicePath (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __inout EFI_DEVICE_PATH_PROTOCOL **DevicePath
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun,
+    IN OUT  EFI_DEVICE_PATH_PROTOCOL **DevicePath
     )
 /*++
 
@@ -232,7 +232,7 @@ Return Value:
 
     tpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
 
-    listEntry = StorChannelSearchLunList(&instance->LunList, *Target, (UCHAR)Lun);
+    listEntry = StorChannelSearchLunList(&instance->LunList, *Target, (UINT8)Lun);
 
     gBS->RestoreTPL(tpl);
 
@@ -270,10 +270,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetTargetLun (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in EFI_DEVICE_PATH_PROTOCOL *DevicePath,
-    __out UINT8 **Target,
-    __out UINT64 *Lun
+    IN  EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN  EFI_DEVICE_PATH_PROTOCOL *DevicePath,
+    OUT UINT8 **Target,
+    OUT UINT64 *Lun
     )
 /*++
 
@@ -336,8 +336,8 @@ Return Value:
 
     foundTargetLun = StorChannelSearchLunList(
         &instance->LunList,
-        (UCHAR) devicePathNode->Scsi.Pun,
-        (UCHAR) devicePathNode->Scsi.Lun);
+        (UINT8) devicePathNode->Scsi.Pun,
+        (UINT8) devicePathNode->Scsi.Lun);
 
     gBS->RestoreTPL(tpl);
 
@@ -356,7 +356,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruResetChannel (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This
+    IN  EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This
     )
 /*++
 
@@ -382,9 +382,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruResetTargetLun (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __in UINT8 *Target,
-    __in UINT64 Lun
+    IN  EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN  UINT8 *Target,
+    IN  UINT64 Lun
     )
 /*++
 
@@ -414,8 +414,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscExtScsiPassThruGetNextTarget (
-    __in EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
-    __inout UINT8 **Target
+    IN      EFI_EXT_SCSI_PASS_THRU_PROTOCOL *This,
+    IN OUT  UINT8 **Target
     )
 /*++
 
@@ -441,7 +441,7 @@ Return Value:
 {
     EFI_STATUS status;
     STORVSC_ADAPTER_CONTEXT *instance;
-    UCHAR nextTarget;
+    UINT8 nextTarget;
     INT16 currentTarget;
     EFI_TPL tpl;
     PTARGET_LUN entry;
@@ -478,7 +478,7 @@ Return Value:
     else
     {
         nextTarget = VMSTOR_MAX_TARGETS + 1;
-        for (listEntry = instance->LunList.ForwardLink; 
+        for (listEntry = instance->LunList.ForwardLink;
              listEntry->ForwardLink != &instance->LunList;
              listEntry = listEntry->ForwardLink)
         {

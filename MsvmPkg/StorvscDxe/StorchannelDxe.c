@@ -10,7 +10,10 @@
 #include "StorvscDxe.h"
 
 #include <Industrystandard/Scsi.h>
+#include <Vmbus/NtStatus.h>
+
 #include "StorportDxe.h"
+
 
 typedef struct _STOR_CHANNEL_PROTOCOL_VERSION
 {
@@ -43,11 +46,11 @@ const STOR_CHANNEL_PROTOCOL_VERSION g_StorChannelSupportedVersions[] =
 
 INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 
-FORCEINLINE
+__forceinline
 BOOLEAN
 StorChannelIsValidDataBuffer (
-    __in const VOID* Buffer,
-    __in UINT32 BufferLength
+    IN  const VOID* Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 
@@ -82,8 +85,8 @@ Return Value:
 
 EFI_STATUS
 StorChannelOpen (
-    __in EFI_EMCL_V2_PROTOCOL* Emcl,
-    __out PSTORVSC_CHANNEL_CONTEXT *ChannelContext
+    IN  EFI_EMCL_V2_PROTOCOL* Emcl,
+    OUT PSTORVSC_CHANNEL_CONTEXT *ChannelContext
     )
 /*++
 
@@ -165,7 +168,7 @@ Cleanup:
 
 VOID
 StorChannelClose (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext
+    IN  PSTORVSC_CHANNEL_CONTEXT ChannelContext
     )
 /*++
 
@@ -193,11 +196,11 @@ Return Value:
 
 EFI_STATUS
 StorChannelInitScsiPacket (
-    __in EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __out VSTOR_PACKET *Packet,
-    __out EFI_EXTERNAL_BUFFER *ExternalBuffer
+    IN  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
+    IN  UINT8 *Target,
+    IN  UINT64 Lun,
+    OUT VSTOR_PACKET *Packet,
+    OUT EFI_EXTERNAL_BUFFER *ExternalBuffer
     )
 /*++
 
@@ -245,15 +248,15 @@ Return Value:
 
     Packet->VmSrb.Length = sizeof(VMSCSI_REQUEST);
     Packet->VmSrb.PathId = 0;
-    Packet->VmSrb.TargetId = *(UCHAR*)Target;
-    Packet->VmSrb.Lun = (UCHAR) Lun;
+    Packet->VmSrb.TargetId = *(UINT8*)Target;
+    Packet->VmSrb.Lun = (UINT8) Lun;
     Packet->VmSrb.DataIn =
         (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_READ);
 
     Packet->VmSrb.SenseInfoExLength = MIN(ScsiRequest->SenseDataLength,
                                           sizeof(Packet->VmSrb.SenseDataEx));
 
-    Packet->VmSrb.TimeOutValue = (ULONG)ScsiRequest->Timeout;
+    Packet->VmSrb.TimeOutValue = (UINT32)ScsiRequest->Timeout;
     Packet->Flags |= REQUEST_COMPLETION_FLAG;
 
     if (ScsiRequest->DataDirection == EFI_EXT_SCSI_DATA_DIRECTION_READ)
@@ -298,8 +301,8 @@ Return Value:
 
 VOID
 StorChannelCopyPacketDataToRequest (
-    __in PVSTOR_PACKET Packet,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest
+    IN      PVSTOR_PACKET Packet,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest
     )
 /*++
 
@@ -374,9 +377,9 @@ Return Value:
 
 VOID
 StorChannelCompletionRoutine (
-    __in_opt VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context OPTIONAL,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 Routine Description:
@@ -446,11 +449,11 @@ Return Value:
 
 EFI_STATUS
 StorChannelSendScsiRequest (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
-    __in UINT8 *Target,
-    __in UINT64 Lun,
-    __in_opt EFI_EVENT Event
+    IN      PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun,
+    IN      EFI_EVENT Event OPTIONAL
     )
 /*++
 
@@ -587,10 +590,10 @@ Cleanup:
 
 EFI_STATUS
 StorChannelSendScsiRequestSync (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
-    __in UINT8 *Target,
-    __in UINT64 Lun
+    IN      PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *ScsiRequest,
+    IN      UINT8 *Target,
+    IN      UINT64 Lun
     )
 /*++
 
@@ -677,13 +680,13 @@ Cleanup:
 
 VOID
 StorChannelReceivePacketCallback (
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN  VOID *ReceiveContext,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  UINT16 TransferPageSetId,
+    IN  UINT32 RangeCount,
+    IN  EFI_TRANSFER_RANGE *Ranges
     )
 /*++
 
@@ -732,7 +735,7 @@ Return Value:
 
 VOID
 StorChannelInitSyntheticVstorPacket (
-    __out PVSTOR_PACKET Packet
+    OUT PVSTOR_PACKET Packet
     )
 /*++
 
@@ -757,8 +760,8 @@ Return Value:
 
 EFI_STATUS
 StorChannelSendSyntheticVstorPacket (
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __inout PVSTOR_PACKET Packet
+    IN      PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    IN OUT  PVSTOR_PACKET Packet
     )
 /*++
 
@@ -822,7 +825,7 @@ Cleanup:
 
 EFI_STATUS
 StorChannelEstablishCommunications (
-    __inout PSTORVSC_CHANNEL_CONTEXT ChannelContext
+    IN OUT  PSTORVSC_CHANNEL_CONTEXT ChannelContext
     )
 /*++
 
@@ -928,7 +931,7 @@ Cleanup:
 
 EFI_STATUS
 StorChannelInitReportLunsRequest (
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request
     )
 /*++
 
@@ -958,10 +961,10 @@ Return Value:
         goto Cleanup;
     }
 
-    ((PUCHAR)Request->Cdb)[0] = EFI_SCSI_OP_REPORT_LUNS;
+    ((UINT8*)Request->Cdb)[0] = EFI_SCSI_OP_REPORT_LUNS;
     Request->DataDirection = EFI_EXT_SCSI_DATA_DIRECTION_READ;
 
-    Request->InTransferLength = FIELD_OFFSET(LUN_LIST, Lun) + STORVSC_MAX_LUN_TRANSFER_LENGTH;
+    Request->InTransferLength = OFFSET_OF(LUN_LIST, Lun) + STORVSC_MAX_LUN_TRANSFER_LENGTH;
     Request->InDataBuffer = AllocateZeroPool(Request->InTransferLength);
     if (Request->InDataBuffer == NULL)
     {
@@ -987,7 +990,7 @@ Cleanup:
 
 VOID
 StorChannelTeardownReportLunsRequest (
-    __out EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request
+    OUT EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request
     )
 /*++
 
@@ -1021,9 +1024,9 @@ Return Value:
 
 EFI_STATUS
 StorChannelParseReportLunsResponse (
-    __inout EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request,
-    __out LIST_ENTRY *LunList,
-    __in UCHAR Target
+    IN OUT  EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET *Request,
+    OUT     LIST_ENTRY *LunList,
+    IN      UINT8 Target
     )
 /*++
 
@@ -1054,7 +1057,7 @@ Return Value:
     PLUN_LIST rawList;
     UINT32 index;
     UINT32 rawListLength;
-    USHORT lun;
+    UINT16 lun;
     PTARGET_LUN targetLunEntry;
 
     if (Request->HostAdapterStatus != EFI_EXT_SCSI_STATUS_HOST_ADAPTER_OK ||
@@ -1095,7 +1098,7 @@ Return Value:
 
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(lun < SCSI_MAXIMUM_LUNS_PER_TARGET);
 
-        targetLunEntry->Lun = (UCHAR)lun;
+        targetLunEntry->Lun = (UINT8)lun;
         targetLunEntry->TargetId = Target;
         InsertTailList(LunList, &targetLunEntry->ListEntry);
     }
@@ -1109,8 +1112,8 @@ Cleanup:
 
 EFI_STATUS
 StorChannelBuildLunList(
-    __in PSTORVSC_CHANNEL_CONTEXT ChannelContext,
-    __out LIST_ENTRY *LunList
+    IN  PSTORVSC_CHANNEL_CONTEXT ChannelContext,
+    OUT LIST_ENTRY *LunList
     )
 /*++
 
@@ -1134,8 +1137,8 @@ Return Value:
     EFI_STATUS status;
     EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET requestTemplate;
     EFI_EXT_SCSI_PASS_THRU_SCSI_REQUEST_PACKET request;
-    UCHAR target;
-    UCHAR adapterLun = 0;
+    UINT8 target;
+    UINT8 adapterLun = 0;
 
     InitializeListHead(LunList);
 
@@ -1182,7 +1185,7 @@ Cleanup:
 
 VOID
 StorChannelFreeLunList (
-    __inout LIST_ENTRY *LunList
+    IN OUT  LIST_ENTRY *LunList
     )
 /*++
 
@@ -1209,9 +1212,9 @@ Arguments:
 
 LIST_ENTRY*
 StorChannelSearchLunList (
-    __in LIST_ENTRY *LunList,
-    __in UCHAR Target,
-    __in UCHAR Lun
+    IN  LIST_ENTRY *LunList,
+    IN  UINT8 Target,
+    IN  UINT8 Lun
     )
 /*++
 

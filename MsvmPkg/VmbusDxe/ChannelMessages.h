@@ -9,8 +9,6 @@
 **/
 #pragma once
 
-#pragma warning(push)
-#pragma warning(disable: 4214)
 #pragma pack(push,1)
 
 //
@@ -525,5 +523,3 @@ typedef struct _VMBUS_CHANNEL_MODIFY_CONNECTION_RESPONSE
 #define ChannelMessageModifyConnectionResponse_TYPE VMBUS_CHANNEL_MODIFY_CONNECTION_RESPONSE
 
 #pragma pack(pop)
-#pragma warning(pop)
-

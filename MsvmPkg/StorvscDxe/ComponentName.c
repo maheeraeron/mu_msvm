@@ -39,9 +39,9 @@ EFI_UNICODE_STRING_TABLE gStorvscControllerNameTable[] =
 EFI_STATUS
 EFIAPI
 StorvscComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME2_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     )
 /*++
 
@@ -76,11 +76,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscComponentNameGetControllerName (
-    __in EFI_COMPONENT_NAME2_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME2_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     )
 /*++
 

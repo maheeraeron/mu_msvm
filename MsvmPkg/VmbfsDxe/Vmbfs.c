@@ -28,8 +28,8 @@ const EFI_FILE_SYSTEM_INFO gVmbFsEfiFileSystemInfoPrototype =
 
 VOID
 VmbfsCloseVolume (
-    _In_ PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL VmbfsSimpleFileSystemProtocol,
-    _In_ BOOLEAN ChannelOpened
+    IN  PVMBFS_SIMPLE_FILE_SYSTEM_PROTOCOL VmbfsSimpleFileSystemProtocol,
+    IN  BOOLEAN ChannelOpened
     )
 
 /*++
@@ -78,8 +78,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsOpenVolume (
-    _In_ EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
-    _Out_ EFI_FILE_PROTOCOL **Root
+    IN  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
+    OUT EFI_FILE_PROTOCOL **Root
     )
 
 /*++
@@ -110,7 +110,7 @@ Return Value:
 --*/
 
 {
-    ULONG bytesRead;
+    UINT32 bytesRead;
     PVMBFS_FILE allocatedFileProtocol = NULL;
     PFILE_INFORMATION fileInformation;
     volatile PFILESYSTEM_INFORMATION fileSystemInformation;

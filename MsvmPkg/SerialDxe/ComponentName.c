@@ -58,9 +58,9 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mSerialDriverNameTable[] 
 EFI_STATUS
 EFIAPI
 SerialComponentNameGetDriverName(
-    _In_  EFI_COMPONENT_NAME_PROTOCOL   *This,
-    _In_  CHAR8                         *Language,
-    _Out_ CHAR16                        **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL   *This,
+    IN  CHAR8                         *Language,
+    OUT CHAR16                        **DriverName
     )
 /*++
 
@@ -120,11 +120,11 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialComponentNameGetControllerName(
-    _In_     EFI_COMPONENT_NAME_PROTOCOL    *This,
-    _In_     EFI_HANDLE                     ControllerHandle,
-    _In_opt_ EFI_HANDLE                     ChildHandle,
-    _In_     CHAR8                          *Language,
-    _Out_    CHAR16                         **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL     *This,
+    IN  EFI_HANDLE                      ControllerHandle,
+    IN  EFI_HANDLE                      ChildHandle OPTIONAL,
+    IN  CHAR8                           *Language,
+    OUT CHAR16                          **ControllerName
     )
 /*++
 
@@ -257,8 +257,8 @@ Return Value:
 
 VOID
 AddName(
-    _In_  SERIAL_DEVICE             *SerialDevice,
-    _In_  SERIAL_DEVICE_PROPERTIES  *SerialProperties
+    IN  SERIAL_DEVICE               *SerialDevice,
+    IN  SERIAL_DEVICE_PROPERTIES    *SerialProperties
     )
 /*++
 

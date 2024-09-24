@@ -75,8 +75,6 @@ typedef enum
 //
 // Information logged for a boot device.
 //
-#pragma warning(push)
-#pragma warning(disable:4200)  // nonstandard extension zero sized array
 typedef struct
 {
     BOOT_DEVICE_STATUS          Status;
@@ -85,7 +83,6 @@ typedef struct
     UINT32                      DevicePathSize;
     UINT8                       DevicePath[];
 } BOOTEVENT_DEVICE_ENTRY;
-#pragma warning(pop)
 
 #define BOOT_EVENT_CHANNEL_GUID \
     {0x8cc6713b, 0x360d, 0x4406, {0x92, 0x68, 0xf6, 0xb0, 0xcf, 0xdf, 0xca, 0x91}}

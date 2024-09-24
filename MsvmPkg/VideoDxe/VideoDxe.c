@@ -28,8 +28,8 @@ EFI_PHYSICAL_ADDRESS FrameBufferBaseAddress;
 EFI_STATUS
 EFIAPI
 VideoDxeDriverEntryPoint (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
 
@@ -73,9 +73,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingSupported(
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /*++
 
@@ -130,9 +130,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingStart (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /*++
 
@@ -310,10 +310,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VideoDxeDriverBindingStop (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     )
 /*++
 
@@ -390,10 +390,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputQueryMode (
-    __in  EFI_GRAPHICS_OUTPUT_PROTOCOL          *This,
-    __in  UINT32                                ModeNumber,
-    __out UINTN                                 *SizeOfInfo,
-    __out EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  **Info
+    IN  EFI_GRAPHICS_OUTPUT_PROTOCOL          *This,
+    IN  UINT32                                ModeNumber,
+    OUT UINTN                                 *SizeOfInfo,
+    OUT EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  **Info
   )
 /*++
 
@@ -445,8 +445,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputSetMode(
-    __in  EFI_GRAPHICS_OUTPUT_PROTOCOL * This,
-    __in  UINT32                         ModeNumber
+    IN   EFI_GRAPHICS_OUTPUT_PROTOCOL * This,
+    IN   UINT32                         ModeNumber
   )
 /*++
 
@@ -494,16 +494,16 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VideoGraphicsOutputBlt (
-    __in  EFI_GRAPHICS_OUTPUT_PROTOCOL       *This,
-    __in  EFI_GRAPHICS_OUTPUT_BLT_PIXEL      *BltBuffer, OPTIONAL
-    __in  EFI_GRAPHICS_OUTPUT_BLT_OPERATION  BltOperation,
-    __in  UINTN                              SourceX,
-    __in  UINTN                              SourceY,
-    __in  UINTN                              DestinationX,
-    __in  UINTN                              DestinationY,
-    __in  UINTN                              Width,
-    __in  UINTN                              Height,
-    __in  UINTN                              Delta
+    IN   EFI_GRAPHICS_OUTPUT_PROTOCOL       *This,
+    IN   EFI_GRAPHICS_OUTPUT_BLT_PIXEL      *BltBuffer, OPTIONAL
+    IN   EFI_GRAPHICS_OUTPUT_BLT_OPERATION  BltOperation,
+    IN   UINTN                              SourceX,
+    IN   UINTN                              SourceY,
+    IN   UINTN                              DestinationX,
+    IN   UINTN                              DestinationY,
+    IN   UINTN                              Width,
+    IN   UINTN                              Height,
+    IN   UINTN                              Delta
   )
 /*++
 

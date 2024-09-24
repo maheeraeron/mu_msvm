@@ -16,7 +16,7 @@
 
 EFI_STATUS
 VideoChannelSendSituationUpdate(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     )
 /*++
 
@@ -40,7 +40,7 @@ Return Value:
     //
     // Construct request message.
     //
-    ZeroMem((PVOID)&message, sizeof(message));
+    ZeroMem((VOID*)&message, sizeof(message));
     message.Header.Type = SynthvidSituationUpdate;
     message.Header.Size = sizeof(SYNTHVID_SITUATION_UPDATE_MESSAGE);
     message.UserContext = 0;
@@ -50,14 +50,14 @@ Return Value:
     message.VideoOutput[0].DepthBits = DEFAULT_SCREEN_BYTES_PER_PIXEL * BITS_PER_BYTE;
     message.VideoOutput[0].WidthPixels = DEFAULT_SCREEN_WIDTH;
     message.VideoOutput[0].HeightPixels = DEFAULT_SCREEN_HEIGHT;
-    message.VideoOutput[0].PitchBytes = DEFAULT_SCREEN_BYTES_PER_PIXEL * 
+    message.VideoOutput[0].PitchBytes = DEFAULT_SCREEN_BYTES_PER_PIXEL *
                                         message.VideoOutput[0].WidthPixels;
 
     //
     // Send message.  Response will occur asynchronously.
     //
-    status = Context->Emcl->SendPacket(Context->Emcl, 
-                                       (PVOID)&message,
+    status = Context->Emcl->SendPacket(Context->Emcl,
+                                       (VOID*)&message,
                                        sizeof(message),
                                        NULL,
                                        0,
@@ -68,8 +68,8 @@ Return Value:
     //
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelSendSituationUpdate failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelSendSituationUpdate failed. Status %x\n",
                 status));
     }
 
@@ -79,9 +79,9 @@ Return Value:
 
 VOID
 VideoChannelOnSituatioUpdateAck(
-    __in VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 
@@ -119,7 +119,7 @@ Return Value:
 
 EFI_STATUS
 VideoChannelSendVramLocation(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     )
 /*++
 
@@ -143,7 +143,7 @@ Return Value:
     //
     // Construct message.
     //
-    ZeroMem((PVOID)&message, sizeof(message));
+    ZeroMem((VOID*)&message, sizeof(message));
     message.Header.Type = SynthvidVramLocation;
     message.Header.Size = sizeof(SYNTHVID_VRAM_LOCATION_MESSAGE);
     message.UserContext = Context->Mode.FrameBufferSize;
@@ -153,20 +153,20 @@ Return Value:
     //
     // Send message.  Response will occur asynchronously.
     //
-    status = Context->Emcl->SendPacket(Context->Emcl, 
-                                       (PVOID)&message,
+    status = Context->Emcl->SendPacket(Context->Emcl,
+                                       (VOID*)&message,
                                        sizeof(message),
                                        NULL,
                                        0,
                                        NULL,
                                        NULL);
-   
+
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelSendVramLocation failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelSendVramLocation failed. Status %x\n",
                 status));
-    } 
+    }
 
     return status;
 }
@@ -174,9 +174,9 @@ Return Value:
 
 VOID
 VideoChannelOnVramLocationAck(
-    __in VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 
@@ -224,14 +224,14 @@ Return Value:
 
 EFI_STATUS
 VideoChannelSendVersionRequest(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     )
 /*++
 
 Routine Description:
 
     Send a version request message to the VSP.
- 
+
 Arguments:
 
     Context - The driver context.
@@ -248,39 +248,39 @@ Return Value:
     //
     // Construct message.
     //
-    ZeroMem((PVOID)&message, sizeof(message));
+    ZeroMem((VOID*)&message, sizeof(message));
     message.Header.Type = SynthvidVersionRequest;
     message.Header.Size = sizeof(SYNTHVID_VERSION_REQUEST_MESSAGE);
     message.Version.AsDWORD = SYNTHVID_VERSION_CURRENT;
- 
- 
+
+
     //
     // Send message.  Response will occur asynchronously.
     //
-    status = Context->Emcl->SendPacket(Context->Emcl, 
-                                       (PVOID)&message,
+    status = Context->Emcl->SendPacket(Context->Emcl,
+                                       (VOID*)&message,
                                        sizeof(message),
                                        NULL,
                                        0,
                                        NULL,
                                        NULL);
-    
+
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelNegotiateProtocol failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelNegotiateProtocol failed. Status %x\n",
                 status));
     }
- 
+
     return status;
 }
 
 
 VOID
 VideoChannelOnVersionResponse(
-    __in VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 /*++
 
@@ -306,7 +306,7 @@ Return Value:
 {
     EFI_STATUS status;
     PVIDEODXE_CONTEXT context = (PVIDEODXE_CONTEXT) Context;
-    PSYNTHVID_VERSION_RESPONSE_MESSAGE response = 
+    PSYNTHVID_VERSION_RESPONSE_MESSAGE response =
         (PSYNTHVID_VERSION_RESPONSE_MESSAGE)Buffer;
 
     ASSERT(response != NULL);
@@ -330,18 +330,18 @@ Return Value:
 
             gBS->SignalEvent(context->InitCompleteEvent);
         }
-    } 
+    }
     else
     {
-        DEBUG ((EFI_D_VERBOSE, 
+        DEBUG ((EFI_D_VERBOSE,
                 "VideoChannelOnVersionResponse - Version %x not accepted\n",
                 response->Version));
-        
+
         //
         // Record error and end initialization.
         //
         context->InitStatus = EFI_PROTOCOL_ERROR;
-        
+
         gBS->SignalEvent(context->InitCompleteEvent);
     }
 }
@@ -349,13 +349,13 @@ Return Value:
 
 VOID
 VideoChannelReceivePacketCallback(
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN  VOID *ReceiveContext,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer OPTIONAL,
+    IN  UINT32 BufferLength,
+    IN  UINT16 TransferPageSetId,
+    IN  UINT32 RangeCount,
+    IN  EFI_TRANSFER_RANGE *Ranges OPTIONAL
     )
 /*++
 
@@ -367,7 +367,7 @@ Arguments:
 
     ReceiveContext - The ChannelContext of the received packet.
 
-    PacketContext - Caller allocated context to be sent to 
+    PacketContext - Caller allocated context to be sent to
         the completion function.
 
     Buffer - The completion buffer for the packet.
@@ -392,72 +392,72 @@ Return Value:
     if (messageHeader != NULL)
     {
         switch (messageHeader->Type)
-        {  
+        {
         case SynthvidError:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidError\n"));
             break;
-            
+
         case SynthvidVersionRequest:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidVersionRequest\n"));
             break;
-            
+
         case SynthvidVersionResponse:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidVersionResponse\n"));
 
             VideoChannelOnVersionResponse(context, Buffer, BufferLength);
 
             break;
-            
+
         case SynthvidVramLocation:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidVramLocation\n"));
             break;
-            
+
         case SynthvidVramLocationAck:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidVramLocation\n"));
-            
+
             VideoChannelOnVramLocationAck(context, Buffer, BufferLength);
 
             break;
-            
+
         case SynthvidSituationUpdate:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidSituationUpdate\n"));
             break;
-            
+
         case SynthvidSituationUpdateAck:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidSituationUpdateAck\n"));
-            
+
             VideoChannelOnSituatioUpdateAck(context, Buffer, BufferLength);
 
             break;
-            
+
         case SynthvidPointerPosition:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidPointerPosition\n"));
             break;
-            
+
         case SynthvidPointerShape:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidPointerShape\n"));
             break;
-            
+
         case SynthvidFeatureChange:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidFeatureChange\n"));
             break;
-            
+
         case SynthvidDirt:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - SynthvidDirt\n"));
             break;
         default:
-            DEBUG ((EFI_D_VERBOSE, 
+            DEBUG ((EFI_D_VERBOSE,
                     "VideoChannelReceivePacketCallback - unknown message type %x\n",
                     messageHeader->Type));
             break;
@@ -465,7 +465,7 @@ Return Value:
     }
     else
     {
-        DEBUG ((EFI_D_VERBOSE, 
+        DEBUG ((EFI_D_VERBOSE,
                 "VideoChannelReceivePacketCallback - buffer is null\n"));
     }
 
@@ -483,7 +483,7 @@ Return Value:
 
 EFI_STATUS
 VideoChannelOpen (
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     )
 /*++
 
@@ -517,8 +517,8 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelOpen - CreateEvent failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelOpen - CreateEvent failed. Status %x\n",
                 status));
         goto Cleanup;
     }
@@ -530,15 +530,15 @@ Return Value:
                                                VideoChannelReceivePacketCallback,
                                                Context,
                                                TPL_VIDEO_CALLBACK);
-    
+
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelOpen - SetReceiveCallback failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelOpen - SetReceiveCallback failed. Status %x\n",
                 status));
         goto Cleanup;
     }
-   
+
     //
     // Start the vmbus channel.
     //
@@ -548,8 +548,8 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelOpen - StartChannel failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelOpen - StartChannel failed. Status %x\n",
                 status));
         goto Cleanup;
     }
@@ -563,8 +563,8 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelOpen - VideoChannelStartInitialize failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelOpen - VideoChannelStartInitialize failed. Status %x\n",
                 status));
         goto Cleanup;
     }
@@ -576,8 +576,8 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelOpen - WaitForEvent failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelOpen - WaitForEvent failed. Status %x\n",
                 status));
         goto Cleanup;
     }
@@ -586,8 +586,8 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG ((EFI_D_ERROR, 
-                "VideoChannelOpen - Initialization failed. Status %x\n", 
+        DEBUG ((EFI_D_ERROR,
+                "VideoChannelOpen - Initialization failed. Status %x\n",
                 status));
         goto Cleanup;
     }
@@ -600,7 +600,7 @@ Cleanup:
 
 VOID
 VideoChannelClose (
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     )
 /*++
 
@@ -636,7 +636,7 @@ Return Value:
 
 EFI_STATUS
 VideoChannelStartInitialize(
-    __in PVIDEODXE_CONTEXT Context
+    IN  PVIDEODXE_CONTEXT Context
     )
 /*++
 
@@ -666,7 +666,7 @@ Return Value:
 {
     //
     // Simply send first message.
-    //    
+    //
     return VideoChannelSendVersionRequest(Context);
 }
 

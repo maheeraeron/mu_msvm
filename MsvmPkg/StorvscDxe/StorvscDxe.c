@@ -70,8 +70,8 @@ STORVSC_ADAPTER_CONTEXT gStorvscAdapterContextTemplate =
 EFI_STATUS
 EFIAPI
 StorvscDriverEntryPoint (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /*++
 
@@ -112,9 +112,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscDriverBindingSupported (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /*++
 
@@ -154,7 +154,7 @@ Return Value:
 
     return EmclChannelTypeSupported(
         ControllerHandle,
-        &GUID_STORAGE_CHANNEL_TYPE,
+        &gSyntheticStorageClassGuid,
         This->DriverBindingHandle);
 }
 
@@ -162,9 +162,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 StorvscDriverBindingStart (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /*++
 
@@ -294,10 +294,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 StorvscDriverBindingStop (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     )
 /*++
 

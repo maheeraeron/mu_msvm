@@ -158,7 +158,7 @@ UINT32  gConsoleMode = ConfigLibConsoleModeDefault;
 
 BOOLEAN
 IsUartFlowControlNode(
-    _In_ UART_FLOW_CONTROL_DEVICE_PATH *FlowControl
+    IN  UART_FLOW_CONTROL_DEVICE_PATH *FlowControl
     )
 /*++
 
@@ -186,7 +186,7 @@ Return Value:
 
 BOOLEAN
 ContainsFlowControl(
-    _In_ EFI_DEVICE_PATH_PROTOCOL      *DevicePath
+    IN  EFI_DEVICE_PATH_PROTOCOL    *DevicePath
     )
 /*++
 
@@ -220,9 +220,9 @@ Return Value:
 
 VOID
 SerialDestroyChildDevice(
-    _In_     EFI_DRIVER_BINDING_PROTOCOL *This,
-    _In_     EFI_HANDLE                  ParentController,
-    _In_opt_ SERIAL_DEVICE               *SerialDevice
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE                  ParentController,
+    IN  SERIAL_DEVICE               *SerialDevice OPTIONAL
     )
 /*++
 
@@ -296,9 +296,9 @@ Return Value:
 
 EFI_STATUS
 SerialCreateChildDevice(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     ParentController,
-    _In_ SERIAL_DEVICE_PROPERTIES       *Properties
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     ParentController,
+    IN  SERIAL_DEVICE_PROPERTIES       *Properties
     )
 /*++
 
@@ -435,8 +435,8 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 SerialEntryPoint(
-    _In_ EFI_HANDLE         ImageHandle,
-    _In_ EFI_SYSTEM_TABLE   *SystemTable
+    IN  EFI_HANDLE         ImageHandle,
+    IN  EFI_SYSTEM_TABLE   *SystemTable
     )
 /*++
 
@@ -510,9 +510,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialDriverSupported(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     ControllerHandle,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
     )
 /*++
 
@@ -584,9 +584,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialDriverStart(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     Controller,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     Controller,
+    IN  EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
     )
 /*++
 
@@ -663,10 +663,10 @@ Exit:
 EFI_STATUS
 EFIAPI
 SerialDriverStop(
-    _In_  EFI_DRIVER_BINDING_PROTOCOL   *This,
-    _In_  EFI_HANDLE                    Controller,
-    _In_  UINTN                         NumberOfChildren,
-    _In_  EFI_HANDLE                    *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL     *This,
+    IN  EFI_HANDLE                      Controller,
+    IN  UINTN                           NumberOfChildren,
+    IN  EFI_HANDLE                      *ChildHandleBuffer
     )
 /*++
 
@@ -764,8 +764,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialReset(
-      _In_ EFI_SERIAL_IO_PROTOCOL  *This
-      )
+    IN  EFI_SERIAL_IO_PROTOCOL  *This
+    )
 /*++
 
 Routine Description:
@@ -824,13 +824,13 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialSetAttributes(
-    _In_ EFI_SERIAL_IO_PROTOCOL  *This,
-    _In_ UINT64                  BaudRate,
-    _In_ UINT32                  ReceiveFifoDepth,
-    _In_ UINT32                  Timeout,
-    _In_ EFI_PARITY_TYPE         Parity,
-    _In_ UINT8                   DataBits,
-    _In_ EFI_STOP_BITS_TYPE      StopBits
+    IN  EFI_SERIAL_IO_PROTOCOL  *This,
+    IN  UINT64                  BaudRate,
+    IN  UINT32                  ReceiveFifoDepth,
+    IN  UINT32                  Timeout,
+    IN  EFI_PARITY_TYPE         Parity,
+    IN  UINT8                   DataBits,
+    IN  EFI_STOP_BITS_TYPE      StopBits
     )
 /*++
 
@@ -1101,8 +1101,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialSetControl(
-    _In_ EFI_SERIAL_IO_PROTOCOL  *This,
-    _In_ UINT32                  Control
+    IN  EFI_SERIAL_IO_PROTOCOL  *This,
+    IN  UINT32                  Control
     )
 /*++
 
@@ -1182,8 +1182,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialGetControl(
-    _In_ EFI_SERIAL_IO_PROTOCOL  *This,
-    _Out_ UINT32                 *Control
+    IN  EFI_SERIAL_IO_PROTOCOL  *This,
+    OUT UINT32                  *Control
     )
 /*++
 
@@ -1224,9 +1224,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialWrite(
-    _In_ EFI_SERIAL_IO_PROTOCOL  *This,
-    _In_ OUT UINTN               *BufferSize,
-    _In_ VOID                    *Buffer
+    IN      EFI_SERIAL_IO_PROTOCOL  *This,
+    IN OUT  UINTN                   *BufferSize,
+    IN      VOID                    *Buffer
     )
 /*++
 
@@ -1281,9 +1281,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SerialRead(
-    _In_    EFI_SERIAL_IO_PROTOCOL  *This,
-    _Inout_ UINTN                   *BufferSize,
-    _Out_   VOID                    *Buffer
+    IN     EFI_SERIAL_IO_PROTOCOL  *This,
+    IN OUT UINTN                   *BufferSize,
+    OUT    VOID                    *Buffer
     )
 /*++
 

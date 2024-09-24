@@ -7,6 +7,10 @@
 
 **/
 
+#pragma once
+
+#include <MsvmBase.h>
+
 #define SCSI_MAXIMUM_LUNS_PER_TARGET 255
 
 //
@@ -19,33 +23,23 @@
 #define SRB_STATUS_PENDING 0
 #define SRB_STATUS_SUCCESS 1
 
-//
-//  RTL_CONTAINS_FIELD usage:
-//
-//      if (RTL_CONTAINS_FIELD(pBlock, pBlock->cbSize, dwMumble)) { // safe to use pBlock->dwMumble
-//
-#ifndef RTL_CONTAINS_FIELD
-#define RTL_CONTAINS_FIELD(Struct, Size, Field) \
-    ( (((PCHAR)(&(Struct)->Field)) + sizeof((Struct)->Field)) <= (((PCHAR)(Struct))+(Size)) )
-#endif
-
 typedef struct _SENSE_DATA
 {
-    UCHAR ErrorCode:7;
-    UCHAR Valid:1;
-    UCHAR SegmentNumber;
-    UCHAR SenseKey:4;
-    UCHAR Reserved:1;
-    UCHAR IncorrectLength:1;
-    UCHAR EndOfMedia:1;
-    UCHAR FileMark:1;
-    UCHAR Information[4];
-    UCHAR AdditionalSenseLength;
-    UCHAR CommandSpecificInformation[4];
-    UCHAR AdditionalSenseCode;
-    UCHAR AdditionalSenseCodeQualifier;
-    UCHAR FieldReplaceableUnitCode;
-    UCHAR SenseKeySpecific[3];
+    UINT8 ErrorCode:7;
+    UINT8 Valid:1;
+    UINT8 SegmentNumber;
+    UINT8 SenseKey:4;
+    UINT8 Reserved:1;
+    UINT8 IncorrectLength:1;
+    UINT8 EndOfMedia:1;
+    UINT8 FileMark:1;
+    UINT8 Information[4];
+    UINT8 AdditionalSenseLength;
+    UINT8 CommandSpecificInformation[4];
+    UINT8 AdditionalSenseCode;
+    UINT8 AdditionalSenseCodeQualifier;
+    UINT8 FieldReplaceableUnitCode;
+    UINT8 SenseKeySpecific[3];
 } SENSE_DATA, *PSENSE_DATA;
 
 //
@@ -53,27 +47,21 @@ typedef struct _SENSE_DATA
 //
 typedef struct _SENSE_DATA FIXED_SENSE_DATA, *PFIXED_SENSE_DATA;
 
-
-#pragma warning(push)
-#pragma warning(disable:4200 /*zero-sized array in struct/union*/)
-
 //
 // Descriptor Sense Data Format
 //
 typedef struct _DESCRIPTOR_SENSE_DATA
 {
-    UCHAR ErrorCode:7;
-    UCHAR Reserved1:1;
-    UCHAR SenseKey:4;
-    UCHAR Reserved2:4;
-    UCHAR AdditionalSenseCode;
-    UCHAR AdditionalSenseCodeQualifier;
-    UCHAR Reserved3[3];
-    UCHAR AdditionalSenseLength;
-    UCHAR DescriptorBuffer[];
+    UINT8 ErrorCode:7;
+    UINT8 Reserved1:1;
+    UINT8 SenseKey:4;
+    UINT8 Reserved2:4;
+    UINT8 AdditionalSenseCode;
+    UINT8 AdditionalSenseCodeQualifier;
+    UINT8 Reserved3[3];
+    UINT8 AdditionalSenseLength;
+    UINT8 DescriptorBuffer[];
 } DESCRIPTOR_SENSE_DATA, *PDESCRIPTOR_SENSE_DATA;
-
-#pragma warning(pop)
 
 //
 // Sense Data Error Codes
@@ -85,9 +73,9 @@ typedef struct _DESCRIPTOR_SENSE_DATA
 
 typedef struct _LUN_LIST
 {
-    UCHAR LunListLength[4]; // sizeof LunSize * 8
-    UCHAR Reserved[4];
-    UCHAR Lun[1][8];        // 4 level of addressing.  2 bytes each.
+    UINT8 LunListLength[4]; // sizeof LunSize * 8
+    UINT8 Reserved[4];
+    UINT8 Lun[1][8];        // 4 level of addressing.  2 bytes each.
 } LUN_LIST, *PLUN_LIST;
 
 //
@@ -100,7 +88,7 @@ typedef struct _LUN_LIST
 // Obtain Error Code from the sense info buffer.
 // Note: Error Code is same as "Response Code" defined in SPC Specification.
 //
-#define ScsiGetSenseErrorCode(SenseInfoBuffer) (((PUCHAR)(SenseInfoBuffer))[0] & 0x7f)
+#define ScsiGetSenseErrorCode(SenseInfoBuffer) (((UINT8*)(SenseInfoBuffer))[0] & 0x7f)
 
 
 //
@@ -125,12 +113,12 @@ typedef struct _LUN_LIST
              (ScsiGetSenseErrorCode(SenseInfoBuffer)) == SCSI_SENSE_ERRORCODE_DESCRIPTOR_CURRENT)
 
 
-_Success_(return != FALSE)
-FORCEINLINE BOOLEAN
+__forceinline
+ BOOLEAN
 ScsiGetTotalSenseByteCountIndicated (
-   _In_reads_bytes_(SenseInfoBufferLength) PVOID SenseInfoBuffer,
-   _In_  UCHAR SenseInfoBufferLength,
-   _Out_ UCHAR *TotalByteCountIndicated
+   IN  VOID  *SenseInfoBuffer,
+   IN  UINT8 SenseInfoBufferLength,
+   OUT UINT8 *TotalByteCountIndicated
    )
 /*++
 
@@ -162,7 +150,7 @@ Returns:
 --*/
 {
     BOOLEAN succeed = FALSE;
-    UCHAR byteCount = 0;
+    UINT8 byteCount = 0;
     PFIXED_SENSE_DATA senseInfoBuffer = NULL;
 
     if (SenseInfoBuffer == NULL ||
@@ -178,15 +166,15 @@ Returns:
     //
     senseInfoBuffer = (PFIXED_SENSE_DATA)SenseInfoBuffer;
 
-    if (RTL_CONTAINS_FIELD(senseInfoBuffer,
+    if (CONTAINS_FIELD(senseInfoBuffer,
                            SenseInfoBufferLength,
                            AdditionalSenseLength))
     {
         if (senseInfoBuffer->AdditionalSenseLength <=
-            (MAX_SENSE_BUFFER_SIZE - RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength)))
+            (MAX_SENSE_BUFFER_SIZE - SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength)))
         {
             byteCount = senseInfoBuffer->AdditionalSenseLength
-                        + RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
+                        + SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
 
             *TotalByteCountIndicated = byteCount;
 
@@ -198,14 +186,14 @@ Returns:
 }
 
 
-_Success_(return != FALSE)
-FORCEINLINE BOOLEAN
+__forceinline
+BOOLEAN
 ScsiGetFixedSenseKeyAndCodes (
-   _In_reads_bytes_(SenseInfoBufferLength) PVOID SenseInfoBuffer,
-   _In_ UCHAR SenseInfoBufferLength,
-   _Out_opt_ PUCHAR SenseKey,
-   _Out_opt_ PUCHAR AdditionalSenseCode,
-   _Out_opt_ PUCHAR AdditionalSenseCodeQualifier
+   IN  VOID     *SenseInfoBuffer,
+   IN  UINT8    SenseInfoBufferLength,
+   OUT UINT8    *SenseKey OPTIONAL,
+   OUT UINT8    *AdditionalSenseCode OPTIONAL,
+   OUT UINT8    *AdditionalSenseCodeQualifier OPTIONAL
    )
 /*++
 
@@ -246,16 +234,16 @@ Returns:
 {
     PFIXED_SENSE_DATA fixedSenseData = (PFIXED_SENSE_DATA)SenseInfoBuffer;
     BOOLEAN succeed = FALSE;
-    ULONG dataLength = 0;
+    UINT32 dataLength = 0;
 
     if (SenseInfoBuffer == NULL || SenseInfoBufferLength == 0)
     {
         return FALSE;
     }
 
-    if (RTL_CONTAINS_FIELD(fixedSenseData, SenseInfoBufferLength, AdditionalSenseLength))
+    if (CONTAINS_FIELD(fixedSenseData, SenseInfoBufferLength, AdditionalSenseLength))
     {
-        dataLength = fixedSenseData->AdditionalSenseLength + RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
+        dataLength = fixedSenseData->AdditionalSenseLength + SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
 
         if (dataLength > SenseInfoBufferLength)
         {
@@ -269,13 +257,13 @@ Returns:
 
         if (AdditionalSenseCode != NULL)
         {
-           *AdditionalSenseCode = RTL_CONTAINS_FIELD(fixedSenseData, dataLength, AdditionalSenseCode) ?
+           *AdditionalSenseCode = CONTAINS_FIELD(fixedSenseData, dataLength, AdditionalSenseCode) ?
                                   fixedSenseData->AdditionalSenseCode : 0;
         }
 
         if (AdditionalSenseCodeQualifier != NULL)
         {
-           *AdditionalSenseCodeQualifier = RTL_CONTAINS_FIELD(fixedSenseData, dataLength, AdditionalSenseCodeQualifier) ?
+           *AdditionalSenseCodeQualifier = CONTAINS_FIELD(fixedSenseData, dataLength, AdditionalSenseCodeQualifier) ?
                                            fixedSenseData->AdditionalSenseCodeQualifier : 0;
         }
 
@@ -286,14 +274,14 @@ Returns:
 }
 
 
-_Success_(return != FALSE)
-FORCEINLINE BOOLEAN
+__forceinline
+BOOLEAN
 ScsiGetDescriptorSenseKeyAndCodes (
-   _In_reads_bytes_(SenseInfoBufferLength) PVOID SenseInfoBuffer,
-   _In_ UCHAR SenseInfoBufferLength,
-   _Out_opt_ PUCHAR SenseKey,
-   _Out_opt_ PUCHAR AdditionalSenseCode,
-   _Out_opt_ PUCHAR AdditionalSenseCodeQualifier
+   IN  VOID     *SenseInfoBuffer,
+   IN  UINT8    SenseInfoBufferLength,
+   OUT UINT8    *SenseKey OPTIONAL,
+   OUT UINT8    *AdditionalSenseCode OPTIONAL,
+   OUT UINT8    *AdditionalSenseCodeQualifier OPTIONAL
    )
 /*++
 
@@ -337,7 +325,7 @@ Returns:
         return FALSE;
     }
 
-    if (RTL_CONTAINS_FIELD(descriptorSenseData, SenseInfoBufferLength, AdditionalSenseLength))
+    if (CONTAINS_FIELD(descriptorSenseData, SenseInfoBufferLength, AdditionalSenseLength))
     {
         if (SenseKey)
         {
@@ -363,7 +351,7 @@ Returns:
 //
 // SCSI_SENSE_OPTIONS
 //
-typedef ULONG SCSI_SENSE_OPTIONS;
+typedef UINT32 SCSI_SENSE_OPTIONS;
 
 //
 // No options are specified
@@ -377,15 +365,15 @@ typedef ULONG SCSI_SENSE_OPTIONS;
 #define SCSI_SENSE_OPTIONS_FIXED_FORMAT_IF_UNKNOWN_FORMAT_INDICATED  ((SCSI_SENSE_OPTIONS)0x00000001)
 
 
-_Success_(return != FALSE)
-FORCEINLINE BOOLEAN
+__forceinline
+BOOLEAN
 ScsiGetSenseKeyAndCodes (
-   _In_reads_bytes_(SenseInfoBufferLength) PVOID SenseInfoBuffer,
-   _In_ UCHAR SenseInfoBufferLength,
-   _In_ SCSI_SENSE_OPTIONS Options,
-   _Out_opt_ PUCHAR SenseKey,
-   _Out_opt_ PUCHAR AdditionalSenseCode,
-   _Out_opt_ PUCHAR AdditionalSenseCodeQualifier
+   IN  VOID  *SenseInfoBuffer,
+   IN  UINT8 SenseInfoBufferLength,
+   IN  SCSI_SENSE_OPTIONS Options,
+   OUT UINT8 *SenseKey OPTIONAL,
+   OUT UINT8 *AdditionalSenseCode OPTIONAL,
+   OUT UINT8 *AdditionalSenseCodeQualifier OPTIONAL
    )
 /*++
 
@@ -457,13 +445,13 @@ Returns:
 }
 
 
-_Success_(return != FALSE)
-FORCEINLINE BOOLEAN
+__forceinline
+BOOLEAN
 ScsiConvertToFixedSenseFormat(
-    _In_reads_bytes_(SenseInfoBufferLength) PVOID SenseInfoBuffer,
-    _In_ UCHAR SenseInfoBufferLength,
-    _Out_writes_bytes_(OutBufferLength) PVOID OutBuffer,
-    _In_ UCHAR OutBufferLength
+    IN  VOID* SenseInfoBuffer,
+    IN  UINT8 SenseInfoBufferLength,
+    OUT VOID* OutBuffer,
+    IN  UINT8 OutBufferLength
     )
 /*++
 
@@ -494,9 +482,9 @@ Returns:
 {
     BOOLEAN succeed = FALSE;
     BOOLEAN validSense  = FALSE;
-    UCHAR senseKey = 0;
-    UCHAR additionalSenseCode = 0;
-    UCHAR additionalSenseCodeQualifier = 0;
+    UINT8 senseKey = 0;
+    UINT8 additionalSenseCode = 0;
+    UINT8 additionalSenseCodeQualifier = 0;
     PFIXED_SENSE_DATA outBuffer = (PFIXED_SENSE_DATA)OutBuffer;
 
     if (SenseInfoBuffer == NULL ||
@@ -528,7 +516,7 @@ Returns:
                 outBuffer->ErrorCode = SCSI_SENSE_ERRORCODE_FIXED_DEFERRED;
             }
 
-            outBuffer->AdditionalSenseLength = sizeof(FIXED_SENSE_DATA) - RTL_SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
+            outBuffer->AdditionalSenseLength = sizeof(FIXED_SENSE_DATA) - SIZEOF_THROUGH_FIELD(FIXED_SENSE_DATA, AdditionalSenseLength);
             outBuffer->SenseKey = senseKey;
             outBuffer->AdditionalSenseCode = additionalSenseCode;
             outBuffer->AdditionalSenseCodeQualifier = additionalSenseCodeQualifier;

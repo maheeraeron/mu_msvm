@@ -38,13 +38,13 @@ const EFI_FILE_INFO gVmbFsEfiFileInfoPrototype =
 
 VOID
 VmbfsReceivePacketCallback (
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN  VOID *ReceiveContext,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  UINT16 TransferPageSetId,
+    IN  UINT32 RangeCount,
+    IN  EFI_TRANSFER_RANGE *Ranges
     )
 
 /*++
@@ -81,11 +81,6 @@ Return Value:
 {
     PFILESYSTEM_INFORMATION fileSystemInformation;
 
-    UNREFERENCED_PARAMETER(PacketContext);
-    UNREFERENCED_PARAMETER(TransferPageSetId);
-    UNREFERENCED_PARAMETER(RangeCount);
-    UNREFERENCED_PARAMETER(Ranges);
-
     fileSystemInformation = (PFILESYSTEM_INFORMATION)ReceiveContext;
 
     if (BufferLength > VMBFS_MAXIMUM_MESSAGE_SIZE)
@@ -103,13 +98,13 @@ Return Value:
 
 EFI_STATUS
 VmbfsSendReceivePacket (
-    __in PFILESYSTEM_INFORMATION FileSystemInformation,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINTN BufferLength,
-    __in UINT32 GpaRangeHandle,
-    __in_bcount(ExternalBufferLength) VOID *ExternalBuffer,
-    __in UINTN ExternalBufferLength,
-    __in BOOLEAN IsWritable
+    IN  PFILESYSTEM_INFORMATION FileSystemInformation,
+    IN  VOID *Buffer,
+    IN  UINTN BufferLength,
+    IN  UINT32 GpaRangeHandle,
+    IN  VOID *ExternalBuffer,
+    IN  UINTN ExternalBufferLength,
+    IN  BOOLEAN IsWritable
     )
 
 /*++
@@ -213,11 +208,11 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbfsOpen (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Out_ EFI_FILE_PROTOCOL **NewHandle,
-    _In_ CHAR16 *FileName,
-    _In_ UINT64 OpenMode,
-    _In_ UINT64 Attributes
+    IN  EFI_FILE_PROTOCOL *This,
+    OUT EFI_FILE_PROTOCOL **NewHandle,
+    IN  CHAR16 *FileName,
+    IN  UINT64 OpenMode,
+    IN  UINT64 Attributes
     )
 
 /*++
@@ -265,20 +260,18 @@ Return Value:
     VMBFS_FILE* allocatedFileProtocol = NULL;
     PFILE_INFORMATION parentFileInformation;
     CHAR16 *parentFilePath;
-    ULONG bytesRead;
+    UINT32 bytesRead;
     PFILE_INFORMATION fileInformation = NULL;
     EFI_FILE_INFO* efiFileInfo = NULL;
     CHAR16* filePath = NULL;
     const CHAR16* pathFormat;
-    SIZE_T filePathLength = 0;
-    SIZE_T parentFilePathLength = 0;
-    SIZE_T filePathLengthInBytes;
+    UINTN filePathLength = 0;
+    UINTN parentFilePathLength = 0;
+    UINTN filePathLengthInBytes;
     PVMBFS_MESSAGE_GET_FILE_INFO getFileInfoMessage = NULL;
     PVMBFS_MESSAGE_GET_FILE_INFO_RESPONSE getFileInfoResponseMessage = NULL;
-    SIZE_T getFileInfoMessageSize;
+    UINTN getFileInfoMessageSize;
     EFI_STATUS status = EFI_SUCCESS;
-
-    UNREFERENCED_PARAMETER(Attributes);
 
     parentFileInformation = GetThisFileInformation(This);
     parentFilePath = &GetThisEfiFileInfo(This)->FileName[0];
@@ -330,7 +323,7 @@ Return Value:
     //
     // File path in VMBus message does not require a terminating NULL.
     //
-    filePathLengthInBytes -= sizeof(WCHAR);
+    filePathLengthInBytes -= sizeof(CHAR16);
 
     getFileInfoMessageSize = sizeof(*getFileInfoMessage) + filePathLengthInBytes;
 
@@ -350,12 +343,12 @@ Return Value:
     }
 
     UnicodeSPrint(filePath,
-                  filePathLengthInBytes + sizeof(WCHAR),
+                  filePathLengthInBytes + sizeof(CHAR16),
                   pathFormat,
                   parentFilePath,
                   FileName);
 
-    efiFileInfo->Size = sizeof(EFI_FILE_INFO) + filePathLengthInBytes + sizeof(WCHAR);
+    efiFileInfo->Size = sizeof(EFI_FILE_INFO) + filePathLengthInBytes + sizeof(CHAR16);
 
     //
     // Build a GetFileInfo message.
@@ -420,7 +413,7 @@ Return Value:
 
     fileInformation->FileSystem = parentFileInformation->FileSystem;
 
-    fileInformation->FilePathLength = filePathLengthInBytes / sizeof(WCHAR);
+    fileInformation->FilePathLength = filePathLengthInBytes / sizeof(CHAR16);
 
     CopyMem(&allocatedFileProtocol->EfiFileProtocol, This, sizeof(allocatedFileProtocol->EfiFileProtocol));
 
@@ -445,7 +438,7 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbfsClose (
-    _In_ EFI_FILE_PROTOCOL *This
+    IN  EFI_FILE_PROTOCOL *This
     )
 
 /*++
@@ -485,7 +478,7 @@ Return Value:
 
 EFI_STATUS
 VmbfsErrorToEfiError(
-    UINT32 Error
+    IN  UINT32 Error
     )
 /*++
 
@@ -522,11 +515,11 @@ Return Value:
 
 EFI_STATUS
 VmbfsReadPayload(
-    _In_ VMBFS_FILE *File,
-    _In_ UINT64 FileOffset,
-    _Out_writes_bytes_to_(BufferSize, *BytesRead) VOID *Buffer,
-    UINTN BufferSize,
-    _Out_ UINTN *BytesRead
+    IN  VMBFS_FILE *File,
+    IN  UINT64 FileOffset,
+    OUT VOID *Buffer,
+    IN  UINTN BufferSize,
+    OUT UINTN *BytesRead
     )
 /*++
 
@@ -563,7 +556,7 @@ Return Value:
     //
     // Ensure the path will fit in the request message.
     //
-    if (File->FileInformation.FilePathLength * sizeof(WCHAR) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
+    if (File->FileInformation.FilePathLength * sizeof(CHAR16) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
     {
         status = EFI_BUFFER_TOO_SMALL;
         goto Cleanup;
@@ -577,11 +570,11 @@ Return Value:
     readFileMessage->ByteCount = (UINT32)bytesRequested;
     CopyMem(readFileMessage->FilePath,
             File->EfiFileInfo.FileName,
-            File->FileInformation.FilePathLength * sizeof(WCHAR));
+            File->FileInformation.FilePathLength * sizeof(CHAR16));
 
     status = VmbfsSendReceivePacket(GetFileSystemInformation(&File->FileInformation),
                                     readFileMessage,
-                                    sizeof(*readFileMessage) + File->FileInformation.FilePathLength * sizeof(WCHAR),
+                                    sizeof(*readFileMessage) + File->FileInformation.FilePathLength * sizeof(CHAR16),
                                     0,
                                     NULL,
                                     0,
@@ -617,7 +610,7 @@ Return Value:
         goto Cleanup;
     }
 
-    CopyMem((PUINT8)Buffer,
+    CopyMem((UINT8*)Buffer,
             readFileResponseMessage->Payload,
             bytesReceived);
 
@@ -631,11 +624,11 @@ Cleanup:
 
 EFI_STATUS
 VmbfsReadRdma(
-    _In_ VMBFS_FILE *File,
-    _In_ UINT64 FileOffset,
-    _Out_writes_bytes_to_(BufferSize, *BytesRead) VOID *Buffer,
-    UINTN BufferSize,
-    _Out_ UINTN *BytesRead
+    IN  VMBFS_FILE *File,
+    IN  UINT64 FileOffset,
+    OUT VOID *Buffer,
+    IN  UINTN BufferSize,
+    OUT UINTN *BytesRead
     )
 /*++
 
@@ -673,7 +666,7 @@ Return Value:
     //
     // Ensure the path will fit in the request message.
     //
-    if (File->FileInformation.FilePathLength * sizeof(WCHAR) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
+    if (File->FileInformation.FilePathLength * sizeof(CHAR16) > VMBFS_MAXIMUM_PAYLOAD_SIZE(*readFileMessage))
     {
         status = EFI_BUFFER_TOO_SMALL;
         goto Cleanup;
@@ -688,11 +681,11 @@ Return Value:
     readFileMessage->ByteCount = (UINT32)bytesRequested;
     CopyMem(readFileMessage->FilePath,
             File->EfiFileInfo.FileName,
-            File->FileInformation.FilePathLength * sizeof(WCHAR));
+            File->FileInformation.FilePathLength * sizeof(CHAR16));
 
     status = VmbfsSendReceivePacket(GetFileSystemInformation(&File->FileInformation),
                                     readFileMessage,
-                                    sizeof(*readFileMessage) + File->FileInformation.FilePathLength * sizeof(WCHAR),
+                                    sizeof(*readFileMessage) + File->FileInformation.FilePathLength * sizeof(CHAR16),
                                     readFileMessage->Handle,
                                     Buffer,
                                     bytesRequested,
@@ -738,9 +731,9 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbfsRead (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Inout_ UINTN *BufferSize,
-    _Out_writes_bytes_(BufferSize) VOID *Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN OUT  UINTN *BufferSize,
+    OUT     VOID *Buffer
     )
 
 /*++
@@ -790,7 +783,7 @@ Return Value:
         {
             status = VmbfsReadRdma(file,
                                    file->FileInformation.FileOffset + bytesRead,
-                                   (PUINT8)Buffer + bytesRead,
+                                   (UINT8*)Buffer + bytesRead,
                                    *BufferSize - bytesRead,
                                    &bytesReadThisTime);
         }
@@ -798,7 +791,7 @@ Return Value:
         {
             status = VmbfsReadPayload(file,
                                       file->FileInformation.FileOffset + bytesRead,
-                                      (PUINT8)Buffer + bytesRead,
+                                      (UINT8*)Buffer + bytesRead,
                                       *BufferSize - bytesRead,
                                       &bytesReadThisTime);
         }
@@ -823,9 +816,9 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbfsWrite (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Inout_ UINTN *BufferSize,
-    _In_reads_bytes_(BufferSize) PVOID Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN OUT  UINTN *BufferSize,
+    IN      VOID *Buffer
     )
 
 /*++
@@ -851,10 +844,6 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER(This);
-    UNREFERENCED_PARAMETER(BufferSize);
-    UNREFERENCED_PARAMETER(Buffer);
-
     return EFI_UNSUPPORTED;
 }
 
@@ -862,8 +851,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsGetPosition (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _Out_ UINT64 *Position
+    IN  EFI_FILE_PROTOCOL *This,
+    OUT UINT64 *Position
     )
 
 /*++
@@ -905,8 +894,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsSetPosition (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _In_ UINT64 Position
+    IN  EFI_FILE_PROTOCOL *This,
+    IN  UINT64 Position
     )
 
 /*++
@@ -967,10 +956,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsGetInfo (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _In_ EFI_GUID *InformationType,
-    _Inout_ UINTN *BufferSize,
-    _Out_ VOID *Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN      EFI_GUID *InformationType,
+    IN OUT  UINTN *BufferSize,
+    OUT     VOID *Buffer
     )
 
 /*++
@@ -1049,10 +1038,10 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsSetInfo (
-    _In_ EFI_FILE_PROTOCOL *This,
-    _In_ EFI_GUID *InformationType,
-    _Inout_ UINTN *BufferSize,
-    _In_ VOID *Buffer
+    IN      EFI_FILE_PROTOCOL *This,
+    IN      EFI_GUID *InformationType,
+    IN OUT  UINTN *BufferSize,
+    IN      VOID *Buffer
     )
 
 /*++
@@ -1091,11 +1080,6 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER(This);
-    UNREFERENCED_PARAMETER(InformationType);
-    UNREFERENCED_PARAMETER(BufferSize);
-    UNREFERENCED_PARAMETER(Buffer);
-
     return EFI_UNSUPPORTED;
 }
 
@@ -1103,7 +1087,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsFlush (
-    _In_ EFI_FILE_PROTOCOL *This
+    IN  EFI_FILE_PROTOCOL *This
     )
 
 /*++
@@ -1123,7 +1107,6 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER(This);
     return EFI_UNSUPPORTED;
 }
 
@@ -1131,7 +1114,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbfsDelete (
-    _In_ EFI_FILE_PROTOCOL *This
+    IN  EFI_FILE_PROTOCOL *This
     )
 
 /*++
@@ -1153,7 +1136,6 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER(This);
     return EFI_UNSUPPORTED;
 }
 
