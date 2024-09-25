@@ -1,9 +1,10 @@
 /** @file
     Implementation of transmitting a packet.
 
-    Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "Snp.h"
@@ -11,11 +12,11 @@
 
 VOID
 FillPacketHeader(
-    _In_ SNP_DRIVER                                      *Snp,
-    _Out_writes_bytes_(PXE_MAC_HEADER_LEN_ETHER) VOID    *MacHeaderPtr,
-    _In_ EFI_MAC_ADDRESS                                 *DestAddr,
-    _In_opt_ EFI_MAC_ADDRESS                             *SrcAddr,
-    _In_ UINT16                                          *ProtocolPtr
+    IN  SNP_DRIVER          *Snp,
+    OUT VOID                *MacHeaderPtr,
+    IN  EFI_MAC_ADDRESS     *DestAddr,
+    IN  EFI_MAC_ADDRESS     *SrcAddr OPTIONAL,
+    IN  UINT16              *ProtocolPtr
     )
 /**
 
@@ -53,34 +54,23 @@ Arguments:
     }
 }
 
-
-EFI_STATUS
-SnpTransmitImpl(
-    _In_ SNP_DRIVER                      *Snp,
-    _In_reads_bytes_(BufferSize) VOID    *Buffer,
-    _In_ UINTN                           BufferSize
-    )
 /**
+  This routine calls undi to transmit the given data buffer
 
-Routine Description:
+  @param  Snp                 pointer to SNP driver structure
+  @param  Buffer           data buffer pointer
+  @param  BufferSize        Size of data in the Buffer
 
-    This routine calls netvsc to transmit the given data buffer
-
-Arguments:
-
-    Snp                 pointer to SNP driver structure
-
-    Buffer           data buffer pointer
-
-    BufferSize        Size of data in the Buffer
-
-Return Value:
-
-    EFI_SUCCESS          Successfully completed the transmission
-
-    Other               Transmission error .
+  @retval EFI_SUCCESS         if successfully completed the undi call
+  @retval Other               error return from undi call.
 
 **/
+EFI_STATUS
+SnpTransmitImpl(
+    IN  SNP_DRIVER      *Snp,
+    IN  VOID            *Buffer,
+    IN  UINTN           BufferSize
+    )
 {
     EFI_STATUS status;
 
@@ -99,90 +89,71 @@ Return Value:
     return status;
 }
 
-EFI_STATUS
-EFIAPI
-SnpTransmit(
-    _In_ EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    _In_ UINTN                       HeaderSize,
-    _In_ UINTN                       BufferSize,
-    _In_ VOID                        *Buffer,
-    _In_opt_ EFI_MAC_ADDRESS         *SrcAddr,
-    _In_opt_ EFI_MAC_ADDRESS         *DestAddr,
-    _In_opt_ UINT16                  *Protocol
-    )
 /**
+  Places a packet in the transmit queue of a network interface.
 
-Routine Description:
+  This function places the packet specified by Header and Buffer on the transmit
+  queue. If HeaderSize is nonzero and HeaderSize is not equal to
+  This->Mode->MediaHeaderSize, then EFI_INVALID_PARAMETER will be returned. If
+  BufferSize is less than This->Mode->MediaHeaderSize, then EFI_BUFFER_TOO_SMALL
+  will be returned. If Buffer is NULL, then EFI_INVALID_PARAMETER will be
+  returned. If HeaderSize is nonzero and DestAddr or Protocol is NULL, then
+  EFI_INVALID_PARAMETER will be returned. If the transmit engine of the network
+  interface is busy, then EFI_NOT_READY will be returned. If this packet can be
+  accepted by the transmit engine of the network interface, the packet contents
+  specified by Buffer will be placed on the transmit queue of the network
+  interface, and EFI_SUCCESS will be returned. GetStatus() can be used to
+  determine when the packet has actually been transmitted. The contents of the
+  Buffer must not be modified until the packet has actually been transmitted.
+  The Transmit() function performs nonblocking I/O. A caller who wants to perform
+  blocking I/O, should call Transmit(), and then GetStatus() until the
+  transmitted buffer shows up in the recycled transmit buffer.
+  If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
 
-    Places a packet in the transmit queue of a network interface.
-
-    This function places the packet specified by Header and Buffer on the transmit
-    queue. If HeaderSize is nonzero and HeaderSize is not equal to 
-    This->Mode->MediaHeaderSize, then EFI_INVALID_PARAMETER will be returned. If 
-    BufferSize is less than This->Mode->MediaHeaderSize, then EFI_BUFFER_TOO_SMALL
-    will be returned. If Buffer is NULL, then EFI_INVALID_PARAMETER will be 
-    returned. If HeaderSize is nonzero and DestAddr or Protocol is NULL, then
-    EFI_INVALID_PARAMETER will be returned. If the transmit engine of the network
-    interface is busy, then EFI_NOT_READY will be returned. If this packet can be 
-    accepted by the transmit engine of the network interface, the packet contents 
-    specified by Buffer will be placed on the transmit queue of the network 
-    interface, and EFI_SUCCESS will be returned. GetStatus() can be used to 
-    determine when the packet has actually been transmitted. The contents of the 
-    Buffer must not be modified until the packet has actually been transmitted. 
-    The Transmit() function performs nonblocking I/O. A caller who wants to perform
-    blocking I/O, should call Transmit(), and then GetStatus() until the 
-    transmitted buffer shows up in the recycled transmit buffer.
-    If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
-
-Arguments:
-
-    This       A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
-
-    HeaderSize The size, in bytes, of the media header to be filled in by the 
+  @param This       A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
+  @param HeaderSize The size, in bytes, of the media header to be filled in by the
                     Transmit() function. If HeaderSize is nonzero, then it must
                     be equal to This->Mode->MediaHeaderSize and the DestAddr and
                     Protocol parameters must not be NULL.
-
-    BufferSize The size, in bytes, of the entire packet (media header and
+  @param BufferSize The size, in bytes, of the entire packet (media header and
                     data) to be transmitted through the network interface.
-
-    Buffer     A pointer to the packet (media header followed by data) to be 
-                    transmitted. This parameter cannot be NULL. If HeaderSize is 
+  @param Buffer     A pointer to the packet (media header followed by data) to be
+                    transmitted. This parameter cannot be NULL. If HeaderSize is
                     zero, then the media header in Buffer must already be filled
-                    in by the caller. If HeaderSize is nonzero, then the media 
+                    in by the caller. If HeaderSize is nonzero, then the media
                     header will be filled in by the Transmit() function.
-
-    SrcAddr    The source HW MAC address. If HeaderSize is zero, then this 
-                    parameter is ignored. If HeaderSize is nonzero and SrcAddr 
-                    is NULL, then This->Mode->CurrentAddress is used for the 
+  @param SrcAddr    The source HW MAC address. If HeaderSize is zero, then this
+                    parameter is ignored. If HeaderSize is nonzero and SrcAddr
+                    is NULL, then This->Mode->CurrentAddress is used for the
                     source HW MAC address.
-
-    DestAddr   The destination HW MAC address. If HeaderSize is zero, then 
+  @param DestAddr   The destination HW MAC address. If HeaderSize is zero, then
                     this parameter is ignored.
-
-    Protocol   The type of header to build. If HeaderSize is zero, then this 
-                    parameter is ignored. See RFC 1700, section "Ether Types," 
+  @param Protocol   The type of header to build. If HeaderSize is zero, then this
+                    parameter is ignored. See RFC 1700, section "Ether Types,"
                     for examples.
 
-Return Value:
-
-    EFI_SUCCESS           The packet was placed on the transmit queue.
-
-    EFI_NOT_STARTED       The network interface has not been started.
-
-    EFI_NOT_READY         The network interface is too busy to accept this
+  @retval EFI_SUCCESS           The packet was placed on the transmit queue.
+  @retval EFI_NOT_STARTED       The network interface has not been started.
+  @retval EFI_NOT_READY         The network interface is too busy to accept this
                                 transmit request.
-
-    EFI_BUFFER_TOO_SMALL  The BufferSize parameter is too small.
-
-    EFI_INVALID_PARAMETER One or more of the parameters has an unsupported
+  @retval EFI_BUFFER_TOO_SMALL  The BufferSize parameter is too small.
+  @retval EFI_INVALID_PARAMETER One or more of the parameters has an unsupported
                                 value.
-
-    EFI_DEVICE_ERROR      The command could not be sent to the network interface.
-
-    EFI_UNSUPPORTED       This function is not supported by the network interface.
+  @retval EFI_DEVICE_ERROR      The command could not be sent to the network interface.
+  @retval EFI_UNSUPPORTED       This function is not supported by the network interface.
 
 **/
+EFI_STATUS
+EFIAPI
+SnpTransmit(
+    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
+    IN  UINTN                       HeaderSize,
+    IN  UINTN                       BufferSize,
+    IN  VOID                        *Buffer,
+    IN  EFI_MAC_ADDRESS             *SrcAddr OPTIONAL,
+    IN  EFI_MAC_ADDRESS             *DestAddr OPTIONAL,
+    IN  UINT16                      *Protocol OPTIONAL
+    )
 {
     SNP_DRIVER  *snpDriver;
     EFI_STATUS  status;

@@ -8,7 +8,6 @@
 #pragma once
 
 #include <Uefi.h>
-#include <EfiNt.h>
 
 #include <Protocol/Vmbus.h>
 #include <Protocol/Emcl.h>
@@ -26,7 +25,6 @@
 #include <Library/SerialPortLib.h>
 #include <Library/Printlib.h>
 
-// TODO SCRUB Make generic protocol definitions, remove EfiNt.h?
 //
 // The following base NDIS types are referenced by nvspprotocol.h.
 // Including the NT header (ntddndis.h) that defines them will pull
@@ -38,12 +36,12 @@
 //
 typedef struct _NDIS_OBJECT_HEADER
 {
-    UCHAR   Type;
-    UCHAR   Revision;
-    USHORT  Size;
+    UINT8   Type;
+    UINT8   Revision;
+    UINT16  Size;
 } NDIS_OBJECT_HEADER, *PNDIS_OBJECT_HEADER;
 
-typedef ULONG NDIS_OID, *PNDIS_OID;
+typedef UINT32 NDIS_OID, *PNDIS_OID;
 
 typedef int NDIS_STATUS, *PNDIS_STATUS;
 //
@@ -59,12 +57,6 @@ typedef UINT32 GPADL_HANDLE;
 // TODO: Make the number of packets in the buffer a PCD variable.
 #define NVSC_DEFAULT_RECEIVE_BUFFER_SIZE    MAXIMUM_ETHERNET_PACKET_SIZE * 128
 #define NVSC_DEFAULT_SEND_BUFFER_SIZE       MAXIMUM_ETHERNET_PACKET_SIZE * 128
-
-//
-// VMBUS guid for synthetic NIC
-//
-DEFINE_GUID(GUID_NETWORK_CHANNEL_TYPE, 0xf8615163, 0xdf3e, 0x46c5, 0x91,
-    0x3f, 0xf2, 0xd2, 0xf9, 0x65, 0xed, 0xe);
 
 #define NETVSC_VERSION 1
 
@@ -158,135 +150,135 @@ typedef struct _TX_PACKET_CONTEXT
 
 EFI_STATUS
 NetvscInit(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo
+    IN  NIC_DATA_INSTANCE *AdapterInfo
     );
 
 EFI_STATUS
 NetvscShutdown(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo
+    IN  NIC_DATA_INSTANCE *AdapterInfo
     );
 
 EFI_STATUS
 NetvscSetFilter(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo,
-    _In_ UINT32            newFilter
+    IN  NIC_DATA_INSTANCE *AdapterInfo,
+    IN  UINT32            newFilter
     );
 
 EFI_STATUS
 NetvscTransmit(
-    _In_ NIC_DATA_INSTANCE               *AdapterInfo,
-    _In_reads_bytes_(BufferSize) VOID    *Buffer,
-    _In_ UINT32                          BufferSize
+    IN  NIC_DATA_INSTANCE               *AdapterInfo,
+    IN  VOID                            *Buffer,
+    IN  UINT32                          BufferSize
     );
 
 VOID
 NetvscReceiveCallback(
-    _In_ VOID                                    *ReceiveContext,
-    _In_ VOID                                    *PacketContext,
-    _In_reads_bytes_(BufferLength) VOID          *Buffer,
-    _In_ UINT32                                  BufferLength,
-    _In_ UINT16                                  TransferPageSetId,
-    _In_ UINT32                                  RangeCount,
-    _In_reads_(RangeCount) EFI_TRANSFER_RANGE    *Ranges
+    IN  VOID                                    *ReceiveContext,
+    IN  VOID                                    *PacketContext,
+    IN  VOID                                    *Buffer,
+    IN  UINT32                                  BufferLength,
+    IN  UINT16                                  TransferPageSetId,
+    IN  UINT32                                  RangeCount,
+    IN  EFI_TRANSFER_RANGE                      *Ranges
     );
 
 EFI_STATUS
 NetvscReceive(
-    _In_ NIC_DATA_INSTANCE                  *AdapterInfo,
-    _Out_writes_bytes_(*BufferSize) VOID    *Buffer,
-    _Inout_ UINTN                           *BufferSize,
-    _Out_opt_ UINTN                         *HeaderSize,
-    _Out_opt_ EFI_MAC_ADDRESS               *SrcAddr,
-    _Out_opt_ EFI_MAC_ADDRESS               *DestAddr,
-    _Out_opt_ UINT16                        *Protocol
+    IN      NIC_DATA_INSTANCE               *AdapterInfo,
+    OUT     VOID                            *Buffer,
+    IN OUT  UINTN                           *BufferSize,
+    OUT     UINTN                         *HeaderSize OPTIONAL,
+    OUT     EFI_MAC_ADDRESS               *SrcAddr OPTIONAL,
+    OUT     EFI_MAC_ADDRESS               *DestAddr OPTIONAL,
+    OUT     UINT16                        *Protocol OPTIONAL
     );
 
 VOID
 NetvscResetStatistics(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo
+    IN  NIC_DATA_INSTANCE *AdapterInfo
     );
 
 EFI_STATUS
 NvspStatusToEfiStatus(
-    _In_ NVSP_STATUS nvspStatus
+    IN  NVSP_STATUS nvspStatus
 );
 
 __forceinline
 EFI_STATUS
 RxQueueInit(
-    _In_ RX_QUEUE    *Queue,
-    _In_ UINT32      Length
+    IN  RX_QUEUE    *Queue,
+    IN  UINT32      Length
     );
 
 __forceinline
 VOID
 RxQueueDestroy(
-    _In_ RX_QUEUE *Queue
+    IN  RX_QUEUE *Queue
     );
 
 __forceinline
 BOOLEAN
 RxQueueIsAlmostFull(
-    _In_ RX_QUEUE *Queue
+    IN  RX_QUEUE *Queue
     );
 
 __forceinline
 BOOLEAN
 RxQueueIsEmpty(
-    _In_ RX_QUEUE *Queue
+    IN  RX_QUEUE *Queue
     );
 
 __forceinline
 VOID
 RxQueueEnqueue(
-    _In_ RX_QUEUE              *Queue,
-    _In_ RX_PACKET_INSTANCE    *PacketInfo
+    IN  RX_QUEUE                *Queue,
+    IN  RX_PACKET_INSTANCE      *PacketInfo
     );
 
 __forceinline
 VOID
 RxQueueDequeue(
-    _In_ RX_QUEUE               *Queue,
-    _Out_ RX_PACKET_INSTANCE    *PacketInfo
+    IN  RX_QUEUE                *Queue,
+    OUT RX_PACKET_INSTANCE      *PacketInfo
     );
 
 __forceinline
 EFI_STATUS
 TxQueueInit(
-    _In_ TX_QUEUE    *Queue,
-    _In_ UINT32      Length
+    IN  TX_QUEUE    *Queue,
+    IN  UINT32      Length
     );
 
 __forceinline
 VOID
 TxQueueDestroy(
-    _In_ TX_QUEUE *Queue
+    IN  TX_QUEUE *Queue
     );
 
 __forceinline
 BOOLEAN
 TxQueueIsFull(
-    _In_ TX_QUEUE *Queue
+    IN  TX_QUEUE *Queue
     );
 
 __forceinline
 BOOLEAN
 TxQueueIsEmpty(
-    _In_ TX_QUEUE *Queue
+    IN  TX_QUEUE *Queue
     );
 
 __forceinline
 VOID
 TxQueueEnqueue(
-    _In_ TX_QUEUE    *Queue,
-    _In_ VOID        *TxBuffer
+    IN  TX_QUEUE    *Queue,
+    IN  VOID        *TxBuffer
     );
 
 __forceinline
 VOID
 TxQueueDequeue(
-    _In_ TX_QUEUE     *Queue,
-    _Out_ VOID        **TxBuffer
+    IN  TX_QUEUE     *Queue,
+    OUT VOID        **TxBuffer
     );
 
 

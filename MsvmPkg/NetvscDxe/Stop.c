@@ -1,34 +1,27 @@
 /** @file
     Implementation of stopping a network interface.
 
-    Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "Snp.h"
 
+/**
+  Call UNDI to stop the interface and changes the snp state.
+
+  @param  Snp   Pointer to snp driver structure
+
+  @retval EFI_SUCCESS            The network interface was stopped.
+  @retval EFI_DEVICE_ERROR       SNP is not initialized.
+
+**/
 EFI_STATUS
 SnpStopImpl(
-    _In_ SNP_DRIVER *Snp
+    IN  SNP_DRIVER *Snp
     )
-/*++
-
-Routine Description:
-
-    Call Netvsc to shut down the interface and destroy all allocated objects
-
-Arguments:
-
-    Snp   Pointer to snp driver structure.
-
-Return Value
-
-    EFI_SUCCESS        vNIC is shut down successfully.
-
-    EFI_DEVICE_ERROR   vNIC could not be shut down.
-
---*/
 {
     EFI_STATUS status = EFI_SUCCESS;
 
@@ -53,43 +46,36 @@ Return Value
 
 Exit:
 
-    return status;  
+    return status;
 }
 
 
-EFI_STATUS
-EFIAPI
-SnpStop(
-    _In_ EFI_SIMPLE_NETWORK_PROTOCOL *This
-    )
 /**
+  Changes the state of a network interface from "started" to "stopped."
 
-Routine Description:
+  This function stops a network interface. This call is only valid if the network
+  interface is in the started state. If the network interface was successfully
+  stopped, then EFI_SUCCESS will be returned.
 
-    Changes the state of a network interface from "started" to "stopped."
+  @param  This                    A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL
+                                  instance.
 
-    This function stops a network interface. This call is only valid if the network
-    interface is in the started state. If the network interface was successfully
-    stopped, then EFI_SUCCESS will be returned.
 
-Arguments:
-
-    This                    A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL 
-                              instance.
-
-Return Value:
-
-    EFI_SUCCESS             The network interface was stopped.
-
-    EFI_NOT_STARTED         The network interface has not been started.
-
-    EFI_INVALID_PARAMETER   This parameter was NULL or did not point to a 
+  @retval EFI_SUCCESS             The network interface was stopped.
+  @retval EFI_NOT_STARTED         The network interface has not been started.
+  @retval EFI_INVALID_PARAMETER   This parameter was NULL or did not point to a
                                   valid EFI_SIMPLE_NETWORK_PROTOCOL structure.
-
-    EFI_DEVICE_ERROR        The command could not be sent to the network 
+  @retval EFI_DEVICE_ERROR        The command could not be sent to the network
+                                  interface.
+  @retval EFI_UNSUPPORTED         This function is not supported by the network
                                   interface.
 
 **/
+EFI_STATUS
+EFIAPI
+SnpStop(
+    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
+    )
 {
     SNP_DRIVER  *snpDriver;
     EFI_TPL     oldTpl;

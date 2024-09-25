@@ -1,38 +1,30 @@
 /** @file
-    Implementation of initializing a network adapter.
+     Implementation of initializing a network adapter.
 
-    Copyright (c) 2004 - 2008, Intel Corporation. All rights reserved.<BR>
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "Snp.h"
 
-EFI_STATUS
-SnpInitImpl(
-    _In_ SNP_DRIVER *Snp
-    )
 /**
+  Call UNDI to initialize the interface.
 
-Routine Description:
+  @param  Snp                   Pointer to snp driver structure.
+  @param  CableDetectFlag       Do/don't detect the cable (depending on what
+                                undi supports).
 
-    Initialize the interface.
-
-Arguments:
-
-    Snp                   Pointer to snp driver structure.
-
-    CableDetectFlag       Do/don't detect the cable 
-
-Return Value:
-
-    EFI_SUCCESS           Initialized successfully.
-
-    EFI_DEVICE_ERROR      Initialization error.
-
-    Other                 Other errors as indicated.
+  @retval EFI_SUCCESS           UNDI is initialized successfully.
+  @retval EFI_DEVICE_ERROR      UNDI could not be initialized.
+  @retval Other                 Other errors as indicated.
 
 **/
+EFI_STATUS
+SnpInitImpl(
+    IN  SNP_DRIVER *Snp
+    )
 {
     EFI_STATUS status;
 
@@ -56,59 +48,46 @@ Return Value:
 }
 
 
-EFI_STATUS
-EFIAPI
-SnpInitialize(
-    _In_ EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    _In_ UINTN                       ExtraRxBufferSize,
-    _In_ UINTN                       ExtraTxBufferSize
-    )
 /**
+  Resets a network adapter and allocates the transmit and receive buffers
+  required by the network interface; optionally, also requests allocation of
+  additional transmit and receive buffers.
 
-Routine Description:
+  This function allocates the transmit and receive buffers required by the network
+  interface. If this allocation fails, then EFI_OUT_OF_RESOURCES is returned.
+  If the allocation succeeds and the network interface is successfully initialized,
+  then EFI_SUCCESS will be returned.
 
-    Resets a network adapter and allocates the transmit and receive buffers 
-    required by the network interface; optionally, also requests allocation of 
-    additional transmit and receive buffers.
+  @param This               A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
 
-    This function allocates the transmit and receive buffers required by the network
-    interface. If this allocation fails, then EFI_OUT_OF_RESOURCES is returned.
-    If the allocation succeeds and the network interface is successfully initialized,
-    then EFI_SUCCESS will be returned.
-
-Arguments:
-
-    This               A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
-
-    ExtraRxBufferSize  The size, in bytes, of the extra receive buffer space
+  @param ExtraRxBufferSize  The size, in bytes, of the extra receive buffer space
                             that the driver should allocate for the network interface.
-                            Some network interfaces will not be able to use the 
-                            extra buffer, and the caller will not know if it is 
+                            Some network interfaces will not be able to use the
+                            extra buffer, and the caller will not know if it is
                             actually being used.
-
-    ExtraTxBufferSize  The size, in bytes, of the extra transmit buffer space
+  @param ExtraTxBufferSize  The size, in bytes, of the extra transmit buffer space
                             that the driver should allocate for the network interface.
                             Some network interfaces will not be able to use the
                             extra buffer, and the caller will not know if it is
                             actually being used.
 
-Return Value:
-
-    EFI_SUCCESS           The network interface was initialized.
-
-    EFI_NOT_STARTED       The network interface has not been started.
-
-    EFI_OUT_OF_RESOURCES  There was not enough memory for the transmit and
+  @retval EFI_SUCCESS           The network interface was initialized.
+  @retval EFI_NOT_STARTED       The network interface has not been started.
+  @retval EFI_OUT_OF_RESOURCES  There was not enough memory for the transmit and
                                 receive buffers.
-
-    EFI_INVALID_PARAMETER This parameter was NULL or did not point to a valid
+  @retval EFI_INVALID_PARAMETER This parameter was NULL or did not point to a valid
                                 EFI_SIMPLE_NETWORK_PROTOCOL structure.
-
-    EFI_DEVICE_ERROR      The command could not be sent to the network interface.
-
-    EFI_UNSUPPORTED       The increased buffer size feature is not supported.
+  @retval EFI_DEVICE_ERROR      The command could not be sent to the network interface.
+  @retval EFI_UNSUPPORTED       The increased buffer size feature is not supported.
 
 **/
+EFI_STATUS
+EFIAPI
+SnpInitialize(
+    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
+    IN  UINTN                       ExtraRxBufferSize,
+    IN  UINTN                       ExtraTxBufferSize
+    )
 {
     EFI_STATUS  efiStatus;
     SNP_DRIVER  *snpDriver;

@@ -1,34 +1,27 @@
 /** @file
-    Implementation of shuting down a network adapter.
+    Implementation of shutting down a network adapter.
 
-    Copyright (c) 2004 - 2007, Intel Corporation. All rights reserved.<BR>
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "Snp.h"
 
+/**
+  Call UNDI to shut down the interface.
+
+  @param  Snp   Pointer to snp driver structure.
+
+  @retval EFI_SUCCESS        UNDI is shut down successfully.
+  @retval EFI_DEVICE_ERROR   UNDI could not be shut down.
+
+**/
 EFI_STATUS
 SnpShutdownImpl(
-    _In_ SNP_DRIVER *Snp
+    IN  SNP_DRIVER *Snp
     )
-/*++
-
-Routine Description:
-
-    Call Netvsc to shut down the interface and destroy all allocated objects
-
-Arguments:
-
-    Snp   Pointer to snp driver structure.
-
-Return Value
-
-    EFI_SUCCESS        vNIC is shut down successfully.
-
-    EFI_DEVICE_ERROR   vNIC could not be shut down.
-
---*/
 {
     EFI_STATUS status;
 
@@ -41,44 +34,34 @@ Return Value
 
     Snp->Mode.State = EfiSimpleNetworkStarted;
 
-    return status;  
+    return status;
 }
 
 
+/**
+  Resets a network adapter and leaves it in a state that is safe for another
+  driver to initialize.
+
+  This function releases the memory buffers assigned in the Initialize() call.
+  Pending transmits and receives are lost, and interrupts are cleared and disabled.
+  After this call, only the Initialize() and Stop() calls may be used. If the
+  network interface was successfully shutdown, then EFI_SUCCESS will be returned.
+  If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
+
+  @param  This  A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
+
+  @retval EFI_SUCCESS           The network interface was shutdown.
+  @retval EFI_NOT_STARTED       The network interface has not been started.
+  @retval EFI_INVALID_PARAMETER This parameter was NULL or did not point to a valid
+                                EFI_SIMPLE_NETWORK_PROTOCOL structure.
+  @retval EFI_DEVICE_ERROR      The command could not be sent to the network interface.
+
+**/
 EFI_STATUS
 EFIAPI
 SnpShutdown(
-    _In_ EFI_SIMPLE_NETWORK_PROTOCOL *This
+    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
     )
-/*++
-
-Routine Description:
-
-      Resets a network adapter and leaves it in a state that is safe for another 
-      driver to initialize. 
-      
-      This function releases the memory buffers assigned in the Initialize() call.
-      Pending transmits and receives are lost, and interrupts are cleared and disabled.
-      After this call, only the Initialize() and Stop() calls may be used. If the 
-      network interface was successfully shutdown, then EFI_SUCCESS will be returned.
-      If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
-
-Arguments:
-
-    This  A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
-
-Return Value:
-
-    EFI_SUCCESS           The network interface was shutdown.
-
-    EFI_NOT_STARTED       The network interface has not been started.
-
-    EFI_INVALID_PARAMETER This parameter was NULL or did not point to a valid 
-                                EFI_SIMPLE_NETWORK_PROTOCOL structure.
-
-    EFI_DEVICE_ERROR      The command could not be sent to the network interface.
-
---*/
 {
     SNP_DRIVER  *snpDriver;
     EFI_STATUS  status;
@@ -113,7 +96,7 @@ Return Value:
         status = EFI_DEVICE_ERROR;
         goto Exit;
     }
-  
+
     status = SnpShutdownImpl(snpDriver);
 
     snpDriver->Mode.ReceiveFilterSetting  = 0;

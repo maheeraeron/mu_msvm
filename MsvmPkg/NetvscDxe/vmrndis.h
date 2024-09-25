@@ -779,7 +779,7 @@ typedef UINT32                                  RNDIS_AF;
 //
 //  NdisInitialize message
 //
-typedef struct _RNDIS_INITIALIZE_REQUEST 
+typedef struct _RNDIS_INITIALIZE_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
     UINT32                                  MajorVersion;
@@ -791,7 +791,7 @@ typedef struct _RNDIS_INITIALIZE_REQUEST
 //
 //  Response to NdisInitialize
 //
-typedef struct _RNDIS_INITIALIZE_COMPLETE 
+typedef struct _RNDIS_INITIALIZE_COMPLETE
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_STATUS                            Status;
@@ -822,7 +822,7 @@ typedef struct _RNDIS_CO_ADDRESS_FAMILY
 //
 //  NdisHalt message
 //
-typedef struct _RNDIS_HALT_REQUEST 
+typedef struct _RNDIS_HALT_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
 } RNDIS_HALT_REQUEST, *PRNDIS_HALT_REQUEST;
@@ -831,7 +831,7 @@ typedef struct _RNDIS_HALT_REQUEST
 //
 // NdisQueryRequest message
 //
-typedef struct _RNDIS_QUERY_REQUEST 
+typedef struct _RNDIS_QUERY_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_OID                               Oid;
@@ -856,7 +856,7 @@ typedef struct _RNDIS_QUERY_COMPLETE
 //
 //  NdisSetRequest message
 //
-typedef struct _RNDIS_SET_REQUEST 
+typedef struct _RNDIS_SET_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_OID                               Oid;
@@ -879,7 +879,7 @@ typedef struct _RNDIS_SET_COMPLETE
 //
 //  NdisSetExRequest message
 //
-typedef struct _RNDIS_SET_EX_REQUEST 
+typedef struct _RNDIS_SET_EX_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_OID                               Oid;
@@ -953,7 +953,7 @@ typedef struct _RNDIS_KEEPALIVE_REQUEST
 
 //
 // Response to NdisKeepAlive
-//  
+//
 typedef struct _RNDIS_KEEPALIVE_COMPLETE
 {
     RNDIS_REQUEST_ID                        RequestId;
@@ -977,7 +977,7 @@ typedef struct _RNDIS_PACKET
     UINT32                                  PerPacketInfoOffset;
     UINT32                                  PerPacketInfoLength;
     RNDIS_HANDLE                            VcHandle;
-    UINT32                                  Reserved;    
+    UINT32                                  Reserved;
 } RNDIS_PACKET, *PRNDIS_PACKET;
 
 //
@@ -1029,7 +1029,7 @@ typedef struct _RNDIS_CONFIG_PARAMETER_INFO
 //
 //  CoNdisMiniportCreateVc message
 //
-typedef struct _RCONDIS_MP_CREATE_VC 
+typedef struct _RCONDIS_MP_CREATE_VC
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_HANDLE                            NdisVcHandle;
@@ -1038,7 +1038,7 @@ typedef struct _RCONDIS_MP_CREATE_VC
 //
 //  Response to CoNdisMiniportCreateVc
 //
-typedef struct _RCONDIS_MP_CREATE_VC_COMPLETE 
+typedef struct _RCONDIS_MP_CREATE_VC_COMPLETE
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_HANDLE                            DeviceVcHandle;
@@ -1049,7 +1049,7 @@ typedef struct _RCONDIS_MP_CREATE_VC_COMPLETE
 //
 //  CoNdisMiniportDeleteVc message
 //
-typedef struct _RCONDIS_MP_DELETE_VC 
+typedef struct _RCONDIS_MP_DELETE_VC
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_HANDLE                            DeviceVcHandle;
@@ -1058,7 +1058,7 @@ typedef struct _RCONDIS_MP_DELETE_VC
 //
 //  Response to CoNdisMiniportDeleteVc
 //
-typedef struct _RCONDIS_MP_DELETE_VC_COMPLETE 
+typedef struct _RCONDIS_MP_DELETE_VC_COMPLETE
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_STATUS                            Status;
@@ -1068,7 +1068,7 @@ typedef struct _RCONDIS_MP_DELETE_VC_COMPLETE
 //
 //  CoNdisMiniportQueryRequest message
 //
-typedef struct _RCONDIS_MP_QUERY_REQUEST 
+typedef struct _RCONDIS_MP_QUERY_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_REQUEST_TYPE                      RequestType;
@@ -1082,7 +1082,7 @@ typedef struct _RCONDIS_MP_QUERY_REQUEST
 //
 //  CoNdisMiniportSetRequest message
 //
-typedef struct _RCONDIS_MP_SET_REQUEST 
+typedef struct _RCONDIS_MP_SET_REQUEST
 {
     RNDIS_REQUEST_ID                        RequestId;
     RNDIS_REQUEST_TYPE                      RequestType;
@@ -1222,7 +1222,7 @@ typedef union _RNDIS_MESSAGE_CONTAINER
 //
 // Remote NDIS message format
 //
-typedef __struct_bcount(MessageLength) struct _RNDIS_MESSAGE 
+typedef struct _RNDIS_MESSAGE
 {
     UINT32                                  NdisMessageType;
 
@@ -1242,7 +1242,7 @@ typedef __struct_bcount(MessageLength) struct _RNDIS_MESSAGE
 //
 // Handy macros
 
-// get the size of an RNDIS message. Pass in the message type, 
+// get the size of an RNDIS message. Pass in the message type,
 // RNDIS_SET_REQUEST, RNDIS_PACKET for example
 #define RNDIS_MESSAGE_SIZE(Message)                             \
     (sizeof(Message) + (sizeof(RNDIS_MESSAGE) - sizeof(RNDIS_MESSAGE_CONTAINER)))

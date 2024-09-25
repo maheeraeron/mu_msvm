@@ -397,7 +397,7 @@ typedef struct _NVSP_2_NETVSC_CAPABILITIES
             UINT64                          Ieee8021q : 1;
             UINT64                          CorrelationId : 1;
             UINT64                          Teaming : 1;
-            ULONG64                         VirtualSubnetId : 1;
+            UINT64                          VirtualSubnetId : 1;
         };
     };
 } NVSP_2_NETVSC_CAPABILITIES, *PNVSP_2_NETVSC_CAPABILITIES;
@@ -507,11 +507,11 @@ typedef struct _NVSP_5_MESSAGE_OID_QUERY_EX_COMPLETE
         //
         // Bytes written to the buffer if query is successful
         //
-        UINT BytesWritten;
+        UINT32 BytesWritten;
         //
         // Bytes needed if Status if NDIS_STATUS_BUFFER_TOO_SHORT;
         //
-        UINT BytesNeeded;
+        UINT32 BytesNeeded;
     };
 } NVSP_5_MESSAGE_OID_QUERY_EX_COMPLETE, *PNVSP_5_MESSAGE_OID_QUERY_EX_COMPLETE;
 #pragma warning(default : 4201)
@@ -638,6 +638,6 @@ typedef struct _NVSP_MESSAGE
     UINT32                                  Padding;
 } NVSP_MESSAGE, *PNVSP_MESSAGE;
 
-C_ASSERT(sizeof(NVSP_MESSAGE) % 8 == 0);
+static_assert(sizeof(NVSP_MESSAGE) % 8 == 0);
 
 #pragma pack(pop)

@@ -405,7 +405,7 @@ HashPeImage (
   }
 
   //
-  // 5.  Skip over the image checksum (it occupies a single ULONG).
+  // 5.  Skip over the image checksum (it occupies a single UINT32).
   //
   if (NumberOfRvaAndSizes <= EFI_IMAGE_DIRECTORY_ENTRY_SECURITY) {
     //

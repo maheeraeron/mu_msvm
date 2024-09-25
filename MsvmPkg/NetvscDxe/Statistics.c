@@ -1,83 +1,70 @@
 /** @file
     Implementation of collecting the statistics on a network interface.
 
-    Copyright (c) 2004 - 2010, Intel Corporation. All rights reserved.<BR>
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+Copyright (c) 2004 - 2010, Intel Corporation. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "Snp.h"
 
 
-EFI_STATUS
-EFIAPI
-SnpStatistics(
-    _In_ EFI_SIMPLE_NETWORK_PROTOCOL    *This,
-    _In_ BOOLEAN                        Reset,
-    _Inout_opt_ UINTN                   *StatisticsSize,
-    _Inout_opt_ EFI_NETWORK_STATISTICS  *StatisticsTable
-    )
 /**
+  Resets or collects the statistics on a network interface.
 
-Routine Description:
+  This function resets or collects the statistics on a network interface. If the
+  size of the statistics table specified by StatisticsSize is not big enough for
+  all the statistics that are collected by the network interface, then a partial
+  buffer of statistics is returned in StatisticsTable, StatisticsSize is set to
+  the size required to collect all the available statistics, and
+  EFI_BUFFER_TOO_SMALL is returned.
+  If StatisticsSize is big enough for all the statistics, then StatisticsTable
+  will be filled, StatisticsSize will be set to the size of the returned
+  StatisticsTable structure, and EFI_SUCCESS is returned.
+  If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
+  If Reset is FALSE, and both StatisticsSize and StatisticsTable are NULL, then
+  no operations will be performed, and EFI_SUCCESS will be returned.
+  If Reset is TRUE, then all of the supported statistics counters on this network
+  interface will be reset to zero.
 
-    Resets or collects the statistics on a network interface.
-
-    This function resets or collects the statistics on a network interface. If the
-    size of the statistics table specified by StatisticsSize is not big enough for
-    all the statistics that are collected by the network interface, then a partial
-    buffer of statistics is returned in StatisticsTable, StatisticsSize is set to
-    the size required to collect all the available statistics, and
-    EFI_BUFFER_TOO_SMALL is returned.
-    If StatisticsSize is big enough for all the statistics, then StatisticsTable
-    will be filled, StatisticsSize will be set to the size of the returned
-    StatisticsTable structure, and EFI_SUCCESS is returned.
-    If the driver has not been initialized, EFI_DEVICE_ERROR will be returned.
-    If Reset is FALSE, and both StatisticsSize and StatisticsTable are NULL, then
-    no operations will be performed, and EFI_SUCCESS will be returned.
-    If Reset is TRUE, then all of the supported statistics counters on this network
-    interface will be reset to zero.
-
-Arguments:
-
-    This            A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
-
-    Reset           Set to TRUE to reset the statistics for the network interface.
-
-    StatisticsSize  On input the size, in bytes, of StatisticsTable. On output
+  @param This            A pointer to the EFI_SIMPLE_NETWORK_PROTOCOL instance.
+  @param Reset           Set to TRUE to reset the statistics for the network interface.
+  @param StatisticsSize  On input the size, in bytes, of StatisticsTable. On output
                          the size, in bytes, of the resulting table of statistics.
-
-    StatisticsTable A pointer to the EFI_NETWORK_STATISTICS structure that
+  @param StatisticsTable A pointer to the EFI_NETWORK_STATISTICS structure that
                          contains the statistics. Type EFI_NETWORK_STATISTICS is
                          defined in "Related Definitions" below.
 
-Return Value:
-
-    EFI_SUCCESS           The requested operation succeeded.
-
-    EFI_NOT_STARTED       The Simple Network Protocol interface has not been
+  @retval EFI_SUCCESS           The requested operation succeeded.
+  @retval EFI_NOT_STARTED       The Simple Network Protocol interface has not been
                                 started by calling Start().
-
-    EFI_BUFFER_TOO_SMALL  StatisticsSize is not NULL and StatisticsTable is
+  @retval EFI_BUFFER_TOO_SMALL  StatisticsSize is not NULL and StatisticsTable is
                                 NULL. The current buffer size that is needed to
                                 hold all the statistics is returned in StatisticsSize.
-
-    EFI_BUFFER_TOO_SMALL  StatisticsSize is not NULL and StatisticsTable is
+  @retval EFI_BUFFER_TOO_SMALL  StatisticsSize is not NULL and StatisticsTable is
                                 not NULL. The current buffer size that is needed
                                 to hold all the statistics is returned in
                                 StatisticsSize. A partial set of statistics is
                                 returned in StatisticsTable.
-
-    EFI_INVALID_PARAMETER StatisticsSize is NULL and StatisticsTable is not
+  @retval EFI_INVALID_PARAMETER StatisticsSize is NULL and StatisticsTable is not
                                 NULL.
-
-    EFI_DEVICE_ERROR      The Simple Network Protocol interface has not
+  @retval EFI_DEVICE_ERROR      The Simple Network Protocol interface has not
                                 been initialized by calling Initialize().
-
-    EFI_DEVICE_ERROR      An error was encountered collecting statistics
+  @retval EFI_DEVICE_ERROR      An error was encountered collecting statistics
                                 from the NIC.
+  @retval EFI_UNSUPPORTED       The NIC does not support collecting statistics
+                                from the network interface.
 
 **/
+EFI_STATUS
+EFIAPI
+SnpStatistics(
+    IN      EFI_SIMPLE_NETWORK_PROTOCOL     *This,
+    IN      BOOLEAN                         Reset,
+    IN OUT  UINTN                           *StatisticsSize OPTIONAL,
+    IN OUT  EFI_NETWORK_STATISTICS          *StatisticsTable OPTIONAL
+    )
 {
     SNP_DRIVER        *snpDriver;
     UINT64            *outStp, *inStp;
@@ -117,7 +104,7 @@ Return Value:
         status = EFI_DEVICE_ERROR;
         goto Exit;
     }
-    
+
     //
     // if we are not resetting the counters, we have to have a valid stat table
     // with >0 size. if no reset, no table and no size, return success.

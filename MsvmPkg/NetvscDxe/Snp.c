@@ -1,9 +1,10 @@
 /** @file
-    Implementation of driver entry point and driver binding protocol.
+  Implementation of driver entry point and driver binding protocol.
 
-    Copyright (c) 2004 - 2011, Intel Corporation. All rights reserved.<BR>
-    Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+Copyright (c) 2004 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.<BR>
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include "Snp.h"
@@ -12,7 +13,7 @@
 VOID
 EFIAPI
 SnpShutdownAndStop(
-    _In_ SNP_DRIVER    *SnpDriver
+    IN  SNP_DRIVER    *SnpDriver
     )
 {
     SnpShutdownImpl(SnpDriver);
@@ -46,9 +47,9 @@ SnpNotifyExitBootServices (
 
 EFI_STATUS
 AppendMac2DevPath(
-    _Out_ EFI_DEVICE_PATH_PROTOCOL      **DevPtr,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *BaseDevPtr,
-    _In_ SNP_DRIVER                     *Snp
+    OUT EFI_DEVICE_PATH_PROTOCOL      **DevPtr,
+    IN  EFI_DEVICE_PATH_PROTOCOL       *BaseDevPtr,
+    IN  SNP_DRIVER                     *Snp
   )
 /*++
 
@@ -146,43 +147,31 @@ Exit:
     return status;
 }
 
-
-EFI_STATUS
-EFIAPI
-SimpleNetworkDriverSupported(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     Controller,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
-    )
 /**
+  Test to see if this driver supports ControllerHandle. This service
+  is called by the EFI boot service ConnectController(). In
+  order to make drivers as small as possible, there are a few calling
+  restrictions for this service. ConnectController() must
+  follow these calling restrictions. If any other agent wishes to call
+  Supported() it must also follow these calling restrictions.
 
-Routine Description:
-
-    Test to see if this driver supports ControllerHandle. This service
-    is called by the EFI boot service ConnectController(). In
-    order to make drivers as small as possible, there are a few calling
-    restrictions for this service. ConnectController() must
-    follow these calling restrictions. If any other agent wishes to call
-    Supported() it must also follow these calling restrictions.
-
-Arguments:
-
-    This                Protocol instance pointer.
-
-    ControllerHandle    Handle of device to test.
-
-    RemainingDevicePath Optional parameter use to pick a specific child
+  @param  This                Protocol instance pointer.
+  @param  ControllerHandle    Handle of device to test.
+  @param  RemainingDevicePath Optional parameter use to pick a specific child
                               device to start.
 
-Return Value:
-
-    EFI_SUCCESS         This driver supports this device.
-
-    EFI_ALREADY_STARTED This driver is already running on this device.
-
-    other               This driver does not support this device.
+  @retval EFI_SUCCESS         This driver supports this device.
+  @retval EFI_ALREADY_STARTED This driver is already running on this device.
+  @retval other               This driver does not support this device.
 
 **/
+EFI_STATUS
+EFIAPI
+SimpleNetworkDriverSupported (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+  )
 {
     EFI_STATUS status;
     EFI_VMBUS_PROTOCOL *vmbus;
@@ -208,7 +197,7 @@ Return Value:
 
     status = EmclChannelTypeSupported(
         Controller,
-        &GUID_NETWORK_CHANNEL_TYPE,
+        &gSyntheticNetworkClassGuid,
         This->DriverBindingHandle);
 
 Exit:
@@ -219,10 +208,10 @@ Exit:
 VOID
 EFIAPI
 NetvscCleanupController (
-    _In_  EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_  EFI_HANDLE                     ControllerHandle,
-    _In_  BOOLEAN                        CloseDevicePathProtocol,
-    _In_  BOOLEAN                        CloseEmclProtocol
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     ControllerHandle,
+    IN  BOOLEAN                        CloseDevicePathProtocol,
+    IN  BOOLEAN                        CloseEmclProtocol
     )
 /**
 
@@ -274,13 +263,13 @@ Return Value:
 VOID
 EFIAPI
 NetvscCleanupDevice (
-    _In_  EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_  EFI_HANDLE                     ControllerHandle,
-    _In_opt_ EFI_HANDLE                  DeviceHandle,
-    _In_  BOOLEAN                        SnpInstalled,
-    _In_  BOOLEAN                        DevicePathInstalled,
-    _In_opt_ SNP_DRIVER                  *SnpDriver,
-    _In_opt_ NETVSC_ADAPTER_CONTEXT      *AdapterContext
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     ControllerHandle,
+    IN  EFI_HANDLE                  DeviceHandle OPTIONAL,
+    IN  BOOLEAN                        SnpInstalled,
+    IN  BOOLEAN                        DevicePathInstalled,
+    IN  SNP_DRIVER                  *SnpDriver OPTIONAL,
+    IN  NETVSC_ADAPTER_CONTEXT      *AdapterContext OPTIONAL
     )
 /**
 
@@ -432,9 +421,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 NetvscInitializeController(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     ControllerHandle,
-    _Out_ EFI_DEVICE_PATH_PROTOCOL      **BaseDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     ControllerHandle,
+    OUT EFI_DEVICE_PATH_PROTOCOL      **BaseDevicePath
     )
 /**
 
@@ -507,9 +496,9 @@ Exit:
 EFI_STATUS
 EFIAPI
 NetvscCreateDevice(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL   *This,
-    _In_ EFI_HANDLE                    ControllerHandle,
-    _In_ EFI_DEVICE_PATH_PROTOCOL      *BaseDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL   *This,
+    IN  EFI_HANDLE                    ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL      *BaseDevicePath
     )
 /**
 
@@ -762,43 +751,31 @@ Cleanup:
     return status;
 }
 
-
-EFI_STATUS
-EFIAPI
-SimpleNetworkDriverStart(
-    _In_ EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_ EFI_HANDLE                     Controller,
-    _In_ EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
-    )
 /**
+  Start this driver on ControllerHandle. This service is called by the
+  EFI boot service ConnectController(). In order to make
+  drivers as small as possible, there are a few calling restrictions for
+  this service. ConnectController() must follow these
+  calling restrictions. If any other agent wishes to call Start() it
+  must also follow these calling restrictions.
 
-Routine Description:
-
-    Start this driver on ControllerHandle. This service is called by the
-    EFI boot service ConnectController(). In order to make
-    drivers as small as possible, there are a few calling restrictions for
-    this service. ConnectController() must follow these
-    calling restrictions. If any other agent wishes to call Start() it
-    must also follow these calling restrictions.
-
-Arguments:
-
-    This                 Protocol instance pointer.
-
-    ControllerHandle     Handle of device to bind driver to.
-
-    RemainingDevicePath  Optional parameter use to pick a specific child
+  @param  This                 Protocol instance pointer.
+  @param  ControllerHandle     Handle of device to bind driver to.
+  @param  RemainingDevicePath  Optional parameter use to pick a specific child
                                device to start.
 
-Return Value:
-
-    EFI_SUCCESS          This driver is added to ControllerHandle
-
-    EFI_ALREADY_STARTED  This driver is already running on ControllerHandle
-
-    other                This driver does not support this device
+  @retval EFI_SUCCESS          This driver is added to ControllerHandle
+  @retval EFI_DEVICE_ERROR     This driver could not be started due to a device error
+  @retval other                This driver does not support this device
 
 **/
+EFI_STATUS
+EFIAPI
+SimpleNetworkDriverStart (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+  )
 {
     EFI_STATUS                 status;
     EFI_DEVICE_PATH_PROTOCOL      *baseDevicePath;
@@ -825,43 +802,32 @@ Exit:
 }
 
 
+/**
+  Stop this driver on ControllerHandle. This service is called by the
+  EFI boot service DisconnectController(). In order to
+  make drivers as small as possible, there are a few calling
+  restrictions for this service. DisconnectController()
+  must follow these calling restrictions. If any other agent wishes
+  to call Stop() it must also follow these calling restrictions.
+
+  @param  This              Protocol instance pointer.
+  @param  ControllerHandle  Handle of device to stop driver on
+  @param  NumberOfChildren  Number of Handles in ChildHandleBuffer. If number of
+                            children is zero stop the entire bus driver.
+  @param  ChildHandleBuffer List of Child Handles to Stop.
+
+  @retval EFI_SUCCESS       This driver is removed ControllerHandle
+  @retval other             This driver was not removed from this device
+
+**/
 EFI_STATUS
 EFIAPI
 SimpleNetworkDriverStop(
-    _In_  EFI_DRIVER_BINDING_PROTOCOL    *This,
-    _In_  EFI_HANDLE                     ControllerHandle,
-    _In_  UINTN                          NumberOfChildren,
-    _In_  EFI_HANDLE                     *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
+    IN  EFI_HANDLE                     ControllerHandle,
+    IN  UINTN                          NumberOfChildren,
+    IN  EFI_HANDLE                     *ChildHandleBuffer
     )
-/**
-
-Routine Description:
-
-    Stop this driver on ControllerHandle. This service is called by the
-    EFI boot service DisconnectController(). In order to
-    make drivers as small as possible, there are a few calling
-    restrictions for this service. DisconnectController()
-    must follow these calling restrictions. If any other agent wishes
-    to call Stop() it must also follow these calling restrictions.
-
-Arguments:
-
-    This              Protocol instance pointer.
-
-    ControllerHandle  Handle of device to stop driver on
-
-    NumberOfChildren  Number of Handles in ChildHandleBuffer. If number of
-                            children is zero stop the entire bus driver.
-
-    ChildHandleBuffer List of Child Handles to Stop.
-
-Return Value:
-
-    EFI_SUCCESS       This driver is removed ControllerHandle
-
-    other             This driver was not removed from this device
-
-**/
 {
     EFI_HANDLE deviceHandle = NULL;
     UINTN index;
@@ -903,33 +869,26 @@ EFI_DRIVER_BINDING_PROTOCOL mSimpleNetworkDriverBinding = {
     NULL
 };
 
-EFI_STATUS
-EFIAPI
-InitializeSnpDriver(
-    _In_ EFI_HANDLE       ImageHandle,
-    _In_ EFI_SYSTEM_TABLE *SystemTable
-    )
 /**
+  The SNP driver entry point.
 
-Routine Description:
+  @param ImageHandle       The driver image handle.
+  @param SystemTable       The system table.
 
-    The SNP driver entry point.
-
-Arguments:
-
-    ImageHandle       The driver image handle.
-
-    SystemTable       The system table.
-
-Return Value:
-
-    EFI_SUCEESS      Initialization routine has found a device,
-                           loaded it's ROM, and installed a notify event.
-
-    Other              Return value from HandleProtocol for
+  @retval EFI_SUCCESS      Initialization routine has found UNDI hardware,
+                           loaded it's ROM, and installed a notify event for
+                           the Network Identifier Interface Protocol
+                           successfully.
+  @retval Other            Return value from HandleProtocol for
                            DeviceIoProtocol or LoadedImageProtocol
 
 **/
+EFI_STATUS
+EFIAPI
+InitializeSnpDriver(
+    IN  EFI_HANDLE       ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
+    )
 {
     return EfiLibInstallDriverBindingComponentName2(
         ImageHandle,

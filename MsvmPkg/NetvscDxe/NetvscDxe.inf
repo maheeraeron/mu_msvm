@@ -1,4 +1,16 @@
 ## @file
+#  This module produces EFI SNP Protocol.
+#
+#  This module produces Simple Network Protocol upon EFI Network Interface
+#  Identifier Protocol, to provide a packet level interface to a network adapter.
+#
+#  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+## @file
 #  Component description file for NetvscDxe module.
 #
 #  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
@@ -6,6 +18,8 @@
 #  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
+
+#Override : 00000002 | NetworkPkg/SnpDxe/SnpDxe.inf | dbef0ca456f2186063a4cb09d98043e3 | 2024-09-25T17-46-04 | 1ab6556d76c73af2ca74a855504e3f6c1b9ab264
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -19,7 +33,7 @@
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
 #
 #  DRIVER_BINDING                =  mSimpleNetworkDriverBinding
 #  COMPONENT_NAME                =  gSimpleNetworkComponentName
@@ -30,27 +44,27 @@
   Receive.c
   Snp.h
   Nvdata.c
-  GetStatus.c
+  Get_status.c
   Start.c
   Snp.c
   Stop.c
   Statistics.c
   Reset.c
   Shutdown.c
-  McastIpToMac.c
+  Mcast_ip_to_mac.c
   Transmit.c
   WaitForPacket.c
-  ReceiveFilters.c
+  Receive_filters.c
   Initialize.c
   ComponentName.c
-  StationAddress.c
-  NetvscDxe.c
-  NetvscDxe.h
+  Station_address.c
+  NetvscDxe.c                     ## MS_HYP_CHANGE
+  NetvscDxe.h                     ## MS_HYP_CHANGE
 
 [Packages]
-  MdeModulePkg/MdeModulePkg.dec
+  MdeModulePkg/MdeModulePkg.dec   ## MS_HYP_CHANGE
   MdePkg/MdePkg.dec
-  MsvmPkg/MsvmPkg.dec
+  MsvmPkg/MsvmPkg.dec             ## MS_HYP_CHANGE
   NetworkPkg/NetworkPkg.dec
 
 [LibraryClasses]
@@ -66,15 +80,16 @@
   gEfiEventExitBootServicesGuid                 # CONSUMES
   gEfiVmbusChannelDevicePathGuid                # CONSUMES
   # MS_HYP_CHANGE - Use gEfiEventBeforeExitBootServicesGuid for SnpDxe to issue shutdown before VmBus disconnect
-  gEfiEventBeforeExitBootServicesGuid               ## SOMETIMES_CONSUMES ## Event
+  gEfiEventBeforeExitBootServicesGuid           ## SOMETIMES_CONSUMES ## Event
+  gSyntheticNetworkClassGuid                    # CONSUMES MS_HYP_CHANGE
 
 [Protocols]
-  gEfiDevicePathProtocolGuid                    # PRODUCES
-  gEfiEmclProtocolGuid                          # CONSUMES
   gEfiSimpleNetworkProtocolGuid                 # PRODUCES
-  gEfiVmbusProtocolGuid                         # CONSUMES
-  gInternalEventServicesProtocolGuid            # CONSUMES
+  gEfiDevicePathProtocolGuid                    # PRODUCES
+  gEfiEmclProtocolGuid                          # CONSUMES MS_HYP_CHANGE
+  gEfiVmbusProtocolGuid                         # CONSUMES MS_HYP_CHANGE
+  gInternalEventServicesProtocolGuid            # CONSUMES MS_HYP_CHANGE
 
 [Pcd]
   gEfiNetworkPkgTokenSpaceGuid.PcdSnpCreateExitBootServicesEvent   ## CONSUMES
-  gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault           ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdMediaPresentEnabledByDefault           ## CONSUMES MS_HYP_CHANGE

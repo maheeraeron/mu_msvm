@@ -54,7 +54,7 @@ INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 
 EFI_STATUS
 NetvscInit(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo
+    IN  NIC_DATA_INSTANCE *AdapterInfo
     )
 /*++
 
@@ -709,8 +709,8 @@ Exit:
 
 EFI_STATUS
 NetvscSetFilter(
-    _In_ NIC_DATA_INSTANCE   *AdapterInfo,
-    _In_   UINT32            NewFilter
+    IN  NIC_DATA_INSTANCE   *AdapterInfo,
+    IN  UINT32              NewFilter
     )
 /*++
 
@@ -804,7 +804,7 @@ Returns:
     pSetRequest->InformationBufferOffset = sizeof(RNDIS_SET_REQUEST);
     pSetRequest->DeviceVcHandle = 0;
 
-    CopyMem((PUINT8)(pSetRequest) + pSetRequest->InformationBufferOffset, &ndisFilter, sizeof(ndisFilter));
+    CopyMem((UINT8*)(pSetRequest) + pSetRequest->InformationBufferOffset, &ndisFilter, sizeof(ndisFilter));
 
     pRndisMessage->NdisMessageType = REMOTE_NDIS_SET_MSG;
     pRndisMessage->MessageLength = rndisMsgSize;
@@ -867,9 +867,9 @@ Exit:
 
 VOID
 NetvscTransmitCallback(
-    _In_opt_ VOID                          *Context,
-    _In_reads_bytes_(BufferLength) VOID    *Buffer,
-    _In_ UINT32                            BufferLength
+    IN  VOID                    *Context OPTIONAL,
+    IN  VOID                    *Buffer,
+    IN  UINT32                  BufferLength
     )
 /*++
 
@@ -907,9 +907,9 @@ Arguments:
 
 EFI_STATUS
 NetvscTransmit(
-    _In_ NIC_DATA_INSTANCE               *AdapterInfo,
-    _In_reads_bytes_(BufferSize) VOID    *Buffer,
-    _In_ UINT32                          BufferSize
+    IN  NIC_DATA_INSTANCE       *AdapterInfo,
+    IN  VOID                    *Buffer,
+    IN  UINT32                  BufferSize
     )
 /*++
 
@@ -1004,7 +1004,7 @@ Returns:
     currentTxPacket->PerPacketInfoLength = 0;
     currentTxPacket->PerPacketInfoOffset = 0;
 
-    currentTxData = (VOID *)((PUINT8)currentTxPacket + currentTxPacket->DataOffset);
+    currentTxData = (VOID *)((UINT8*)currentTxPacket + currentTxPacket->DataOffset);
     CopyMem(currentTxData, Buffer, BufferSize);
 
     rndisMessage.Header.MessageType = NvspMessage1TypeSendRNDISPacket;
@@ -1048,13 +1048,13 @@ Cleanup:
 
 EFI_STATUS
 NetvscReceive(
-    _In_ NIC_DATA_INSTANCE                  *AdapterInfo,
-    _Out_writes_bytes_(*BufferSize) VOID    *Buffer,
-    _Inout_ UINTN                           *BufferSize,
-    _Out_opt_ UINTN                         *HeaderSize,
-    _Out_opt_ EFI_MAC_ADDRESS               *SrcAddr,
-    _Out_opt_ EFI_MAC_ADDRESS               *DestAddr,
-    _Out_opt_ UINT16                        *Protocol
+    IN      NIC_DATA_INSTANCE               *AdapterInfo,
+    OUT     VOID                            *Buffer,
+    IN OUT  UINTN                           *BufferSize,
+    OUT     UINTN                           *HeaderSize OPTIONAL,
+    OUT     EFI_MAC_ADDRESS                 *SrcAddr OPTIONAL,
+    OUT     EFI_MAC_ADDRESS                 *DestAddr OPTIONAL,
+    OUT     UINT16                          *Protocol OPTIONAL
     )
 /*++
 
@@ -1204,13 +1204,13 @@ Exit:
 
 VOID
 NetvscReceiveCallback(
-    _In_ VOID                                    *ReceiveContext,
-    _In_ VOID                                    *PacketContext,
-    _In_reads_bytes_(BufferLength) VOID          *Buffer,
-    _In_ UINT32                                  BufferLength,
-    _In_ UINT16                                  TransferPageSetId,
-    _In_ UINT32                                  RangeCount,
-    _In_reads_(RangeCount) EFI_TRANSFER_RANGE    *Ranges
+    IN  VOID                                    *ReceiveContext,
+    IN  VOID                                    *PacketContext,
+    IN  VOID                                    *Buffer,
+    IN  UINT32                                  BufferLength,
+    IN  UINT16                                  TransferPageSetId,
+    IN  UINT32                                  RangeCount,
+    IN  EFI_TRANSFER_RANGE                      *Ranges
     )
 /*++
 
@@ -1246,7 +1246,7 @@ Arguments:
     PRNDIS_QUERY_COMPLETE pQueryReqComplete;
     VOID *packetBuffer, *copyPacketBuffer;
     UINT32 rangeIndex;
-    PUINT8 nodeAddr;
+    UINT8 *nodeAddr;
     UINT32 numDataPkts = 0;
     RX_PACKET_INSTANCE newPacketInfo;
 
@@ -1266,7 +1266,7 @@ Arguments:
     //
     for (rangeIndex = 0; rangeIndex < RangeCount; rangeIndex++)
     {
-        pRndisMessage = (PRNDIS_MESSAGE)((PUINT8)adapterInfo->RxBuffer + Ranges[rangeIndex].ByteOffset);
+        pRndisMessage = (PRNDIS_MESSAGE)((UINT8*)adapterInfo->RxBuffer + Ranges[rangeIndex].ByteOffset);
 
         switch (pRndisMessage->NdisMessageType)
         {
@@ -1294,7 +1294,7 @@ Arguments:
             }
 
             numDataPkts++;
-            packetBuffer = ((PUINT8)pRndisPacket) + pRndisPacket->DataOffset;
+            packetBuffer = ((UINT8*)pRndisPacket) + pRndisPacket->DataOffset;
 
             //
             // The packet should start and ends in the specified range.
@@ -1344,7 +1344,7 @@ Arguments:
                 switch(pQueryReqComplete->RequestId)
                 {
                 case PERM_NODE_ADDR_REQUEST_ID:
-                    nodeAddr = (PUINT8)((UINTN) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
+                    nodeAddr = (UINT8*)((UINTN) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
                     CopyMem(
                         &adapterInfo->PermNodeAddress,
                         nodeAddr,
@@ -1352,7 +1352,7 @@ Arguments:
                     break;
 
                 case CURR_NODE_ADDR_REQUEST_ID:
-                    nodeAddr = (PUINT8)((UINTN) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
+                    nodeAddr = (UINT8*)((UINTN) pQueryReqComplete + pQueryReqComplete->InformationBufferOffset);
                     CopyMem(
                         &adapterInfo->CurrentNodeAddress,
                         nodeAddr,
@@ -1434,7 +1434,7 @@ Exit:
 
 EFI_STATUS
 NetvscShutdown(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo
+    IN  NIC_DATA_INSTANCE *AdapterInfo
     )
 /*++
 
@@ -1522,7 +1522,7 @@ Returns:
 
 VOID
 NetvscResetStatistics(
-    _In_ NIC_DATA_INSTANCE *AdapterInfo
+    IN  NIC_DATA_INSTANCE *AdapterInfo
     )
 /*++
 
@@ -1536,7 +1536,7 @@ Arguments:
 
 --*/
 {
-    PUINT64 lastSupportedStatistic;
+    UINT64 *lastSupportedStatistic;
     //
     // The Supported Statistics are initialized to 0.
     // The unsupported statistics are initialized to -1.
@@ -1576,7 +1576,7 @@ Arguments:
     //
     // Setting the buffer size required for retrieving all Supported Statistics
     //
-    AdapterInfo->SupportedStatisticsSize = (UINTN)(((PUINT8)(lastSupportedStatistic + 1)) - ((PUINT8) &AdapterInfo->Statistics));
+    AdapterInfo->SupportedStatisticsSize = (UINTN)(((UINT8*)(lastSupportedStatistic + 1)) - ((UINT8*) &AdapterInfo->Statistics));
 }
 
 
@@ -1634,8 +1634,8 @@ Returns:
 
 EFI_STATUS
 RxQueueInit(
-    _In_ RX_QUEUE    *Queue,
-    _In_ UINT32      Length
+    IN  RX_QUEUE    *Queue,
+    IN  UINT32      Length
     )
 /*++
 
@@ -1680,7 +1680,7 @@ Return Value:
 
 VOID
 RxQueueDestroy(
-    _In_ RX_QUEUE *Queue
+    IN  RX_QUEUE *Queue
     )
 /*++
 
@@ -1705,7 +1705,7 @@ Arguments:
 
 BOOLEAN
 RxQueueIsAlmostFull(
-    _In_ RX_QUEUE *Queue
+    IN  RX_QUEUE *Queue
     )
 /*++
 
@@ -1736,7 +1736,7 @@ Return Value:
 
 BOOLEAN
 RxQueueIsEmpty(
-    _In_ RX_QUEUE *Queue
+    IN  RX_QUEUE *Queue
     )
 /*++
 
@@ -1762,8 +1762,8 @@ Return Value:
 
 VOID
 RxQueueEnqueue(
-    _In_ RX_QUEUE              *Queue,
-    _In_ RX_PACKET_INSTANCE    *PacketInfo
+    IN  RX_QUEUE              *Queue,
+    IN  RX_PACKET_INSTANCE    *PacketInfo
     )
 /*++
 
@@ -1794,8 +1794,8 @@ Arguments:
 
 VOID
 RxQueueDequeue(
-    _In_ RX_QUEUE               *Queue,
-    _Out_ RX_PACKET_INSTANCE    *PacketInfo
+    IN  RX_QUEUE               *Queue,
+    OUT RX_PACKET_INSTANCE    *PacketInfo
     )
 /*++
 
@@ -1827,8 +1827,8 @@ Arguments:
 
 EFI_STATUS
 TxQueueInit(
-    _In_ TX_QUEUE    *Queue,
-    _In_ UINT32      Length
+    IN  TX_QUEUE    *Queue,
+    IN  UINT32      Length
     )
 /*++
 
@@ -1873,7 +1873,7 @@ Returns:
 
 VOID
 TxQueueDestroy(
-    _In_ TX_QUEUE *Queue
+    IN  TX_QUEUE *Queue
     )
 /*++
 
@@ -1898,7 +1898,7 @@ Arguments:
 
 BOOLEAN
 TxQueueIsFull(
-    _In_ TX_QUEUE *Queue
+    IN  TX_QUEUE *Queue
     )
 /*++
 
@@ -1924,7 +1924,7 @@ Return Value:
 
 BOOLEAN
 TxQueueIsEmpty(
-    _In_ TX_QUEUE *Queue
+    IN  TX_QUEUE *Queue
     )
 /*++
 
@@ -1950,8 +1950,8 @@ Return Value:
 
 VOID
 TxQueueEnqueue(
-    _In_ TX_QUEUE    *Queue,
-    _In_ VOID        *TxBuffer
+    IN  TX_QUEUE    *Queue,
+    IN  VOID        *TxBuffer
     )
 /*++
 
@@ -1980,8 +1980,8 @@ Arguments:
 
 VOID
 TxQueueDequeue(
-    _In_ TX_QUEUE    *Queue,
-    _Out_ VOID        **TxBuffer
+    IN  TX_QUEUE    *Queue,
+    OUT VOID        **TxBuffer
     )
 /*++
 
