@@ -113,6 +113,7 @@ INF MsvmPkg/PlatformPei/PlatformPei.inf
 INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+INF DebuggerFeaturePkg/DebugConfigPei/DebugConfigPei.inf
 
 !include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.PEI.inc.fdf
 
@@ -149,7 +150,7 @@ APRIORI DXE {
   INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
   INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
   INF MsvmPkg/EfiHvDxe/EfiHvDxe.inf
-!if $(DEBUGLIB_ADVANCED) == 0
+!if $(LEGACY_DEBUGGER) == 1
   INF MsKdDebugPkg2/KdDxe/KdDxe.inf
 !endif
   INF MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
@@ -162,7 +163,7 @@ APRIORI DXE {
 INF ArmPkg/Drivers/CpuDxe/CpuDxe.inf
 INF ArmPkg/Drivers/ArmGic/ArmGicDxe.inf
 
-!if $(DEBUGLIB_ADVANCED) == 1
+!if $(FILE_LOGGER) == 1
   INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 !endif
 
@@ -194,7 +195,7 @@ INF MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
 INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 
-!if $(DEBUGLIB_ADVANCED) == 0
+!if $(LEGACY_DEBUGGER) == 1
   INF MsKdDebugPkg2/KdDxe/KdDxe.inf
 !endif
 

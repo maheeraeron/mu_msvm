@@ -14,6 +14,10 @@
     path = Common/MU_TIANO
     url = https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus
     branch = release/202302
+[submodule "Feature/DEBUGGER"]
+    path = Feature/DEBUGGER
+    url = https://github.com/microsoft/mu_feature_debugger.git
+    branch = main
 [submodule "Silicon/ARM/MU_TIANO"]
     path = Silicon/ARM/MU_TIANO
     url = https://github.com/Microsoft/mu_silicon_arm_tiano.git

@@ -50,6 +50,7 @@
 
 [LibraryClasses]
     CrashLib
+    DeviceStateLib
     DebugLib
     HobLib
     IoLib

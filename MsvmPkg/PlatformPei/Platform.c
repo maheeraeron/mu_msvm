@@ -20,6 +20,7 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/IoLib.h>
+#include <Library/DeviceStateLib.h>
 
 #if defined(MDE_CPU_AARCH64)
 #include <Mmu.h>
@@ -791,6 +792,32 @@ Return Value:
 
 }
 
+VOID
+InitializeDeviceState() 
+/*++
+
+Routine Description:
+
+    Initializes any device state needed during PEI initialization
+
+Arguments:
+
+    None.
+
+Return Value:
+
+    None.
+
+--*/
+{
+    DEVICE_STATE CoreNotifications = 0;
+    if (PcdGetBool(PcdDebuggerEnabled))
+    {
+        DEBUG((DEBUG_INFO, "Debugger enabled\n"));
+        CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
+    }
+    AddDeviceState(CoreNotifications);
+}
 
 EFI_STATUS
 EFIAPI
@@ -889,6 +916,12 @@ Return Value:
         //
         InitializeWatchdog();
     }
+
+
+    //
+    // Initialize device state before we finish.
+    // 
+    InitializeDeviceState();
 
     DEBUG((DEBUG_VERBOSE, "<<< *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));
 

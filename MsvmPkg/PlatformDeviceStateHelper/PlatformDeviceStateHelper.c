@@ -87,7 +87,7 @@ PlatformDeviceStateHelperInit(
         CoreNotifications |= DEVICE_STATE_SECUREBOOT_OFF;
     }
 
-    if (PcdGetBool(PcdDebuggerEnabled) != FALSE)
+    if (PcdGetBool(PcdDebuggerEnabled))
     {
         CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
     }

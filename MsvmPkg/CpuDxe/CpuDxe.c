@@ -291,7 +291,7 @@ CpuRegisterInterruptHandler (
   )
 {
   // MS_HYP_CHANGE BEGIN
-#if defined(DEBUGLIB_ADVANCED)
+#ifndef LEGACY_DEBUGGER
   return RegisterCpuInterruptHandler (InterruptType, InterruptHandler);
 #else
   return BdRegisterCpuInterruptHandler (InterruptType, InterruptHandler);
@@ -961,7 +961,7 @@ InitInterruptDescriptorTable (
   VOID
   )
 {
-#if defined(DEBUGLIB_ADVANCED)
+#ifndef LEGACY_DEBUGGER
   EFI_STATUS                Status;
   EFI_VECTOR_HANDOFF_INFO   *VectorInfoList;
   EFI_VECTOR_HANDOFF_INFO   *VectorInfo;
