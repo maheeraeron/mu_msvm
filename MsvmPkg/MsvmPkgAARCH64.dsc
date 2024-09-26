@@ -1,7 +1,7 @@
 ## @file
 #  EFI/Framework Microsoft Virtual Machine Firmware (MSVM) platform
 #
-#  Copyright (C) Microsoft.
+#  Copyright (c) Microsoft.
 #  Licensed under the BSD-2-Clause-Patent license.
 #
 ##
@@ -76,6 +76,7 @@
   ArmLib|ArmPkg/Library/ArmLib/ArmBaseLib.inf
   ArmMmuLib|ArmPkg/Library/ArmMmuLib/ArmMmuBaseLib.inf
   ArmSmcLib|ArmPkg/Library/ArmSmcLib/ArmSmcLib.inf
+  ArmTrngLib|MsvmPkg/Library/MsvmArmTrngLibNull/BaseArmTrngLibNull.inf
   AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
@@ -256,7 +257,7 @@
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
-  RngLib|MsvmPkg/Library/RngLib/RngLib.inf
+  RngLib|MsvmPkg/Library/MsvmRngLib/MsvmRngLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   UdpIoLib|NetworkPkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
@@ -843,10 +844,6 @@
   MsvmPkg/NetvscDxe/NetvscDxe.inf
   MsvmPkg/NvmExpressDxe/NvmExpressDxe.inf
   MsvmPkg/PlatformDeviceStateHelper/PlatformDeviceStateHelper.inf
-  MsvmPkg/RngDxe/RngDxe.inf {
-    <LibraryClasses>
-      RngLib|MsvmPkg/Library/RngLib/RngLib.inf
-  }
   MsvmPkg/SerialDxe/SerialDxe.inf
   MsvmPkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
   MsvmPkg/StorvscDxe/StorvscDxe.inf
@@ -865,15 +862,20 @@
   AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 !endif
 
+  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf {
+    <LibraryClasses>
+      RngLib|MsvmPkg/Library/MsvmRngLib/MsvmRngLib.inf
+  }
+
   # TPM related components
   # TODO: Currently the PH is locked by the hypervisor.
   #       If this ever changes, will need a driver to lock the PH.
 
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
-  SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
+  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLib/Tpm2DeviceLib.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
@@ -881,7 +883,7 @@
 
   SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLib/Tpm2DeviceLib.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf

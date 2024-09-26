@@ -9,8 +9,8 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = Tpm2DeviceLibMsvm
-  MODULE_UNI_FILE                = Tpm2DeviceLibMsvm.uni
+  BASE_NAME                      = Tpm2DeviceLib
+  MODULE_UNI_FILE                = Tpm2DeviceLib.uni
   FILE_GUID                      = CEF38845-C766-4EA8-BDF5-D2AB2126B213
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
@@ -23,7 +23,7 @@
 #
 
 [Sources]
-  Tpm2DeviceLibMsvm.c
+  Tpm2DeviceLib.c
 
 [Packages]
   MdePkg/MdePkg.dec

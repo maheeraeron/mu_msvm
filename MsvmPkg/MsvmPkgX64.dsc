@@ -244,7 +244,7 @@
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
-  RngLib|MsvmPkg/Library/RngLib/RngLib.inf
+  RngLib|MsvmPkg/Library/MsvmRngLib/MsvmRngLib.inf
   UdpIoLib|NetworkPkg/Library/DxeUdpIoLib/DxeUdpIoLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
@@ -875,19 +875,20 @@
   AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 !endif
 
+  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf {
+    <LibraryClasses>
+      RngLib|MsvmPkg/Library/MsvmRngLib/MsvmRngLib.inf
+  }
+
   # TPM related components
   # TODO: Currently the PH is locked by the hypervisor.
   #       If this ever changes, will need a driver to lock the PH.
 
-  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf {
-    <LibraryClasses>
-      RngLib|MsvmPkg/Library/RngLib/RngLib.inf
-  }
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
-  SecurityPkg\Tcg\Tcg2Dxe\Tcg2Dxe.inf {
+  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLib/Tpm2DeviceLib.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
@@ -897,7 +898,7 @@
 
   SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
     <LibraryClasses>
-      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLibMsvm/Tpm2DeviceLibMsvm.inf
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLib/Tpm2DeviceLib.inf
       HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
       NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
