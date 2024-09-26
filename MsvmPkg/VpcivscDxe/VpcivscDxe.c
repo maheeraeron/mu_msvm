@@ -1,25 +1,22 @@
-///
-/// \copyright  Copyright (c) Microsoft Corporation. All Rights Reserved.
-///
-/// \file VpcivscDxe.c
-///
-/// \brief Implementation of the VPCI VSC DXE UEFI driver.
-///
-/// \author Chris Oo (cho)
-/// \date Aug 9, 2019
-///
+/** @file
+  Implementation of the VPCI VSC DXE UEFI driver.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #include "VpcivscDxe.h"
 
-#include <Library/UefiLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DevicePathLib.h>
 #include <Library/EmclLib.h>
-#include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/MmioAllocationLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/DevicePathLib.h>
 #include <Library/PcdLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Vmbus/NtStatus.h>
 
 #include <IsolationTypes.h>
 
@@ -102,9 +99,9 @@ UINT64 mCanonicalizationMask;
 // VmBus outgoing ring buffer page count
 //
 // These are both sized off our largest message (VPCI_DEVICE_TRANSLATE_2)
-// with the maximum number of resources (MAX_SUPPORTED_INTERRUPT_MESSAGES, currently 500)
-// the size of this structure is MAX_VIRT_PCI_BUS_PACKET_SIZE and works out to
-// 28+(500*70)= 35,028 bytes, or 8.5 4K pages, round up to nearest power of two for some breathing
+// with the maximum number of resources (currently 500)
+// the size of this structure works out to 28+(500*70)= 35,028 bytes,
+// or 8.5 4K pages, round up to nearest power of two for some breathing
 // room.
 //
 #define RING_BUFFER_INCOMING_PAGE_COUNT    16
@@ -177,18 +174,18 @@ IsNvmeDevice(
 ///
 VOID
 VpciChannelReceivePacketCallback(
-    __in VOID *ReceiveContext,
-    __in VOID *PacketContext,
-    __in_bcount_opt(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT16 TransferPageSetId,
-    __in UINT32 RangeCount,
-    __in_ecount(RangeCount) EFI_TRANSFER_RANGE *Ranges
+    IN  VOID *ReceiveContext,
+    IN  VOID *PacketContext,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  UINT16 TransferPageSetId,
+    IN  UINT32 RangeCount,
+    IN  EFI_TRANSFER_RANGE *Ranges
     )
 {
     PVPCIVSC_CONTEXT context = ReceiveContext;
     PVPCI_PACKET_HEADER header = Buffer;
-    ULONG sizeRequired = 0;
+    UINT32 sizeRequired = 0;
 
     if (BufferLength < sizeof(*header))
     {
@@ -196,7 +193,6 @@ VpciChannelReceivePacketCallback(
         FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
     }
 
-    // See VpciEvtChannelProcessPacket fdo.c
     // See if it's a VpciMsgBusRelations packet, those are the only ones we care about.
 
     DEBUG((DEBUG_VPCI_INFO, "Recv VPCI channel packet with type 0x%x, len 0x%x\n", header->MessageType, BufferLength));
@@ -204,7 +200,7 @@ VpciChannelReceivePacketCallback(
     if (header->MessageType == VpciMsgBusRelations)
     {
         // Since this is data coming from the host, validate before proceeding
-        if (BufferLength < (UINT32) FIELD_OFFSET(VPCI_QUERY_BUS_RELATIONS, Devices))
+        if (BufferLength < (UINT32) OFFSET_OF(VPCI_QUERY_BUS_RELATIONS, Devices))
         {
             DEBUG((DEBUG_ERROR, "Recv VPCI channel packet very short\n"));
             FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR();
@@ -231,7 +227,7 @@ VpciChannelReceivePacketCallback(
 
         DEBUG((DEBUG_VPCI_INFO, "Recv VpciMsgBusRelations packet, number of child devices 0x%x\n", busRelationsPacket->Devices));
 
-        sizeRequired = context->DeviceCount * sizeof(VPCI_DEVICE_DESCRIPTION) + FIELD_OFFSET(VPCI_QUERY_BUS_RELATIONS, Devices);
+        sizeRequired = context->DeviceCount * sizeof(VPCI_DEVICE_DESCRIPTION) + OFFSET_OF(VPCI_QUERY_BUS_RELATIONS, Devices);
 
         if (BufferLength < sizeRequired)
         {
@@ -247,7 +243,6 @@ VpciChannelReceivePacketCallback(
         context->Devices = AllocateCopyPool(context->DeviceCount * sizeof(VPCI_DEVICE_DESCRIPTION),
             busRelationsPacket->Devices);
 
-        // DEBUGDEBUG
         DEBUG((DEBUG_VPCI_INFO, "Printing all child devices..\n"));
         for (UINTN i = 0; i < context->DeviceCount; i++)
         {
@@ -275,9 +270,9 @@ VpciChannelReceivePacketCallback(
 //
 EFI_STATUS
 VpciChannelSendCompletionCallback(
-    __in_opt VOID *Context,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength
+    IN  VOID *Context OPTIONAL,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength
     )
 {
     // Context is the response buffer info, check if big enough, copy if so
@@ -320,12 +315,12 @@ VpciChannelSendCompletionCallback(
 ///
 EFI_STATUS
 VpciChannelSendPacketSync(
-    PVPCIVSC_CONTEXT Context,
-    VOID* Packet,
-    UINT32 PacketLength,
-    _Out_opt_ VOID* CompletionPacket,
-    _In_opt_ UINT32 CompletionPacketSize,
-    _Out_opt_ UINT32* CompletionPacketBytesReceived
+    IN  PVPCIVSC_CONTEXT Context,
+    IN  VOID* Packet,
+    IN  UINT32 PacketLength,
+    OUT VOID* CompletionPacket OPTIONAL,
+    IN  UINT32 CompletionPacketSize OPTIONAL,
+    OUT UINT32* CompletionPacketBytesReceived OPTIONAL
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -408,7 +403,7 @@ Cleanup:
 ///
 EFI_STATUS
 VpciChannelOpen(
-    _In_ PVPCIVSC_CONTEXT Context
+    IN  PVPCIVSC_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -442,7 +437,7 @@ VpciChannelOpen(
 ///
 VOID
 VpciChannelClose(
-    _In_ PVPCIVSC_CONTEXT Context
+    IN  PVPCIVSC_CONTEXT Context
     )
 {
     Context->Emcl->StopChannel((EFI_EMCL_PROTOCOL*)Context->Emcl);
@@ -457,7 +452,7 @@ VpciChannelClose(
 ///
 EFI_STATUS
 VpciChannelNegotiateProtocol(
-    _In_ PVPCIVSC_CONTEXT Context
+    IN  PVPCIVSC_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -497,9 +492,8 @@ VpciChannelNegotiateProtocol(
     if (NT_SUCCESS(ntStatus))
     {
         // Version accepted by VSP
-        // NOTE: The protocol is a bit weird. the reply packed doesn't contain
-        //       the version we  negotiated, rather, it contains the highest version
-        //       the VSP supports, which can be higher than the one we negotiated.
+        // N.B. The reply doesn't contain the version we negotiated; rather, it contains
+        // the highest version the VSP supports, which can be higher than the one we negotiated.
         DEBUG((DEBUG_VPCI_INFO, "vpci VSP accepted requested version\n"));
         DEBUG((DEBUG_VPCI_INFO, "vpci VSP latest version is %x\n", replyPacket.ProtocolVersion));
     }
@@ -534,7 +528,7 @@ VpciChannelNegotiateProtocol(
 ///
 EFI_STATUS
 VpciChannelFdoD0Entry(
-    _In_ PVPCIVSC_CONTEXT Context
+    IN  PVPCIVSC_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -543,7 +537,6 @@ VpciChannelFdoD0Entry(
     UINT32 packetBytesRecv = 0;
 
     // Config space is two pages in the current protocol version.
-    // See /onecore/vm/dv/vpci/core2/VirtualBus.h
     UINT64 mmioBaseAddress = (UINT64)AllocateMmioPages(VPCI_CONFIG_SPACE_PAGES);
 
     DEBUG((DEBUG_VPCI_INFO, "got mmio pages starting at 0x%llx\n", mmioBaseAddress));
@@ -596,7 +589,7 @@ VpciChannelFdoD0Entry(
 ///
 EFI_STATUS
 VpciChannelPdoQueryResourceRequirements(
-    _Inout_ PVPCI_DEVICE_CONTEXT Context
+    IN OUT  PVPCI_DEVICE_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -641,7 +634,7 @@ VpciChannelPdoQueryResourceRequirements(
 /// \brief      Parse the raw bars returned by the VSP for this device and
 ///             allocate them.
 ///
-///             TODO-cho: Function doesn't handle 32 bit bars. See comment in DriverBindingStart.
+///             TODO: Function doesn't handle 32 bit bars. See comment in VpcivscDriverBindingStart.
 ///
 /// \param[in]  Context  The device context
 ///
@@ -649,13 +642,13 @@ VpciChannelPdoQueryResourceRequirements(
 ///
 EFI_STATUS
 VpciParseAndAllocateBars(
-    _Inout_ PVPCI_DEVICE_CONTEXT Context
+    IN OUT  PVPCI_DEVICE_CONTEXT Context
     )
 {
     UINTN index = 0;
     UINTN mappedIndex = 0;
 
-    while (index < PCI_TYPE0_BAR_COUNT)
+    while (index < PCI_MAX_BAR)
     {
         // If the whole bar is 0, skip it (aka unused).
         if (Context->RawBars[index].AsUINT32 == 0)
@@ -680,7 +673,7 @@ VpciParseAndAllocateBars(
         }
 
         // The last bar can't be a 64 bit bar.
-        if (index == (PCI_TYPE0_BAR_COUNT - 1))
+        if (index == (PCI_MAX_BAR - 1))
         {
             DEBUG((DEBUG_ERROR, "VCPI VSP reported last bar as 64bit, invalid!\n"));
             return EFI_DEVICE_ERROR;
@@ -729,9 +722,9 @@ VpciParseAndAllocateBars(
 ///
 VOID
 EncodeBar(
-    _Inout_ PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    _In_ UINT64 MappedAddress,
-    _In_ UINT64 Size
+    IN OUT  PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
+    IN      UINT64 MappedAddress,
+    IN      UINT64 Size
     )
 {
     Descriptor->Type = CmResourceTypeMemory;
@@ -749,19 +742,19 @@ EncodeBar(
     {
         // Shift by 8 to fit, set flag
         Descriptor->Flags |= CM_RESOURCE_MEMORY_LARGE_40;
-        Descriptor->u.Memory40.Length40 = (UINT32)(Size >> 8);
+        Descriptor->u.Generic.Start = (UINT32)(Size >> 8);
     }
     else if (Size < CM_RESOURCE_MEMORY_LARGE_48_MAXLEN)
     {
         // Shift by 16
         Descriptor->Flags |= CM_RESOURCE_MEMORY_LARGE_48;
-        Descriptor->u.Memory48.Length48 = (UINT32)(Size >> 16);
+        Descriptor->u.Generic.Start = (UINT32)(Size >> 16);
     }
     else
     {
         // Shift by 32
         Descriptor->Flags |= CM_RESOURCE_MEMORY_LARGE_64;
-        Descriptor->u.Memory64.Length64 = (UINT32)(Size >> 32);
+        Descriptor->u.Generic.Start = (UINT32)(Size >> 32);
     }
 }
 
@@ -774,7 +767,7 @@ EncodeBar(
 ///
 EFI_STATUS
 VpciChannelPdoSendAssignedResourcesMessage(
-    _In_ PVPCI_DEVICE_CONTEXT Context
+    IN  PVPCI_DEVICE_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -795,7 +788,7 @@ VpciChannelPdoSendAssignedResourcesMessage(
     //
     // NOTE: UEFI doesn't support MSIs, so due to the struct being zero initialized
     //       we respond that we assigned 0 interrupts.
-    for (UINTN i = 0; i < PCI_TYPE0_BAR_COUNT; i++)
+    for (UINTN i = 0; i < PCI_MAX_BAR; i++)
     {
         // Check and see if this bar is even mapped. If not, skip it.
         if (Context->MappedBars[i].Size == 0)
@@ -805,11 +798,10 @@ VpciChannelPdoSendAssignedResourcesMessage(
 
         UINT8 rawBarIndex = Context->MappedBars[i].BarIndex;
 
-        ASSERT(rawBarIndex < PCI_TYPE0_BAR_COUNT);
+        ASSERT(rawBarIndex < PCI_MAX_BAR);
 
         PCM_PARTIAL_RESOURCE_DESCRIPTOR descriptor = &assignedResourcesPacket.MmioResources[rawBarIndex];
 
-        // Adapted from pdo.c - PdoQueryResourceRequirements and PdoPrepareHardware
         // The VSP doesn't seem to care about anything except the type, base, and the
         // encoded length. So don't bother setting anything else.
         EncodeBar(descriptor,
@@ -829,7 +821,7 @@ VpciChannelPdoSendAssignedResourcesMessage(
 
         // Since this is a 64 bit bar, set the next descriptor as null type.
         rawBarIndex++;
-        ASSERT(rawBarIndex < PCI_TYPE0_BAR_COUNT);
+        ASSERT(rawBarIndex < PCI_MAX_BAR);
         descriptor = &assignedResourcesPacket.MmioResources[rawBarIndex];
         descriptor->Type = CmResourceTypeNull;
     }
@@ -874,7 +866,7 @@ VpciChannelPdoSendAssignedResourcesMessage(
 ///
 EFI_STATUS
 VpciChannelPdoD0Entry(
-    _In_ PVPCI_DEVICE_CONTEXT Context
+    IN  PVPCI_DEVICE_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -923,9 +915,9 @@ VpciChannelPdoD0Entry(
 ///
 VOID
 InitializeVpciDeviceContext(
-    _In_ PVPCIVSC_CONTEXT VscContext,
-    _In_ PVPCI_DEVICE_DESCRIPTION DeviceDescription,
-    _Inout_ PVPCI_DEVICE_CONTEXT DeviceContext
+    IN      PVPCIVSC_CONTEXT VscContext,
+    IN      PVPCI_DEVICE_DESCRIPTION DeviceDescription,
+    IN OUT  PVPCI_DEVICE_CONTEXT DeviceContext
     )
 {
     // Copy the template that contains information for all devices
@@ -945,7 +937,7 @@ InitializeVpciDeviceContext(
 ///
 EFI_STATUS
 VpciCreateChildDevice(
-    _In_ PVPCI_DEVICE_CONTEXT Context
+    IN  PVPCI_DEVICE_CONTEXT Context
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -1005,7 +997,7 @@ VpciCreateChildDevice(
 ///
 VOID
 VpcivscDestroyDevice(
-    _In_ PVPCI_DEVICE_CONTEXT Context
+    IN  PVPCI_DEVICE_CONTEXT Context
     )
 {
     FreePool(Context->DevicePath);
@@ -1018,7 +1010,7 @@ VpcivscDestroyDevice(
 ///
 VOID
 VpscivscDestroyContext(
-    _In_ PVPCIVSC_CONTEXT Context
+    IN  PVPCIVSC_CONTEXT Context
     )
 {
     if (Context->NvmeDevices != NULL)
@@ -1044,8 +1036,8 @@ VpscivscDestroyContext(
 EFI_STATUS
 EFIAPI
 VpcivscDriverEntryPoint (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -1084,9 +1076,9 @@ VpcivscDriverEntryPoint (
 EFI_STATUS
 EFIAPI
 VpcivscDriverBindingSupported (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -1111,7 +1103,7 @@ VpcivscDriverBindingSupported (
     // specific instance guid if set.
     return EmclChannelTypeAndInstanceSupported(
         ControllerHandle,
-        &GUID_VPCI_VSP_CHANNEL_TYPE,
+        &gSyntheticVpciClassGuid,
         This->DriverBindingHandle,
         instanceFilter);
 }
@@ -1135,9 +1127,9 @@ VpcivscDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 VpcivscDriverBindingStart (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -1236,7 +1228,7 @@ VpcivscDriverBindingStart (
 
     channelStarted = TRUE;
 
-    // Exchange version - FdoProtocolCommunication in fdo.c
+    // Exchange version
     status = VpciChannelNegotiateProtocol(instance);
 
     if (EFI_ERROR(status))
@@ -1246,7 +1238,7 @@ VpcivscDriverBindingStart (
         goto Cleanup;
     }
 
-    // Map config space - Send VpciMsgFdoD0Entry, see VpciD0Entry in fdo.c.
+    // Map config space - Send VpciMsgFdoD0Entry.
     // In response, the VSP sends a VirtualBusSendBusRelationsPacket packet which
     // will contain the list of child devices.
     status = VpciChannelFdoD0Entry(instance);
@@ -1349,7 +1341,7 @@ VpcivscDriverBindingStart (
 
         // Allocate the BARs and stash where we allocated them for when the device access them later
         //
-        // TODO-cho: No devices need 32 bit bars but we really should support it.
+        // TODO:     No devices need 32 bit bars but we really should support it.
         //           This means we need to allocate from the low mmio gap which is less straightforward than the high gap
         //           since we have some devices on some platforms in that gap. The low mmio allocator
         //           should probably start from the other end and exclude some number of reserved pages.
@@ -1362,8 +1354,7 @@ VpcivscDriverBindingStart (
             goto Cleanup;
         }
 
-        // The Windows VSC now notifies the VSP that we assigned resources, with
-        // where they were assigned.
+        // Notify the VSP that we assigned resources, withwhere they were assigned.
         status = VpciChannelPdoSendAssignedResourcesMessage(deviceContext);
 
         if (EFI_ERROR(status))
@@ -1373,7 +1364,7 @@ VpcivscDriverBindingStart (
             goto Cleanup;
         }
 
-        // Next state in the Windows VSC state machine is PdoD0Entry, send it.
+        // Next state in the VSC state machine is PdoD0Entry, send it.
         // On success, the device is ready to use.
         status = VpciChannelPdoD0Entry(deviceContext);
 
@@ -1405,9 +1396,9 @@ Cleanup:
         {
             if (channelStarted)
             {
-                // TODO-cho: Technically we should also go through the state machine to teardown devices, but
+                // TODO:     Technically we should also go through the state machine to teardown devices, but
                 //           the VSP needs to support the ExitBootServices flow where the only notification it gets is a
-                //           channel close notification. So this is probably fine.
+                //           channel close notification. So this is fine.
                 VpciChannelClose(instance);
             }
 
@@ -1459,10 +1450,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VpcivscDriverBindingStop (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     )
 {
     EFI_STATUS status = EFI_DEVICE_ERROR;
@@ -1514,7 +1505,7 @@ VpcivscDriverBindingStop (
 
             VpcivscDestroyDevice(deviceContext);
 
-            // FIXME: do we need to uninstall the pci io protocol? or does the
+            // TODO: do we need to uninstall the pci io protocol? or does the
             // handle go away once we return?
         }
     }
@@ -1608,9 +1599,9 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gVpcivscComponentName
 EFI_STATUS
 EFIAPI
 VpcivscComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     )
 {
     return LookupUnicodeString2(
@@ -1625,11 +1616,11 @@ VpcivscComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 VpcivscComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     )
 /*++
 

@@ -1,20 +1,16 @@
-///
-/// \copyright  Copyright (c) Microsoft Corporation. All Rights Reserved.
-///
-/// \file VpcivscPciIo.c
-///
-/// \brief PciIo protocol implementation for the UEFI VPCI VSC, used by child drivers.
-///
-/// \author Chris Oo (cho)
-/// \date Aug 9, 2019
-///
+/** @file
+  PciIo protocol implementation for the UEFI VPCI VSC, used by child drivers.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #include "VpcivscDxe.h"
 
-#include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/MemoryAllocationLib.h>
+#include <Library/DebugLib.h>
 #include <Library/IoLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 #include <IndustryStandard/Pci.h>
 
@@ -37,14 +33,14 @@ const UINT16 DEFAULT_PCI_DEVICE_ID              = 0xb111;
 EFI_STATUS
 EFIAPI
 VpcivscPciIoPollMem(
-    _In_  EFI_PCI_IO_PROTOCOL          *This,
-    _In_  EFI_PCI_IO_PROTOCOL_WIDTH    Width,
-    _In_  UINT8                        BarIndex,
-    _In_  UINT64                       Offset,
-    _In_  UINT64                       Mask,
-    _In_  UINT64                       Value,
-    _In_  UINT64                       Delay,
-    _Out_ UINT64                       *Result
+    IN  EFI_PCI_IO_PROTOCOL          *This,
+    IN  EFI_PCI_IO_PROTOCOL_WIDTH    Width,
+    IN  UINT8                        BarIndex,
+    IN  UINT64                       Offset,
+    IN  UINT64                       Mask,
+    IN  UINT64                       Value,
+    IN  UINT64                       Delay,
+    OUT UINT64                       *Result
     )
 {
     ASSERT(FALSE);
@@ -67,14 +63,14 @@ VpcivscPciIoPollMem(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoPollIo(
-    _In_  EFI_PCI_IO_PROTOCOL        *This,
-    _In_  EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_  UINT8                      BarIndex,
-    _In_  UINT64                     Offset,
-    _In_  UINT64                     Mask,
-    _In_  UINT64                     Value,
-    _In_  UINT64                     Delay,
-    _Out_ UINT64                     *Result
+    IN  EFI_PCI_IO_PROTOCOL        *This,
+    IN  EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN  UINT8                      BarIndex,
+    IN  UINT64                     Offset,
+    IN  UINT64                     Mask,
+    IN  UINT64                     Value,
+    IN  UINT64                     Delay,
+    OUT UINT64                     *Result
     )
 {
     ASSERT(FALSE);
@@ -159,7 +155,7 @@ VpcivscValidateBarAccess(
     UINTN Count
     )
 {
-    ASSERT(BarIndex < PCI_TYPE0_BAR_COUNT);
+    ASSERT(BarIndex < PCI_MAX_BAR);
 
     // Check how big of a region we're accessing. Width * Count gives us that.
     UINT64 totalSize = Count * DecodePciIoProtocolWidth(Width) + Offset;
@@ -211,12 +207,12 @@ VpcivscValidateBarAccess(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoMemRead(
-    _In_     EFI_PCI_IO_PROTOCOL        *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_     UINT8                      BarIndex,
-    _In_     UINT64                     Offset,
-    _In_     UINTN                      Count,
-    _Inout_ VOID                       *Buffer
+    IN      EFI_PCI_IO_PROTOCOL        *This,
+    IN      EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN      UINT8                      BarIndex,
+    IN      UINT64                     Offset,
+    IN      UINTN                      Count,
+    IN OUT  VOID                       *Buffer
     )
 {
     PVPCI_DEVICE_CONTEXT context = NULL;
@@ -227,7 +223,7 @@ VpcivscPciIoMemRead(
     //     Offset,
     //     Count));
 
-    if (BarIndex >= PCI_TYPE0_BAR_COUNT)
+    if (BarIndex >= PCI_MAX_BAR)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -319,12 +315,12 @@ VpcivscPciIoMemRead(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoMemWrite(
-    _In_     EFI_PCI_IO_PROTOCOL        *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_     UINT8                      BarIndex,
-    _In_     UINT64                     Offset,
-    _In_     UINTN                      Count,
-    _Inout_ VOID                       *Buffer
+    IN      EFI_PCI_IO_PROTOCOL        *This,
+    IN      EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN      UINT8                      BarIndex,
+    IN      UINT64                     Offset,
+    IN      UINTN                      Count,
+    IN OUT  VOID                       *Buffer
     )
 {
     PVPCI_DEVICE_CONTEXT context = NULL;
@@ -335,7 +331,7 @@ VpcivscPciIoMemWrite(
     //     Offset,
     //     Count));
 
-    if (BarIndex >= PCI_TYPE0_BAR_COUNT)
+    if (BarIndex >= PCI_MAX_BAR)
     {
         return EFI_INVALID_PARAMETER;
     }
@@ -401,12 +397,12 @@ VpcivscPciIoMemWrite(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoIoRead(
-    _In_     EFI_PCI_IO_PROTOCOL        *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_     UINT8                      BarIndex,
-    _In_     UINT64                     Offset,
-    _In_     UINTN                      Count,
-    _Inout_ VOID                       *Buffer
+    IN      EFI_PCI_IO_PROTOCOL        *This,
+    IN      EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN      UINT8                      BarIndex,
+    IN      UINT64                     Offset,
+    IN      UINTN                      Count,
+    IN OUT  VOID                       *Buffer
     )
 {
     ASSERT(FALSE);
@@ -421,12 +417,12 @@ VpcivscPciIoIoRead(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoIoWrite(
-    _In_     EFI_PCI_IO_PROTOCOL        *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_     UINT8                      BarIndex,
-    _In_     UINT64                     Offset,
-    _In_     UINTN                      Count,
-    _Inout_ VOID                       *Buffer
+    IN      EFI_PCI_IO_PROTOCOL        *This,
+    IN      EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN      UINT8                      BarIndex,
+    IN      UINT64                     Offset,
+    IN      UINTN                      Count,
+    IN OUT  VOID                       *Buffer
     )
 {
     ASSERT(FALSE);
@@ -448,11 +444,11 @@ VpcivscPciIoIoWrite(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoConfigRead(
-    _In_     EFI_PCI_IO_PROTOCOL        *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_     UINT32                     Offset,
-    _In_     UINTN                      Count,
-    _Inout_ VOID                       *Buffer
+    IN      EFI_PCI_IO_PROTOCOL        *This,
+    IN      EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN      UINT32                     Offset,
+    IN      UINTN                      Count,
+    IN OUT  VOID                       *Buffer
     )
 {
     PVPCI_DEVICE_CONTEXT context = NULL;
@@ -466,7 +462,7 @@ VpcivscPciIoConfigRead(
 
     context = VPCI_DEVICE_CONTEXT_FROM_PCI_IO(This);
 
-    // TODO-cho: The device would need to have a VPCI_DEVICE_DESCRIPTION for if
+    // TODO:     The device would need to have a VPCI_DEVICE_DESCRIPTION for if
     //           we ever want to support more than just NVMe. But we don't,
     //           so just return the spec values for an NVMe device.
 
@@ -486,7 +482,7 @@ VpcivscPciIoConfigRead(
             break;
         case PCI_VENDOR_ID_OFFSET:
             // PCI_VENDOR_ID_OFFSET and PCI_DEVICE_ID_OFFSET can be read together with a count of 2 at offset PCI_VENDOR_ID_OFFSET
-            if (!(((Count == 1) || (Count == 2)) && (Width == EfiPciIoWidthUint16))) 
+            if (!(((Count == 1) || (Count == 2)) && (Width == EfiPciIoWidthUint16)))
             {
                 ASSERT(FALSE);
                 return EFI_DEVICE_ERROR;
@@ -494,7 +490,7 @@ VpcivscPciIoConfigRead(
 
             UINT16* id = (UINT16*) Buffer;
             id[0] = DEFAULT_PCI_VENDOR_ID;
-            if (Count == 2) 
+            if (Count == 2)
             {
                 // Read the PCI_DEVICE_ID_OFFSET too
                 id[1] = DEFAULT_PCI_DEVICE_ID;
@@ -525,11 +521,11 @@ VpcivscPciIoConfigRead(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoConfigWrite(
-    _In_     EFI_PCI_IO_PROTOCOL        *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-    _In_     UINT32                     Offset,
-    _In_     UINTN                      Count,
-    _Inout_ VOID                       *Buffer
+    IN      EFI_PCI_IO_PROTOCOL        *This,
+    IN      EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+    IN      UINT32                     Offset,
+    IN      UINTN                      Count,
+    IN OUT  VOID                       *Buffer
     )
 {
     ASSERT(FALSE);
@@ -544,13 +540,13 @@ VpcivscPciIoConfigWrite(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoCopyMem(
-    IN EFI_PCI_IO_PROTOCOL              *This,
-    _In_     EFI_PCI_IO_PROTOCOL_WIDTH    Width,
-    _In_     UINT8                        DestBarIndex,
-    _In_     UINT64                       DestOffset,
-    _In_     UINT8                        SrcBarIndex,
-    _In_     UINT64                       SrcOffset,
-    _In_     UINTN                        Count
+    IN  EFI_PCI_IO_PROTOCOL         *This,
+    IN  EFI_PCI_IO_PROTOCOL_WIDTH   Width,
+    IN  UINT8                       DestBarIndex,
+    IN  UINT64                      DestOffset,
+    IN  UINT8                       SrcBarIndex,
+    IN  UINT64                      SrcOffset,
+    IN  UINTN                       Count
     )
 {
     ASSERT(FALSE);
@@ -579,12 +575,12 @@ VpcivscPciIoCopyMem(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoMap(
-    _In_     EFI_PCI_IO_PROTOCOL            *This,
-    _In_     EFI_PCI_IO_PROTOCOL_OPERATION  Operation,
-    _In_     VOID                           *HostAddress,
-    _Inout_ UINTN                          *NumberOfBytes,
-    _Out_    EFI_PHYSICAL_ADDRESS           *DeviceAddress,
-    _Out_    VOID                           **Mapping
+    IN      EFI_PCI_IO_PROTOCOL            *This,
+    IN      EFI_PCI_IO_PROTOCOL_OPERATION  Operation,
+    IN      VOID                           *HostAddress,
+    IN OUT  UINTN                          *NumberOfBytes,
+    OUT     EFI_PHYSICAL_ADDRESS           *DeviceAddress,
+    OUT     VOID                           **Mapping
     )
 {
     // For VPCI, the VSC has DMA access to all pages. So nothing to do here,
@@ -608,8 +604,8 @@ VpcivscPciIoMap(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoUnmap(
-    _In_  EFI_PCI_IO_PROTOCOL  *This,
-    _In_  VOID                 *Mapping
+    IN  EFI_PCI_IO_PROTOCOL  *This,
+    IN  VOID                 *Mapping
     )
 {
     // DEBUG((DEBUG_VPCI_INFO, "VpcivscPciIoUnmap called with mapping %llx\n", Mapping));
@@ -642,12 +638,12 @@ VpcivscPciIoUnmap(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoAllocateBuffer(
-    _In_  EFI_PCI_IO_PROTOCOL   *This,
-    _In_  EFI_ALLOCATE_TYPE     Type,
-    _In_  EFI_MEMORY_TYPE       MemoryType,
-    _In_  UINTN                 Pages,
-    _Out_ VOID                  **HostAddress,
-    _In_  UINT64                Attributes
+    IN  EFI_PCI_IO_PROTOCOL   *This,
+    IN  EFI_ALLOCATE_TYPE     Type,
+    IN  EFI_MEMORY_TYPE       MemoryType,
+    IN  UINTN                 Pages,
+    OUT VOID                  **HostAddress,
+    IN  UINT64                Attributes
     )
 {
     VOID* buffer = NULL;
@@ -657,7 +653,7 @@ VpcivscPciIoAllocateBuffer(
     // For VPCI, the VSC has DMA access to all pages. So nothing special here,
     // just allocate memory like normal.
 
-    // TODO-cho: NVMe dxe driver doesn't use attributes.
+    // NVMe dxe driver doesn't use attributes.
     if (Attributes != 0)
     {
         ASSERT(FALSE);
@@ -686,9 +682,9 @@ VpcivscPciIoAllocateBuffer(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoFreeBuffer(
-    _In_  EFI_PCI_IO_PROTOCOL   *This,
-    _In_  UINTN                 Pages,
-    _In_  VOID                  *HostAddress
+    IN  EFI_PCI_IO_PROTOCOL   *This,
+    IN  UINTN                 Pages,
+    IN  VOID                  *HostAddress
     )
 {
     DEBUG((DEBUG_VPCI_INFO, "VpcivscPciIoFreeBuffer called with addr %llx pages %x\n", HostAddress, Pages));
@@ -697,7 +693,7 @@ VpcivscPciIoFreeBuffer(
     // FreePages(HostAddress, Pages);
     // NOTE: To workaround a bug with ND2 on the host registering write
     // notifications for pages resulting in the VM hanging, do not put
-    // pages used for NVMe queues back onto the free list. Instead, 
+    // pages used for NVMe queues back onto the free list. Instead,
     // leak these pages as they will be reclaimed later at ExitBootServices.
 
     return EFI_SUCCESS;
@@ -706,7 +702,7 @@ VpcivscPciIoFreeBuffer(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoFlush(
-    _In_  EFI_PCI_IO_PROTOCOL  *This
+    IN  EFI_PCI_IO_PROTOCOL  *This
     )
 {
     ASSERT(FALSE);
@@ -716,11 +712,11 @@ VpcivscPciIoFlush(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoGetLocation(
-    _In_  EFI_PCI_IO_PROTOCOL  *This,
-    _Out_ UINTN                *Segment,
-    _Out_ UINTN                *Bus,
-    _Out_ UINTN                *Device,
-    _Out_ UINTN                *Function
+    IN  EFI_PCI_IO_PROTOCOL  *This,
+    OUT UINTN                *Segment,
+    OUT UINTN                *Bus,
+    OUT UINTN                *Device,
+    OUT UINTN                *Function
     )
 {
     ASSERT(FALSE);
@@ -749,10 +745,10 @@ VpcivscPciIoGetLocation(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoAttributes(
-    _In_ EFI_PCI_IO_PROTOCOL                       * This,
-    _In_  EFI_PCI_IO_PROTOCOL_ATTRIBUTE_OPERATION  Operation,
-    _In_  UINT64                                   Attributes,
-    _Out_ UINT64                                   *Result OPTIONAL
+    IN  EFI_PCI_IO_PROTOCOL                       * This,
+    IN  EFI_PCI_IO_PROTOCOL_ATTRIBUTE_OPERATION  Operation,
+    IN  UINT64                                   Attributes,
+    OUT UINT64                                   *Result OPTIONAL
     )
 {
     DEBUG((DEBUG_VPCI_INFO, "VpcivscPciIoAttributes called\n"));
@@ -766,10 +762,10 @@ VpcivscPciIoAttributes(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoGetBarAttributes(
-    _In_ EFI_PCI_IO_PROTOCOL             * This,
-    _In_  UINT8                          BarIndex,
-    _Out_ UINT64                         *Supports, OPTIONAL
-    _Out_ VOID                           **Resources OPTIONAL
+    IN  EFI_PCI_IO_PROTOCOL             * This,
+    IN  UINT8                          BarIndex,
+    OUT UINT64                         *Supports, OPTIONAL
+    OUT VOID                           **Resources OPTIONAL
     )
 {
     ASSERT(FALSE);
@@ -779,11 +775,11 @@ VpcivscPciIoGetBarAttributes(
 EFI_STATUS
 EFIAPI
 VpcivscPciIoSetBarAttributes(
-    _In_ EFI_PCI_IO_PROTOCOL              *This,
-    _In_     UINT64                       Attributes,
-    _In_     UINT8                        BarIndex,
-    _Inout_ UINT64                       *Offset,
-    _Inout_ UINT64                       *Length
+    IN      EFI_PCI_IO_PROTOCOL          *This,
+    IN      UINT64                       Attributes,
+    IN      UINT8                        BarIndex,
+    IN OUT  UINT64                       *Offset,
+    IN OUT  UINT64                       *Length
     )
 {
     ASSERT(FALSE);

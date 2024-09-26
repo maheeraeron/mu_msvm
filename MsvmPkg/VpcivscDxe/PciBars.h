@@ -1,13 +1,9 @@
-///
-/// \copyright  Copyright (c) Microsoft Corporation. All Rights Reserved.
-///
-/// \file PciBars.h
-///
-/// \brief Helper definition for PCI BARs defined in the PCI specification.
-///
-/// \author Chris Oo (cho)
-/// \date Aug 9, 2019
-///
+/** @file
+  Helper definition for PCI BARs defined in the PCI specification.
+
+  Copyright (c) Microsoft Corporation.
+  Licensed under the BSD-2-Clause-Patent license.
+--*/
 
 #pragma once
 
@@ -38,7 +34,4 @@ typedef struct _PCI_BAR_FORMAT
 } PCI_BAR_FORMAT;
 #pragma warning(default : 4201)
 
-#define PCI_BAR_MEMORY_SPACE 0
-
-#define PCI_BAR_MEMORY_TYPE_32BIT 0x0
 #define PCI_BAR_MEMORY_TYPE_64BIT 0x2
