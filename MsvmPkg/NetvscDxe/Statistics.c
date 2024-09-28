@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "Snp.h"
 
-
 /**
   Resets or collects the statistics on a network interface.
 
@@ -60,113 +59,104 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 SnpStatistics(
-    IN      EFI_SIMPLE_NETWORK_PROTOCOL     *This,
-    IN      BOOLEAN                         Reset,
-    IN OUT  UINTN                           *StatisticsSize OPTIONAL,
-    IN OUT  EFI_NETWORK_STATISTICS          *StatisticsTable OPTIONAL
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      Reset,
+  IN OUT UINTN                    *StatisticsSize  OPTIONAL,
+  IN OUT EFI_NETWORK_STATISTICS   *StatisticsTable OPTIONAL
+  )
 {
-    SNP_DRIVER        *snpDriver;
-    UINT64            *outStp, *inStp;
-    UINTN             requiredSize;
-    UINTN             index;
-    EFI_TPL           oldTpl;
-    EFI_STATUS        status;
-    NIC_DATA_INSTANCE *adapterInfo;
+  SNP_DRIVER         *Snp;
+  UINT64             *outStp, *inStp;
+  UINTN              Size;
+  UINTN              Index;
+  EFI_TPL            OldTpl;
+  EFI_STATUS         Status;
+  NIC_DATA_INSTANCE *adapterInfo; // MS_HYP_CHANGE
 
-    //
-    // Get pointer to SNP driver instance for *This.
-    //
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  //
+  // Get pointer to SNP driver instance for *This.
+  //
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
-    adapterInfo = &snpDriver->AdapterContext->NicInfo;
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
+  adapterInfo = &Snp->AdapterContext->NicInfo;  // MS_HYP_CHANGE
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    //
-    // Return error if the SNP is not initialized.
-    //
-    switch (snpDriver->Mode.State)
-    {
+  //
+  // Return error if the SNP is not initialized.
+  //
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
+  //
+  // if we are not resetting the counters, we have to have a valid stat table
+  // with >0 size. if no reset, no table and no size, return success.
+  //
+  if (!Reset && (StatisticsSize == NULL)) {
+    Status = (StatisticsTable != NULL) ? EFI_INVALID_PARAMETER : EFI_SUCCESS;
+    goto ON_EXIT;
+  }
+
+  // MS_HYP_CHANGE BEGIN
+  if (Reset) {
+    NetvscResetStatistics(adapterInfo);
+    Status = EFI_SUCCESS;
+    goto ON_EXIT;
+  }
+
+  if (StatisticsTable == NULL) {
+    *StatisticsSize = sizeof (EFI_NETWORK_STATISTICS);
+    Status          = EFI_BUFFER_TOO_SMALL;
+    goto ON_EXIT;
+  }
+
+  //
+  // Convert the NetVsc statistics information to SNP statistics
+  // information.
+  //
+  // MS_HYP_CHANGE BEGIN
+  ZeroMem (StatisticsTable, *StatisticsSize);
+  outStp  = (UINT64 *)StatisticsTable;
+  inStp   = (UINT64 *)&adapterInfo->Statistics;
+
+  for (Index = 0; Index < 64; Index++, outStp++, inStp++) {
     //
-    // if we are not resetting the counters, we have to have a valid stat table
-    // with >0 size. if no reset, no table and no size, return success.
+    // There must be room for a full UINT64.  Partial
+    // numbers will not be stored.
     //
-    if (!Reset && StatisticsSize == NULL)
-    {
-        status = (StatisticsTable != NULL) ? EFI_INVALID_PARAMETER : EFI_SUCCESS;
-        goto Exit;
+    if ((Index + 1) * sizeof (UINT64) > *StatisticsSize) {
+      break;
     }
 
-    if (Reset)
-    {
-        NetvscResetStatistics(adapterInfo);
-        status = EFI_SUCCESS;
-        goto Exit;
-    }
+    *outStp  = *inStp;
+  }
 
-    if (StatisticsTable == NULL)
-    {
-        *StatisticsSize = sizeof (EFI_NETWORK_STATISTICS);
-        status = EFI_BUFFER_TOO_SMALL;
-        goto Exit;
-    }
+  Size = Snp->AdapterContext->NicInfo.SupportedStatisticsSize;
+  // MS_HYP_CHANGE END
 
-    //
-    // Convert Adapter's statistics information to SNP statistics
-    // information.
-    //
-    ZeroMem(StatisticsTable, *StatisticsSize);
-    outStp   = (UINT64 *) StatisticsTable;
-    inStp = (UINT64 *) &adapterInfo->Statistics;
+  if (*StatisticsSize >= Size) {
+    *StatisticsSize = Size;
+    Status          = EFI_SUCCESS;
+  } else {
+    *StatisticsSize = Size;
+    Status          = EFI_BUFFER_TOO_SMALL;
+  }
 
-    for (index = 0; index < 64; index++, outStp++, inStp++)
-    {
-        //
-        // There must be room for a full UINT64.  Partial
-        // numbers will not be stored.
-        //
-        if ((index + 1) * sizeof (UINT64) > *StatisticsSize)
-        {
-            break;
-        }
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-        *outStp  = *inStp;
-    }
-
-    requiredSize = snpDriver->AdapterContext->NicInfo.SupportedStatisticsSize;
-    if (*StatisticsSize >= requiredSize)
-    {
-        status = EFI_SUCCESS;
-    }
-    else
-    {
-        status = EFI_BUFFER_TOO_SMALL;
-    }
-    *StatisticsSize = requiredSize;
-
-Exit:
-
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

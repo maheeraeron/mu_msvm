@@ -10,6 +10,30 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "Snp.h"
 
 /**
+  Call UNDI to start the interface and changes the snp state.
+
+  @param  Snp                    pointer to snp driver structure.
+
+  @retval EFI_SUCCESS            UNDI is started successfully.
+  @retval EFI_DEVICE_ERROR       UNDI could not be started.
+
+**/
+EFI_STATUS
+PxeStart (
+  IN SNP_DRIVER  *Snp
+  )
+{
+  // MS_HYP_CHANGE
+
+  //
+  // Set simple network state to Started and return success.
+  //
+  Snp->Mode.State = EfiSimpleNetworkStarted;
+
+  return EFI_SUCCESS;
+}
+
+/**
   Change the state of a network interface from "stopped" to "started."
 
   This function starts a network interface. If the network interface successfully
@@ -28,50 +52,46 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 SnpStart(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_STATUS  status = EFI_SUCCESS;
-    EFI_TPL     oldTpl;
+  SNP_DRIVER  *Snp;
+  EFI_STATUS  Status;
+  EFI_TPL     OldTpl;
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkStopped:
-        break;
+      break;
 
     case EfiSimpleNetworkStarted:
     case EfiSimpleNetworkInitialized:
-        status = EFI_ALREADY_STARTED;
-        goto Exit;
+      Status = EFI_ALREADY_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    //
-    // Set simple network state to Started and return success.
-    //
-    snpDriver->Mode.State = EfiSimpleNetworkStarted;
+  Status = PxeStart (Snp);
+  if (EFI_ERROR (Status)) {
+    goto ON_EXIT;
+  }
 
-    snpDriver->Mode.MCastFilterCount = 0;
+  // MS_HYP_CHANGE
 
-Exit:
+  Snp->Mode.MCastFilterCount = 0;
 
-    gBS->RestoreTPL(oldTpl);
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

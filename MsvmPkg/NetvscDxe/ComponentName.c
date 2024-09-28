@@ -306,43 +306,41 @@ SimpleNetworkComponentNameGetDriverName (
 **/
 EFI_STATUS
 EFIAPI
-SimpleNetworkComponentNameGetControllerName(
-    IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-    IN  EFI_HANDLE                                      ControllerHandle,
-    IN  EFI_HANDLE                                  ChildHandle OPTIONAL,
-    IN  CHAR8                                           *Language,
-    OUT CHAR16                                          **ControllerName
-    )
+SimpleNetworkComponentNameGetControllerName (
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
+  )
 {
-    EFI_STATUS status;
+  EFI_STATUS                   Status;
 
-    //
-    // ChildHandle must be NULL for a Device Driver
-    //
-    if (ChildHandle != NULL)
-    {
-        return EFI_UNSUPPORTED;
-    }
+  if (ChildHandle != NULL) {
+    return EFI_UNSUPPORTED;
+  }
 
-    if (ControllerHandle == NULL)
-    {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (ControllerHandle == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    status = EfiTestManagedDevice(
-        ControllerHandle,
-        mSimpleNetworkDriverBinding.DriverBindingHandle,
-        &gEfiEmclProtocolGuid);
+  //
+  // Make sure this driver is currently managing ControllHandle
+  //
+  Status = EfiTestManagedDevice (
+             ControllerHandle,
+             mSimpleNetworkDriverBinding.DriverBindingHandle,
+             &gEfiEmclProtocolGuid
+             );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    if (EFI_ERROR(status))
-    {
-        return status;
-    }
-
-    return LookupUnicodeString2(
-        Language,
-        This->SupportedLanguages,
-        mSimpleNetworkControllerNameTable,
-        ControllerName,
-        (BOOLEAN)(This == &gSimpleNetworkComponentName));
+  return LookupUnicodeString2 (
+           Language,
+           This->SupportedLanguages,
+           mSimpleNetworkControllerNameTable,
+           ControllerName,
+           (BOOLEAN)(This == &gSimpleNetworkComponentName)
+           );
 }

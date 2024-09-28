@@ -11,7 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "Snp.h"
 
 /**
-  Call UNDI to receive a packet and fills in the data in the input pointers.
+  Call NetVsc to receive a packet and fills in the data in the input pointers.
 
   @param  Snp          Pointer to snp driver structure
   @param  Buffer       Pointer to the memory for the received data
@@ -37,22 +37,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpReceiveImpl(
-    IN      SNP_DRIVER              *Snp,
-    OUT     VOID                    *Buffer,
-    IN OUT  UINTN                   *BufferSize,
-    OUT     UINTN                   *HeaderSize OPTIONAL,
-    OUT     EFI_MAC_ADDRESS         *SrcAddr OPTIONAL,
-    OUT     EFI_MAC_ADDRESS         *DestAddr OPTIONAL,
-    OUT     UINT16                  *Protocol OPTIONAL
-    )
+PxeReceive (
+  SNP_DRIVER       *Snp,
+  VOID             *Buffer,
+  UINTN            *BufferSize,
+  UINTN            *HeaderSize,
+  EFI_MAC_ADDRESS  *SrcAddr,
+  EFI_MAC_ADDRESS  *DestAddr,
+  UINT16           *Protocol
+  )
 {
-    UINTN           buffSize;
-    EFI_STATUS      status;
+  UINTN            BuffSize;
 
-    buffSize  = *BufferSize;
+  BuffSize = *BufferSize;
 
-    status = NetvscReceive(
+  // MS_HYP_CHANGE BEGIN
+  EFI_STATUS status = NetvscReceive(
         &Snp->AdapterContext->NicInfo,
         Buffer,
         BufferSize,
@@ -61,21 +61,22 @@ SnpReceiveImpl(
         DestAddr,
         Protocol);
 
-    switch(status)
-    {
+  switch(status)
+  {
     case EFI_SUCCESS:
-        break;
+      break;
 
     case EFI_NOT_READY:
-        return status;
+      return EFI_NOT_READY;
 
     default:
-        return EFI_DEVICE_ERROR;
-    }
+      return EFI_DEVICE_ERROR;
+  }
 
-    return (*BufferSize <= buffSize) ? EFI_SUCCESS : EFI_BUFFER_TOO_SMALL;
+  // MS_HYP_CHANGE END
+
+  return (*BufferSize <= BuffSize) ? EFI_SUCCESS : EFI_BUFFER_TOO_SMALL;
 }
-
 
 /**
   Receives a packet from a network interface.
@@ -128,69 +129,62 @@ SnpReceiveImpl(
 EFI_STATUS
 EFIAPI
 SnpReceive(
-    IN      EFI_SIMPLE_NETWORK_PROTOCOL     *This,
-    OUT     UINTN                           *HeaderSize OPTIONAL,
-    IN OUT  UINTN                           *BufferSize,
-    OUT     VOID                            *Buffer,
-    OUT     EFI_MAC_ADDRESS                 *SrcAddr OPTIONAL,
-    OUT     EFI_MAC_ADDRESS                 *DestAddr OPTIONAL,
-    OUT     UINT16                          *Protocol OPTIONAL
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  OUT UINTN                       *HeaderSize OPTIONAL,
+  IN OUT UINTN                    *BufferSize,
+  OUT VOID                        *Buffer,
+  OUT EFI_MAC_ADDRESS             *SrcAddr OPTIONAL,
+  OUT EFI_MAC_ADDRESS             *DestAddr OPTIONAL,
+  OUT UINT16                      *Protocol OPTIONAL
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
-    EFI_STATUS  status;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
+  EFI_STATUS  Status;
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    if ((BufferSize == NULL) || (Buffer == NULL))
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+  if ((BufferSize == NULL) || (Buffer == NULL)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
 
-    if (snpDriver->Mode.ReceiveFilterSetting == 0)
-    {
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+  if (Snp->Mode.ReceiveFilterSetting == 0) {
+    Status = EFI_DEVICE_ERROR;
+    goto ON_EXIT;
+  }
 
-    status = SnpReceiveImpl(
-        snpDriver,
-        Buffer,
-        BufferSize,
-        HeaderSize,
-        SrcAddr,
-        DestAddr,
-        Protocol);
+  Status = PxeReceive (
+             Snp,
+             Buffer,
+             BufferSize,
+             HeaderSize,
+             SrcAddr,
+             DestAddr,
+             Protocol
+             );
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

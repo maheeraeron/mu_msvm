@@ -10,52 +10,50 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "Snp.h"
 
 
-VOID
-FillPacketHeader(
-    IN  SNP_DRIVER          *Snp,
-    OUT VOID                *MacHeaderPtr,
-    IN  EFI_MAC_ADDRESS     *DestAddr,
-    IN  EFI_MAC_ADDRESS     *SrcAddr OPTIONAL,
-    IN  UINT16              *ProtocolPtr
-    )
+// MS_HYP_CHANGE BEGIN
 /**
+  Create the meadia header for the given data buffer.
 
-Routine Description:
+  @param  Snp              Pointer to SNP driver structure.
+  @param  MacHeaderPtr     Address where the media header will be filled in.
+  @param  DestAddr         Address of the destination mac address buffer.
+  @param  SrcAddr          Address of the source mac address buffer.
+  @param  ProtocolPtr      Address of the protocol type.
 
-    Create the meadia header for the given data buffer.
-
-Arguments:
-
-    Snp                 pointer to SNP driver structure
-
-    MacHeaderPtr     Address where the media header will be filled in.
-
-    DestAddr         Address of the destination mac address buffer.
-
-    SrcAddr          Address of the source mac address buffer.
-
-    ProtocolPtr      Address of the protocol type.
+  @retval EFI_SUCCESS      Successfully completed the undi call.
+  @retval Other            Error return from undi call.
 
 **/
+EFI_STATUS
+PxeFillHeader (
+  SNP_DRIVER       *Snp,
+  VOID             *MacHeaderPtr,
+  EFI_MAC_ADDRESS  *DestAddr,
+  EFI_MAC_ADDRESS  *SrcAddr,
+  UINT16           *ProtocolPtr
+  )
 {
-    ETHERNET_HEADER    *macHeader;
-    UINT32             index;
-    EFI_MAC_ADDRESS    *sourceAddr;
+  ETHERNET_HEADER    *macHeader;
+  UINT32             index;
+  EFI_MAC_ADDRESS    *sourceAddr;
 
-    sourceAddr = SrcAddr == NULL? &Snp->Mode.CurrentAddress: SrcAddr;
-    macHeader = (ETHERNET_HEADER *) MacHeaderPtr;
+  sourceAddr = SrcAddr == NULL? &Snp->Mode.CurrentAddress: SrcAddr;
+  macHeader = (ETHERNET_HEADER *) MacHeaderPtr;
 
-    macHeader->Type = (UINT16) PXE_SWAP_UINT16 (*ProtocolPtr);
+  macHeader->Type = (UINT16) PXE_SWAP_UINT16 (*ProtocolPtr);
 
-    for (index = 0; index < PXE_HWADDR_LEN_ETHER; index++)
-    {
-        macHeader->DestAddr[index] = DestAddr->Addr[index];
-        macHeader->SrcAddr[index] = sourceAddr->Addr[index];
-    }
+  for (index = 0; index < PXE_HWADDR_LEN_ETHER; index++)
+  {
+    macHeader->DestAddr[index] = DestAddr->Addr[index];
+    macHeader->SrcAddr[index] = sourceAddr->Addr[index];
+  }
+
+  return EFI_SUCCESS;
 }
+// MS_HYP_CHANGE END
 
 /**
-  This routine calls undi to transmit the given data buffer
+  This routine calls NetVsc to transmit the given data buffer
 
   @param  Snp                 pointer to SNP driver structure
   @param  Buffer           data buffer pointer
@@ -66,27 +64,29 @@ Arguments:
 
 **/
 EFI_STATUS
-SnpTransmitImpl(
-    IN  SNP_DRIVER      *Snp,
-    IN  VOID            *Buffer,
-    IN  UINTN           BufferSize
-    )
+PxeTransmit (
+  SNP_DRIVER  *Snp,
+  VOID        *Buffer,
+  UINTN       BufferSize
+  )
 {
-    EFI_STATUS status;
+  EFI_STATUS        Status;
 
-    status = NetvscTransmit(&Snp->AdapterContext->NicInfo, Buffer, (UINT32) BufferSize);
+  // MS_HYP_CHANGE BEGIN
+  Status = NetvscTransmit(&Snp->AdapterContext->NicInfo, Buffer, (UINT32) BufferSize);
 
-    switch (status)
-    {
+  switch (Status){
     case EFI_SUCCESS:
     case EFI_NOT_READY:
     case EFI_DEVICE_ERROR:
-        break;
-    default:
-        status = EFI_DEVICE_ERROR;
-    }
+      break;
 
-    return status;
+    default:
+      Status = EFI_DEVICE_ERROR;
+  }
+  // MS_HYP_CHANGE END
+
+  return Status;
 }
 
 /**
@@ -146,88 +146,91 @@ SnpTransmitImpl(
 EFI_STATUS
 EFIAPI
 SnpTransmit(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  UINTN                       HeaderSize,
-    IN  UINTN                       BufferSize,
-    IN  VOID                        *Buffer,
-    IN  EFI_MAC_ADDRESS             *SrcAddr OPTIONAL,
-    IN  EFI_MAC_ADDRESS             *DestAddr OPTIONAL,
-    IN  UINT16                      *Protocol OPTIONAL
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINTN                        HeaderSize,
+  IN UINTN                        BufferSize,
+  IN VOID                         *Buffer,
+  IN EFI_MAC_ADDRESS              *SrcAddr   OPTIONAL,
+  IN EFI_MAC_ADDRESS              *DestAddr  OPTIONAL,
+  IN UINT16                       *Protocol  OPTIONAL
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_STATUS  status;
-    EFI_TPL     oldTpl;
+  SNP_DRIVER  *Snp;
+  EFI_STATUS  Status;
+  EFI_TPL     OldTpl;
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  /*
+  MS_HYP_CHANGE: This is a bug, returning at wrong TPL.  Should be removed
+  if (Snp == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
+  */
+
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
+
+  if (Buffer == NULL) {
+    Status = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
+
+  if (BufferSize < Snp->Mode.MediaHeaderSize) {
+    Status = EFI_BUFFER_TOO_SMALL;
+    goto ON_EXIT;
+  }
+
+  // MS_HYP_CHANGE BEGIN
+  if (BufferSize > Snp->Mode.MaxPacketSize) {
+    Status = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
+  // MS_HYP_CHANGE END
+
+  //
+  // if the HeaderSize is non-zero, we need to fill up the header and for that
+  // we need the destination address and the protocol
+  //
+  if (HeaderSize != 0) {
+    if ((HeaderSize != Snp->Mode.MediaHeaderSize) || (DestAddr == 0) || (Protocol == 0)) {
+      Status = EFI_INVALID_PARAMETER;
+      goto ON_EXIT;
     }
 
-    if (Buffer == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
+    Status = PxeFillHeader (
+               Snp,
+               Buffer,
+               DestAddr,
+               SrcAddr,
+               Protocol
+               );
+
+    if (EFI_ERROR (Status)) {
+      goto ON_EXIT;
     }
+  }
 
-    if (BufferSize < snpDriver->Mode.MediaHeaderSize)
-    {
-        status = EFI_BUFFER_TOO_SMALL;
-        goto Exit;
-    }
+  Status = PxeTransmit (Snp, Buffer, BufferSize);
 
-    if (BufferSize > snpDriver->Mode.MaxPacketSize)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    //
-    // If the HeaderSize is non-zero, we need to fill up the header and for that
-    // we need the destination address and the protocol.
-    //
-    if (HeaderSize != 0)
-    {
-        if (HeaderSize != snpDriver->Mode.MediaHeaderSize || DestAddr == 0 || Protocol == 0)
-        {
-            status = EFI_INVALID_PARAMETER;
-            goto Exit;
-        }
-
-        FillPacketHeader(
-            snpDriver,
-            Buffer,
-            DestAddr,
-            SrcAddr,
-            Protocol);
-    }
-
-    status = SnpTransmitImpl(snpDriver, Buffer, BufferSize);
-
-Exit:
-
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

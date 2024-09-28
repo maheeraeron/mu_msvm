@@ -7,7 +7,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#pragma once
+#ifndef _SNP_H_
+#define _SNP_H_
 
 #include <Uefi.h>
 
@@ -29,20 +30,20 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define FOUR_GIGABYTES  (UINT64) 0x100000000ULL
 
-#define SNP_DRIVER_SIGNATURE  SIGNATURE_32('s', 'n', 'd', 's')
+#define SNP_DRIVER_SIGNATURE  SIGNATURE_32 ('s', 'n', 'd', 's')
 
-typedef struct
-{
-    UINT32                      Signature;
-    EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-    EFI_SIMPLE_NETWORK_MODE     Mode;
 
-    NETVSC_ADAPTER_CONTEXT      *AdapterContext;
+typedef struct {
+  UINT32                         Signature;
+  EFI_SIMPLE_NETWORK_PROTOCOL    Snp;
+  EFI_SIMPLE_NETWORK_MODE        Mode;
 
-    EFI_EVENT    ExitBootServicesEvent;
+  NETVSC_ADAPTER_CONTEXT      *AdapterContext;
+
+  EFI_EVENT    ExitBootServicesEvent;
 } SNP_DRIVER;
 
-#define EFI_SIMPLE_NETWORK_DEV_FROM_THIS(a) CR(a, SNP_DRIVER, Snp, SNP_DRIVER_SIGNATURE)
+#define EFI_SIMPLE_NETWORK_DEV_FROM_THIS(a)  CR (a, SNP_DRIVER, Snp, SNP_DRIVER_SIGNATURE)
 
 //
 // Global Variables
@@ -52,7 +53,7 @@ extern EFI_COMPONENT_NAME_PROTOCOL    gSimpleNetworkComponentName;
 extern EFI_COMPONENT_NAME2_PROTOCOL   gSimpleNetworkComponentName2;
 
 /**
-  this routine calls undi to start the interface and changes the snp state.
+  this routine calls NetVsc to start the interface and changes the snp state.
 
   @param  Snp                    pointer to snp driver structure
 
@@ -61,12 +62,12 @@ extern EFI_COMPONENT_NAME2_PROTOCOL   gSimpleNetworkComponentName2;
 
 **/
 EFI_STATUS
-SnpInitImpl(
-    IN  SNP_DRIVER *Snp
-    );
+PxeStart (
+  IN SNP_DRIVER  *Snp
+  );
 
 /**
-  this routine calls undi to stop the interface and changes the snp state.
+  this routine calls NetVsc to stop the interface and changes the snp state.
 
   @param  Snp   pointer to snp driver structure
 
@@ -77,12 +78,12 @@ SnpInitImpl(
 
 **/
 EFI_STATUS
-SnpShutdownImpl(
-    IN  SNP_DRIVER *Snp
-    );
+PxeStop (
+  SNP_DRIVER  *Snp
+  );
 
 /**
-  this routine calls undi to initialize the interface.
+  this routine calls NetVsc to initialize the interface.
 
   @param  Snp                   pointer to snp driver structure
   @param  CableDetectFlag       Do/don't detect the cable (depending on what undi supports)
@@ -93,12 +94,27 @@ SnpShutdownImpl(
 
 **/
 EFI_STATUS
-SnpStopImpl(
-    IN  SNP_DRIVER *Snp
-    );
+PxeInit (
+  SNP_DRIVER  *Snp,
+  UINT16      CableDetectFlag
+  );
 
 /**
-  this routine calls undi to read the MAC address of the NIC and updates the
+  this routine calls NetVsc to shut down the interface.
+
+  @param  Snp   pointer to snp driver structure
+
+  @retval EFI_SUCCESS        UNDI is shut down successfully
+  @retval EFI_DEVICE_ERROR   UNDI could not be shut down
+
+**/
+EFI_STATUS
+PxeShutdown (
+  IN SNP_DRIVER  *Snp
+  );
+
+/**
+  this routine calls NetVsc to read the MAC address of the NIC and updates the
   mode structure with the address.
 
   @param  Snp         pointer to snp driver structure.
@@ -108,9 +124,33 @@ SnpStopImpl(
 
 **/
 EFI_STATUS
-GetStnAddr(
-    IN  SNP_DRIVER *Snp
-    );
+PxeGetStnAddr (
+  SNP_DRIVER  *Snp
+  );
+
+/**
+  Call undi to get the status of the interrupts, get the list of recycled transmit
+  buffers that completed transmitting. The recycled transmit buffer address will
+  be saved into Snp->RecycledTxBuf. This function will also update the MediaPresent
+  field of EFI_SIMPLE_NETWORK_MODE if UNDI support it.
+
+  @param[in]   Snp                     Pointer to snp driver structure.
+  @param[out]  InterruptStatusPtr      A non null pointer to contain the interrupt
+                                       status.
+  @param[in]   GetTransmittedBuf       Set to TRUE to retrieve the recycled transmit
+                                       buffer address.
+
+  @retval      EFI_SUCCESS             The status of the network interface was retrieved.
+  @retval      EFI_DEVICE_ERROR        The command could not be sent to the network
+                                       interface.
+
+**/
+EFI_STATUS
+PxeGetStatus (
+  IN     SNP_DRIVER  *Snp,
+  OUT UINT32         *InterruptStatusPtr,
+  OUT VOID          **TransmitBufferListPtr OPTIONAL
+  );
 
 /**
   Changes the state of a network interface from "stopped" to "started".
@@ -131,8 +171,8 @@ GetStnAddr(
 EFI_STATUS
 EFIAPI
 SnpStart(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
+  );
 
 /**
   Changes the state of a network interface from "started" to "stopped".
@@ -155,8 +195,8 @@ SnpStart(
 EFI_STATUS
 EFIAPI
 SnpStop(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
+  );
 
 /**
   Resets a network adapter and allocates the transmit and receive buffers
@@ -194,10 +234,10 @@ SnpStop(
 EFI_STATUS
 EFIAPI
 SnpInitialize(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  UINTN                       ExtraRxBufferSize,
-    IN  UINTN                       ExtraTxBufferSize
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINTN                        ExtraRxBufferSize OPTIONAL,
+  IN UINTN                        ExtraTxBufferSize OPTIONAL
+  );
 
 /**
   Resets a network adapter and reinitializes it with the parameters that were
@@ -226,9 +266,9 @@ SnpInitialize(
 EFI_STATUS
 EFIAPI
 SnpReset(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL  *This,
-    IN  BOOLEAN                      ExtendedVerification
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      ExtendedVerification
+  );
 
 /**
   Resets a network adapter and leaves it in a state that is safe for another
@@ -252,8 +292,8 @@ SnpReset(
 EFI_STATUS
 EFIAPI
 SnpShutdown(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
+  );
 
 /**
   Manages the multicast receive filters of a network interface.
@@ -352,13 +392,13 @@ SnpShutdown(
 EFI_STATUS
 EFIAPI
 SnpReceiveFilters(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  UINT32                      Enable,
-    IN  UINT32                      Disable,
-    IN  BOOLEAN                     ResetMCastFilter,
-    IN  UINTN                       MCastFilterCnt,
-    IN  EFI_MAC_ADDRESS             *MCastFilter OPTIONAL
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINT32                       Enable,
+  IN UINT32                       Disable,
+  IN BOOLEAN                      ResetMCastFilter,
+  IN UINTN                        MCastFilterCnt   OPTIONAL,
+  IN EFI_MAC_ADDRESS              *MCastFilter     OPTIONAL
+  );
 
 /**
   Modifies or resets the current station address, if supported.
@@ -395,10 +435,10 @@ SnpReceiveFilters(
 EFI_STATUS
 EFIAPI
 SnpStationAddress(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  BOOLEAN                     Reset,
-    IN  EFI_MAC_ADDRESS         *New OPTIONAL
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      Reset,
+  IN EFI_MAC_ADDRESS              *New  OPTIONAL
+  );
 
 /**
   Resets or collects the statistics on a network interface.
@@ -450,11 +490,11 @@ SnpStationAddress(
 EFI_STATUS
 EFIAPI
 SnpStatistics(
-    IN      EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN      BOOLEAN                     Reset,
-    IN OUT  UINTN                       *StatisticsSize OPTIONAL,
-    IN OUT  EFI_NETWORK_STATISTICS      *StatisticsTable OPTIONAL
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      Reset,
+  IN OUT UINTN                    *StatisticsSize   OPTIONAL,
+  IN OUT EFI_NETWORK_STATISTICS   *StatisticsTable  OPTIONAL
+  );
 
 /**
   Converts a multicast IP address to a multicast HW MAC address.
@@ -487,11 +527,11 @@ SnpStatistics(
 EFI_STATUS
 EFIAPI
 SnpMcastIpToMac(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  BOOLEAN                     IPv6,
-    IN  EFI_IP_ADDRESS              *IP,
-    OUT EFI_MAC_ADDRESS             *MAC
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      IPv6,
+  IN EFI_IP_ADDRESS               *IP,
+  OUT EFI_MAC_ADDRESS             *MAC
+  );
 
 /**
   Performs read and write operations on the NVRAM device attached to a network
@@ -547,12 +587,12 @@ SnpMcastIpToMac(
 EFI_STATUS
 EFIAPI
 SnpNvData(
-    IN      EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN      BOOLEAN                     ReadWrite,
-    IN      UINTN                       Offset,
-    IN      UINTN                       BufferSize,
-    IN OUT  VOID                        *Buffer
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      ReadWrite,
+  IN UINTN                        Offset,
+  IN UINTN                        BufferSize,
+  IN OUT VOID                     *Buffer
+  );
 
 /**
   Reads the current interrupt status and recycled transmit buffer status from a
@@ -595,10 +635,10 @@ SnpNvData(
 EFI_STATUS
 EFIAPI
 SnpGetStatus(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    OUT UINT32                      *InterruptStatus OPTIONAL,
-    OUT VOID                        **TxBuf OPTIONAL
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  OUT UINT32                      *InterruptStatus  OPTIONAL,
+  OUT VOID                        **TxBuf           OPTIONAL
+  );
 
 /**
   Places a packet in the transmit queue of a network interface.
@@ -657,14 +697,14 @@ SnpGetStatus(
 EFI_STATUS
 EFIAPI
 SnpTransmit(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  UINTN                       HeaderSize,
-    IN  UINTN                       BufferSize,
-    IN  VOID                        *Buffer,
-    IN  EFI_MAC_ADDRESS             *SrcAddr OPTIONAL,
-    IN  EFI_MAC_ADDRESS             *DestAddr OPTIONAL,
-    IN  UINT16                      *Protocol OPTIONAL
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINTN                        HeaderSize,
+  IN UINTN                        BufferSize,
+  IN VOID                         *Buffer,
+  IN EFI_MAC_ADDRESS              *SrcAddr   OPTIONAL,
+  IN EFI_MAC_ADDRESS              *DestAddr  OPTIONAL,
+  IN UINT16                       *Protocol  OPTIONAL
+  );
 
 /**
   Receives a packet from a network interface.
@@ -717,14 +757,14 @@ SnpTransmit(
 EFI_STATUS
 EFIAPI
 SnpReceive(
-    IN      EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    OUT     UINTN                       *HeaderSize OPTIONAL,
-    IN OUT  UINTN                       *BufferSize,
-    OUT     VOID                        *Buffer,
-    OUT     EFI_MAC_ADDRESS             *SrcAddr OPTIONAL,
-    OUT     EFI_MAC_ADDRESS             *DestAddr OPTIONAL,
-    OUT     UINT16                      *Protocol OPTIONAL
-    );
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  OUT UINTN                       *HeaderSize OPTIONAL,
+  IN OUT UINTN                    *BufferSize,
+  OUT VOID                        *Buffer,
+  OUT EFI_MAC_ADDRESS             *SrcAddr OPTIONAL,
+  OUT EFI_MAC_ADDRESS             *DestAddr OPTIONAL,
+  OUT UINT16                      *Protocol OPTIONAL
+  );
 
 /**
   Notification call back function for WaitForPacket event.
@@ -735,10 +775,11 @@ SnpReceive(
 **/
 VOID
 EFIAPI
-SnpWaitForPacketNotify(
-    IN  EFI_EVENT Event,
-    IN  VOID      *SnpPtr
-    );
+SnpWaitForPacketNotify (
+  EFI_EVENT  Event,
+  VOID       *SnpPtr
+  );
 
 #define SNP_MEM_PAGES(x)  (((x) - 1) / 4096 + 1)
 
+#endif /*  _SNP_H_  */

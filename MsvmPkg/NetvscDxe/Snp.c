@@ -9,17 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "Snp.h"
 
-
-VOID
-EFIAPI
-SnpShutdownAndStop(
-    IN  SNP_DRIVER    *SnpDriver
-    )
-{
-    SnpShutdownImpl(SnpDriver);
-    SnpStopImpl(SnpDriver);
-}
-
 /**
   One notified function to stop UNDI device when gBS->ExitBootServices() called.
 
@@ -39,9 +28,18 @@ SnpNotifyExitBootServices (
   Snp = (SNP_DRIVER *)Context;
 
   //
-  // Shutdown and stop UNDI driver
+  // Shutdown and stop NetVsc driver
   //
-  SnpShutdownAndStop (Snp);
+  // MS_HYP_CHANGE Do NOT shutdown the driver, as this causes runtime
+  // memory map changes for as-of-yet unknown reasons.
+  // PxeShutdown (Snp);
+  PxeStop (Snp);
+
+  // MU_CHANGE [BEGIN] - Shutdown SnpDxe in BeforeExitBootServices
+  // Since BeforeExitBootServices is run on each call, close event
+  // to prevent reentry.
+  gBS->CloseEvent (Event);
+  // MU_CHANGE [END]
 }
 
 
@@ -370,7 +368,8 @@ Return Value:
 
         if (AdapterContext->NicInfo.Emcl != NULL)
         {
-            SnpShutdownAndStop(SnpDriver);
+            PxeShutdown (SnpDriver);
+            PxeStop (SnpDriver);
 
             gBS->CloseProtocol(
                     ControllerHandle,
@@ -663,7 +662,7 @@ Return Value:
     // The station address needs to be saved in the mode structure. We need to
     // initialize the SNP driver first for this.
     //
-    status = SnpInitImpl(snpDriver);
+    status              = PxeInit (snpDriver, PXE_OPFLAGS_INITIALIZE_DO_NOT_DETECT_CABLE);
 
     if (EFI_ERROR(status))
     {
@@ -671,24 +670,26 @@ Return Value:
         goto Cleanup;
     }
 
-    status = GetStnAddr(snpDriver);
+    status = PxeGetStnAddr(snpDriver);
 
     if (status != EFI_SUCCESS)
     {
         DEBUG ((EFI_D_ERROR, "\nSnp->get_station_addr() failed.\n"));
-        SnpShutdownAndStop(snpDriver);
+        PxeShutdown (snpDriver);
+        PxeStop (snpDriver);
         goto Cleanup;
     }
 
     //
     // We should not leave SNP started and initialized here.
-    // The SNP layer will be started when upper layers call Snp->start.
+    // The NetVsc layer will be started when upper layers call Snp->start.
     // How ever, this DriverStart() must fill up the snp mode structure which
     // contains the MAC address of the NIC. For this reason we started and
     // initialized SNP here, now we are done, do a shutdown and stop of the
-    // SNPinterface.
+    // NetVsc interface.
     //
-    SnpShutdownAndStop(snpDriver);
+    PxeShutdown (snpDriver);
+    PxeStop (snpDriver);
 
     if (PcdGetBool (PcdSnpCreateExitBootServicesEvent)) {
         //
@@ -699,7 +700,7 @@ Return Value:
                         TPL_CALLBACK,
                         SnpNotifyExitBootServices,
                         snpDriver,
-                        &gEfiEventBeforeExitBootServicesGuid ,   // MS_HYP_CHANGE
+                        &gEfiEventBeforeExitBootServicesGuid,   // MU_CHANGE - Shutdown SnpDxe in BeforeExitBootServices
                         &snpDriver->ExitBootServicesEvent
                         );
 

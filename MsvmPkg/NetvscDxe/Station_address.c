@@ -21,31 +21,37 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-GetStnAddr(
+PxeGetStnAddr (
   SNP_DRIVER  *Snp
   )
 {
-    //
-    // Set new station address in SNP->Mode structure and return success.
-    //
-    CopyMem(
-        &(Snp->Mode.CurrentAddress),
-        &(Snp->AdapterContext->NicInfo.CurrentNodeAddress),
-        Snp->Mode.HwAddressSize);
+  // MS_HYP_CHANGE BEGIN
 
-    CopyMem(
-        &Snp->Mode.BroadcastAddress,
-        &Snp->AdapterContext->NicInfo.BroadcastNodeAddress,
-        Snp->Mode.HwAddressSize);
+  //
+  // Set new station address in SNP->Mode structure and return success.
+  //
+  CopyMem (
+    &(Snp->Mode.CurrentAddress),
+    &(Snp->AdapterContext->NicInfo.CurrentNodeAddress),
+    Snp->Mode.HwAddressSize
+    );
 
-    CopyMem(
-        &Snp->Mode.PermanentAddress,
-        &Snp->AdapterContext->NicInfo.PermNodeAddress,
-        Snp->Mode.HwAddressSize);
+  CopyMem (
+    &Snp->Mode.BroadcastAddress,
+    &Snp->AdapterContext->NicInfo.BroadcastNodeAddress,
+    Snp->Mode.HwAddressSize
+    );
 
-    return EFI_SUCCESS;
+  CopyMem (
+    &Snp->Mode.PermanentAddress,
+    &Snp->AdapterContext->NicInfo.PermNodeAddress,
+    Snp->Mode.HwAddressSize
+    );
+
+  // MS_HYP_CHANGE END
+
+  return EFI_SUCCESS;
 }
-
 
 /**
   Modifies or resets the current station address, if supported.
@@ -82,52 +88,50 @@ GetStnAddr(
 EFI_STATUS
 EFIAPI
 SnpStationAddress(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  BOOLEAN                     Reset,
-    IN  EFI_MAC_ADDRESS             *New OPTIONAL
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      Reset,
+  IN EFI_MAC_ADDRESS              *New OPTIONAL
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_STATUS  status;
-    EFI_TPL     OldTpl;
+  SNP_DRIVER  *Snp;
+  EFI_STATUS  Status;
+  EFI_TPL     OldTpl;
 
-    //
-    // Check for invalid parameter combinations.
-    //
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+  //
+  // Check for invalid parameter combinations.
+  //
+  if ((This == NULL) ||
+      (!Reset && (New == NULL)))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    OldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    //
-    // Return error if the SNP is not initialized.
-    //
-    switch (snpDriver->Mode.State)
-    {
+  //
+  // Return error if the SNP is not initialized.
+  //
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        //
-        // Setting CurrentAddress is not supported
-        //
-        status = EFI_UNSUPPORTED;
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        break;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        break;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    gBS->RestoreTPL(OldTpl);
+  // MS_HYP_CHANGE
+  // Setting CurrentAddress is not supported
+  Status = EFI_UNSUPPORTED;
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    return status;
+  return Status;
 }

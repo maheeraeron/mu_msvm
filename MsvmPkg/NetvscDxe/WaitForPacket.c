@@ -23,8 +23,6 @@ SnpWaitForPacketNotify (
   VOID       *SnpPtr
   )
 {
-    NIC_DATA_INSTANCE *adapterInfo;
-
   //
   // Do nothing if either parameter is a NULL pointer.
   //
@@ -45,9 +43,12 @@ SnpWaitForPacketNotify (
       return;
   }
 
-    adapterInfo = &(((SNP_DRIVER *) SnpPtr)->AdapterContext->NicInfo);
-    if (!RxQueueIsEmpty(&adapterInfo->RxPacketQueue))
-    {
-        gBS->SignalEvent(Event);
-    }
+  // MS_HYP_CHANGE BEGIN
+  NIC_DATA_INSTANCE *adapterInfo;
+  adapterInfo = &(((SNP_DRIVER *) SnpPtr)->AdapterContext->NicInfo);
+  if (!RxQueueIsEmpty(&adapterInfo->RxPacketQueue))
+  {
+  // MS_HYP_CHANGE END
+    gBS->SignalEvent (Event);
+  }
 }

@@ -10,81 +10,80 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "Snp.h"
 
+/**
+  Get the status of the interrupts, get the list of transmit
+  buffers that completed transmitting.. This function will also update the MediaPresent
+  field of EFI_SIMPLE_NETWORK_MODE.
 
+  @param[in]   Snp                     Pointer to snp driver structure.
+  @param[out]  InterruptStatusPtr      A non null pointer to contain the interrupt
+                                       status.
+  @param[in]   GetTransmittedBuf       Set to TRUE to retrieve the recycled transmit
+                                       buffer address.
+
+  @retval      EFI_SUCCESS             The status of the network interface was retrieved.
+  @retval      EFI_DEVICE_ERROR        The command could not be sent to the network
+                                       interface.
+
+**/
 EFI_STATUS
-SnpGetStatusImpl(
-    IN  SNP_DRIVER  *Snp,
-    OUT UINT32      *InterruptStatusPtr OPTIONAL,
-    OUT VOID        **TransmitBufferListPtr OPTIONAL
-    )
+PxeGetStatus (
+  IN     SNP_DRIVER  *Snp,
+  OUT UINT32         *InterruptStatusPtr,
+  OUT VOID          **TransmitBufferListPtr OPTIONAL
+  )
 /**
 
-Routine Description:
-
-    Get the status of the interrupts, get the list of transmit
-    buffers that completed transmitting.
-
 Arguments:
-
-    Snp                     Pointer to snp driver structure.
-
-    InterruptStatusPtr      A non null pointer to contain the interrupt
-                              status.
 
     TransmitBufferListPtrs  A non null pointer to contain the list of
                               pointers of previous transmitted buffers whose
                               transmission was completed asynchronously.
 
-Return Value:
-
-    EFI_SUCCESS         The status of the network interface was retrieved.
-
-    EFI_DEVICE_ERROR    The command could not be sent to the network
-                              interface.
-
 **/
 {
-    NIC_DATA_INSTANCE *adapterInfo;
+  // MS_HYP_CHANGE BEGIN
+  NIC_DATA_INSTANCE *adapterInfo;
 
-    adapterInfo = &Snp->AdapterContext->NicInfo;
+  //
+  // Get the NicInfo.
+  //
+  adapterInfo = &Snp->AdapterContext->NicInfo;
 
-    if (InterruptStatusPtr != NULL)
-    {
-        *InterruptStatusPtr = 0;
+  //
+  // report the values back..
+  //
+  if (InterruptStatusPtr != NULL) {
+    *InterruptStatusPtr = 0;
 
-        if (adapterInfo->RxInterrupt)
-        {
-            *InterruptStatusPtr |= EFI_SIMPLE_NETWORK_RECEIVE_INTERRUPT;
-            adapterInfo->RxInterrupt = FALSE;
-        }
-
-        if (adapterInfo->TxedInterrupt)
-        {
-            *InterruptStatusPtr |= EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT;
-            adapterInfo->TxedInterrupt = FALSE;
-        }
+    if (adapterInfo->RxInterrupt) {
+      *InterruptStatusPtr |= EFI_SIMPLE_NETWORK_RECEIVE_INTERRUPT;
+      adapterInfo->RxInterrupt = FALSE;
     }
 
-    if (TransmitBufferListPtr != NULL)
-    {
-        if (TxQueueIsEmpty(&adapterInfo->TxedBuffersQueue))
-        {
-            *TransmitBufferListPtr = NULL;
-        }
-        else
-        {
-            TxQueueDequeue(&adapterInfo->TxedBuffersQueue, TransmitBufferListPtr);
-        }
+    if (adapterInfo->TxedInterrupt) {
+      *InterruptStatusPtr |= EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT;
+      adapterInfo->TxedInterrupt = FALSE;
     }
+  }
 
-    if (Snp->Mode.MediaPresentSupported)
+  if (TransmitBufferListPtr != NULL)
+  {
+    if (TxQueueIsEmpty(&adapterInfo->TxedBuffersQueue))
     {
-        Snp->Mode.MediaPresent = adapterInfo->MediaPresent;
+      *TransmitBufferListPtr = NULL;
     }
+    else
+    {
+      TxQueueDequeue(&adapterInfo->TxedBuffersQueue, TransmitBufferListPtr);
+    }
+  }
 
-    return EFI_SUCCESS;
+  Snp->Mode.MediaPresent = adapterInfo->MediaPresent;
+  // MS_HYP_CHANGE END
+
+  return EFI_SUCCESS;
 }
-
 
 /**
   Reads the current interrupt status and recycled transmit buffer status from a
@@ -127,52 +126,49 @@ Return Value:
 EFI_STATUS
 EFIAPI
 SnpGetStatus(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    OUT UINT32                      *InterruptStatus OPTIONAL,
-    OUT VOID                        **TxBuf OPTIONAL
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  OUT UINT32                      *InterruptStatus  OPTIONAL,
+  OUT VOID                        **TxBuf           OPTIONAL
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
-    EFI_STATUS  status;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
+  EFI_STATUS  Status;
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (InterruptStatus == NULL && TxBuf == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if ((InterruptStatus == NULL) && (TxBuf == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  if (Snp == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    status = SnpGetStatusImpl(snpDriver, InterruptStatus, TxBuf);
+  // MS_HYP_CHANGE
+  Status = PxeGetStatus(Snp, InterruptStatus, TxBuf);
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

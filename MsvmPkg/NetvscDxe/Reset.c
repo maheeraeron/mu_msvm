@@ -9,9 +9,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "Snp.h"
 
-
 /**
-  Call UNDI to reset the NIC.
+  Call NetVsc to reset the NIC.
 
   @param  Snp                 Pointer to the snp driver structure.
 
@@ -20,43 +19,47 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpResetImpl(
-  IN  SNP_DRIVER *Snp
+PxeReset (
+  SNP_DRIVER  *Snp
   )
 {
-    EFI_STATUS status = EFI_SUCCESS;
-    EFI_NETWORK_STATISTICS savedStats;
-    UINT32 savedFilters;
+  // MS_HYP_CHANGE BEGIN
+  EFI_STATUS status = EFI_SUCCESS;
+  EFI_NETWORK_STATISTICS savedStats;
+  UINT32 savedFilters;
 
-    CopyMem(&savedStats, &Snp->AdapterContext->NicInfo.Statistics, sizeof(EFI_NETWORK_STATISTICS));
-    savedFilters = Snp->AdapterContext->NicInfo.RxFilter;
+  CopyMem(&savedStats, &Snp->AdapterContext->NicInfo.Statistics, sizeof(EFI_NETWORK_STATISTICS));
+  savedFilters = Snp->AdapterContext->NicInfo.RxFilter;
 
-    status = NetvscShutdown(&Snp->AdapterContext->NicInfo);
-    if (EFI_ERROR(status))
-    {
-        goto Cleanup;
-    }
+  status = NetvscShutdown(&Snp->AdapterContext->NicInfo);
+  if (EFI_ERROR(status))
+  {
+    goto Cleanup;
+  }
 
-    status = NetvscInit(&Snp->AdapterContext->NicInfo);
-    if (EFI_ERROR(status))
-    {
-        goto Cleanup;
-    }
+  status = NetvscInit(&Snp->AdapterContext->NicInfo);
+  if (EFI_ERROR(status))
+  {
+    goto Cleanup;
+  }
 
-    CopyMem(&Snp->AdapterContext->NicInfo.Statistics, &savedStats, sizeof(EFI_NETWORK_STATISTICS));
+  CopyMem(&Snp->AdapterContext->NicInfo.Statistics, &savedStats, sizeof(EFI_NETWORK_STATISTICS));
 
-    status = NetvscSetFilter(&Snp->AdapterContext->NicInfo, savedFilters);
+  status = NetvscSetFilter(&Snp->AdapterContext->NicInfo, savedFilters);
 
 Cleanup:
 
-    if (EFI_ERROR(status))
-    {
-        status = EFI_DEVICE_ERROR;
-    }
+  if (EFI_ERROR(status))
+  {
+    //
+    // NetVsc could not be reset. Return NetVsc error.
+    //
+    return EFI_DEVICE_ERROR;
+  }
+  // MS_HYP_CHANGE BEGIN
 
-    return status;
+  return EFI_SUCCESS;
 }
-
 
 /**
   Resets a network adapter and reinitializes it with the parameters that were
@@ -89,45 +92,38 @@ SnpReset(
   IN BOOLEAN                      ExtendedVerification
   )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
-    EFI_STATUS  status;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
+  EFI_STATUS  Status;
 
-    //
-    // Ignoring ExtendedVerification as it doesn't change how vNIC is reset.
-    //
+  // MS_HYP_CHANGE
+  // Ignoring ExtendedVerification as it doesn't change how vNIC is reset.
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    status = SnpResetImpl(snpDriver);
+  Status = PxeReset (Snp);
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

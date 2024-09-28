@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
   Call undi to convert an multicast IP address to a MAC address.
 
+  @param  Snp   Pointer to snp driver structure.
   @param  IPv6  Flag to indicate if this is an ipv6 address.
   @param  IP    Multicast IP address.
   @param  MAC   Pointer to hold the return MAC address.
@@ -25,48 +26,49 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpIp2MacImpl(
-    IN  BOOLEAN             IPv6,
-    IN  EFI_IP_ADDRESS      *IP,
-    OUT EFI_MAC_ADDRESS     *MAC
-    )
+PxeIp2Mac (
+  IN SNP_DRIVER           *Snp,
+  IN BOOLEAN              IPv6,
+  IN EFI_IP_ADDRESS       *IP,
+  IN OUT EFI_MAC_ADDRESS  *MAC
+  )
 {
-    EFI_STATUS status = EFI_SUCCESS;
+  // MS_HYP_CHANGE BEGIN
+  if (IPv6)
+  {
+      if (IP->v6.Addr[0] != 0xFF)
+      {
+          return EFI_INVALID_PARAMETER;
+      }
+      else
+      {
+          MAC->Addr[0] = 0x33;
+          MAC->Addr[1] = 0x33;
+          MAC->Addr[2] = IP->v6.Addr[12];
+          MAC->Addr[3] = IP->v6.Addr[13];
+          MAC->Addr[4] = IP->v6.Addr[14];
+          MAC->Addr[5] = IP->v6.Addr[15];
+      }
+  }
+  else
+  {
+      if ((IP->v4.Addr[0] & 0xF0) != 0xE0)
+      {
+          return EFI_INVALID_PARAMETER;
+      }
+      else
+      {
+          MAC->Addr[0] = 0x01;
+          MAC->Addr[1] = 0x00;
+          MAC->Addr[2] = 0x5E;
+          MAC->Addr[3] = (IP->v4.Addr[1] & 0x7F);
+          MAC->Addr[4] = IP->v4.Addr[2];
+          MAC->Addr[5] = IP->v4.Addr[3];
+      }
+  }
+  // MS_HYP_CHANGE BEGIN
 
-    if (IPv6)
-    {
-        if (IP->v6.Addr[0] != 0xFF)
-        {
-            status = EFI_INVALID_PARAMETER;
-        }
-        else
-        {
-            MAC->Addr[0] = 0x33;
-            MAC->Addr[1] = 0x33;
-            MAC->Addr[2] = IP->v6.Addr[12];
-            MAC->Addr[3] = IP->v6.Addr[13];
-            MAC->Addr[4] = IP->v6.Addr[14];
-            MAC->Addr[5] = IP->v6.Addr[15];
-        }
-    }
-    else
-    {
-        if ((IP->v4.Addr[0] & 0xF0) != 0xE0)
-        {
-            status = EFI_INVALID_PARAMETER;
-        }
-        else
-        {
-            MAC->Addr[0] = 0x01;
-            MAC->Addr[1] = 0x00;
-            MAC->Addr[2] = 0x5E;
-            MAC->Addr[3] = (IP->v4.Addr[1] & 0x7F);
-            MAC->Addr[4] = IP->v4.Addr[2];
-            MAC->Addr[5] = IP->v4.Addr[3];
-        }
-    }
-
-    return status;
+  return EFI_SUCCESS;
 }
 
 
@@ -101,56 +103,48 @@ SnpIp2MacImpl(
 EFI_STATUS
 EFIAPI
 SnpMcastIpToMac(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  BOOLEAN                     IPv6,
-    IN  EFI_IP_ADDRESS              *IP,
-    OUT EFI_MAC_ADDRESS            *MAC
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      IPv6,
+  IN EFI_IP_ADDRESS               *IP,
+  OUT EFI_MAC_ADDRESS             *MAC
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
-    EFI_STATUS  status;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
+  EFI_STATUS  Status;
 
-    //
-    // Get pointer to SNP driver instance for *this.
-    //
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  //
+  // Get pointer to SNP driver instance for *this.
+  //
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (IP == NULL || MAC == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if ((IP == NULL) || (MAC == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    status = SnpIp2MacImpl(IPv6, IP, MAC);
+  Status = PxeIp2Mac (Snp, IPv6, IP, MAC);
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

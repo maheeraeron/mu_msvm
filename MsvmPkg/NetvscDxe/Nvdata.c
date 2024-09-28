@@ -11,6 +11,34 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "Snp.h"
 
 /**
+  This routine calls Undi to read the desired number of eeprom bytes.
+
+  @param  Snp          pointer to the snp driver structure
+  @param  Offset       eeprom register value relative to the base address
+  @param  BufferSize   number of bytes to read
+  @param  Buffer       pointer where to read into
+
+  @retval EFI_SUCCESS           The NVRAM access was performed.
+  @retval EFI_INVALID_PARAMETER Invalid UNDI command.
+  @retval EFI_UNSUPPORTED       Command is not supported by UNDI.
+  @retval EFI_DEVICE_ERROR      Fail to execute UNDI command.
+
+**/
+EFI_STATUS
+PxeNvDataRead (
+  IN SNP_DRIVER  *Snp,
+  IN UINTN       Offset,
+  IN UINTN       BufferSize,
+  IN OUT VOID    *Buffer
+  )
+{
+  // MS_HYP_CHANGE
+  // Nvdata is NOT SUPPORTED.
+  return EFI_UNSUPPORTED;
+}
+
+
+/**
   Performs read and write operations on the NVRAM device attached to a network
   interface.
 
@@ -64,54 +92,78 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 SnpNvData(
-    IN      EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN      BOOLEAN                     ReadWrite,
-    IN      UINTN                       Offset,
-    IN      UINTN                       BufferSize,
-    IN OUT  VOID                        *Buffer
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN BOOLEAN                      ReadWrite,
+  IN UINTN                        Offset,
+  IN UINTN                        BufferSize,
+  IN OUT VOID                     *Buffer
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
-    EFI_STATUS  status;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
+  EFI_STATUS  Status;
 
-    //
-    // Get pointer to SNP driver instance from *This.
-    //
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+  //
+  // Get pointer to SNP driver instance for *this.
+  //
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    //
-    // Return error if the SNP is not initialized.
-    //
-    switch (snpDriver->Mode.State)
-    {
+  //
+  // Return error if the SNP is not initialized.
+  //
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        //
-        // Nvdata is NOT SUPPORTED.
-        //
-        status = EFI_UNSUPPORTED;
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        break;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        break;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    gBS->RestoreTPL(oldTpl);
+  //
+  // Return error if non-volatile memory variables are not valid.
+  //
+  if ((Snp->Mode.NvRamSize == 0) || (Snp->Mode.NvRamAccessSize == 0)) {
+    Status = EFI_UNSUPPORTED;
+    goto ON_EXIT;
+  }
 
-Exit:
+  //
+  // Check for invalid parameter combinations.
+  //
+  if ((BufferSize == 0) ||
+      (Buffer == NULL) ||
+      (Offset >= Snp->Mode.NvRamSize) ||
+      (Offset + BufferSize > Snp->Mode.NvRamSize) ||
+      (BufferSize % Snp->Mode.NvRamAccessSize != 0) ||
+      (Offset % Snp->Mode.NvRamAccessSize != 0)
+      )
+  {
+    Status = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
 
-    return status;
+  //
+  // check the implementation flags of undi if we can write the nvdata!
+  //
+  if (!ReadWrite) {
+    Status = EFI_UNSUPPORTED;
+  } else {
+    Status = PxeNvDataRead (Snp, Offset, BufferSize, Buffer);
+  }
+
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
+
+  return Status;
 }

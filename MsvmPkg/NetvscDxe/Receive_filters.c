@@ -26,39 +26,42 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpRecvFilterEnable(
-    IN  SNP_DRIVER      *Snp,
-    IN  UINT32          EnableFlags,
-    IN  UINTN           MCastAddressCount,
-    IN  EFI_MAC_ADDRESS *MCastAddressList
-    )
+PxeRecvFilterEnable (
+  SNP_DRIVER       *Snp,
+  UINT32           EnableFlags,
+  UINTN            MCastAddressCount,
+  EFI_MAC_ADDRESS  *MCastAddressList
+  )
 {
-    UINT32       newFilter;
-    EFI_STATUS   status;
 
-    if (MCastAddressCount > 0)
-    {
-        //
-        // All Multicast Packets are broadcasted to all vNICS by VMswitch
-        // So, the worst case scenario is that the Stack would be processing
-        // a lot of multicast packets it doesn't need to.
-        //
-        // TODO: Implement Multicast support or clarify the lack of support for Multicasting.
-        //
-        CopyMem(Snp->Mode.MCastFilter, MCastAddressList, MCastAddressCount*sizeof(EFI_MAC_ADDRESS));
-        Snp->Mode.MCastFilterCount = (UINT32) MCastAddressCount;
-    }
+  // MS_HYP_CHANGE BEGIN
+  UINT32       newFilter;
+  EFI_STATUS   status;
 
-    newFilter = (EnableFlags & Snp->Mode.ReceiveFilterMask) | Snp->AdapterContext->NicInfo.RxFilter;
+  if (MCastAddressCount > 0)
+  {
+    //
+    // All Multicast Packets are broadcasted to all vNICS by VMswitch
+    // So, the worst case scenario is that the Stack would be processing
+    // a lot of multicast packets it doesn't need to.
+    //
+    // TODO: Implement Multicast support or clarify the lack of support for Multicasting.
+    //
+    CopyMem(Snp->Mode.MCastFilter, MCastAddressList, MCastAddressCount*sizeof(EFI_MAC_ADDRESS));
+    Snp->Mode.MCastFilterCount = (UINT32) MCastAddressCount;
+  }
 
-    status = NetvscSetFilter(&Snp->AdapterContext->NicInfo, newFilter);
+  newFilter = (EnableFlags & Snp->Mode.ReceiveFilterMask) | Snp->AdapterContext->NicInfo.RxFilter;
 
-    if (EFI_ERROR(status))
-    {
-        status = EFI_DEVICE_ERROR;
-    }
+  status = NetvscSetFilter(&Snp->AdapterContext->NicInfo, newFilter);
 
-    return status;
+  if (EFI_ERROR(status))
+  {
+  // MS_HYP_CHANGE END
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -74,37 +77,57 @@ SnpRecvFilterEnable(
 
 **/
 EFI_STATUS
-SnpRecvFilterDisable(
-    IN  SNP_DRIVER *Snp,
-    IN  UINT32     DisableFlags,
-    IN  BOOLEAN    ResetMCastList
-    )
+PxeRecvFilterDisable (
+  SNP_DRIVER  *Snp,
+  UINT32      DisableFlags,
+  BOOLEAN     ResetMCastList
+  )
 {
-    UINT32       newFilter;
-    EFI_STATUS   status;
+  // MS_HYP_CHANGE BEGIN
+  UINT32       newFilter;
+  EFI_STATUS   status;
 
-    if (ResetMCastList)
-    {
-        //
-        // All Multicast Packets are broadcasted to all vNICS by VMswitch
-        // So, the worst case scenario is that the stack would be processing
-        // a lot of multicast packets it doesn't need to.
-        //
-        Snp->Mode.MCastFilterCount = 0;
-    }
+  if (ResetMCastList)
+  {
+    //
+    // All Multicast Packets are broadcasted to all vNICS by VMswitch
+    // So, the worst case scenario is that the stack would be processing
+    // a lot of multicast packets it doesn't need to.
+    //
+    Snp->Mode.MCastFilterCount = 0;
+  }
 
-    newFilter = (~(DisableFlags & Snp->Mode.ReceiveFilterMask)) & Snp->AdapterContext->NicInfo.RxFilter;
+  newFilter = (~(DisableFlags & Snp->Mode.ReceiveFilterMask)) & Snp->AdapterContext->NicInfo.RxFilter;
 
-    status = NetvscSetFilter(&Snp->AdapterContext->NicInfo, newFilter);
+  status = NetvscSetFilter(&Snp->AdapterContext->NicInfo, newFilter);
 
-    if (EFI_ERROR(status))
-    {
-        status = EFI_DEVICE_ERROR;
-    }
+  if (EFI_ERROR(status)) {
+  // MS_HYP_CHANGE END
+    return EFI_DEVICE_ERROR;
+  }
 
-    return status;
+  return EFI_SUCCESS;
 }
 
+/**
+  Call undi to read the receive filters.
+
+  @param  Snp                Pointer to snp driver structure.
+
+  @retval EFI_SUCCESS           The receive filter was read.
+  @retval EFI_DEVICE_ERROR      Fail to execute UNDI command.
+
+**/
+EFI_STATUS
+PxeRecvFilterRead (
+  SNP_DRIVER  *Snp
+  )
+{
+  // MS_HYP_CHANGE
+  Snp->Mode.ReceiveFilterSetting = Snp->AdapterContext->NicInfo.RxFilter;
+
+  return EFI_SUCCESS;
+}
 
 /**
   Manages the multicast receive filters of a network interface.
@@ -203,116 +226,100 @@ SnpRecvFilterDisable(
 EFI_STATUS
 EFIAPI
 SnpReceiveFilters(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  UINT32                      Enable,
-    IN  UINT32                      Disable,
-    IN  BOOLEAN                     ResetMCastFilter,
-    IN  UINTN                       MCastFilterCnt,
-    IN  EFI_MAC_ADDRESS         *MCastFilter OPTIONAL
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINT32                       Enable,
+  IN UINT32                       Disable,
+  IN BOOLEAN                      ResetMCastFilter,
+  IN UINTN                        MCastFilterCnt   OPTIONAL,
+  IN EFI_MAC_ADDRESS              *MCastFilter     OPTIONAL
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_STATUS  status = EFI_SUCCESS;
-    EFI_TPL     oldTpl;
+  SNP_DRIVER  *Snp;
+  EFI_STATUS  Status;
+  EFI_TPL     OldTpl;
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
+
+  //
+  // check if we are asked to enable or disable something that the NetVsc
+  // does not even support!
+  //
+  if (((Enable &~Snp->Mode.ReceiveFilterMask) != 0) ||
+      ((Disable &~Snp->Mode.ReceiveFilterMask) != 0))
+  {
+    Status = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
+
+  if (ResetMCastFilter) {
+    Disable       |= EFI_SIMPLE_NETWORK_RECEIVE_MULTICAST & Snp->Mode.ReceiveFilterMask;
+    MCastFilterCnt = 0;
+    MCastFilter    = NULL;
+  } else {
+    if (MCastFilterCnt != 0) {
+      if ((MCastFilterCnt > Snp->Mode.MaxMCastFilterCount) ||
+          (MCastFilter == NULL))
+      {
+        Status = EFI_INVALID_PARAMETER;
+        goto ON_EXIT;
+      }
     }
+  }
 
-    //
-    // Check if we are asked to enable or disable something that the VSP
-    // does not even support.
-    //
-    if (((Enable &~snpDriver->Mode.ReceiveFilterMask) != 0) ||
-        ((Disable &~snpDriver->Mode.ReceiveFilterMask) != 0))
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
+  if ((Enable == 0) && (Disable == 0) && !ResetMCastFilter && (MCastFilterCnt == 0)) {
+    Status = EFI_SUCCESS;
+    goto ON_EXIT;
+  }
+
+  if (((Enable & EFI_SIMPLE_NETWORK_RECEIVE_MULTICAST) != 0) && (MCastFilterCnt == 0)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
+
+  if ((Enable != 0) || (MCastFilterCnt != 0)) {
+    Status = PxeRecvFilterEnable (
+               Snp,
+               Enable,
+               MCastFilterCnt,
+               MCastFilter
+               );
+
+    if (EFI_ERROR (Status)) {
+      goto ON_EXIT;
     }
+  }
 
-    if (ResetMCastFilter)
-    {
-        Disable |= EFI_SIMPLE_NETWORK_RECEIVE_MULTICAST & snpDriver->Mode.ReceiveFilterMask;
-        MCastFilterCnt = 0;
-        MCastFilter    = NULL;
+  if ((Disable != 0) || ResetMCastFilter) {
+    Status = PxeRecvFilterDisable (Snp, Disable, ResetMCastFilter);
+
+    if (EFI_ERROR (Status)) {
+      goto ON_EXIT;
     }
-    else
-    {
-        if (MCastFilterCnt != 0)
-        {
-            if ((MCastFilterCnt > snpDriver->Mode.MaxMCastFilterCount) ||
-                (MCastFilter == NULL))
-            {
-                status = EFI_INVALID_PARAMETER;
-                goto Exit;
-            }
-        }
-    }
+  }
 
-    if (Enable == 0 && Disable == 0 && !ResetMCastFilter && MCastFilterCnt == 0)
-    {
-        status = EFI_SUCCESS;
-        goto Exit;
-    }
+  Status = PxeRecvFilterRead (Snp);
 
-    if ((Enable & EFI_SIMPLE_NETWORK_RECEIVE_MULTICAST) != 0 && MCastFilterCnt == 0)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    if ((Enable != 0) || (MCastFilterCnt != 0))
-    {
-        status = SnpRecvFilterEnable(
-            snpDriver,
-            Enable,
-            MCastFilterCnt,
-            MCastFilter);
-
-        if (EFI_ERROR (status))
-        {
-            goto Exit;
-        }
-    }
-    snpDriver->Mode.ReceiveFilterSetting = snpDriver->AdapterContext->NicInfo.RxFilter;
-
-    if ((Disable != 0) || ResetMCastFilter)
-    {
-        status = SnpRecvFilterDisable(snpDriver, Disable, ResetMCastFilter);
-
-        if (EFI_ERROR(status))
-        {
-            goto Exit;
-        }
-    }
-
-    snpDriver->Mode.ReceiveFilterSetting = snpDriver->AdapterContext->NicInfo.RxFilter;
-
-Exit:
-
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }

@@ -19,36 +19,30 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpStopImpl(
-    IN  SNP_DRIVER *Snp
-    )
+PxeStop (
+  SNP_DRIVER  *Snp
+  )
 {
-    EFI_STATUS status = EFI_SUCCESS;
-
-    switch (Snp->Mode.State)
-    {
+  // MS_HYP_CHANGE BEGIN
+  switch (Snp->Mode.State)
+  {
     case EfiSimpleNetworkStarted:
       break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      return EFI_NOT_STARTED;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      return EFI_DEVICE_ERROR;
+  }
+  // MS_HYP_CHANGE END
 
-    //
-    // Set simple network state to Stopped and return success.
-    //
-    Snp->Mode.State = EfiSimpleNetworkStopped;
-
-Exit:
-
-    return status;
+  //
+  // Set simple network state to Stopped and return success.
+  //
+  Snp->Mode.State = EfiSimpleNetworkStopped;
+  return EFI_SUCCESS;
 }
-
 
 /**
   Changes the state of a network interface from "started" to "stopped."
@@ -74,28 +68,38 @@ Exit:
 EFI_STATUS
 EFIAPI
 SnpStop(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
-    EFI_STATUS  status = EFI_SUCCESS;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
+  EFI_STATUS  Status;
 
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    status = SnpStopImpl(snpDriver);
+  switch (Snp->Mode.State) {
+    case EfiSimpleNetworkStarted:
+      break;
 
-    gBS->RestoreTPL(oldTpl);
+    case EfiSimpleNetworkStopped:
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
-InvalidParamExit:
+    default:
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    return status;
+  Status = PxeStop (Snp);
+
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
+
+  return Status;
 }

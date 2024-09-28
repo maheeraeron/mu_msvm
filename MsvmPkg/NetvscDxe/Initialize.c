@@ -22,31 +22,33 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpInitImpl(
-    IN  SNP_DRIVER *Snp
-    )
+PxeInit (
+  SNP_DRIVER  *Snp,
+  UINT16      CableDetectFlag
+  )
 {
-    EFI_STATUS status;
+  EFI_STATUS          Status;
 
-    status = NetvscInit(&Snp->AdapterContext->NicInfo);
+  // MS_HYP_CHANGE BEGIN
+  Status = NetvscInit(&Snp->AdapterContext->NicInfo);
 
-    if (status == EFI_SUCCESS)
-    {
-        Snp->Mode.State = EfiSimpleNetworkInitialized;
-    }
-    else
-    {
-        status = EFI_DEVICE_ERROR;
-    }
-
+  if (Status == EFI_SUCCESS)
+  {
     if (Snp->Mode.MediaPresentSupported)
     {
         Snp->Mode.MediaPresent = Snp->AdapterContext->NicInfo.MediaPresent;
     }
 
-    return status;
-}
+    Snp->Mode.State = EfiSimpleNetworkInitialized;
+  }
+  else
+  {
+  // MS_HYP_CHANGE END
+    Status = EFI_DEVICE_ERROR;
+  }
 
+  return Status;
+}
 
 /**
   Resets a network adapter and allocates the transmit and receive buffers
@@ -84,73 +86,79 @@ SnpInitImpl(
 EFI_STATUS
 EFIAPI
 SnpInitialize(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This,
-    IN  UINTN                       ExtraRxBufferSize,
-    IN  UINTN                       ExtraTxBufferSize
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
+  IN UINTN                        ExtraRxBufferSize OPTIONAL,
+  IN UINTN                        ExtraTxBufferSize OPTIONAL
+  )
 {
-    EFI_STATUS  efiStatus;
-    SNP_DRIVER  *snpDriver;
-    EFI_TPL     oldTpl;
+  EFI_STATUS  EfiStatus;
+  SNP_DRIVER  *Snp;
+  EFI_TPL     OldTpl;
 
-    if (This == NULL)
-    {
-        efiStatus = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    switch (snpDriver->Mode.State)
-    {
+  if (Snp == NULL) {
+    EfiStatus = EFI_INVALID_PARAMETER;
+    goto ON_EXIT;
+  }
+
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkStarted:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        efiStatus = EFI_NOT_STARTED;
-        goto Exit;
+      EfiStatus = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        efiStatus = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      EfiStatus = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    efiStatus = gBS->CreateEvent(
-        EVT_NOTIFY_WAIT,
-        TPL_NOTIFY,
-        &SnpWaitForPacketNotify,
-        snpDriver,
-        &snpDriver->Snp.WaitForPacket);
+  EfiStatus = gBS->CreateEvent (
+                     EVT_NOTIFY_WAIT,
+                     TPL_NOTIFY,
+                     &SnpWaitForPacketNotify,
+                     Snp,
+                     &Snp->Snp.WaitForPacket
+                     );
 
-    if (EFI_ERROR(efiStatus))
-    {
-        snpDriver->Snp.WaitForPacket = NULL;
-        efiStatus = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+  if (EFI_ERROR (EfiStatus)) {
+    Snp->Snp.WaitForPacket = NULL;
+    EfiStatus              = EFI_DEVICE_ERROR;
+    goto ON_EXIT;
+  }
 
-    snpDriver->Mode.MCastFilterCount      = 0;
-    snpDriver->Mode.ReceiveFilterSetting  = 0;
-    ZeroMem(snpDriver->Mode.MCastFilter, sizeof snpDriver->Mode.MCastFilter);
-    CopyMem(
-        &snpDriver->Mode.CurrentAddress,
-        &snpDriver->Mode.PermanentAddress,
-        sizeof (EFI_MAC_ADDRESS));
+  //
+  //
+  //
+  Snp->Mode.MCastFilterCount     = 0;
+  Snp->Mode.ReceiveFilterSetting = 0;
+  ZeroMem (Snp->Mode.MCastFilter, sizeof Snp->Mode.MCastFilter);
+  CopyMem (
+    &Snp->Mode.CurrentAddress,
+    &Snp->Mode.PermanentAddress,
+    sizeof (EFI_MAC_ADDRESS)
+    );
 
-    efiStatus = SnpInitImpl(snpDriver);
+  EfiStatus = PxeInit (Snp, PXE_OPFLAGS_INITIALIZE_DO_NOT_DETECT_CABLE);
+  if (EFI_ERROR (EfiStatus)) {
+    gBS->CloseEvent (Snp->Snp.WaitForPacket);
+    goto ON_EXIT;
+  }
 
-    if (EFI_ERROR(efiStatus))
-    {
-        gBS->CloseEvent(snpDriver->Snp.WaitForPacket);
-    }
+  // MS_HYP_CHANGE
+  // Try to update the MediaPresent field
+  PxeGetStatus (Snp, NULL, NULL);
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    gBS->RestoreTPL (oldTpl);
-
-InvalidParamExit:
-
-    return efiStatus;
+  return EfiStatus;
 }

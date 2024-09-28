@@ -19,24 +19,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 EFI_STATUS
-SnpShutdownImpl(
-    IN  SNP_DRIVER *Snp
-    )
+PxeShutdown (
+  IN SNP_DRIVER  *Snp
+  )
 {
-    EFI_STATUS status;
+  // MS_HYP_CHANGE BEGIN
+  EFI_STATUS status = NetvscShutdown(&Snp->AdapterContext->NicInfo);
 
-    status = NetvscShutdown(&Snp->AdapterContext->NicInfo);
+  if (EFI_ERROR(status))
+  {
+    return EFI_DEVICE_ERROR;
+  }
 
-    if (EFI_ERROR(status))
-    {
-        status = EFI_DEVICE_ERROR;
-    }
+  // MS_HYP_CHANGE END
 
-    Snp->Mode.State = EfiSimpleNetworkStarted;
-
-    return status;
+  return EFI_SUCCESS;
 }
-
 
 /**
   Resets a network adapter and leaves it in a state that is safe for another
@@ -60,62 +58,58 @@ SnpShutdownImpl(
 EFI_STATUS
 EFIAPI
 SnpShutdown(
-    IN  EFI_SIMPLE_NETWORK_PROTOCOL *This
-    )
+  IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
+  )
 {
-    SNP_DRIVER  *snpDriver;
-    EFI_STATUS  status;
-    EFI_TPL     oldTpl;
+  SNP_DRIVER  *Snp;
+  EFI_STATUS  Status;
+  EFI_TPL     OldTpl;
 
-    //
-    // Get pointer to SNP driver instance from *This.
-    //
-    if (This == NULL)
-    {
-        status = EFI_INVALID_PARAMETER;
-        goto InvalidParamExit;
-    }
+  //
+  // Get pointer to SNP driver instance for *This.
+  //
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    snpDriver = EFI_SIMPLE_NETWORK_DEV_FROM_THIS(This);
+  Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-    oldTpl = gBS->RaiseTPL(TPL_CALLBACK);
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
-    //
-    // Return error if the SNP is not initialized.
-    //
-    switch (snpDriver->Mode.State)
-    {
+  //
+  // Return error if the SNP is not initialized.
+  //
+  switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:
-        break;
+      break;
 
     case EfiSimpleNetworkStopped:
-        status = EFI_NOT_STARTED;
-        goto Exit;
+      Status = EFI_NOT_STARTED;
+      goto ON_EXIT;
 
     default:
-        status = EFI_DEVICE_ERROR;
-        goto Exit;
-    }
+      Status = EFI_DEVICE_ERROR;
+      goto ON_EXIT;
+  }
 
-    status = SnpShutdownImpl(snpDriver);
+  Status = PxeShutdown (Snp);
 
-    snpDriver->Mode.ReceiveFilterSetting  = 0;
+  Snp->Mode.State                = EfiSimpleNetworkStarted;
+  Snp->Mode.ReceiveFilterSetting = 0;
 
-    snpDriver->Mode.MCastFilterCount      = 0;
-    snpDriver->Mode.ReceiveFilterSetting  = 0;
-    ZeroMem(snpDriver->Mode.MCastFilter, sizeof snpDriver->Mode.MCastFilter);
-    CopyMem(
-        &snpDriver->Mode.CurrentAddress,
-        &snpDriver->Mode.PermanentAddress,
-        sizeof(EFI_MAC_ADDRESS));
+  Snp->Mode.MCastFilterCount     = 0;
+  Snp->Mode.ReceiveFilterSetting = 0;
+  ZeroMem (Snp->Mode.MCastFilter, sizeof Snp->Mode.MCastFilter);
+  CopyMem (
+    &Snp->Mode.CurrentAddress,
+    &Snp->Mode.PermanentAddress,
+    sizeof (EFI_MAC_ADDRESS)
+    );
 
-    gBS->CloseEvent(snpDriver->Snp.WaitForPacket);
+  gBS->CloseEvent (Snp->Snp.WaitForPacket);
 
-Exit:
+ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
 
-    gBS->RestoreTPL(oldTpl);
-
-InvalidParamExit:
-
-    return status;
+  return Status;
 }
