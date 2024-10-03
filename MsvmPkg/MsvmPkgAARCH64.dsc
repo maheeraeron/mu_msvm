@@ -354,6 +354,9 @@
 
   # Feature Debugger Config
   DebuggerFeaturePkgTokenSpaceGuid.PcdInitialBreakpointTimeoutMs|0
+!if $(DEBUGGER_ENABLED) == 1
+  DebuggerFeaturePkgTokenSpaceGuid.PcdForceEnableDebugger|TRUE
+!endif
 
   # Synthetic Timer Config
   gMsvmPkgTokenSpaceGuid.PcdSynicTimerSintIndex|0x1
