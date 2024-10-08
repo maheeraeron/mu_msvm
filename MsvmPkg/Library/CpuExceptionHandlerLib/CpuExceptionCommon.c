@@ -110,7 +110,7 @@ InternalPrintMessage (
   VA_END (Marker);
 
   //
-  // Send the print string to debug
+  // Send the print string to debug       // MS_HYP_CHANGE
   //
   DEBUG((DEBUG_ERROR, "%a", Buffer));     // MS_HYP_CHANGE
 

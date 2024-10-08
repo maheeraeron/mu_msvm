@@ -223,10 +223,10 @@ NvmeCreatePrpList (
   IN OUT NVME_HOST_VISIBILITY_CONTEXT *HostVisibilityContext     // MS_HYP_CHANGE
   )
 {
-  UINT64                PrpEntryNo; // MU_CHANGE - comparison mismatch
+  UINT64                PrpEntryNo; // MU_CHANGE - CodeQl Change - comparison mismatch
   UINT64                PrpListBase;
-  UINT64                PrpListIndex;  // MU_CHANGE - comparison mismatch
-  UINT64                PrpEntryIndex; // MU_CHANGE - comparison mismatch
+  UINT64                PrpListIndex;  // MU_CHANGE - CodeQl Change - comparison mismatch
+  UINT64                PrpEntryIndex; // MU_CHANGE - CodeQl Change - comparison mismatch
   UINT64                Remainder;
   EFI_PHYSICAL_ADDRESS  PrpListPhyAddr;
   UINTN                 Bytes;
@@ -284,12 +284,7 @@ NvmeCreatePrpList (
   }
   // MS_HYP_CHANGE END
 
-  Bytes = EFI_PAGES_TO_SIZE (*PrpListNo);
-  // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-  DEBUG ((DEBUG_VERBOSE, "%a - Mapping PrpList Buffer:\n", __FUNCTION__));
-  DEBUG ((DEBUG_VERBOSE, "\tAddress - 0x%lx\n", *PrpListHost));
-  DEBUG ((DEBUG_VERBOSE, "\tLength  - 0x%lx\n", Bytes));
-  DEBUG ((DEBUG_VERBOSE, "\tDirection - BusMasterCommonBuffer\n"));
+  Bytes  = EFI_PAGES_TO_SIZE (*PrpListNo);
   Status = PciIo->Map (
                     PciIo,
                     EfiPciIoOperationBusMasterCommonBuffer,
@@ -303,10 +298,6 @@ NvmeCreatePrpList (
     DEBUG ((DEBUG_ERROR, "NvmeCreatePrpList: create PrpList failure!\n"));
     goto EXIT;
   }
-
-  // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-  DEBUG ((DEBUG_VERBOSE, "\tResulting Map Address - 0x%lx\n", PrpListPhyAddr));
-  DEBUG ((DEBUG_VERBOSE, "\tPrpListMapData - 0x%lx\n", *Mapping));
 
   // MS_HYP_CHANGE BEGIN
   if (IsIsolated()) {
@@ -497,54 +488,6 @@ AbortAsyncPassThruTasks (
   return Status;
 }
 
-// MS_CHANGE [BEGIN] - Add extra debugging for IOMMU error tracking.
-
-/**
-  Dump PassThru packet info
-**/
-VOID
-DumpNvmePassThruPacket (
-  IN  EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET  *Packet
-  )
-{
-  EFI_NVM_EXPRESS_COMMAND  *NvmeCmd;
-
-  NvmeCmd = Packet->NvmeCmd;
-
-  DEBUG ((DEBUG_VERBOSE, "%a - Packet information:\n", __FUNCTION__));
-
-  DEBUG ((DEBUG_VERBOSE, "\tTarget NamespaceID - 0x%x\n", NvmeCmd->Nsid));
-  DEBUG ((DEBUG_VERBOSE, "\tQueueType - %a\n", Packet->QueueType == NVME_ADMIN_QUEUE ? "Admin" : "IO"));
-  DEBUG ((DEBUG_VERBOSE, "\tCommand Opcode - 0x%x ", (UINT8)NvmeCmd->Cdw0.Opcode));
-
-  if (Packet->QueueType == NVME_IO_QUEUE) {
-    switch ((UINT8)NvmeCmd->Cdw0.Opcode) {
-      case NVME_IO_FLUSH_OPC:
-        DEBUG ((DEBUG_VERBOSE, "(Nvme Flush Command)"));
-        break;
-      case NVME_IO_READ_OPC:
-        DEBUG ((DEBUG_VERBOSE, "(Nvme Read Command)"));
-        break;
-      case NVME_IO_WRITE_OPC:
-        DEBUG ((DEBUG_VERBOSE, "(Nvme Write Command)"));
-        break;
-      default:
-        break;
-    }
-  }
-
-  DEBUG ((DEBUG_VERBOSE, "\n"));
-
-  DEBUG ((DEBUG_VERBOSE, "\tData Buffer Address - 0x%lx\n", Packet->TransferBuffer));
-  DEBUG ((DEBUG_VERBOSE, "\tData Buffer Length  - 0x%lx\n", Packet->TransferLength));
-  DEBUG ((DEBUG_VERBOSE, "\tMeta Buffer Address - 0x%lx\n", Packet->MetadataBuffer));
-  DEBUG ((DEBUG_VERBOSE, "\tMeta Buffer Length  - 0x%lx\n", Packet->MetadataLength));
-
-  return;
-}
-
-// MS_CHANGE [END] - Add extra debugging for IOMMU error tracking.
-
 /**
   Sends an NVM Express Command Packet to an NVM Express controller or namespace. This function supports
   both blocking I/O and non-blocking I/O. The blocking I/O functionality is required, and the non-blocking
@@ -590,8 +533,8 @@ NvmExpressPassThru (
   EFI_STATUS                     Status;
   EFI_STATUS                     PreviousStatus;
   EFI_PCI_IO_PROTOCOL            *PciIo;
-  volatile NVME_SQ               *Sq;      // MU_CHANGE: Add volatile to ensure HW access
-  volatile NVME_CQ               *Cq;      // MU_CHANGE: Add volatile so that timer loop below is getting updated CQ
+  NVME_SQ                        *Sq;
+  volatile NVME_CQ               *Cq;
   UINT16                         QueueId;
   UINT16                         QueueSize;
   UINT32                         Bytes;
@@ -704,21 +647,6 @@ NvmExpressPassThru (
 
   // MU_CHANGE [END]
 
-  // MS_CHANGE [BEGIN] - Add extra debugging for IOMMU error tracking.
-  DEBUG_CODE (
-    DEBUG ((
-      DEBUG_VERBOSE,
-      "%a - Receiving %a command.\n",
-      __FUNCTION__,
-      Event == NULL ? "blocking" : "non-blocking"
-      ));
-    //
-    // Dump NVMe PassThru packet info
-    //
-    DumpNvmePassThruPacket (Packet);
-    );
-  // MS_CHANGE [END] - Add extra debugging for IOMMU error tracking.
-
   if (Packet->QueueType == NVME_ADMIN_QUEUE) {
     QueueId = 0;
   } else {
@@ -753,7 +681,7 @@ NvmExpressPassThru (
   //
   Cq->Pt = Private->Pt[QueueId];
 
-  ZeroMem ((VOID *)Sq, sizeof (NVME_SQ)); // MU_CHANGE: Add volatile keyword to ensure HW access
+  ZeroMem (Sq, sizeof (NVME_SQ));
   Sq->Opc  = (UINT8)Packet->NvmeCmd->Cdw0.Opcode;
   Sq->Fuse = (UINT8)Packet->NvmeCmd->Cdw0.FusedOperation;
   Sq->Cid  = Private->Cid[QueueId]++;
@@ -799,15 +727,6 @@ NvmExpressPassThru (
       Flag = EfiPciIoOperationBusMasterWrite;
     }
 
-    // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-    DEBUG ((DEBUG_VERBOSE, "%a - Mapping Data Buffer:\n", __FUNCTION__));
-    DEBUG ((DEBUG_VERBOSE, "\tAddress - 0x%lx\n", Packet->TransferBuffer));
-    DEBUG ((
-      DEBUG_VERBOSE,
-      "\tDirection - %a\n",
-      Flag == EfiPciIoOperationBusMasterRead ? "BusMasterRead" : "BusMasterWrite"
-      ));
-
     if ((Packet->TransferLength != 0) && (Packet->TransferBuffer != NULL)) {
 
       // MS_HYP_CHANGE BEGIN
@@ -851,14 +770,9 @@ NvmExpressPassThru (
                              &MapData
                              );
         if (EFI_ERROR (Status) || (Packet->TransferLength != MapLength)) {
-          // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-          DEBUG ((DEBUG_ERROR, "%a: Data Buffer Mapping error - %r!\n", __FUNCTION__, Status));
           return EFI_OUT_OF_RESOURCES;
         }
 
-        // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-        DEBUG ((DEBUG_VERBOSE, "\tResulting Map Address - 0x%lx\n", PhyAddr));
-        DEBUG ((DEBUG_VERBOSE, "\tMapData - 0x%lx\n", MapData));
       } // MS_HYP_CHANGE
 
       Sq->Prp[0] = PhyAddr;
@@ -912,15 +826,6 @@ NvmExpressPassThru (
     }
 
     if ((Packet->MetadataLength != 0) && (Packet->MetadataBuffer != NULL)) {
-      // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-      DEBUG ((DEBUG_VERBOSE, "%a - Mapping Meta Data Buffer:\n", __FUNCTION__));
-      DEBUG ((DEBUG_VERBOSE, "\tAddress - 0x%lx\n", Packet->MetadataBuffer));
-      DEBUG ((
-        DEBUG_VERBOSE,
-        "\tDirection - %a\n",
-        Flag == EfiPciIoOperationBusMasterRead ? "BusMasterRead" : "BusMasterWrite"
-        ));
-
       // MS_HYP_CHANGE BEGIN
       if (NvmExpressIsBounceActive()) {
 
@@ -967,10 +872,6 @@ NvmExpressPassThru (
                              &MapMeta
                              );
         if (EFI_ERROR (Status) || (Packet->MetadataLength != MapLength)) {
-          // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-          DEBUG ((DEBUG_ERROR, "%a: Meta Data Buffer Mapping error - %r!\n", __FUNCTION__, Status));
-          DEBUG ((DEBUG_VERBOSE, "%a - Unmapping Data Buffer (on MetaData mapping error path):\n", __FUNCTION__));
-          DEBUG ((DEBUG_VERBOSE, "\tMapData - 0x%lx\n", MapData));
           PciIo->Unmap (
                    PciIo,
                    MapData
@@ -978,11 +879,6 @@ NvmExpressPassThru (
 
           return EFI_OUT_OF_RESOURCES;
         }
-
-        // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-        DEBUG ((DEBUG_VERBOSE, "\tResulting Map Address - 0x%lx\n", PhyAddr));
-        DEBUG ((DEBUG_VERBOSE, "\tMapData - 0x%lx\n", MapMeta));
-
       } // MS_HYP_CHANGE
       Sq->Mptr = PhyAddr;
     }
@@ -1145,18 +1041,18 @@ NvmExpressPassThru (
       // Dump every completion entry status for debugging.
       //
       DEBUG_CODE_BEGIN ();
-      NvmeDumpStatus ((NVME_CQ *)Cq); // MU_CHANGE: Add volatile keyword to NVME_CQ
+      NvmeDumpStatus ((NVME_CQ *)Cq);
       DEBUG_CODE_END ();
     }
 
     //
     // Copy the Respose Queue entry for this command to the callers response buffer
     //
-    CopyMem (Packet->NvmeCompletion, (VOID *)Cq, sizeof (EFI_NVM_EXPRESS_COMPLETION));  // MU_CHANGE: Add volatile keyword to NVME_CQ
+    CopyMem (Packet->NvmeCompletion, (VOID *)Cq, sizeof (EFI_NVM_EXPRESS_COMPLETION));
   } else {
-    // MS_CHANGE BEGIN UEFI_890
+    // MU_CHANGE BEGIN UEFI_890
     ReportStatusCode ((EFI_ERROR_MAJOR | EFI_ERROR_CODE), (EFI_IO_BUS_SCSI | EFI_IOB_EC_INTERFACE_ERROR));
-    // MS_CHANGE END UEFI_890
+    // MU_CHANGE END UEFI_890
 
     //
     // Timeout occurs for an NVMe command. Reset the controller to abort the
@@ -1246,9 +1142,6 @@ EXIT:
   // MS_HYP_CHANGE END
 
   if (MapData != NULL) {
-    // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-    DEBUG ((DEBUG_VERBOSE, "%a - Unmapping Data Buffer:\n", __FUNCTION__));
-    DEBUG ((DEBUG_VERBOSE, "\tMapData - 0x%lx\n", MapData));
     PciIo->Unmap (
              PciIo,
              MapData
@@ -1256,9 +1149,6 @@ EXIT:
   }
 
   if (MapMeta != NULL) {
-    // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-    DEBUG ((DEBUG_VERBOSE, "%a - Unmapping MetaData Buffer:\n", __FUNCTION__));
-    DEBUG ((DEBUG_VERBOSE, "\tMapMeta - 0x%lx\n", MapData));
     PciIo->Unmap (
              PciIo,
              MapMeta
@@ -1266,9 +1156,6 @@ EXIT:
   }
 
   if (MapPrpList != NULL) {
-    // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-    DEBUG ((DEBUG_VERBOSE, "%a - Unmapping PrpList Buffer:\n", __FUNCTION__));
-    DEBUG ((DEBUG_VERBOSE, "\tPrpListMapping - 0x%lx\n", MapPrpList));
     PciIo->Unmap (
              PciIo,
              MapPrpList

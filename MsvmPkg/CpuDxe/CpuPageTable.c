@@ -1453,12 +1453,13 @@ InitializePageTableLib (
   This function set given attributes of the memory region specified by
   BaseAddress and Length.
   The valid Attributes is EFI_MEMORY_RP, EFI_MEMORY_XP, and EFI_MEMORY_RO.
-  @param  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
-  @param  BaseAddress       The physical address that is the start address of
-                            a memory region.
-  @param  Length            The size in bytes of the memory region.
-  @param  Attributes        The bit mask of attributes to set for the memory
-                            region.
+
+  @param[in]  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
+  @param[in]  BaseAddress       The physical address that is the start address of
+                                a memory region.
+  @param[in]  Length            The size in bytes of the memory region.
+  @param[in]  Attributes        The bit mask of attributes to set for the memory
+                                region.
   @retval EFI_SUCCESS           The attributes were set for the memory region.
   @retval EFI_INVALID_PARAMETER Length is zero.
                                 Attributes specified an illegal combination of
@@ -1488,15 +1489,15 @@ EfiSetMemoryAttributes (
   BOOLEAN        IsModified;
   BOOLEAN        IsSplitted;
 
-  DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx (0x%lx)\n", __FUNCTION__, BaseAddress, Length, Attributes));
+  DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx (0x%lx)\n", __func__, BaseAddress, Length, Attributes));
 
   if (Attributes == 0) {
-    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes == 0\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes == 0\n", __func__));
     return EFI_INVALID_PARAMETER;
   }
 
   if ((Attributes & ~EFI_MEMORY_ACCESS_MASK) != 0) {
-    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes(0x%lx) invalid\n", __FUNCTION__, Attributes));
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes(0x%lx) invalid\n", __func__, Attributes));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1518,7 +1519,7 @@ EfiSetMemoryAttributes (
       CpuFlushTlb ();
     }
   } else {
-    DEBUG ((DEBUG_ERROR, "%a: Failed in ConvertMemoryPageAttributes (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: Failed in ConvertMemoryPageAttributes (%r)\n", __func__, Status));
   }
 
   return Status;
@@ -1528,12 +1529,13 @@ EfiSetMemoryAttributes (
   This function clears given attributes of the memory region specified by
   BaseAddress and Length.
   The valid Attributes is EFI_MEMORY_RP, EFI_MEMORY_XP, and EFI_MEMORY_RO.
-  @param  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
-  @param  BaseAddress       The physical address that is the start address of
-                            a memory region.
-  @param  Length            The size in bytes of the memory region.
-  @param  Attributes        The bit mask of attributes to clear for the memory
-                            region.
+
+  @param[in]  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
+  @param[in]  BaseAddress       The physical address that is the start address of
+                                a memory region.
+  @param[in]  Length            The size in bytes of the memory region.
+  @param[in]  Attributes        The bit mask of attributes to clear for the memory
+                                region.
   @retval EFI_SUCCESS           The attributes were cleared for the memory region.
   @retval EFI_INVALID_PARAMETER Length is zero.
                                 Attributes specified an illegal combination of
@@ -1563,15 +1565,15 @@ EfiClearMemoryAttributes (
   BOOLEAN        IsModified;
   BOOLEAN        IsSplitted;
 
-  DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx (0x%lx)\n", __FUNCTION__, BaseAddress, Length, Attributes));
+  DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx (0x%lx)\n", __func__, BaseAddress, Length, Attributes));
 
   if (Attributes == 0) {
-    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes == 0\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes == 0\n", __func__));
     return EFI_INVALID_PARAMETER;
   }
 
   if ((Attributes & ~EFI_MEMORY_ACCESS_MASK) != 0) {
-    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes(0x%lx) invalid\n", __FUNCTION__, Attributes));
+    DEBUG ((DEBUG_ERROR, "%a: Error - Attributes(0x%lx) invalid\n", __func__, Attributes));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1593,7 +1595,7 @@ EfiClearMemoryAttributes (
       CpuFlushTlb ();
     }
   } else {
-    DEBUG ((DEBUG_ERROR, "%a: Failed in ConvertMemoryPageAttributes (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: Failed in ConvertMemoryPageAttributes (%r)\n", __func__, Status));
   }
 
   return Status;
@@ -1603,11 +1605,13 @@ EfiClearMemoryAttributes (
   This function retrieves the attributes of the memory region specified by
   BaseAddress and Length. If different attributes are got from different part
   of the memory region, EFI_NO_MAPPING will be returned.
-  @param  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
-  @param  BaseAddress       The physical address that is the start address of
-                            a memory region.
-  @param  Length            The size in bytes of the memory region.
-  @param  Attributes        Pointer to attributes returned.
+
+  @param[in]  This              The EFI_MEMORY_ATTRIBUTE_PROTOCOL instance.
+  @param[in]  BaseAddress       The physical address that is the start address of
+                                a memory region.
+  @param[in]  Length            The size in bytes of the memory region.
+  @param[in]  Attributes        Pointer to attributes returned.
+
   @retval EFI_SUCCESS           The attributes got for the memory region.
   @retval EFI_INVALID_PARAMETER Length is zero.
                                 Attributes is NULL.
@@ -1635,8 +1639,8 @@ EfiGetMemoryAttributes (
   UINT64                         AddressEncMask;
 
   // MU_CHANGE START: Change debug verbosity
-  // DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx\n", __FUNCTION__, BaseAddress, Length));
-  DEBUG ((DEBUG_VERBOSE, "%a: 0x%lx - 0x%lx\n", __FUNCTION__, BaseAddress, Length));
+  // DEBUG ((DEBUG_INFO, "%a: 0x%lx - 0x%lx\n", __func__, BaseAddress, Length));
+  DEBUG ((DEBUG_VERBOSE, "%a: 0x%lx - 0x%lx\n", __func__, BaseAddress, Length));
   // MU_CHANGE END
 
   if ((BaseAddress & (EFI_PAGE_SIZE - 1)) != 0) {
@@ -1710,8 +1714,8 @@ EfiGetMemoryAttributes (
   } while (Size > 0);
 
   // MU_CHANGE START: Change debug verbosity
-  // DEBUG ((DEBUG_INFO, "%a: Attributes is 0x%lx\n", __FUNCTION__, *Attributes));
-  DEBUG ((DEBUG_VERBOSE, "%a: Attributes is 0x%lx\n", __FUNCTION__, *Attributes));
+  // DEBUG ((DEBUG_INFO, "%a: Attributes is 0x%lx\n", __func__, *Attributes));
+  DEBUG ((DEBUG_VERBOSE, "%a: Attributes is 0x%lx\n", __func__, *Attributes));
   // MU_CHANG END
 
   return EFI_SUCCESS;
@@ -1770,7 +1774,7 @@ ClearPageFault (
       if (((OldAttributes & EFI_MEMORY_RP) != 0) || ((OldAttributes & EFI_MEMORY_XP) != 0)) {
         NewAttributes  = OldAttributes;
         NewAttributes &= ~(EFI_MEMORY_RP | EFI_MEMORY_XP);
-        DEBUG ((DEBUG_INFO, "%a - Clearing page fault at address: 0x%x\n", __FUNCTION__, PFAddress));
+        DEBUG ((DEBUG_INFO, "%a - Clearing page fault at address: 0x%x\n", __func__, PFAddress));
         Status = AssignMemoryPageAttributes (
                    &PagingContext,
                    PFAddress,
@@ -1784,7 +1788,7 @@ ClearPageFault (
             mPageFaultAddresses[mPFCount++] = PFAddress;
           }
         } else {
-          DEBUG ((DEBUG_INFO, "%a - Failed to clear page fault at address: 0x%x\n", __FUNCTION__, PFAddress));
+          DEBUG ((DEBUG_INFO, "%a - Failed to clear page fault at address: 0x%x\n", __func__, PFAddress));
         }
       }
     }
@@ -1824,7 +1828,7 @@ ResetPageAttributes (
 
     if (PageEntry != NULL) {
       Attributes = mPageFaultAttributes[mPFCount];
-      DEBUG ((DEBUG_INFO, "%a - Restoring page attributes at address: 0x%x\n", __FUNCTION__, PFAddress));
+      DEBUG ((DEBUG_INFO, "%a - Restoring page attributes at address: 0x%x\n", __func__, PFAddress));
       if (EFI_ERROR (
             AssignMemoryPageAttributes (
               &PagingContext,
@@ -1835,7 +1839,7 @@ ResetPageAttributes (
               )
             ))
       {
-        DEBUG ((DEBUG_ERROR, "%a - Unable to set memory attributes at address: 0x%x\n", __FUNCTION__, PFAddress));
+        DEBUG ((DEBUG_ERROR, "%a - Unable to set memory attributes at address: 0x%x\n", __func__, PFAddress));
         Status = EFI_DEVICE_ERROR;
       }
 

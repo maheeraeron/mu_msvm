@@ -8,7 +8,7 @@
 #
 #**/
 
-#Override : 00000002 | ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf | 0967c70c89b0c8aae4fec55708abb80e | 2024-09-23T18-28-06 | 3377f2f9e1f1c2517ef99176f3c255ef929491b2
+#Override : 00000002 | ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf | 444621e3ec61c11d66caf1d7d44c50e9 | 2024-10-04T16-30-42 | 4846544a82b36eb5e82b842cf332f8d8821d862e
 
 [Defines]
   INF_VERSION                    = 0x00010006

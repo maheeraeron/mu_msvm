@@ -216,7 +216,7 @@ NvmeRead (
     DEBUG_BLKIO,
     "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
     "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n",
-    __FUNCTION__,
+    __func__,
     Lba,
     (UINT64)OrginalBlocks,
     (UINT64)Blocks,
@@ -302,7 +302,7 @@ NvmeWrite (
     DEBUG_BLKIO,
     "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
     "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n",
-    __FUNCTION__,
+    __func__,
     Lba,
     (UINT64)OrginalBlocks,
     (UINT64)Blocks,
@@ -817,7 +817,7 @@ NvmeAsyncRead (
     DEBUG_BLKIO,
     "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
     "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n",
-    __FUNCTION__,
+    __func__,
     Lba,
     (UINT64)OrginalBlocks,
     (UINT64)Blocks,
@@ -945,7 +945,7 @@ NvmeAsyncWrite (
     DEBUG_BLKIO,
     "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
     "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n",
-    __FUNCTION__,
+    __func__,
     Lba,
     (UINT64)OrginalBlocks,
     (UINT64)Blocks,
@@ -1699,7 +1699,9 @@ TrustTransferNvmeDevice (
   function shall return EFI_DEVICE_ERROR.
 
   @param  This                         Indicates a pointer to the calling context.
-  @param  MediaId                      ID of the medium to receive data from.
+  @param  MediaId                      ID of the medium to receive data from. If there is no
+                                       block IO protocol supported by the physical device, the
+                                       value of MediaId is undefined.
   @param  Timeout                      The timeout, in 100ns units, to use for the execution
                                        of the security protocol command. A Timeout value of 0
                                        means that this function will wait indefinitely for the
@@ -1812,7 +1814,9 @@ NvmeStorageSecurityReceiveData (
   shall return EFI_DEVICE_ERROR.
 
   @param  This                         Indicates a pointer to the calling context.
-  @param  MediaId                      ID of the medium to receive data from.
+  @param  MediaId                      ID of the medium to receive data from. If there is no
+                                       block IO protocol supported by the physical device, the
+                                       value of MediaId is undefined.
   @param  Timeout                      The timeout, in 100ns units, to use for the execution
                                        of the security protocol command. A Timeout value of 0
                                        means that this function will wait indefinitely for the

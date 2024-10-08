@@ -60,6 +60,7 @@ class PlatformBuilder(UefiBuilder, UpdateSettingsManager, SetupSettingsManager, 
         self.env.SetValue("TOOL_CHAIN_TAG", "VS2022", "Platform hardcoded")
         self.env.SetValue("BLD_*_BUILD_UNIT_TESTS", "FALSE", "Unit Test build off by default")
         self.env.SetValue("BLD_*_BUILD_APPS", "FALSE", "App Build off by default")
+        self.env.SetValue("PE_VALIDATION_PATH", self.edk2path.GetAbsolutePathOnThisSystemFromEdk2RelativePath("MsvmPkg", "image_validation.cfg"), "Image validation ignore list")
 
         #
         # Build AARCH64 by using BUILD_ARCH=AARCH64 with PlatformBuild.py

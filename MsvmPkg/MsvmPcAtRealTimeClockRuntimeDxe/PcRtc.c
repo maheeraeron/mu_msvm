@@ -4,7 +4,6 @@
 Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 Copyright (c) 2017, AMD Inc. All rights reserved.<BR>
 Copyright (c) 2018 - 2020, ARM Limited. All rights reserved.<BR>
-Copyright (c) Microsoft Corporation.
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -12,9 +11,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "PcRtc.h"
 
-extern UINTN  mRtcIndexRegister;
-extern UINTN  mRtcTargetRegister;
-
+extern UINTN   mRtcIndexRegister;
+extern UINTN   mRtcTargetRegister;
+extern UINT16  mRtcDefaultYear;
+extern UINT16  mMinimalValidYear;
+extern UINT16  mMaximalValidYear;
 //
 // Days of month.
 //
@@ -73,10 +74,10 @@ IoRtcRead (
   )
 {
   IoWrite8 (
-    PcdGet8 (PcdRtcIndexRegister),
-    (UINT8)(Address | (UINT8)(IoRead8 (PcdGet8 (PcdRtcIndexRegister)) & 0x80))
+    mRtcIndexRegister,
+    (UINT8)(Address | (UINT8)(IoRead8 (mRtcIndexRegister) & 0x80))
     );
-  return IoRead8 (PcdGet8 (PcdRtcTargetRegister));
+  return IoRead8 (mRtcTargetRegister);
 }
 
 /**
@@ -95,10 +96,10 @@ IoRtcWrite (
   )
 {
   IoWrite8 (
-    PcdGet8 (PcdRtcIndexRegister),
-    (UINT8)(Address | (UINT8)(IoRead8 (PcdGet8 (PcdRtcIndexRegister)) & 0x80))
+    mRtcIndexRegister,
+    (UINT8)(Address | (UINT8)(IoRead8 (mRtcIndexRegister) & 0x80))
     );
-  IoWrite8 (PcdGet8 (PcdRtcTargetRegister), Data);
+  IoWrite8 (mRtcTargetRegister, Data);
 }
 
 /**
@@ -318,7 +319,7 @@ PcRtcInit (
     Time.Hour       = RTC_INIT_HOUR;
     Time.Day        = RTC_INIT_DAY;
     Time.Month      = RTC_INIT_MONTH;
-    Time.Year       = RTC_INIT_YEAR;   // MS_CHANGE_162988
+    Time.Year       = RTC_INIT_YEAR;   // MU_CHANGE
     Time.Nanosecond = 0;
     Time.TimeZone   = EFI_UNSPECIFIED_TIMEZONE;
     Time.Daylight   = 0;
@@ -358,7 +359,8 @@ PcRtcInit (
   Time.Hour       = RTC_INIT_HOUR;
   Time.Day        = RTC_INIT_DAY;
   Time.Month      = RTC_INIT_MONTH;
-  Time.Year       = PcdGet16 (PcdMinimalValidYear);
+  Time.Year       = MAX (mRtcDefaultYear, mMinimalValidYear);
+  Time.Year       = MIN (Time.Year, mMaximalValidYear);
   Time.Nanosecond = 0;
   Time.TimeZone   = Global->SavedTimeZone;
   Time.Daylight   = Global->Daylight;
@@ -838,11 +840,10 @@ PcRtcSetWakeupTime (
     // Just support set alarm time within 24 hours
     //
     Status = PcRtcGetTime (&RtcTime, &Capabilities, Global);
-    if (EFI_ERROR (Status)) {
-      return EFI_DEVICE_ERROR;
+    if (!EFI_ERROR (Status)) {
+      Status = RtcTimeFieldsValid (&RtcTime);
     }
 
-    Status = RtcTimeFieldsValid (&RtcTime);
     if (EFI_ERROR (Status)) {
       return EFI_DEVICE_ERROR;
     }
@@ -1031,8 +1032,8 @@ ConvertRtcTimeToEfiTime (
   //   Century is 19 if RTC year >= 70,
   //   Century is 20 otherwise.
   //
-  Century = (UINT8)(PcdGet16 (PcdMinimalValidYear) / 100);
-  if (Time->Year < PcdGet16 (PcdMinimalValidYear) % 100) {
+  Century = (UINT8)(mMinimalValidYear / 100);
+  if (Time->Year < mMinimalValidYear % 100) {
     Century++;
   }
 
@@ -1114,8 +1115,8 @@ RtcTimeFieldsValid (
   IN EFI_TIME  *Time
   )
 {
-  if ((Time->Year < PcdGet16 (PcdMinimalValidYear)) ||
-      (Time->Year > PcdGet16 (PcdMaximalValidYear)) ||
+  if ((Time->Year < mMinimalValidYear) ||
+      (Time->Year > mMaximalValidYear) ||
       (Time->Month < 1) ||
       (Time->Month > 12) ||
       (!DayValid (Time)) ||

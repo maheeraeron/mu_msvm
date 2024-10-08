@@ -5,21 +5,12 @@
 #  Identifier Protocol, to provide a packet level interface to a network adapter.
 #
 #  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) Microsoft Corporation.
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
-
-## @file
-#  Component description file for NetvscDxe module.
-#
-#  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-#  Copyright (c) Microsoft Corporation.
-#  Licensed under the BSD-2-Clause-Patent license.
-#
-##
-
-#Override : 00000002 | NetworkPkg/SnpDxe/SnpDxe.inf | dbef0ca456f2186063a4cb09d98043e3 | 2024-09-25T17-46-04 | 1ab6556d76c73af2ca74a855504e3f6c1b9ab264
+#Override : 00000002 | NetworkPkg/SnpDxe/SnpDxe.inf | 6de8f98fe6ab90e0008e85b2bb4062eb | 2024-09-27T00-21-20 | f77e9e031e954b294b0d282e9f46ec526f811de6
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -77,10 +68,12 @@
   UefiDriverEntryPoint
 
 [Guids]
-  gEfiEventExitBootServicesGuid                 # CONSUMES
-  gEfiVmbusChannelDevicePathGuid                # CONSUMES
-  # MS_HYP_CHANGE - Use gEfiEventBeforeExitBootServicesGuid for SnpDxe to issue shutdown before VmBus disconnect
+  # MU_CHANGE [BEGIN] - Shutdown SnpDxe in BeforeExitBootServices
+  #  gEfiEventExitBootServicesGuid                 ## SOMETIMES_CONSUMES ## Event
   gEfiEventBeforeExitBootServicesGuid           ## SOMETIMES_CONSUMES ## Event
+  gSnpNetworkInitializedEventGuid               ## SOMETIMES_PRODUCES ## MU_CHANGE - Signal
+  # MU_CHANGE [END]
+  gEfiVmbusChannelDevicePathGuid                # CONSUMES MS_HYP_CHANGE
   gSyntheticNetworkClassGuid                    # CONSUMES MS_HYP_CHANGE
 
 [Protocols]

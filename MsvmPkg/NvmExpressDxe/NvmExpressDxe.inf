@@ -10,7 +10,7 @@
 #
 ##
 
-#Track : 00000002 | MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf | 54b84869962818e0984778a3a67ebb66 | 2024-09-05T23-37-56 | 1ab6556d76c73af2ca74a855504e3f6c1b9ab264
+#Override : 00000002 | MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf | e3c5531fb7174699039e79b682faf092 | 2024-09-27T20-38-58 | f77e9e031e954b294b0d282e9f46ec526f811de6
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -43,18 +43,18 @@
   NvmExpressHci.c
   NvmExpressHci.h
   NvmExpressPassthru.c
-  NvmExpressMediaSanitize.c
-  NvmExpressMediaSanitize.h
+  NvmExpressMediaSanitize.c # MU_CHANGE - Add Media Sanitize
+  NvmExpressMediaSanitize.h # MU_CHANGE - Add Madia Sanitize
 
-## MSChange [BEGIN]
+## MU_CHANGE Start: Add NVMe Long Delay Time Events
 [Guids]
   gNVMeEnableStartEventGroupGuid
   gNVMeEnableCompleteEventGroupGuid
-## MSChange [END]
+## MU_CHANGE End: Add NVMe Long Delay Time Events
 
 [Packages]
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec     ## MSCHANGE for event
+  MdeModulePkg/MdeModulePkg.dec ## MU_CHANGE Add NVMe Long Delay Time Events
   MsvmPkg/MsvmPkg.dec               ## MS_HYP_CHANGE
 
 [LibraryClasses]
@@ -81,7 +81,7 @@
   gEfiDiskInfoProtocolGuid                    ## BY_START
   gEfiStorageSecurityCommandProtocolGuid      ## BY_START
   gEfiDriverSupportedEfiVersionProtocolGuid   ## PRODUCES
-  gMediaSanitizeProtocolGuid                  ## PRODUCES
+  gMediaSanitizeProtocolGuid                  ## PRODUCES # MU_CHANGE - Add Media Sanitize
   gEfiResetNotificationProtocolGuid           ## CONSUMES
   gEfiHvIvmProtocolGuid                       ## CONSUMES ## MS_HYP_CHANGE
 

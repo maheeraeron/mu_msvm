@@ -14,7 +14,7 @@
 #
 ##
 
-#Override : 00000002 | MdePkg/Library/BaseRngLib/BaseRngLib.inf | 1d638b285062e6b436d37a6ae9b87568 | 2023-11-14T22-35-48 | 11fc03bfa5afe10509e0e31d46136384b8714e42
+#Override : 00000002 | MdePkg/Library/BaseRngLib/BaseRngLib.inf | 37c64f26382798e13243e768535d16b3 | 2024-10-03T17-42-35 | c59d3eaa5c33d8f515a018072b467d7f196ed84d
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -42,10 +42,8 @@
   AArch64/Rndr.c
   AArch64/ArmRng.h
 
-  AArch64/ArmReadIdIsar0.S   | GCC
   AArch64/ArmRng.S           | GCC
 
-  AArch64/ArmReadIdIsar0.asm | MSFT
   AArch64/ArmRng.asm         | MSFT
 
 [Guids.AARCH64]

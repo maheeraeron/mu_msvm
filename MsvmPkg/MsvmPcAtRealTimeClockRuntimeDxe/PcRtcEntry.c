@@ -17,8 +17,11 @@ EFI_HANDLE  mHandle = NULL;
 
 STATIC EFI_EVENT  mVirtualAddrChangeEvent;
 
-UINTN  mRtcIndexRegister;
-UINTN  mRtcTargetRegister;
+UINTN   mRtcIndexRegister;
+UINTN   mRtcTargetRegister;
+UINT16  mRtcDefaultYear;
+UINT16  mMinimalValidYear;
+UINT16  mMaximalValidYear;
 
 // MS_HYP_CHANGE BEGIN
 
@@ -292,9 +295,10 @@ PcRtcEfiSetWakeupTime (
   @param[in]    Event   The Event that is being processed
   @param[in]    Context Event Context
 **/
+STATIC
 VOID
 EFIAPI
-LibRtcVirtualNotifyEvent (
+VirtualNotifyEvent (
   IN EFI_EVENT  Event,
   IN VOID       *Context
   )
@@ -323,6 +327,80 @@ LibRtcVirtualNotifyEvent (
 
 }
 
+//
+// MU_CHANGE begin
+//
+
+/**
+    OnVariablePolicyProtocolNotification
+
+    Sets the AdvancedLogger Locator variable policy.
+
+    @param[in]      Event   - NULL if called from Entry, Event if called from notification
+    @param[in]      Context - VariablePolicy if called from Entry, NULL if called from notification
+
+  **/
+STATIC
+VOID
+EFIAPI
+OnVariablePolicyProtocolNotification (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
+{
+  EDKII_VARIABLE_POLICY_PROTOCOL  *VariablePolicy = NULL;
+  EFI_STATUS                      Status;
+
+  DEBUG ((DEBUG_INFO, "%a: Setting policy for RTC variables, Context=%p\n", __FUNCTION__, Context));
+
+  if (Context != NULL) {
+    VariablePolicy = (EDKII_VARIABLE_POLICY_PROTOCOL *)Context;
+  } else {
+    Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: - Locating Variable Policy failed - Code=%r\n", __FUNCTION__, Status));
+      ASSERT_EFI_ERROR (Status);
+      return;
+    }
+  }
+
+  Status = RegisterBasicVariablePolicy (
+             VariablePolicy,
+             &gEfiCallerIdGuid,
+             L"RTCALARM",
+             sizeof (EFI_TIME),
+             sizeof (EFI_TIME),
+             EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+             (UINT32) ~(EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE),
+             VARIABLE_POLICY_TYPE_NO_LOCK
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: - Error setting policy for RTCALARM - Code=%r\n", __FUNCTION__, Status));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  Status = RegisterBasicVariablePolicy (
+             VariablePolicy,
+             &gEfiCallerIdGuid,
+             L"RTC",
+             sizeof (UINT32),
+             sizeof (UINT32),
+             EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+             (UINT32) ~(EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE),
+             VARIABLE_POLICY_TYPE_NO_LOCK
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: - Error setting policy for RTC - Code=%r\n", __FUNCTION__, Status));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  return;
+}
+
+//
+// MU_CHANGE end
+//
+
 /**
   The user Entry Point for PcRTC module.
 
@@ -344,9 +422,11 @@ InitializePcRtc (
   )
 {
   EFI_STATUS                      Status;
+  EFI_EVENT                       Event;
+  VOID                            *ProtocolRegistration;    // MU_CHANGE
+  EDKII_VARIABLE_POLICY_PROTOCOL  *VariablePolicy = NULL;   // MU_CHANGE
 
   // MS_HYP_CHANGE BEGIN
-
   BOOLEAN registerAddressChangeHandler = FALSE;
 
   mHardwareIsolatedWithNoParavisor = IsHardwareIsolatedNoParavisor();
@@ -376,10 +456,8 @@ InitializePcRtc (
   mTimeBuffer = (PVM_EFI_TIME)mTimeBufferGpa;
   registerAddressChangeHandler = TRUE;
 #else
-
   // MS_HYP_CHANGE END
 
-  EFI_EVENT                       Event;
 
   EfiInitializeLock (&mModuleGlobal.RtcLock, TPL_CALLBACK);
   mModuleGlobal.CenturyRtcAddress = GetCenturyRtcAddress ();
@@ -387,11 +465,20 @@ InitializePcRtc (
   if (FeaturePcdGet (PcdRtcUseMmio)) {
     mRtcIndexRegister  = (UINTN)PcdGet64 (PcdRtcIndexRegister64);
     mRtcTargetRegister = (UINTN)PcdGet64 (PcdRtcTargetRegister64);
+  } else {
+    mRtcIndexRegister  = (UINTN)PcdGet8 (PcdRtcIndexRegister);
+    mRtcTargetRegister = (UINTN)PcdGet8 (PcdRtcTargetRegister);
   }
 
+  mRtcDefaultYear   = PcdGet16 (PcdRtcDefaultYear);
+  mMinimalValidYear = PcdGet16 (PcdMinimalValidYear);
+  mMaximalValidYear = PcdGet16 (PcdMaximalValidYear);
+
+  // MS_HYP_CHANGE BEGIN
   // Skip RTC device library init as none is present when isolated with no paravisor.
   if (!mHardwareIsolatedWithNoParavisor)
   {
+  // MS_HYP_CHANGE END
     Status = PcRtcInit(&mModuleGlobal);
     ASSERT_EFI_ERROR(Status);
 
@@ -401,7 +488,8 @@ InitializePcRtc (
         PcRtcAcpiTableChangeCallback,
         NULL,
         &gEfiAcpi10TableGuid,
-        &Event);
+        &Event
+        );
     ASSERT_EFI_ERROR(Status);
 
     Status = gBS->CreateEventEx(
@@ -410,12 +498,14 @@ InitializePcRtc (
         PcRtcAcpiTableChangeCallback,
         NULL,
         &gEfiAcpiTableGuid,
-        &Event);
+        &Event
+        );
     ASSERT_EFI_ERROR(Status);
+
+  // MS_HYP_CHANGE BEGIN
   }
-
-
 #endif
+  // MS_HYP_CHANGE END
 
   gRT->GetTime       = PcRtcEfiGetTime;
   gRT->SetTime       = PcRtcEfiSetTime;
@@ -430,7 +520,7 @@ InitializePcRtc (
                   );
   if (EFI_ERROR (Status)) {
     ASSERT_EFI_ERROR (Status);
-    goto Cleanup;
+    goto Cleanup; // MS_HYP_CHANGE
   }
 
   if (registerAddressChangeHandler || FeaturePcdGet (PcdRtcUseMmio)) {  // MS_HYP_CHANGE
@@ -438,7 +528,7 @@ InitializePcRtc (
     Status = gBS->CreateEventEx (
                     EVT_NOTIFY_SIGNAL,
                     TPL_NOTIFY,
-                    LibRtcVirtualNotifyEvent,
+                    VirtualNotifyEvent,
                     NULL,
                     &gEfiEventVirtualAddressChangeGuid,
                     &mVirtualAddrChangeEvent
@@ -446,9 +536,9 @@ InitializePcRtc (
     ASSERT_EFI_ERROR (Status);
   }
 
-Cleanup:
-
   // MS_HYP_CHANGE BEGIN
+
+Cleanup:
 
 #if defined(MDE_CPU_AARCH64)
 
@@ -465,6 +555,48 @@ Cleanup:
 #endif
 
   // MS_HYP_CHANGE END
+
+  //
+  // MU_CHANGE begin
+  //
+  // There is no dependency for VariablePolicy Protocol in case this code is used
+  // in firmware without VariablePolicy.  And, VariablePolicy may or may not be installed
+  // before this driver is run.  If the Variable Policy Protocol is not found, register for
+  // a notification that may not occur.
+
+  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
+  if (EFI_ERROR (Status)) {
+    Status = gBS->CreateEvent (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    OnVariablePolicyProtocolNotification,
+                    NULL,
+                    &Event
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to create notification callback event (%r)\n", __FUNCTION__, Status));
+      ASSERT_EFI_ERROR (Status);
+    } else {
+      Status = gBS->RegisterProtocolNotify (
+                      &gEdkiiVariablePolicyProtocolGuid,
+                      Event,
+                      &ProtocolRegistration
+                      );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: failed to register for notification (%r)\n", __FUNCTION__, Status));
+        gBS->CloseEvent (Event);
+        ASSERT_EFI_ERROR (Status);
+      }
+    }
+  } else {
+    OnVariablePolicyProtocolNotification (NULL, VariablePolicy);
+  }
+
+  //
+  // MU_CHANGE end
+  //
 
   return Status;
 }

@@ -13,7 +13,7 @@
 #
 ##
 
-#Override : 00000002 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | b76cac4675fe2be72332212df8ed92a6 | 2023-11-14T22-38-09 | b603713498151146d14ffa8ab779fa2ae56b8076
+#Override : 00000002 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | 1875b3cef767211879ff8470ed0daf2c | 2024-09-26T21-01-17 | b3258ca050c9c2f53516b63d583be6d39a36d386
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -41,7 +41,7 @@
   MdeModulePkg/MdeModulePkg.dec
   CryptoPkg/CryptoPkg.dec
   SecurityPkg/SecurityPkg.dec
-  MsvmPkg/MsvmPkg.dec             # MS_HYP_CHANGE
+  MsvmPkg/MsvmPkg.dec             ## MS_HYP_CHANGE
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -56,6 +56,7 @@
   SecurityManagementLib
   PeCoffLib
   TpmMeasurementLib
+  CrashLib                        ## MS_HYP_CHANGE
 
 [Protocols]
   gEfiFirmwareVolume2ProtocolGuid       ## SOMETIMES_CONSUMES

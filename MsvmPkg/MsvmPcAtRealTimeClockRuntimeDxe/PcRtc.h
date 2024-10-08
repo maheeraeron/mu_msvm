@@ -17,6 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/Acpi.h>
 
 #include <Protocol/RealTimeClock.h>
+#include <Protocol/VariablePolicy.h>            // MU_CHANGE
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
@@ -30,7 +31,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/PcdLib.h>
 #include <Library/ReportStatusCodeLib.h>
-
+#include <Library/VariablePolicyHelperLib.h>    // MU_CHANGE
 
 typedef struct {
   EFI_LOCK    RtcLock;
@@ -65,9 +66,8 @@ extern PC_RTC_MODULE_GLOBALS  mModuleGlobal;
 #define RTC_INIT_SECOND  0
 #define RTC_INIT_MINUTE  0
 #define RTC_INIT_HOUR    0
-// MS_CHANGE_162988
-// MSChange - base the default date on the build date midnight.  Since we are in PST/PDT, if anyone between here and the international date line
-//                       tries to use this UEFI within 6 hours, they might go in the future.
+// MU_CHANGE [BEGIN] - Default date on the build date midnight.
+// Since we are in PST/PDT, if anyone between here and the international date line
 #define RTC_INIT_DAY    ( ((__DATE__)[5] - '0') +  ( (((__DATE__)[4] >= '0') && ((__DATE__)[4] <= '3') ) ? (((__DATE__)[4] - '0') * 10) : 0 ) )
 #define RTC_INIT_MONTH  ( (__DATE__[0] == 'F') ? 2  : (\
                           (__DATE__[0] == 'S') ? 9  : (\
@@ -83,7 +83,7 @@ extern PC_RTC_MODULE_GLOBALS  mModuleGlobal;
                           3))))))))))))
 
 #define RTC_INIT_YEAR  (((__DATE__)[7] - '0')*1000 + ((__DATE__)[8] - '0')*100 + ((__DATE__)[9] - '0')*10 + ((__DATE__)[10] - '0'))
-// END
+// MU_CHANGE [END]
 
 #pragma pack(1)
 //

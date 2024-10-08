@@ -13,28 +13,6 @@
 ; Notes:
 ;
 ;------------------------------------------------------------------------------
-%include "Nasm.inc"
-
-;
-; Equivalent NASM structure of IA32_DESCRIPTOR
-;
-struc IA32_DESCRIPTOR
-  .Limit                         CTYPE_UINT16 1
-  .Base                          CTYPE_UINTN  1
-endstruc
-
-;
-; Equivalent NASM structure of IA32_IDT_GATE_DESCRIPTOR
-;
-struc IA32_IDT_GATE_DESCRIPTOR
-  .OffsetLow                     CTYPE_UINT16 1
-  .Selector                      CTYPE_UINT16 1
-  .Reserved_0                    CTYPE_UINT8 1
-  .GateType                      CTYPE_UINT8 1
-  .OffsetHigh                    CTYPE_UINT16 1
-  .OffsetUpper                   CTYPE_UINT32 1
-  .Reserved_1                    CTYPE_UINT32 1
-endstruc
 
 ;
 ; CommonExceptionHandler()
@@ -49,29 +27,35 @@ extern ASM_PFX(CommonExceptionHandler)
 SECTION .data
 
 DEFAULT REL
+%ifndef NO_ABSOLUTE_RELOCS_IN_TEXT
 SECTION .text
+%endif
 
 ALIGN   8
 
-; Generate 256 IDT vectors.
+; Generate 32 IDT vectors.
+; 32 IDT vectors are enough because interrupts (32+) are not enabled in SEC and PEI phase.
 AsmIdtVectorBegin:
 %assign Vector 0
-%rep  256
-    push    strict dword %[Vector] ; This instruction pushes sign-extended 8-byte value on stack
+%rep  32
+    push    byte %[Vector]
     push    rax
-    mov     rax, strict qword 0    ; mov     rax, ASM_PFX(CommonInterruptEntry)
+    mov     rax, ASM_PFX(CommonInterruptEntry)
     jmp     rax
 %assign Vector Vector+1
 %endrep
 AsmIdtVectorEnd:
 
 HookAfterStubHeaderBegin:
-    push    strict dword 0      ; 0 will be fixed
-VectorNum:
+    db      0x6a        ; push
+@VectorNum:
+    db      0          ; 0 will be fixed
     push    rax
-    mov     rax, strict qword 0 ;     mov     rax, HookAfterStubHeaderEnd
-JmpAbsoluteAddress:
+    mov     rax, HookAfterStubHeaderEnd
     jmp     rax
+
+SECTION .text
+
 HookAfterStubHeaderEnd:
     mov     rax, rsp
     and     sp,  0xfff0        ; make sure 16-byte aligned for exception context
@@ -300,53 +284,6 @@ DrFinish:
     call    ASM_PFX(CommonExceptionHandler)
     add     rsp, 4 * 8 + 8
 
-    ; The follow algorithm is used for clear shadow stack token busy bit.
-    ; The comment is based on the sample shadow stack.
-    ; Shadow stack is 32 bytes aligned.
-    ; The sample shadow stack layout :
-    ; Address | Context
-    ;         +-------------------------+
-    ;  0xFB8  |   FREE                  | It is 0xFC0|0x02|(LMA & CS.L), after SAVEPREVSSP.
-    ;         +-------------------------+
-    ;  0xFC0  |  Prev SSP               |
-    ;         +-------------------------+
-    ;  0xFC8  |   RIP                   |
-    ;         +-------------------------+
-    ;  0xFD0  |   CS                    |
-    ;         +-------------------------+
-    ;  0xFD8  |  0xFD8 | BUSY           | BUSY flag cleared after CLRSSBSY
-    ;         +-------------------------+
-    ;  0xFE0  | 0xFC0|0x02|(LMA & CS.L) |
-    ;         +-------------------------+
-    ; Instructions for Intel Control Flow Enforcement Technology (CET) are supported since NASM version 2.15.01.
-    cmp     qword [ASM_PFX(mDoFarReturnFlag)], 0
-    jz      CetDone
-    mov     rax, cr4
-    and     rax, 0x800000       ; Check if CET is enabled
-    jz      CetDone
-    sub     rsp, 0x10
-    sidt    [rsp]
-    mov     rcx, qword [rsp + IA32_DESCRIPTOR.Base]; Get IDT base address
-    add     rsp, 0x10
-    mov     rax, qword [rbp + 8]; Get exception number
-    sal     rax, 0x04           ; Get IDT offset
-    add     rax, rcx            ; Get IDT gate descriptor address
-    mov     al, byte [rax + IA32_IDT_GATE_DESCRIPTOR.Reserved_0]
-    and     rax, 0x01           ; Check IST field
-    jz      CetDone
-                                ; SSP should be 0xFC0 at this point
-    mov     rax, 0x04           ; advance past cs:lip:prevssp;supervisor shadow stack token
-    incsspq rax                 ; After this SSP should be 0xFE0
-    saveprevssp                 ; now the shadow stack restore token will be created at 0xFB8
-    rdsspq  rax                 ; Read new SSP, SSP should be 0xFE8
-    sub     rax, 0x10
-    clrssbsy [rax]              ; Clear token at 0xFD8, SSP should be 0 after this
-    sub     rax, 0x20
-    rstorssp [rax]              ; Restore to token at 0xFB8, new SSP will be 0xFB8
-    mov     rax, 0x01           ; Pop off the new save token created
-    incsspq rax                 ; SSP should be 0xFC0 now
-CetDone:
-
     cli
 ;; UINT64  ExceptionData;
     add     rsp, 8
@@ -453,22 +390,9 @@ global ASM_PFX(AsmGetTemplateAddressMap)
 ASM_PFX(AsmGetTemplateAddressMap):
     lea     rax, [AsmIdtVectorBegin]
     mov     qword [rcx], rax
-    mov     qword [rcx + 0x8],  (AsmIdtVectorEnd - AsmIdtVectorBegin) / 256
+    mov     qword [rcx + 0x8],  (AsmIdtVectorEnd - AsmIdtVectorBegin) / 32
     lea     rax, [HookAfterStubHeaderBegin]
     mov     qword [rcx + 0x10], rax
-
-; Fix up CommonInterruptEntry address
-    lea    rax, [ASM_PFX(CommonInterruptEntry)]
-    lea    rcx, [AsmIdtVectorBegin]
-%rep  256
-    mov    qword [rcx + (JmpAbsoluteAddress - 8 - HookAfterStubHeaderBegin)], rax
-    add    rcx, (AsmIdtVectorEnd - AsmIdtVectorBegin) / 256
-%endrep
-; Fix up HookAfterStubHeaderEnd
-    lea    rax, [HookAfterStubHeaderEnd]
-    lea    rcx, [JmpAbsoluteAddress]
-    mov    qword [rcx - 8], rax
-
     ret
 
 ;-------------------------------------------------------------------------------------
@@ -477,6 +401,6 @@ ASM_PFX(AsmGetTemplateAddressMap):
 global ASM_PFX(AsmVectorNumFixup)
 ASM_PFX(AsmVectorNumFixup):
     mov     rax, rdx
-    mov     [rcx + (VectorNum - 4 - HookAfterStubHeaderBegin)], al
+    mov     [rcx + (@VectorNum - HookAfterStubHeaderBegin)], al
     ret
 

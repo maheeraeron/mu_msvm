@@ -97,10 +97,10 @@
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
   FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
   HwResetSystemLib|ArmPkg/Library/ArmSmcPsciResetSystemLib/ArmSmcPsciResetSystemLib.inf
+  ImagePropertiesRecordLib|MdeModulePkg/Library/ImagePropertiesRecordLib/ImagePropertiesRecordLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsicArmVirt.inf
   IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
-  MemoryInitPeiLib|ArmVirtPkg/Library/ArmVirtMemoryInitPeiLib/ArmVirtMemoryInitPeiLib.inf
   MmuLib|ArmPkg/Library/MmuLib/BaseMmuLib.inf
   MmUnblockMemoryLib|MdePkg/Library/MmUnblockMemoryLib/MmUnblockMemoryLibNull.inf
   MsBootPolicyLib|MsvmPkg/Library/MsBootPolicyLib/MsBootPolicyLib.inf
@@ -131,9 +131,6 @@
   SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
   PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
 !endif
-
-  # Required by DebugAgent
-  SourceDebugEnabledLib|MsvmPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
 
   ## MS_CHANGE_?
   # MeasuredBoot and Other TPM-Based Security
@@ -276,10 +273,7 @@
   MemoryAllocationLib|MdeModulePkg/Library/DxeCoreMemoryAllocationLib/DxeCoreMemoryAllocationLib.inf
   HvHypercallLib|MsvmPkg/Library/HvHypercallLib/HvHypercallLib.inf
 
-
 ##MSChange Begin
-  MemoryBinOverrideLib|MdeModulePkg/Library/MemoryBinOverrideLibNull/MemoryBinOverrideLibNull.inf
-
 [LibraryClasses.common.DXE_DRIVER]
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
   HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
@@ -306,12 +300,12 @@
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Runtime/AdvancedLoggerLib.inf
   BiosDeviceLib|MsvmPkg/Library/BiosDeviceLib/BiosDeviceRuntimeLib.inf
-  # runtime drivers shouldn't use UEFI debugging, especially after ExitBootServices()  
+  # runtime drivers shouldn't use UEFI debugging, especially after ExitBootServices()
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
 !if $(LEGACY_DEBUGGER) == 1
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 !endif
-  ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf  
+  ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
 
@@ -476,7 +470,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|0x00000001
 
   # COM port used for feature debugger
-  gMsvmPkgTokenSpaceGuid.PcdFeatureDebuggerPortUartBase|0xEFFEC000  #COM1 
+  gMsvmPkgTokenSpaceGuid.PcdFeatureDebuggerPortUartBase|0xEFFEC000  #COM1
 
   # COM port used for advanced logger output
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0xEFFEB000 #COM2
@@ -508,7 +502,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdInternalEventServicesEnabled|TRUE
 
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|FALSE
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM|FALSE
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE
 
 [PcdsDynamicDefault]
@@ -696,7 +689,6 @@
   # This mask is used to indicate which PCRs are intended to be supported by the *platform* (not UEFI software).
   # If a PCR is allocated that isn't in this mask, it will be deallocated by Tcg2Pei.
   # If a PCR is supported in this mask, but isn't supported by the TPM, the mask will be updated by Tcg2Pei.
-  # This mask is adjusted for legacy VM versions for compatibility reasons.
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|0x00000007               # HASH_ALG_SHA[384 | 256 | 1]
 
   # PcdTcg2HashAlgorithmBitmap
@@ -741,6 +733,7 @@
   #
   # PEI Phase modules
   #
+  ArmPkg/Drivers/CpuPei/CpuPei.inf
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
   MdeModulePkg/Core/Pei/PeiMain.inf
   MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
@@ -772,7 +765,7 @@
       DebugLib|MsKdDebugPkg2/Library/DxeDebugLibRouter/DxeDebugLibRouter.inf
 !else
       ArmGenericTimerCounterLib|ArmPkg/Library/ArmGenericTimerVirtCounterLib/ArmGenericTimerVirtCounterLib.inf
-      DebugTransportLib|MsvmPkg/Library/DebugTransportLibMsvm/DebugTransportLibMsvm.inf      
+      DebugTransportLib|MsvmPkg/Library/DebugTransportLibMsvm/DebugTransportLibMsvm.inf
       DebugAgentLib|DebuggerFeaturePkg/Library/DebugAgent/DebugAgentDxe.inf
       PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
       SerialPortLib|ArmPlatformPkg/Library/PL011SerialPortLib/PL011SerialPortLib.inf
@@ -899,6 +892,7 @@
     <LibraryClasses>
       PL011UartClockLib|ArmPlatformPkg/Library/PL011UartClockLib/PL011UartClockLib.inf
       SerialPortLib|MsvmPkg/Library/KdPL011SerialPortLib/KdPL011SerialPortLib.inf
+      SourceDebugEnabledLib|MsvmPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
   }
 !endif
 

@@ -5,19 +5,16 @@
   Licensed under the BSD-2-Clause-Patent license.
 **/
 
-#include <Uefi.h>
-#include <Library/BaseLib.h>
-#include <Library/UefiLib.h>
-#include <Library/UefiDriverEntryPoint.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Guid/GlobalVariable.h>
+
+#include <Library/CrashLib.h>
 #include <Library/DebugLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/DeviceStateLib.h>
-#include <Library/PcdLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/UefiLib.h>
+
 #include <IsolationTypes.h>
 
-#include <Guid/GlobalVariable.h>
 
 
 /**
@@ -34,7 +31,7 @@ IsSecureBootOn()
     UINTN       Size = 0;
 
     //
-    // For now, no hardware isolated platforms with no paravisor support secure boot.
+    // For now, no hardware isolated platforms without a paravisor support secure boot.
     //
     if (IsHardwareIsolatedNoParavisor()) {
         return FALSE;
@@ -62,10 +59,6 @@ IsSecureBootOn()
 /**
     Set up the device state variable for use later in displaying the device state
 
-    @param[in]  FileHandle   Handle of the file being invoked.
-
-    @param[in]  PeiServices  General purpose services available to every PEIM.
-
     @retval     EFI_SUCCESS  Always returns success.
 **/
 EFI_STATUS
@@ -75,28 +68,23 @@ PlatformDeviceStateHelperInit(
     IN EFI_SYSTEM_TABLE             *SystemTable
   )
 {
-    DEVICE_STATE CoreNotifications = 0;
+    DEVICE_STATE CoreNotifications = GetDeviceState();
 
     DEBUG((DEBUG_INFO, "Starting %a \n", __FUNCTION__));
 
     //
-    //Handle checking for "Common" On screen notifications
+    // Validate/set secure boot state
     //
-    if (!IsSecureBootOn())
+    if (IsSecureBootOn())
+    {
+        // It is illegal to enable debugging with secure boot
+        FAIL_FAST_UNEXPECTED_HOST_BEHAVIOR_IF_FALSE(((CoreNotifications & DEVICE_STATE_SOURCE_DEBUG_ENABLED) == 0));
+    }
+    else
     {
         CoreNotifications |= DEVICE_STATE_SECUREBOOT_OFF;
+        AddDeviceState(CoreNotifications);
     }
-
-    if (PcdGetBool(PcdDebuggerEnabled))
-    {
-        CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
-    }
-
-#if defined(DEBUG_PLATFORM)
-    CoreNotifications |= DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED;
-#endif
-
-    AddDeviceState(CoreNotifications);
 
     return EFI_SUCCESS;
 }

@@ -19,15 +19,13 @@ ENTRY_POINT         = PlatformDeviceStateHelperInit
 
 [LibraryClasses]
   BaseLib
+  CrashLib
   DebugLib
   DeviceStateLib
   IsolationLib
   MemoryAllocationLib
-  PcdLib
-  UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiLib
-  UefiRuntimeServicesTableLib
 
 [Packages]
   MsvmPkg/MsvmPkg.dec
@@ -37,9 +35,6 @@ ENTRY_POINT         = PlatformDeviceStateHelperInit
 
 [Guids]
   gEfiGlobalVariableGuid                                  ## CONSUMES
-
-[Pcd]
-  gMsvmPkgTokenSpaceGuid.PcdDebuggerEnabled               ## CONSUMES
 
 [Depex]
   gEfiVariableArchProtocolGuid AND

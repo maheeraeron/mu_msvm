@@ -13,7 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 
 #include "BaseRngLibInternals.h"
-#include "MsvmRngLibInternals.h"
+#include "MsvmRngLibInternals.h"      // MS_HYP_CHANGE
 
 //
 // Limited retry number when valid random data is returned.

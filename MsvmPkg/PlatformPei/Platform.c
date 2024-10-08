@@ -41,6 +41,9 @@
 #error Unsupported Architecture
 #endif
 
+
+#if defined(MDE_CPU_X64)
+
 //
 // Initial data for Memory Type Information HOB.
 //
@@ -48,15 +51,13 @@ static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformation[] =
 {
     { EfiACPIMemoryNVS,       0x004 },
     { EfiACPIReclaimMemory,   0x032 },
-    { EfiReservedMemoryType,  0x004 },
-    { EfiRuntimeServicesData, 0x054 },
-    { EfiRuntimeServicesCode, 0x030 },
-    { EfiBootServicesCode,    0x500 },
-    { EfiBootServicesData,    0xF00 },
+    { EfiReservedMemoryType,  0x000 },
+    { EfiRuntimeServicesData, 0x055 },
+    { EfiRuntimeServicesCode, 0x055 },
+    { EfiBootServicesCode,    0x64A },
+    { EfiBootServicesData,    0xBDC },
     { EfiMaxMemoryType,       0x000 }
 };
-
-#if defined(MDE_CPU_X64)
 
 //
 // Initial data for Memory Type Information HOB for TDX guests. TDX guests use
@@ -67,21 +68,19 @@ static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformationTdxGuest[] =
     { EfiACPIMemoryNVS,       0x008 },
     { EfiACPIReclaimMemory,   0x032 },
     { EfiReservedMemoryType,  0x004 },
-    { EfiRuntimeServicesData, 0x054 },
-    { EfiRuntimeServicesCode, 0x030 },
-    { EfiBootServicesCode,    0x500 },
-    { EfiBootServicesData,    0xF00 },
+    { EfiRuntimeServicesData, 0x055 },
+    { EfiRuntimeServicesCode, 0x055 },
+    { EfiBootServicesCode,    0x64A },
+    { EfiBootServicesData,    0xBDC },
     { EfiMaxMemoryType,       0x000 }
 };
 
-#endif
-
 //
 // Initial data for Memory Type Information HOB for hibernate enabled VMs.
+// Because a memory map change across hibernate/resume can be fatal, we add
+// additional buffer in the calculations (EfiBootServicesData recommendation
+// is doubled/rounded), based on BmMisc.c memory type allocation prints.
 // This accounts for 4 SCSI drives and 2 NICs present during UEFI.
-// This is not a strict limit since an additional buffer is included in the calculations.
-// If we exceed the memory needed, resume from hibernate could fail due to a changed memory
-// map during resume.
 //
 static EFI_MEMORY_TYPE_INFORMATION MsvmMemoryTypeInformationHibernateEnabled[] =
 {
@@ -94,6 +93,45 @@ static EFI_MEMORY_TYPE_INFORMATION MsvmMemoryTypeInformationHibernateEnabled[] =
     { EfiBootServicesData,    0x21BE },
     { EfiMaxMemoryType,       0x0000 }
 };
+
+
+#elif defined(MDE_CPU_AARCH64)
+
+//
+// Initial data for Memory Type Information HOB.
+//
+static EFI_MEMORY_TYPE_INFORMATION MsvmDefaultMemoryTypeInformation[] =
+{
+    { EfiACPIMemoryNVS,       0x000 },
+    { EfiACPIReclaimMemory,   0x026 },
+    { EfiReservedMemoryType,  0x000 },
+    { EfiRuntimeServicesData, 0x104 },
+    { EfiRuntimeServicesCode, 0x4B0 },
+    { EfiBootServicesCode,    0x584 },
+    { EfiBootServicesData,    0xD2F },
+    { EfiMaxMemoryType,       0x000 }
+};
+
+//
+// Initial data for Memory Type Information HOB for hibernate enabled VMs.
+// Because a memory map change across hibernate/resume can be fatal, we add
+// additional buffer in the calculations (EfiBootServicesData recommendation
+// is doubled/rounded), based on BmMisc.c memory type allocation prints.
+// This accounts for 4 SCSI drives and 2 NICs present during UEFI.
+//
+static EFI_MEMORY_TYPE_INFORMATION MsvmMemoryTypeInformationHibernateEnabled[] =
+{
+    { EfiACPIMemoryNVS,       0x0000 },
+    { EfiACPIReclaimMemory,   0x0026 },
+    { EfiReservedMemoryType,  0x0000 },
+    { EfiRuntimeServicesData, 0x0104 },
+    { EfiRuntimeServicesCode, 0x04B0 },
+    { EfiBootServicesCode,    0x0584 },
+    { EfiBootServicesData,    0x2000 },
+    { EfiMaxMemoryType,       0x0000 }
+};
+
+#endif
 
 //
 // Boot Mode PPI.
@@ -793,7 +831,7 @@ Return Value:
 }
 
 VOID
-InitializeDeviceState() 
+InitializeDeviceState()
 /*++
 
 Routine Description:
@@ -810,13 +848,22 @@ Return Value:
 
 --*/
 {
-    DEVICE_STATE CoreNotifications = 0;
+    DEVICE_STATE deviceState = 0;
+
     if (PcdGetBool(PcdDebuggerEnabled))
     {
         DEBUG((DEBUG_INFO, "Debugger enabled\n"));
-        CoreNotifications |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
+        deviceState |= DEVICE_STATE_SOURCE_DEBUG_ENABLED;
     }
-    AddDeviceState(CoreNotifications);
+
+#if defined(DEBUG_PLATFORM)
+    deviceState |= DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED;
+#endif
+
+    // Secure boot state requires NVRAM access and will be set in
+    // early DXE phase via PlatformDeviceStateHelperInit
+
+    AddDeviceState(deviceState);
 }
 
 EFI_STATUS
@@ -920,7 +967,7 @@ Return Value:
 
     //
     // Initialize device state before we finish.
-    // 
+    //
     InitializeDeviceState();
 
     DEBUG((DEBUG_VERBOSE, "<<< *** Platform PEIM InitializePlatform@%p\n", InitializePlatform));

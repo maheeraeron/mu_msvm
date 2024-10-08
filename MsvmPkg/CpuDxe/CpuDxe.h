@@ -1,7 +1,8 @@
 /** @file
   CPU DXE Module to produce CPU ARCH Protocol and CPU MP Protocol.
 
-  Copyright (c) 2008 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -13,6 +14,7 @@
 
 #include <Protocol/Cpu.h>
 // MS_HYP_CHANGE #include <Protocol/MpService.h>
+#include <Register/Intel/Cpuid.h>
 #include <Register/Intel/Msr.h>
 
 #include <Ppi/SecPlatformInformation.h>

@@ -2,11 +2,13 @@
 #  CPU Exception Handler library instance for DXE modules.
 #
 #  Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2024, Loongson Technology Corporation Limited. All rights reserved.<BR>
+#  Copyright (c) Microsoft Corporation.
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
-#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | c1dad0459d94c5a230f50aaf2eadfb8d | 2024-08-23T22-28-52 | 1ab6556d76c73af2ca74a855504e3f6c1b9ab264
+#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | 1a2caaa91d93c2aaf430231db13bbc5e | 2024-09-26T20-17-12 | f77e9e031e954b294b0d282e9f46ec526f811de6
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -20,24 +22,32 @@
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = IA32 X64 LOONGARCH64
 #
+
 [Sources.Ia32]
-  Ia32/ExceptionHandlerAsm.nasm
-  Ia32/ExceptionTssEntryAsm.nasm
   Ia32/ArchExceptionHandler.c
   Ia32/ArchInterruptDefs.h
+  Ia32/ExceptionHandlerAsm.nasm
+  Ia32/ExceptionTssEntryAsm.nasm
 
 [Sources.X64]
-  X64/Xcode5ExceptionHandlerAsm.nasm
   X64/ArchExceptionHandler.c
   X64/ArchInterruptDefs.h
+  X64/ExceptionHandlerAsm.nasm
 
-[Sources.common]
+[Sources.Ia32, Sources.X64]
   CpuExceptionCommon.h
   CpuExceptionCommon.c
-  PeiDxeSmmCpuException.c
   DxeException.c
+  PeiDxeSmmCpuException.c
+
+[Sources.LoongArch64]
+  LoongArch/DxeExceptionLib.c
+  LoongArch/ExceptionCommon.h
+  LoongArch/ExceptionCommon.c
+  LoongArch/LoongArch64/ArchExceptionHandler.c
+  LoongArch/LoongArch64/ExceptionHandlerAsm.S | GCC
 
 [Pcd]
   # MU_CHANGE START Remove memory protection PCD references
@@ -55,15 +65,23 @@
   UefiCpuPkg/UefiCpuPkg.dec
   MsvmPkg/MsvmPkg.dec           ## MS_HYP_CHANGE
 
-[LibraryClasses]
+[LibraryClasses.common]
   BaseLib
-  SerialPortLib
-  PrintLib
-  SynchronizationLib
-  LocalApicLib
-  PeCoffGetEntryPointLib
-  MemoryAllocationLib
   DebugLib
+  MemoryAllocationLib
+  PeCoffGetEntryPointLib
+  PrintLib
+  SerialPortLib
+  SynchronizationLib
+  DxeMemoryProtectionHobLib ## MU_CHANGE
+
+[LibraryClasses.Ia32, LibraryClasses.X64]
   CcExitLib
   CrashLib                      ## MS_HYP_CHANGE
-  DxeMemoryProtectionHobLib ## MU_CHANGE
+  LocalApicLib
+
+[LibraryClasses.LoongArch64]
+  CpuLib
+
+[BuildOptions]
+  XCODE:*_*_X64_NASM_FLAGS = -D NO_ABSOLUTE_RELOCS_IN_TEXT

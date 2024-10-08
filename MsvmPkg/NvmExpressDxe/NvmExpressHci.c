@@ -8,7 +8,7 @@
 **/
 
 #include "NvmExpress.h"
-#include <Guid/NVMeEventGroup.h> // MS_CHANGE
+#include <Guid/NVMeEventGroup.h> // MU_CHANGE
 
 #define NVME_SHUTDOWN_PROCESS_TIMEOUT  45
 
@@ -402,9 +402,8 @@ NvmeEnableController (
   UINT32      Index;
   UINT8       Timeout;
 
-  // MSCHANGE - BEGIN
-  EfiEventGroupSignal (&gNVMeEnableStartEventGroupGuid);
-  // MSCHANGE - END
+  EfiEventGroupSignal (&gNVMeEnableStartEventGroupGuid); // MU_CHANGE Add NVMe Long Delay Time Events
+
   //
   // Enable the controller.
   // CC.AMS, CC.MPS and CC.CSS are all set to 0.
@@ -416,9 +415,7 @@ NvmeEnableController (
 
   Status = WriteNvmeControllerConfiguration (Private, &Cc);
   if (EFI_ERROR (Status)) {
-    // MSCHANGE - BEGIN
-    goto Cleanup;
-    // MSCHANGE - END
+    goto Cleanup; // MU_CHANGE Add NVMe Long Delay Time Events
   }
 
   //
@@ -440,9 +437,7 @@ NvmeEnableController (
     Status = ReadNvmeControllerStatus (Private, &Csts);
 
     if (EFI_ERROR (Status)) {
-      // MSCHANGE - BEGIN
-      goto Cleanup;
-      // MSCHANGE - END
+      goto Cleanup; // MU_CHANGE Add NVMe Long Delay Time Events
     }
 
     if (Csts.Rdy) {
@@ -460,10 +455,10 @@ NvmeEnableController (
 
   DEBUG ((DEBUG_INFO, "NVMe controller is enabled with status [%r].\n", Status));
 
-  // MSCHANGE - BEGIN
+  // MU_CHANGE Start: Add NVMe Long Delay Time Events
 Cleanup:
   EfiEventGroupSignal (&gNVMeEnableCompleteEventGroupGuid);
-  // MSCHANGE - END
+  // MU_CHANGE End: Add NVMe Long Delay Time Events
   return Status;
 }
 
@@ -1172,9 +1167,9 @@ NvmeUnregisterShutdownNotification (
   EFI_STATUS                       Status;
   EFI_RESET_NOTIFICATION_PROTOCOL  *ResetNotify;
 
-  // MS_CHANGE - BEGIN
+  // MU_CHANGE - BEGIN
   ReportStatusCode ((EFI_ERROR_MAJOR | EFI_ERROR_CODE), (EFI_IO_BUS_SCSI | EFI_IOB_EC_INTERFACE_ERROR));
-  // MS_CHANGE - END
+  // MU_CHANGE - END
   mNvmeControllerNumber--;
   if (mNvmeControllerNumber == 0) {
     Status = gBS->LocateProtocol (&gEfiResetNotificationProtocolGuid, NULL, (VOID **)&ResetNotify);

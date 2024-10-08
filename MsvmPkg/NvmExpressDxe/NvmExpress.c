@@ -2,7 +2,7 @@
   NvmExpressDxe driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  Copyright (c) 2013 - 2017, Intel Corporation. All rights reserved.
+  Copyright (c) 2013 - 2017, Intel Corporation. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -183,6 +183,7 @@ EnumerateNvmeDevNamespace (
     Device->BlockIo2.FlushBlocksEx = NvmeBlockIoFlushBlocksEx;
     InitializeListHead (&Device->AsyncQueue);
 
+    // MU_CHANGE Start - Add Media Sanitize
     //
     // Create Media Sanitize Protocol instance
     //
@@ -202,6 +203,7 @@ EnumerateNvmeDevNamespace (
       &(Device->Controller->ControllerData->Sanicap),
       sizeof (Device->MediaSanitize.SanitizeCapabilities)
       );
+    // MU_CHANGE End - Add Media Sanitize
 
     //
     // Create StorageSecurityProtocol Instance
@@ -714,23 +716,14 @@ ProcessAsyncTaskList (
         // Free the resources allocated before cmd submission
         //
         if (AsyncRequest->MapData != NULL) {
-          // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-          DEBUG ((DEBUG_VERBOSE, "%a - Unmapping Data Buffer:\n", __FUNCTION__));
-          DEBUG ((DEBUG_VERBOSE, "\tMapData - 0x%lx\n", AsyncRequest->MapData));
           PciIo->Unmap (PciIo, AsyncRequest->MapData);
         }
 
         if (AsyncRequest->MapMeta != NULL) {
-          // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-          DEBUG ((DEBUG_VERBOSE, "%a - Unmapping MetaData Buffer:\n", __FUNCTION__));
-          DEBUG ((DEBUG_VERBOSE, "\tMapMeta - 0x%lx\n", AsyncRequest->MapMeta));
           PciIo->Unmap (PciIo, AsyncRequest->MapMeta);
         }
 
         if (AsyncRequest->MapPrpList != NULL) {
-          // MS_CHANGE - Add extra debugging for IOMMU error tracking.
-          DEBUG ((DEBUG_VERBOSE, "%a - Unmapping PrpList Buffer:\n", __FUNCTION__));
-          DEBUG ((DEBUG_VERBOSE, "\tPrpListMapping - 0x%lx\n", AsyncRequest->MapPrpList));
           PciIo->Unmap (PciIo, AsyncRequest->MapPrpList);
         }
 

@@ -86,6 +86,7 @@
   HostVisibilityLib|MsvmPkg/Library/HostVisibilityLib/HostVisibilityLib.inf
   HwResetSystemLib|MsvmPkg/Library/ResetSystemLib/ResetSystemLib.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+  ImagePropertiesRecordLib|MdeModulePkg/Library/ImagePropertiesRecordLib/ImagePropertiesRecordLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   IsolationLib|MsvmPkg/Library/IsolationLib/IsolationLib.inf
   LocalApicLib|UefiCpuPkg/Library/BaseXApicX2ApicLib/BaseXApicX2ApicLib.inf
@@ -167,7 +168,6 @@
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
   PeiServicesTablePointerLib|MdePkg/Library/PeiServicesTablePointerLibIdt/PeiServicesTablePointerLibIdt.inf
-  NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
 
 #
 # Library instance overrides just for SEC
@@ -186,13 +186,14 @@
   PcdLib|MdePkg/Library/PeiPcdLib/PeiPcdLib.inf
   WatchdogTimerLib|MsvmPkg/Library/WatchdogTimerLib/WatchdogTimerLib.inf
   ResetSystemLib|MdeModulePkg/Library/PeiResetSystemLib/PeiResetSystemLib.inf
+  NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
 
 #
 # Library instance overrides just for PEI CORE
 #
 [LibraryClasses.common.PEI_CORE]
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/PeiCore/AdvancedLoggerLib.inf
-  PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf 
+  PeiCoreEntryPoint|MdePkg/Library/PeiCoreEntryPoint/PeiCoreEntryPoint.inf
 
 #
 # Library instance overrides just for PEIMs
@@ -269,7 +270,6 @@
   PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
 !endif
 ##MSChange Begin
-  MemoryBinOverrideLib|MdeModulePkg/Library/MemoryBinOverrideLibNull/MemoryBinOverrideLibNull.inf
 [LibraryClasses.common.DXE_DRIVER]
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
   HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
@@ -500,7 +500,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdInternalEventServicesEnabled|TRUE
 
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|FALSE
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM|FALSE
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE
 
 [PcdsDynamicDefault]
@@ -740,7 +739,11 @@
   #
   # SEC Phase modules
   #
-  MsvmPkg/Sec/SecMain.inf
+  MsvmPkg/Sec/SecMain.inf {
+    <LibraryClasses>
+      NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
+  }
+  UefiCpuPkg/ResetVector/Vtf0/Vtf0.inf
 
   #
   # PEI Phase modules
@@ -770,9 +773,9 @@
   MdeModulePkg/Core/Dxe/DxeMain.inf {
     <LibraryClasses>
 !if $(LEGACY_DEBUGGER) == 0
-      CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf 
+      CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
       DebugAgentLib|DebuggerFeaturePkg/Library/DebugAgent/DebugAgentDxe.inf
-      DebugTransportLib|MsvmPkg/Library/DebugTransportLibMsvm/DebugTransportLibMsvm.inf      
+      DebugTransportLib|MsvmPkg/Library/DebugTransportLibMsvm/DebugTransportLibMsvm.inf
       SerialPortLib|PcAtChipsetPkg/Library/SerialIoLib/SerialIoLib.inf
       TransportLogControlLib|DebuggerFeaturePkg/Library/TransportLogControlLibNull/TransportLogControlLibNull.inf
 !endif
@@ -909,11 +912,6 @@
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
       #special library For HyperV so that boot doesn't measure Main FV
       NULL|MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.inf
- !if $(SOURCE_DEBUG_ENABLE) == TRUE
-      SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugForceEnabled/SourceDebugForceEnabled.inf
- !else
-      SourceDebugEnabledLib|SourceLevelDebugPkg/Library/SourceDebugEnabled/SourceDebugEnabledLib.inf
- !endif
   }
 
   # UI Theme Protocol

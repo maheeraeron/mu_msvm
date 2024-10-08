@@ -22,6 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "DxeImageVerificationLib.h"
 
 #include <BiosBootLogInterface.h>             // MS_HYP_CHANGE
+#include <Library/CrashLib.h>                 // MS_HYP_CHANGE
 #include <Library/ReportStatusCodeLib.h>      // MS_HYP_CHANGE
 
 //
@@ -405,7 +406,7 @@ HashPeImage (
   }
 
   //
-  // 5.  Skip over the image checksum (it occupies a single UINT32).
+  // 5.  Skip over the image checksum (it occupies a single ULONG).
   //
   if (NumberOfRvaAndSizes <= EFI_IMAGE_DIRECTORY_ENTRY_SECURITY) {
     //
@@ -890,9 +891,9 @@ IsCertHashFoundInDbx (
     return Status;
   }
 
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DbxSize > 0) && (SignatureListSize >= (UINTN)DbxList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     //
     // Determine Hash Algorithm of Certificate in the forbidden database.
     //
@@ -1037,9 +1038,9 @@ IsSignatureFoundInDatabase (
   // Enumerate all signature data in SigDB to check if signature exists for executable.
   //
   CertList = (EFI_SIGNATURE_LIST *)Data;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DataSize > 0) && (DataSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
     Cert      = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
     if ((CertList->SignatureSize == sizeof (EFI_SIGNATURE_DATA) - 1 + SignatureSize) && (CompareGuid (&CertList->SignatureType, CertType))) {
@@ -1204,9 +1205,9 @@ PassTimestampCheck (
   }
 
   CertList = (EFI_SIGNATURE_LIST *)DbtData;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DbtDataSize > 0) && (DbtDataSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     if (CompareGuid (&CertList->SignatureType, &gEfiCertX509Guid)) {
       Cert      = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
       CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
@@ -1332,9 +1333,9 @@ IsForbiddenByDbx (
   //
   CertList     = (EFI_SIGNATURE_LIST *)Data;
   CertListSize = DataSize;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((CertListSize > 0) && (CertListSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     if (CompareGuid (&CertList->SignatureType, &gEfiCertX509Guid)) {
       CertData  = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
       CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
@@ -1539,9 +1540,9 @@ IsAllowedByDb (
   // Find X509 certificate in Signature List to verify the signature in pkcs7 signed data.
   //
   CertList = (EFI_SIGNATURE_LIST *)Data;
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - comparison-with-wider-type
   while ((DataSize > 0) && (DataSize >= (UINTN)CertList->SignatureListSize)) {
-    // MU_CHANGE [END] - CodeQL change
+    // MU_CHANGE End - CodeQL change - comparison-with-wider-type
     if (CompareGuid (&CertList->SignatureType, &gEfiCertX509Guid)) {
       CertData  = (EFI_SIGNATURE_DATA *)((UINT8 *)CertList + sizeof (EFI_SIGNATURE_LIST) + CertList->SignatureHeaderSize);
       CertCount = (CertList->SignatureListSize - sizeof (EFI_SIGNATURE_LIST) - CertList->SignatureHeaderSize) / CertList->SignatureSize;
@@ -1625,7 +1626,7 @@ Done:
 }
 
 
-// MS_HYP_CHANGE: Start
+// MS_HYP_CHANGE BEGIN
 /**
   Report status code for DXE image verfication.
 
@@ -1661,7 +1662,7 @@ ReportDxeImageVerificationStatusCode (
     DxeImageVerificationStatusCodeReported = TRUE;
   }
 }
-// MS_HYP_CHANGE
+// MS_HYP_CHANGE END
 
 
 /**
@@ -1678,7 +1679,7 @@ ReportDxeImageVerificationStatusCode (
       in the security database "db", and no valid signature nor any hash value of the image may
       be reflected in the security database "dbx".
     Otherwise, the image is not signed,
-      The SHA256 hash value of the image must match a record in the security database "db", and
+      The hash value of the image must match a record in the security database "db", and
       not be reflected in the security data base "dbx".
 
   Caution: This function may receive untrusted input.
@@ -1729,7 +1730,8 @@ DxeImageVerificationHandler (
   EFI_IMAGE_EXECUTION_ACTION    Action;
   WIN_CERTIFICATE               *WinCertificate;
   UINT32                        Policy;
-  UINT8                         *SecureBoot;
+  UINT8                         SecureBoot;
+  UINTN                         SecureBootSize;
   PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
   UINT32                        NumberOfRvaAndSizes;
   WIN_CERTIFICATE_EFI_PKCS      *PkcsCertData;
@@ -1744,7 +1746,11 @@ DxeImageVerificationHandler (
   RETURN_STATUS                 PeCoffStatus;
   EFI_STATUS                    HashStatus;
   EFI_STATUS                    DbStatus;
+  EFI_STATUS                    VarStatus;
+  UINT32                        VarAttr;
   BOOLEAN                       IsFound;
+  UINT8                         HashAlg;
+  BOOLEAN                       IsFoundInDatabase;
 
   SignatureList     = NULL;
   SignatureListSize = 0;
@@ -1754,6 +1760,7 @@ DxeImageVerificationHandler (
   Action            = EFI_IMAGE_EXECUTION_AUTH_UNTESTED;
   IsVerified        = FALSE;
   IsFound           = FALSE;
+  IsFoundInDatabase = FALSE;
   DxeImageVerificationStatusCodeReported = FALSE;    // MS_HYP_CHANGE
 
   //
@@ -1799,26 +1806,28 @@ DxeImageVerificationHandler (
   //
   ASSERT (Policy != QUERY_USER_ON_SECURITY_VIOLATION && Policy != ALLOW_EXECUTE_ON_SECURITY_VIOLATION);
   if ((Policy == QUERY_USER_ON_SECURITY_VIOLATION) || (Policy == ALLOW_EXECUTE_ON_SECURITY_VIOLATION)) {
-    CpuDeadLoop ();
+    FAIL_FAST(EFI_SECURITY_VIOLATION, "Invalid secure boot policy");        // MS_HYP_CHANGE
   }
 
-  GetEfiGlobalVariable2 (EFI_SECURE_BOOT_MODE_NAME, (VOID **)&SecureBoot, NULL);
+  SecureBootSize = sizeof (SecureBoot);
+  VarStatus      = gRT->GetVariable (EFI_SECURE_BOOT_MODE_NAME, &gEfiGlobalVariableGuid, &VarAttr, &SecureBootSize, &SecureBoot);
   //
   // Skip verification if SecureBoot variable doesn't exist.
   //
-  if (SecureBoot == NULL) {
+  if (VarStatus == EFI_NOT_FOUND) {
     return EFI_SUCCESS;
   }
 
   //
   // Skip verification if SecureBoot is disabled but not AuditMode
   //
-  if (*SecureBoot == SECURE_BOOT_MODE_DISABLE) {
-    FreePool (SecureBoot);
+  if ((VarStatus == EFI_SUCCESS) &&
+      (VarAttr == (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                   EFI_VARIABLE_RUNTIME_ACCESS)) &&
+      (SecureBoot == SECURE_BOOT_MODE_DISABLE))
+  {
     return EFI_SUCCESS;
   }
-
-  FreePool (SecureBoot);
 
   //
   // Read the Dos header.
@@ -1843,7 +1852,6 @@ DxeImageVerificationHandler (
     // The information can't be got from the invalid PeImage
     //
     DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: PeImage invalid. Cannot retrieve image information.\n"));
-
     ReportDxeImageVerificationStatusCode(File, SecureBootInvalidImage);     // MS_HYP_CHANGE
     goto Failed;
   }
@@ -1868,7 +1876,6 @@ DxeImageVerificationHandler (
     // It is not a valid Pe/Coff file.
     //
     DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Not a valid PE/COFF image.\n"));
-
     ReportDxeImageVerificationStatusCode(File, SecureBootInvalidImage);     // MS_HYP_CHANGE
     goto Failed;
   }
@@ -1896,41 +1903,52 @@ DxeImageVerificationHandler (
   //
   if ((SecDataDir == NULL) || (SecDataDir->Size == 0)) {
     //
-    // This image is not signed. The SHA256 hash value of the image must match a record in the security database "db",
+    // This image is not signed. The hash value of the image must match a record in the security database "db",
     // and not be reflected in the security data base "dbx".
     //
-    if (!HashPeImage (HASHALG_SHA256)) {
-      DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Failed to hash this image using %s.\n", mHashTypeStr));
-      goto Failed;
+    HashAlg = sizeof (mHash) / sizeof (HASH_TABLE);
+    while (HashAlg > 0) {
+      HashAlg--;
+      if ((mHash[HashAlg].GetContextSize == NULL) || (mHash[HashAlg].HashInit == NULL) || (mHash[HashAlg].HashUpdate == NULL) || (mHash[HashAlg].HashFinal == NULL)) {
+        continue;
+      }
+
+      if (!HashPeImage (HashAlg)) {
+        continue;
+      }
+
+      DbStatus = IsSignatureFoundInDatabase (
+                   EFI_IMAGE_SECURITY_DATABASE1,
+                   mImageDigest,
+                   &mCertType,
+                   mImageDigestSize,
+                   &IsFound
+                   );
+      if (EFI_ERROR (DbStatus) || IsFound) {
+        //
+        // Image Hash is in forbidden database (DBX).
+        //
+        DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Image is not signed and %s hash of image is forbidden by DBX.\n", mHashTypeStr));
+        ReportDxeImageVerificationStatusCode(File, SecureBootHashDenied);     // MS_HYP_CHANGE
+        goto Failed;
+      }
+
+      DbStatus = IsSignatureFoundInDatabase (
+                   EFI_IMAGE_SECURITY_DATABASE,
+                   mImageDigest,
+                   &mCertType,
+                   mImageDigestSize,
+                   &IsFound
+                   );
+      if (!EFI_ERROR (DbStatus) && IsFound) {
+        //
+        // Image Hash is in allowed database (DB).
+        //
+        IsFoundInDatabase = TRUE;
+      }
     }
 
-    DbStatus = IsSignatureFoundInDatabase (
-                 EFI_IMAGE_SECURITY_DATABASE1,
-                 mImageDigest,
-                 &mCertType,
-                 mImageDigestSize,
-                 &IsFound
-                 );
-    if (EFI_ERROR (DbStatus) || IsFound) {
-      //
-      // Image Hash is in forbidden database (DBX).
-      //
-      DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Image is not signed and %s hash of image is forbidden by DBX.\n", mHashTypeStr));
-      ReportDxeImageVerificationStatusCode(File, SecureBootHashDenied);     // MS_HYP_CHANGE
-      goto Failed;
-    }
-
-    DbStatus = IsSignatureFoundInDatabase (
-                 EFI_IMAGE_SECURITY_DATABASE,
-                 mImageDigest,
-                 &mCertType,
-                 mImageDigestSize,
-                 &IsFound
-                 );
-    if (!EFI_ERROR (DbStatus) && IsFound) {
-      //
-      // Image Hash is in allowed database (DB).
-      //
+    if (IsFoundInDatabase) {
       return EFI_SUCCESS;
     }
 
@@ -2056,6 +2074,7 @@ DxeImageVerificationHandler (
       if (!EFI_ERROR (DbStatus) && IsFound) {
         IsVerified = TRUE;
       } else {
+        Action = EFI_IMAGE_EXECUTION_AUTH_SIG_NOT_FOUND;
         DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Image is signed but signature is not allowed by DB and %s hash of image is not found in DB/DBX.\n", mHashTypeStr));
         ReportDxeImageVerificationStatusCode(File, SecureBootSignedHashNotFound);     // MS_HYP_CHANGE
       }
@@ -2092,10 +2111,12 @@ DxeImageVerificationHandler (
     Signature = (EFI_SIGNATURE_DATA *)((UINT8 *)SignatureList + sizeof (EFI_SIGNATURE_LIST));
     CopyMem (Signature->SignatureData, mImageDigest, mImageDigestSize);
   }
+  // MS_HYP_CHANGE BEGIN
   else
   {
-  	ReportDxeImageVerificationStatusCode(File, SecureBootNeitherCertNorHashInDb);     // MS_HYP_CHANGE
+  	ReportDxeImageVerificationStatusCode(File, SecureBootNeitherCertNorHashInDb);
   }
+  // MS_HYP_CHANGE END
 Failed:
   //
   // Policy decides to defer or reject the image; add its information in image
@@ -2103,16 +2124,15 @@ Failed:
   //
   NameStr = ConvertDevicePathToText (File, FALSE, TRUE);
 
-  // MU_CHANGE [BEGIN] - CodeQL change
+  // MU_CHANGE Start - CodeQL change - unguardednullreturndereference
   if (NameStr != NULL) {
     AddImageExeInfo (Action, NameStr, File, SignatureList, SignatureListSize);
     DEBUG ((DEBUG_INFO, "The image doesn't pass verification: %s\n", NameStr));
-    FreePool(NameStr);
-
+    FreePool (NameStr);
     ReportDxeImageVerificationStatusCode(File, SecureBootFailed);     // MS_HYP_CHANGE
   }
 
-  // MU_CHANGE [END] - CodeQL change
+  // MU_CHANGE End - CodeQL change - unguardednullreturndereference
 
   if (SignatureList != NULL) {
     FreePool (SignatureList);

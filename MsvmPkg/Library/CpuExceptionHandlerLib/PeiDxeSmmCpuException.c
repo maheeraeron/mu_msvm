@@ -143,14 +143,14 @@ CommonExceptionHandlerWorker (
     (ExternalInterruptHandler[ExceptionType])(ExceptionType, SystemContext);
   } else if (ExceptionType < CPU_EXCEPTION_NUM) {
 
-    // MS_HYP_CHANGE BEGIN
-
     //
     // Get Spinlock to display CPU information
     //
     while (!AcquireSpinLockOrFail (&ExceptionHandlerData->DisplayMessageSpinLock)) {
       CpuPause ();
     }
+
+    // MS_HYP_CHANGE BEGIN
 
     //
     // Display ExceptionType, CPU information and Image information

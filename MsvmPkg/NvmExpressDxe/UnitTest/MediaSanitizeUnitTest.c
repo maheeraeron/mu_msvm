@@ -83,7 +83,7 @@ NvmeDeviceUnitTestPassthru (
       //
       // Sanitize Check 1: Validate Sanitize Action parameter
       //
-      if (SanitizeCdw1011.Sanac > 0x4) {
+      if (SanitizeCdw1011.Sanact > 0x4) {
         Cqe->Sct = NVME_CQE_SCT_GENERIC_CMD_STATUS;
         Cqe->Sc  = NVME_CQE_SC_INVALID_FIELD_IN_CMD;
 
@@ -93,8 +93,8 @@ NvmeDeviceUnitTestPassthru (
       //
       // Sanitize Check 2: Validate overwrite action with non-NULL overwrite pattern
       //
-      if (((SanitizeCdw1011.Sanac == SANITIZE_ACTION_OVERWRITE) && (SanitizeCdw1011.Ovrpat != 0xDEADBEEF)) ||
-          ((SanitizeCdw1011.Sanac != SANITIZE_ACTION_OVERWRITE) && (SanitizeCdw1011.Ovrpat != 0)))
+      if (((SanitizeCdw1011.Sanact == SANITIZE_ACTION_OVERWRITE) && (SanitizeCdw1011.Ovrpat != 0xDEADBEEF)) ||
+          ((SanitizeCdw1011.Sanact != SANITIZE_ACTION_OVERWRITE) && (SanitizeCdw1011.Ovrpat != 0)))
       {
         Cqe->Sct = NVME_CQE_SCT_GENERIC_CMD_STATUS;
         Cqe->Sc  = NVME_CQE_SC_INVALID_FIELD_IN_CMD;

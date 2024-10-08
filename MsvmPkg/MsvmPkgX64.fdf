@@ -97,7 +97,7 @@ READ_LOCK_STATUS   = TRUE
 # firmware volume and then transfers control there.
 #
 INF  MsvmPkg/Sec/SecMain.inf
-INF  RuleOverride=RESET_VECTOR UefiCpuPkg/ResetVector/Vtf0/Bin/ResetVector.inf
+INF  RuleOverride=RESET_VECTOR UefiCpuPkg/ResetVector/Vtf0/Vtf0.inf
 
 
 ################################################################################
@@ -355,6 +355,7 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
     VERSION   STRING="$(INF_VERSION)" Optional BUILD_NUM=$(BUILD_NUMBER)
   }
 
+# TODO: WARNING - Cannot find kduefi.inf for kduefi.efi, Skipping...
 [Rule.Common.PEIM.PLATFORM_PEI]
   FILE PEIM = $(NAMED_GUID) {
      RAW       BIN                       kduefi.efi
@@ -440,5 +441,5 @@ FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile) {
 
 [Rule.Common.SEC.RESET_VECTOR]
   FILE RAW = $(NAMED_GUID) {
-    RAW RAW                |.raw
+    RAW BIN   |.bin
   }

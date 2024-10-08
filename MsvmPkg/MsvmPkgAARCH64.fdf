@@ -105,15 +105,16 @@ APRIORI PEI {
 # SEC and PEI components
 #
 INF MsvmPkg/Sec/SecMain.inf
+INF ArmPkg/Drivers/CpuPei/CpuPei.inf
+INF DebuggerFeaturePkg/DebugConfigPei/DebugConfigPei.inf
 INF MdeModulePkg/Universal/PCD/Pei/Pcd.inf
 INF MdeModulePkg/Universal/ResetSystemPei/ResetSystemPei.inf
-INF MdeModulePkg/Core/Pei/PeiMain.inf
-INF SecurityPkg/RandomNumberGenerator/RngPei/RngPei.inf
-INF MsvmPkg/PlatformPei/PlatformPei.inf
-INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
+INF MdeModulePkg/Core/Pei/PeiMain.inf
+INF MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
+INF MsvmPkg/PlatformPei/PlatformPei.inf
+INF SecurityPkg/RandomNumberGenerator/RngPei/RngPei.inf
 INF SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
-INF DebuggerFeaturePkg/DebugConfigPei/DebugConfigPei.inf
 
 !include $(SHARED_CRYPTO_PATH)/Driver/Bin/CryptoDriver.PEI.inc.fdf
 

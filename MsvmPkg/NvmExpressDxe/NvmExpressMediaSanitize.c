@@ -229,8 +229,8 @@ NvmExpressSanitize (
   Command.Cdw0.Opcode          = NVME_ADMIN_SANITIZE_CMD;
   Command.Nsid                 = NamespaceId;
 
-  SanitizeCdw10Cdw11.Ndas   = NoDeallocAfterSanitize;
-  SanitizeCdw10Cdw11.Sanac  = SanitizeAction;
+  SanitizeCdw10Cdw11.Nodas  = NoDeallocAfterSanitize;
+  SanitizeCdw10Cdw11.Sanact = SanitizeAction;
   SanitizeCdw10Cdw11.Ovrpat = OverwritePattern;
   CopyMem (&CommandPacket.NvmeCmd->Cdw10, &SanitizeCdw10Cdw11, sizeof (NVME_ADMIN_SANITIZE));
 
@@ -262,7 +262,7 @@ NvmExpressSanitize (
     if ((Sct == NVME_CQE_SCT_GENERIC_CMD_STATUS) &&
         (Sc == NVME_CQE_SC_INVALID_CMD_OPCODE))
     {
-      switch (SanitizeCdw10Cdw11.Sanac) {
+      switch (SanitizeCdw10Cdw11.Sanact) {
         case SANITIZE_ACTION_BLOCK_ERASE:
           FnvmSes = SES_USER_DATA_ERASE; // User Data Erase (LBAs indeterminate after)
           break;

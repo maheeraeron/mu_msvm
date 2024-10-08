@@ -6,9 +6,10 @@
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
+#
 #**/
 
-#Override : 00000002 | ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf | 2ce7a682b50346c2cb7718a8e4ca42c2 | 2024-08-17T01-35-00 | 3377f2f9e1f1c2517ef99176f3c255ef929491b2
+#Override : 00000002 | ArmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerLib.inf | 30b6121f4945d40c36f8d11260700195 | 2024-09-27T22-03-43 | 4a8c4779a7f6b91ed32581ace0ab7a54e56e0019
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -20,6 +21,9 @@
 
 [Sources.common]
   DefaultExceptionHandlerUefi.c
+
+[Sources.ARM]
+  Arm/DefaultExceptionHandler.c
 
 [Sources.AARCH64]
   AArch64/DefaultExceptionHandler.c

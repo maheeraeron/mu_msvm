@@ -624,7 +624,7 @@ InitializeExceptionStackSwitchHandlers (
   UINTN                           Index;
   EFI_STATUS                      Status;  // MU_CHANGE - CodeQL change
 
-  // MU_CHANGE [START] - CodeQL change
+  // MU_CHANGE Start - CodeQL Change - unguardednullreturndereference
   Status = MpInitLibWhoAmI (&Index);
 
   if (EFI_ERROR (Status)) {
@@ -632,8 +632,9 @@ InitializeExceptionStackSwitchHandlers (
     return;
   }
 
-  // MU_CHANGE [END] - CodeQL change
+  // MU_CHANGE End - CodeQL Change - unguardednullreturndereference
   SwitchStackData = (EXCEPTION_STACK_SWITCH_CONTEXT *)Buffer;
+
   //
   // This may be called twice for each Cpu. Only run InitializeSeparateExceptionStacks
   // if this is the first call or the first call failed because of size too small.
@@ -769,6 +770,7 @@ InitializeMpSupport (
   Status = MpInitLibInitialize ();
   ASSERT_EFI_ERROR (Status);
 
+  // MU_CHANGE Start - CodeQL Change - unguardednullreturndereference
   Status = MpInitLibGetNumberOfProcessors (&NumberOfProcessors, &NumberOfEnabledProcessors);
   ASSERT_EFI_ERROR (Status);
   if (!EFI_ERROR (Status)) {
@@ -794,3 +796,5 @@ InitializeMpSupport (
     ASSERT_EFI_ERROR (Status);
   }
 }
+
+// MU_CHANGE End - CodeQL Change - unguardednullreturndereference

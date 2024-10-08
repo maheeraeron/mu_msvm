@@ -2,8 +2,8 @@
   NvmExpressDxe driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  (C) Copyright 2016 Hewlett Packard Enterprise Development LP
-  Copyright (c) 2013 - 2019, Intel Corporation. All rights reserved.
+  (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
+  Copyright (c) 2013 - 2019, Intel Corporation. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -30,7 +30,7 @@
 #include <Protocol/DriverSupportedEfiVersion.h>
 #include <Protocol/StorageSecurityCommand.h>
 #include <Protocol/ResetNotification.h>
-#include <Protocol/MediaSanitize.h>
+#include <Protocol/MediaSanitize.h> // MU_CHANGE - Add Media Sanitize
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -43,9 +43,11 @@
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/ReportStatusCodeLib.h>
 
-// MS_CHANGE BEGIN -- UEFI_890
+// MU_CHANGE BEGIN -- UEFI_890
 #include <Library/ReportStatusCodeLib.h>
-// MS_CHANGE END -- UEFI_890
+// MU_CHANGE END -- UEFI_890
+
+#include <Guid/NVMeEventGroup.h> // MU_CHANGE: Add NVMe Long Delay Time Events
 
 typedef struct _NVME_CONTROLLER_PRIVATE_DATA  NVME_CONTROLLER_PRIVATE_DATA;
 typedef struct _NVME_DEVICE_PRIVATE_DATA      NVME_DEVICE_PRIVATE_DATA;
@@ -54,17 +56,12 @@ typedef struct _NVME_DEVICE_PRIVATE_DATA      NVME_DEVICE_PRIVATE_DATA;
 #include "NvmExpressBounce.h"   // MS_HYP_CHANGE
 #include "NvmExpressDiskInfo.h"
 #include "NvmExpressHci.h"
-#include "NvmExpressMediaSanitize.h"
+#include "NvmExpressMediaSanitize.h" // MU_CHANGE - Add Media Sanitize
 
 extern EFI_DRIVER_BINDING_PROTOCOL                gNvmExpressDriverBinding;
 extern EFI_COMPONENT_NAME_PROTOCOL                gNvmExpressComponentName;
 extern EFI_COMPONENT_NAME2_PROTOCOL               gNvmExpressComponentName2;
 extern EFI_DRIVER_SUPPORTED_EFI_VERSION_PROTOCOL  gNvmExpressDriverSupportedEfiVersion;
-
-// MSCHANGE - BEGIN
-extern EFI_GUID  gNVMeEnableStartEventGroupGuid;
-extern EFI_GUID  gNVMeEnableCompleteEventGroupGuid;
-// MSCHANGE - END
 
 #define PCI_CLASS_MASS_STORAGE_NVM  0x08                // mass storage sub-class non-volatile memory.
 #define PCI_IF_NVMHCI               0x02                // mass storage programming interface NVMHCI.
@@ -88,6 +85,7 @@ extern EFI_GUID  gNVMeEnableCompleteEventGroupGuid;
 
 #define NVME_MAX_QUEUES  3                              // Number of queues supported by the driver
 
+// MU_CHANGE Start - Add Media Sanitize
 //
 // FormatNVM Admin Command LBA Format (LBAF) Mask
 //
@@ -111,6 +109,7 @@ extern EFI_GUID  gNVMeEnableCompleteEventGroupGuid;
 #define NVME_CQE_SC_INVALID_FIELD_IN_CMD                 0x02
 
 #define NVME_ALL_NAMESPACES  0xFFFFFFFF
+// MU_CHANGE End - Add Media Sanitize
 
 // MU_CHANGE [BEGIN] - Support alternative hardware queue sizes in NVME driver
 
@@ -256,7 +255,7 @@ struct _NVME_DEVICE_PRIVATE_DATA {
   EFI_DISK_INFO_PROTOCOL                   DiskInfo;
   EFI_STORAGE_SECURITY_COMMAND_PROTOCOL    StorageSecurity;
 
-  MEDIA_SANITIZE_PROTOCOL                  MediaSanitize;
+  MEDIA_SANITIZE_PROTOCOL                  MediaSanitize; // MU_CHANGE - Add Media Sanitize
 
   LIST_ENTRY                               AsyncQueue;
 
@@ -299,12 +298,14 @@ struct _NVME_DEVICE_PRIVATE_DATA {
       NVME_DEVICE_PRIVATE_DATA_SIGNATURE                 \
       )
 
+// MU_CHANGE Start - Add Media Sanitize
 #define NVME_DEVICE_PRIVATE_DATA_FROM_MEDIA_SANITIZE(a) \
   CR (a,                                                \
       NVME_DEVICE_PRIVATE_DATA,                         \
       MediaSanitize,                                    \
       NVME_DEVICE_PRIVATE_DATA_SIGNATURE                \
       )
+// MU_CHANGE Start - Add Media Sanitize
 
 //
 // Nvme block I/O 2 request.
