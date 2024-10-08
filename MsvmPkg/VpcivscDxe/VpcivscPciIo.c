@@ -2,7 +2,7 @@
   PciIo protocol implementation for the UEFI VPCI VSC, used by child drivers.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include "VpcivscDxe.h"

@@ -2,7 +2,7 @@
   Provides the root controller and bus implementation for the VMBus driver.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -191,7 +191,7 @@ static const UINT32 gVmbusSupportedVersions[] =
 //
 
 // {18DD3964-3E8A-4E42-86FA-C8E6B191EE0E}
-DEFINE_GUID(VMBUS_UEFI_CLIENT_ID, 
+DEFINE_GUID(VMBUS_UEFI_CLIENT_ID,
 0x18dd3964, 0x3e8a, 0x4e42, 0x86, 0xfa, 0xc8, 0xe6, 0xb1, 0x91, 0xee, 0xe);
 
 VMBUS_ROOT_CONTEXT mRootContext;
@@ -1464,7 +1464,7 @@ VmbusRootInitiateContact(
         {
             return status;
         }
-        
+
         //
         // Clear feature flags only supported for confidential connections.
         //

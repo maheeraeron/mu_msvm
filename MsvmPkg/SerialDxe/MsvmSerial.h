@@ -4,7 +4,7 @@
   This is a tag protocol used privately in the SerialDxe driver.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 **/

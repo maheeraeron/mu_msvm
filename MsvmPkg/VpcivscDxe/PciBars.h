@@ -2,7 +2,7 @@
   Helper definition for PCI BARs defined in the PCI specification.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #pragma once

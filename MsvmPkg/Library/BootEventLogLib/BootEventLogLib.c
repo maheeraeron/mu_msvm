@@ -2,7 +2,7 @@
   Library wrapper around EFI_EVENTLOG_PROTOCOL for logging boot events
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <Library/BaseLib.h>

@@ -6,7 +6,7 @@
 
   Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
   This code is not similar enough to justify an override but it is loosely derived
   from the following:

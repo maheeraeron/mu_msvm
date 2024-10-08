@@ -2,7 +2,7 @@
   This module contains code to interact with the Hyper-V watchdog timer.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #pragma once

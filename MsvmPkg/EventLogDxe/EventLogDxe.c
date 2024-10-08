@@ -2,7 +2,7 @@
   Entry point and initialization for combined status code and event logging driver
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "EventLogDxe.h"

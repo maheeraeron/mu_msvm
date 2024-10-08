@@ -4,7 +4,7 @@
 #  specialized wrappers for specific event log channels such as the boot log.
 #
 #  Copyright (c) Microsoft Corporation.
-#  Licensed under the BSD-2-Clause-Patent license.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 

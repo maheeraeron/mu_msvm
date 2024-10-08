@@ -3,7 +3,7 @@
 
   Copyright (c) 2004 - 2012, Intel Corporation. All rights reserved.
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #ifndef _FRONT_PAGE_H_
@@ -13,7 +13,7 @@
 
 #include <Protocol/FormBrowser2.h>
 #include <Protocol/HiiConfigAccess.h>
-#include "FrontPageVfr.h"  // all shared VFR / C constants here.  
+#include "FrontPageVfr.h"  // all shared VFR / C constants here.
 #include <Library/HiiLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/HiiConfigRouting.h>

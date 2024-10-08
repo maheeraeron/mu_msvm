@@ -4,7 +4,7 @@
 #
 ##
 # Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the BSD-2-Clause-Patent license.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 ###
 from edk2toolext.environment.plugintypes.uefi_build_plugin import IUefiBuildPlugin

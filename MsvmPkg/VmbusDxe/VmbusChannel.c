@@ -2,7 +2,7 @@
   Provides the implementation of the VMBus EFI protocol.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -142,8 +142,8 @@ Return Value:
     //      channel is confidential and the caller specified that the GPADL can
     //      be encrypted.
     //
-    if (IsIsolated() && 
-        ((Flags & EFI_VMBUS_PREPARE_GPADL_FLAG_ALLOW_ENCRYPTED) == 0 || 
+    if (IsIsolated() &&
+        ((Flags & EFI_VMBUS_PREPARE_GPADL_FLAG_ALLOW_ENCRYPTED) == 0 ||
          !channelContext->Confidential))
     {
         status = mHvIvm->MakeAddressRangeHostVisible(mHvIvm,

@@ -2,7 +2,7 @@
     This module defines the Remote NDIS message structures.
 
     Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+    SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 // TODO SCRUB This is an NDIS header that is just copied from Windows

@@ -5,7 +5,7 @@
   If host emulation is used, it is required to run this lib in memory.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 // MS_HYP_CHANGE BEGIN

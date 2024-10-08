@@ -2,7 +2,7 @@
   Implementation of ComponentName and ComponentName2 protocol for VideoDxe.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 

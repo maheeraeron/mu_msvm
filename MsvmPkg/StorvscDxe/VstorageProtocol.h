@@ -4,7 +4,7 @@
     The definitions are used for communication between StorVSP and StorVSC.
 
     Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+    SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

@@ -2,11 +2,11 @@
   Shared definitions for Hyper-V FrontPage VFR and C code.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 //
-// THIS FILE MUST ONLY CONTAIN DEFINTIONS THAT CAN BE INTERPRETED 
+// THIS FILE MUST ONLY CONTAIN DEFINTIONS THAT CAN BE INTERPRETED
 // BY BOTH THE VFR AND C COMPILERS.
 //
 
@@ -64,7 +64,7 @@
 
 //
 // Grid class End delimeter (GUID opcode).
-//  
+//
 #define SURFACE_GRID_END_OPCODE_GUID                                               \
   {                                                                                \
     0x30879de9, 0x7e69, 0x4f1b, { 0xb5, 0xa5, 0xda, 0x15, 0xbf, 0x6, 0x25, 0xce }  \
@@ -72,7 +72,7 @@
 
 //
 // Grid class select cell location (GUID opcode).
-//  
+//
 #define SURFACE_GRID_SELECT_CELL_OPCODE_GUID                                       \
   {                                                                                \
     0x3147b040, 0xeac3, 0x4b9f, { 0xb5, 0xec, 0xc2, 0xe2, 0x88, 0x45, 0x17, 0x4e } \
@@ -80,7 +80,7 @@
 
 //
 // Bitmap class definition (GUID opcode).
-//  
+//
 #define SURFACE_BITMAP_OPCODE_GUID                                                 \
   {                                                                                \
     0xefbdb196, 0x91d7, 0x4e04, { 0xb7, 0xef, 0xa4, 0x4c, 0x5f, 0xba, 0x2e, 0xb5 } \
@@ -89,7 +89,7 @@
 //
 // Compliance Label Bitmap File GUID - Expanded.
 // NOTE: This is unfortunate but it has to be done until VFR recognizes GUID as a data type for guided opcodes.
-// 
+//
 typedef struct {
   UINT32  Data1;
   UINT16  Data2;
@@ -138,14 +138,14 @@ typedef struct{
     UINT8   MicroSDMode;      // microSD:         1 = Enabled,  0 = GrayedOut
     UINT8   WiFiMode;         // Wi-Fi:           1 = Enabled,  0 = GrayedOut
     UINT8   BluetoothMode;    // Bluetooth:       1 = Enabled,  0 = GrayedOut
-    UINT8   LanMode;          // Wired Lan        1 = Enabled,  0 = GrayedOut 
+    UINT8   LanMode;          // Wired Lan        1 = Enabled,  0 = GrayedOut
     UINT8   BladePort;        // Blade Port       1 = Enabled,  0 = GrayedOut
-    UINT8   SystemPassword;   // System Password  1 = Enabled,  0 = GrayedOut 
-    UINT8   AccessoryRadio;   // Accessory Radio  1 = Enabled,  0 = GrayedOut 
+    UINT8   SystemPassword;   // System Password  1 = Enabled,  0 = GrayedOut
+    UINT8   AccessoryRadio;   // Accessory Radio  1 = Enabled,  0 = GrayedOut
     UINT8   LteModem;         // LTE Modem        1 = Enabled,  0 = GreyedOut
     UINT8   WFOVCameraMode;   // WFOV Cameras:    1 = Enabled,  0 = Disabled
 }FRONT_PAGE_GRAYOUT_CONFIGURATION;
-  
+
 #define FRONT_PAGE_VARID            0x0071
 #define FRONT_PAGE_HACK_VARID       0x0072
 #define FRONT_PAGE_SECURITY_VARID   0x0074

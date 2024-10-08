@@ -2,7 +2,7 @@
   Device Boot Manager  - Device Extensions to BdsDxe.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <Uefi.h>
@@ -633,7 +633,7 @@ DeviceBootManagerUnableToBoot (
             }
         }
     }
-    
+
     if (AttemptDefaultBoot) {
         EfiBootManagerConnectAll();
 
@@ -641,7 +641,7 @@ DeviceBootManagerUnableToBoot (
         if (PcdGetBool(PcdIsVmbfsBoot)) {
             Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
             DEBUG((DEBUG_INFO, "Attempted to boot from HDD with FilterNoUSB, SelectAndBootDevice returned %r\n", Status));
-        }   
+        }
         else {
             Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterOnlyMedia);
             DEBUG((DEBUG_INFO, "Attempted to boot from HDD with FilterOnlyMedia, SelectAndBootDevice returned %r\n", Status));

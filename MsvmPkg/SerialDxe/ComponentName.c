@@ -4,7 +4,7 @@
 
   Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
   This code is derived from the following:
             IntelFrameworkModulePackage\Bus\Isa\IsaSerialDxe\ComponentName.c

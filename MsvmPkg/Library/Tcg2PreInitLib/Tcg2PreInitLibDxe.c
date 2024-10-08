@@ -2,7 +2,7 @@
   Tpm2 intialization hooks specific to the MSFT0101 virtual TPM device.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <Uefi.h>

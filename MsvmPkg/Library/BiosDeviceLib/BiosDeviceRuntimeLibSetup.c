@@ -2,7 +2,7 @@
   Library setup for the runtime version of BiosDeviceLib
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <PiDxe.h>

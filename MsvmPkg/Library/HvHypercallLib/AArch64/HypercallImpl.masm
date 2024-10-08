@@ -2,7 +2,7 @@
   This module implements the hypercall API.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
     AREA    |.text|,ALIGN=3,CODE,READONLY

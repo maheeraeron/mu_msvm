@@ -2,7 +2,7 @@
 #  Provides wrapper Boot Event Log entries using EFI_EVENTLOG_PROTOCOL
 #
 #  Copyright (c) Microsoft Corporation.
-#  Licensed under the BSD-2-Clause-Patent license.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 

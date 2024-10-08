@@ -2,7 +2,7 @@
   A library to simplify access to virtual machine configuration information.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

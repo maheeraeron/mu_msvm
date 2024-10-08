@@ -2,7 +2,7 @@
   EFI GOP Driver for Hyper-V Synthetic Video
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "VideoDxe.h"

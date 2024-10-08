@@ -2,7 +2,7 @@
 #  Microsoft Virtual Machine Firmware Flash Description File
 #
 #  Copyright (C) Microsoft.
-#  Licensed under the BSD-2-Clause-Patent license.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #  This file describes the layout and contents of the BIOS image that would
 #  normally get burned to flash on a physical machine.   In a Hyper-V VM

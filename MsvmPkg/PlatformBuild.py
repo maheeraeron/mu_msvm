@@ -2,7 +2,7 @@
 ## Script to Build Hyper-V UEFI firmware
 ##
 ## Copyright (C) Microsoft.
-##  Licensed under the BSD-2-Clause-Patent license.
+##  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import os, sys, logging
 from edk2toolext.environment.uefi_build import UefiBuilder

@@ -2,7 +2,7 @@
     This module will provide the fonts used in the  UI
 
     Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+    SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <Uefi.h>

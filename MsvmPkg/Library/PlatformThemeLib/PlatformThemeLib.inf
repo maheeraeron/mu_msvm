@@ -1,8 +1,8 @@
 ## @file
 #  Supplies the platform theme.
 #
-#  Copyright (c) Microsoft Corporation. 
-#  Licensed under the BSD-2-Clause-Patent license. 
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]

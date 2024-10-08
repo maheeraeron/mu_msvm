@@ -3,7 +3,7 @@
 
   Copyright (c) 2004 - 2010, Intel Corporation. All rights reserved.
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "FrontPage.h"
@@ -16,7 +16,7 @@ EFI_HII_HANDLE gStringPackHandle;
 
 EFI_GUID mFrontPageStringPackGuid = {
   // {9CA9EC7A-BC96-45E4-A500-1D4B79141553}
-  0x9ca9ec7a, 0xbc96, 0x45e4, { 0xa5, 0x0, 0x1d, 0x4b, 0x79, 0x14, 0x15, 0x53 } 
+  0x9ca9ec7a, 0xbc96, 0x45e4, { 0xa5, 0x0, 0x1d, 0x4b, 0x79, 0x14, 0x15, 0x53 }
 };
 
 /**

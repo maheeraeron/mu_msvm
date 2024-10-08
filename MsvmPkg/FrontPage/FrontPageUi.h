@@ -2,7 +2,7 @@
   User interaction functions for the Hyper-V FrontPage.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #ifndef _FRONT_PAGE_UI_H_

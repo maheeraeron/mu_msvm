@@ -2,7 +2,7 @@
   This file implements support routines for PEI hypercalls.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiPei.h>

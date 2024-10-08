@@ -3,7 +3,7 @@
     Necessary definitions from Storport.h
 
     Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+    SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

@@ -4,7 +4,7 @@
   Copyright (c) 2011-2014, ARM Limited. All rights reserved.
   Copyright (c) 2016, Linaro Limited. All rights reserved.
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Adapted from ArmPkg\Library\ArmMmuLib\AArch64\ArmMmuLibCore.c
 

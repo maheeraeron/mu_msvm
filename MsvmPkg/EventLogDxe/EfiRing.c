@@ -12,7 +12,7 @@
   and functions utilizing them will fail.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "EventLogDxe.h"

@@ -2,7 +2,7 @@
   HiiConfigAccess definitions for Hyper-V FrontPage.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #ifndef _FRONT_PAGE_CONFIG_ACCESS_H_

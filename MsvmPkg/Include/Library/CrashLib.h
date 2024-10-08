@@ -3,7 +3,7 @@
     This file contains the code to fail fast.
 
     Copyright (c) Microsoft Corporation.
-    Licensed under the BSD-2-Clause-Patent license.
+    SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #pragma once

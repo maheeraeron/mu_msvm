@@ -2,7 +2,7 @@
   Measure VM specific data to TPM using PCR[06]
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

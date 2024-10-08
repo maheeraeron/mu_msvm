@@ -2,7 +2,7 @@
   Barriers and synchronizaton primitives.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #if defined(MDE_CPU_X64)

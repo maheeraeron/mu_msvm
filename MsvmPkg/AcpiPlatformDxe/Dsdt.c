@@ -2,7 +2,7 @@
   This module is responsible for runtime initialization of the DSDT acpi table.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiDxe.h>

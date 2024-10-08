@@ -3,7 +3,7 @@
   Abstracts away the type of IO required from callers.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <Base.h>

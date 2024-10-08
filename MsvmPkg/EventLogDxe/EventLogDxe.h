@@ -2,7 +2,7 @@
   Internal include file the Event Log Runtime DXE Driver.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #pragma once

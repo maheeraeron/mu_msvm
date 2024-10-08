@@ -2,7 +2,7 @@
   This file contains architecture specific functions for debugging a failure.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

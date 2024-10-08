@@ -2,7 +2,7 @@
   Platform Console routines for showing the Hyper-V diagnostic console
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/UefiBootServicesTableLib.h>

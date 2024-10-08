@@ -4,7 +4,7 @@
 
   Copyright (c) 2008 - 2010, Intel Corporation. All rights reserved.
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #ifndef __MS_PLAT_BDS_LIB_H_

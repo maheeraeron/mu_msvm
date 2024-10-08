@@ -1,8 +1,8 @@
 ## @file
 #  Application that presents & manages the Hyper-V Setup Front Page.
 #
-#  Copyright (c) Microsoft Corporation. 
-#  Licensed under the BSD-2-Clause-Patent license. 
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]
@@ -44,7 +44,7 @@
   HiiLib
   MsColorTableLib
   MsLogoLib
-  MsUiThemeLib    
+  MsUiThemeLib
   PcdLib
   PrintLib
   ResetSystemLib

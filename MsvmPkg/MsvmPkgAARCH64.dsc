@@ -2,7 +2,7 @@
 #  EFI/Framework Microsoft Virtual Machine Firmware (MSVM) platform
 #
 #  Copyright (c) Microsoft.
-#  Licensed under the BSD-2-Clause-Patent license.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 

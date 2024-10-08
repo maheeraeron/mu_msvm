@@ -2,7 +2,7 @@
   Defines the public interface for kdnet used by the kdnet library consumers.
 
   Copyright (c) Microsoft Corporation.
-  Licensed under the BSD-2-Clause-Patent license.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #pragma once
