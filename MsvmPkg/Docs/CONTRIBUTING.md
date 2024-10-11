@@ -17,8 +17,8 @@ submitted in the issues section.
 
 ## Security Vulnerabilities
 
-Please review the repos `Security Policy` for more details. The MsvmPkg has `Private vulnerability reporting`
-enabled.  Please use the security tab to report a potential issue.  
+Please review the repo's `Security Policy` for more details. The MsvmPkg has `Private vulnerability reporting`
+enabled.  Please use the security tab to report a potential issue.
 
 ### Look For an Existing Issue
 

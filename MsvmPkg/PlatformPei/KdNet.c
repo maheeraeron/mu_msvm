@@ -12,11 +12,9 @@ Abstract:
 
 --*/
 
-#include <EfiNt.h>
 #include <Platform.h>
 #include <Hob.h>
 #include <KdNet.h>
-#include <kdnetinterface.h>
 #include <IndustryStandard/PeImage.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -25,6 +23,9 @@ Abstract:
 #include <Library/PeiServicesLib.h>
 #include <IsolationTypes.h>
 #include <Library/CrashDumpAgentLib.h>
+
+#include <Private/EfiNt.h>
+#include <Private/kdnetinterface.h>
 
 #define MSR_GHCB        0xC0010130
 

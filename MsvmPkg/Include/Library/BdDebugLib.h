@@ -18,7 +18,7 @@ Author:
 
 #pragma once
 
-#include <EfiNt.h>
+#include <Private/EfiNt.h>
 
 typedef struct _BD_DEBUG_TABLE
 {

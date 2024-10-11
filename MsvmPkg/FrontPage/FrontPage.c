@@ -46,7 +46,6 @@
 #include <MsDisplayEngine.h>
 #include <UIToolKit/SimpleUIToolKit.h>
 
-#include <Resources/MicrosoftLogo.h>
 #include "PlatformConsole.h"
 
 #define FP_OSK_WIDTH_PERCENT        75      // On-screen keyboard is 75% the width of the screen.
@@ -537,7 +536,7 @@ RenderTitlebar(VOID)
               mTitleBarWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
              );
 
-    GetAndDisplayBitmap(PcdGetPtr(PcdFpMsLogoFile), (mMasterFrameWidth  * FP_TBAR_MSLOGO_X_PERCENT) / 100, FALSE);   // 2nd param is x coordinate
+    GetAndDisplayBitmap(PcdGetPtr(PcdFrontPageLogoFile), (mMasterFrameWidth  * FP_TBAR_MSLOGO_X_PERCENT) / 100, FALSE);   // 2nd param is x coordinate
 
     Status = gBS->HandleProtocol(mImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **)&ImageInfo);
     ASSERT_EFI_ERROR(Status);

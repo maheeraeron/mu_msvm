@@ -265,11 +265,11 @@ INF  MsvmPkg/FrontPage/FrontPage.inf
 #INF  MdeModulePkg/Universal/Acpi/FirmwarePerformanceDataTableDxe/FirmwarePerformanceDxe.inf
 
 FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdLogoFile) {
-    SECTION RAW = MsvmPkg/bootlogo.bmp
+    SECTION RAW = MsvmPkg/FrontPage/Resources/HyperVLogo.bmp
     SECTION UI = "Logo"
   }
 
-FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile) {
+FILE FREEFORM = PCD(gMsvmPkgTokenSpaceGuid.PcdFrontPageLogoFile) {
     SECTION RAW = MsvmPkg/FrontPage/Resources/MicrosoftLogo.bmp
 }
 

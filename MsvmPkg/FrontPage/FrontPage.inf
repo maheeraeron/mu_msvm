@@ -81,7 +81,7 @@
   gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState                 ## PRODUCES
   gMsvmPkgTokenSpaceGuid.PcdBootFailIndicatorFile                     ## CONSUMES
   gMsvmPkgTokenSpaceGuid.PcdDisableFrontpage                          ## CONSUMES
-  gMsvmPkgTokenSpaceGuid.PcdFpMsLogoFile                              ## CONSUMES
+  gMsvmPkgTokenSpaceGuid.PcdFrontPageLogoFile                         ## CONSUMES
   gMsvmPkgTokenSpaceGuid.PcdPlatformStringBufferSize                  ## CONSUMES
 
 [Depex]
