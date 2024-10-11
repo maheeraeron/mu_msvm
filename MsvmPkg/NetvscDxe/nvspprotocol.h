@@ -180,6 +180,20 @@ typedef struct _NVSP_MESSAGE_HEADER
     UINT32                                  MessageType;
 } NVSP_MESSAGE_HEADER, *PNVSP_MESSAGE_HEADER;
 
+
+//
+// The following base NDIS type is referenced by nvspprotocol.h.  See
+// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/objectheader/ns-objectheader-ndis_object_header
+//
+typedef struct _NDIS_OBJECT_HEADER
+{
+    UINT8   Type;
+    UINT8   Revision;
+    UINT16  Size;
+} NDIS_OBJECT_HEADER, *PNDIS_OBJECT_HEADER;
+
+typedef UINT32 GPADL_HANDLE;
+
 //
 // Init Messages
 //
@@ -480,6 +494,8 @@ typedef struct _NVSP_4_MESSAGE_SWITCH_DATA_PATH
 //
 // NvspMessage5TypeOidQueryEx
 //
+typedef UINT32 NDIS_OID, *PNDIS_OID;
+
 typedef struct _NVSP_5_MESSAGE_OID_QUERY_EX
 {
     //
@@ -495,6 +511,8 @@ typedef struct _NVSP_5_MESSAGE_OID_QUERY_EX
 //
 // NvspMessage5TypeOidQueryExComplete
 //
+typedef int NDIS_STATUS, *PNDIS_STATUS;
+
 #pragma warning(disable : 4201)
 typedef struct _NVSP_5_MESSAGE_OID_QUERY_EX_COMPLETE
 {

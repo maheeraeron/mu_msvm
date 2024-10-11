@@ -423,7 +423,7 @@ Return Value:
                                NULL,
                                This->DriverBindingHandle,
                                Controller,
-                               EFI_OPEN_PROTOCOL_TEST_PROTOCOL);   // TODO: Why EFI_OPEN_PROTOCOL_TEST_PROTOCOL here???
+                               EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
 
 
     if (EFI_ERROR(status))

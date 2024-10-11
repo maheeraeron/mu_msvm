@@ -15,7 +15,7 @@
 
 #include "NetvscDxe.h"
 #include "NvspProtocol.h"
-#include "vmrndis.h"
+#include "rndis.h"
 
 //
 // This number is just a random 16 bit number which is used to
@@ -44,7 +44,6 @@
 //
 // NDIS Status values for REMOTE_NDIS_INDICATE_STATUS_MSG messages
 //
-// TODO SCRUB What do we do with NDIS_STATUS
 #define NDIS_STATUS_NETWORK_CHANGE              ((NDIS_STATUS)0x40010018L)
 
 #define TPL_NETVSC_CALLBACK                (TPL_CALLBACK + 2)

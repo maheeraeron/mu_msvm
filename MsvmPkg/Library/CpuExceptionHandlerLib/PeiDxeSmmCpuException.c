@@ -161,11 +161,10 @@ CommonExceptionHandlerWorker (
     //
     ReleaseSpinLock (&ExceptionHandlerData->DisplayMessageSpinLock);
     //
-    // Enter a dead loop if needn't to execute old IDT handler further
+    // Fail fast if needn't to execute old IDT handler further
     //
     if (ReservedVectors[ExceptionType].Attribute != EFI_VECTOR_HANDOFF_HOOK_BEFORE) {
 
-      // TODO: consider parameters
       FailFast(
         ExceptionType,
         SystemContext.SystemContextX64->ExceptionData,

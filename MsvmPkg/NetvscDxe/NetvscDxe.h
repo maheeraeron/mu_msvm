@@ -25,31 +25,6 @@
 #include <Library/SerialPortLib.h>
 #include <Library/Printlib.h>
 
-//
-// The following base NDIS types are referenced by nvspprotocol.h.
-// Including the NT header (ntddndis.h) that defines them will pull
-// in a lot of other unworkable include file dependencies. These
-// types are not going to change and are only relevant to this
-// network driver so simply define them here.
-//
-// Begin duplicated types from ntddndis.h
-//
-typedef struct _NDIS_OBJECT_HEADER
-{
-    UINT8   Type;
-    UINT8   Revision;
-    UINT16  Size;
-} NDIS_OBJECT_HEADER, *PNDIS_OBJECT_HEADER;
-
-typedef UINT32 NDIS_OID, *PNDIS_OID;
-
-typedef int NDIS_STATUS, *PNDIS_STATUS;
-//
-// End duplicated types from ntddndis.h
-//
-
-typedef UINT32 GPADL_HANDLE;
-
 #include <NvspProtocol.h>
 
 #define MAXIMUM_ETHERNET_PACKET_SIZE        1514

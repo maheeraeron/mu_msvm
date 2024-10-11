@@ -1,15 +1,8 @@
-/*++
+/** @file
+  This file implements helper routines to facilitate Isolation checks.
 
-Copyright (c) Microsoft Corporation
-
-Module Name:
-
-    IsolationLib.c
-
-Abstract:
-
-    This file implements helper routines to facilitate Isolation checks.
-
+  Copyright (c) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
 
 #include <IsolationTypes.h>
@@ -40,7 +33,7 @@ IsIsolatedEx(
     return (IsolationType != UefiIsolationTypeNone);
 }
 
-BOOLEAN 
+BOOLEAN
 IsIsolated(
     )
 {
@@ -59,7 +52,7 @@ IsHardwareIsolatedEx(
 #endif
 }
 
-BOOLEAN 
+BOOLEAN
 IsHardwareIsolated(
     )
 {
@@ -78,7 +71,7 @@ IsSoftwareIsolatedEx(
     return (IsolationType == UefiIsolationTypeVbs);
 }
 
-BOOLEAN 
+BOOLEAN
 IsSoftwareIsolated(
     )
 {
@@ -98,7 +91,7 @@ IsHardwareIsolatedNoParavisorEx(
 #endif
 }
 
-BOOLEAN 
+BOOLEAN
 IsHardwareIsolatedNoParavisor(
     )
 {

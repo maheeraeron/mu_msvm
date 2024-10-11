@@ -430,13 +430,15 @@
 
 # Disable asserts when not building debug
 !if $(TARGET) == DEBUG
-  # TODO: Originally, this was set to 0x47 to enable DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED
+!if $(LEGACY_DEBUGGER) == 1
+  # Originally, this was set to 0x47 to enable DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED
   # However, SerialDebugAssert in MsKdDebugPkg2 will generate recursive exceptions in
   # DefaultExceptionHandlerLib when a debugger isn't enabled at runtime on debug builds
   # (which means MsKdDebugPkg2 hasn't installed the right trap handlers).
-  # Revisit when moving to the MU feature debugger
-  # gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x07
+!else
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x47
+!endif
 !else
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x06
 !endif
