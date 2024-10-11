@@ -19,7 +19,8 @@
 #include <Library/UefiLib.h>
 #include <PiDxe.h>
 #include <Protocol/InternalEventServices.h>
-#include <VmbusP.h>
+
+#include "VmbusP.h"
 
 #define VMBUS_SUPPORTED_FEATURE_FLAGS (VMBUS_FEATURE_FLAG_CLIENT_ID)
 #define VMBUS_SUPPORTED_FEATURE_FLAGS_PARAVISOR \
@@ -60,119 +61,119 @@ INTERNAL_EVENT_SERVICES_PROTOCOL *mInternalEventServices = NULL;
 VOID
 EFIAPI
 VmbusRootSintNotify(
-    __in VOID *Context
+    IN  VOID *Context
     );
 
 VOID
 VmbusRootScanEventFlags(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in volatile HV_SYNIC_EVENT_FLAGS *Flags
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  volatile HV_SYNIC_EVENT_FLAGS *Flags
     );
 
 BOOLEAN
 VmbusRootDispatchMessage(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in HV_MESSAGE *HvMessage
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  HV_MESSAGE *HvMessage
     );
 
 VOID
 EFIAPI
 VmbusRootExitBootServices(
-    __in EFI_EVENT Event,
-    __in VOID *Context
+    IN  EFI_EVENT Event,
+    IN  VOID *Context
     );
 
 EFI_STATUS
 VmbusRootInitializeContext(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     );
 
 EFI_STATUS
 VmbusRootDestroyContext(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     );
 
 EFI_STATUS
 VmbusRootDestroyChannel(
-    __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    IN  VMBUS_CHANNEL_CONTEXT *ChannelContext
     );
 
 VOID
 VmbusRootWaitForMessage(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in BOOLEAN PollForMessage,
-    __out VMBUS_MESSAGE *Message
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  BOOLEAN PollForMessage,
+    OUT VMBUS_MESSAGE *Message
     );
 
 EFI_STATUS
 VmbusRootInitiateContact(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 RequestedVersion
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 RequestedVersion
     );
 
 EFI_STATUS
 VmbusRootNegotiateVersion(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     );
 
 VOID
 VmbusRootSendUnload(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     );
 
 EFI_STATUS
 VmbusRootCreateChannel(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage,
-    __out_opt VMBUS_CHANNEL_CONTEXT **ChannelContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage,
+    OUT VMBUS_CHANNEL_CONTEXT **ChannelContext OPTIONAL
     );
 
 BOOLEAN
 VmbusRootIsChannelAllowed(
-    __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
+    IN  VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
 );
 
 EFI_STATUS
 VmbusRootEnumerateChildren(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     );
 
 VOID
 EFIAPI
 VmbusRootHotAddAllocation(
-    __in EFI_EVENT Event,
-    __in VOID *Context
+    IN  EFI_EVENT Event,
+    IN  VOID *Context
     );
 
 VOID
 EFIAPI
 VmbusRootHotAdd(
-    __in EFI_EVENT Event,
-    __in VOID *Context
+    IN  EFI_EVENT Event,
+    IN  VOID *Context
     );
 
 EFI_STATUS
 EFIAPI
 VmbusComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     );
 
 EFI_STATUS
 EFIAPI
 VmbusComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     );
 
 EFI_STATUS
 VmbusRootConnectSint(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in BOOLEAN Reconnect
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  BOOLEAN Reconnect
     );
 
 //
@@ -185,14 +186,6 @@ static const UINT32 gVmbusSupportedVersions[] =
     VMBUS_VERSION_COPPER,
     VMBUS_VERSION_WIN8_1
 };
-
-//
-// The ID for the UEFI VmBus client.
-//
-
-// {18DD3964-3E8A-4E42-86FA-C8E6B191EE0E}
-DEFINE_GUID(VMBUS_UEFI_CLIENT_ID,
-0x18dd3964, 0x3e8a, 0x4e42, 0x86, 0xfa, 0xc8, 0xe6, 0xb1, 0x91, 0xee, 0xe);
 
 VMBUS_ROOT_CONTEXT mRootContext;
 
@@ -236,7 +229,7 @@ EFI_DEVICE_PATH_PROTOCOL gEfiEndNode =
 
 EFI_STATUS
 VmbusRootInitializeContext(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     )
 /**
     This routine initializes a root context.
@@ -329,7 +322,7 @@ Cleanup:
 
 EFI_STATUS
 VmbusRootDestroyChannel(
-    __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    IN  VMBUS_CHANNEL_CONTEXT *ChannelContext
     )
 /**
     This routine destroys a channel handle by uninstalling the VMBus and Device
@@ -391,7 +384,7 @@ VmbusRootDestroyChannel(
 
 EFI_STATUS
 VmbusRootDestroyContext (
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     )
 /**
     This routine destroys a root context.
@@ -488,9 +481,9 @@ VmbusRootDestroyContext (
 
 VOID
 VmbusRootWaitForMessage(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in BOOLEAN PollForMessage,
-    __out VMBUS_MESSAGE *Message
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  BOOLEAN PollForMessage,
+    OUT VMBUS_MESSAGE *Message
     )
 /**
     This routine waits for a message targeted at the root device.
@@ -553,7 +546,7 @@ VmbusRootWaitForMessage(
 
 VMBUS_MESSAGE*
 VmbusRootWaitForChannelResponse(
-    __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    IN  VMBUS_CHANNEL_CONTEXT *ChannelContext
     )
 /**
     This routine waits for a message targeted at a specific channel.
@@ -597,9 +590,9 @@ VmbusRootWaitForChannelResponse(
 
 EFI_STATUS
 VmbusRootWaitForGpadlResponse(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle,
-    __out VMBUS_MESSAGE **Message
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle,
+    OUT VMBUS_MESSAGE **Message
     )
 /**
     This routine waits for a message targeted at a specific GPADL.
@@ -658,9 +651,9 @@ VmbusRootWaitForGpadlResponse(
 
 VOID
 VmbusRootInitializeMessage(
-    __inout VMBUS_MESSAGE *Message,
-    __in VMBUS_CHANNEL_MESSAGE_TYPE Type,
-    __in UINT32 Size
+    IN OUT  VMBUS_MESSAGE *Message,
+    IN      VMBUS_CHANNEL_MESSAGE_TYPE Type,
+    IN      UINT32 Size
     )
 /**
     This routine initializes a VMBus message.
@@ -683,8 +676,8 @@ VmbusRootInitializeMessage(
 
 EFI_STATUS
 VmbusRootSendMessage(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in VMBUS_MESSAGE *Message
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  VMBUS_MESSAGE *Message
     )
 /**
     This routine synchronously sends a VMBus message to the opposite endpoint.
@@ -720,7 +713,7 @@ VmbusRootSendMessage(
 VOID
 EFIAPI
 VmbusRootSintNotify (
-    __in VOID *Context
+    IN  VOID *Context
     )
 /**
     This interrupt callback scans event flags and dispatches VMBus messages when
@@ -771,8 +764,8 @@ VmbusRootSintNotify (
 
 VOID
 VmbusRootScanEventFlags(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in volatile HV_SYNIC_EVENT_FLAGS *Flags
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  volatile HV_SYNIC_EVENT_FLAGS *Flags
     )
 /**
     This routine scans the hypervisor event flags and signals interrupt events
@@ -816,8 +809,8 @@ VmbusRootScanEventFlags(
 
 BOOLEAN
 VmbusRootDispatchMessage(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in HV_MESSAGE *HvMessage
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  HV_MESSAGE *HvMessage
     )
 /**
     This routine dispatches a hypervisor message based on its type, notifying
@@ -866,14 +859,13 @@ VmbusRootDispatchMessage(
             completeMessage = FALSE;
             break;
         }
-
-        __fallthrough;
+        // fallthrough
 
     case ChannelMessageVersionResponse:
-        __fallthrough;
+        // fallthrough
 
     case ChannelMessageAllOffersDelivered:
-        __fallthrough;
+        // fallthrough
 
     case ChannelMessageUnloadComplete:
 
@@ -957,8 +949,8 @@ VmbusRootDispatchMessage(
 VOID
 EFIAPI
 VmbusRootHotAddAllocation(
-    _In_ EFI_EVENT Event,
-    _In_ VOID * Context
+    IN  EFI_EVENT Event,
+    IN  VOID * Context
     )
 /**
     This routine allocates space for hot add messages and copies the message
@@ -1029,8 +1021,8 @@ Cleanup:
 VOID
 EFIAPI
 VmbusRootHotAdd(
-    __in EFI_EVENT Event,
-    __in VOID *Context
+    IN  EFI_EVENT Event,
+    IN  VOID *Context
     )
 /**
     This routine processes hot-add messages. Hot-remove is not supported under UEFI,
@@ -1109,8 +1101,8 @@ VmbusRootHotAdd(
 
 EFI_STATUS
 VmbusRootGetFreeGpadl(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __out UINT32 *GpadlHandle
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    OUT UINT32 *GpadlHandle
     )
 /**
     This routine allocates a new GPADL and returns its handle.
@@ -1190,8 +1182,8 @@ Cleanup:
 
 VOID
 VmbusRootReclaimGpadl(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle
     )
 /**
     This routine releases a GPADL to be reused.
@@ -1216,8 +1208,8 @@ VmbusRootReclaimGpadl(
 
 BOOLEAN
 VmbusRootValidateGpadl(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle
     )
 /**
     This routine verifies if the provided GPADL handle is valid.
@@ -1235,9 +1227,9 @@ VmbusRootValidateGpadl(
 
 VOID
 VmbusRootSetInterruptEntry(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 ChannelId,
-    __in EFI_EVENT Event
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 ChannelId,
+    IN  EFI_EVENT Event
     )
 
 /**
@@ -1271,8 +1263,8 @@ VmbusRootSetInterruptEntry(
 
 VOID
 VmbusRootClearInterruptEntry(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 ChannelId
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 ChannelId
     )
 /**
     This routine unregisters an interrupt for a channel.
@@ -1318,8 +1310,8 @@ VmbusRootClearInterruptEntry(
 VOID
 EFIAPI
 VmbusRootExitBootServices(
-    __in EFI_EVENT Event,
-    __in VOID *Context
+    IN  EFI_EVENT Event,
+    IN  VOID *Context
     )
 /**
     This event notification sends an unload message when ExitBootServices is
@@ -1364,7 +1356,7 @@ VmbusRootExitBootServices(
 
 EFI_STATUS
 VmbusRootNegotiateVersion(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     )
 /**
     This routine initiates contact with the host endpoint and negotiates the
@@ -1379,7 +1371,7 @@ VmbusRootNegotiateVersion(
 **/
 {
     EFI_STATUS status = EFI_PROTOCOL_ERROR;
-    SIZE_T index;
+    UINTN index;
     UINT32 version;
 
     for (index = 0; index < ARRAY_SIZE(gVmbusSupportedVersions); index++)
@@ -1405,8 +1397,8 @@ VmbusRootNegotiateVersion(
 
 EFI_STATUS
 VmbusRootInitiateContact(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 RequestedVersion
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 RequestedVersion
     )
 /**
     This routine initiates contact with the host endpoint using the requested
@@ -1440,7 +1432,7 @@ VmbusRootInitiateContact(
     message.InitiateContact.TargetMessageVp = mHv->GetCurrentVpIndex(mHv);
     if (RequestedVersion >= VMBUS_VERSION_COPPER)
     {
-        message.InitiateContact.ClientId = VMBUS_UEFI_CLIENT_ID;
+        message.InitiateContact.ClientId = gMsvmVmbusClientGuid;
         message.InitiateContact.FeatureFlags = VMBUS_SUPPORTED_FEATURE_FLAGS;
         if (RootContext->Confidential)
         {
@@ -1516,7 +1508,7 @@ VmbusRootInitiateContact(
 
 VOID
 VmbusRootSendUnload(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     )
 /**
     This routine sends an unload message and synchronously waits for a response
@@ -1555,9 +1547,9 @@ VmbusRootSendUnload(
 
 EFI_STATUS
 VmbusRootCreateChannel(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage,
-    __out_opt VMBUS_CHANNEL_CONTEXT **ChannelContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage,
+    OUT VMBUS_CHANNEL_CONTEXT **ChannelContext OPTIONAL
     )
 /**
     This routine constructs a channel from an offer message.
@@ -1661,7 +1653,7 @@ Cleanup:
 
 BOOLEAN
 VmbusRootIsChannelAllowed(
-    __in VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
+    IN  VMBUS_CHANNEL_OFFER_CHANNEL *OfferMessage
 )
 /**
     This routine determines if a VmBus channel is allowed or not.
@@ -1718,7 +1710,7 @@ VmbusRootIsChannelAllowed(
 
 EFI_STATUS
 VmbusRootEnumerateChildren(
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN  VMBUS_ROOT_CONTEXT *RootContext
     )
 /**
     This routine receives all VMBus offers from the root, creates a child
@@ -1795,9 +1787,9 @@ VmbusRootEnumerateChildren(
 EFI_STATUS
 EFIAPI
 VmbusRootDriverSupported (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /**
     Supported routine for VMBus driver binding protocol.
@@ -1842,8 +1834,8 @@ VmbusRootDriverSupported (
 
 EFI_STATUS
 VmbusRootConnectSint(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in BOOLEAN Reconnect
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  BOOLEAN Reconnect
     )
 {
     EFI_STATUS status;
@@ -1876,9 +1868,9 @@ VmbusRootConnectSint(
 EFI_STATUS
 EFIAPI
 VmbusRootDriverStart (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL
     )
 /**
     Start routine for VMBus driver binding protocol.
@@ -1991,10 +1983,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbusRootDriverStop (
-    __in EFI_DRIVER_BINDING_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in UINTN NumberOfChildren,
-    __in_ecount(NumberOfChildren) EFI_HANDLE *ChildHandleBuffer
+    IN  EFI_DRIVER_BINDING_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  UINTN NumberOfChildren,
+    IN  EFI_HANDLE *ChildHandleBuffer
     )
 /**
     Stop routine for VMBus driver binding protocol.
@@ -2123,9 +2115,9 @@ EFI_DRIVER_BINDING_PROTOCOL gVmbusDriverBindingProtocol =
 EFI_STATUS
 EFIAPI
 VmbusComponentNameGetDriverName (
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in CHAR8 *Language,
-    __out CHAR16 **DriverName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **DriverName
     )
 /**
     Retrieves a Unicode string that is the user readable name of the EFI Driver.
@@ -2159,11 +2151,11 @@ VmbusComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 VmbusComponentNameGetControllerName(
-    __in EFI_COMPONENT_NAME_PROTOCOL *This,
-    __in EFI_HANDLE ControllerHandle,
-    __in_opt EFI_HANDLE ChildHandle,
-    __in CHAR8 *Language,
-    __out CHAR16 **ControllerName
+    IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+    IN  EFI_HANDLE ControllerHandle,
+    IN  EFI_HANDLE ChildHandle OPTIONAL,
+    IN  CHAR8 *Language,
+    OUT CHAR16 **ControllerName
     )
 /**
     Retrieves a Unicode string that is the user readable name of the controller
@@ -2240,8 +2232,8 @@ VmbusComponentNameGetControllerName(
 EFI_STATUS
 EFIAPI
 VmbusDriverInitialize (
-    __in EFI_HANDLE ImageHandle,
-    __in EFI_SYSTEM_TABLE *SystemTable
+    IN  EFI_HANDLE ImageHandle,
+    IN  EFI_SYSTEM_TABLE *SystemTable
     )
 /**
     Entry point into VMBus driver.
@@ -2317,8 +2309,8 @@ VmbusDriverInitialize (
 
 BOOLEAN
 VmbusRootSupportsFeatureFlag(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 FeatureFlag
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 FeatureFlag
     )
 {
     return (RootContext->FeatureFlags & FeatureFlag) != 0;

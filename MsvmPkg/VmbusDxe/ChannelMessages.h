@@ -9,6 +9,8 @@
 **/
 #pragma once
 
+#include <Vmbus/NtStatus.h>
+
 #pragma pack(push,1)
 
 //
@@ -162,7 +164,7 @@ typedef struct _VMBUS_CHANNEL_OFFER_CHANNEL
     UINT16 Flags;
     UINT16 MmioMegabytes;
 
-    UCHAR UserDefined[MAX_USER_DEFINED_BYTES];
+    UINT8 UserDefined[MAX_USER_DEFINED_BYTES];
 
     UINT16 SubChannelIndex; // Defined in Win8
     UINT16 MmioMegabytesOptional;  // mmio memory in addition to MmioMegabytes that is optional
@@ -186,14 +188,14 @@ typedef struct _VMBUS_CHANNEL_OFFER_CHANNEL
             UINT32 ConnectionId;
         };
 
-        UCHAR Windows6Offset;
+        UINT8 Windows6Offset;
     };
 
 } VMBUS_CHANNEL_OFFER_CHANNEL, *PVMBUS_CHANNEL_OFFER_CHANNEL;
 
 static_assert(sizeof(VMBUS_CHANNEL_OFFER_CHANNEL) <= MAXIMUM_SYNIC_MESSAGE_BYTES, "Offer message too large");
 
-#define VMBUS_CHANNEL_OFFER_CHANNEL_SIZE_PRE_WIN7 (UINT32)FIELD_OFFSET(VMBUS_CHANNEL_OFFER_CHANNEL, Windows6Offset)
+#define VMBUS_CHANNEL_OFFER_CHANNEL_SIZE_PRE_WIN7 (UINT32)OFFSET_OF(VMBUS_CHANNEL_OFFER_CHANNEL, Windows6Offset)
 
 // Rescind Offer parameters
 typedef struct _VMBUS_CHANNEL_RESCIND_OFFER
@@ -245,7 +247,7 @@ typedef struct _VMBUS_CHANNEL_OPEN_CHANNEL
     //
     // User-specific data to be passed along to the server endpoint.
     //
-    UCHAR           UserData[MAX_USER_DEFINED_BYTES];
+    UINT8           UserData[MAX_USER_DEFINED_BYTES];
 
     //
     // Guest-specified signal parameters; valid only if
@@ -263,7 +265,7 @@ typedef struct _VMBUS_CHANNEL_OPEN_CHANNEL
 
 } VMBUS_CHANNEL_OPEN_CHANNEL, *PVMBUS_CHANNEL_OPEN_CHANNEL;
 
-#define VMBUS_CHANNEL_OPEN_CHANNEL_MIN_SIZE FIELD_OFFSET(VMBUS_CHANNEL_OPEN_CHANNEL, ConnectionId)
+#define VMBUS_CHANNEL_OPEN_CHANNEL_MIN_SIZE OFFSET_OF(VMBUS_CHANNEL_OPEN_CHANNEL, ConnectionId)
 
 // Open Channel Result parameters
 typedef struct _VMBUS_CHANNEL_OPEN_RESULT
@@ -379,7 +381,7 @@ typedef struct _VMBUS_CHANNEL_INITIATE_CONTACT
     GUID                ClientId; // VMBUS_FEATURE_FLAG_CLIENT_ID
 } VMBUS_CHANNEL_INITIATE_CONTACT, *PVMBUS_CHANNEL_INITIATE_CONTACT;
 
-#define VMBUS_CHANNEL_INITIATE_CONTACT_MIN_SIZE FIELD_OFFSET(VMBUS_CHANNEL_INITIATE_CONTACT, ClientId)
+#define VMBUS_CHANNEL_INITIATE_CONTACT_MIN_SIZE OFFSET_OF(VMBUS_CHANNEL_INITIATE_CONTACT, ClientId)
 
 typedef struct _VMBUS_CHANNEL_VERSION_RESPONSE
 {
@@ -398,7 +400,7 @@ typedef struct _VMBUS_CHANNEL_VERSION_RESPONSE
 
 } VMBUS_CHANNEL_VERSION_RESPONSE, * PVMBUS_CHANNEL_VERSION_RESPONSE;
 
-#define VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE FIELD_OFFSET(VMBUS_CHANNEL_VERSION_RESPONSE, SupportedFeatures)
+#define VMBUS_CHANNEL_VERSION_RESPONSE_MIN_SIZE OFFSET_OF(VMBUS_CHANNEL_VERSION_RESPONSE, SupportedFeatures)
 
 //
 // Status codes for the ConnectionState field of
@@ -459,11 +461,11 @@ typedef struct _VMBUS_CHANNEL_TL_CONNECT_REQUEST
     union
     {
         GUID SiloId;
-        UCHAR WindowsRS1Offset;
+        UINT8 WindowsRS1Offset;
     };
 } VMBUS_CHANNEL_TL_CONNECT_REQUEST, *PVMBUS_CHANNEL_TL_CONNECT_REQUEST;
 
-#define VMBUS_CHANNEL_TL_CONNECT_REQUEST_PRE_RS5_SIZE (UINT32)FIELD_OFFSET(VMBUS_CHANNEL_TL_CONNECT_REQUEST, WindowsRS1Offset)
+#define VMBUS_CHANNEL_TL_CONNECT_REQUEST_PRE_RS5_SIZE (UINT32)OFFSET_OF(VMBUS_CHANNEL_TL_CONNECT_REQUEST, WindowsRS1Offset)
 
 typedef struct _VMBUS_CHANNEL_TL_CONNECT_RESULT
 {

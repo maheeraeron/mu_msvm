@@ -40,12 +40,12 @@ VMBUS_DEVICE_PATH gVmbusChannelNode =
 EFI_STATUS
 EFIAPI
 VmbusChannelPrepareGpadl (
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __in UINT32 Flags,
-    __in HV_MAP_GPA_FLAGS MapFlags,
-    __out EFI_VMBUS_GPADL **Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    IN  UINT32 Flags,
+    IN  HV_MAP_GPA_FLAGS MapFlags,
+    OUT EFI_VMBUS_GPADL **Gpadl
     )
 /*++
 
@@ -197,8 +197,8 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbusChannelCreateGpadl (
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     )
 /*++
 
@@ -355,10 +355,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 VmbusChannelCreateGpadlLegacy (
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in_bcount(BufferLength) VOID *Buffer,
-    __in UINT32 BufferLength,
-    __out UINT32 *GpadlHandle
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  VOID *Buffer,
+    IN  UINT32 BufferLength,
+    OUT UINT32 *GpadlHandle
     )
 /*++
 
@@ -421,8 +421,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelDestroyGpadl (
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     )
 /*++
 
@@ -519,8 +519,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelDestroyGpadlLegacy (
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in UINT32 GpadlHandle
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  UINT32 GpadlHandle
     )
 /*++
 
@@ -564,8 +564,8 @@ Return Value:
 UINT32
 EFIAPI
 VmbusChannelGetGpadlHandle(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     )
 /*++
 
@@ -589,11 +589,11 @@ Return Value:
 }
 
 
-PVOID
+VOID*
 EFIAPI
 VmbusChannelGetGpadlBuffer(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *Gpadl
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *Gpadl
     )
 /*++
 
@@ -616,11 +616,11 @@ Return Value:
 {
     if (Gpadl->VisibleBufferPA >= mSharedGpaBoundary)
     {
-        return (PVOID)(Gpadl->VisibleBufferPA | mCanonicalizationMask);
+        return (VOID*)(Gpadl->VisibleBufferPA | mCanonicalizationMask);
     }
     else
     {
-        return (PVOID)Gpadl->VisibleBufferPA;
+        return (VOID*)Gpadl->VisibleBufferPA;
     }
 }
 
@@ -628,9 +628,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelOpenChannel (
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in EFI_VMBUS_GPADL *RingBufferGpadl,
-    __in UINT32 RingBufferPageOffset
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_VMBUS_GPADL *RingBufferGpadl,
+    IN  UINT32 RingBufferPageOffset
     )
 /*++
 
@@ -694,9 +694,9 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelOpenChannelLegacy (
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in UINT32 RingBufferGpadlHandle,
-    __in UINT32 RingBufferPageOffset
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  UINT32 RingBufferGpadlHandle,
+    IN  UINT32 RingBufferPageOffset
     )
 /*++
 
@@ -745,7 +745,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelCloseChannel (
-    __in EFI_VMBUS_PROTOCOL *This
+    IN  EFI_VMBUS_PROTOCOL *This
     )
 /*++
 
@@ -785,7 +785,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelCloseChannelLegacy (
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This
     )
 /*++
 
@@ -818,8 +818,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelRegisterIsr(
-    __in EFI_VMBUS_PROTOCOL *This,
-    __in_opt EFI_EVENT Event
+    IN  EFI_VMBUS_PROTOCOL *This,
+    IN  EFI_EVENT Event OPTIONAL
     )
 /*++
 
@@ -865,8 +865,8 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelRegisterIsrLegacy(
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This,
-    __in_opt EFI_EVENT Event
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This,
+    IN  EFI_EVENT Event OPTIONAL
     )
 /*++
 
@@ -900,7 +900,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelSendInterrupt (
-    __in EFI_VMBUS_PROTOCOL *This
+    IN  EFI_VMBUS_PROTOCOL *This
     )
 /*++
 
@@ -935,7 +935,7 @@ Return Value:
 EFI_STATUS
 EFIAPI
 VmbusChannelSendInterruptLegacy (
-    __in EFI_VMBUS_LEGACY_PROTOCOL *This
+    IN  EFI_VMBUS_LEGACY_PROTOCOL *This
     )
 /*++
 
@@ -966,9 +966,9 @@ Return Value:
 
 VOID
 VmbusChannelInitializeContext(
-    __inout VMBUS_CHANNEL_CONTEXT *ChannelContext,
-    __in VMBUS_CHANNEL_OFFER_CHANNEL *Offer,
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN OUT  VMBUS_CHANNEL_CONTEXT *ChannelContext,
+    IN      VMBUS_CHANNEL_OFFER_CHANNEL *Offer,
+    IN      VMBUS_ROOT_CONTEXT *RootContext
     )
 /*++
 
@@ -1045,7 +1045,7 @@ Return Value:
 
 VOID
 VmbusChannelDestroyContext(
-    __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    IN  VMBUS_CHANNEL_CONTEXT *ChannelContext
     )
 /*++
 

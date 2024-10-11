@@ -34,7 +34,6 @@ typedef struct _GPA_RANGE
 
 } GPA_RANGE;
 
-#include <EfiNt.h>
 #include <ChannelMessages.h>
 
 #define VMBUS_MESSAGE_CONNECTION_ID 1
@@ -141,7 +140,7 @@ typedef struct _VMBUS_MESSAGE
 
     union
     {
-        UCHAR Data[MAXIMUM_SYNIC_MESSAGE_BYTES];
+        UINT8 Data[MAXIMUM_SYNIC_MESSAGE_BYTES];
         VMBUS_CHANNEL_MESSAGE_HEADER Header;
         VMBUS_CHANNEL_OFFER_CHANNEL OfferChannel;
         VMBUS_CHANNEL_RESCIND_OFFER RescindOffer;
@@ -204,7 +203,7 @@ typedef struct _VMBUS_CHANNEL_CONTEXT
 
 struct _EFI_VMBUS_GPADL
 {
-    PVOID AllocatedBuffer;
+    VOID* AllocatedBuffer;
     UINT64 VisibleBufferPA;
     UINT32 BufferLength;
     UINT32 NumberOfPages;
@@ -215,84 +214,84 @@ struct _EFI_VMBUS_GPADL
 
 VMBUS_MESSAGE*
 VmbusRootWaitForChannelResponse(
-    __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    IN  VMBUS_CHANNEL_CONTEXT *ChannelContext
     );
 
 EFI_STATUS
 VmbusRootWaitForGpadlResponse(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle,
-    __out VMBUS_MESSAGE **Message
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle,
+    OUT VMBUS_MESSAGE **Message
     );
 
 VOID
 VmbusRootInitializeMessage(
-    __inout VMBUS_MESSAGE *Message,
-    __in VMBUS_CHANNEL_MESSAGE_TYPE Type,
-    __in UINT32 Size
+    IN OUT  VMBUS_MESSAGE *Message,
+    IN      VMBUS_CHANNEL_MESSAGE_TYPE Type,
+    IN      UINT32 Size
     );
 
 EFI_STATUS
 VmbusRootSendMessage(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in VMBUS_MESSAGE *Message
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  VMBUS_MESSAGE *Message
     );
 
 EFI_STATUS
 VmbusRootGetFreeGpadl(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __out UINT32 *GpadlHandle
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    OUT UINT32 *GpadlHandle
     );
 
 VOID
 VmbusRootReclaimGpadl(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle
     );
 
 VOID
 VmbusRootSetGpadlPageRange(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle,
-    __in UINT64 GpaPageBase,
-    __in UINT32 PageCount
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle,
+    IN  UINT64 GpaPageBase,
+    IN  UINT32 PageCount
     );
 
 BOOLEAN
 VmbusRootValidateGpadl(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 GpadlHandle
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 GpadlHandle
     );
 
 VOID
 VmbusRootSetInterruptEntry(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 ChannelId,
-    __in EFI_EVENT Event
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 ChannelId,
+    IN  EFI_EVENT Event
     );
 
 VOID
 VmbusRootClearInterruptEntry(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 ChannelId
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 ChannelId
     );
 
 VOID
 VmbusChannelInitializeContext(
-    __inout VMBUS_CHANNEL_CONTEXT *ChannelContext,
-    __in VMBUS_CHANNEL_OFFER_CHANNEL *Offer,
-    __in VMBUS_ROOT_CONTEXT *RootContext
+    IN OUT  VMBUS_CHANNEL_CONTEXT *ChannelContext,
+    IN      VMBUS_CHANNEL_OFFER_CHANNEL *Offer,
+    IN      VMBUS_ROOT_CONTEXT *RootContext
     );
 
 VOID
 VmbusChannelDestroyContext(
-    __in VMBUS_CHANNEL_CONTEXT *ChannelContext
+    IN  VMBUS_CHANNEL_CONTEXT *ChannelContext
     );
 
 BOOLEAN
 VmbusRootSupportsFeatureFlag(
-    __in VMBUS_ROOT_CONTEXT *RootContext,
-    __in UINT32 FeatureFlag
+    IN  VMBUS_ROOT_CONTEXT *RootContext,
+    IN  UINT32 FeatureFlag
     );
 
 #pragma warning(pop)
