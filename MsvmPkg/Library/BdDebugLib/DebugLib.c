@@ -28,7 +28,7 @@ Author:
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/BdDebugLib.h>
 
-#include <EfiNt.h>
+#include <Private/EfiNt.h>
 
 // -------------------------------------------------------------------- Defines
 

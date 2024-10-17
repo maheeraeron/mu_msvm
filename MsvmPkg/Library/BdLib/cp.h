@@ -15,7 +15,6 @@ Abstract:
 
 --*/
 
-#include "EfiNt.h"
 #include "Bd.h"
 
 #if defined(_ARM64)

@@ -21,7 +21,6 @@ Environment:
 
 --*/
 
-#include <EfiNt.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>

@@ -12,13 +12,13 @@ Abstract:
 
 --*/
 
-#include <EfiNt.h>
-#include <kdnetinterface.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Hv/HvGuestMsr.h>
 
 #include "Bd.h"
+
+#include <Private/kdnetinterface.h>
 
 EFI_KDNET_HOB *KdnetHob;
 KD_CONTEXT BdContext = {MAXIMUM_RETRIES, FALSE};

@@ -35,7 +35,7 @@ Environment:
 #include <Library/TimerLib.h>
 
 #include "Bd.h"
-#include "EfiNt.h"
+#include <Private/EfiNt.h>
 
 UINTN
 BdGetModuleName(

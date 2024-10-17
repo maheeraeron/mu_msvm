@@ -22,7 +22,6 @@ Environment:
 
 --*/
 
-#include <EfiNt.h>
 #include "Bd.h"
 #include <Hv/HvGuestCpuid.h>
 #include <Library/ResetSystemLib.h>

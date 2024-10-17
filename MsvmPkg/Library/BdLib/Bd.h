@@ -30,7 +30,7 @@ Environment:
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 #define UNALIGNED
 
-#include <EfiNt.h>
+#include <Private/EfiNt.h>
 #include <Library/BdDebugLib.h>
 
 //
