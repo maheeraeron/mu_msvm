@@ -19,7 +19,7 @@ resources:
 variables:
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
   Parameters.vPack.majorVer: "24"
-  Parameters.vPack.minorVer: "0"
+  Parameters.vPack.minorVer: "2"
 
 extends:
   template: v2/Microsoft.Official.yml@templates_onebranch                   # EXTEND MICROSOFT.OFFICIAL.YML
