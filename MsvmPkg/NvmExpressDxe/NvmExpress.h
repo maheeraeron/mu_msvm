@@ -131,7 +131,8 @@ extern EFI_DRIVER_SUPPORTED_EFI_VERSION_PROTOCOL  gNvmExpressDriverSupportedEfiV
 //
 // Time out value for Nvme transaction execution
 //
-#define NVME_GENERIC_TIMEOUT  EFI_TIMER_PERIOD_SECONDS (5)
+// MS_HYP_CHANGE: Extended I/O timeout for Azure
+#define NVME_GENERIC_TIMEOUT  EFI_TIMER_PERIOD_SECONDS (120)
 
 //
 // Nvme async transfer timer interval, set by experience.
