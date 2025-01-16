@@ -16,7 +16,7 @@ parameters:
 
 variables:
   Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.PR.$(Build.Arch).$(Build.Target)"
-  Parameters.vPack.majorVer: "24"
+  Parameters.vPack.majorVer: "25"
   Parameters.vPack.minorVer: "0"
 
 extends:
