@@ -271,6 +271,7 @@
   PeCoffExtraActionLib|MsvmPkg/Library/BdLib/DxeBdLib.inf
 !endif
 ##MSChange Begin
+  MemoryBinOverrideLib|MdeModulePkg/Library/MemoryBinOverrideLibNull/MemoryBinOverrideLibNull.inf
 [LibraryClasses.common.DXE_DRIVER]
   ResetSystemLib|MdeModulePkg/Library/DxeResetSystemLib/DxeResetSystemLib.inf
   HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
