@@ -19,25 +19,34 @@ jobs:
         Build.Target: 'DEBUG'
         Build.Arch: 'x64'
         Build.Extra: 'BLD_*_DEBUG_NOISY=1 BLD_*_DEBUGLIB_SERIAL=1'
+        Build.Variant: 'STANDARD'
+      TARGET_LEGACY_DEBUG_X64:
+        Build.Target: 'DEBUG'
+        Build.Arch: 'x64'
+        Build.Extra: 'BLD_*_LEGACY_DEBUGGER=1'
+        Build.Variant: 'LEGACY'
       TARGET_RELEASE_x64:
         Build.Target: 'RELEASE'
         Build.Arch: 'x64'
         Build.Extra: ''
+        Build.Variant: 'STANDARD'
       TARGET_DEBUG_AARCH64:
         Build.Target: 'DEBUG'
         Build.Arch: 'AARCH64'
         Build.Extra: ''
+        Build.Variant: 'STANDARD'
       TARGET_RELEASE_AARCH64:
         Build.Target: 'RELEASE'
         Build.Arch: 'AARCH64'
         Build.Extra: ''
+        Build.Variant: 'STANDARD'
   variables:
     Build.ToolChainTag: "VS2022"
     Env.PythonVersion: "3.12"
     GIT_TERMINAL_PROMPT: "0"
     ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
     ob_nugetPublishing_enabled:  ${{parameters.publishNuget}}
-    ob_artifactSuffix: '_$(Build.Arch)_$(Build.Target)'
+    ob_artifactSuffix: '_$(Build.Arch)_$(Build.Target)_$(Build.Variant)'
     ${{ if eq(parameters.pipeline, 'Official') }}:
       ob_createvpack_vpackdirectory: '$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin'
     PlatformPkg: "MsvmPkg"
@@ -124,22 +133,22 @@ jobs:
       TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Build Logs $(System.JobName)
     condition: succeededOrFailed()
   - task: CopyFiles@2
-    displayName: "Copy Files for 'Publish Artifact: Firmware Bin File $(Build.Target)_$(Build.Arch)' publish task"
+    displayName: "Copy Files for 'Publish Artifact: Firmware Bin File $(Build.Target)_$(Build.Arch)_$(Build.Variant)' publish task"
     inputs:
       Contents: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Binary File $(Build.Target)_$(Build.Arch)
+      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Binary File $(Build.Target)_$(Build.Arch)_$(Build.Variant)
   - task: CopyFiles@2
-    displayName: "Copy Files for 'Publish Artifact: Firmware PDB Files $(Build.Target)_$(Build.Arch)' publish task"
+    displayName: "Copy Files for 'Publish Artifact: Firmware PDB Files $(Build.Target)_$(Build.Arch)_$(Build.Variant)' publish task"
     inputs:
       SourceFolder: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/'
       Contents: '**'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware PDB Files $(Build.Target)_$(Build.Arch)
+      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware PDB Files $(Build.Target)_$(Build.Arch)_$(Build.Variant)
   - task: CopyFiles@2
-    displayName: "Copy Files for 'Publish Artifact: Firmware Map Files $(Build.Target)_$(Build.Arch)' publish task"
+    displayName: "Copy Files for 'Publish Artifact: Firmware Map Files $(Build.Target)_$(Build.Arch)_$(Build.Variant)' publish task"
     inputs:
       SourceFolder: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/MAP/'
       Contents: '**'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Map Files $(Build.Target)_$(Build.Arch)
+      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Map Files $(Build.Target)_$(Build.Arch)_$(Build.Variant)
   - task: PublishSymbols@2
     displayName: 'Publish symbols to the symbol server'
     inputs:
