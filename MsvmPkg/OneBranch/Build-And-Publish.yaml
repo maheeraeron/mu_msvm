@@ -161,6 +161,7 @@ jobs:
   - ${{ if eq(parameters.pipeline, 'Official') }}:
     - task: Powershell@2
       displayName: 'Compute Hash and copy firmware to vpack folder'
+      condition: ne(variables['Build.Variant'], 'LEGACY')
       inputs:
         targetType: 'inline'
         script: |
@@ -175,6 +176,7 @@ jobs:
   - ${{ if eq(parameters.publishNuget, true) }}:
     - task: NuGetCommand@2
       displayName: 'Pack the NuGet package'
+      condition: ne(variables['Build.Variant'], 'LEGACY')
       inputs:
         command: 'pack'
         packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
