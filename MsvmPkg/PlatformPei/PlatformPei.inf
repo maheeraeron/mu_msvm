@@ -43,12 +43,14 @@
     NetworkPkg/NetworkPkg.dec
     SecurityPkg/SecurityPkg.dec
     UefiCpuPkg/UefiCpuPkg.dec
+    AdvLoggerPkg/AdvLoggerPkg.dec
     MsvmPkg/MsvmPkg.dec
 
 [Packages.AARCH64]
     ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
+    AdvancedLoggerLib
     CrashLib
     DeviceStateLib
     DebugLib
@@ -70,10 +72,11 @@
     ArmLib
 
 [Guids]
+    gAdvancedLoggerHobGuid
+    gDxeMemoryProtectionSettingsGuid
     gEfiMemoryTypeInformationGuid
     gMsvmDebuggerEnabledGuid
     gMsvmDebuggerKdnetBinaryGuid
-    gDxeMemoryProtectionSettingsGuid
 
 [Guids.AARCH64]
     gArmTokenSpaceGuid

@@ -397,7 +397,7 @@
 
   #
   # The runtime state of these two Debug PCDs can be modified in the debugger by
-  # modifyting EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
+  # modifying EfiBdDebugPrintGlobalMask and EfiBdDebugPrintComponentMask.
   #
 !ifdef DEBUG_NOISY
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEF4B
