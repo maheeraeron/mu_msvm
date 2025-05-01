@@ -33,7 +33,7 @@ jobs:
         Build.Extra: ''
   variables:
     Build.ToolChainTag: "VS2022"
-    Env.PythonVersion: "3.12"
+    Env.PythonVersion: "3.10"
     GIT_TERMINAL_PROMPT: "0"
     ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
     ob_nugetPublishing_enabled:  ${{parameters.publishNuget}}
