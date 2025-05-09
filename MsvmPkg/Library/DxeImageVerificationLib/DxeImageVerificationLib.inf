@@ -13,7 +13,7 @@
 #
 ##
 
-#Override : 00000002 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | 1875b3cef767211879ff8470ed0daf2c | 2024-09-26T21-01-17 | b3258ca050c9c2f53516b63d583be6d39a36d386
+#Override : 00000002 | SecurityPkg/Library/DxeImageAuthenticationStatusLib/DxeImageAuthenticationStatusLib.inf | 3a8d825ba3b904f9282188b07850f5d0 | 2025-04-29T23-23-38 | 11d9e5b96f034b6de815a91d56db563bfbe61e81
 
 [Defines]
   INF_VERSION                    = 0x00010005

@@ -8,7 +8,7 @@
 #
 ##
 
-#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | 1a2caaa91d93c2aaf430231db13bbc5e | 2024-09-26T20-17-12 | f77e9e031e954b294b0d282e9f46ec526f811de6
+#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | 3dcc4c07390c2c199c2e66b5a5d9e5e1 | 2025-04-28T23-59-16 | 68d85db2976337990f886c64c4ff430beebfbf4b
 
 [Defines]
   INF_VERSION                    = 0x00010005

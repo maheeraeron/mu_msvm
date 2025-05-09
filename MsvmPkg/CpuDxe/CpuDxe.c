@@ -729,7 +729,6 @@ InitializeMtrrMask (
 
   This function refreshes the GCD Memory Space attributes according to MTRRs.
 
-
 **/
 VOID
 RefreshMemoryAttributesFromMtrr (
@@ -1506,12 +1505,15 @@ InitializeCpu (
                   );
   ASSERT_EFI_ERROR (Status);
 
-  // TCBZ3519 MU_CHANGE START
+  //
+  // Install EFI memory attribute Protocol
+  //
+  // MU_CHANGE Start - Use Memory Protection Hob
   if (gDxeMps.InstallMemoryAttributeProtocol) {
-    InstallEfiMemoryAttributeProtocol ();
+    InstallEfiMemoryAttributeProtocol (mCpuHandle);
   }
 
-  // MU_CHANGE END
+  // MU_CHANGE END - Use Memory Protection Hob
 
   //
   // Refresh GCD memory space map according to MTRR value.
@@ -1569,6 +1571,13 @@ InitializeCpu (
     }
   }
 #endif
+  // MS_HYP TODO: do we want this?
+  // MU_CHANGE START
+  //if ((GetDeviceState () & DEVICE_STATE_UNIT_TEST_MODE) != 0) {
+  //  InstallMemoryProtectionNonstopModeProtocol (mCpuHandle);
+  //}
+
+  // MU_CHANGE END
   // MS_HYP_CHANGE END
 
 Cleanup:
