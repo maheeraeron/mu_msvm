@@ -1,0 +1,60 @@
+## @file
+#  DebugLibRouter which routes DebugPrint and DebugAsser to either Serial,
+#  Report Status Code, or KD
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#  Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#Override : 00000002 | MsCorePkg/Library/DxeDebugLibRouter/DxeDebugLibRouter.inf | 8cb8efabcf28dfab846f17744bb478f5 | 2022-05-28T01-12-07 | 52681bd61432d1820515da083ec78d2103e3b31c
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DxeDebugLibRouter
+  MODULE_UNI_FILE                = DxeDebugLibRouter.uni
+  FILE_GUID                      = 010e0da7-385b-4e82-a68d-5fd5eee4c577
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DebugLib|DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER
+  CONSTRUCTOR                    = DxeDebugLibConstructor
+  DESTRUCTOR                     = DxeDebugLibDestructor
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64 ARM
+#
+
+[Sources]
+  DxeDebugLibRouter.c
+  Serial/SerialDebugLib.c
+  ReportStatusCode/ReportStatusCodeDebugLib.c
+  Kd/KdDebugLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MsKdDebugPkg2/MsKdDebugPkg.dec
+
+[LibraryClasses]
+  SerialPortLib
+  ReportStatusCodeLib
+  BaseMemoryLib
+  PcdLib
+  PrintLib
+  BaseLib
+  DebugPrintErrorLevelLib
+
+[Protocols]
+  gMsSerialStatusCodeHandlerDxeProtocolGuid     ## CONSUMES
+  gKdDebugPrintGuid                             ## CONSUMES
+
+[Guids]
+  gEfiStatusCodeDataTypeDebugGuid    ## SOMETIMES_CONSUMES ## GUID
+  gEfiEventExitBootServicesGuid      ## CONSUMES ## GUID
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue  ## SOMETIMES_CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask      ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel ## CONSUMES

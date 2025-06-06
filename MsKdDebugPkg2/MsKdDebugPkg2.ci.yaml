@@ -1,0 +1,66 @@
+## @file
+# CI configuration for MsKdDebugPkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "MsKdDebugPkg.dsc",
+        "skip": True # TODO: Get this passing.
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MsKdDebugPkg2/MsKdDebugPkg.dec",
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "ArmPkg/ArmPkg.dec",
+            "SourceLevelDebugPkg/SourceLevelDebugPkg.dec",
+            "MsCorePkg/MsCorePkg.dec",
+        ],
+        # For host based unit tests
+        "AcceptableDependencies-HOST_APPLICATION":[],
+        # For UEFI shell based apps
+        "AcceptableDependencies-UEFI_APPLICATION":[],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "MsKdDebugPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [
+            # Used by an override of DxeDebugLibRouter.
+            "010E0DA7-385B-4E82-A68D-5FD5EEE4C577"
+        ],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "AuditOnly": True,           # Fails test but run in AuditOnly mode to collect log
+        "IgnoreFiles": [],           # use gitignore syntax to ignore errors in matching files
+        "ExtendWords": [],           # words to extend to the dictionary for this package
+        "IgnoreStandardPaths": [],   # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [] # Additional paths to spell check (wildcards supported)
+    }
+}

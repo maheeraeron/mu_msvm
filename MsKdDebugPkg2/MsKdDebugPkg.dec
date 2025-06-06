@@ -1,0 +1,33 @@
+## @file MsKdDebugPkg.dec
+#
+# This Package provides all definitions and library instances, which are
+# defined and created by the Microsoft debugger 2 package.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = MsKdDebugPkg2
+  PACKAGE_GUID                   = BE801347-8C46-41B1-9E89-48B621132943
+  PACKAGE_VERSION                = 1.00
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  KdProtocolLib  |Include/Library/KdProtocolLib.h
+  KdTransportLib |Include/Library/KdTransportLib.h
+
+  WatchdogTimerLib |Include/Library/WatchdogTimerLib.h
+
+[Guids]
+
+[Protocols]
+
+  #
+  # DebugPrint protocol.
+  #
+
+  gKdDebugPrintGuid = {0x196aa249, 0x5f68, 0x4890, {0x96, 0x66, 0x84, 0xfc, 0x44, 0xa7, 0x4f, 0x18}}

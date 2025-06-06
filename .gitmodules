@@ -2,10 +2,6 @@
     path = MU_BASECORE
     url = https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore
     branch = release/202502
-[submodule "Common/MSCORE_INTERNAL"]
-    path = Common/MSCORE_INTERNAL
-    url = https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal
-    branch = release/202302
 [submodule "Common/MU"]
     path = Common/MU
     url = https://github.com/microsoft/mu_plus.git

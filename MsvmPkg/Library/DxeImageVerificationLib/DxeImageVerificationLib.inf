@@ -13,7 +13,7 @@
 #
 ##
 
-#Override : 00000002 | SecurityPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.inf | f7654a1916ba19b181d5ddb0bbd92e52 | 2025-05-15T22-42-30 | d5fcf6fbaff4d732bc2f8325a39cf519a494ca17
+#Override : 00000002 | TpmTestingPkg/Overrides/Library/DxeImageVerificationLib/DxeImageVerificationLib.c | 2de3612e0bc141060d9313f5fffb40c8 | 2025-06-05T20-55-15 | fb485d9d1e76b6d73e6b2486dfe8d582070df0d2  BASE_NAME                      = DxeImageVerificationLib
 
 [Defines]
   INF_VERSION                    = 0x00010005

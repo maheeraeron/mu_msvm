@@ -60,17 +60,16 @@ jobs:
         Uninstall-AzureRm -verbose
   - task: AzurePowerShell@5
     displayName: 'Set the access token'
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
     inputs:
       azureSubscription: 'hyperv.uefi OneBranch Service Connection'
-      ScriptType: InlineScript
+      ScriptType: 'InlineScript'
       azurePowerShellVersion: LatestVersion
       pwsh: true
       Inline: |
-        $ado = Get-AzAccessToken -Resource "499b84ac-1321-427f-aa17-267ca6975798"
-        $token = $ado.Token
-        git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $token"
-        git config --global http.https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal.extraheader "AUTHORIZATION: Bearer $token"
-        git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $token"
+        git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
+        git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
   - task: UsePythonVersion@0
     displayName: 'Install Python $(Env.PythonVersion)'
     inputs:
@@ -79,7 +78,7 @@ jobs:
   - task: CmdLine@2
     displayName: 'Add mu_build pip'
     inputs:
-      script: python.exe -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir
+      script: python.exe -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir   
   - task: CmdLine@2
     displayName: 'Platform build Setup'
     inputs:
