@@ -9,7 +9,7 @@
 #
 ##
 
-#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 6f8d141573703fdf3115215bf72332d9 | 2025-04-29T23-52-12 | 68d85db2976337990f886c64c4ff430beebfbf4b
+#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 2b7a88f3ede5d68f11ac6268aff1b5c8 | 2025-06-06T21-41-04 | 185df73bd7db75a4a21e059fe47bfbc25f60cccc
 
 [Defines]
   INF_VERSION                    = 0x00010005
