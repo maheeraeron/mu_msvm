@@ -83,11 +83,10 @@
   gEfiResetNotificationProtocolGuid           ## CONSUMES
   gEfiHvIvmProtocolGuid                       ## CONSUMES ## MS_HYP_CHANGE
 
-
 [Pcd]
   ## MU_CHANGE [BEGIN] - Support alternative hardware queue sizes in NVME driver
   gEfiMdeModulePkgTokenSpaceGuid.PcdSupportAlternativeQueueSize ## CONSUMES
-  ## MU_CHANGE [END]
+  ## MU_CHANGE [END] - Support alternative hardware queue sizes in NVME driver
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaBoundary                ## MS_HYP_CHANGE
   gMsvmPkgTokenSpaceGuid.PcdIsolationSharedGpaCanonicalizationBitmask ## MS_HYP_CHANGE
   gMsvmPkgTokenSpaceGuid.PcdNvmeNamespaceFilter                       ## MS_HYP_CHANGE
