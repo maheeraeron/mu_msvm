@@ -50,14 +50,6 @@ jobs:
     displayName: 'Pip authenticate'
     inputs:
       artifactFeeds: '$(System.TeamProject)/$(System.TeamProject)_PublicPackages'
-  - task: PowerShell@2
-    displayName: 'Update Az Module'
-    inputs:
-      targetType: 'inline'
-      script: |
-        Get-PackageProvider -Name NuGet -ForceBootstrap
-        install-module Az.Accounts -MinimumVersion 2.2.0 -verbose -force -AllowClobber
-        Uninstall-AzureRm -verbose
   - task: AzurePowerShell@5
     displayName: 'Set the access token'
     env:
