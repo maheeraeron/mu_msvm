@@ -43,6 +43,16 @@
   DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM
 !endif
 
+  # Generate PDBs on release builds with full debugging, with linker and CC flags
+  MSFT:*_*_*_DLINK_FLAGS = /DEBUG:FULL /PDBALTPATH:$(MODULE_NAME).pdb
+  MSFT:*_*_*_CC_FLAGS = /Zi
+
+[BuildOptions.common.EDKII.DXE_CORE]
+  MSFT:*_*_*_DLINK_FLAGS = /FILEALIGN:4096
+
+[BuildOptions.common.EDKII.SEC, BuildOptions.common.EDKII.PEIM, BuildOptions.common.EDKII.PEI_CORE]
+  MSFT:*_*_*_DLINK_FLAGS = /ALIGN:4096 /FILEALIGN:4096
+
 ################################################################################
 #
 # SKU Identification section - list of all SKU IDs supported by this Platform.
@@ -960,14 +970,3 @@
   PrmPkg/Samples/PrmSampleHardwareAccessModule/PrmSampleHardwareAccessModule.inf
   PrmPkg/Samples/PrmSampleContextBufferModule/PrmSampleContextBufferModule.inf
 !endif
-
-[BuildOptions]
-  # Generate PDBs on release builds with full debugging, with linker and CC flags
-  MSFT:*_*_*_DLINK_FLAGS = /DEBUG:FULL /PDBALTPATH:$(MODULE_NAME).pdb
-  MSFT:*_*_*_CC_FLAGS = /Zi
-
-[BuildOptions.common.EDKII.DXE_CORE]
-  MSFT:*_*_*_DLINK_FLAGS = /FILEALIGN:4096
-
-[BuildOptions.common.EDKII.SEC, BuildOptions.common.EDKII.PEIM, BuildOptions.common.EDKII.PEI_CORE]
-  MSFT:*_*_*_DLINK_FLAGS = /ALIGN:32 /FILEALIGN:32
