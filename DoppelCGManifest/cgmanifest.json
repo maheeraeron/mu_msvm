@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json.schemastore.org/component-detection-manifest.json",
+  "version": 1,
+  "Registrations": [
+    {
+      "Component": {
+        "Type": "git",
+        "Git": {
+          "CommitHash": "fbe0805b2091393406952e84724188f8c1941837",
+          "RepositoryUrl": "https://github.com/tianocore/edk2",
+          "Tag": "edk2-stable202502"
+        }
+      },
+      "DetectedComponentLocations": [
+        "MsvmPkg/CpuDxe/CpuDxe.c",
+        "MsvmPkg/CpuDxe/CpuDxe.c",
+        "MsvmPkg/CpuDxe/CpuDxe.uni",
+        "MsvmPkg/CpuDxe/CpuDxeExtra.uni",
+        "MsvmPkg/CpuDxe/CpuGdt.c",
+        "MsvmPkg/CpuDxe/CpuGdt.h",
+        "MsvmPkg/CpuDxe/CpuMp.c",
+        "MsvmPkg/CpuDxe/CpuPageTable.c",
+        "MsvmPkg/CpuDxe/LoongArch64/CpuDxe.c",
+        "MsvmPkg/CpuDxe/LoongArch64/CpuDxe.h",
+        "MsvmPkg/CpuDxe/LoongArch64/CpuMp.c",
+        "MsvmPkg/CpuDxe/LoongArch64/Exception.c",
+        "MsvmPkg/EventLogDxe/StatusCode.c",
+        "MsvmPkg/Library/BdLib/bdapi.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/CpuExceptionCommon.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.uni",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/DxeException.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/Ia32/ArchExceptionHandler.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/Ia32/ArchInterruptDefs.h",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/Ia32/ExceptionHandlerAsm.nasm",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/Ia32/ExceptionTssEntryAsm.nasm",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/LoongArch/DxeExceptionLib.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/LoongArch/ExceptionCommon.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/LoongArch/ExceptionCommon.h",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/LoongArch/LoongArch64/ArchExceptionHandler.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/LoongArch/LoongArch64/ExceptionHandlerAsm.S",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/LoongArch/SecPeiExceptionLib.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/PeiCpuException.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/PeiCpuExceptionHandlerLib.uni",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/PeiDxeSmmCpuException.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/SecPeiCpuException.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/SecPeiCpuExceptionHandlerLib.uni",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/SmmCpuExceptionHandlerLib.uni",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/SmmException.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/X64/ArchExceptionHandler.c",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/X64/ArchInterruptDefs.h",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.nasm",
+        "MsvmPkg/Library/CpuExceptionHandlerLib/X64/SecPeiExceptionHandlerAsm.nasm",
+        "MsvmPkg/Library/DefaultExceptionHandlerLib/Arm/DefaultExceptionHandler.c",
+        "MsvmPkg/Library/DefaultExceptionHandlerLib/DefaultExceptionHandlerUefi.c",
+        "MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.c",
+        "MsvmPkg/Library/MsvmRngLib/AArch64/ArmRng.asm",
+        "MsvmPkg/Library/MsvmRngLib/AArch64/ArmRng.h",
+        "MsvmPkg/Library/MsvmRngLib/AArch64/ArmRng.S",
+        "MsvmPkg/Library/MsvmRngLib/AArch64/Rndr.c",
+        "MsvmPkg/Library/MsvmRngLib/BaseRng.c",
+        "MsvmPkg/Library/MsvmRngLib/BaseRngLib.uni",
+        "MsvmPkg/Library/MsvmRngLib/BaseRngLibInternals.h",
+        "MsvmPkg/Library/MsvmRngLib/Rand/RdRand.c",
+        "MsvmPkg/Library/MsvmRngLib/Riscv/Rng.c",
+        "MsvmPkg/Library/MsvmRngLib/Riscv/Seed.S",
+        "MsvmPkg/Library/ResetSystemLib/ResetSystemLib.c",
+        "MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcRtc.c",
+        "MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcRtc.uni",
+        "MsvmPkg/MsvmPcAtRealTimeClockRuntimeDxe/PcRtcExtra.uni",
+        "MsvmPkg/NvmExpressDxe/ComponentName.c",
+        "MsvmPkg/NvmExpressDxe/NvmExpress.c",
+        "MsvmPkg/NvmExpressDxe/NvmExpressBlockIo.c",
+        "MsvmPkg/NvmExpressDxe/NvmExpressBlockIo.h",
+        "MsvmPkg/NvmExpressDxe/NvmExpressDiskInfo.c",
+        "MsvmPkg/NvmExpressDxe/NvmExpressDiskInfo.h",
+        "MsvmPkg/NvmExpressDxe/NvmExpressDxe.uni",
+        "MsvmPkg/NvmExpressDxe/NvmExpressDxeExtra.uni",
+        "MsvmPkg/NvmExpressDxe/NvmExpressHci.c",
+        "MsvmPkg/NvmExpressDxe/NvmExpressMediaSanitize.c",
+        "MsvmPkg/NvmExpressDxe/NvmExpressMediaSanitize.h",
+        "MsvmPkg/NvmExpressDxe/NvmExpressPassthru.c",
+        "MsvmPkg/SynthKeyDxe/SynthSimpleTextIn.c",
+        "MsvmPkg/WatchdogTimerDxe/WatchdogTimer.c"
+      ],
+      "developmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "Git": {
+          "CommitHash": "f80f052277c88a67c55e107b550f504eeea947d3",
+          "RepositoryUrl": "https://github.com/tianocore/edk2",
+          "Tag": "edk2-stable202302"
+        }
+      },
+      "DetectedComponentLocations": [
+        "MsvmPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.c",
+        "MsvmPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.h",
+        "MsvmPkg/Library/DxeImageVerificationLib/DxeImageVerificationLib.uni",
+        "MsvmPkg/Library/DxeImageVerificationLib/Measurement.c",
+        "MsvmPkg/Library/LegacyMtrrLib/MtrrLib.c",
+        "MsvmPkg/Library/LegacyMtrrLib/MtrrLib.inf",
+        "MsvmPkg/Library/LegacyMtrrLib/MtrrLib.uni",
+        "MsvmPkg/Library/LegacyMtrrLib/MtrrLib.uni"
+      ],
+      "developmentDependency": false
+    },
+    {
+      "Component": {
+        "Type": "git",
+        "Git": {
+          "CommitHash": "324a4c9d7d512f3bf78fe782803d3a8a09c69f73",
+          "RepositoryUrl": "https://github.com/tianocore/edk2",
+          "Tag": "vUDK2017"
+        }
+      },
+      "DetectedComponentLocations": [
+        "MsvmPkg/Sec/X64/SecMain.c"
+      ],
+      "developmentDependency": false
+    }
+  ]
+}
