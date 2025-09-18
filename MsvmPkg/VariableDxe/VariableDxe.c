@@ -10,6 +10,7 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/Baselib.h>
 #include <Library/DebugLib.h>
@@ -1071,6 +1072,13 @@ Returns:
     //
     // Have volatile variable.
     //
+    // Check runtime access during runtime phase.
+    //
+    if (EfiAtRuntime() && !(variable->Attributes & EFI_VARIABLE_RUNTIME_ACCESS))
+    {
+        return EFI_NOT_FOUND;
+    }
+
     dataSize = variable->DataSize;
 
     //
