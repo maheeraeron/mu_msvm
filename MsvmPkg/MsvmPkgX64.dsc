@@ -491,6 +491,9 @@
 
   gEfiSecurityPkgTokenSpaceGuid.PcdForceReallocatePcrBanks|FALSE
 
+  # Disable TPM platform hierarchy by default
+  gEfiSecurityPkgTokenSpaceGuid.PcdRandomizePlatformHierarchy|FALSE
+
   # Disable auto power off
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|0xffffffff
 
@@ -898,8 +901,6 @@
   }
 
   # TPM related components
-  # TODO: Currently the PH is locked by the hypervisor.
-  #       If this ever changes, will need a driver to lock the PH.
 
   SecurityPkg/Tcg/MemoryOverwriteControl/TcgMor.inf
 
@@ -923,6 +924,13 @@
       NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibPei.inf
       #special library For HyperV so that boot doesn't measure Main FV
       NULL|MsvmPkg/Library/ExcludeMainFvFromMeasurementLib/ExcludeMainFvFromMeasurementLib.inf
+  }
+
+  SecurityPkg/Tcg/Tcg2PlatformDxe/Tcg2PlatformDxe.inf {
+    <LibraryClasses>
+      Tpm2DeviceLib|MsvmPkg/Library/Tpm2DeviceLib/Tpm2DeviceLib.inf
+      TpmPlatformHierarchyLib|SecurityPkg/Library/PeiDxeTpmPlatformHierarchyLib/PeiDxeTpmPlatformHierarchyLib.inf
+      NULL|MsvmPkg/Library/Tcg2PreInitLib/Tcg2PreInitLibDxe.inf
   }
 
   # UI Theme Protocol
