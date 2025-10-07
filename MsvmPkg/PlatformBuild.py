@@ -34,11 +34,11 @@ class PlatformBuilder(UefiBuilder, UpdateSettingsManager, SetupSettingsManager, 
 
     def GetRequiredSubmodules(self):
         return [
-            RequiredSubmodule("MU_BASECORE"),
-            RequiredSubmodule("Common/MU"),
-            RequiredSubmodule("Common/MU_TIANO"),
-            RequiredSubmodule("Feature/DEBUGGER"),
-            RequiredSubmodule("Silicon/ARM/MU_TIANO"),
+            RequiredSubmodule("MU_BASECORE", False, ".pytool/CISettings.py"),
+            RequiredSubmodule("Common/MU", False, ".pytool/CISettings.py"),
+            RequiredSubmodule("Common/MU_TIANO", False, ".pytool/CISettings.py"),
+            RequiredSubmodule("Feature/DEBUGGER", False, ".pytool/CISettings.py"),
+            RequiredSubmodule("Silicon/ARM/MU_TIANO", False), # TODO: specify .pytool/CISettings.py when upstream is fixed
         ]
 
     def GetPackagesPath(self):
