@@ -1,0 +1,8 @@
+schemaVersion: 0.0.1
+isProduction: true
+accountableOwners:
+  service: cc11fefb-11c3-400f-ba32-69d3607977c0
+routing:
+  defaultAreaPath:
+    org: microsoft
+    path: OS\Core\Base\VMAC - Virtual Machines and Containers\MVM-Modern VM\MsvmPkg UEFI Firmware
