@@ -5,4 +5,4 @@ accountableOwners:
 routing:
   defaultAreaPath:
     org: microsoft
-    path: OS\Core\Base\VMAC - Virtual Machines and Containers\MVM-Modern VM\Device Platform
+    path: OS\Core\Base\VMAC - Virtual Machines and Containers\MVM-Modern VM\MsvmPkg UEFI Firmware
