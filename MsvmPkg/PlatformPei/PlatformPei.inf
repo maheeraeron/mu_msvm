@@ -198,6 +198,7 @@
     gMsvmPkgTokenSpaceGuid.PcdMtrrsInitializedAtLoad
     gMsvmPkgTokenSpaceGuid.PcdNvmeNamespaceFilter
     gMsvmPkgTokenSpaceGuid.PcdHvSintEnabled
+    gMsvmPkgTokenSpaceGuid.PcdAziHsmEnabled
 
 [Pcd.AArch64]
     gMsvmPkgTokenSpaceGuid.PcdSystemMemoryBaseAddress
