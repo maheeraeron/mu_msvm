@@ -80,11 +80,7 @@ Return Value:
     m->u.GetVersion64.KdSecondaryVersion = CURRENT_KD_SECONDARY_VERSION;
     m->u.GetVersion64.Flags = DBGKD_VERS_FLAG_PTR64;
 
-#if defined(_M_IX86)
-
-    m->u.GetVersion64.MachineType = IMAGE_FILE_MACHINE_I386;
-
-#elif defined(_AMD64_)
+#if defined(_AMD64_)
 
     m->u.GetVersion64.MachineType = IMAGE_FILE_MACHINE_AMD64;
 
