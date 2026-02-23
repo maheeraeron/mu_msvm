@@ -44,9 +44,8 @@ Author:
 // Declspec wrappers.
 //
 
-#define DECLSPEC_ALIGN(x) __declspec(align(x))
-#define DECLSPEC_CACHEALIGN DECLSPEC_ALIGN(64)
-#define DECLSPEC_DEPRECATED __declspec(deprecated)
+#include "DeclspecAlign.h"
+#include "DeclspecCacheAlign.h"
 #define FORCEINLINE __forceinline
 
 //

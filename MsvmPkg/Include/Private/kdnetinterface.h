@@ -4,9 +4,8 @@
   Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 --*/
-
 #pragma once
-
+#include "DeclspecAlign.h"
 #pragma warning(disable : 4201)
 
 typedef struct {
@@ -178,7 +177,7 @@ typedef struct _DHCP_STATE {
     ULONG DhcpLeaseTime;
     ULONG DhcpTimer;
     ULONG DhcpLeaseRenewed;
-    __declspec(align(4))
+    DECLSPEC_ALIGN (4)
     ETHERNET_ADDRESS DhcpServerMac;
 } DHCP_STATE, *PDHCP_STATE;
 
@@ -189,7 +188,7 @@ typedef struct _IPV6_STATE {
     IPV6_ADDRESS GlobalAddress;
     IPV6_ADDRESS Prefix;
     IPV6_ADDRESS RouterLinkLocalAddress;
-    __declspec(align(4))
+    DECLSPEC_ALIGN (4)
     ETHERNET_ADDRESS RouterEthernetAddress;
     ULONG ReachableTime;
     ULONG RetransmitTime;
@@ -237,42 +236,42 @@ typedef struct _DEBUG_NET_PARAMETERS {
     // Optional assigned Target IP address.
     //
 
-    __declspec(align(16))
+    DECLSPEC_ALIGN (16)
     IPV6_ADDRESS TargetIP;
 
     //
     // Optional assigned Gateway IP address.
     //
 
-    __declspec(align(16))
+    DECLSPEC_ALIGN (16)
     IPV6_ADDRESS GatewayIP;
 
     //
     // Optional assigned Host IP address.
     //
 
-    __declspec(align(16))
+    DECLSPEC_ALIGN (16)
     IPV6_ADDRESS AssignedHostIP;
 
     //
     // Host IP address.
     //
 
-    __declspec(align(16))
+    DECLSPEC_ALIGN (16)
     IPV6_ADDRESS HostIP;
 
     //
     // Host Ethernet physical address.
     //
 
-    __declspec(align(4))
+    DECLSPEC_ALIGN (4)
     ETHERNET_ADDRESS HostMac;
 
     //
     // is the debugger active?
     //
 
-    __declspec(align(4))
+    DECLSPEC_ALIGN (4)
     BOOLEAN DebuggerActive;
 
     //
@@ -337,7 +336,7 @@ typedef struct _DEBUG_NET_PARAMETERS {
     // Target random data.
     //
 
-    __declspec(align(8))
+    DECLSPEC_ALIGN (8)
     UCHAR TargetRandom[KD_NET_TARGET_RANDOM_SIZE];
 
     //
@@ -372,7 +371,7 @@ typedef struct _DEBUG_NET_PARAMETERS {
     // Use SMBIOS UUID and the NIC MAC address to identify machines.
     //
 
-    __declspec(align(8))
+    DECLSPEC_ALIGN (8)
     UCHAR MachineId[KD_NET_MACHINE_ID_SIZE];
 
     //

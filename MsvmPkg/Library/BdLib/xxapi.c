@@ -17,18 +17,13 @@ Author:
 Revision History:
 
 --*/
-
-// ------------------------------------------------------------------- Includes
-
 #include <PiDxe.h>
-
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
-
 #include "Bd.h"
-
+#include "DeclspecAlign.h"
 // ------------------------------------------------------------------ Functions
 
 VOID

@@ -11,11 +11,9 @@ Abstract:
     Adaptation based upon ntdbg.h, kd64.h, etc.
 
 --*/
-
 #pragma once
-
+#include "DeclspecAlign.h"
 #pragma warning(disable : 4201)
-
 
 #if !defined(_AMD64_) && !defined(_ARM64_)
 #error unsupported architecture
