@@ -104,8 +104,6 @@ typedef struct _STRING
 
 #if defined(MDE_CPU_X64)
 
-#if defined(MDE_CPU_X64)
-
 #define MemoryBarrier() __faststorefence()
 
 #pragma intrinsic(__cpuid)
@@ -115,8 +113,6 @@ __cpuid(
     int CPUInfo[4],
     int InfoType
     );
-
-#endif
 
 FORCEINLINE
 LONG
