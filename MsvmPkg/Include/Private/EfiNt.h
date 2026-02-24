@@ -296,7 +296,7 @@ WriteNoFence16 (
         extern const GUID __declspec(selectany) name \
                 = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
 
-#define C_ASSERT(x) static_assert(x, "Failed assertion")
+#define C_ASSERT(x) STATIC_ASSERT(x, "Failed assertion")
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x)   (sizeof(x) / sizeof(x[0]))
