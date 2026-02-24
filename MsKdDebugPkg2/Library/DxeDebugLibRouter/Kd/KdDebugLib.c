@@ -101,7 +101,7 @@ KdDebugPrint (
   //
   // Send the print string to KD
   //
-  mKdDebugPrint->DebugPrint (Buffer, (UINT16)AsciiStrLen (Buffer));
+  mKdDebugPrint->DebugPrint ((UINT8*)Buffer, (UINT16)AsciiStrLen (Buffer));
 }
 
 /**
@@ -143,7 +143,7 @@ KdDebugAssert (
   //
   // Send the print string to the KD
   //
-  mKdDebugPrint->DebugPrint (Buffer, (UINT16)AsciiStrLen (Buffer));
+  mKdDebugPrint->DebugPrint ((UINT8*)Buffer, (UINT16)AsciiStrLen (Buffer));
 
   //
   // Generate an Assertion Break, Breakpoint, DeadLoop, or NOP based on PCD settings

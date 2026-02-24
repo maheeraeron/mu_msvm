@@ -392,7 +392,7 @@ Return Value:
     UEFI_CONFIG_FLAGS configFlags;
     UEFI_IGVM_PARAMETER_INFO *parameterInfo;
     UEFI_CONFIG_PROCESSOR_INFORMATION processorInfo;
-    VOID* secretsPage;
+    PSNP_SECRETS secretsPage;
     EFI_STATUS status;
     UINT64 svsmBase = 0;
     UINT64 svsmSize = 0;
@@ -420,7 +420,7 @@ Return Value:
         // TODO: Find some way of avoiding hardcode of necessary host information
         //
         UINT32 i;
-        UINT8* azureAssetTag = "7783-7084-3265-9085-8269-3286-77";
+        UINT8* azureAssetTag = (UINT8*)"7783-7084-3265-9085-8269-3286-77";
         UINT8* freeParameterMemory = (UINT8*)(parameterInfo) + sizeof(UEFI_IGVM_PARAMETER_INFO);
         UINT8* smbiosAssetTag = freeParameterMemory + sizeof(GUID);
         UINT64* smbiosGuid = (UINT64*)freeParameterMemory;

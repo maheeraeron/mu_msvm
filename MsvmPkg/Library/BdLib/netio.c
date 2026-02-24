@@ -238,7 +238,7 @@ Return Value:
     ReturnCode = KdnetHob->ReceivePacket(PacketType,
                                          MessageHeader,
                                          MessageData,
-                                         DataLength,
+                                         (PULONG)DataLength,
                                          &BdContext);
 
     BdControlCPending = BdContext.KdpControlCPending;

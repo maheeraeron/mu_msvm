@@ -293,7 +293,7 @@ Return Value:
     // Check for NET debug parameters.
     //
 
-    parameter = FindDebugStringToken(CommandLine, "HOST_IP");
+    parameter = FindDebugStringToken(CommandLine, (PUCHAR)"HOST_IP");
     if ((parameter != NULL) && (*parameter == ' '))
     {
         UseKdNetDebugger = TRUE;
@@ -327,7 +327,7 @@ Return Value:
         KdNetParameters.AssignedHostIP = KdNetParameters.HostIP;
     }
 
-    parameter = FindDebugStringToken(CommandLine, "HOST_PORT");
+    parameter = FindDebugStringToken(CommandLine, (PUCHAR)"HOST_PORT");
     if ((parameter != NULL) && (*parameter == ' '))
     {
         KdNetParameters.HostPort = (UINT16)ConvertAsciiToUint32(parameter + 1, NULL);
@@ -335,7 +335,7 @@ Return Value:
         KdNetParameters.TargetPort = KdNetParameters.HostPort;
     }
 
-    parameter = FindDebugStringToken(CommandLine, "ENCRYPTION_KEY");
+    parameter = FindDebugStringToken(CommandLine, (PUCHAR)"ENCRYPTION_KEY");
     if ((parameter != NULL) && (*parameter == ' '))
     {
         KdNetParameters.EncryptedLink = TRUE;

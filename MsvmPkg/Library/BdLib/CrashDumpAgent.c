@@ -36,7 +36,7 @@ Environment:
 
 EFI_DUMP_BUFFER     BdDumpBuffer = {0};
 MemoryDumpType      BdDumpType   = MemoryDumpDisabled;
-static CHAR8        CrashDumpBuffer[EFI_DUMP_BUFFER_SIZE] = {0};
+static UINT8 CrashDumpBuffer[EFI_DUMP_BUFFER_SIZE] = {0};
 
 /**
   Called to initialize the crash dump agent.
