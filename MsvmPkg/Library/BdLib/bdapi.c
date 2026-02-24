@@ -698,7 +698,6 @@ Return Value:
 
 --*/
 {
-
     switch (Parameters->Type)
     {
     case BdSerial:
@@ -706,8 +705,10 @@ Return Value:
 
     case BdNet:
         return BdNetConfigureDebuggerDevice(Parameters);
-    }
 
+    case BdNone:
+        break;
+    }
     return STATUS_INVALID_PARAMETER;
 }
 
