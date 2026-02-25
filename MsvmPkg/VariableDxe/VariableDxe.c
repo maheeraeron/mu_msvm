@@ -12,7 +12,7 @@
 
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/Baselib.h>
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeLib.h>

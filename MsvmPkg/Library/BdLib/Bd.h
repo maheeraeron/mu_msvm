@@ -24,9 +24,7 @@ Environment:
 
 #pragma once
 
-//#include <string.h>
-//#include <stdio.h>
-//#include <stdlib.h>
+#include "ntstatus.h"
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 #define UNALIGNED
 
@@ -66,7 +64,13 @@ typedef struct _UNICODE_STRING
 
 #define UNICODE_NULL ((CHAR16)(0))
 
-#include "cpu.h"
+#ifdef MDE_CPU_X64
+#include "X64/cpu.h"
+#elif defined (MDE_CPU_X64)
+#include "AArch64/cpu.h"
+#else
+#error unknown architecture
+#endif
 #include "BdHelper.h"
 
 //#include "ntverp.h"

@@ -312,7 +312,7 @@ WriteNoFence16 (
 
 typedef _Return_type_success_(return >= 0) long NTSTATUS;
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
-#include <ntstatus.h>
+#include <Vmbus/NtStatus.h>
 
 //
 // 4200 - nonstandard extension used : zero-sized array in struct/union
