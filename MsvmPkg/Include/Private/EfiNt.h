@@ -16,14 +16,9 @@ Author:
     John Starks (jostarks) - 2-Jul-2012
 
 --*/
-
 #pragma once
-
-//
-// Include SAL
-//
-
 #include <specstrings.h>
+#include <stddef.h>
 
 //
 // Establish Windows style alias for processor architecture.
@@ -282,7 +277,7 @@ WriteNoFence16 (
 
 #define UNREFERENCED_PARAMETER(_Parameter_) (_Parameter_)
 #define ARGUMENT_PRESENT(_ArgumentPointer_) ((_ArgumentPointer_) != NULL)
-#define FIELD_OFFSET(x, y) ((UINTN)&(((x *)0)->y))
+#define FIELD_OFFSET offsetof
 
 #define RTL_FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
 
