@@ -1,3 +1,5 @@
+#error specstrings_strict.h: This file is not used, and will be deleted.
+
 //
 //    Copyright (C) Microsoft.  All rights reserved.
 //

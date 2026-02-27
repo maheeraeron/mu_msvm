@@ -1,3 +1,5 @@
+#error concurrencysal.h: This file is not used, and will be deleted.
+
 /***
 *concurrencysal.h - markers for documenting the concurrent semantics of APIs
 *

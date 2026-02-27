@@ -1,3 +1,5 @@
+#error driverspecs.h: This file is not used, and will be deleted.
+
 /*****************************************************************************\
 *                                                                             *
 * DriverSpecs.h - markers for documenting the semantics of driver APIs        *

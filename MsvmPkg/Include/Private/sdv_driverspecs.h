@@ -1,3 +1,5 @@
+#error sdv_driverspecs.h: This file is not used, and will be deleted.
+
 #ifndef _SDV_
 // general purpose save 
 //-----------------------

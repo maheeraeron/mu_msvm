@@ -17,7 +17,10 @@ Author:
 
 --*/
 #pragma once
+#include "EmptySal.h"
+#if !(defined (__clang__) || defined (__GNUC__))
 #include <specstrings.h>
+#endif
 #include <stddef.h>
 
 //

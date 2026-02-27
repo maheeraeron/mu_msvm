@@ -1,3 +1,5 @@
+#error specstrings.h: This file is not used, and will be deleted.
+
 #ifndef SPECSTRINGS_H // [
 #define SPECSTRINGS_H
 
