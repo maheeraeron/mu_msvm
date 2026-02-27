@@ -22,6 +22,7 @@ Author:
 #include <specstrings.h>
 #endif
 #include <stddef.h>
+#include "Inline.h"
 
 //
 // Establish Windows style alias for processor architecture.
