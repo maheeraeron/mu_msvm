@@ -46,8 +46,6 @@ typedef union _KIDT_HANDLER_ADDRESS {
     UINT64 Address;
 } KIDT_HANDLER_ADDRESS, *PKIDT_HANDLER_ADDRESS;
 
-#define Add2Ptr(P,I) ((PVOID)((PUCHAR)(P) + (I)))
-
 VOID
 ArchSetIdtEntry (
     _In_ IA32_IDT_GATE_DESCRIPTOR *IdtBase,
