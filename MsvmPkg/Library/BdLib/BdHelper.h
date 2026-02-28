@@ -19,94 +19,24 @@ Abstract:
 #error unsupported architecture
 #endif
 
-
 #define IMAGE_FILE_MACHINE_AMD64            0x8664
 
 #define PAGE_ALIGN(va) (PVOID)((UINT_PTR)(va) & ~(EFI_PAGE_SIZE - 1))
 #define BYTE_OFFSET(Va) ((ULONG)((LONG_PTR)(Va) & (EFI_PAGE_SIZE - 1)))
 
-#define HIGH32(_Value64_) (UINT32)((_Value64_) >> 32)
-#define LOW32(_Value64_)  (UINT32)((_Value64_) & 0xFFFFFFFF)
-
-#define HIGH16(_Value32_) (UINT16)((_Value32_) >> 16)
-#define LOW16(_Value32_)  (UINT16)((_Value32_) & 0xFFFF)
-
 #define HIGH8(_Value16_) (UINT8)((_Value16_) >> 8)
 #define LOW8(_Value16_)  (UINT8)((_Value16_) & 0xFF)
-
-
-#define ALIGN_RANGE_DOWN(_range, _alignment) \
-    ((_range) & ~((ULONG64)(_alignment) - 1))
-
-#define ALIGN_RANGE_UP(_range, _alignment) \
-    ALIGN_RANGE_DOWN((_range) + (_alignment) - 1, _alignment)
 
 #define Add2Ptr(_Ptr, _Value) ((PVOID)((PUCHAR)(_Ptr) + (_Value)))
 
 #define PAGE_SIZE 0x1000
 #define PAGE_SHIFT 12L
 
-#define DELETE                      (0x00010000L)
-#define READ_CONTROL                (0x00020000L)
-#define WRITE_DAC                   (0x00040000L)
-#define WRITE_OWNER                 (0x00080000L)
-#define SYNCHRONIZE                 (0x00100000L)
-#define STANDARD_RIGHTS_REQUIRED    (0x000F0000L)
-#define STANDARD_RIGHTS_READ        (READ_CONTROL)
-#define STANDARD_RIGHTS_WRITE       (READ_CONTROL)
-#define STANDARD_RIGHTS_EXECUTE     (READ_CONTROL)
-#define STANDARD_RIGHTS_ALL         (0x001F0000L)
-#define SPECIFIC_RIGHTS_ALL         (0x0000FFFFL)
-#define FILE_READ_DATA              (0x0001)
-#define FILE_LIST_DIRECTORY         (0x0001)
-#define FILE_WRITE_DATA             (0x0002)
-#define FILE_ADD_FILE               (0x0002)
-#define FILE_APPEND_DATA            (0x0004)
-#define FILE_ADD_SUBDIRECTORY       (0x0004)
-#define FILE_CREATE_PIPE_INSTANCE   (0x0004)
-#define FILE_READ_EA                (0x0008)
-#define FILE_WRITE_EA               (0x0010)
-#define FILE_EXECUTE                (0x0020)
-#define FILE_TRAVERSE               (0x0020)
-#define FILE_DELETE_CHILD           (0x0040)
-#define FILE_READ_ATTRIBUTES        (0x0080)
-#define FILE_WRITE_ATTRIBUTES       (0x0100)
-#define FILE_ALL_ACCESS             (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF)
-#define FILE_GENERIC_READ           (STANDARD_RIGHTS_READ | FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE)
-#define FILE_GENERIC_WRITE          (STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | FILE_APPEND_DATA | SYNCHRONIZE)
-#define FILE_GENERIC_EXECUTE        (STANDARD_RIGHTS_EXECUTE  | FILE_READ_ATTRIBUTES | FILE_EXECUTE | SYNCHRONIZE)
-#define FILE_SHARE_READ                     (0x00000001)
-#define FILE_SHARE_WRITE                    (0x00000002)
-#define FILE_SHARE_DELETE                   (0x00000004)
-#define FILE_SHARE_VALID_FLAGS              (0x00000007)
-#define FILE_ATTRIBUTE_READONLY             (0x00000001)
-#define FILE_ATTRIBUTE_HIDDEN               (0x00000002)
-#define FILE_ATTRIBUTE_SYSTEM               (0x00000004)
-#define FILE_ATTRIBUTE_DIRECTORY            (0x00000010)
-#define FILE_ATTRIBUTE_ARCHIVE              (0x00000020)
-#define FILE_ATTRIBUTE_DEVICE               (0x00000040)
-#define FILE_ATTRIBUTE_NORMAL               (0x00000080)
-#define FILE_ATTRIBUTE_TEMPORARY            (0x00000100)
-#define FILE_ATTRIBUTE_SPARSE_FILE          (0x00000200)
-#define FILE_ATTRIBUTE_REPARSE_POINT        (0x00000400)
-#define FILE_ATTRIBUTE_COMPRESSED           (0x00000800)
-#define FILE_ATTRIBUTE_OFFLINE              (0x00001000)
-#define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED  (0x00002000)
-#define FILE_ATTRIBUTE_ENCRYPTED            (0x00004000)
-#define FILE_SUPERSEDE                      (0x00000000)
-#define FILE_OPEN                           (0x00000001)
-#define FILE_CREATE                         (0x00000002)
-#define FILE_OPEN_IF                        (0x00000003)
-#define FILE_OVERWRITE                      (0x00000004)
-#define FILE_OVERWRITE_IF                   (0x00000005)
-#define FILE_MAXIMUM_DISPOSITION            (0x00000005)
-
 typedef UINT64 HV_SPA, *PHV_SPA;
 typedef UINT8 *PUINT8;
 
 extern UINT32 BdTransportMaxPacketSize;
 extern UINT32 BdTrapRoutine;
-
 
 #define DBGKD_MAXSTREAM 16
 
@@ -634,24 +564,6 @@ ExceptionRecord32To64(
     Ex64->NumberParameters = Ex32->NumberParameters;
     for (i = 0; i < EXCEPTION_MAXIMUM_PARAMETERS; i++) {
         COPYSE(Ex64,Ex32,ExceptionInformation[i]);
-    }
-}
-
-__inline
-void
-ExceptionRecord64To32(
-    IN PEXCEPTION_RECORD64 Ex64,
-    OUT PEXCEPTION_RECORD32 Ex32
-    )
-{
-    ULONG i;
-    Ex32->ExceptionCode = Ex64->ExceptionCode;
-    Ex32->ExceptionFlags = Ex64->ExceptionFlags;
-    Ex32->ExceptionRecord = (ULONG) Ex64->ExceptionRecord;
-    Ex32->ExceptionAddress = (ULONG) Ex64->ExceptionAddress;
-    Ex32->NumberParameters = Ex64->NumberParameters;
-    for (i = 0; i < EXCEPTION_MAXIMUM_PARAMETERS; i++) {
-        Ex32->ExceptionInformation[i] = (ULONG) Ex64->ExceptionInformation[i];
     }
 }
 
