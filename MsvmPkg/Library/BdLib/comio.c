@@ -716,7 +716,7 @@ Return Value:
     PDBGKD_WAIT_STATE_CHANGE64 StateChange;
     PDBGKD_TRACE_IO TraceIo;
 
-    if (ARGUMENT_PRESENT(MessageData))
+    if (MessageData)
     {
         messageDataLength = MessageData->Length;
         packetHeader.Checksum = BdpComputeChecksum((PUINT8)MessageData->Buffer,

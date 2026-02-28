@@ -473,7 +473,7 @@ Return Value:
         WaitStateChange.u.LoadSymbols.ProcessId = SymbolInfo->ProcessId;
         WaitStateChange.u.LoadSymbols.CheckSum = SymbolInfo->CheckSum;
         WaitStateChange.u.LoadSymbols.SizeOfImage = SymbolInfo->SizeOfImage;
-        if (ARGUMENT_PRESENT(PathName))
+        if (PathName)
         {
             WaitStateChange.u.LoadSymbols.PathNameLength =
                 BdMoveMemory((PCHAR)BdMessageBuffer,

@@ -195,7 +195,7 @@ Return Value:
         String++;
     }
 
-    if (ARGUMENT_PRESENT(Next))
+    if (Next)
     {
         *Next = String;
     }
@@ -252,7 +252,7 @@ Return Value:
         }
         else
         {
-            if (ARGUMENT_PRESENT(Next))
+            if (Next)
             {
                 *Next = String;
             }

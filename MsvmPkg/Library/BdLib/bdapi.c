@@ -773,7 +773,7 @@ Return Value:
     // Use KDNET debugging if the transport was loaded.
     //
 
-    if (ARGUMENT_PRESENT(TransportHob))
+    if (TransportHob)
     {
         Parameters->Type = BdNet;
     }

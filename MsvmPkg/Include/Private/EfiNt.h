@@ -193,7 +193,6 @@ WriteRelease (
 #define MemoryBarrierWithoutFence() _ReadWriteBarrier()
 
 #define UNREFERENCED_PARAMETER(_Parameter_) (_Parameter_)
-#define ARGUMENT_PRESENT(_ArgumentPointer_) ((_ArgumentPointer_) != NULL)
 #define FIELD_OFFSET offsetof
 
 #define RTL_FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
