@@ -24,6 +24,7 @@
     ArmPlatformPkg/ArmPlatformPkg.dec
 
 [LibraryClasses]
+    ClangTemporaryLib
     UefiBootServicesTableLib
     BaseLib
     BaseMemoryLib
