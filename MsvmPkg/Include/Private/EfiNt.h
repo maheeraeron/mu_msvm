@@ -112,29 +112,6 @@ __cpuid(
     int InfoType
     );
 
-FORCEINLINE
-LONG
-ReadAcquire (
-    _In_ _Interlocked_operand_ LONG const volatile *Source
-    )
-{
-    LONG Value;
-
-    Value = *Source;
-    return Value;
-}
-
-FORCEINLINE
-VOID
-WriteRelease (
-    _Out_ _Interlocked_operand_ LONG volatile *Destination,
-    _In_ LONG Value
-    )
-{
-
-    *Destination = Value;
-}
-
 #elif defined(MDE_CPU_AARCH64)
 
 #pragma intrinsic(__dmb)
@@ -159,32 +136,6 @@ _ARM64INTR_BARRIER_TYPE;
 void __dmb(unsigned int _Type);
 
 #define MemoryBarrier() __dmb(_ARM64_BARRIER_SY)
-
-FORCEINLINE
-LONG
-ReadAcquire (
-    _In_ _Interlocked_operand_ LONG const volatile *Source
-    )
-{
-
-    LONG Value;
-
-    Value = __iso_volatile_load32((int *)Source);
-    __dmb(_ARM64_BARRIER_ISH);
-    return Value;
-}
-
-FORCEINLINE
-VOID
-WriteRelease (
-    _Out_ _Interlocked_operand_ LONG volatile *Destination,
-    _In_ LONG Value
-    )
-{
-
-    __dmb(_ARM64_BARRIER_ISH);
-    __iso_volatile_store32((int *)Destination, Value);
-}
 
 #else
 #error Unsupported architecture

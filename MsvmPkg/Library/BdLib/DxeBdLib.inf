@@ -30,6 +30,7 @@
     BaseMemoryLib
     HobLib
     MemoryAllocationLib
+    MsBaseLib
     WatchdogTimerLib
     SerialPortLib
     TimerLib
