@@ -14,11 +14,9 @@ Abstract:
     Adapted from earlier versions of the Windows boot debugger.
 
 --*/
-
-// ------------------------------------------------------------------- Includes
-
 #include "cp.h"
 #include "Bd.h"
+#include "MsBarrier.h"
 
 #ifndef FlagOn
 #define FlagOn(_F,_SF)        ((_F) & (_SF))
@@ -80,9 +78,9 @@ Return Value:
 {
     UINT8 result = 0;
 
-    MemoryBarrierWithoutFence();
+    CompilerBarrier();
     result = (UINT8) _inp((unsigned short) Port);
-    MemoryBarrierWithoutFence();
+    CompilerBarrier();
 
     return result;
 }
@@ -114,15 +112,14 @@ Return Value:
 --*/
 {
     //
-    // N.B. The following MemoryBarrierWithoutFence are there to prevent the
+    // N.B. The following CompilerBarrier are there to prevent the
     // compiler from reordering reads or writes (even volatile ones) in
-    // front of the in\out instructions! MemoryBarrierWithoutFence is
-    // _ReadWriteBarrier in our environment!
+    // front of the in\out instructions.
     //
 
-    MemoryBarrierWithoutFence();
+    CompilerBarrier();
     _outp((unsigned short) Port, (int) Value);
-    MemoryBarrierWithoutFence();
+    CompilerBarrier();
 }
 
 
