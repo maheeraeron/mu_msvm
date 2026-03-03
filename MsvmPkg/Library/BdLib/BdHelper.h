@@ -121,7 +121,7 @@ typedef AMD64_DBGKD_CONTROL_SET DBGKD_CONTROL_SET;
 
 #elif defined(_ARM64_)
 
-#define PROGRAM_COUNTER(_context)   ((LONG)(_context)->Pc)
+#define PROGRAM_COUNTER(_context)   ((ULONG_PTR)(_context)->Pc)
 
 typedef ARM64_DBGKD_CONTROL_REPORT DBGKD_CONTROL_REPORT;
 typedef ARM64_DBGKD_CONTROL_SET DBGKD_CONTROL_SET;
