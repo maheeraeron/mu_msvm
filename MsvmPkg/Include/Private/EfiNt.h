@@ -17,11 +17,12 @@ Author:
 
 --*/
 #pragma once
-#include "EmptySal.h"
+#include <stddef.h>
+#include <stdint.h>
 #if !(defined (__clang__) || defined (__GNUC__))
 #include <specstrings.h>
 #endif
-#include <stddef.h>
+#include "EmptySal.h"
 #include "Inline.h"
 
 //
@@ -50,28 +51,22 @@ Author:
 //
 // String types.
 //
-
 typedef CHAR16 WCHAR, *PWCHAR;
 typedef __nullterminated CHAR8 *PSTR;
 typedef __nullterminated const CHAR8 *PCSTR;
 typedef __nullterminated CHAR16 *PWSTR;
 typedef __nullterminated const CHAR16* PCWSTR;
 
-//
-// "Legacy" types.
-//
-
 typedef char CHAR, *PCHAR;
-typedef unsigned char UCHAR, *PUCHAR;
-typedef short SHORT, *PSHORT;
-typedef unsigned short USHORT, *PUSHORT;
-typedef long LONG, *PLONG;
-typedef unsigned long ULONG, *PULONG, ULONG32, *PULONG32;
-typedef long long LONGLONG, *PLONGLONG, LONG64, *PLONG64;
-typedef unsigned long long ULONGLONG, *PULONGLONG, ULONG64, *PULONG64;
-typedef unsigned int UINT, *PUINT;
+typedef uint8_t UCHAR, *PUCHAR;
+typedef int16_t SHORT, *PSHORT;
+typedef uint16_t USHORT, *PUSHORT;
+typedef int32_t LONG, *PLONG;
+typedef uint32_t ULONG, *PULONG, ULONG32, *PULONG32;
+typedef int64_t LONGLONG, *PLONGLONG, LONG64, *PLONG64;
+typedef uint64_t ULONGLONG, *PULONGLONG, ULONG64, *PULONG64;
+typedef uint32_t UINT, *PUINT;
 typedef int BOOL;
-
 
 typedef UINT8 *PUINT8;
 typedef UINT16 *PUINT16;
@@ -133,11 +128,7 @@ __cpuid(
 #define ANYSIZE_ARRAY 1       // winnt
 #endif
 
-//
-// Include NTSTATUS
-//
-
-typedef _Return_type_success_(return >= 0) long NTSTATUS;
+typedef int32_t NTSTATUS;
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #include <Vmbus/NtStatus.h>
 
