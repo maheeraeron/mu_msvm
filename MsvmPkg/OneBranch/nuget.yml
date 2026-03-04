@@ -1,0 +1,15 @@
+# download one package
+# TODO: Set CoreXT-like environment variables here.
+
+parameters:
+- name: name
+- name: version
+
+steps:
+- task: DownloadPackage@1
+  displayName: get ${{parameters.name}}.${{parameters.version}}
+  inputs:
+    definition:   ${{parameters.name}}
+    version:      ${{parameters.version}}
+    feed:         TerrapinRetrievalTool-Feed
+    downloadPath: $(Pkg)/${{parameters.name}}.${{parameters.version}}

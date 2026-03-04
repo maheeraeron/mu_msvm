@@ -1,0 +1,14 @@
+# Download multiple packages with Terrapin.
+
+parameters:
+- name: packages
+  type: object
+
+steps:
+- ${{ each package in parameters.packages }}:
+  - template: terrapin.yml@self
+    parameters:
+      name: ${{package.name}}
+      url:  ${{package.url}}
+      path: ${{package.path}}
+      hash: ${{package.hash}}
