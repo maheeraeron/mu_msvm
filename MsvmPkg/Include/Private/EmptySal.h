@@ -29,5 +29,6 @@
 #define _Inout_opt_
 #define _Out_
 #define _Out_opt_
+#define _Outptr_
 #define _Return_type_success_(...)
 #endif
