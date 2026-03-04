@@ -56,7 +56,7 @@ EfiBuildCrashDumpModuleList()
     if (!EfiDumpBufferAllocateBlockEx(&BdDumpBuffer,
             BlockTypeModuleList,
             tableSize,
-            &pModuleBlock))
+            (void**)&pModuleBlock))
     {
         return FALSE;
     }
@@ -186,7 +186,7 @@ EfiBuildCrashDump(
     //
     // Info Block
     //
-    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeInfo, &pInfo))
+    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeInfo, (void**)&pInfo))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
@@ -210,7 +210,7 @@ EfiBuildCrashDump(
     if (!EfiDumpBufferAllocateBlockEx(&BdDumpBuffer,
             BlockTypeContext,
             sizeof(*Context),
-            &pGenericBlock))
+            (void**)&pGenericBlock))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
@@ -227,7 +227,7 @@ EfiBuildCrashDump(
         if (!EfiDumpBufferAllocateBlockEx(&BdDumpBuffer,
                 BlockTypeException,
                 sizeof(*ExceptionRecord),
-                &pGenericBlock))
+                (void**)&pGenericBlock))
         {
             ASSERT(FALSE);
             status = RETURN_OUT_OF_RESOURCES;
@@ -253,7 +253,7 @@ EfiBuildCrashDump(
     //
     // End of List Block
     //
-    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeListEnd, &pGenericBlock))
+    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeListEnd, (void**)&pGenericBlock))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
@@ -294,7 +294,7 @@ EfiCrashDumpAddTriageInfo(
     //
     // Stack Block
     //
-    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, &pMemoryRegion))
+    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, (void**)&pMemoryRegion))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
@@ -308,7 +308,7 @@ EfiCrashDumpAddTriageInfo(
     //
     // PRCB Block
     //
-    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, &pMemoryRegion))
+    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, (void**)&pMemoryRegion))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
@@ -322,7 +322,7 @@ EfiCrashDumpAddTriageInfo(
     //
     // Debugger Data block
     //
-    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, &pMemoryRegion))
+    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, (void**)&pMemoryRegion))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
@@ -344,7 +344,7 @@ EfiCrashDumpAddTriageInfo(
     // - current code page from context.
     //
 
-    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, &pMemoryRegion))
+    if (!EfiDumpBufferAllocateBlock(&BdDumpBuffer, BlockTypeMemoryRegion, (void**)&pMemoryRegion))
     {
         ASSERT(FALSE);
         status = RETURN_OUT_OF_RESOURCES;
