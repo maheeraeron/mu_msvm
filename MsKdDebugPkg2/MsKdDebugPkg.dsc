@@ -57,3 +57,11 @@
 [BuildOptions]
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
 
+  # Set file alignment and (memory) alignment to 4K.
+  # Memory alignment 4K is required for page protection.
+  # i.e. So that, text/data/rdata are on different pages,
+  # so that data/rdata are not executable and text/rdata are not writable.
+  # This is the main reason sections exist and the main feature of the PE format.
+  # File==memory for execute in place, or loader perf/simplicity otherwise.
+  # Memory alignment defaults to 4K, if not otherwise changed by build system.
+  *_*_*_DLINK_FLAGS = -align:4096 -filealign:4096
