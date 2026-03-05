@@ -579,12 +579,9 @@ Return Value:
         {
         case BREAKPOINT_GET_TABLE:
             //
-            // Make sure to return NULL to indicate to
-            // the DebugLib that the debugger is not installed.
+            // NULL indicates no debugger to DebugLib.
             //
-            TrapFrame->Rax = 0LL;
-            __fallthrough;
-
+            TrapFrame->Rax = 0; // fallthrough
         case BREAKPOINT_BREAK:
         case BREAKPOINT_PRINT:
         case BREAKPOINT_PROMPT:
