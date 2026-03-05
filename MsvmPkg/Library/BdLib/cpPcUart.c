@@ -14,9 +14,9 @@ Abstract:
     Adapted from earlier versions of the Windows boot debugger.
 
 --*/
+#include <Library/IoLib.h>
 #include "cp.h"
 #include "Bd.h"
-#include "MsBarrier.h"
 
 #ifndef FlagOn
 #define FlagOn(_F,_SF)        ((_F) & (_SF))
@@ -53,76 +53,6 @@ Return Value:
     }
 }
 
-
-UINT8
-ReadPort8(
-    __in UINT_PTR Port
-    )
-/*++
-
-Routine Description:
-
-    This routine reads an 8bit value from the specified port.
-
-    Note: This operation is also a memory barrier.
-
-Arguments:
-
-    Port - Supplies the port to read from.
-
-Return Value:
-
-    8bit port contents.
-
---*/
-{
-    UINT8 result = 0;
-
-    CompilerBarrier();
-    result = (UINT8) _inp((unsigned short) Port);
-    CompilerBarrier();
-
-    return result;
-}
-
-
-VOID
-WritePort8(
-    __in UINT_PTR Port,
-    __in UINT8 Value
-    )
-/*++
-
-Routine Description:
-
-    This routine writes an 8bit value to the specified port.
-
-    Note: This operation is also a memory barrier.
-
-Arguments:
-
-    Port - Supplies the port to write to.
-
-    Value - Supplies a byte to be written to the port.
-
-Return Value:
-
-    None.
-
---*/
-{
-    //
-    // N.B. The following CompilerBarrier are there to prevent the
-    // compiler from reordering reads or writes (even volatile ones) in
-    // front of the in\out instructions.
-    //
-
-    CompilerBarrier();
-    _outp((unsigned short) Port, (int) Value);
-    CompilerBarrier();
-}
-
-
 UINT8
 CppPortReadRegister8(
     __in PCP_PORT Port,
@@ -149,7 +79,7 @@ Return Value:
 {
     if (Port->Address.Type == CpPortTypeIoPort)
     {
-        return ReadPort8(Port->Address.IoPort + RegisterNumber);
+        return IoRead8(Port->Address.IoPort + RegisterNumber);
     }
 
     return 0;
@@ -185,7 +115,7 @@ Return Value:
 {
     if (Port->Address.Type == CpPortTypeIoPort)
     {
-        WritePort8(Port->Address.IoPort + RegisterNumber, Value);
+        IoWrite8(Port->Address.IoPort + RegisterNumber, Value);
     }
 }
 
