@@ -19,20 +19,13 @@ Environment:
     Boot
 
 --*/
-
-// ------------------------------------------------------------------- Includes
-
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
-
+#include "AllowNamelessAggregate.h"
 #include "Bd.h"
 #include "CrashDump.h"
-
-// -------------------------------------------------------------------- Pragmas
-
-#pragma warning(disable:4152)      // Function pointer to data pointer.
-#pragma warning(disable:4201)
+MS_WARNING_DISABLE(4152) // code/data pointer cast
 
 // ------------------------------------------------------------------ Functions
 
@@ -619,6 +612,3 @@ Return Value:
     KiSaveProcessorControlState(&BdPrcb->ProcessorState);
     return;
 }
-
-#pragma warning(default:4152)
-#pragma warning(default:4201)

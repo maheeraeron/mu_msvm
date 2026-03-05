@@ -21,10 +21,10 @@ Environment:
     Boot
 
 --*/
-
 #pragma once
-
+#include "AllowNamelessAggregate.h"
 #include "ntstatus.h"
+
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 #define UNALIGNED
 

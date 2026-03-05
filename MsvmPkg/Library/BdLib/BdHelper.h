@@ -12,8 +12,8 @@ Abstract:
 
 --*/
 #pragma once
+#include "AllowNamelessAggregate.h"
 #include "DeclspecAlign.h"
-#pragma warning(disable : 4201)
 
 #if !defined(_AMD64_) && !defined(_ARM64_)
 #error unsupported architecture
@@ -3826,5 +3826,3 @@ typedef struct _EFI_UNLOADED_MODULE {
     PVOID EndAddress;
     UINT64 CurrentTime;
 } EFI_UNLOADED_MODULE, *PEFI_UNLOADED_MODULE;
-
-#pragma warning(default : 4201)

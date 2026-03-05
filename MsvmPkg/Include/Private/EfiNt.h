@@ -22,8 +22,13 @@ Author:
 #if !(defined (__clang__) || defined (__GNUC__))
 #include <specstrings.h>
 #endif
+#include "AllowNamelessAggregate.h"
 #include "EmptySal.h"
 #include "Inline.h"
+#include "WarningDisable.h"
+MS_WARNING_DISABLE(4200) // nonstandard: zero-sized array in struct/union
+MS_WARNING_DISABLE(4214) // nonstandard: bit field types other than int
+MS_WARNING_DISABLE(4324) // pad due to __declspec(align())
 
 //
 // Establish Windows style alias for processor architecture.
@@ -131,11 +136,3 @@ __cpuid(
 typedef int32_t NTSTATUS;
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #include <Vmbus/NtStatus.h>
-
-//
-// 4200 - nonstandard extension used : zero-sized array in struct/union
-// 4201 - nonstandard extension used : nameless struct/union
-// 4214 - nonstandard extension used : bit field types other than int
-// 4324 - structure was padded due to __declspec(align())
-//
-#pragma warning(disable: 4200 4201 4214 4324)
