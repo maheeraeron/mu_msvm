@@ -355,7 +355,7 @@ Return Value:
 {
     ZeroMem(BdUnloadedModules, (sizeof(EFI_UNLOADED_MODULE) * BD_MAX_UNLOADED_MODULES));
 
-    BdDebuggerDataBlock.Header.OwnerTag = 'GBDK';
+    BdDebuggerDataBlock.Header.OwnerTag = SIGNATURE_32('K','D','B','G');
     BdDebuggerDataBlock.Header.Size = sizeof(BdDebuggerDataBlock);
     BdDebuggerDataBlock.PsLoadedModuleList = (UINTN)&BdModuleList;
     BdDebuggerDataBlock.BreakpointWithStatus = (UINTN)BdBreakPointWithStatus;
