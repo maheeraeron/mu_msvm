@@ -108,7 +108,7 @@ __cpuid(
 
 #endif
 
-#define UNREFERENCED_PARAMETER(_Parameter_) (_Parameter_)
+#define UNREFERENCED_PARAMETER(_Parameter_) ((void)(_Parameter_))
 #define FIELD_OFFSET offsetof
 
 #define RTL_FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
