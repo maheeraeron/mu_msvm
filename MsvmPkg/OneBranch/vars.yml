@@ -23,7 +23,7 @@ variables:
   # Specifically $(PkgFoo) is the path to package Foo.
   # Ideally we would only list names and versions, as in corext.config, and not form the path here.
   #
-  Pkg:                      $(System.ArtifactsDirectory)\pkg
+  Pkg:                      $(Pipeline.Workspace)\pkg
   TerrapinVer:              8.0.0-105383472
   PkgTerrapinRetrievalTool: $(Pkg)\TerrapinRetrievalTool.$(TerrapinVer)
   STUART_EXTDEP_CACHE_PATH: $(Pkg)
