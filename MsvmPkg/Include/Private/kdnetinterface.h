@@ -7,6 +7,7 @@
 #pragma once
 #include "AllowNamelessAggregate.h"
 #include "DeclspecAlign.h"
+#include "StaticAssert1.h"
 
 typedef struct {
     UCHAR Type;  //CmResourceType
@@ -181,7 +182,7 @@ typedef struct _DHCP_STATE {
     ETHERNET_ADDRESS DhcpServerMac;
 } DHCP_STATE, *PDHCP_STATE;
 
-C_ASSERT((OFFSET_OF(DHCP_STATE, DhcpServerMac) & 0x3) == 0);
+STATIC_ASSERT_1((OFFSET_OF(DHCP_STATE, DhcpServerMac) & 0x3) == 0);
 
 typedef struct _IPV6_STATE {
     IPV6_ADDRESS LinkLocalAddress;
@@ -198,7 +199,7 @@ typedef struct _IPV6_STATE {
     UCHAR NoRouterSolicitations;
 } IPV6_STATE, *PIPV6_STATE;
 
-C_ASSERT((OFFSET_OF(IPV6_STATE, RouterEthernetAddress) & 0x3) == 0);
+STATIC_ASSERT_1((OFFSET_OF(IPV6_STATE, RouterEthernetAddress) & 0x3) == 0);
 
 #define KD_NET_KEY_SIZE_DWORDS 8
 #define KD_NET_KEY_SIZE (KD_NET_KEY_SIZE_DWORDS * sizeof(ULONG))
@@ -427,8 +428,8 @@ typedef struct _DEBUG_NET_PARAMETERS {
 
 } DEBUG_NET_PARAMETERS, *PDEBUG_NET_PARAMETERS;
 
-C_ASSERT((FIELD_OFFSET(DEBUG_NET_PARAMETERS, HostMac) & 0x3) == 0);
-C_ASSERT((FIELD_OFFSET(DEBUG_NET_PARAMETERS, DebuggerActive) & 0x3) == 0);
+STATIC_ASSERT_1((FIELD_OFFSET(DEBUG_NET_PARAMETERS, HostMac) & 0x3) == 0);
+STATIC_ASSERT_1((FIELD_OFFSET(DEBUG_NET_PARAMETERS, DebuggerActive) & 0x3) == 0);
 
 #if defined(_KDNET_INTERNAL_)
 

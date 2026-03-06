@@ -14,6 +14,7 @@ Abstract:
 #pragma once
 #include "AllowNamelessAggregate.h"
 #include "DeclspecAlign.h"
+#include "StaticAssert1.h"
 
 #if !defined(_AMD64_) && !defined(_ARM64_)
 #error unsupported architecture
@@ -627,7 +628,7 @@ typedef struct _DBGKD_ANY_WAIT_STATE_CHANGE
 
 } DBGKD_ANY_WAIT_STATE_CHANGE, *PDBGKD_ANY_WAIT_STATE_CHANGE;
 
-C_ASSERT (sizeof (DBGKD_ANY_WAIT_STATE_CHANGE) == 240);
+STATIC_ASSERT_1 (sizeof (DBGKD_ANY_WAIT_STATE_CHANGE) == 240);
 
 //
 // If the packet type is PACKET_TYPE_KD_STATE_MANIPULATE, then
@@ -786,7 +787,7 @@ typedef struct _DBGKD_CONTINUE2
     };
 } DBGKD_CONTINUE2, *PDBGKD_CONTINUE2;
 
-C_ASSERT(sizeof (DBGKD_CONTINUE2) == 32);
+STATIC_ASSERT_1(sizeof (DBGKD_CONTINUE2) == 32);
 
 #pragma pack(pop)
 
@@ -950,7 +951,7 @@ typedef struct _DBGKD_MANIPULATE_STATE64
     } u;
 } DBGKD_MANIPULATE_STATE64, *PDBGKD_MANIPULATE_STATE64;
 
-C_ASSERT (sizeof (DBGKD_MANIPULATE_STATE64) == 56);
+STATIC_ASSERT_1 (sizeof (DBGKD_MANIPULATE_STATE64) == 56);
 
 //
 // This is the format for the trace data passed back from the kernel to
