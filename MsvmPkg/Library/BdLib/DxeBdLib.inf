@@ -62,25 +62,25 @@
     image.c
 
 [Sources.X64]
-    cpPcUart.c          | MSFT
-    CrashDumpAgent.c    | MSFT
+    cpPcUart.c
+    CrashDumpAgent.c
     X64/trapa.asm       | MSFT
     X64/debugstb.asm    | MSFT
     X64/state.asm       | MSFT
-    X64/debug.c         | MSFT
-    X64/cpuapi.c        | MSFT
-    X64/trapc.c         | MSFT
-    X64/CrashDump.c     | MSFT
+    X64/debug.c
+    X64/cpuapi.c
+    X64/trapc.c
+    X64/CrashDump.c
 
 [Sources.AARCH64]
-    cpPL011.c           | MSFT
-    AArch64/cpuapi.c    | MSFT
-    AArch64/debug.c     | MSFT
-    AArch64/state.c     | MSFT
-    AArch64/trapc.c     | MSFT
+    cpPL011.c
+    AArch64/cpuapi.c
+    AArch64/debug.c
+    AArch64/state.c
+    AArch64/trapc.c
     AArch64/vector.masm | MSFT
     AArch64/debugstb.masm | MSFT
-    AArch64/archapi.c   | MSFT
+    AArch64/archapi.c
 
 [Guids]
     gEfiEventExitBootServicesGuid
