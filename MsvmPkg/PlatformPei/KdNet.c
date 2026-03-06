@@ -286,7 +286,7 @@ Return Value:
     UINT32 index;
     UINT8 ipAddress[4];
     PUCHAR parameter;
-    IPV6_ADDRESS unspecifiedIPv4Address = {0x0000ffff00000000, 0};
+    IPV6_ADDRESS unspecifiedIPv4Address = {{{0x0000ffff00000000, 0}}};
     UINT64 value;
 
     //
