@@ -116,7 +116,7 @@ typedef struct _STRING
 #endif
 
 #ifndef ANYSIZE_ARRAY
-#define ANYSIZE_ARRAY 1       // winnt
+#define ANYSIZE_ARRAY 1
 #endif
 
 typedef int32_t NTSTATUS;
