@@ -96,18 +96,6 @@ typedef struct _STRING
     CHAR *Buffer;
 } STRING, *PSTRING;
 
-#if defined(MDE_CPU_X64)
-
-#pragma intrinsic(__cpuid)
-
-void
-__cpuid(
-    int CPUInfo[4],
-    int InfoType
-    );
-
-#endif
-
 #define UNREFERENCED_PARAMETER(_Parameter_) ((void)(_Parameter_))
 #define FIELD_OFFSET offsetof
 
