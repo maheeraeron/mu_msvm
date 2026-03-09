@@ -22,6 +22,7 @@
 #define __out_opt
 #define _Analysis_assume_(...)
 #define _In_
+#define _In_bytecount_(...)
 #define _In_opt_
 #define _In_z_
 #define _Inout_
