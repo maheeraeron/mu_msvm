@@ -334,6 +334,7 @@ BdPollBreakIn (
     );
 
 VOID
+EFIAPI
 BdBreakPointWithStatus(
     __in UINT32 Status
     );
@@ -966,16 +967,19 @@ BdImageNotification(
 //
 
 VOID
+EFIAPI
 KiRestoreProcessorControlState (
     __in PKPROCESSOR_STATE ProcessorState
     );
 
 VOID
+EFIAPI
 KiSaveProcessorControlState (
     __in PKPROCESSOR_STATE ProcessorState
     );
 
 VOID
+EFIAPI
 EfiCaptureContext (
     __out PCONTEXT ContextRecord
     );
@@ -993,6 +997,7 @@ LOGICAL
     );
 
 VOID
+EFIAPI
 EfiDispatchException (
     _In_    PEXCEPTION_RECORD   ExceptionRecord,
     _In_    PKEXCEPTION_FRAME   ExceptionFrame,

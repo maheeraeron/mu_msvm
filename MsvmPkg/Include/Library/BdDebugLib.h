@@ -27,17 +27,14 @@ typedef struct _BD_DEBUG_TABLE
         VOID
         );
 
-    VOID
-    (*BreakPointWithStatus)(
-        __in UINT32 Status
-        );
-
+    VOID (EFIAPI *BreakPointWithStatus)(UINT32 Status);
     volatile UINT32 *DebuggerMask;
     volatile UINT32 *DebuggerNotPresent;
 
 } BD_DEBUG_TABLE;
 
 VOID *
+EFIAPI
 DebugService2(
     __in_opt VOID *Param1,
     __in_opt VOID *Param2,
