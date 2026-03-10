@@ -542,7 +542,7 @@ BdNetSentReceivedPacketCount(
 
 UINT32
 BdAddBreakpoint (
-    __in ULONG64 Address
+    UINT64 Address
     );
 
 LOGICAL

@@ -29,10 +29,9 @@ BdLowWriteContent (
     __in UINT32 Index
     );
 
-
 UINT32
 BdAddBreakpoint (
-    __in UINT64 Address
+    UINT64 Address
     )
 /*++
 

@@ -245,12 +245,10 @@ Return Value:
     return ReturnCode;
 }
 
-
-ULONG64
+UINT64
 BdNetSentReceivedPacketCount (
     VOID
     )
-
 /*++
 
 Routine Description:
@@ -268,7 +266,6 @@ Return Value:
     the bottom 32 bits.
 
 --*/
-
 {
 
     ULONG64 PacketCount;
