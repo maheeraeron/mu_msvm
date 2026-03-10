@@ -15,10 +15,9 @@ parameters:
   default: false
 
 variables:
-- template: vars.yml
-# Because we have a template, we must use name/value to add more?
-- name: Parameters.vPack.pushPkgName
-  value: $(Build.Repository.Name).mscoreuefi.$(Build.Arch).PR.$(Build.Target)
+  Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.PR.$(Build.Arch).$(Build.Target)"
+  Parameters.vPack.majorVer: "25"
+  Parameters.vPack.minorVer: "0"
 
 extends:
   template: v2/Microsoft.NonOfficial.yml@templates # https://aka.ms/obpipelines/templates

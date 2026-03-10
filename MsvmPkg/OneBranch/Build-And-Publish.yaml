@@ -62,15 +62,6 @@ jobs:
       Inline: |
         git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
         git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
-  # TODO: How to download this nuget/feed?
-  # - template: nugets.yml@self
-  #  parameters:
-  #    packages: [{name: TerrapinRetrievalTool, version: $(TerrapinVer)}]
-  - template: terrapins.yml@self
-    parameters:
-      packages: [
-        {name: BaseTools, url: $(BaseToolsUrl), path: $(BaseToolsPath), hash: $(BaseToolsHash)},
-        {name: MuCrypto,  url: $(MuCryptoUrl),  path: $(MuCryptoPath),  hash: $(MuCryptoHash)}]
   - task: UsePythonVersion@0
     displayName: 'Install Python $(Env.PythonVersion)'
     inputs:
