@@ -10,7 +10,7 @@
 #
 ##
 
-#Override : 00000002 | NetworkPkg/SnpDxe/SnpDxe.inf | bab67f0b0ee2e9955a69777bcad12f64 | 2025-04-30T00-44-23 | 68d85db2976337990f886c64c4ff430beebfbf4b
+#Override : 00000002 | NetworkPkg/SnpDxe/SnpDxe.inf | d7cc224b7ce503bc7bbab840f1ba27e5 | 2026-03-10T20-25-36 | 551c3c87f83ae1121feec1e499303affc44e943d
 
 [Defines]
   INF_VERSION                    = 0x00010005
