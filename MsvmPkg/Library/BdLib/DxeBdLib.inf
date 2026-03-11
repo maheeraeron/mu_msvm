@@ -64,6 +64,7 @@
 [Sources.X64]
     cpPcUart.c
     CrashDumpAgent.c
+    X64/archapia.nasm
     X64/trapa.asm       | MSFT
     X64/debugstb.asm    | MSFT
     X64/state.asm       | MSFT

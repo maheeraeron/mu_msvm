@@ -1069,11 +1069,9 @@ BdSerialPrint (
   ...
   );
 
-#if defined(MDE_CPU_AARCH64)
 VOID
 BlArchSweepIcacheRange (
   __in PVOID BaseAddress,
   __in SIZE_T Length
   );
-#endif
 

@@ -150,12 +150,11 @@ Return Value:
     //
 
     BytesMoved = ActualLength - Length;
-#if defined(MDE_CPU_AARCH64)
+
     BlArchSweepIcacheRange(BaseDestination, (SIZE_T)BytesMoved);
-#endif
+
     return BytesMoved;
 }
-
 
 VOID
 BdCopyMemory (
