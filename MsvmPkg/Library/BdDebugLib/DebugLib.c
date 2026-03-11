@@ -59,7 +59,6 @@ BdDebugLibConstructor (
     return 0;
 }
 
-
 VOID
 EFIAPI
 DebugPrint(
@@ -420,12 +419,10 @@ Return Value:
     }
 }
 
-
 VOID
 EFIAPI
 DebugBreakPointWithStatus(
-    __in UINT32 Status
-    )
+    UINT32 Status)
 /*++
 
 Routine Description:

@@ -25,6 +25,7 @@
 
 [LibraryClasses]
     ClangTemporaryLib
+    CrashLib
     UefiBootServicesTableLib
     BaseLib
     BaseMemoryLib

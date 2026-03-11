@@ -20,11 +20,11 @@ Environment:
     UEFI
 
 --*/
-
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/CrashDumpAgentLib.h>
+#include <Library/CrashLib.h>
 #include <Library/HobLib.h>
 #include <Library/BaseLib.h>
 #include <Library/WatchdogTimerLib.h>
@@ -163,14 +163,14 @@ EfiBugCheckWithContext(
 
     if (EFI_ERROR(status))
     {
-        BdTripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
+        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
                     0,
                     0,
                     0);
     }
     else
     {
-        BdTripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
+        TripleFault(GUESTDUMP_TRIPLEFAULT_SIGNATURE,
                     (UINT64)BdDumpBuffer.Buffer,
                     BdDumpBuffer.Offset,
                     0);

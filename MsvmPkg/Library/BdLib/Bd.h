@@ -339,14 +339,6 @@ BdBreakPointWithStatus(
     __in UINT32 Status
     );
 
-VOID
-BdTripleFault(
-    __in    UINTN   Rax,
-    __in    UINTN   Rbx,
-    __in    UINTN   Rcx,
-    __in    UINTN   Rdx
-    );
-
 NTSTATUS
 BdArchInitialize (
     VOID
