@@ -46,6 +46,7 @@ KdDxeExceptionDestroy (
   );
 
 VOID *
+EFIAPI
 DebugService2 (
   VOID    *Param1,
   VOID    *Param2,
@@ -53,6 +54,7 @@ DebugService2 (
   );
 
 VOID
+EFIAPI
 KdDxeKdBreakPointWithStatus (
   UINT32  Status
   );

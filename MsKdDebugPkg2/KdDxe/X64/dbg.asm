@@ -12,15 +12,15 @@ public KdDxeKdBreakPointWithStatus
 ;
 ; Routine Description:
 ;
-;   This function calls the kernel debugger to execute a command string.
+;   Call debugger generically.
 ;
 ; Arguments:
 ;
-;   Param1 (x0) - Supplies the first parameter to the KD fault handler
+;   Param1 (rcx) - first parameter
 ;
-;   Param2 (x1) - Supplies the second parameter to the KD fault handler
+;   Param2 (rdx) - second parameter
 ;
-;   Service (x2) - Supplies a pointer to the command string.
+;   Service (r8d) - what to do BREAKPOINT_LOAD_SYMBOLS etc.
 ;
 ; Return Value:
 ;
@@ -58,7 +58,7 @@ DebugService2:
 ;
 ; Arguments:
 ;
-;   Status (r0) - Supplies the break point status code.
+;   Status (rcx) - Supplies the break point status code.
 ;
 ; Return Value:
 ;
