@@ -550,7 +550,7 @@ typedef struct _EXCEPTION_RECORD64 {
 
 #define COPYSE(p64,p32,f) p64->f = (ULONG64)(LONG64)(LONG)p32->f
 
-__inline
+static inline
 void
 ExceptionRecord32To64(
     IN PEXCEPTION_RECORD32 Ex32,

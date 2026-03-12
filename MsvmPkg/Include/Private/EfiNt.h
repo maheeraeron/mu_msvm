@@ -24,7 +24,6 @@ Author:
 #endif
 #include "AllowNamelessAggregate.h"
 #include "EmptySal.h"
-#include "Inline.h"
 #include "WarningDisable.h"
 MS_WARNING_DISABLE(4200) // nonstandard: zero-sized array in struct/union
 MS_WARNING_DISABLE(4214) // nonstandard: bit field types other than int
@@ -48,10 +47,8 @@ MS_WARNING_DISABLE(4324) // pad due to __declspec(align())
 //
 // Declspec wrappers.
 //
-
 #include "DeclspecAlign.h"
 #include "DeclspecCacheAlign.h"
-#define FORCEINLINE __forceinline
 
 //
 // String types.

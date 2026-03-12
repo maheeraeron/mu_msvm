@@ -52,14 +52,11 @@ BdTrap (
     __in PKTRAP_FRAME TrapFrame
     );
 
-
-
-__inline
+static inline
 UINT32
 GetCurrentEl(
     VOID
     )
-
 /*++
 
 Routine Description:
@@ -75,7 +72,6 @@ Return Value:
     The current Exception Level (0-3).
 
 --*/
-
 {
     switch ((_ReadStatusReg(ARM64_CurrentEL) & CPSREL_MASK)) {
     case CPSREL_0: return 0;
