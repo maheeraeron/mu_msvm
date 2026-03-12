@@ -29,6 +29,13 @@
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
+# memcpy and memset are difficult to avoid, esp. on ARM64.
+# e.g. struct/union/array init/assign, passing va_list by value in PrintLib.
+# Therefore link CompilerIntrinsicsLib everywhere (NULL class).
+# Current upstream AMD64 CompilerIntrinsicsLib does not compile but future does.
+[LibraryClasses.AARCH64]
+  NULL|MdePkg/Library/CompilerIntrinsicsLib/CompilerIntrinsicsLib.inf
+
 [LibraryClasses.common.DXE_DRIVER]
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
