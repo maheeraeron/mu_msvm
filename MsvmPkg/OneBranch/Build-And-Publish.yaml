@@ -62,27 +62,29 @@ jobs:
       Inline: |
         git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
         git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
-  - task: UsePythonVersion@0
-    displayName: 'Install Python $(Env.PythonVersion)'
-    inputs:
-      versionSpec: '$(Env.PythonVersion)'
-      architecture: 'x64'
+  - script: python --version
+    displayName: python_version
+  #- task: UsePythonVersion@0
+  #  displayName: 'Install Python $(Env.PythonVersion)'
+  #  inputs:
+  #    versionSpec: '$(Env.PythonVersion)'
+  #    architecture: 'x64'
   - task: CmdLine@2
     displayName: 'Add mu_build pip'
     inputs:
-      script: python.exe -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir   
+      script: python -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir   
   - task: CmdLine@2
     displayName: 'Platform build Setup'
     inputs:
-      script: python.exe $(PlatformPkg)/PlatformBuild.py --setup
+      script: python $(PlatformPkg)/PlatformBuild.py --setup
   - task: CmdLine@2
     displayName: 'Platform build Update'
     inputs:
-      script: python.exe $(PlatformPkg)/PlatformBuild.py --update
+      script: python $(PlatformPkg)/PlatformBuild.py --update
   - task: CmdLine@2
     displayName: 'Run Build '
     inputs:
-      script: python.exe $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
+      script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
   - task: CopyFiles@2
     displayName: "Copy build logs"
     inputs:
