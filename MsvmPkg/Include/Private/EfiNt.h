@@ -17,13 +17,12 @@ Author:
 
 --*/
 #pragma once
+// EmptySal.h ahead of compiler-supplied headers,
+// otherwise sometimes works, sometimes fails.
+#include "EmptySal.h"
 #include <stddef.h>
 #include <stdint.h>
-#if !(defined (__clang__) || defined (__GNUC__))
-#include <specstrings.h>
-#endif
 #include "AllowNamelessAggregate.h"
-#include "EmptySal.h"
 #include "WarningDisable.h"
 MS_WARNING_DISABLE(4200) // nonstandard: zero-sized array in struct/union
 MS_WARNING_DISABLE(4214) // nonstandard: bit field types other than int
