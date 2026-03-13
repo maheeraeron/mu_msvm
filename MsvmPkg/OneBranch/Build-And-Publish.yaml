@@ -85,6 +85,16 @@ jobs:
     displayName: 'Run Build '
     inputs:
       script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
+  - task: CmdLine@2
+    displayName: "logs"
+    condition: succeededOrFailed()
+    continueOnError: true
+    inputs:
+      script: |
+        ls   Build        2>nul || true
+        dir  Build        2>nul || true
+        cat  Build/B*.txt 2>nul || true
+        type Build\B*.txt 2>nul || true
   - task: CopyFiles@2
     displayName: "Copy build logs"
     inputs:
