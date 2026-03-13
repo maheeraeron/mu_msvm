@@ -405,6 +405,7 @@ Return Value:
 
 
 VOID
+EFIAPI
 EfiDispatchException (
     _In_    PEXCEPTION_RECORD   ExceptionRecord,
     _In_    PKEXCEPTION_FRAME   ExceptionFrame,
