@@ -23,6 +23,7 @@ Author:
 #include <stddef.h>
 #include <stdint.h>
 #include "AllowNamelessAggregate.h"
+#include "UnreferencedParameter.h"
 #include "WarningDisable.h"
 MS_WARNING_DISABLE(4200) // nonstandard: zero-sized array in struct/union
 MS_WARNING_DISABLE(4214) // nonstandard: bit field types other than int
@@ -92,7 +93,6 @@ typedef struct _STRING
     CHAR *Buffer;
 } STRING, *PSTRING;
 
-#define UNREFERENCED_PARAMETER(_Parameter_) ((void)(_Parameter_))
 #define FIELD_OFFSET offsetof
 
 #define RTL_FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
