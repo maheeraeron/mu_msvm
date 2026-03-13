@@ -36,7 +36,7 @@
 #
 ################################################################################
 [BuildOptions]
-  *_*_X64_GENFW_FLAGS = --keepexceptiontable
+  *_*_*_GENFW_FLAGS = --keepexceptiontable
 !if $(LEGACY_DEBUGGER) == 1
   DEBUG_*_*_CC_FLAGS = -D DEBUG_PLATFORM -D LEGACY_DEBUGGER
 !else
