@@ -39,10 +39,11 @@ typedef union _KIDT_HANDLER_ADDRESS {
     UINT64 Address;
 } KIDT_HANDLER_ADDRESS, *PKIDT_HANDLER_ADDRESS;
 
+static
 VOID
 ArchSetIdtEntry (
     _In_ IA32_IDT_GATE_DESCRIPTOR *IdtBase,
-    _In_ UINT32 Offset,
+    _In_ UINT32 Index,
     _In_ PVOID InterruptHandler,
     _In_ UINT16 Access,
     _In_ UINT16 Selector
@@ -71,11 +72,9 @@ Return Value:
 
 --*/
 {
-
     KIDT_HANDLER_ADDRESS handlerAddress;
-    IA32_IDT_GATE_DESCRIPTOR *idt;
-
-    idt = Add2Ptr(IdtBase, Offset);
+    UINT32 offset = (Index * sizeof(IA32_IDT_GATE_DESCRIPTOR));
+    IA32_IDT_GATE_DESCRIPTOR *idt = Add2Ptr(IdtBase, offset);
 
     //
     // Use KIDT_HANDLER_ADDRESS structure to facilitate setting Offset
@@ -92,14 +91,12 @@ Return Value:
     idt->Bits.GateType = (Access >> 8);
 }
 
-
 VOID
 BdPatchIdt (
     _Inout_bytecount_(IdtLength) PVOID Idt,
     _In_    UINT32      IdtLength,
     _In_    UINT16      CodeSegment
     )
-
 /*++
 
 Routine Description:
@@ -121,12 +118,9 @@ Return Value:
     None.
 
 --*/
-
 {
-    IA32_IDT_GATE_DESCRIPTOR *idtBase;
     UINT32 index;
-
-    idtBase = (IA32_IDT_GATE_DESCRIPTOR*)Idt;
+    IA32_IDT_GATE_DESCRIPTOR *idtBase = (IA32_IDT_GATE_DESCRIPTOR*)Idt;
 
     if (IdtLength < (0x2d * sizeof(IA32_IDT_GATE_DESCRIPTOR)))
     {
@@ -150,7 +144,7 @@ Return Value:
             ((index != 0x1D) && (index != 0x14)))
         {
             ArchSetIdtEntry(idtBase,
-                            index * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                            index,
                             BdUnhandledException,
                             0x8e00,
                             CodeSegment);
@@ -173,7 +167,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x01 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x01,
                     BdDebugTrapOrFault,
                     0x8e00,
                     CodeSegment);
@@ -183,7 +177,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x02 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x02,
                     BdNmiInterrupt,
                     0x8e00,
                     CodeSegment);
@@ -193,7 +187,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x03 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x03,
                     BdBreakpointTrap,
                     0x8e00,
                     CodeSegment);
@@ -203,7 +197,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x04 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x04,
                     BdOverflowTrap,
                     0x8e00,
                     CodeSegment);
@@ -213,7 +207,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x05 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x05,
                     BdBoundFault,
                     0x8e00,
                     CodeSegment);
@@ -223,7 +217,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x06 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x06,
                     BdInvalidOpcodeFault,
                     0x8e00,
                     CodeSegment);
@@ -233,7 +227,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x07 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x07,
                     BdNpxNotAvailableFault,
                     0x8e00,
                     CodeSegment);
@@ -243,7 +237,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x08 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x08,
                     BdDoubleFault,
                     0x8e00,
                     CodeSegment);
@@ -253,7 +247,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x0A * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x0A,
                     BdInvalidTss,
                     0x8e00,
                     CodeSegment);
@@ -263,7 +257,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x0d * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x0d,
                     BdGeneralProtectionFault,
                     0x8e00,
                     CodeSegment);
@@ -273,7 +267,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x0e * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x0e,
                     BdPageFault,
                     0x8e00,
                     CodeSegment);
@@ -283,7 +277,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x10 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x10,
                     BdFloatingPointFault,
                     0x8e00,
                     CodeSegment);
@@ -293,7 +287,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x11 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x11,
                     BdAlignmentFault,
                     0x8e00,
                     CodeSegment);
@@ -303,7 +297,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x12 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x12,
                     BdMachineCheckAbort,
                     0x8e00,
                     CodeSegment);
@@ -313,7 +307,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x13 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x13,
                     BdXmmException,
                     0x8e00,
                     CodeSegment);
@@ -323,7 +317,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x29 * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x29,
                     BdFastFailTrap,
                     0x8e00,
                     CodeSegment);
@@ -333,7 +327,7 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x2c * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x2c,
                     BdAssertionFailureTrap,
                     0x8e00,
                     CodeSegment);
@@ -343,12 +337,10 @@ Return Value:
     //
 
     ArchSetIdtEntry(idtBase,
-                    0x2d * sizeof(IA32_IDT_GATE_DESCRIPTOR),
+                    0x2d,
                     BdDebugServiceTrap,
                     0x8e00,
                     CodeSegment);
-
-    return;
 }
 
 VOID
@@ -399,10 +391,7 @@ Return Value:
     codeSegment = AsmReadCs();
     BdPatchIdt((PVOID)idtRegister.Base, idtRegister.Limit, codeSegment);
     AsmWriteIdtr(&idtRegister);
-
-    return;
 }
-
 
 VOID
 EFIAPI
@@ -452,11 +441,8 @@ Return Value:
             ExceptionRecord->ExceptionInformation[1],
             ExceptionRecord->ExceptionInformation[2]
             );
-
     }
-
 }
-
 
 VOID
 BdRestoreKframe (
@@ -528,9 +514,7 @@ Return Value:
     //
 
     KiRestoreProcessorControlState(&BdPrcb->ProcessorState);
-    return;
 }
-
 
 VOID
 BdSaveKframe (
@@ -611,5 +595,4 @@ Return Value:
     //
 
     KiSaveProcessorControlState(&BdPrcb->ProcessorState);
-    return;
 }
