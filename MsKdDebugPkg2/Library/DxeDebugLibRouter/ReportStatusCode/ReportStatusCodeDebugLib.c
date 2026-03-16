@@ -10,15 +10,14 @@ Copyright (C) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-
 #include <Guid/StatusCodeDataTypeId.h>
 #include <Guid/StatusCodeDataTypeDebug.h>
+#include "NtAssert.h"
 
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
@@ -352,7 +351,7 @@ ReportStatusCodeDebugAssert (
   // Generate an Assertion Break, Breakpoint, DeadLoop, or NOP based on PCD settings
   //
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED) != 0) {
-    CpuBreakAssert ();
+    NtAssert ();
   }
 
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {

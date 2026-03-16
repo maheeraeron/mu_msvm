@@ -12,12 +12,12 @@ Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
 #include <Library/SerialPortLib.h>
 #include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/BaseLib.h>
+#include "NtAssert.h"
 
 //
 // Define the maximum debug and assert message length that this library supports
@@ -115,7 +115,7 @@ SerialDebugAssert (
   // Generate an Assertion Break, Breakpoint, DeadLoop, or NOP based on PCD settings
   //
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED) != 0) {
-    CpuBreakAssert ();
+    NtAssert ();
   }
 
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {

@@ -21,6 +21,11 @@
 
 [Sources.AARCH64]
     AArch64/AArch64Support.S
+    AArch64/Assert.S
+    AArch64/Assert.masm
+
+[Sources.X64]
+    X64/Assert.nasm
 
 [Packages]
     MdeModulePkg/MdeModulePkg.dec

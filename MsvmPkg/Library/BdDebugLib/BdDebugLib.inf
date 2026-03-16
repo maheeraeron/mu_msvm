@@ -33,6 +33,7 @@
     PrintLib
     BaseLib
     DebugPrintErrorLevelLib
+    MsBaseLib
 
 [Pcd]
 gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel  ## CONSUMES

@@ -15,9 +15,6 @@ Author:
     Shreyas Srivatsan (shreyas) 01-Aug-2012
 
 --*/
-
-// ------------------------------------------------------------------- Includes
-
 #include <Base.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
@@ -27,8 +24,8 @@ Author:
 #include <Library/CrashLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/BdDebugLib.h>
-
 #include <Private/EfiNt.h>
+#include "NtAssert.h"
 
 // -------------------------------------------------------------------- Defines
 
@@ -127,7 +124,6 @@ Return value:
     DebugPrintString(buffer, sizeof(buffer));
 }
 
-
 VOID
 EFIAPI
 DebugAssert (
@@ -140,6 +136,8 @@ DebugAssert (
 Routine Description:
 
     Breaks into the debugger with assertion status.
+    This is anathema to its usual use.
+    Usually it is inline, preserves all context, uses __annotation to find parameters in pdb.
 
 Arguments:
 
@@ -159,10 +157,9 @@ Return Value:
     UNREFERENCED_PARAMETER(LineNumber);
     UNREFERENCED_PARAMETER(Description);
 
-    if (gBdDebugTable != NULL &&
-        *gBdDebugTable->DebuggerNotPresent == FALSE)
+    if (gBdDebugTable && !*gBdDebugTable->DebuggerNotPresent)
     {
-        CpuBreakAssert ();
+        NtAssert ();
     }
 }
 

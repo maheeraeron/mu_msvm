@@ -32,7 +32,6 @@ THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
-
 #include <Base.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
@@ -42,6 +41,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/SerialPortLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Protocol/KdDebugPrint.h>
+#include "NtAssert.h"
 
 //
 // Define the maximum debug and assert message length that this library supports
@@ -149,7 +149,7 @@ KdDebugAssert (
   // Generate an Assertion Break, Breakpoint, DeadLoop, or NOP based on PCD settings
   //
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED) != 0) {
-    CpuBreakAssert ();
+    NtAssert ();
   }
 
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
