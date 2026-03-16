@@ -27,12 +27,11 @@ Revision History:
 
 #include "Bd.h"
 
-
 // ------------------------------------------------------------------ Functions
 
-PVOID
+BOOL
 BdReadCheck (
-    __in PVOID Address
+    UINT_PTR Address
     )
 /*++
 
@@ -46,26 +45,16 @@ Arguments:
 
 Return Value:
 
-    A value of NULL is returned if the address is not valid or readable.
-    Otherwise, the physical address of the corresponding virtual address
-    is returned.
+    if the address is valid and readable
 
 --*/
 {
-    if ((UINT64)Address >= 0xFFFFFFFF)
-    {
-        return NULL;
-    }
-    else
-    {
-        return Address;
-    }
+    return Address && Address < 0xFFFFFFFF;
 }
 
-
-PVOID
+BOOL
 BdWriteCheck (
-    __in PVOID Address
+    UINT_PTR Address
     )
 /*++
 
@@ -79,22 +68,12 @@ Arguments:
 
 Return Value:
 
-    A value of NULL is returned if the address is not valid or writeable.
-    Otherwise, the physical address of the corresponding virtual address
-    is returned.
+    if the address is valid and writeable
 
 --*/
 {
-    if ((UINT64)Address >= 0xFFFFFFFF)
-    {
-        return NULL;
-    }
-    else
-    {
-        return Address;
-    }
+    return Address && Address < 0xFFFFFFFF;
 }
-
 
 PVOID
 BdTranslatePhysicalAddress (

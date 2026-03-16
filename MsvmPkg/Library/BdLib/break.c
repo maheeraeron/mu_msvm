@@ -88,7 +88,7 @@ Return Value:
     // If the specified address is not write accessible, then return zero.
     //
 
-    if (accessible && BdWriteCheck((PVOID)(UINT_PTR)Address) == NULL) 
+    if (accessible && !BdWriteCheck(Address))
     {
         return 0;
     }

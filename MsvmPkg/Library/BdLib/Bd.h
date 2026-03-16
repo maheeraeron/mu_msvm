@@ -26,7 +26,6 @@ Environment:
 #include "ntstatus.h"
 
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
-#define UNALIGNED
 
 #include <Private/EfiNt.h>
 #include <Library/BdDebugLib.h>
@@ -587,14 +586,14 @@ BdRestoreAllBreakpoints (
 // Memory check functions (check.c)
 //
 
-PVOID
+BOOL
 BdReadCheck (
-    __in PVOID Address
+    UINT_PTR Address
     );
 
-PVOID
+BOOL
 BdWriteCheck (
-    __in PVOID Address
+    UINT_PTR Address
     );
 
 PVOID
@@ -738,19 +737,18 @@ BdSetContextEx (
 //
 // Move memory functions (move.c)
 //
-
 ULONG
 BdMoveMemory (
-    __out_bcount_part(Length, return) volatile PCHAR Destination,
-    __in_bcount(Length) volatile PCHAR Source,
-    __in UINT32 Length
+    void volatile * volatile Destination,
+    void volatile const * volatile Source,
+    UINT32 Length
     );
 
 VOID
 BdCopyMemory (
-    __out_bcount(Length) volatile PCHAR Destination,
-    __in_bcount(Length) volatile PCHAR Source,
-    __in UINT32 Length
+    void volatile * volatile Destination,
+    void volatile const * volatile Source,
+    UINT32 Length
     );
 
 //

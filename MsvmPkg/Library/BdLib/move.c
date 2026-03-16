@@ -18,25 +18,24 @@ Author:
 Revision History:
 
 --*/
-
 #include <PiDxe.h>
-
 #include <Guid/DebugImageInfoTable.h>
-
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
-
 #include "Bd.h"
+
+// Toplevel volatile is historical and helps avoid
+// the compiler transforming this to memcpy.
 
 ULONG
 BdMoveMemory (
-    __out_bcount_part(Length, return) volatile PCHAR Destination,
-    __in_bcount(Length) volatile PCHAR Source,
-    __in UINT32 Length
+    void volatile * volatile VoidDestination,
+    void volatile const * volatile VoidSource,
+    UINT32 Length
     )
 /*++
 
@@ -61,11 +60,13 @@ Return Value:
 
 --*/
 {
-    PVOID Address1;
-    PVOID Address2;
-    UINT32 ActualLength;
-    PVOID BaseDestination;
-    UINT32 BytesMoved;
+    PVOID BaseDestination = (PVOID)VoidDestination;
+    UINT32 BytesMoved = 0;
+
+    // Toplevel volatile is historical and helps avoid
+    // the compiler transforming this to memcpy.
+    UINT_PTR volatile Destination = (UINT_PTR)VoidDestination;
+    UINT_PTR volatile Source = (UINT_PTR)VoidSource;
 
     //
     // If the length is greater than the size of the message buffer, then
@@ -80,48 +81,47 @@ Return Value:
     //
     // Move the source information to the destination address.
     //
+    UINT32 ActualLength = Length;
 
-    ActualLength = Length;
-    BaseDestination = Destination;
-    while (((UINT_PTR)Source & 3) && (Length > 0))
+    // Copy bytes until aligned.
+
+    while (Length > 0 && ((Source | Destination) & 3))
     {
         //
         // Only perform the move operation if it will not generate a page
         // fault.
         //
-
-        Address1 = BdWriteCheck((PVOID)Destination);
-        Address2 = BdReadCheck((PVOID)Source);
-        if ((Address1 == NULL) || (Address2 == NULL))
+        if (!BdWriteCheck(Destination) || !BdReadCheck(Source))
         {
             break;
         }
 
-        *(PCHAR)Destination = *(PCHAR)Source;
+        *(UINT8 * volatile)Destination = *(UINT8 * const volatile)Source;
         Destination += 1;
         Source += 1;
         Length -= 1;
     }
 
-    while (Length > 3)
+    // Copy ints while aligned.
+
+    while (Length > 3 && 0 == ((Source | Destination) & 3))
     {
         //
         // Only perform the move operation if it will not generate a page
         // fault.
         //
-
-        Address1 = BdWriteCheck((PVOID)Destination);
-        Address2 = BdReadCheck((PVOID)Source);
-        if ((Address1 == NULL) || (Address2 == NULL))
+        if (!BdWriteCheck(Destination) || !BdReadCheck(Source))
         {
             break;
         }
 
-        *(UINT32 UNALIGNED *)Destination = *(PUINT32)Source;
+        *(UINT32 * volatile)Destination = *(UINT32 * const volatile)Source;
         Destination += 4;
         Source += 4;
         Length -= 4;
     }
+
+    // Copy tail of bytes.
 
     while (Length > 0)
     {
@@ -129,15 +129,12 @@ Return Value:
         // Only perform the move operation if it will not generate a page
         // fault.
         //
-
-        Address1 = BdWriteCheck((PVOID)Destination);
-        Address2 = BdReadCheck((PVOID)Source);
-        if ((Address1 == NULL) || (Address2 == NULL))
+        if (!BdWriteCheck(Destination) || !BdReadCheck(Source))
         {
             break;
         }
 
-        *(PCHAR)Destination = *(PCHAR)Source;
+        *(UINT8 * volatile)Destination = *(UINT8 * const volatile)Source;
         Destination += 1;
         Source += 1;
         Length -= 1;
@@ -151,16 +148,19 @@ Return Value:
 
     BytesMoved = ActualLength - Length;
 
-    BlArchSweepIcacheRange(BaseDestination, (SIZE_T)BytesMoved);
+    BlArchSweepIcacheRange(BaseDestination, BytesMoved);
 
     return BytesMoved;
 }
 
+// Toplevel volatile is historical and helps avoid
+// the compiler transforming this to memcpy.
+
 VOID
 BdCopyMemory (
-    __out_bcount(Length) volatile PCHAR Destination,
-    __in_bcount(Length) volatile PCHAR Source,
-    __in UINT32 Length
+    void volatile * volatile VoidDestination,
+    void volatile const * volatile VoidSource,
+    UINT32 Length
     )
 /*++
 
@@ -189,6 +189,9 @@ Return Value:
 
 --*/
 {
+    UINT8 volatile * volatile Destination = VoidDestination;
+    UINT8 volatile const * volatile Source = VoidSource;
+
     while (Length > 0)
     {
         *Destination = *Source;
@@ -196,6 +199,4 @@ Return Value:
         Source += 1;
         Length -= 1;
     }
-
-    return;
 }
