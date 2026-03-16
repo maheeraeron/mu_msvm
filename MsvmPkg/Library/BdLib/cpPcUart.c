@@ -18,40 +18,9 @@ Abstract:
 #include "cp.h"
 #include "Bd.h"
 
-#ifndef FlagOn
-#define FlagOn(_F,_SF)        ((_F) & (_SF))
-#endif
+#define FlagOn(_F,_SF) (!!((_F) & (_SF)))
 
-UINT8 CpLastError = 0;
-
-VOID
-CppPortMapRegisters(
-    __inout PCP_PORT Port
-    )
-/*++
-
-Routine Description:
-
-    This routine ensures the registers are mapped.
-
-Arguments:
-
-    Port - Supplies a pointer to the COM port object.
-
-Return Value:
-
-    None.
-
---*/
-{
-    //
-    // I/O ports don't need a mapping.
-    //
-    if (Port->Address.Type == CpPortTypeIoPort)
-    {
-        return;
-    }
-}
+UINT8 CpLastError;
 
 UINT8
 CppPortReadRegister8(
@@ -84,7 +53,6 @@ Return Value:
 
     return 0;
 }
-
 
 VOID
 CppPortWriteRegister8(
@@ -119,7 +87,6 @@ Return Value:
     }
 }
 
-
 VOID
 CppCheckPowerButton(
     VOID
@@ -145,7 +112,6 @@ Return Value:
     //
     return;
 }
-
 
 VOID
 CpPortInit(
@@ -196,7 +162,6 @@ Return Value:
 
     CppPortSetBaud(Port, BaudRate);
 }
-
 
 CP_STATUS
 CpPortWrite(
@@ -279,7 +244,6 @@ Return Value:
     CppPortWriteRegister8(Port, COM_DAT, Byte);
     return CpStatusSuccess;
 }
-
 
 CP_STATUS
 CpPortRead(
@@ -389,7 +353,6 @@ Return Value:
     return CpStatusNoData;
 }
 
-
 BOOLEAN
 CpPortDataReady(
     __in PCP_PORT Port
@@ -412,25 +375,10 @@ Return Value:
 
 --*/
 {
-    UINT8 lsr;
+    UINT8 lsr = CppPortReadLsr(Port, COM_DATRDY);
 
-    lsr = CppPortReadLsr(Port, COM_DATRDY);
-
-    if (lsr == SERIAL_LSR_NOT_PRESENT)
-    {
-        return FALSE;
-    }
-
-    if (FlagOn(lsr, COM_DATRDY))
-    {
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
+    return (lsr != SERIAL_LSR_NOT_PRESENT) && FlagOn(lsr, COM_DATRDY);
 }
-
 
 // ------------------------------------------------------------ Local Functions
 

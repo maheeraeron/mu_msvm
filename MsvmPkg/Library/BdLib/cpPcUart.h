@@ -102,15 +102,9 @@ typedef struct _CP_PORT {
 #define SERIAL_ENABLE_FIFO  0x1
 #define SERIAL_FIFO_ENABLED_BIT 0xC
 
-
 //
 // Private/internal functions
 //
-VOID
-CppPortMapRegisters(
-    __inout PCP_PORT Port
-    );
-
 UINT8
 CppPortReadLsr(
     __in PCP_PORT Port,
