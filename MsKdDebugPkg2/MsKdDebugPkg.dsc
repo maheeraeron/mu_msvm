@@ -63,6 +63,10 @@
 
 [BuildOptions]
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
+  MSFT:*_*_*_DLINK_FLAGS = /DEBUG:FULL /PDBALTPATH:$(MODULE_NAME).pdb
+  *_CLANGPDB_*_DLINK_FLAGS = /DEBUG:FULL /PDBALTPATH:$(MODULE_NAME).pdb
+  MSFT:*_*_*_CC_FLAGS = /Z7
+  *_CLANGPDB_*_CC_FLAGS = -g -gcodeview -gcodeview-ghash -gcodeview-command-line
 
   # Set file alignment and (memory) alignment to 4K.
   # Memory alignment 4K is required for page protection.
