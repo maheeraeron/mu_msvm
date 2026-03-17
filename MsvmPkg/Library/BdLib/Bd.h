@@ -22,6 +22,7 @@ Environment:
 
 --*/
 #pragma once
+#include <stddef.h>
 #include "AllowNamelessAggregate.h"
 #include "ntstatus.h"
 
@@ -714,18 +715,18 @@ BdSetContextEx (
 //
 // Move memory functions (move.c)
 //
-ULONG
+size_t
 BdMoveMemory (
     void volatile * volatile Destination,
     void volatile const * volatile Source,
-    UINT32 Length
+    size_t Length
     );
 
 VOID
 BdCopyMemory (
     void volatile * volatile Destination,
     void volatile const * volatile Source,
-    UINT32 Length
+    size_t Length
     );
 
 //

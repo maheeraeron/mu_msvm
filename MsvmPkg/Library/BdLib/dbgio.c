@@ -52,7 +52,7 @@ Return Value:
     // Move the output string to the message buffer.
     //
 
-    length = BdMoveMemory((PCHAR)BdMessageBuffer,
+    length = (UINT32)BdMoveMemory((PCHAR)BdMessageBuffer,
                              (PCHAR)Output->Buffer,
                              Output->Length);
 
@@ -128,7 +128,7 @@ Return Value:
     // Move the output string to the message buffer.
     //
 
-    length = BdMoveMemory((PCHAR)BdMessageBuffer,
+    length = (UINT32)BdMoveMemory((PCHAR)BdMessageBuffer,
                              (PCHAR)Output->Buffer,
                              Output->Length);
 

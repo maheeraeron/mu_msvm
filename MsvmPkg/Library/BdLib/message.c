@@ -476,7 +476,7 @@ Return Value:
         if (PathName)
         {
             WaitStateChange.u.LoadSymbols.PathNameLength =
-                BdMoveMemory((PCHAR)BdMessageBuffer,
+                (UINT32)BdMoveMemory((PCHAR)BdMessageBuffer,
                                 (PCHAR)PathName->Buffer,
                                 PathName->Length) + 1;
 

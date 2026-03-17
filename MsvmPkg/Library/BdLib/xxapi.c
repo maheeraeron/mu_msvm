@@ -536,7 +536,7 @@ Return Value:
     // Move the data to the destination buffer.
     //
 
-    length = BdMoveMemory((PCHAR)(UINT_PTR)m->u.WriteMemory.TargetBaseAddress,
+    length = (UINT32)BdMoveMemory((PCHAR)(UINT_PTR)m->u.WriteMemory.TargetBaseAddress,
                              (PCHAR)AdditionalData->Buffer,
                              AdditionalData->Length);
 
@@ -1043,7 +1043,7 @@ Return Value:
         breakPointCount = BREAKPOINT_TABLE_SIZE;
     }
 
-    i = BdMoveMemory((PCHAR)bpBuf,
+    i = (UINT32)BdMoveMemory((PCHAR)bpBuf,
                          AdditionalData->Buffer,
                          breakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64));
 

@@ -31,11 +31,11 @@ Revision History:
 // Toplevel volatile is historical and helps avoid
 // the compiler transforming this to memcpy.
 
-ULONG
+size_t
 BdMoveMemory (
     void volatile * volatile VoidDestination,
     void volatile const * volatile VoidSource,
-    UINT32 Length
+    size_t Length
     )
 /*++
 
@@ -56,32 +56,17 @@ Arguments:
 
 Return Value:
 
-    The actual length of the move is returned as the fucntion value.
+    The actual length of the move is returned.
 
 --*/
 {
     PVOID BaseDestination = (PVOID)VoidDestination;
-    UINT32 BytesMoved = 0;
+    size_t ActualLength = Length;
 
     // Toplevel volatile is historical and helps avoid
     // the compiler transforming this to memcpy.
     UINT_PTR volatile Destination = (UINT_PTR)VoidDestination;
     UINT_PTR volatile Source = (UINT_PTR)VoidSource;
-
-    //
-    // If the length is greater than the size of the message buffer, then
-    // reduce the length to the size of the message buffer.
-    //
-
-    if (Length > BD_MESSAGE_BUFFER_SIZE)
-    {
-        Length = BD_MESSAGE_BUFFER_SIZE;
-    }
-
-    //
-    // Move the source information to the destination address.
-    //
-    UINT32 ActualLength = Length;
 
     // Copy bytes until aligned.
 
@@ -146,7 +131,7 @@ Return Value:
     // patched using this routine.
     //
 
-    BytesMoved = ActualLength - Length;
+    size_t BytesMoved = ActualLength - Length;
 
     BlArchSweepIcacheRange(BaseDestination, BytesMoved);
 
@@ -160,7 +145,7 @@ VOID
 BdCopyMemory (
     void volatile * volatile VoidDestination,
     void volatile const * volatile VoidSource,
-    UINT32 Length
+    size_t Length
     )
 /*++
 
