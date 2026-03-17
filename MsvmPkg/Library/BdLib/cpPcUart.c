@@ -18,8 +18,6 @@ Abstract:
 #include "cp.h"
 #include "Bd.h"
 
-#define FlagOn(_F,_SF) (!!((_F) & (_SF)))
-
 UINT8 CpLastError;
 
 UINT8
@@ -85,32 +83,6 @@ Return Value:
     {
         IoWrite8(Port->Address.IoPort + RegisterNumber, Value);
     }
-}
-
-VOID
-CppCheckPowerButton(
-    VOID
-    )
-/*++
-
-Routine Description:
-
-    This routine checks to see if the machine is trying to be powered down.
-
-Arguments:
-
-    None.
-
-Return Value:
-
-    None.
-
---*/
-{
-    //
-    // Not relevant in a VM.
-    //
-    return;
 }
 
 VOID
@@ -293,7 +265,6 @@ Return Value:
 
     if (Port->Address.Type == CpPortTypeUninitialized)
     {
-        CppCheckPowerButton();
         return CpStatusNoData;
     }
 
@@ -351,33 +322,6 @@ Return Value:
     Port->LastLsr = 0;
     CppPortReadLsr(Port, 0);
     return CpStatusNoData;
-}
-
-BOOLEAN
-CpPortDataReady(
-    __in PCP_PORT Port
-    )
-/*++
-
-Routine Description:
-
-    This routine returns back if data is available on the serial
-    port
-
-Arguments:
-
-    Port - Supplies a pointer to the COM port object.
-
-
-Return Value:
-
-    BOOLEAN
-
---*/
-{
-    UINT8 lsr = CppPortReadLsr(Port, COM_DATRDY);
-
-    return (lsr != SERIAL_LSR_NOT_PRESENT) && FlagOn(lsr, COM_DATRDY);
 }
 
 // ------------------------------------------------------------ Local Functions
@@ -493,8 +437,6 @@ Return Value:
     {
         return lsr;
     }
-
-    CppCheckPowerButton();
 
     if ((lsr == Port->LastLsr) && (msr == Port->LastMsr))
     {

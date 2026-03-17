@@ -183,29 +183,3 @@ Return Value:
 }
 
 
-BOOLEAN
-CpPortDataReady(
-    __in PCP_PORT Port
-    )
-/*++
-
-Routine Description:
-
-    This routine returns back if data is available on the serial
-    port
-
-Arguments:
-
-    Port - Supplies a pointer to the COM port object.
-
-
-Return Value:
-
-    BOOLEAN
-
---*/
-{
-    return PL011UartPoll(Port->Address.MmioAddress);
-}
-
-

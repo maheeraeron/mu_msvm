@@ -131,11 +131,6 @@ CppPortWriteRegister8(
     );
 
 VOID
-CppCheckPowerButton(
-    VOID
-    );
-
-VOID
 CppDumpPortString(
     __in PSTR String
     );

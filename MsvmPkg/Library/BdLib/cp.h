@@ -130,9 +130,4 @@ CpPortRead(
     __in BOOLEAN WaitForByte
     );
 
-BOOLEAN
-CpPortDataReady(
-    __in PCP_PORT Port
-    );
-
 
