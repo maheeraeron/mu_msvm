@@ -207,29 +207,6 @@ extern BD_CONNECTION_TYPE BdDebuggerType;
 
 // ----------------------------------------------------------------- Prototypes
 
-BOOLEAN
-BdDebuggerEnabled (
-    VOID
-    );
-
-/*++
-
-Routine Description:
-
-    This routine returns a BOOLEAN indicating the status of the debugger
-    connection.
-
-Arguments:
-
-    None.
-
-Return Value:
-
-    TRUE if a debugger connection is established.
-    FALSE otherwise.
-
---*/
-
 NTSTATUS
 BdInitialize (
     _In_opt_ VOID *Hob

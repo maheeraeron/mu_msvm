@@ -100,53 +100,6 @@ BdpReconfigureDebuggerDevice (
 
 // ------------------------------------------------------------------ Functions
 
-BOOLEAN
-BdDebuggerEnabled (
-    VOID
-    )
-/*++
-
-Routine Description:
-
-    This routine returns a BOOLEAN indicating the status of the debugger
-    connection.
-
-Arguments:
-
-    None.
-
-Return Value:
-
-    TRUE if a debugger connection is established.
-    FALSE otherwise.
-
---*/
-{
-
-    BOOLEAN debuggerEnabled;
-    BOOLEAN debuggerInitialized;
-
-    //
-    // N.B. This routine does not have interface enter/exit calls to ensure
-    //      that it can be called from any context, most notably from physical
-    //      mode in a virtual mode application.  This is required because this
-    //      routine is called during the execution of asserts.
-    //
-
-    debuggerInitialized = BdDebuggerInitialized();
-    if ((debuggerInitialized != FALSE) && (BdDebuggerNotPresent == FALSE))
-    {
-        debuggerEnabled = TRUE;
-    }
-    else
-    {
-        debuggerEnabled = FALSE;
-    }
-
-    return debuggerEnabled;
-}
-
-
 VOID
 BdNotifyShutdown(
     INTN       Reason
