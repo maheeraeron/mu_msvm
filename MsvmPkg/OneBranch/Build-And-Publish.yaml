@@ -8,170 +8,253 @@ parameters:
 - name: publishNuget
   type: boolean
   default: false
+- name: Builds
+  type: object
+  # gcc is not to ship, because no Codeview and 64K aligned files (64K is easily fixed by using mingw tools).
+  # gcc could be Windows-hosted if backward slashes are fixed.
+  # Clang/amd64 is not yet to ship, stubs out assembly.
+  default: [
+    # TODO: What order for the columns?
+    # TODO: What redundancy vs. derivation?
+    {Pool: Windows, Windows: true, Arch:     X64, Target:   DEBUG, ToolChainTag:   VS2022, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Windows, Windows: true, Arch:     X64, Target: RELEASE, ToolChainTag:   VS2022},
+    {Pool: Windows, Windows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag:   VS2022},
+    {Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag:   VS2022},
+
+    #
+    # Salt (flavor?):
+    # Arch (not needed)   Target (not needed)    Tool          BuildHostOs (Pool)
+    # A arm64             D debug                G gcc         L Linux
+    # X X64               R release              C clang       W Windows
+    #                                            V VS? M MSVC?
+    #                                            M Mingw?
+    #                                            CP CLANGPDB?
+    #                                            CD CLANGDWARF?
+    #                                            CE CLANGELF?
+    #                                            CP CLANGPE?
+    #                                            GE GCCELF?
+    #                                            GP GCCPE?
+    #
+    # Probably this should be the order for these columns.
+    #
+
+    {Pool: Windows, Windows: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .XDCW, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Windows, Windows: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .XRCW},
+    {Pool: Windows, Windows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .ADCW},
+    {Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .ARCW},
+
+    {Pool: Linux, Linux: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .XDCL, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Linux, Linux: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .XRCL},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .ADCL},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .ARCL},
+
+    {Pool: Linux, Linux: true, Arch:     X64, Target:   DEBUG, ToolChainTag:      GCC, DotSalt: .XDGL, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Linux, Linux: true, Arch:     X64, Target: RELEASE, ToolChainTag:      GCC, DotSalt: .XRGL},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag:      GCC, DotSalt: .ADGL},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target: RELEASE, ToolChainTag:      GCC, DotSalt: .ARGL},
+    ]
 
 jobs:
-- job: job
-  pool:
-    type: windows
-  strategy:
-    matrix:
-      TARGET_DEBUG_X64:
-        Build.Target: 'DEBUG'
-        Build.Arch: 'X64'
-        Build.Extra: 'BLD_*_LEGACY_DEBUGGER=1'
-      TARGET_RELEASE_X64:
-        Build.Target: 'RELEASE'
-        Build.Arch: 'X64'
-        Build.Extra: ''
-      TARGET_DEBUG_AARCH64:
-        Build.Target: 'DEBUG'
-        Build.Arch: 'AARCH64'
-        Build.Extra: ''
-      TARGET_RELEASE_AARCH64:
-        Build.Target: 'RELEASE'
-        Build.Arch: 'AARCH64'
-        Build.Extra: ''
-  variables:
-    Build.ToolChainTag: "VS2022"
-    Env.PythonVersion: "3.10"
-    GIT_TERMINAL_PROMPT: "0"
-    ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
-    ob_nugetPublishing_enabled:  ${{parameters.publishNuget}}
-    ob_artifactSuffix: '_$(Build.Arch)_$(Build.Target)'
-    ${{ if eq(parameters.pipeline, 'Official') }}:
-      ob_createvpack_vpackdirectory: '$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin'
-    PlatformPkg: "MsvmPkg"
-    WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # https://aka.ms/obpipelines/containers
-  steps:
-  - task: NuGetAuthenticate@1
-    inputs:
-      nuGetServiceConnections: WindowsPartners_NugetFeedConnection
-  - task: PipAuthenticate@1
-    displayName: 'Pip authenticate'
-    inputs:
-      artifactFeeds: '$(System.TeamProject)/$(System.TeamProject)_PublicPackages'
-  - task: AzurePowerShell@5
-    displayName: 'Set the access token'
-    env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-    inputs:
-      azureSubscription: 'hyperv.uefi OneBranch Service Connection'
-      ScriptType: 'InlineScript'
-      azurePowerShellVersion: LatestVersion
-      pwsh: true
-      Inline: |
-        git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
-        git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
-  - script: python --version
-    displayName: python_version
-  #- task: UsePythonVersion@0
-  #  displayName: 'Install Python $(Env.PythonVersion)'
-  #  inputs:
-  #    versionSpec: '$(Env.PythonVersion)'
-  #    architecture: 'x64'
-  - script: python -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir
-    displayName: 'Add mu_build pip'
-  - script: python $(PlatformPkg)/PlatformBuild.py --setup
-    displayName: 'Platform build Setup'
-  - script: python $(PlatformPkg)/PlatformBuild.py --update
-    displayName: 'Platform build Update'
-  - script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
-    displayName: 'Run Build '
-  - script: |
-      ls   Build        2>nul || true
-      dir  Build        2>nul || true
-      cat  Build/B*.txt 2>nul || true
-      type Build\B*.txt 2>nul || true
-    displayName: "logs"
-    condition: succeededOrFailed()
-    continueOnError: true
-  - task: CopyFiles@2
-    displayName: "Copy build logs"
-    inputs:
-      targetFolder: "$(Build.ArtifactStagingDirectory)"
-      SourceFolder: "Build"
-      contents: |
-        BuildLog.txt
-        BUILDLOG_*.txt
-        BUILDLOG_*.md
-        **/BUILD_REPORT.txt
-        CI_*.txt
-        CI_*.md
-        CISETUP.txt
-        SETUPLOG.txt
-        UPDATE_LOG.txt
-        PREVALLOG.txt
-        TestSuites.xml
-        **/BUILD_TOOLS_REPORT.html
-        **/OVERRIDELOG.TXT
-        BASETOOLS_BUILD*.*
-        **/FD_REPORT.HTML
-      flattenFolders: true
-    condition: succeededOrFailed()
-  - task: CopyFiles@2
-    continueOnError: true
-    displayName: "Copy Files for 'Publish build logs' publish task"
-    inputs:
-      SourceFolder: "$(Build.ArtifactStagingDirectory)"
-      Contents: '**'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Build Logs $(System.JobName)
-    condition: succeededOrFailed()
-  - task: CopyFiles@2
-    displayName: "Copy Files for 'Publish Artifact: Firmware Bin File $(Build.Target)_$(Build.Arch)' publish task"
-    inputs:
-      Contents: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Binary File $(Build.Target)_$(Build.Arch)
-  - task: CopyFiles@2
-    displayName: "Copy Files for 'Publish Artifact: Firmware PDB Files $(Build.Target)_$(Build.Arch)' publish task"
-    inputs:
-      SourceFolder: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/'
-      Contents: '**'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware PDB Files $(Build.Target)_$(Build.Arch)
-  - task: CopyFiles@2
-    displayName: "Copy Files for 'Publish Artifact: Firmware Map Files $(Build.Target)_$(Build.Arch)' publish task"
-    inputs:
-      SourceFolder: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/MAP/'
-      Contents: '**'
-      TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Map Files $(Build.Target)_$(Build.Arch)
-  - task: PublishSymbols@2
-    displayName: 'Publish symbols to the symbol server'
-    inputs:
-      SearchPattern: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/*.pdb'
-      IndexSources: true
-      SymbolServerType: 'TeamServices'
-      SymbolsProduct: 'Hyper-V UEFI'
-      enablesymbolspublishing: true
-    continueOnError: true
-  - task: Powershell@2
-    displayName: 'Compute Hash and copy firmware to vpack folder'
-    inputs:
-      targetType: 'inline'
-      script: |
-        $LocalCommit = & 'git' rev-parse "@"
-        Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
-        $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
-        New-Item $folder -Type Directory
-        copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd" $folder
-        copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/$(Build.Arch)/MsvmPkg/AcpiTables/AcpiTables/OUTPUT/Dsdt.aml" $folder
-        copy-item "MsvmPkg/Include/BiosInterface.h" $folder
-  - task: Powershell@2
-    displayName: 'Copy PDBs'
-    inputs:
-      targetType: 'inline'
-      script: |
-        $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
-        copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB" $folder -Recurse
-  - ${{ if eq(parameters.publishNuget, true) }}:
-    - task: NuGetCommand@2
-      displayName: 'Pack the NuGet package'
-      inputs:
-        command: 'pack'
-        packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
-        packDestination: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/packages'
-        packTimezone: 'utc'
-        buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer)-$(Build.SourceBranchName).$(Build.SourceVersion)'
-  - script: |
-      git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader
-      git config --global --unset http.https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal.extraheader
-      git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader
-    displayName: 'Unset access token'
+  - ${{ each Build in parameters.Builds }}:
+    # Keep historical job names for VS2022 and append _(Windows|Linux) for GCC/CLANGPDB.
+    - job: ${{Build.Target}}_${{Build.Arch}}_${{Build.ToolChainTag}}${{iif(ne(Build.ToolChainTag, 'VS2022'), format('_{0}', Build.Pool), '')}}
+      pool:
+        type: ${{ Build.Pool }}
+      variables:
+        Build.Arch: ${{Build.Arch}}
+        Build.Extra: ${{Build.Extra}}
+        Build.Target: ${{Build.Target}}
+        Build.ToolChainTag: ${{Build.ToolChainTag}}
+        DotSalt: ${{Build.DotSalt}}
+        Env.PythonVersion: "3.10"
+        GCC_AARCH64_PREFIX: '/usr/bin/aarch64-linux-gnu-'
+        GCC_X64_PREFIX: '/usr/bin/x86_64-linux-gnu-'
+        GIT_TERMINAL_PROMPT: "0"
+        # Trailing slash is required. Setting this unconditionally (in vars.xml) breaks Linux build.
+        ${{ if Build.Windows }}:
+          CLANG_BIN: 'C:\program files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\'
+
+        # https://eng.ms/docs/products/onebranch/infrastructureandimages/containerimages/containerimages
+        # TODO: Switch to AzureLinux
+        LinuxContainerImage:   'onebranch.azurecr.io/linux/ubuntu-2404:latest'
+
+        ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
+        ob_nugetPublishing_enabled: ${{parameters.publishNuget}}
+        # Job name is included in artifact path and non-matrix job names must be unique.
+        # Otherwise we would have "UnderSalt" like "DotSalt".
+        # ob_artifactSuffix: '_$(Build.Arch)_$(Build.Target)'
+        ${{ if eq(parameters.pipeline, 'Official') }}:
+          ob_createvpack_vpackdirectory: '$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin'
+        PlatformPkg: "MsvmPkg"
+        ToolChainTag: ${{Build.ToolChainTag}}
+        WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # https://aka.ms/obpipelines/containers
+      steps:
+
+      - task: NuGetAuthenticate@1
+        inputs:
+          nuGetServiceConnections: WindowsPartners_NugetFeedConnection
+
+      - task: PipAuthenticate@1
+        displayName: 'Pip authenticate'
+        inputs:
+          artifactFeeds: '$(System.TeamProject)/$(System.TeamProject)_PublicPackages'
+
+      - task: AzurePowerShell@5
+        displayName: 'Set the access token'
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        inputs:
+          azureSubscription: 'hyperv.uefi OneBranch Service Connection'
+          ScriptType: 'InlineScript'
+          azurePowerShellVersion: LatestVersion
+          pwsh: true
+          Inline: |
+            git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
+            git config --global http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader "AUTHORIZATION: Bearer $(System.AccessToken)"
+
+      - script: python --version
+        displayName: python_version
+
+      # Python install fails on Linux and is not needed in any case.
+      #- task: UsePythonVersion@0
+      #  displayName: 'Install Python $(Env.PythonVersion)'
+      #  inputs:
+      #    versionSpec: '$(Env.PythonVersion)'
+      #    architecture: 'x64'
+
+      # gcc-* fails because of multiple version numbers.
+      - ${{ if Build.Linux }}:
+        - bash: |
+            set -e
+            set -x
+            sudo apt-get update -y
+            sudo apt-get install -y make uuid-dev clang lld llvm \
+                binutils binutils-aarch64-linux-gnu binutils-x86-64-linux-gnu \
+                gcc g++ \
+                gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+                gcc-x86-64-linux-gnu  g++-x86-64-linux-gnu
+          displayName: apt
+
+      - script: python -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir
+        displayName: 'Add mu_build pip'
+
+      - script: python $(PlatformPkg)/PlatformBuild.py --setup
+        displayName: 'Platform build Setup'
+
+      - script: python $(PlatformPkg)/PlatformBuild.py --update
+        displayName: 'Platform build Update'
+
+      - script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
+        displayName: 'Run Build '
+
+      - script: |
+          ls   Build        2>nul || true
+          dir  Build        2>nul || true
+          cat  Build/B*.txt 2>nul || true
+          type Build\B*.txt 2>nul || true
+        displayName: "logs"
+        condition: succeededOrFailed()
+        continueOnError: true
+
+      - task: CopyFiles@2
+        displayName: "Copy build logs"
+        inputs:
+          targetFolder: "$(Build.ArtifactStagingDirectory)"
+          SourceFolder: "Build"
+          contents: |
+            BuildLog.txt
+            BUILDLOG_*.txt
+            BUILDLOG_*.md
+            **/BUILD_REPORT.txt
+            CI_*.txt
+            CI_*.md
+            CISETUP.txt
+            SETUPLOG.txt
+            UPDATE_LOG.txt
+            PREVALLOG.txt
+            TestSuites.xml
+            **/BUILD_TOOLS_REPORT.html
+            **/OVERRIDELOG.TXT
+            BASETOOLS_BUILD*.*
+            **/FD_REPORT.HTML
+          flattenFolders: true
+        condition: succeededOrFailed()
+
+      - task: CopyFiles@2
+        continueOnError: true
+        displayName: "Copy Files for 'Publish build logs' publish task"
+        inputs:
+          SourceFolder: "$(Build.ArtifactStagingDirectory)"
+          Contents: '**'
+          TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Build Logs $(System.JobName)
+        condition: succeededOrFailed()
+
+      - task: CopyFiles@2
+        displayName: "Copy FV/MSVM.fd for 'Publish Artifact: Firmware Bin File $(Build.Target)_$(Build.Arch)' publish task"
+        inputs:
+          Contents: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/MSVM.fd'
+          TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Binary File $(Build.Target)_$(Build.Arch)
+
+      - ${{ if ne(Build.ToolChainTag, 'GCC')}}:
+        - task: CopyFiles@2
+          displayName: "Copy PDB/ for 'Publish Artifact: Firmware Bin File $(Build.Target)_$(Build.Arch)' publish task"
+          inputs:
+            SourceFolder: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/'
+            Contents: '**'
+            TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware PDB Files $(Build.Target)_$(Build.Arch)
+
+      - task: CopyFiles@2
+        displayName: "Copy MAP/ for 'Publish Artifact: Firmware Map Files $(Build.Target)_$(Build.Arch)' publish task"
+        inputs:
+          SourceFolder: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/MAP/'
+          Contents: '**'
+          TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Firmware Map Files $(Build.Target)_$(Build.Arch)
+
+      - ${{ if ne(Build.ToolChainTag, 'GCC')}}:
+        - task: PublishSymbols@2
+          displayName: 'Publish symbols to the symbol server'
+          inputs:
+            SearchPattern: 'Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB/*.pdb'
+            IndexSources: true
+            SymbolServerType: 'TeamServices'
+            SymbolsProduct: 'Hyper-V UEFI'
+            enablesymbolspublishing: true
+          continueOnError: true
+
+      - task: Powershell@2
+        displayName: 'Compute Hash and copy firmware to vpack folder'
+        inputs:
+          targetType: 'inline'
+          script: |
+            $LocalCommit = & 'git' rev-parse "@"
+            Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
+            $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
+            New-Item $folder -Type Directory
+            copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/MSVM.fd" $folder
+            copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/$(Build.Arch)/MsvmPkg/AcpiTables/AcpiTables/OUTPUT/Dsdt.aml" $folder
+            copy-item "MsvmPkg/Include/BiosInterface.h" $folder
+
+      - ${{ if ne(Build.ToolChainTag, 'GCC')}}:
+        - task: Powershell@2
+          displayName: 'Copy PDBs to vpack folder'
+          inputs:
+            targetType: 'inline'
+            script: |
+              $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
+              copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB" $folder -Recurse
+
+      - ${{ if eq(parameters.publishNuget, true) }}:
+        - task: NuGetCommand@2
+          displayName: 'Pack the NuGet package'
+          inputs:
+            command: 'pack'
+            packagesToPack: '$(PlatformPkg)/HyperVUefi.NuSpec'
+            packDestination: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/packages'
+            packTimezone: 'utc'
+            buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)$(DotSalt);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer)-$(Build.SourceBranchName).$(Build.SourceVersion)'
+
+      - script: |
+          git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader
+          git config --global --unset http.https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal.extraheader
+          git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader
+        displayName: 'Unset access token'
