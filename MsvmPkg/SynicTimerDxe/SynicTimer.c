@@ -129,14 +129,14 @@ Return Value:
     if (NotifyFunction == NULL && mTimerNotifyFunction == NULL)
     {
         status = EFI_INVALID_PARAMETER;
-        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __func__, status));
         return status;
     }
 
     if (NotifyFunction != NULL && mTimerNotifyFunction != NULL)
     {
         status = EFI_ALREADY_STARTED;
-        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __func__, status));
         return status;
     }
 
@@ -206,7 +206,7 @@ Return Value:
     if (TimerPeriod == NULL)
     {
         status = EFI_INVALID_PARAMETER;
-        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to register handler - %r \n", __func__, status));
         return status;
     }
 
@@ -281,7 +281,7 @@ Return Value:
             messageType = message->Header.MessageType;
             if (messageType != HvMessageTimerExpired)
             {
-                DEBUG((EFI_D_ERROR, "%a: Unexpected message type 0xlx%", __FUNCTION__, messageType));
+                DEBUG((EFI_D_ERROR, "%a: Unexpected message type 0xlx%", __func__, messageType));
             }
             mHv->CompleteSintMessage(mHv, mSintIndex, FALSE);
         }
@@ -328,7 +328,7 @@ Return Value:
     status = gBS->LocateProtocol(&gEfiHvProtocolGuid, NULL, (VOID **)&mHv);
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to locate the HV protocol - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to locate the HV protocol - %r \n", __func__, status));
         goto Cleanup;
     }
 
@@ -345,7 +345,7 @@ Return Value:
 
         if (EFI_ERROR(status))
         {
-            DEBUG((EFI_D_ERROR, "--- %a: failed to connect the SINT - %r \n", __FUNCTION__, status));
+            DEBUG((EFI_D_ERROR, "--- %a: failed to connect the SINT - %r \n", __func__, status));
             goto Cleanup;
         }
 
@@ -364,7 +364,7 @@ Return Value:
                                  SynicTimerInterruptHandler);
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to configure the timer - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to configure the timer - %r \n", __func__, status));
         goto Cleanup;
     }
 
@@ -373,7 +373,7 @@ Return Value:
     status = SynicTimerSetTimerPeriod(&mTimer, PcdGet64(PcdSynicTimerDefaultPeriod));
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to set the timer period - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to set the timer period - %r \n", __func__, status));
         goto Cleanup;
     }
 
@@ -387,7 +387,7 @@ Return Value:
 
     if (EFI_ERROR(status))
     {
-        DEBUG((EFI_D_ERROR, "--- %a: failed to install the protocol - %r \n", __FUNCTION__, status));
+        DEBUG((EFI_D_ERROR, "--- %a: failed to install the protocol - %r \n", __func__, status));
         goto Cleanup;
     }
 

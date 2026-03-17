@@ -108,7 +108,7 @@ Return value:
 
     kdnetHob = NULL;
 
-    BdSerialPrint(">>> %a (%lx, %p, %p)\n", __FUNCTION__, InitFlag, Context, Function);
+    BdSerialPrint(">>> %a (%lx, %p, %p)\n", __func__, InitFlag, Context, Function);
     if (InitFlag == DEBUG_AGENT_INIT_DXE_CORE)
     {
         //
@@ -128,7 +128,7 @@ Return value:
             // We should always be passing this HOB.
             ASSERT(FALSE);
         }
-        BdSerialPrint("--- %a: DebuggerEnabled %a\n", __FUNCTION__,
+        BdSerialPrint("--- %a: DebuggerEnabled %a\n", __func__,
             BdSubsystemEnabled ? "TRUE" : "FALSE");
 
         //
@@ -155,10 +155,10 @@ Return value:
 
     if (Function != NULL)
     {
-        BdSerialPrint("--- %a: Calling function %p\n", __FUNCTION__, Function);
+        BdSerialPrint("--- %a: Calling function %p\n", __func__, Function);
         Function (Context);
     }
-    BdSerialPrint("<<< %a\n", __FUNCTION__);
+    BdSerialPrint("<<< %a\n", __func__);
 }
 
 

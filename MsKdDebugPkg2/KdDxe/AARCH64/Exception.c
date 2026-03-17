@@ -600,7 +600,7 @@ KdDxeExceptionInitialize (
 
   Status = gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, (VOID **)&mKdDxeCpu);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: Locate(gEfiCpuArchProtocolGuid) failed, Status = (%r).\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: Locate(gEfiCpuArchProtocolGuid) failed, Status = (%r).\n", __func__, Status));
     ASSERT_EFI_ERROR (Status);
     goto Cleanup;
   }
@@ -612,7 +612,7 @@ KdDxeExceptionInitialize (
                         );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: RegisterInterruptHandler failed, Status = (%r).\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: RegisterInterruptHandler failed, Status = (%r).\n", __func__, Status));
     ASSERT_EFI_ERROR (Status);
     mKdDxeCpu = NULL;
     goto Cleanup;
@@ -650,7 +650,7 @@ KdDxeExceptionDestroy (
                           );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: RegisterInterruptHandler failed, Status = (%r).\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: RegisterInterruptHandler failed, Status = (%r).\n", __func__, Status));
       ASSERT_EFI_ERROR (Status);
     }
   }

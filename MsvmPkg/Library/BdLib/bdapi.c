@@ -364,7 +364,7 @@ Return Value:
     status = STATUS_SUCCESS;
     portOpened = FALSE;
 
-    BdSerialPrint(">>> %a\n", __FUNCTION__);
+    BdSerialPrint(">>> %a\n", __func__);
 
     //
     // Initialization that is always performed (this includes debugger reinitialization).
@@ -499,7 +499,7 @@ InitializeEnd:
         BdArchDestroy();
     }
 
-    BdSerialPrint("<<< %a: %r\n", __FUNCTION__, status);
+    BdSerialPrint("<<< %a: %r\n", __func__, status);
 
     return status;
 }

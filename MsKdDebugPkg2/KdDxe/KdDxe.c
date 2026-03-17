@@ -141,7 +141,7 @@ KdDxeTimerInitialize (
                     TimerPeriodic,
                     10000000
                     );
-    DEBUG ((DEBUG_INFO, "%a: Setting Timer Event. Code=%r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_INFO, "%a: Setting Timer Event. Code=%r\n", __func__, Status));
   }
 
   return;
@@ -201,7 +201,7 @@ KdDxeInitialize (
 {
   EFI_STATUS  Status;
 
-  DEBUG ((DEBUG_INFO, "%a: Entry.\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Entry.\n", __func__));
 
   //
   // Initialize the test pattern.
@@ -218,7 +218,7 @@ KdDxeInitialize (
   //
 
   if (IsSourceDebugEnabled (DEBUG_AGENT_INIT_DXE_CORE) == FALSE) {
-    DEBUG ((DEBUG_INFO, "%a: debugger not enabled, going to cleanup!\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: debugger not enabled, going to cleanup!\n", __func__));
     Status = EFI_SUCCESS;
     goto Cleanup;
   }
@@ -229,7 +229,7 @@ KdDxeInitialize (
 
   Status = KdDxeExceptionInitialize ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: KdDxeExceptionInitialize failed, Status = (%r).\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: KdDxeExceptionInitialize failed, Status = (%r).\n", __func__, Status));
     ASSERT_EFI_ERROR (Status);
     goto Cleanup;
   }
@@ -251,13 +251,13 @@ KdDxeInitialize (
   //
   Status = KdTransportLibInitialize ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: KdTransportLibInitialize failed, Status = (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: KdTransportLibInitialize failed, Status = (%r)\n", __func__, Status));
     goto Cleanup;
   }
 
   Status = KdProtocolLibInitialize ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: KdProtocolLibInitialize failed, Status = (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: KdProtocolLibInitialize failed, Status = (%r)\n", __func__, Status));
     goto Cleanup;
   }
 
@@ -271,7 +271,7 @@ KdDxeInitialize (
                   (VOID *)&mKdPrint
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: mMsKdDxeDebugPrintProtocol install failed, Status = (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: mMsKdDxeDebugPrintProtocol install failed, Status = (%r)\n", __func__, Status));
     goto Cleanup;
   }
 
@@ -281,7 +281,7 @@ KdDxeInitialize (
   // This will attempt to be printed to the KD. If it doesn't succeeed, the
   // transport lib will recognize that the KD is not connected.
   //
-  DEBUG ((DEBUG_ERROR, "%a - EfiKd: Trying to initialize!\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "%a - EfiKd: Trying to initialize!\n", __func__));
 
   //
   // Initialize symbol support.
@@ -300,6 +300,6 @@ KdDxeInitialize (
 
 Cleanup:
 
-  DEBUG ((DEBUG_INFO, "%a: Exit (%r).\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: Exit (%r).\n", __func__, Status));
   return Status;
 }

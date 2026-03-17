@@ -101,7 +101,7 @@ KdDxeLoadedImageCallback (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: HandleProtocol failed, Status = %r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: HandleProtocol failed, Status = %r\n", __func__, Status));
       break;
     }
 

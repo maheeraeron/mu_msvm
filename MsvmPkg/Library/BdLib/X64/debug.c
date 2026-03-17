@@ -69,7 +69,7 @@ Return Value:
 {
     BOOLEAN hardwareIsolated = FALSE;
 
-    BdSerialPrint(">>> %a\n", __FUNCTION__);
+    BdSerialPrint(">>> %a\n", __func__);
     //
     // Allocate the boot debugger PCR.
     //
@@ -158,7 +158,7 @@ Return Value:
     //
 
     BdArchBlockDebuggerOperation = FALSE;
-    BdSerialPrint("<<< %a\n", __FUNCTION__);
+    BdSerialPrint("<<< %a\n", __func__);
     return STATUS_SUCCESS;
 }
 
