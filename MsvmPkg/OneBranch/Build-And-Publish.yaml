@@ -17,11 +17,11 @@ jobs:
     matrix:
       TARGET_DEBUG_X64:
         Build.Target: 'DEBUG'
-        Build.Arch: 'x64'
+        Build.Arch: 'X64'
         Build.Extra: 'BLD_*_LEGACY_DEBUGGER=1'
-      TARGET_RELEASE_x64:
+      TARGET_RELEASE_X64:
         Build.Target: 'RELEASE'
-        Build.Arch: 'x64'
+        Build.Arch: 'X64'
         Build.Extra: ''
       TARGET_DEBUG_AARCH64:
         Build.Target: 'DEBUG'
@@ -69,32 +69,22 @@ jobs:
   #  inputs:
   #    versionSpec: '$(Env.PythonVersion)'
   #    architecture: 'x64'
-  - task: CmdLine@2
+  - script: python -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir
     displayName: 'Add mu_build pip'
-    inputs:
-      script: python -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir   
-  - task: CmdLine@2
+  - script: python $(PlatformPkg)/PlatformBuild.py --setup
     displayName: 'Platform build Setup'
-    inputs:
-      script: python $(PlatformPkg)/PlatformBuild.py --setup
-  - task: CmdLine@2
+  - script: python $(PlatformPkg)/PlatformBuild.py --update
     displayName: 'Platform build Update'
-    inputs:
-      script: python $(PlatformPkg)/PlatformBuild.py --update
-  - task: CmdLine@2
+  - script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
     displayName: 'Run Build '
-    inputs:
-      script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
-  - task: CmdLine@2
+  - script: |
+      ls   Build        2>nul || true
+      dir  Build        2>nul || true
+      cat  Build/B*.txt 2>nul || true
+      type Build\B*.txt 2>nul || true
     displayName: "logs"
     condition: succeededOrFailed()
     continueOnError: true
-    inputs:
-      script: |
-        ls   Build        2>nul || true
-        dir  Build        2>nul || true
-        cat  Build/B*.txt 2>nul || true
-        type Build\B*.txt 2>nul || true
   - task: CopyFiles@2
     displayName: "Copy build logs"
     inputs:
@@ -152,20 +142,25 @@ jobs:
       SymbolsProduct: 'Hyper-V UEFI'
       enablesymbolspublishing: true
     continueOnError: true
-  - ${{ if eq(parameters.pipeline, 'Official') }}:
-    - task: Powershell@2
-      displayName: 'Compute Hash and copy firmware to vpack folder'
-      inputs:
-        targetType: 'inline'
-        script: |
-          $LocalCommit = & 'git' rev-parse "@"
-          Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
-          $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
-          New-Item $folder -Type Directory
-          copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd" $folder
-          copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB" $folder -Recurse
-          copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/$(Build.Arch)/MsvmPkg/AcpiTables/AcpiTables/OUTPUT/Dsdt.aml" $folder
-          copy-item "MsvmPkg/Include/BiosInterface.h" $folder
+  - task: Powershell@2
+    displayName: 'Compute Hash and copy firmware to vpack folder'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $LocalCommit = & 'git' rev-parse "@"
+        Write-Host "##vso[task.setvariable variable=Build.CommitHash]$LocalCommit"
+        $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
+        New-Item $folder -Type Directory
+        copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/FV/Msvm.fd" $folder
+        copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/$(Build.Arch)/MsvmPkg/AcpiTables/AcpiTables/OUTPUT/Dsdt.aml" $folder
+        copy-item "MsvmPkg/Include/BiosInterface.h" $folder
+  - task: Powershell@2
+    displayName: 'Copy PDBs'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $folder = "$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin"
+        copy-item "Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/PDB" $folder -Recurse
   - ${{ if eq(parameters.publishNuget, true) }}:
     - task: NuGetCommand@2
       displayName: 'Pack the NuGet package'
@@ -175,11 +170,8 @@ jobs:
         packDestination: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/packages'
         packTimezone: 'utc'
         buildProperties: 'id=$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target);version=$(Parameters.vPack.majorVer).$(Parameters.vPack.minorVer)-$(Build.SourceBranchName).$(Build.SourceVersion)'
-  - task: Powershell@2
+  - script: |
+      git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader
+      git config --global --unset http.https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal.extraheader
+      git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader
     displayName: 'Unset access token'
-    inputs:
-      targetType: 'inline'
-      script: |
-        git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_basecore.extraheader
-        git config --global --unset http.https://dev.azure.com/windowspartners/MSCoreUEFI/_git/Core_UEFI_Internal.extraheader
-        git config --global --unset http.https://dev.azure.com/microsoft/OS/_git/hyperv.uefi.mu_tiano_plus.extraheader
