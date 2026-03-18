@@ -200,7 +200,7 @@ Return Value:
     // return an unsuccessful status.
     //
 
-    Length = min(a->TransferCount,
+    Length = MIN(a->TransferCount,
                  PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64));
 
     ASSERT(sizeof(PVOID) == sizeof(UINT_PTR));
@@ -236,7 +236,7 @@ Return Value:
         break;
 
     case DEBUG_CONTROL_SPACE_KSPECIAL:
-        Length = min(Length, sizeof(KSPECIAL_REGISTERS));
+        Length = MIN(Length, sizeof(KSPECIAL_REGISTERS));
         BdMoveMemory (AdditionalData->Buffer,
                       (PVOID)&(BdPrcb->ProcessorState.SpecialRegisters),
                       Length);
@@ -298,7 +298,7 @@ Return Value:
 
     UNREFERENCED_PARAMETER(Context);
 
-    Length = min(a->TransferCount, AdditionalData->Length);
+    Length = MIN(a->TransferCount, AdditionalData->Length);
 
     //
     // If the specified control registers are within control space, then
@@ -309,7 +309,7 @@ Return Value:
     switch ( (UINT_PTR)a->TargetBaseAddress ) 
     {
     case DEBUG_CONTROL_SPACE_KSPECIAL:
-        Length = min(Length, sizeof(KSPECIAL_REGISTERS));
+        Length = MIN(Length, sizeof(KSPECIAL_REGISTERS));
         BdMoveMemory((PVOID)&(BdPrcb->ProcessorState.SpecialRegisters),
                          AdditionalData->Buffer,
                          Length);

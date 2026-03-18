@@ -462,7 +462,7 @@ Return Value:
     // Trim the transfer count to fit in a single message.
     //
 
-    length = min(m->u.ReadMemory.TransferCount,
+    length = MIN(m->u.ReadMemory.TransferCount,
                  PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64));
 
     //
@@ -721,7 +721,7 @@ Return Value:
     // Trim transfer count to fit in a single message.
     //
 
-    length = min(a->TransferCount,
+    length = MIN(a->TransferCount,
                  PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64));
 
     //

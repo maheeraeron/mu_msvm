@@ -186,7 +186,7 @@ Return Value:
     // return an unsuccessful status.
     //
 
-    Length = min(a->TransferCount,
+    Length = MIN(a->TransferCount,
                  PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64));
 
     if (((UINTN)a->TargetBaseAddress + Length) <= END_OF_CONTROL_SPACE) {
@@ -259,7 +259,7 @@ Return Value:
     // return an unsuccessful status.
     //
 
-    Length = min(a->TransferCount, AdditionalData->Length);
+    Length = MIN(a->TransferCount, AdditionalData->Length);
     if (((UINTN)a->TargetBaseAddress + Length) <= END_OF_CONTROL_SPACE) {
         BdCopyMemory(Add2Ptr(&BdPrcb->ProcessorState, a->TargetBaseAddress),
                      AdditionalData->Buffer,

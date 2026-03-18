@@ -186,7 +186,7 @@ Return Value:
         }
     } while (returnCode != BD_PACKET_RECEIVED);
 
-    length = min(length, Input->MaximumLength);
+    length = MIN(length, Input->MaximumLength);
     Input->Length = (USHORT)BdMoveMemory((PCHAR)Input->Buffer,
                                             (PCHAR)BdMessageBuffer,
                                             length);

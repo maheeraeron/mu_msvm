@@ -25,35 +25,14 @@ Environment:
 #include <stddef.h>
 #include "AllowNamelessAggregate.h"
 #include "ntstatus.h"
-
-#define min(a,b)    (((a) < (b)) ? (a) : (b))
-
 #include <Private/EfiNt.h>
 #include <Library/BdDebugLib.h>
 
-//
-// Necessary type definitions.
-//
-
 typedef LIST_ENTRY LIST_ENTRY64;
-
-typedef UINT8  volatile* PVUINT8;
-typedef UINT8 BYTE, *PBYTE;
-
+typedef UINT8 BYTE;
 typedef char CCHAR;
 typedef UCHAR KIRQL;
-typedef KIRQL *PKIRQL;
-
-typedef unsigned long DWORD;
-
 typedef ULONG LOGICAL;
-typedef LONG HRESULT;
-#define S_OK    ((HRESULT)0L)
-
-typedef PVOID HANDLE;
-typedef HANDLE *PHANDLE;
-
-typedef DWORD ACCESS_MASK, *PACCESS_MASK;
 
 typedef struct _UNICODE_STRING
 {
@@ -61,8 +40,6 @@ typedef struct _UNICODE_STRING
     UINT16 MaximumLength;
     CHAR16 *Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
-
-#define UNICODE_NULL ((CHAR16)(0))
 
 #ifdef MDE_CPU_X64
 #include "X64/cpu.h"
@@ -585,36 +562,6 @@ BdUnmapVirtualAddress(
     );
 
 //
-// KD file support (file.c).
-//
-
-NTSTATUS
-BdCloseRemoteFile (
-    __in HANDLE Handle
-    );
-
-NTSTATUS
-BdCreateRemoteFile (
-    __out PHANDLE Handle,
-    __out_opt PULONG64 Length,
-    __in PUNICODE_STRING FileName,
-    __in ACCESS_MASK DesiredAccess,
-    __in ULONG FileAttributes,
-    __in ULONG ShareAccess,
-    __in ULONG CreateDisposition,
-    __in ULONG CreateOptions
-    );
-
-NTSTATUS
-BdReadRemoteFile (
-    __in HANDLE Handle,
-    __in ULONG64 Offset,
-    __out_bcount(Length) PVOID Buffer,
-    __in ULONG Length,
-    __out PULONG Completed
-    );
-
-//
 // State change message functions (message.c)
 //
 
@@ -1000,10 +947,6 @@ BdSaveKframe (
     _Inout_ PCONTEXT            ContextRecord
     );
 
-//
-// Define external data.
-//
-
 extern LOGICAL BdArchBlockDebuggerOperation;
 extern BD_BREAKPOINT_TYPE BdBreakpointInstruction;
 extern BREAKPOINT_ENTRY BdBreakpointTable[];
@@ -1042,4 +985,3 @@ BlArchSweepIcacheRange (
   __in PVOID BaseAddress,
   __in SIZE_T Length
   );
-
