@@ -21,5 +21,6 @@ Revision History:
 #pragma once
 
 #define BD_BREAKPOINT_TYPE  UCHAR
+#define BD_BREAKPOINT_SIZE  1
 #define BD_BREAKPOINT_ALIGN 0
 #define BD_BREAKPOINT_VALUE 0xcc

@@ -75,7 +75,7 @@ Return Value:
 
     if (BdMoveMemory((PCHAR)&content,
                         (PCHAR)(UINT_PTR)Address,
-                        sizeof(BD_BREAKPOINT_TYPE) ) != sizeof(BD_BREAKPOINT_TYPE)) 
+                        BD_BREAKPOINT_SIZE) != BD_BREAKPOINT_SIZE)
     {
         accessible = FALSE;
     } 
@@ -88,7 +88,7 @@ Return Value:
     // If the specified address is not write accessible, then return zero.
     //
 
-    if (accessible && !BdWriteCheck(Address))
+    if (accessible && !BdWriteCheck(Address, BD_BREAKPOINT_SIZE))
     {
         return 0;
     }
@@ -122,7 +122,7 @@ Return Value:
         BdBreakpointTable[index].Flags = BD_BREAKPOINT_IN_USE;
         if (BdMoveMemory((PCHAR)(UINT_PTR)Address,
                             (PCHAR)&BdBreakpointInstruction,
-                            sizeof(BD_BREAKPOINT_TYPE)) != sizeof(BD_BREAKPOINT_TYPE)) 
+                            BD_BREAKPOINT_SIZE) != BD_BREAKPOINT_SIZE)
         {
         }
     } 
@@ -183,7 +183,7 @@ Return Value:
 
     if (BdMoveMemory((PCHAR)(UINT_PTR)BdBreakpointTable[Index].Address,
                         (PCHAR)&BdBreakpointTable[Index].Content,
-                        sizeof(BD_BREAKPOINT_TYPE) ) != sizeof(BD_BREAKPOINT_TYPE)) 
+                        BD_BREAKPOINT_SIZE) != BD_BREAKPOINT_SIZE)
     {
         BdBreakpointTable[Index].Flags |= BD_BREAKPOINT_NEEDS_REPLACE;
         return FALSE;
@@ -357,10 +357,7 @@ BdSuspendAllBreakpoints (
     {
         BdSuspendBreakpoint(handle);
     }
-
-    return;
 }
-
 
 LOGICAL
 BdLowRestoreBreakpoint (
@@ -408,10 +405,9 @@ Return Value:
 
     BdMoveMemory((PCHAR)(UINT_PTR)BdBreakpointTable[Index].Address,
                     (PCHAR)&BdBreakpointInstruction,
-                     sizeof(BD_BREAKPOINT_TYPE));
+                     BD_BREAKPOINT_SIZE);
     return TRUE;
 }
-
 
 VOID
 BdRestoreAllBreakpoints (
@@ -431,6 +427,4 @@ BdRestoreAllBreakpoints (
             BdLowRestoreBreakpoint(index);
         }
     }
-
-    return;
 }

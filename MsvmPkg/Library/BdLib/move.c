@@ -61,26 +61,27 @@ Return Value:
 --*/
 {
     PVOID BaseDestination = (PVOID)VoidDestination;
-    size_t ActualLength = Length;
 
     // Toplevel volatile is historical and helps avoid
     // the compiler transforming this to memcpy.
     UINT_PTR volatile Destination = (UINT_PTR)VoidDestination;
     UINT_PTR volatile Source = (UINT_PTR)VoidSource;
 
+    // BdReadCheck and BdWriteCheck are just checks for 4GB.
+    // Use that knowledge to remove them from the loops.
+    if (!Length || !BdReadCheck (Source, Length) || !BdWriteCheck (Destination, Length))
+    {
+        return 0;
+    }
+
+    //
+    // Move the source information to the destination address.
+    //
+
     // Copy bytes until aligned.
 
     while (Length > 0 && ((Source | Destination) & 3))
     {
-        //
-        // Only perform the move operation if it will not generate a page
-        // fault.
-        //
-        if (!BdWriteCheck(Destination) || !BdReadCheck(Source))
-        {
-            break;
-        }
-
         *(UINT8 * volatile)Destination = *(UINT8 * const volatile)Source;
         Destination += 1;
         Source += 1;
@@ -91,15 +92,6 @@ Return Value:
 
     while (Length > 3 && 0 == ((Source | Destination) & 3))
     {
-        //
-        // Only perform the move operation if it will not generate a page
-        // fault.
-        //
-        if (!BdWriteCheck(Destination) || !BdReadCheck(Source))
-        {
-            break;
-        }
-
         *(UINT32 * volatile)Destination = *(UINT32 * const volatile)Source;
         Destination += 4;
         Source += 4;
@@ -110,15 +102,6 @@ Return Value:
 
     while (Length > 0)
     {
-        //
-        // Only perform the move operation if it will not generate a page
-        // fault.
-        //
-        if (!BdWriteCheck(Destination) || !BdReadCheck(Source))
-        {
-            break;
-        }
-
         *(UINT8 * volatile)Destination = *(UINT8 * const volatile)Source;
         Destination += 1;
         Source += 1;
@@ -131,20 +114,17 @@ Return Value:
     // patched using this routine.
     //
 
-    size_t BytesMoved = ActualLength - Length;
+    BlArchSweepIcacheRange(BaseDestination, Length);
 
-    BlArchSweepIcacheRange(BaseDestination, BytesMoved);
-
-    return BytesMoved;
+    return Length;
 }
 
 // Toplevel volatile is historical and helps avoid
 // the compiler transforming this to memcpy.
-
 VOID
 BdCopyMemory (
-    void volatile * volatile VoidDestination,
-    void volatile const * volatile VoidSource,
+    void volatile * volatile Destination,
+    void volatile const * volatile Source,
     size_t Length
     )
 /*++
@@ -155,10 +135,6 @@ Routine Description:
     to the debugger. This allows breakpoints and watch points to be set
     RtlMoveMemory itself without risk of recursive debugger entry and the
     accompanying hang.
-
-    N.B. Unlike BdMoveMemory, this routine does NOT check for accessability
-      and may fault! Use it ONLY in the debugger and ONLY where you could
-      use RtlMoveMemory.
 
 Arguments:
 
@@ -174,14 +150,5 @@ Return Value:
 
 --*/
 {
-    UINT8 volatile * volatile Destination = VoidDestination;
-    UINT8 volatile const * volatile Source = VoidSource;
-
-    while (Length > 0)
-    {
-        *Destination = *Source;
-        Destination += 1;
-        Source += 1;
-        Length -= 1;
-    }
+    BdMoveMemory (Destination, Source, Length);
 }

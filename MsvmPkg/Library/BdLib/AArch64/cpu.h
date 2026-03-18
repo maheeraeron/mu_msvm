@@ -19,5 +19,6 @@ Author:
 #pragma once
 
 #define BD_BREAKPOINT_TYPE  ULONG
+#define BD_BREAKPOINT_SIZE  4
 #define BD_BREAKPOINT_ALIGN 1
 #define BD_BREAKPOINT_VALUE (0xd4200000 | (0xf000 << 5))

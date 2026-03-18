@@ -31,17 +31,20 @@ Revision History:
 
 BOOL
 BdReadCheck (
-    UINT_PTR Address
+    UINT_PTR Address,
+    size_t Size
     )
 /*++
 
 Routine Description:
 
-    This routine determines if the specified address can be read.
+    This routine determines if the specified address+size can be read.
 
 Arguments:
 
     Address - Supplies the virtual address to check.
+
+    Size - Number of bytes.
 
 Return Value:
 
@@ -49,22 +52,27 @@ Return Value:
 
 --*/
 {
-    return Address && Address < 0xFFFFFFFF;
+    UINT_PTR const end = (Address + Size);
+    UINT_PTR const limit = 0xFFFFFFFF;
+    return Address < limit && end <= limit && end >= Address;
 }
 
 BOOL
 BdWriteCheck (
-    UINT_PTR Address
+    UINT_PTR Address,
+    size_t Size
     )
 /*++
 
 Routine Description:
 
-    This routine determines if the specified address can be written.
+    This routine determines if the specified address+size can be written.
 
 Arguments:
 
     Address - Supplies the virtual address to check.
+
+    Size - Number of bytes.
 
 Return Value:
 
@@ -72,7 +80,7 @@ Return Value:
 
 --*/
 {
-    return Address && Address < 0xFFFFFFFF;
+    return BdReadCheck (Address, Size);
 }
 
 PVOID
@@ -107,7 +115,6 @@ Return Value:
 
     return (PVOID)(UINTN)Address;
 }
-
 
 VOID
 BdUnmapVirtualAddress(

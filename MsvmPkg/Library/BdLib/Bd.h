@@ -543,12 +543,14 @@ BdRestoreAllBreakpoints (
 
 BOOL
 BdReadCheck (
-    UINT_PTR Address
+    UINT_PTR Address,
+    size_t Size
     );
 
 BOOL
 BdWriteCheck (
-    UINT_PTR Address
+    UINT_PTR Address,
+    size_t Size
     );
 
 PVOID
