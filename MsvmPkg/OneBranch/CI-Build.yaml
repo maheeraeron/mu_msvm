@@ -17,12 +17,14 @@ resources:
       ref: refs/heads/main
 
 variables:
-  Parameters.vPack.pushPkgName: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
-  Parameters.vPack.majorVer: "25"
-  Parameters.vPack.minorVer: "0"
+- template: vars.yml
+
+# Because we have a template, we must use name/value to add more.
+- name: Parameters.vPack.pushPkgName
+  value: "$(Build.Repository.Name).mscoreuefi.$(Build.Arch).$(Build.Target)"
 
 extends:
-  template: v2/Microsoft.Official.yml@templates_onebranch                   # EXTEND MICROSOFT.OFFICIAL.YML
+  template: v2/Microsoft.Official.yml@templates_onebranch # EXTEND MICROSOFT.OFFICIAL.YML
   parameters:
     platform:
       name: 'windows_undocked'

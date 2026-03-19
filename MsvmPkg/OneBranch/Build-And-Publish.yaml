@@ -8,6 +8,13 @@ parameters:
 - name: publishNuget
   type: boolean
   default: false
+###############################################################################
+# constants
+- name: Nugets
+  type: object
+  default: [
+    {definition: llvm.tools,    version: $(LlvmVersion), feed: $(LlvmFeed), downloadPath: $(PkgLlvm_Tools)},
+    {definition: clang.headers, version: $(LlvmVersion), feed: $(LlvmFeed), downloadPath: $(PkgClang_Headers)}]
 - name: Builds
   type: object
   # gcc is not to ship, because no Codeview and 64K aligned files (64K is easily fixed by using mingw tools).
@@ -22,12 +29,19 @@ parameters:
     {Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag:   VS2022},
 
     #
-    # Salt (flavor?):
-    # Arch (not needed)   Target (not needed)    Tool          BuildHostOs (Pool)
-    # A arm64             D debug                G gcc         L Linux
-    # X X64               R release              C clang       W Windows
-    #                                            V VS? M MSVC?
-    #                                            M Mingw?
+    # Salt (adds to flavor):
+    #
+    # Not perfectly systematic.
+    # CV implies W.
+    # CW implies W.
+    #
+    # Arch (not needed)   Target (not needed)    Tool            BuildHostOS (Pool)
+    # A arm64             D debug                G  gcc          L Linux
+    # X X64               R release              CV ClangVS      W Windows
+    #                                            CW ClangWindows
+    #                                            CL ClangLinux
+    #                                            V  VS? M MSVC?
+    #                                            M  Mingw?
     #                                            CP CLANGPDB?
     #                                            CD CLANGDWARF?
     #                                            CE CLANGELF?
@@ -37,47 +51,60 @@ parameters:
     #
     # Probably this should be the order for these columns.
     #
+    # CLANG_BIN: Trailing slash is required. Setting this unconditionally (in vars.xml) breaks Linux build.
+    {Pool: Windows, Windows: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: XDCV, Env: {CLANG_BIN: $(CLANGVS)/bin/}, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Windows, Windows: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: XRCV, Env: {CLANG_BIN: $(CLANGVS)/bin/}},
+    {Pool: Windows, Windows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: ADCV, Env: {CLANG_BIN: $(CLANGVS)/bin/}},
+    {Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: ARCV, Env: {CLANG_BIN: $(CLANGVS)/bin/}},
 
-    {Pool: Windows, Windows: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .XDCW, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
-    {Pool: Windows, Windows: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .XRCW},
-    {Pool: Windows, Windows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .ADCW},
-    {Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .ARCW},
+    {Pool: Windows, Windows: true, ClangWindows: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: XDCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Windows, Windows: true, ClangWindows: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: XRCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
+    {Pool: Windows, Windows: true, ClangWindows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: ADCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
+    {Pool: Windows, Windows: true, ClangWindows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: ARCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
 
-    {Pool: Linux, Linux: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .XDCL, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
-    {Pool: Linux, Linux: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .XRCL},
-    {Pool: Linux, Linux: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, DotSalt: .ADCL},
-    {Pool: Linux, Linux: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, DotSalt: .ARCL},
+    {Pool: Linux, Linux: true, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: XDCL, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Linux, Linux: true, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: XRCL},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: ADCL},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: ARCL},
 
-    {Pool: Linux, Linux: true, Arch:     X64, Target:   DEBUG, ToolChainTag:      GCC, DotSalt: .XDGL, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
-    {Pool: Linux, Linux: true, Arch:     X64, Target: RELEASE, ToolChainTag:      GCC, DotSalt: .XRGL},
-    {Pool: Linux, Linux: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag:      GCC, DotSalt: .ADGL},
-    {Pool: Linux, Linux: true, Arch: AARCH64, Target: RELEASE, ToolChainTag:      GCC, DotSalt: .ARGL},
+    {Pool: Linux, Linux: true, Arch:     X64, Target:   DEBUG, ToolChainTag:      GCC, Salt: XDG, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {Pool: Linux, Linux: true, Arch:     X64, Target: RELEASE, ToolChainTag:      GCC, Salt: XRG},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag:      GCC, Salt: ADG},
+    {Pool: Linux, Linux: true, Arch: AARCH64, Target: RELEASE, ToolChainTag:      GCC, Salt: ARG}
     ]
-
+###############################################################################
 jobs:
   - ${{ each Build in parameters.Builds }}:
-    # Keep historical job names for VS2022 and append _(Windows|Linux) for GCC/CLANGPDB.
-    - job: ${{Build.Target}}_${{Build.Arch}}_${{Build.ToolChainTag}}${{iif(ne(Build.ToolChainTag, 'VS2022'), format('_{0}', Build.Pool), '')}}
+    # Keep historical job names for VS2022 and append _Salt for GCC/CLANGPDB.
+    - job: ${{Build.Target}}_${{Build.Arch}}_${{Build.ToolChainTag}}${{iif(ne(Build.Salt, ''), format('_{0}', Build.Salt), '')}}
       pool:
         type: ${{ Build.Pool }}
       variables:
+        ${{each pair in Build.Env}}:
+          ${{pair.Key}}: ${{pair.Value}}
         Build.Arch: ${{Build.Arch}}
         Build.Extra: ${{Build.Extra}}
         Build.Target: ${{Build.Target}}
         Build.ToolChainTag: ${{Build.ToolChainTag}}
+        Flavor:             $(Build.Target)_$(Build.Arch)
+        Salt:               $(Build.Salt)
         DotSalt: ${{Build.DotSalt}}
+
+        # Hypothetical Python version to install, not used.
         Env.PythonVersion: "3.10"
+
+        # GCC prefix for Linux-hosted builds.
         GCC_AARCH64_PREFIX: '/usr/bin/aarch64-linux-gnu-'
         GCC_X64_PREFIX: '/usr/bin/x86_64-linux-gnu-'
-        GIT_TERMINAL_PROMPT: "0"
-        # Trailing slash is required. Setting this unconditionally (in vars.xml) breaks Linux build.
-        ${{ if Build.Windows }}:
-          CLANG_BIN: 'C:\program files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\'
 
+        GIT_TERMINAL_PROMPT: "0"
+
+        # Docker images to host pipeline on.
         # https://eng.ms/docs/products/onebranch/infrastructureandimages/containerimages/containerimages
         # TODO: Switch to AzureLinux
         LinuxContainerImage:   'onebranch.azurecr.io/linux/ubuntu-2404:latest'
 
+        BuildDir:           Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)
         ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
         ob_nugetPublishing_enabled: ${{parameters.publishNuget}}
         # Job name is included in artifact path and non-matrix job names must be unique.
@@ -89,7 +116,6 @@ jobs:
         ToolChainTag: ${{Build.ToolChainTag}}
         WindowsContainerImage: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # https://aka.ms/obpipelines/containers
       steps:
-
       - task: NuGetAuthenticate@1
         inputs:
           nuGetServiceConnections: WindowsPartners_NugetFeedConnection
@@ -122,18 +148,38 @@ jobs:
       #    versionSpec: '$(Env.PythonVersion)'
       #    architecture: 'x64'
 
-      # gcc-* fails because of multiple version numbers.
-      - ${{ if Build.Linux }}:
-        - bash: |
-            set -e
-            set -x
-            sudo apt-get update -y
-            sudo apt-get install -y make uuid-dev clang lld llvm \
-                binutils binutils-aarch64-linux-gnu binutils-x86-64-linux-gnu \
-                gcc g++ \
-                gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-                gcc-x86-64-linux-gnu  g++-x86-64-linux-gnu
-          displayName: apt
+      - ${{if Build.Linux}}:
+        - script: sudo apt-get update -y
+          displayName: apt up
+
+        # gcc-* fails because of multiple version numbers.
+        # TODO: Specialize on $ToolChainTag = GCC.
+        - script: |
+            cat $0
+            sudo apt-get install -y gcc binutils \
+              binutils-aarch64-linux-gnu binutils-x86-64-linux-gnu \
+              gcc-aarch64-linux-gnu gcc-x86-64-linux-gnu \
+              clang lld llvm
+
+          displayName: apt inst
+
+      # The nugets are downloaded into a strict read only cachable form, one Nuget per directory, like CoreXT.
+      # But clang wants its headers located differently. Therefore download and copy instead of just download.
+      # One clang nuget would be better in this regard, execute in-place.
+      - ${{if Build.ClangWindows}}:
+        - ${{each Nuget in parameters.Nugets}}:
+          - task: DownloadPackage@1
+            displayName: get ${{Nuget.definition}}
+            inputs: ${{Nuget}}
+        # Always clean install.
+        - script: |
+            @echo on
+            @type %0
+            :: quotes to accomodate forward slashes
+            rmdir /q/s                          "$(CLANGWIN)"
+            xcopy /fivery "$(PkgLlvm_Tools)"    "$(CLANGWIN_BIN)" || goto :eof
+            xcopy /fivery "$(PkgClang_Headers)" "$(CLANGWIN_INC)" || goto :eof
+          displayName: install Windows clang
 
       - script: python -m pip install --upgrade -r pip_requirement_stable.txt --force-reinstall --no-cache-dir
         displayName: 'Add mu_build pip'
@@ -147,14 +193,20 @@ jobs:
       - script: python $(PlatformPkg)/PlatformBuild.py $(Build.Extra) tool_chain_tag=$(Build.ToolChainTag) BUILDREPORTING=TRUE BUILDREPORT_TYPES="PCD DEPEX FLASH BUILD_FLAGS LIBRARY" TARGET=$(Build.Target) BUILD_ARCH=$(Build.Arch) LaunchLogOnSuccess=FALSE LaunchLogOnError=FALSE
         displayName: 'Run Build '
 
-      - script: |
-          ls   Build        2>nul || true
-          dir  Build        2>nul || true
-          cat  Build/B*.txt 2>nul || true
-          type Build\B*.txt 2>nul || true
-        displayName: "logs"
-        condition: succeededOrFailed()
-        continueOnError: true
+      - ${{if Build.Linux}}:
+        - script: |
+            ls   Build
+            cat  Build/B*.txt
+          condition: succeededOrFailed()
+          continueOnError: true
+          displayName: "logs"
+      - ${{else}}:
+        - script: |
+            dir  Build
+            type Build\B*.txt
+          condition: succeededOrFailed()
+          continueOnError: true
+          displayName: "logs"
 
       - task: CopyFiles@2
         displayName: "Copy build logs"
@@ -181,11 +233,21 @@ jobs:
         condition: succeededOrFailed()
 
       - task: CopyFiles@2
+        condition: failed()
+        continueOnError: true
+        displayName: Copy all, for debugging
+        inputs:
+          SourceFolder: Build
+          Contents: '**'
+          TargetFolder: $(ob_outputDirectory)/all for debugging
+
+      - task: CopyFiles@2
         continueOnError: true
         displayName: "Copy Files for 'Publish build logs' publish task"
         inputs:
           SourceFolder: "$(Build.ArtifactStagingDirectory)"
-          Contents: '**'
+          # Nugets are downloaded here so * instead of **.
+          Contents: '*'
           TargetFolder: $(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT/Build Logs $(System.JobName)
         condition: succeededOrFailed()
 
