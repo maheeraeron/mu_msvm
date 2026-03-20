@@ -115,9 +115,7 @@ Return Value:
 
     m->ReturnStatus = STATUS_SUCCESS;
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &messageHeader, NULL);
-    return;
 }
-
 
 VOID
 BdGetContext (
@@ -167,10 +165,7 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     AdditionalData);
-
-    return;
 }
-
 
 VOID
 BdGetContextEx (
@@ -178,7 +173,6 @@ BdGetContextEx (
     __out PSTRING AdditionalData,
     __in PCONTEXT Context
     )
-
 /*++
 
 Routine Description:
@@ -201,9 +195,7 @@ Return Value:
     None.
 
 --*/
-
 {
-
     ULONG ByteCount;
     ULONG ContextLength;
     STRING MessageHeader;
@@ -273,10 +265,7 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                  &MessageHeader,
                  AdditionalData);
-
-    return;
 }
-
 
 VOID
 BdSetContext (
@@ -328,7 +317,6 @@ BdSetContextEnd:
                     NULL);
 }
 
-
 VOID
 BdSetContextEx (
     __in PDBGKD_MANIPULATE_STATE64 m,
@@ -358,9 +346,7 @@ Return Value:
     None.
 
 --*/
-
 {
-
     ULONG ByteCount;
     ULONG ContextLength;
     STRING MessageHeader;
@@ -417,16 +403,12 @@ BdSetContextExEnd:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                  &MessageHeader,
                  NULL);
-
-    return;
 }
-
 
 VOID
 BdReadVirtualMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __out PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __out PSTRING AdditionalData
     )
 /*++
 
@@ -442,8 +424,6 @@ Arguments:
 
     AdditionalData - Supplies a pointer to a descriptor for the data to read.
 
-    Context - Supplies a pointer to the current context.
-
 Return Value:
 
     None.
@@ -452,8 +432,6 @@ Return Value:
 {
     UINT32 length;
     STRING messageHeader;
-
-    UNREFERENCED_PARAMETER(Context);
 
     ASSERT(AdditionalData->MaximumLength == BD_MESSAGE_BUFFER_SIZE);
     __analysis_assume(AdditionalData->MaximumLength == BD_MESSAGE_BUFFER_SIZE);
@@ -495,15 +473,12 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     AdditionalData);
-    return;
 }
-
 
 VOID
 BdWriteVirtualMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     )
 /*++
 
@@ -519,8 +494,6 @@ Arguments:
 
     AdditionalData - Supplies a pointer to a descriptor for the data to write.
 
-    Context - Supplies a pointer to the current context.
-
 Return Value:
 
     None.
@@ -529,8 +502,6 @@ Return Value:
 {
     UINT32 length;
     STRING messageHeader;
-
-    UNREFERENCED_PARAMETER(Context);
 
     //
     // Move the data to the destination buffer.
@@ -561,16 +532,11 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     NULL);
-
-    return;
 }
-
 
 VOID
 BdWriteBreakpoint (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     )
 /*++
 
@@ -584,10 +550,6 @@ Arguments:
 
     m - Supplies the state manipulation message.
 
-    AdditionalData - Supplies any additional data for the message.
-
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
@@ -596,9 +558,6 @@ Return Value:
 {
     PDBGKD_WRITE_BREAKPOINT64 a = &m->u.WriteBreakPoint;
     STRING messageHeader;
-
-    UNREFERENCED_PARAMETER(AdditionalData);
-    UNREFERENCED_PARAMETER(Context);
 
     a->BreakPointHandle = BdAddBreakpoint(a->BreakPointAddress);
     if (a->BreakPointHandle != 0) {
@@ -617,16 +576,11 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     NULL);
-
-    return;
 }
-
 
 VOID
 BdRestoreBreakpoint (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     )
 /*++
 
@@ -640,10 +594,6 @@ Arguments:
 
     m - Supplies the state manipulation message.
 
-    AdditionalData - Supplies any additional data for the message.
-
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
@@ -652,9 +602,6 @@ Return Value:
 {
     PDBGKD_RESTORE_BREAKPOINT a = &m->u.RestoreBreakPoint;
     STRING messageHeader;
-
-    UNREFERENCED_PARAMETER(AdditionalData);
-    UNREFERENCED_PARAMETER(Context);
 
     if (BdDeleteBreakpoint(a->BreakPointHandle)) {
         m->ReturnStatus = STATUS_SUCCESS;
@@ -674,12 +621,10 @@ Return Value:
                     NULL);
 }
 
-
 VOID
 BdReadPhysicalMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __out PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __out PSTRING AdditionalData
     )
 /*++
 
@@ -695,8 +640,6 @@ Arguments:
 
     AdditionalData - Supplies any additional data for the message.
 
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
@@ -708,11 +651,8 @@ Return Value:
     PCHAR destination;
     UINT32 length;
     STRING messageHeader;
-    UINT16 numberBytes;
     PHYSICAL_ADDRESS source;
     PVOID virtualAddress;
-
-    UNREFERENCED_PARAMETER(Context);
 
     ASSERT(AdditionalData->MaximumLength == BD_MESSAGE_BUFFER_SIZE);
     __analysis_assume(AdditionalData->MaximumLength == BD_MESSAGE_BUFFER_SIZE);
@@ -736,77 +676,17 @@ Return Value:
     source = (UINT_PTR)a->TargetBaseAddress;
     destination = AdditionalData->Buffer;
     bytesLeft = (UINT16)length;
-    if(PAGE_ALIGN((PUCHAR)(UINT_PTR)a->TargetBaseAddress) ==
-       PAGE_ALIGN((PUCHAR)((UINT_PTR)a->TargetBaseAddress) + length))
+
+    virtualAddress = BdTranslatePhysicalAddress(source);
+    if (virtualAddress == NULL)
     {
-        //
-        // Memory move starts and ends on the same page.
-        //
-
-        virtualAddress=BdTranslatePhysicalAddress(source);
-        if (virtualAddress == NULL)
-        {
-            AdditionalData->Length = 0;
-        }
-        else
-        {
-            AdditionalData->Length = (UINT16)BdMoveMemory(destination,
-                                                             virtualAddress,
-                                                             bytesLeft);
-
-            bytesLeft = bytesLeft - AdditionalData->Length;
-            BdUnmapVirtualAddress(virtualAddress);
-        }
+        AdditionalData->Length = 0;
     }
     else
     {
-        //
-        // Memory move spans page boundaries
-        //
-
-        virtualAddress=BdTranslatePhysicalAddress(source);
-        if (virtualAddress == NULL)
-        {
-            AdditionalData->Length = 0;
-        }
-        else
-        {
-            numberBytes = (UINT16)(EFI_PAGE_SIZE - BYTE_OFFSET(virtualAddress));
-            AdditionalData->Length = (UINT16)BdMoveMemory(destination,
-                                                             virtualAddress,
-                                                             numberBytes);
-
-            BdUnmapVirtualAddress(virtualAddress);
-            source += numberBytes;
-            destination += numberBytes;
-            bytesLeft = bytesLeft - numberBytes;
-            while(bytesLeft > 0)
-            {
-                //
-                // Transfer a full page or the last bit,
-                // whichever is smaller.
-                //
-
-                virtualAddress = BdTranslatePhysicalAddress(source);
-                if (virtualAddress == NULL)
-                {
-                    break;
-                }
-                else
-                {
-                    numberBytes = (UINT16) ((EFI_PAGE_SIZE < bytesLeft) ? EFI_PAGE_SIZE : bytesLeft);
-                    AdditionalData->Length = AdditionalData->Length +
-                        (UINT16)BdMoveMemory(destination,
-                                                virtualAddress,
-                                                numberBytes);
-
-                    BdUnmapVirtualAddress(virtualAddress);
-                    source += numberBytes;
-                    destination += numberBytes;
-                    bytesLeft = bytesLeft - numberBytes;
-                }
-            }
-        }
+        AdditionalData->Length = (UINT16)BdMoveMemory(destination,
+                                                         virtualAddress,
+                                                         bytesLeft);
     }
 
     if (length == AdditionalData->Length)
@@ -829,16 +709,12 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     AdditionalData);
-
-    return;
 }
-
 
 VOID
 BdWritePhysicalMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     )
 /*++
 
@@ -854,8 +730,6 @@ Arguments:
 
     AdditionalData - Supplies any additional data for the message.
 
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
@@ -867,93 +741,26 @@ Return Value:
     PHYSICAL_ADDRESS destination;
     UINT32 Length;
     STRING messageHeader;
-    UINT16 numberBytes;
     PCHAR source;
     PVOID virtualAddress;
-
-    UNREFERENCED_PARAMETER(Context);
 
     messageHeader.Length = sizeof(*m);
     messageHeader.Buffer = (PCHAR)m;
 
-    //
-    // Since the BdTranslatePhysicalAddress only maps in one physical
-    // page at a time, we need to break the memory move up into smaller
-    // moves which don't cross page boundaries.  There are two cases we
-    // need to deal with.  The area to be moved may start and end on the
-    // same page, or it may start and end on different pages (with an
-    // arbitrary number of pages in between)
-    //
-
     destination = (UINT_PTR)a->TargetBaseAddress;
     source = AdditionalData->Buffer;
     bytesLeft = (UINT16) a->TransferCount;
-    if(PAGE_ALIGN(destination) ==
-       PAGE_ALIGN(destination+bytesLeft))
+    virtualAddress = BdTranslatePhysicalAddress(destination);
+
+    if (virtualAddress == NULL)
     {
-        //
-        // Memory move starts and ends on the same page.
-        //
-
-        virtualAddress = BdTranslatePhysicalAddress(destination);
-        if (virtualAddress == NULL)
-        {
-            Length = 0;
-        }
-        else
-        {
-            Length = (UINT16)BdMoveMemory(virtualAddress,
-                                             source,
-                                             bytesLeft);
-
-            BdUnmapVirtualAddress(virtualAddress);
-            bytesLeft = bytesLeft - (UINT16)Length;
-        }
+        Length = 0;
     }
     else
     {
-        //
-        // Memory move spans page boundaries
-        //
-
-        virtualAddress = BdTranslatePhysicalAddress(destination);
-        if (virtualAddress == NULL)
-        {
-            Length = 0;
-        }
-        else
-        {
-            numberBytes = (UINT16) (EFI_PAGE_SIZE - BYTE_OFFSET(virtualAddress));
-            Length = (UINT16)BdMoveMemory(virtualAddress,
-                                             source,
-                                             numberBytes);
-
-            BdUnmapVirtualAddress(virtualAddress);
-            source += numberBytes;
-            destination += numberBytes;
-            bytesLeft = bytesLeft - numberBytes;
-            while(bytesLeft > 0)
-            {
-                //
-                // Transfer a full page or the last bit, whichever is smaller.
-                //
-
-                virtualAddress = BdTranslatePhysicalAddress(destination);
-                if (virtualAddress == NULL) {
-                    break;
-                }
-
-                numberBytes = (UINT16) ((EFI_PAGE_SIZE < bytesLeft) ? EFI_PAGE_SIZE : bytesLeft);
-                Length += (UINT16)BdMoveMemory(virtualAddress,
-                                                  source,
-                                                  numberBytes);
-
-                BdUnmapVirtualAddress(virtualAddress);
-                source += numberBytes;
-                destination += numberBytes;
-                bytesLeft = bytesLeft - numberBytes;
-            }
-        }
+        Length = (UINT16)BdMoveMemory(virtualAddress,
+                                         source,
+                                         bytesLeft);
     }
 
     if (Length == AdditionalData->Length)
@@ -969,16 +776,12 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     NULL);
-
-    return;
 }
-
 
 NTSTATUS
 BdWriteBreakPointEx (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     )
 /*++
 
@@ -1003,8 +806,6 @@ Arguments:
 
     AdditionalData - Supplies any additional data for the message.
 
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
@@ -1017,8 +818,6 @@ Return Value:
     STRING messageHeader;
     DBGKD_WRITE_BREAKPOINT64 bpBuf[BREAKPOINT_TABLE_SIZE];
     UINT32 breakPointCount;
-
-    UNREFERENCED_PARAMETER(Context);
 
     messageHeader.Length = sizeof(*m);
     messageHeader.Buffer = (PCHAR)m;
@@ -1112,12 +911,10 @@ Return Value:
     return a->ContinueStatus;
 }
 
-
 VOID
 BdRestoreBreakPointEx (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     )
 /*++
 
@@ -1132,8 +929,6 @@ Arguments:
 
     AdditionalData - Supplies any additional data for the message.
 
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
@@ -1146,8 +941,6 @@ Return Value:
     UINT32 i;
     DBGKD_RESTORE_BREAKPOINT bpBuf[BREAKPOINT_TABLE_SIZE];
     UINT32 breakPointCount;
-
-    UNREFERENCED_PARAMETER(Context);
 
     messageHeader.Length = sizeof(*m);
     messageHeader.Buffer = (PCHAR)m;
@@ -1204,6 +997,4 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                     &messageHeader,
                     AdditionalData);
-
-    return;
 }

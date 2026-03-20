@@ -505,16 +505,12 @@ BdDeleteBreakpointRange (
 
 VOID
 BdRestoreBreakpoint (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     );
 
 VOID
 BdWriteBreakpoint (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     );
 
 VOID
@@ -558,11 +554,6 @@ BdTranslatePhysicalAddress (
     __in PHYSICAL_ADDRESS Address
     );
 
-VOID
-BdUnmapVirtualAddress(
-    __in PVOID VirtualAddress
-    );
-
 //
 // State change message functions (message.c)
 //
@@ -594,43 +585,37 @@ BdGetVersion (
 VOID
 BdRestoreBreakPointEx (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     );
 
 NTSTATUS
 BdWriteBreakPointEx (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     );
 
 VOID
 BdReadPhysicalMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __out PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __out PSTRING AdditionalData
     );
 
 VOID
 BdWritePhysicalMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     );
 
 VOID
 BdReadVirtualMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __out PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __out PSTRING AdditionalData
     );
 
 VOID
 BdWriteVirtualMemory (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     );
 
 VOID
@@ -697,36 +682,29 @@ BdGetStateChange (
 VOID
 BdSetStateChange (
     __in PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    __in PEXCEPTION_RECORD ExceptionRecord,
     __in PCONTEXT ContextRecord
     );
 
 VOID
 BdReadControlSpace (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __out PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __out PSTRING AdditionalData
     );
 
 VOID
 BdWriteControlSpace (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     );
 
 VOID
 BdReadIoSpace (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     );
 
 VOID
 BdWriteIoSpace (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     );
 
 VOID

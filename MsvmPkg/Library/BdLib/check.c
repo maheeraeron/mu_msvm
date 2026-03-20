@@ -115,11 +115,3 @@ Return Value:
 
     return (PVOID)(UINTN)Address;
 }
-
-VOID
-BdUnmapVirtualAddress(
-    __in PVOID Va
-    )
-{
-    UNREFERENCED_PARAMETER(Va);
-}

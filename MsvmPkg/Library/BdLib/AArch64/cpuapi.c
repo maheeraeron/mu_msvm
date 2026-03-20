@@ -109,10 +109,8 @@ Return Value:
 VOID
 BdSetStateChange (
     __in PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    __in PEXCEPTION_RECORD ExceptionRecord,
     __in PCONTEXT ContextRecord
     )
-
 /*++
 
 Routine Description:
@@ -123,8 +121,6 @@ Arguments:
 
     WaitStateChange - Supplies pointer to record to fill in
 
-    ExceptionRecord - Supplies a pointer to an exception record.
-
     ContextRecord - Supplies a pointer to a context record.
 
 Return Value:
@@ -132,22 +128,15 @@ Return Value:
     None.
 
 --*/
-
 {
-
-    UNREFERENCED_PARAMETER(ExceptionRecord);
-
     BdSetContextState(WaitStateChange, ContextRecord);
-    return;
 }
 
 VOID
 BdReadControlSpace (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __out PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __out PSTRING AdditionalData
     )
-
 /*++
 
 Routine Description:
@@ -161,21 +150,15 @@ Arguments:
 
     AdditionalData - Supplies any additional data for the message.
 
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
 
 --*/
-
 {
-
     PDBGKD_READ_MEMORY64 a = &m->u.ReadMemory;
     ULONG Length;
     STRING MessageHeader;
-
-    UNREFERENCED_PARAMETER(Context);
 
     //ASSERT(AdditionalData->MaximumLength == BD_MESSAGE_BUFFER_SIZE);
     __analysis_assume(AdditionalData->MaximumLength == BD_MESSAGE_BUFFER_SIZE);
@@ -214,17 +197,13 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                  &MessageHeader,
                  AdditionalData);
-
-    return;
 }
 
 VOID
 BdWriteControlSpace (
     __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PSTRING AdditionalData
     )
-
 /*++
 
 Routine Description:
@@ -237,21 +216,15 @@ Arguments:
 
     AdditionalData - Supplies any additional data for the message.
 
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
 
 --*/
-
 {
-
     PDBGKD_WRITE_MEMORY64 a = &m->u.WriteMemory;
     ULONG Length;
     STRING MessageHeader;
-
-    UNREFERENCED_PARAMETER(Context);
 
     //
     // If the specified control registers are within control space, then
@@ -283,17 +256,12 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                  &MessageHeader,
                  NULL);
-
-    return;
 }
 
 VOID
 BdReadIoSpace (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     )
-
 /*++
 
 Routine Description:
@@ -304,21 +272,13 @@ Arguments:
 
     m - Supplies a pointer to the state manipulation message.
 
-    AdditionalData - Supplies any additional data for the message.
-
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
 
 --*/
-
 {
     STRING MessageHeader;
-
-    UNREFERENCED_PARAMETER(AdditionalData);
-    UNREFERENCED_PARAMETER(Context);
 
     m->ReturnStatus = STATUS_INVALID_PARAMETER;
 
@@ -331,17 +291,12 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                  &MessageHeader,
                  NULL);
-
-    return;
 }
 
 VOID
 BdWriteIoSpace (
-    __in PDBGKD_MANIPULATE_STATE64 m,
-    __in PSTRING AdditionalData,
-    __in PCONTEXT Context
+    __in PDBGKD_MANIPULATE_STATE64 m
     )
-
 /*++
 
 Routine Description:
@@ -352,21 +307,13 @@ Arguments:
 
     m - Supplies a pointer to the state manipulation message.
 
-    AdditionalData - Supplies any additional data for the message.
-
-    Context - Supplies the current context.
-
 Return Value:
 
     None.
 
 --*/
-
 {
     STRING MessageHeader;
-
-    UNREFERENCED_PARAMETER(AdditionalData);
-    UNREFERENCED_PARAMETER(Context);
 
     //
     // Case on data size and check alignment.
@@ -383,6 +330,4 @@ Return Value:
     BdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
                  &MessageHeader,
                  NULL);
-
-    return;
 }

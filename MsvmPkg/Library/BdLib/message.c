@@ -140,19 +140,19 @@ ResendPacket:
         switch (ManipulateState.ApiNumber)
         {
         case DbgKdReadVirtualMemoryApi:
-            BdReadVirtualMemory(&ManipulateState, &MessageData, ContextRecord);
+            BdReadVirtualMemory(&ManipulateState, &MessageData);
             break;
 
         case DbgKdWriteVirtualMemoryApi:
-            BdWriteVirtualMemory(&ManipulateState, &MessageData, ContextRecord);
+            BdWriteVirtualMemory(&ManipulateState, &MessageData);
             break;
 
         case DbgKdReadPhysicalMemoryApi:
-            BdReadPhysicalMemory(&ManipulateState, &MessageData, ContextRecord);
+            BdReadPhysicalMemory(&ManipulateState, &MessageData);
             break;
 
         case DbgKdWritePhysicalMemoryApi:
-            BdWritePhysicalMemory(&ManipulateState, &MessageData, ContextRecord);
+            BdWritePhysicalMemory(&ManipulateState, &MessageData);
             break;
 
         case DbgKdGetContextApi:
@@ -172,27 +172,27 @@ ResendPacket:
             break;
 
         case DbgKdWriteBreakPointApi:
-            BdWriteBreakpoint(&ManipulateState, &MessageData, ContextRecord);
+            BdWriteBreakpoint(&ManipulateState);
             break;
 
         case DbgKdRestoreBreakPointApi:
-            BdRestoreBreakpoint(&ManipulateState, &MessageData, ContextRecord);
+            BdRestoreBreakpoint(&ManipulateState);
             break;
 
         case DbgKdReadControlSpaceApi:
-            BdReadControlSpace(&ManipulateState, &MessageData, ContextRecord);
+            BdReadControlSpace(&ManipulateState, &MessageData);
             break;
 
         case DbgKdWriteControlSpaceApi:
-            BdWriteControlSpace(&ManipulateState, &MessageData, ContextRecord);
+            BdWriteControlSpace(&ManipulateState, &MessageData);
             break;
 
         case DbgKdReadIoSpaceApi:
-            BdReadIoSpace(&ManipulateState, &MessageData, ContextRecord);
+            BdReadIoSpace(&ManipulateState);
             break;
 
         case DbgKdWriteIoSpaceApi:
-            BdWriteIoSpace(&ManipulateState, &MessageData, ContextRecord);
+            BdWriteIoSpace(&ManipulateState);
             break;
 
         case DbgKdContinueApi:
@@ -237,9 +237,7 @@ ResendPacket:
             break;
 
         case DbgKdWriteBreakPointExApi:
-            Status = BdWriteBreakPointEx(&ManipulateState,
-                                            &MessageData,
-                                            ContextRecord);
+            Status = BdWriteBreakPointEx(&ManipulateState, &MessageData);
 
             if (Status)
             {
@@ -251,7 +249,7 @@ ResendPacket:
             break;
 
         case DbgKdRestoreBreakPointExApi:
-            BdRestoreBreakPointEx(&ManipulateState, &MessageData, ContextRecord);
+            BdRestoreBreakPointEx(&ManipulateState, &MessageData);
             break;
 
         //
@@ -393,7 +391,7 @@ Return Value:
 
         WaitStateChange.u.Exception.FirstChance = FirstChance;
 
-        BdSetStateChange(&WaitStateChange, ExceptionRecord, ContextRecord);
+        BdSetStateChange(&WaitStateChange, ContextRecord);
 
         MessageHeader.Length = sizeof(WaitStateChange);
         MessageHeader.Buffer = (PCHAR)&WaitStateChange;
