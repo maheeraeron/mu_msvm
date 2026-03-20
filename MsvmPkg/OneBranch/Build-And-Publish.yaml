@@ -23,10 +23,10 @@ parameters:
   default: [
     # TODO: What order for the columns?
     # TODO: What redundancy vs. derivation?
-    {Pool: Windows, Windows: true, Arch:     X64, Target:   DEBUG, ToolChainTag:   VS2022, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
-    {Pool: Windows, Windows: true, Arch:     X64, Target: RELEASE, ToolChainTag:   VS2022},
-    {Pool: Windows, Windows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag:   VS2022},
-    {Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag:   VS2022},
+    {ob_nugetPublishing_enabled: true, Pool: Windows, Windows: true, Arch:     X64, Target:   DEBUG, ToolChainTag: VS2022, Extra: 'BLD_*_LEGACY_DEBUGGER=1'},
+    {ob_nugetPublishing_enabled: true, Pool: Windows, Windows: true, Arch:     X64, Target: RELEASE, ToolChainTag: VS2022},
+    {ob_nugetPublishing_enabled: true, Pool: Windows, Windows: true, Arch: AARCH64, Target:   DEBUG, ToolChainTag: VS2022},
+    {ob_nugetPublishing_enabled: true, Pool: Windows, Windows: true, Arch: AARCH64, Target: RELEASE, ToolChainTag: VS2022},
 
     #
     # Salt (adds to flavor):
@@ -106,11 +106,11 @@ jobs:
 
         BuildDir:           Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)
         ob_outputDirectory: '$(Build.ArtifactStagingDirectory)/ONEBRANCH_ARTIFACT'
-        ob_nugetPublishing_enabled: ${{parameters.publishNuget}}
+        ob_nugetPublishing_enabled: ${{and(parameters.publishNuget, Build.ob_nugetPublishing_enabled)}}
         # Job name is included in artifact path and non-matrix job names must be unique.
         # Otherwise we would have "UnderSalt" like "DotSalt".
         # ob_artifactSuffix: '_$(Build.Arch)_$(Build.Target)'
-        ${{ if eq(parameters.pipeline, 'Official') }}:
+        ${{ if and(eq(parameters.pipeline, 'Official'), Build.ob_nugetPublishing_enabled) }}:
           ob_createvpack_vpackdirectory: '$(ob_outputDirectory)/Build/Msvm$(Build.Arch)/$(Build.Target)_$(Build.ToolChainTag)/Bin'
         PlatformPkg: "MsvmPkg"
         ToolChainTag: ${{Build.ToolChainTag}}
@@ -164,8 +164,7 @@ jobs:
           displayName: apt inst
 
       # The nugets are downloaded into a strict read only cachable form, one Nuget per directory, like CoreXT.
-      # But clang wants its headers located differently. Therefore download and copy instead of just download.
-      # One clang nuget would be better in this regard, execute in-place.
+      # Then copied to how clang wants them.
       - ${{if Build.ClangWindows}}:
         - ${{each Nuget in parameters.Nugets}}:
           - task: DownloadPackage@1
