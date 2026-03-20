@@ -23,6 +23,7 @@
 ;
 ;--
 
+include macamd64.inc
 include ksamd64.inc
 
         extern  EfiDispatchException:proc

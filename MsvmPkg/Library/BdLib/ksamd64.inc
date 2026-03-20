@@ -1,5 +1,3 @@
-include macamd64.inc
-
 ;
 ;  Bug Check Code Definitions
 ;
