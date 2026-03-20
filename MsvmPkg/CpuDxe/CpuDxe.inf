@@ -37,6 +37,7 @@
   HobLib
   MemoryAllocationLib
   MpInitLib
+  MsBaseLib                 ## MS_HYP_CHANGE
   PeCoffGetEntryPointLib
   ReportStatusCodeLib
   TimerLib

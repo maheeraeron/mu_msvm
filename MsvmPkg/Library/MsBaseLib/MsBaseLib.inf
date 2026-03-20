@@ -26,6 +26,7 @@
 
 [Sources.X64]
     X64/Assert.nasm
+    X64/EnableInterrupts.nasm
 
 [Packages]
     MdeModulePkg/MdeModulePkg.dec
