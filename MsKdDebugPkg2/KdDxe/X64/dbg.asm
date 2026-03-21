@@ -1,7 +1,8 @@
-public DebugService2
-public KdDxeKdBreakPointWithStatus
+global DebugService2
+global KdDxeKdBreakPointWithStatus
 
-.code
+default rel
+section .text
 
 ; VOID
 ; DebugService2(
@@ -31,7 +32,7 @@ public KdDxeKdBreakPointWithStatus
 DebugService2:
     mov     eax, r8d                ; set debug service type
     int     2dh                     ; call debug service
-    int     3                       ; required - do not remove
+    int3                            ; required - do not remove
     ret
 
 ;++
@@ -67,7 +68,5 @@ DebugService2:
 ;--
 
 KdDxeKdBreakPointWithStatus:
-  int   3
+  int3
   ret
-
-END

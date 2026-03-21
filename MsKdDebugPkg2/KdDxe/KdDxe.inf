@@ -53,7 +53,7 @@
   AARCH64/ReadWriteStatusReg.S | GCC
 
 [Sources.X64]
-  X64/dbg.asm
+  X64/dbg.nasm
   X64/Exception.c
 
 [Packages]
