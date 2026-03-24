@@ -10,7 +10,7 @@
 #include "CpuDxe.h"
 #include "CpuMp.h"
 #include "CpuPageTable.h"
-#include <Library/DeviceStateLib.h> // MU_CHANGE
+
 #define CPU_INTERRUPT_NUM  256
 
 //
@@ -1033,7 +1033,6 @@ RefreshGcdMemoryAttributes (
 
   // MS_HYP_CHANGE BEGIN
   //if (IsPagingAndPageAddressExtensionsEnabled ()) {
-  //  DEBUG ((DEBUG_INFO, "Syncing GCD...\n")); // MU_CHANGE
   //  RefreshGcdMemoryAttributesFromPaging ();
   //}
   // MS_HYP_CHANGE END
@@ -1558,14 +1557,10 @@ InitializeCpu (
   //
   RefreshGcdMemoryAttributes ();
 
-  // MU_CHANGE START: Install blank protocol to signal the end of the GCD sync
-  gBS->InstallMultipleProtocolInterfaces (
-         &ImageHandle,
-         &gEdkiiGcdSyncCompleteProtocolGuid,
-         NULL,
-         NULL
-         );
-  // MU_CHANGE END
+  //
+  // Add and allocate local APIC memory mapped space
+  //
+  // MS_HYP_CHANGE AddLocalApicMemorySpace (ImageHandle);
 
   //
   // Setup a callback for idle events
@@ -1609,15 +1604,11 @@ InitializeCpu (
     }
   }
 #endif
-  // MS_HYP TODO: do we want this?
-  // MU_CHANGE START
-  //if ((GetDeviceState () & DEVICE_STATE_UNIT_TEST_MODE) != 0) {
-  //  InstallMemoryProtectionNonstopModeProtocol (mCpuHandle);
-  //}
 
   // MU_CHANGE END
   
-
+  // MS_HYP_CHANGE BEGIN
+  // InitializeMpSupport ();
 Cleanup:
   // MS_HYP_CHANGE END
 

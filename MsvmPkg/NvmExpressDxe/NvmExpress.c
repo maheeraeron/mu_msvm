@@ -1079,10 +1079,9 @@ NvmExpressDriverCleanUpQueues (
       NvmExpressMakeAddressRangePrivate (&Private->QueueVisibilityContext, Private->Buffer);
       
     }
-
     // MS_HYP_CHANGE END
 
-    Status = Private->PciIo->FreeBuffer (Private->PciIo, QueuePairPageCount, Private->Buffer);
+    Status             = Private->PciIo->FreeBuffer (Private->PciIo, QueuePairPageCount, Private->Buffer);
 
     if (EFI_ERROR (Status)) {
       ReturnStatus = Status;
@@ -1116,8 +1115,8 @@ NvmExpressDriverCleanUpQueues (
     if (IsIsolated()) {
       NvmExpressMakeAddressRangePrivate (&Private->IoQueueVisibilityContext, Private->IoQueueBuffer);
     }
-    // // MS_HYP_CHANGE END
-    Status = Private->PciIo->FreeBuffer (Private->PciIo, QueuePairPageCount*Private->NumberOfIoQueuePairs, Private->IoQueueBuffer);
+    // MS_HYP_CHANGE END
+    Status             = Private->PciIo->FreeBuffer (Private->PciIo, QueuePairPageCount*Private->NumberOfIoQueuePairs, Private->IoQueueBuffer);
 
     if (EFI_ERROR (Status)) {
       ReturnStatus = Status;
@@ -1285,7 +1284,7 @@ NvmExpressDriverBindingStart (
     // }
 
 
-    // MU_CHANGE - Support alternative hardware queue sizes in NVME driver
+    // MS_HYP_CHANGE - Support alternative hardware queue sizes in NVME driver
     // Bytes  = EFI_PAGES_TO_SIZE (QueuePageCount);
     // Status = PciIo->Map (
     //                   PciIo,
@@ -1296,9 +1295,10 @@ NvmExpressDriverBindingStart (
     //                   &Private->Mapping
     //                   );
 
-    // MU_CHANGE - Support alternative hardware queue sizes in NVME driver
+    // MS_HYP_CHANGE - Support alternative hardware queue sizes in NVME driver
     // if (EFI_ERROR (Status) || (Bytes != EFI_PAGES_TO_SIZE (QueuePageCount))) {
     //  goto Exit;
+	// }
     
 
     // Private->BufferPciAddr             = (UINT8 *)(UINTN)MappedAddr;
@@ -1574,8 +1574,6 @@ NvmExpressDriverBindingStop (
       // }
       //
       // if (Private->Buffer != NULL) {
-
-      // MU_CHANGE - Support alternative hardware queue sizes in NVME driver
       //   Private->PciIo->FreeBuffer (Private->PciIo, 6, Private->Buffer);
       // }
 

@@ -28,11 +28,9 @@ parameters:
     # TODO: What redundancy vs. derivation?
     {Pool: Windows, Windows: True, Arch:     X64, Target:   DEBUG, ToolChainTag: VS2022, Extra: BLD_*_LEGACY_DEBUGGER=1},
     {Pool: Windows, Windows: True, Arch:     X64, Target: RELEASE, ToolChainTag: VS2022},
-    {Pool: Windows, Windows: True, Arch: AARCH64, Target:   DEBUG, ToolChainTag: VS2022},
-    {Pool: Windows, Windows: True, Arch: AARCH64, Target: RELEASE, ToolChainTag: VS2022},
 
     #
-    # Salt (adds to flavor):
+    # Salt (adds to flavor, for non-production builds):
     #
     # Not perfectly systematic.
     # CV implies W.
@@ -62,8 +60,8 @@ parameters:
 
     {Pool: Windows, Windows: True, ClangWindows: True, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: XDCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}, Extra: BLD_*_LEGACY_DEBUGGER=1},
     {Pool: Windows, Windows: True, ClangWindows: True, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: XRCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
-    {Pool: Windows, Windows: True, ClangWindows: True, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: ADCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
-    {Pool: Windows, Windows: True, ClangWindows: True, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: ARCW, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
+    {Pool: Windows, Windows: True, ClangWindows: True, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
+    {Pool: Windows, Windows: True, ClangWindows: True, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, Env: {CLANG_BIN: $(CLANGWIN_BIN)/}},
 
     {Pool: Linux, Linux: True, Arch:     X64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: XDCL, Extra: BLD_*_LEGACY_DEBUGGER=1},
     {Pool: Linux, Linux: True, Arch:     X64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: XRCL},
@@ -72,8 +70,9 @@ parameters:
 
     {Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target:   DEBUG, ToolChainTag: GCC, Salt: XDG, Extra: BLD_*_LEGACY_DEBUGGER=1},
     {Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target: RELEASE, ToolChainTag: GCC, Salt: XRG},
-    {Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target:   DEBUG, ToolChainTag:  GCC, Salt: ADG},
-    {Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target: RELEASE, ToolChainTag:  GCC, Salt: ARG}
+    # Disabled for now, due to AcpiTables build issue
+    #{Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target:   DEBUG, ToolChainTag:  GCC, Salt: ADG},
+    #{Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target: RELEASE, ToolChainTag:  GCC, Salt: ARG}
     ]
 ###############################################################################
 jobs:

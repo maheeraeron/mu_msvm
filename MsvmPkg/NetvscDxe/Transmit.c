@@ -145,7 +145,7 @@ PxeTransmit (
 **/
 EFI_STATUS
 EFIAPI
-SnpTransmit(
+SnpUndi32Transmit (
   IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
   IN UINTN                        HeaderSize,
   IN UINTN                        BufferSize,
@@ -165,14 +165,11 @@ SnpTransmit(
 
   Snp = EFI_SIMPLE_NETWORK_DEV_FROM_THIS (This);
 
-  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
-
-  /*
-  MS_HYP_CHANGE: This is a bug, returning at wrong TPL.  Should be removed
   if (Snp == NULL) {
     return EFI_DEVICE_ERROR;
   }
-  */
+
+  OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
 
   switch (Snp->Mode.State) {
     case EfiSimpleNetworkInitialized:

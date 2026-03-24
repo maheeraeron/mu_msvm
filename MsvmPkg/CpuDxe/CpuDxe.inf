@@ -9,7 +9,7 @@
 #
 ##
 
-#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 2677b20196e4acae3f3c017d3618ed5f | 2026-03-10T20-16-32 | 551c3c87f83ae1121feec1e499303affc44e943d
+#Override : 00000002 | UefiCpuPkg/CpuDxe/CpuDxe.inf | 9069f972cd756a4a42919bb5e2f1e007 | 2026-02-27T21-12-15 | 187a160e565265c7e9bfdcf157beebef9f2287b9
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -59,6 +59,7 @@
   CpuMmuLib
 
 [Sources.IA32, Sources.X64]
+  CpuBd.c                   ## MS_HYP_CHANGE
   CpuDxe.c
   CpuDxe.h
   CpuGdt.c
@@ -67,7 +68,6 @@
   CpuMp.h
   CpuPageTable.h
   CpuPageTable.c
-  CpuBd.c         ## MS_HYP_CHANGE
 
 [Sources.IA32]
   Ia32/CpuAsm.nasm
@@ -92,8 +92,7 @@
   gEfiHvProtocolGuid                            ## MS_HYP_CHANGE CONSUMES
   gEfiMemoryAttributeProtocolGuid               ## PRODUCES
   gEfiMpServiceProtocolGuid                     ## PRODUCES
-  gMemoryProtectionNonstopModeProtocolGuid      ## MU_CHANGE: PRODUCES
-  gEdkiiGcdSyncCompleteProtocolGuid             ## MU_CHANGE: PRODUCES
+  # MS_HYP_CHANGE gEfiSmmBase2ProtocolGuid                      ## SOMETIMES_CONSUMES
 
 [Guids]
   gIdleLoopEventGuid                            ## CONSUMES           ## Event
@@ -106,10 +105,10 @@
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdPteMemoryEncryptionAddressOrMask    ## CONSUMES
-  # MU_CHANGE START Remove memory protection PCD references
+  # MU_CHANGE START Use Memory Protection Hob
   # gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask               ## CONSUMES
   # gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask    ## CONSUMES
-  # MU_CHANGE END
+  # MU_CHANGE END Use Memory Protection Hob
   gEfiMdeModulePkgTokenSpaceGuid.PcdTdxSharedBitMask                    ## CONSUMES
   gMsvmPkgTokenSpaceGuid.PcdAcpiMadtMpMailBoxAddress                    ## MS_HYP_CHANGE CONSUMES
   gMsvmPkgTokenSpaceGuid.PcdProcessorCount                              ## MS_HYP_CHANGE CONSUMES

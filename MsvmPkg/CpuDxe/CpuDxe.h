@@ -36,7 +36,7 @@
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/MpInitLib.h>
 #include <Library/TimerLib.h>
-#include <Library/DxeMemoryProtectionHobLib.h> // MU_CHANGE
+#include <Library/DxeMemoryProtectionHobLib.h> // MU_CHANGE Use Memory Protection Hob
 
 #include <Guid/IdleLoopEvent.h>
 #include <Guid/VectorHandoffTable.h>
@@ -59,7 +59,7 @@
 #define NULL_DETECTION_NONSTOP_MODE   \
         ((PcdGet8 (PcdNullPointerDetectionPropertyMask) & (BIT6|BIT0)) > BIT6)
 */
-// MU_CHANGE END
+// MU_CHANGE END Remove Nonstop Mode
 
 /**
   Flush CPU data cache. If the instruction cache is fully coherent

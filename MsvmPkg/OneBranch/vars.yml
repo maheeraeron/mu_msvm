@@ -2,7 +2,7 @@
 # https://aka.ms/obpipelines/variables
 
 variables:
-  Parameters.vPack.majorVer: "25"
+  Parameters.vPack.majorVer: "26"
   Parameters.vPack.minorVer: "0"
 
   # Directory to download Nugets to, emulating CoreXT.

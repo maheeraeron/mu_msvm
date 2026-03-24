@@ -7,7 +7,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include "Snp.h"
 
 /**
@@ -128,7 +127,7 @@ PxeReceive (
 **/
 EFI_STATUS
 EFIAPI
-SnpReceive(
+SnpUndi32Receive (
   IN EFI_SIMPLE_NETWORK_PROTOCOL  *This,
   OUT UINTN                       *HeaderSize OPTIONAL,
   IN OUT UINTN                    *BufferSize,

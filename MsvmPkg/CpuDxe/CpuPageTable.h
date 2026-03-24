@@ -11,7 +11,6 @@
 
 #include <IndustryStandard/PeImage.h>
 #include <Protocol/MemoryAttribute.h>
-#include <Protocol/MemoryProtectionNonstopMode.h> // MU_CHANGE
 
 #define PAGE_TABLE_LIB_PAGING_CONTEXT_IA32_X64_ATTRIBUTES_PSE              BIT0
 #define PAGE_TABLE_LIB_PAGING_CONTEXT_IA32_X64_ATTRIBUTES_PAE              BIT1
@@ -165,20 +164,6 @@ VOID
 InstallEfiMemoryAttributeProtocol (
   IN EFI_HANDLE  Handle
   );
-
-// MU_CHANGE START
-
-/**
-  Install Memory Protection Nonstop Protocol.
-
-  @param Handle A pointer to the EFI_HANDLE on which the interface is to be installed
-**/
-VOID
-InstallMemoryProtectionNonstopModeProtocol (
-  IN EFI_HANDLE  Handle
-  );
-
-// MU_CHANGE END
 
 // MS_HYP_CHANGE BEGIN
 

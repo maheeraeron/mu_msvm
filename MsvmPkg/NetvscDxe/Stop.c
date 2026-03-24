@@ -35,10 +35,10 @@ PxeStop (
     default:
       return EFI_DEVICE_ERROR;
   }
-  // MS_HYP_CHANGE END
 
   //
   // Set simple network state to Stopped and return success.
+  // MS_HYP_CHANGE END
   //
   Snp->Mode.State = EfiSimpleNetworkStopped;
   return EFI_SUCCESS;
@@ -67,7 +67,7 @@ PxeStop (
 **/
 EFI_STATUS
 EFIAPI
-SnpStop(
+SnpUndi32Stop (
   IN EFI_SIMPLE_NETWORK_PROTOCOL  *This
   )
 {

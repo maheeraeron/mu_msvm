@@ -109,15 +109,17 @@ InternalPrintMessage (
   Bytes = AsciiVSPrint (Buffer, sizeof (Buffer), Format, Marker); // MS_HYP_CHANGE
   VA_END (Marker);
 
+  // MS_HYP_CHANGE BEGIN
   //
-  // Send the print string to debug       // MS_HYP_CHANGE
+  // Send the print string to debug
   //
-  DEBUG((DEBUG_ERROR, "%a", Buffer));     // MS_HYP_CHANGE
+  DEBUG((DEBUG_ERROR, "%a", Buffer));
 
   // Copy to the debug page, if it fits
   Bytes = MIN(Bytes, (sizeof mDebugBuffer) - (sizeof(mDebugBuffer[0]) * mDebugCursor));
   CopyMem(&mDebugBuffer[mDebugCursor], &Buffer, Bytes);
   mDebugCursor += Bytes;
+  // MS_HYP_CHANGE END
 }
 
 /**

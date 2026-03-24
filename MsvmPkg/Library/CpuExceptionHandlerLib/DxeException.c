@@ -12,7 +12,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-#include <Library/DxeMemoryProtectionHobLib.h> // MU_CHANGE
+#include <Library/DxeMemoryProtectionHobLib.h> // MU_CHANGE Use Memory Protection Hob
 
 CONST UINTN  mDoFarReturnFlag = 0;
 

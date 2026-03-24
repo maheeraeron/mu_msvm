@@ -43,10 +43,6 @@
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/ReportStatusCodeLib.h>
 
-// MU_CHANGE BEGIN -- UEFI_890
-#include <Library/ReportStatusCodeLib.h>
-// MU_CHANGE END -- UEFI_890
-
 #include <Guid/NVMeEventGroup.h>
 
 typedef struct _NVME_CONTROLLER_PRIVATE_DATA  NVME_CONTROLLER_PRIVATE_DATA;

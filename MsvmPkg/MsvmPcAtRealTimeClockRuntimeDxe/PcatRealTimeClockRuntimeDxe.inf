@@ -13,7 +13,7 @@
 #
 ##
 
-#Override : 00000002 | PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf | bbebe6df50a0cb047c725bc83011d621 | 2025-04-30T00-38-40 | 68d85db2976337990f886c64c4ff430beebfbf4b
+#Override : 00000002 | PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf | 5c20afc8185c55918a56cad4fcf79e79 | 2026-02-27T20-57-06 | 187a160e565265c7e9bfdcf157beebef9f2287b9
 
 [Defines]
   INF_VERSION                    = 0x00010005
