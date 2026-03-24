@@ -9,7 +9,7 @@ variables:
   Pkg:      $(System.ArtifactsDirectory)/pkg
 
   # Clang from VisualStudio2022 in the 1ES image. Windows hosted.
-  CLANGVS:  'C:/program files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/x64'
+  CLANGVS:  C:/program files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/x64
 
   # Clang built and supported by Windows org. Windows hosted.
   # It is split into two Nugets. We keep them separate in the

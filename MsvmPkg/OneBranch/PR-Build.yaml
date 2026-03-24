@@ -1,47 +1,29 @@
 # https://aka.ms/obpipelines/triggers
 trigger: none
 
-resources:
-  repositories:
-  - repository: templates
-    type: git
-    name: OneBranch.Pipelines/GovernedTemplates
-    ref: refs/heads/main
-
 parameters:
+
+# This controls only Nuget create, not Vpack creation.
+# Due to upstream code/policy, vpacks cannot be created in the PR pipeline.
+# The official "CI" pipeline, which creates vpacks, can be run against PRs with approval.
 - name: PublishPRNuget
   displayName: Publish Nuget Pkg for this PR for testing?
   type: boolean
-  default: false
+  default: False
 
 variables:
 - template: vars.yml
-
 # Because we have a template, we must use name/value to add more.
-- name: Parameters.vPack.pushPkgName
-  value: "$(Build.Repository.Name).mscoreuefi.PR.$(Build.Arch).$(Build.Target)"
+- name: PRdot
+  value: 'PR.'
 
 extends:
-  template: v2/Microsoft.NonOfficial.yml@templates # https://aka.ms/obpipelines/templates
+  template: common.yaml
   parameters:
-    platform:
-      name: 'windows_undocked'
-    globalSdl:
-      tsa:
-        enabled: false
-    featureFlags:
-      WindowsHostVersion: '1ESWindows2022'
-    nugetPublishing:
-      feeds:
-      - name: OS/HyperVUefi
-        continueOnConflict: false
-        files_to_publish: '*.nupkg;!*.symbols.nupkg'
-    git:
-      submodules: false
-    stages:
-    - stage: Build
-      jobs:
-      - template: MsvmPkg\OneBranch\Build-And-Publish.yaml@self
-        parameters:
-          pipeline: 'PR'
-          publishNuget: ${{parameters.PublishPRNuget}}
+    base: v2/Microsoft.NonOfficial.yml # https://aka.ms/obpipelines/templates
+    pipeline: PR
+
+    # This controls only Nuget create, not Vpack creation.
+    # Due to upstream code/policy, vpacks cannot be created in the PR pipeline.
+    # The official "CI" pipeline, which creates vpacks, can be run against PRs with approval.
+    publishNuget: ${{parameters.PublishPRNuget}}
