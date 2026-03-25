@@ -295,6 +295,7 @@ Return Value:
         range->Reserved = 0;
 
         range += 1;
+        rangeIndex += 1;
     }
 
     Status = PcdSet64S(PcdMemoryMapPtr, (UINT64)uefiMemoryMap);
