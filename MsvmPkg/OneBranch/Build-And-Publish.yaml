@@ -70,9 +70,8 @@ parameters:
 
     {Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target:   DEBUG, ToolChainTag: GCC, Salt: XDG, Extra: BLD_*_LEGACY_DEBUGGER=1},
     {Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target: RELEASE, ToolChainTag: GCC, Salt: XRG},
-    # Disabled for now, due to AcpiTables build issue
-    #{Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target:   DEBUG, ToolChainTag:  GCC, Salt: ADG},
-    #{Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target: RELEASE, ToolChainTag:  GCC, Salt: ARG}
+    {Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target:   DEBUG, ToolChainTag:  GCC, Salt: ADG},
+    {Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target: RELEASE, ToolChainTag:  GCC, Salt: ARG}
     ]
 ###############################################################################
 jobs:
