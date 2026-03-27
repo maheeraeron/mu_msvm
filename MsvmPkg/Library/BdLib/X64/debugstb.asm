@@ -53,7 +53,7 @@ include macamd64.inc
 
 LEAF_ENTRY BdBreakPointWithStatus, _TEXT$00
 
-    int     3                       ; break into debugger
+    int3                            ; break into debugger
     ret                             ; return
 
 LEAF_END BdBreakPointWithStatus, _TEXT$00

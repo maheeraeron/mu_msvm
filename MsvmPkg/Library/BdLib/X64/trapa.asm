@@ -23,11 +23,16 @@
 ;
 ;--
 
-include macamd64.inc
-include ksamd64.inc
+        extern  EfiDispatchException
+        extern  EfiBugCheck
 
-        extern  EfiDispatchException:proc
-        extern  EfiBugCheck:proc
+%define blank     0
+%define Blank     0
+%define ErrorCode 1
+%define Virtual   2
+%define NoPop     3
+%define Volatile  4
+%define Rbp       5
 
 ;
 ; TODO: Define special macros to align trap entry points on cache line boundaries.
@@ -36,32 +41,17 @@ include ksamd64.inc
 ;      these macros.
 ;
 
-BL_TRAP_ENTRY macro Name, Handler
+%macro BL_TRAP_ENTRY 1
 
-Section segment para 'CODE'
         align   16
-        public  Name
+        global  %1
+        %1:
 
-ifb <Handler>
-
-Name    proc    frame
-
-else
-
-Name    proc    frame:Handler
-
-endif
-
-        endm
+%endmacro
 
 
-BL_TRAP_END macro Name
-
-Name    endp
-
-Section ends
-
-    endm
+%macro BL_TRAP_END 1
+%endmacro
 
 ;
 ; Define trap frame generation macro.
@@ -81,18 +71,20 @@ Section ends
 ;       be two bytes" rule.
 ;
 
-BL_GENERATE_TRAP_FRAME macro ErrorCode
+%macro BL_GENERATE_TRAP_FRAME_INTERNAL 1
 
-ifb <ErrorCode>
+; %1 is ErrorCode, true or false or a number (Virtual)
 
-        push_frame                      ; mark machine frame without error code
+%if %1 != Blank
+
+        push_frame  blank               ; mark machine frame without error code
         alloc_stack 8                   ; allocate dummy error code
 
-else
+%else
 
         push_frame code                 ; mark machine frame with error code
 
-endif
+%endif
 
 ;
 ; After pushing rbp onto the stack, The high low 56 bytes of the trap
@@ -116,19 +108,31 @@ endif
 
         BL_SAVE_TRAP_STATE <>           ; save trap state
 
-ifnb <ErrorCode>
+%if %1 != Blank
 
         mov     eax, TrErrorCode[rbp]   ; return error code
 
-ifidn <ErrorCode>, <Virtual>
+%if %1 == Virtual
 
         mov     rcx, cr2                ; return virtual address
 
-endif
+%endif
 
-endif
+%endif
 
-        endm
+%endmacro
+
+%macro BL_GENERATE_TRAP_FRAME 0
+    BL_GENERATE_TRAP_FRAME_INTERNAL Blank
+%endmacro
+
+%macro BL_GENERATE_TRAP_FRAME_Virtual 0
+    BL_GENERATE_TRAP_FRAME_INTERNAL Virtual
+%endmacro
+
+%macro BL_GENERATE_TRAP_FRAME_ErrorCode 0
+    BL_GENERATE_TRAP_FRAME_INTERNAL ErrorCode
+%endmacro
 
 ;
 ; Define save trap state macro.
@@ -145,7 +149,7 @@ endif
 ;   rbp - Supplies the address of the trap frame.
 ;
 
-BL_SAVE_TRAP_STATE macro Service
+%macro BL_SAVE_TRAP_STATE 1
 
         mov     TrRax[rbp], rax         ; save volatile integer registers
         mov     TrRcx[rbp], rcx         ;
@@ -156,7 +160,7 @@ BL_SAVE_TRAP_STATE macro Service
         mov     TrR11[rbp], r11         ;
         cld                             ; clear direction flag
 
-        endm
+%endmacro
 
 
 ;
@@ -184,7 +188,7 @@ BL_SAVE_TRAP_STATE macro Service
 ;   rbp - Supplies the address of the trap frame.
 ;
 
-BL_RESTORE_TRAP_STATE macro State
+%macro BL_RESTORE_TRAP_STATE 1
 
         mov     r11, TrR11[rbp]         ; restore volatile integer state
         mov     r10, TrR10[rbp]         ;
@@ -203,7 +207,7 @@ BL_RESTORE_TRAP_STATE macro State
         add     rsp, (KTRAP_FRAME_LENGTH - (5 * 8) - 128)
         iretq                           ;
 
-        endm
+%endmacro
 
 ;
 ; Define generate exception frame macro.
@@ -224,17 +228,17 @@ BL_RESTORE_TRAP_STATE macro State
 ;   The top of the stack is assumed to contain a return address.
 ;
 
-BL_GENERATE_EXCEPTION_FRAME macro Flag
+%macro BL_GENERATE_EXCEPTION_FRAME 1 ; Flag
 
-ifidn <Flag>, <NoPop>
+%if %1 == NoPop
 
         alloc_stack (EXCEPTION_RECORD_LENGTH + KEXCEPTION_FRAME_LENGTH - (1 * 8)) ; allocate frame
 
-else
+%else
 
         alloc_stack (KEXCEPTION_FRAME_LENGTH - (1 * 8)) ; allocate frame
 
-endif
+%endif
 
         lea     rax, 100h[rsp]          ; set frame display pointer
 
@@ -242,13 +246,13 @@ endif
 ; Save nonvolatile integer registers
 ;
 
-ifidn <Flag>, <Rbp>
+%if %1 == Rbp
 
         mov     (ExRbp - 100h)[rax], rbp ; save nonvolatile integer register
         .savereg rbp, ExRbp             ;
         set_frame rbp, 0                ; set frame pointer
 
-endif
+%endif
 
         mov     (ExRbx - 100h)[rax], rbx ;
         .savereg rbx, ExRbx             ;
@@ -273,7 +277,7 @@ endif
 
         END_PROLOGUE
 
-        endm
+%endmacro
 
 ;
 ; Define restore exception state macro.
@@ -293,7 +297,7 @@ endif
 ;   rsp - Supplies the address of the exception frame.
 ;
 
-BL_RESTORE_EXCEPTION_STATE macro Flag
+%macro BL_RESTORE_EXCEPTION_STATE 1 ; Flag
 
         lea     rcx, 100h[rsp]          ; set frame display pointer
         mov     rbx, (ExRbx - 100h)[rcx] ; restore nonvolatile integer registers
@@ -304,19 +308,19 @@ BL_RESTORE_EXCEPTION_STATE macro Flag
         mov     r14, (ExR14 - 100h)[rcx] ;
         mov     r15, (ExR15 - 100h)[rcx] ;
 
-ifdif <Flag>, <NoPop>
+%if %1 != NoPop
 
-ifidn <Flag>, <Rbp>
+%if %1 == Rbp
 
         mov     rbp, (ExRbp - 100h)[rcx]  ; restore nonvolatile integer register
 
-endif
+%endif
 
         add     rsp, KEXCEPTION_FRAME_LENGTH - (1 * 8) ; deallocate frame
 
-endif
+%endif
 
-        endm
+%endmacro
 
 
         subttl "Unhandled Exception"
@@ -419,7 +423,7 @@ endif
 
         BL_GENERATE_TRAP_FRAME              ; generate trap frame
 
-        and     dword ptr TrEflags[rbp], not EFLAGS_TF_MASK ; clear TF Flag.
+        and     dword ptr TrEflags[rbp], ~ EFLAGS_TF_MASK ; clear TF Flag.
 
         mov     ecx, STATUS_SINGLE_STEP     ; set exception code.
         mov     r8, TrRip[rbp]              ; set exception address
@@ -717,7 +721,7 @@ endif
 
         BL_TRAP_ENTRY BdInvalidTss
 
-        BL_GENERATE_TRAP_FRAME <ErrorCode>  ; generate trap frame
+        BL_GENERATE_TRAP_FRAME_ErrorCode ; generate trap frame
 
         mov     r10, TrRip[rbp]         ; set parameter 5 to exception address
         mov     TrP5[rbp], r10
@@ -755,7 +759,7 @@ endif
 
         BL_TRAP_ENTRY BdGeneralProtectionFault
 
-        BL_GENERATE_TRAP_FRAME <ErrorCode> ; generate trap frame
+        BL_GENERATE_TRAP_FRAME_ErrorCode   ; generate trap frame
 
         mov     ecx, STATUS_ACCESS_VIOLATION ; set exception code.
         mov     r8, TrRip[rbp]             ; set exception address
@@ -804,7 +808,7 @@ endif
 
         BL_TRAP_ENTRY BdPageFault
 
-        BL_GENERATE_TRAP_FRAME <Virtual> ; generate trap frame
+        BL_GENERATE_TRAP_FRAME_Virtual  ; generate trap frame
 
 ;
 ; No backing store for the page table in the boot environment.  Just
@@ -1115,7 +1119,7 @@ nonNullValue:
 
         BL_TRAP_ENTRY EfiCommonExceptionDispatch
 
-        BL_GENERATE_EXCEPTION_FRAME <NoPop> ; generate exception frame
+        BL_GENERATE_EXCEPTION_FRAME NoPop ; generate exception frame
 
         lea     rax, (KEXCEPTION_FRAME_LENGTH - 8)[rsp] ; get exception record address
         mov     ErExceptionCode[rax], ecx ; set exception code
@@ -1132,9 +1136,9 @@ nonNullValue:
         mov     rcx, rax                ; set exception record address
         call    EfiDispatchException    ; dispatch exception
 
-        BL_RESTORE_EXCEPTION_STATE <NoPop> ; restore exception state/deallocate
+        BL_RESTORE_EXCEPTION_STATE NoPop ; restore exception state/deallocate
 
-        BL_RESTORE_TRAP_STATE <Volatile> ; restore trap state and exit
+        BL_RESTORE_TRAP_STATE Volatile  ; restore trap state and exit
 
         BL_TRAP_END EfiCommonExceptionDispatch
 

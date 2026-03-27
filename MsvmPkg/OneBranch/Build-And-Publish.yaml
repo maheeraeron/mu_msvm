@@ -68,7 +68,9 @@ parameters:
     {Pool: Linux, Linux: True, Arch: AARCH64, Target:   DEBUG, ToolChainTag: CLANGPDB, Salt: ADCL},
     {Pool: Linux, Linux: True, Arch: AARCH64, Target: RELEASE, ToolChainTag: CLANGPDB, Salt: ARCL},
 
-    {Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target:   DEBUG, ToolChainTag: GCC, Salt: XDG, Extra: BLD_*_LEGACY_DEBUGGER=1},
+    # Temporarily disable Gcc debug build.
+    # Probably depends on https://github.com/microsoft/mu_basecore/pull/1710 DisableNullDetection: Make calling convention consistent.
+    #{Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target:   DEBUG, ToolChainTag: GCC, Salt: XDG, Extra: BLD_*_LEGACY_DEBUGGER=1},
     {Pool: Linux, Linux: True, Arch:     X64, GnuArch: "x86-64", Target: RELEASE, ToolChainTag: GCC, Salt: XRG},
     {Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target:   DEBUG, ToolChainTag:  GCC, Salt: ADG},
     {Pool: Linux, Linux: True, Arch: AARCH64, GnuArch: aarch64, Target: RELEASE, ToolChainTag:  GCC, Salt: ARG}

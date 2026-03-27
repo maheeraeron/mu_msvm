@@ -24,7 +24,6 @@
     ArmPlatformPkg/ArmPlatformPkg.dec
 
 [LibraryClasses]
-    ClangTemporaryLib
     CrashLib
     UefiBootServicesTableLib
     BaseLib
@@ -66,9 +65,9 @@
     cpPcUart.c
     CrashDumpAgent.c
     X64/archapia.nasm
-    X64/trapa.asm       | MSFT
-    X64/debugstb.asm    | MSFT
-    X64/state.asm       | MSFT
+    X64/trapa.nasm
+    X64/debugstb.nasm
+    X64/state.nasm
     X64/debug.c
     X64/cpuapi.c
     X64/trapc.c

@@ -17,7 +17,7 @@
     DebugLib.c
 
 [Sources.X64]
-    X64/debugstb.asm   | MSFT
+    X64/debugstb.nasm
 
 [Sources.AARCH64]
     AArch64/debugstb.masm | MSFT
@@ -28,7 +28,6 @@
 
 [LibraryClasses]
     BaseMemoryLib
-    ClangTemporaryLib
     PcdLib
     PrintLib
     BaseLib

@@ -180,10 +180,10 @@ include ksamd64.inc
 ;
 ;--
 
-CcFrame struct
-        EFlags  dd ?                    ; saved processor flags
-        Fill    dd ?                    ; fill
-CcFrame ends
+struc CcFrame
+        .EFlags  dd ?                   ; saved processor flags
+        .Fill    dd ?                   ; fill
+endstruc
 
 
         NESTED_ENTRY EfiCaptureContext, _TEXT$00
@@ -240,18 +240,18 @@ CcFrame ends
 
         stmxcsr CxMxCsr[rcx]            ; save sse control state
 
-        lea     rax, (sizeof CcFrame) + 8[rsp] ; get previous stack address
+        lea     rax, (CcFrame_size) + 8[rsp] ; get previous stack address
         mov     CxRsp[rcx], rax         ;
 
-        mov     rax, (sizeof CcFrame)[rsp] ; set return address
+        mov     rax, (CcFrame_size)[rsp] ; set return address
         mov     CxRip[rcx], rax         ;
 
-        mov     eax, Ccframe.EFlags[rsp] ; set processor flags
+        mov     eax, CcFrame.EFlags[rsp] ; set processor flags
         mov     CxEFlags[rcx], eax      ;
 
-        mov     dword ptr CxContextFlags[rcx], CONTEXT_FULL or CONTEXT_SEGMENTS ; set context flags
+        mov     dword ptr CxContextFlags[rcx], CONTEXT_FULL | CONTEXT_SEGMENTS ; set context flags
 
-        add     rsp, sizeof CcFrame     ; deallocate stack frame
+        add     rsp, CcFrame_size       ; deallocate stack frame
 
         BEGIN_EPILOGUE
 

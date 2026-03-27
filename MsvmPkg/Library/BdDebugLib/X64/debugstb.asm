@@ -56,7 +56,7 @@ LEAF_ENTRY DebugService2, _TEXT$00
 
     mov     eax, r8d                ; set debug service type
     int     2dh                     ; call debug service
-    int     3                       ; required - do not remove
+    int3                            ; required - do not remove
 
 NoDebuggerPresent:
 
