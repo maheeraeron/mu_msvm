@@ -61,6 +61,7 @@ Return Value:
 --*/
 {
     PVOID BaseDestination = (PVOID)VoidDestination;
+    size_t OriginalLength = Length;
 
     // Toplevel volatile is historical and helps avoid
     // the compiler transforming this to memcpy.
@@ -114,9 +115,9 @@ Return Value:
     // patched using this routine.
     //
 
-    BlArchSweepIcacheRange(BaseDestination, Length);
+    BlArchSweepIcacheRange(BaseDestination, OriginalLength);
 
-    return Length;
+    return OriginalLength;
 }
 
 // Toplevel volatile is historical and helps avoid
