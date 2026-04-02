@@ -155,7 +155,7 @@ VOID
 KdDxeTimerDestroy (
   )
 {
-  if (mKdDxeTimerEvent == NULL) {
+  if (mKdDxeTimerEvent != NULL) {
     gBS->CloseEvent (mKdDxeTimerEvent);
   }
 
