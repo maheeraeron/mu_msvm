@@ -59,6 +59,7 @@
     IoLib
     IsolationLib
     MsBaseLib
+    SafeIntLib
     PeCoffLib
     PeimEntryPoint
     PeiServicesLib
