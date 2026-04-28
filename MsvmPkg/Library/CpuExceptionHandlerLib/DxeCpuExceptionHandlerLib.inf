@@ -8,7 +8,7 @@
 #
 ##
 
-#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | a02dbbd86344616b9f48bf5f7cc8bd94 | 2026-02-27T20-39-53 | 187a160e565265c7e9bfdcf157beebef9f2287b9
+#Override : 00000002 | UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf | ef007482473a23e95f38f29830197886 | 2026-04-27T20-28-02 | 90633f7ee064b77bfb7927b62516af7c296bf920
 
 [Defines]
   INF_VERSION                    = 0x00010005
@@ -95,4 +95,4 @@
   gEfiDebugImageInfoTableGuid
 
 [BuildOptions]
-  XCODE:*_*_X64_NASM_FLAGS = -D NO_ABSOLUTE_RELOCS_IN_TEXT
+  XCODE:*_*_X64_NASM_FLAGS = -D SMM_DXE_NO_ABSOLUTE_RELOCS_IN_TEXT

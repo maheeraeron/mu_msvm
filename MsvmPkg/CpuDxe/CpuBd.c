@@ -16,16 +16,13 @@
 #include <Library/PrintLib.h>
 
 
-#define CPU_INTERRUPT_NUM  256
-
-
-IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[CPU_INTERRUPT_NUM] = { 0 };
+IA32_IDT_GATE_DESCRIPTOR  mOrigIdtEntry[X86_CPU_INTERRUPT_NUM] = { 0 };
 
 EFI_CPU_INTERRUPT_HANDLER ExternalVectorTable[0x100];
 UINT16                    mOrigIdtEntryCount    = 0;
 
 
-extern IA32_IDT_GATE_DESCRIPTOR  gIdtTable[CPU_INTERRUPT_NUM];
+extern IA32_IDT_GATE_DESCRIPTOR  gIdtTable[X86_CPU_INTERRUPT_NUM];
 extern EFI_CPU_ARCH_PROTOCOL gCpu;
 
 //
@@ -294,7 +291,7 @@ BdInitInterruptDescriptorTable (
   //
   // Intialize IDT
   //
-  for (Index = 0; Index < CPU_INTERRUPT_NUM; Index ++) {
+  for (Index = 0; Index < X86_CPU_INTERRUPT_NUM; Index ++) {
 
     //
     // If the old IDT had a handler for this interrupt, then

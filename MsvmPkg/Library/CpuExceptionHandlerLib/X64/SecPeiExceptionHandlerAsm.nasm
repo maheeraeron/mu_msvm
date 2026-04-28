@@ -27,7 +27,7 @@ extern ASM_PFX(CommonExceptionHandler)
 SECTION .data
 
 DEFAULT REL
-%ifndef NO_ABSOLUTE_RELOCS_IN_TEXT
+%ifndef SEC_PEI_NO_ABSOLUTE_RELOCS_IN_TEXT
 SECTION .text
 %endif
 
