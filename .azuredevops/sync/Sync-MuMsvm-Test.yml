@@ -1,0 +1,31 @@
+# Test-only pipeline. Verifies that pushes to a test branch on microsoft/mu_msvm
+# trigger this ADO pipeline via the Azure Pipelines GitHub App.
+trigger: none
+pr: none
+
+resources:
+  repositories:
+    - repository: mu_msvm
+      type: github
+      endpoint: github.com_maheeraeron
+      name: microsoft/mu_msvm
+      ref: refs/heads/users/maheeraeron/sync-trigger-test
+      trigger:
+        branches:
+          include:
+            - users/maheeraeron/sync-trigger-test
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- checkout: none
+- pwsh: |
+    Write-Host "===================================================="
+    Write-Host "TRIGGER TEST FIRED"
+    Write-Host "----------------------------------------------------"
+    Write-Host "Build reason       : $(Build.Reason)"
+    Write-Host "mu_msvm trigger SHA: $(resources.repositories.mu_msvm.version)"
+    Write-Host "mu_msvm trigger ref: $(resources.repositories.mu_msvm.ref)"
+    Write-Host "===================================================="
+  displayName: 'Show trigger metadata'
