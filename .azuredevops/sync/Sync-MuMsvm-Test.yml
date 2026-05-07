@@ -10,7 +10,10 @@ resources:
       endpoint: github.com_maheeraeron
       name: microsoft/mu_msvm
       ref: refs/heads/user/maheeraeron/sync-trigger-test
-      trigger: true
+      trigger:
+        branches:
+          include:
+            - user/maheeraeron/sync-trigger-test
 
 pool:
   vmImage: 'windows-latest'
