@@ -1,5 +1,6 @@
 # Test-only pipeline. Verifies that pushes to a test branch on microsoft/mu_msvm
 # trigger this ADO pipeline via the Azure Pipelines GitHub App.
+# Probe: 2026-05-18 (verify trigger after ADO pipeline permissions granted)
 trigger: none
 pr: none
 
